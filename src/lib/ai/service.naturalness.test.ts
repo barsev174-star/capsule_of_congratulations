@@ -31,6 +31,21 @@ describe("AI draft naturalness", () => {
     expect(text).not.toContain("крич");
   });
 
+  it("does not produce broken wish constructions", async () => {
+    const result = await generateParticipantMessage({
+      cardId: `card_test_wish_${Date.now()}`,
+      recipientName: "Анидовна",
+      occasion: "personal",
+      occasionText: "за выпускной",
+      draftNotes: "Будь такой же доброй, умной, справедливой. Ценю вашу поддержку и тепло.",
+      style: "respectful"
+    });
+
+    const text = result.variants.map((item) => item.text).join(" ");
+    expect(text).not.toContain("Пусть будь");
+    expect(text).not.toContain("по поводу за выпускной");
+  });
+
   it("produces different drafts for repeated generations on the same card", async () => {
     const cardId = `card_test_repeat_${Date.now()}`;
     const first = await generateParticipantMessage({

@@ -73,3 +73,26 @@ export const validateContributionFormData = (formData: FormData): ContributionVa
     }
   };
 };
+
+export const validateContributionMessage = (message: string): ContributionValidationIssue[] => {
+  const issues: ContributionValidationIssue[] = [];
+  const normalizedMessage = message.trim();
+
+  if (normalizedMessage.length < 20 || normalizedMessage.length > 1500) {
+    pushIssue(issues, "message", "Текст поздравления должен быть от 20 до 1500 символов.");
+  }
+
+  if (wordCount(normalizedMessage) < 3) {
+    pushIssue(issues, "message", "Добавьте чуть больше смысла: хотя бы 3 слова.");
+  }
+
+  if (hasSpamLikeContent(normalizedMessage)) {
+    pushIssue(issues, "message", "Ссылки в тексте пока не поддерживаются.");
+  }
+
+  if (isTooGeneric(normalizedMessage)) {
+    pushIssue(issues, "message", "Такой текст слишком короткий и общий. Добавьте хотя бы пару теплых деталей.");
+  }
+
+  return issues;
+};

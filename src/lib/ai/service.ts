@@ -56,6 +56,24 @@ const extractValueClauses = (parts: string[]) =>
 const extractGeneralClauses = (parts: string[], wishClauses: string[], valueClauses: string[]) =>
   parts.filter((part) => !wishClauses.includes(part) && !valueClauses.includes(part));
 
+const normalizeWishClause = (clause: string) => {
+  const cleaned = normalizeClause(clause)
+    .replace(/^(хочу\s+)?пожелать\s+/i, "")
+    .replace(/^желаю\s+/i, "")
+    .replace(/^пусть\s+/i, "")
+    .trim();
+
+  if (/^будь\s+/i.test(cleaned)) {
+    return cleaned.replace(/^будь\s+/i, "оставаться ");
+  }
+
+  if (/^оставайся\s+/i.test(cleaned)) {
+    return cleaned.replace(/^оставайся\s+/i, "оставаться ");
+  }
+
+  return cleaned;
+};
+
 const buildOpening = (recipientName: string, occasionText: string, seed: number) => {
   const context = cleanText(occasionText).toLowerCase();
 
@@ -99,7 +117,7 @@ const buildValueSentence = (valueClauses: string[], seed: number) => {
     [
       `Очень ценю, что ${clause}.`,
       `Особенно хочется отметить, что ${clause}.`,
-      `Именно за это вас особенно ценят: ${clause}.`
+      `Именно это в вас особенно ценно: ${clause}.`
     ],
     seed,
     1
@@ -111,13 +129,17 @@ const buildWishSentence = (wishClauses: string[], seed: number) => {
     return "";
   }
 
-  const clause = normalizeClause(wishClauses[0]);
+  const clause = normalizeWishClause(wishClauses[0]);
+
+  if (!clause) {
+    return "";
+  }
 
   return pickBySeed(
     [
-      `Пусть ${clause}.`,
-      `От души хочется пожелать, чтобы ${clause}.`,
-      `Очень хочется, чтобы ${clause}.`
+      `Желаю вам ${clause}.`,
+      `От души хочу пожелать вам ${clause}.`,
+      `Пусть в вашей жизни будет больше ${clause}.`
     ],
     seed,
     2
@@ -144,11 +166,21 @@ const buildGeneralSentence = (generalClauses: string[], seed: number) => {
 
 const buildContextTail = (occasionText: string) => {
   const cleaned = cleanText(occasionText);
+  const lower = cleaned.toLowerCase();
+
   if (!cleaned) {
     return "";
   }
 
-  return `Особенно приятно собрать эти слова по поводу ${cleaned.toLowerCase()}.`;
+  if (lower.startsWith("за ")) {
+    return `Эти слова мы собираем в честь ${lower.slice(3)}.`;
+  }
+
+  if (lower.startsWith("на ") || lower.startsWith("к ")) {
+    return `Эти слова мы собираем ${lower}.`;
+  }
+
+  return `Эти слова мы собираем по поводу ${lower}.`;
 };
 
 const styleClosers: Record<AiStyle, string> = {
@@ -182,7 +214,6 @@ const buildShortVariant = (
 };
 
 const buildStyledVariant = (
-  recipientName: string,
   opening: string,
   wishSentence: string,
   valueSentence: string,
@@ -223,15 +254,7 @@ const buildVariants = (input: AiGenerationInput, generationIndex: number) => {
   const heartfelt = [opening, wishSentence, valueSentence, generalSentence, styleClosers[input.style]]
     .filter(Boolean)
     .join(" ");
-  const styled = buildStyledVariant(
-    cleanedRecipientName,
-    opening,
-    wishSentence,
-    valueSentence,
-    generalSentence,
-    contextTail,
-    input.style
-  );
+  const styled = buildStyledVariant(opening, wishSentence, valueSentence, generalSentence, contextTail, input.style);
 
   return [
     { id: "short", label: "Короткий вариант", text: short },
@@ -256,7 +279,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
     generationType: "participant_message",
     inputJson: JSON.stringify(input),
     outputText: JSON.stringify(variants),
-    model: "local-template-v4",
+    model: "local-template-v5",
     createdAt: new Date().toISOString()
   };
 

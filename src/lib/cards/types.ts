@@ -69,3 +69,8 @@ export type ContributionStatusUpdate = {
   contributionId: string;
   status: Exclude<ContributionStatus, "visible"> | "visible";
 };
+
+export type ContributionMessageUpdate = {
+  contributionId: string;
+  message: string;
+};

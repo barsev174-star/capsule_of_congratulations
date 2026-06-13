@@ -1,4 +1,5 @@
 import { validateContributionFormData } from "@/lib/contributions/validation";
+import { validateContributionMessage } from "@/lib/contributions/validation";
 
 const buildFormData = (entries: Record<string, string>) => {
   const formData = new FormData();
@@ -62,5 +63,10 @@ describe("validateContributionFormData", () => {
     if (!result.success) {
       expect(result.issues.some((issue) => issue.message.includes("Ссылки"))).toBe(true);
     }
+  });
+
+  it("reuses message rules for organizer editing", () => {
+    const issues = validateContributionMessage("Поздравляю!");
+    expect(issues.some((issue) => issue.field === "message")).toBe(true);
   });
 });

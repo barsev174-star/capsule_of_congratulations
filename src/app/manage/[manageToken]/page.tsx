@@ -6,6 +6,7 @@ import {
 } from "@/lib/cards/repository";
 import { buildReminderText } from "@/lib/manage/reminder";
 import { setContributionStatusAction } from "./actions";
+import { ContributionEditor } from "./contribution-editor";
 import styles from "./manage-page.module.css";
 
 type Props = {
@@ -65,7 +66,11 @@ export default async function ManagePage({ params }: Props) {
                       </div>
                       <span className={styles.statusBadge}>{contribution.status}</span>
                     </div>
-                    <p className={styles.message}>{contribution.message}</p>
+                    <ContributionEditor
+                      contributionId={contribution.id}
+                      manageToken={manageToken}
+                      initialMessage={contribution.message}
+                    />
                     <div className={styles.controls}>
                       <form action={setContributionStatusAction}>
                         <input type="hidden" name="manageToken" value={manageToken} />

@@ -99,3 +99,25 @@ export const updateContributionStatus = async (
   await writeFile(contributionsFilePath, JSON.stringify(contributions, null, 2), "utf8");
   return updated;
 };
+
+export const updateContributionMessage = async (
+  contributionId: string,
+  message: Contribution["message"]
+) => {
+  const contributions = await readContributions();
+  const index = contributions.findIndex((item) => item.id === contributionId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const updated = {
+    ...contributions[index],
+    message,
+    updatedAt: new Date().toISOString()
+  };
+
+  contributions[index] = updated;
+  await writeFile(contributionsFilePath, JSON.stringify(contributions, null, 2), "utf8");
+  return updated;
+};
