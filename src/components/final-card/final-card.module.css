@@ -1,61 +1,94 @@
 .page {
+  position: relative;
   min-height: 100vh;
-  padding: 24px 16px 56px;
+  padding: 28px 16px 64px;
+  overflow: hidden;
+}
+
+.page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.38), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.22), transparent 26%);
+  pointer-events: none;
 }
 
 .shell {
-  max-width: 1160px;
+  position: relative;
+  max-width: 1180px;
   margin: 0 auto;
 }
 
 .warm-classic {
-  --fc-bg: linear-gradient(180deg, #f8f0e6 0%, #f4eadf 100%);
-  --fc-surface: rgba(255, 250, 245, 0.92);
-  --fc-card: rgba(255, 252, 249, 0.9);
-  --fc-text: #3b2d25;
-  --fc-muted: #6e5a4d;
-  --fc-line: rgba(88, 63, 48, 0.14);
+  --fc-bg: linear-gradient(180deg, #f7ecdf 0%, #efe2d3 100%);
+  --fc-surface: rgba(255, 249, 243, 0.92);
+  --fc-card: rgba(255, 252, 248, 0.94);
+  --fc-text: #3b2b23;
+  --fc-muted: #715d4f;
+  --fc-line: rgba(92, 63, 45, 0.14);
   --fc-accent: #c46f4d;
+  --fc-accent-soft: rgba(196, 111, 77, 0.16);
+  --fc-hero: linear-gradient(135deg, rgba(255, 247, 239, 0.96), rgba(242, 224, 209, 0.92));
 }
 
 .team-modern {
-  --fc-bg: linear-gradient(180deg, #eef4f8 0%, #e7f0f4 100%);
-  --fc-surface: rgba(249, 252, 255, 0.92);
-  --fc-card: rgba(255, 255, 255, 0.9);
-  --fc-text: #26353d;
-  --fc-muted: #5f7580;
+  --fc-bg: linear-gradient(180deg, #ebf4f7 0%, #ddecef 100%);
+  --fc-surface: rgba(247, 252, 255, 0.92);
+  --fc-card: rgba(255, 255, 255, 0.94);
+  --fc-text: #23333c;
+  --fc-muted: #607580;
   --fc-line: rgba(53, 81, 96, 0.14);
   --fc-accent: #2e6679;
+  --fc-accent-soft: rgba(46, 102, 121, 0.14);
+  --fc-hero: linear-gradient(140deg, rgba(251, 255, 255, 0.96), rgba(220, 238, 244, 0.92));
 }
 
 .bright-celebration {
-  --fc-bg: linear-gradient(180deg, #fff1dd 0%, #ffe4c1 100%);
-  --fc-surface: rgba(255, 251, 245, 0.92);
-  --fc-card: rgba(255, 255, 255, 0.9);
-  --fc-text: #51331f;
-  --fc-muted: #8b6448;
-  --fc-line: rgba(111, 74, 45, 0.14);
+  --fc-bg: linear-gradient(180deg, #fff0d9 0%, #ffdcae 100%);
+  --fc-surface: rgba(255, 250, 241, 0.93);
+  --fc-card: rgba(255, 255, 255, 0.94);
+  --fc-text: #4d2f1c;
+  --fc-muted: #8d684d;
+  --fc-line: rgba(122, 79, 42, 0.16);
   --fc-accent: #da7b35;
+  --fc-accent-soft: rgba(218, 123, 53, 0.16);
+  --fc-hero: linear-gradient(135deg, rgba(255, 248, 232, 0.96), rgba(255, 224, 180, 0.9));
 }
 
 .gentle-personal {
-  --fc-bg: linear-gradient(180deg, #fbf1ef 0%, #f7e7e2 100%);
-  --fc-surface: rgba(255, 250, 249, 0.92);
-  --fc-card: rgba(255, 255, 255, 0.88);
-  --fc-text: #4b3a39;
-  --fc-muted: #7c6461;
+  --fc-bg: linear-gradient(180deg, #f9efec 0%, #f3e0da 100%);
+  --fc-surface: rgba(255, 250, 248, 0.92);
+  --fc-card: rgba(255, 255, 255, 0.92);
+  --fc-text: #4b3938;
+  --fc-muted: #7d6562;
   --fc-line: rgba(110, 84, 78, 0.14);
   --fc-accent: #b67970;
+  --fc-accent-soft: rgba(182, 121, 112, 0.16);
+  --fc-hero: linear-gradient(135deg, rgba(255, 248, 247, 0.96), rgba(244, 223, 217, 0.92));
 }
 
 .canvas {
+  position: relative;
   display: grid;
-  gap: 18px;
+  gap: 20px;
   padding: 22px;
-  border-radius: 32px;
+  border-radius: 36px;
   background: var(--fc-bg);
   color: var(--fc-text);
-  box-shadow: 0 20px 70px rgba(61, 43, 32, 0.12);
+  box-shadow:
+    0 24px 80px rgba(61, 43, 32, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.canvas::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  border-radius: 28px;
+  pointer-events: none;
 }
 
 .hero,
@@ -65,38 +98,62 @@
 .closing,
 .qualities,
 .memories {
+  position: relative;
   border: 1px solid var(--fc-line);
-  border-radius: 24px;
+  border-radius: 28px;
   background: var(--fc-surface);
+  overflow: hidden;
 }
 
 .hero {
   display: grid;
-  gap: 18px;
-  padding: 24px;
+  gap: 22px;
+  padding: 28px;
+  background: var(--fc-hero);
 }
 
-.eyebrow {
+.heroGlow {
+  position: absolute;
+  right: -80px;
+  top: -70px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--fc-accent-soft), transparent 68%);
+  pointer-events: none;
+}
+
+.heroMain {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 18px;
+}
+
+.eyebrow,
+.sectionEyebrow {
   margin: 0;
   color: var(--fc-accent);
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .title {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(2.4rem, 7vw, 5rem);
-  line-height: 0.95;
+  font-size: clamp(2.8rem, 8vw, 5.6rem);
+  line-height: 0.92;
+  max-width: 8ch;
 }
 
 .subtitle {
   margin: 0;
   max-width: 720px;
   color: var(--fc-muted);
-  line-height: 1.7;
+  line-height: 1.8;
+  font-size: 1.02rem;
 }
 
 .heroMeta {
@@ -105,27 +162,79 @@
   gap: 12px;
 }
 
-.metaPill {
-  padding: 10px 14px;
+.metaPill,
+.sectionBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
   border-radius: 999px;
   border: 1px solid var(--fc-line);
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(8px);
+}
+
+.heroAside {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14px;
+}
+
+.heroStatCard,
+.heroNoteCard {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid var(--fc-line);
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.heroStatLabel,
+.heroNoteLabel {
+  color: var(--fc-muted);
+  font-size: 0.92rem;
+}
+
+.heroStatValue {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.heroStatText,
+.heroNoteText {
+  margin: 0;
+  color: var(--fc-text);
+  line-height: 1.6;
 }
 
 .section {
-  padding: 22px;
+  padding: 24px;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 14px;
 }
 
 .sectionTitle {
-  margin: 0 0 12px;
+  margin: 6px 0 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
+  line-height: 1.15;
 }
 
 .sectionText {
   margin: 0;
   color: var(--fc-muted);
-  line-height: 1.7;
+  line-height: 1.78;
 }
 
 .chipList {
@@ -135,22 +244,42 @@
 }
 
 .chip {
-  padding: 10px 14px;
+  padding: 11px 16px;
   border-radius: 999px;
   border: 1px solid var(--fc-line);
-  background: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36);
 }
 
 .grid {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
-.card {
-  padding: 18px;
-  border-radius: 20px;
+.card,
+.quoteCard,
+.memoryCard {
+  position: relative;
+  padding: 20px;
+  border-radius: 24px;
   border: 1px solid var(--fc-line);
   background: var(--fc-card);
+  box-shadow: 0 10px 30px rgba(61, 43, 32, 0.05);
+}
+
+.cardAccent {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.94)),
+    var(--fc-card);
+}
+
+.cardAccent::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  border-radius: 24px 0 0 24px;
+  background: linear-gradient(180deg, var(--fc-accent), transparent 85%);
 }
 
 .cardHeader {
@@ -161,7 +290,7 @@
 }
 
 .author {
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .role {
@@ -170,35 +299,52 @@
 }
 
 .message {
-  margin: 10px 0 0;
-  line-height: 1.7;
+  margin: 12px 0 0;
+  line-height: 1.75;
   white-space: pre-wrap;
 }
 
 .quoteCard {
-  padding: 18px;
-  border-radius: 20px;
-  border: 1px solid var(--fc-line);
-  background: var(--fc-card);
-  color: var(--fc-muted);
+  color: var(--fc-text);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.94)),
+    var(--fc-card);
+}
+
+.quoteMark {
+  display: block;
+  color: var(--fc-accent);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.8rem;
+  line-height: 0.8;
+  margin-bottom: 6px;
 }
 
 .memoryCard {
-  padding: 18px;
-  border-radius: 20px;
-  border: 1px dashed var(--fc-line);
-  background: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.72);
+  border-style: dashed;
+}
+
+.memoryCardTilt {
+  transform: rotate(-0.7deg);
 }
 
 .memoryTitle {
   margin: 0 0 8px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .closing {
   display: grid;
-  gap: 14px;
-  padding: 22px;
+  gap: 18px;
+  padding: 26px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.9)),
+    var(--fc-surface);
+}
+
+.closingContent {
+  max-width: 760px;
 }
 
 .actions {
@@ -209,36 +355,38 @@
 
 .primaryButton,
 .secondaryButton {
-  min-height: 48px;
-  padding: 0 20px;
+  min-height: 50px;
+  padding: 0 22px;
   border-radius: 999px;
-  font-weight: 700;
+  font-weight: 800;
+  font: inherit;
 }
 
 .primaryButton {
   border: 0;
-  background: var(--fc-accent);
+  background: linear-gradient(135deg, var(--fc-accent), color-mix(in srgb, var(--fc-accent) 78%, white));
   color: #fff9f5;
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--fc-accent) 25%, transparent);
 }
 
 .secondaryButton {
   border: 1px solid var(--fc-line);
-  background: rgba(255, 255, 255, 0.66);
+  background: rgba(255, 255, 255, 0.7);
 }
 
 @media (min-width: 900px) {
   .page {
-    padding: 36px 24px 64px;
+    padding: 38px 24px 72px;
+  }
+
+  .canvas {
+    padding: 26px;
   }
 
   .hero {
-    padding: 30px;
-  }
-
-  .twoColumns {
-    display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
-    gap: 18px;
+    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
+    align-items: stretch;
+    padding: 34px;
   }
 
   .messagesGrid {
@@ -247,5 +395,9 @@
 
   .quotesGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .memoriesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
