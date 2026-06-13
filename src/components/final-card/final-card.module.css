@@ -1,0 +1,251 @@
+.page {
+  min-height: 100vh;
+  padding: 24px 16px 56px;
+}
+
+.shell {
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+.warm-classic {
+  --fc-bg: linear-gradient(180deg, #f8f0e6 0%, #f4eadf 100%);
+  --fc-surface: rgba(255, 250, 245, 0.92);
+  --fc-card: rgba(255, 252, 249, 0.9);
+  --fc-text: #3b2d25;
+  --fc-muted: #6e5a4d;
+  --fc-line: rgba(88, 63, 48, 0.14);
+  --fc-accent: #c46f4d;
+}
+
+.team-modern {
+  --fc-bg: linear-gradient(180deg, #eef4f8 0%, #e7f0f4 100%);
+  --fc-surface: rgba(249, 252, 255, 0.92);
+  --fc-card: rgba(255, 255, 255, 0.9);
+  --fc-text: #26353d;
+  --fc-muted: #5f7580;
+  --fc-line: rgba(53, 81, 96, 0.14);
+  --fc-accent: #2e6679;
+}
+
+.bright-celebration {
+  --fc-bg: linear-gradient(180deg, #fff1dd 0%, #ffe4c1 100%);
+  --fc-surface: rgba(255, 251, 245, 0.92);
+  --fc-card: rgba(255, 255, 255, 0.9);
+  --fc-text: #51331f;
+  --fc-muted: #8b6448;
+  --fc-line: rgba(111, 74, 45, 0.14);
+  --fc-accent: #da7b35;
+}
+
+.gentle-personal {
+  --fc-bg: linear-gradient(180deg, #fbf1ef 0%, #f7e7e2 100%);
+  --fc-surface: rgba(255, 250, 249, 0.92);
+  --fc-card: rgba(255, 255, 255, 0.88);
+  --fc-text: #4b3a39;
+  --fc-muted: #7c6461;
+  --fc-line: rgba(110, 84, 78, 0.14);
+  --fc-accent: #b67970;
+}
+
+.canvas {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border-radius: 32px;
+  background: var(--fc-bg);
+  color: var(--fc-text);
+  box-shadow: 0 20px 70px rgba(61, 43, 32, 0.12);
+}
+
+.hero,
+.summary,
+.messages,
+.quotes,
+.closing,
+.qualities,
+.memories {
+  border: 1px solid var(--fc-line);
+  border-radius: 24px;
+  background: var(--fc-surface);
+}
+
+.hero {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--fc-accent);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.4rem, 7vw, 5rem);
+  line-height: 0.95;
+}
+
+.subtitle {
+  margin: 0;
+  max-width: 720px;
+  color: var(--fc-muted);
+  line-height: 1.7;
+}
+
+.heroMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.metaPill {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--fc-line);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.section {
+  padding: 22px;
+}
+
+.sectionTitle {
+  margin: 0 0 12px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.4rem;
+}
+
+.sectionText {
+  margin: 0;
+  color: var(--fc-muted);
+  line-height: 1.7;
+}
+
+.chipList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--fc-line);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.grid {
+  display: grid;
+  gap: 14px;
+}
+
+.card {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid var(--fc-line);
+  background: var(--fc-card);
+}
+
+.cardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.author {
+  font-weight: 700;
+}
+
+.role {
+  color: var(--fc-muted);
+  font-size: 0.95rem;
+}
+
+.message {
+  margin: 10px 0 0;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.quoteCard {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid var(--fc-line);
+  background: var(--fc-card);
+  color: var(--fc-muted);
+}
+
+.memoryCard {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px dashed var(--fc-line);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.memoryTitle {
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.closing {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.primaryButton {
+  border: 0;
+  background: var(--fc-accent);
+  color: #fff9f5;
+}
+
+.secondaryButton {
+  border: 1px solid var(--fc-line);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+@media (min-width: 900px) {
+  .page {
+    padding: 36px 24px 64px;
+  }
+
+  .hero {
+    padding: 30px;
+  }
+
+  .twoColumns {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 18px;
+  }
+
+  .messagesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quotesGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
