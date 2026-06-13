@@ -5,6 +5,7 @@ dist/
 coverage/
 .npm-cache/
 data/cards.json
+data/contributions.json
 
 # Python
 __pycache__/

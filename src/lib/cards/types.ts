@@ -39,3 +39,25 @@ export type CreateCardResult = {
   manageLink: string;
   chatMessage: string;
 };
+
+export type ContributionStatus = "visible";
+export type ContributionSource = "manual";
+
+export type Contribution = {
+  id: string;
+  cardId: string;
+  authorName: string;
+  authorRole: string | null;
+  message: string;
+  status: ContributionStatus;
+  source: ContributionSource;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateContributionInput = {
+  cardId: string;
+  authorName: string;
+  authorRole?: string;
+  message: string;
+};

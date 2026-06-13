@@ -1,22 +1,23 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { CardDraft } from "@/lib/cards/types";
+import type { CardDraft, Contribution } from "@/lib/cards/types";
 
-const dataFilePath = join(process.cwd(), "data", "cards.json");
+const cardsFilePath = join(process.cwd(), "data", "cards.json");
+const contributionsFilePath = join(process.cwd(), "data", "contributions.json");
 
-const ensureDataFile = async () => {
-  await mkdir(dirname(dataFilePath), { recursive: true });
+const ensureJsonFile = async (filePath: string) => {
+  await mkdir(dirname(filePath), { recursive: true });
 
   try {
-    await readFile(dataFilePath, "utf8");
+    await readFile(filePath, "utf8");
   } catch {
-    await writeFile(dataFilePath, "[]", "utf8");
+    await writeFile(filePath, "[]", "utf8");
   }
 };
 
 const readCards = async (): Promise<CardDraft[]> => {
-  await ensureDataFile();
-  const raw = await readFile(dataFilePath, "utf8");
+  await ensureJsonFile(cardsFilePath);
+  const raw = await readFile(cardsFilePath, "utf8");
 
   try {
     const parsed = JSON.parse(raw);
@@ -29,7 +30,35 @@ const readCards = async (): Promise<CardDraft[]> => {
 export const saveCardDraft = async (card: CardDraft) => {
   const existingCards = await readCards();
   existingCards.push(card);
-  await writeFile(dataFilePath, JSON.stringify(existingCards, null, 2), "utf8");
+  await writeFile(cardsFilePath, JSON.stringify(existingCards, null, 2), "utf8");
 };
 
 export const listCardDrafts = async () => readCards();
+
+export const getCardDraftByPublicSlug = async (publicSlug: string) => {
+  const cards = await readCards();
+  return cards.find((card) => card.publicSlug === publicSlug) ?? null;
+};
+
+const readContributions = async (): Promise<Contribution[]> => {
+  await ensureJsonFile(contributionsFilePath);
+  const raw = await readFile(contributionsFilePath, "utf8");
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as Contribution[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveContribution = async (contribution: Contribution) => {
+  const contributions = await readContributions();
+  contributions.push(contribution);
+  await writeFile(contributionsFilePath, JSON.stringify(contributions, null, 2), "utf8");
+};
+
+export const listContributionsByCardId = async (cardId: string) => {
+  const contributions = await readContributions();
+  return contributions.filter((item) => item.cardId === cardId && item.status === "visible");
+};

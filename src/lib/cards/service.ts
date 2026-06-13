@@ -1,7 +1,13 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { logger } from "@/lib/logger";
-import { saveCardDraft } from "@/lib/cards/repository";
-import type { CreateCardInput, CreateCardResult, CardDraft } from "@/lib/cards/types";
+import { saveCardDraft, saveContribution } from "@/lib/cards/repository";
+import type {
+  CreateCardInput,
+  CreateCardResult,
+  CardDraft,
+  CreateContributionInput,
+  Contribution
+} from "@/lib/cards/types";
 
 const slug = (size = 8) => randomBytes(size).toString("hex");
 
@@ -52,4 +58,30 @@ export const createCardDraft = async (input: CreateCardInput): Promise<CreateCar
     manageLink,
     chatMessage
   };
+};
+
+export const createContribution = async (input: CreateContributionInput) => {
+  const now = new Date().toISOString();
+
+  const contribution: Contribution = {
+    id: randomUUID(),
+    cardId: input.cardId,
+    authorName: input.authorName,
+    authorRole: input.authorRole?.trim() ? input.authorRole.trim() : null,
+    message: input.message,
+    status: "visible",
+    source: "manual",
+    createdAt: now,
+    updatedAt: now
+  };
+
+  await saveContribution(contribution);
+
+  logger.info("funnel.contribution_created", "Contribution created", {
+    cardId: contribution.cardId,
+    contributionId: contribution.id,
+    source: contribution.source
+  });
+
+  return contribution;
 };
