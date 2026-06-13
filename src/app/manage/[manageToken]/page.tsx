@@ -112,6 +112,16 @@ export default async function ManagePage({ params }: Props) {
               </p>
             </section>
 
+            <section className={styles.actionsCard}>
+              <h2 className={styles.sectionTitle}>Состав финального экрана</h2>
+              <p className={styles.line}>
+                Выбор блоков будет жить здесь, на странице организатора, рядом с предпросмотром.
+              </p>
+              <p className={styles.line}>
+                Следующий шаг: дать возможность включать и выключать блоки вроде `summary`, `quotes`, `memories`.
+              </p>
+            </section>
+
             <section className={styles.previewCard}>
               <h2 className={styles.sectionTitle}>Предпросмотр</h2>
               <p className={styles.previewText}>

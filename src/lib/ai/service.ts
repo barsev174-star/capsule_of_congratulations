@@ -5,19 +5,13 @@ import { logger } from "@/lib/logger";
 
 const CARD_GENERATION_LIMIT = 50;
 
-type RelationCategory = "student" | "parent" | "colleague" | "friend" | "relative" | "manager" | "general";
+const negativePatterns = [/крич/i, /ор[её]/i, /руг/i, /зл/i, /бесит/i, /ненав/i, /туп/i];
 
 const cleanText = (value: string) =>
   value
     .replace(/[!]+/g, "")
     .replace(/\s+/g, " ")
     .trim();
-
-const sanitizeItems = (items: string[]) =>
-  items
-    .map((item) => cleanText(item).toLowerCase())
-    .filter(Boolean)
-    .slice(0, 3);
 
 const sanitizeSentence = (value?: string) => {
   const cleaned = cleanText(value ?? "");
@@ -27,37 +21,6 @@ const sanitizeSentence = (value?: string) => {
 
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 };
-
-const relationLower = (relation: string) => cleanText(relation).toLowerCase();
-
-const qualityNounMap: Record<string, string> = {
-  добрый: "доброта",
-  внимательный: "внимание к людям",
-  надежный: "надежность",
-  мудрый: "мудрость",
-  заботливый: "забота",
-  вдохновляющий: "умение вдохновлять"
-};
-
-const qualityObjectMap: Record<string, string> = {
-  добрый: "доброту",
-  внимательный: "внимание к людям",
-  надежный: "надежность",
-  мудрый: "мудрость",
-  заботливый: "заботу",
-  вдохновляющий: "умение вдохновлять"
-};
-
-const wishPhraseMap: Record<string, string> = {
-  здоровья: "крепкого здоровья",
-  радости: "радости",
-  спокойствия: "спокойствия",
-  успехов: "успехов",
-  тепла: "тепла",
-  "новых возможностей": "новых возможностей"
-};
-
-const negativeDetailPatterns = [/крич/i, /ор[её]/i, /руг/i, /зл/i, /бесит/i, /наказыва/i, /строг/i, /боюсь/i, /ненав/i];
 
 const hashText = (value: string) => {
   let hash = 0;
@@ -71,69 +34,112 @@ const hashText = (value: string) => {
 
 const pickBySeed = <T,>(items: T[], seed: number, offset = 0) => items[(seed + offset) % items.length];
 
-const toQualityNouns = (qualities: string[]) =>
-  qualities.map((quality) => qualityNounMap[quality] ?? quality).filter(Boolean);
+const splitDraftNotes = (draftNotes: string) =>
+  cleanText(draftNotes)
+    .split(/[.;\n]+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length >= 3)
+    .filter((item) => !negativePatterns.some((pattern) => pattern.test(item)))
+    .slice(0, 5);
 
-const toQualityObjects = (qualities: string[]) =>
-  qualities.map((quality) => qualityObjectMap[quality] ?? quality).filter(Boolean);
+const normalizeClause = (text: string) => {
+  const cleaned = cleanText(text);
+  return cleaned.charAt(0).toLowerCase() + cleaned.slice(1);
+};
 
-const toWishPhrases = (wishes: string[]) => wishes.map((wish) => wishPhraseMap[wish] ?? wish).filter(Boolean);
+const extractWishClauses = (parts: string[]) =>
+  parts.filter((part) => /жела|пожела|пусть|оставай|будь|любви|радост|здоров|успех|счаст/i.test(part));
 
-const normalizePersonalDetail = (value?: string) => {
-  const cleaned = sanitizeSentence(value);
-  if (!cleaned) {
+const extractValueClauses = (parts: string[]) =>
+  parts.filter((part) => /ценю|благодар|нрав|рад|важно|вдохнов|скром|целеустрем|доброт|тепл|забот/i.test(part));
+
+const extractGeneralClauses = (parts: string[], wishClauses: string[], valueClauses: string[]) =>
+  parts.filter((part) => !wishClauses.includes(part) && !valueClauses.includes(part));
+
+const buildOpening = (recipientName: string, occasionText: string, seed: number) => {
+  const context = cleanText(occasionText).toLowerCase();
+
+  if (context.includes("команд") || context.includes("коллег")) {
+    return pickBySeed(
+      [
+        `${recipientName}, с вами особенно приятно проходить важные рабочие и человеческие моменты вместе.`,
+        `${recipientName}, рядом с вами особенно ценятся надежность, тепло и умение поддержать других.`
+      ],
+      seed
+    );
+  }
+
+  if (context.includes("учител") || context.includes("воспит")) {
+    return pickBySeed(
+      [
+        `${recipientName}, сегодня особенно хочется сказать вам теплые слова благодарности и уважения.`,
+        `${recipientName}, очень хочется поблагодарить вас за то добро и участие, которые вы даете людям рядом.`
+      ],
+      seed
+    );
+  }
+
+  return pickBySeed(
+    [
+      `${recipientName}, сегодня особенно хочется сказать вам несколько по-настоящему теплых слов.`,
+      `${recipientName}, в этот день особенно хочется собрать для вас добрые и искренние пожелания.`
+    ],
+    seed
+  );
+};
+
+const buildValueSentence = (valueClauses: string[], seed: number) => {
+  if (valueClauses.length === 0) {
     return "";
   }
 
-  if (negativeDetailPatterns.some((pattern) => pattern.test(cleaned))) {
+  const clause = normalizeClause(valueClauses[0]);
+
+  return pickBySeed(
+    [
+      `Очень ценю, что ${clause}.`,
+      `Особенно хочется отметить, что ${clause}.`,
+      `Именно за это вас особенно ценят: ${clause}.`
+    ],
+    seed,
+    1
+  );
+};
+
+const buildWishSentence = (wishClauses: string[], seed: number) => {
+  if (wishClauses.length === 0) {
     return "";
   }
 
-  return cleaned;
+  const clause = normalizeClause(wishClauses[0]);
+
+  return pickBySeed(
+    [
+      `Пусть ${clause}.`,
+      `От души хочется пожелать, чтобы ${clause}.`,
+      `Очень хочется, чтобы ${clause}.`
+    ],
+    seed,
+    2
+  );
 };
 
-const resolveRelationCategory = (relation: string): RelationCategory => {
-  const cleaned = relationLower(relation);
-
-  if (!cleaned) {
-    return "general";
+const buildGeneralSentence = (generalClauses: string[], seed: number) => {
+  if (generalClauses.length === 0) {
+    return "";
   }
 
-  if (cleaned.includes("учен")) {
-    return "student";
-  }
+  const clause = normalizeClause(generalClauses[0]);
 
-  if (cleaned.includes("родител")) {
-    return "parent";
-  }
-
-  if (cleaned.includes("коллег")) {
-    return "colleague";
-  }
-
-  if (cleaned.includes("друг") || cleaned.includes("подруг")) {
-    return "friend";
-  }
-
-  if (cleaned.includes("родствен") || cleaned.includes("сест") || cleaned.includes("брат")) {
-    return "relative";
-  }
-
-  if (cleaned.includes("руковод") || cleaned.includes("началь")) {
-    return "manager";
-  }
-
-  return "general";
-};
-
-const relationPrefix = (relation: string, category: RelationCategory) => {
-  const cleaned = cleanText(relation).toLowerCase();
-
-  if (!cleaned || category === "general") {
-    return "как человек, который вас очень ценит";
-  }
-
-  return `как ${cleaned}`;
+  return pickBySeed(
+    [
+      `Рядом с вами чувствуется, что ${clause}.`,
+      `Это очень откликается: ${clause}.`,
+      `И в этом особенно чувствуется ваша человеческая сила: ${clause}.`
+    ],
+    seed,
+    3
+  );
 };
 
 const buildContextTail = (occasionText: string) => {
@@ -145,120 +151,6 @@ const buildContextTail = (occasionText: string) => {
   return `Особенно приятно собрать эти слова по поводу ${cleaned.toLowerCase()}.`;
 };
 
-const buildOpening = (
-  recipientName: string,
-  relationCategory: RelationCategory,
-  occasionText: string,
-  seed: number
-) => {
-  const context = cleanText(occasionText).toLowerCase();
-
-  if (relationCategory === "student") {
-    return pickBySeed(
-      [
-        `${recipientName}, хочется сказать вам спасибо за тот след, который вы оставляете в людях рядом.`,
-        `${recipientName}, в этот день особенно хочется поблагодарить вас за внимание, терпение и человеческое тепло.`
-      ],
-      seed
-    );
-  }
-
-  if (relationCategory === "parent") {
-    return pickBySeed(
-      [
-        `${recipientName}, от души хочется поблагодарить вас за заботу, участие и ту атмосферу, которую вы создаете.`,
-        `${recipientName}, сегодня особенно хочется сказать вам теплые слова благодарности и уважения.`
-      ],
-      seed
-    );
-  }
-
-  if (relationCategory === "colleague" || context.includes("команд")) {
-    return pickBySeed(
-      [
-        `${recipientName}, рядом с вами особенно ценятся надежность, спокойствие и умение поддержать других.`,
-        `${recipientName}, с вами приятно проходить и рабочие задачи, и важные общие моменты.`
-      ],
-      seed
-    );
-  }
-
-  if (relationCategory === "friend" || relationCategory === "relative") {
-    return pickBySeed(
-      [
-        `${recipientName}, рядом с вами особенно чувствуются искренность, тепло и умение быть рядом вовремя.`,
-        `${recipientName}, очень хочется сказать вам теплые слова и поблагодарить за добро, которое вы даете людям рядом.`
-      ],
-      seed
-    );
-  }
-
-  return pickBySeed(
-    [
-      `${recipientName}, сегодня особенно хочется отметить, сколько тепла и хорошего настроения вы приносите окружающим.`,
-      `${recipientName}, хочется сказать вам теплые слова и поблагодарить за все хорошее, что вы даете людям рядом.`
-    ],
-    seed
-  );
-};
-
-const joinItems = (items: string[]) => {
-  if (items.length === 1) {
-    return items[0];
-  }
-
-  if (items.length === 2) {
-    return `${items[0]} и ${items[1]}`;
-  }
-
-  return `${items.slice(0, -1).join(", ")} и ${items.at(-1)}`;
-};
-
-const buildQualitiesSentence = (qualities: string[], seed: number) => {
-  if (qualities.length === 0) {
-    return "";
-  }
-
-  const joined = joinItems(qualities);
-  return pickBySeed(
-    [
-      `В вас особенно чувствуются ${joined}.`,
-      `Именно с вами у многих ассоциируются ${joined}.`,
-      `Вас ценят именно за ${joined}.`
-    ],
-    seed,
-    1
-  );
-};
-
-const buildDetailSentence = (detail: string, seed: number) => {
-  if (!detail) {
-    return "";
-  }
-
-  const normalized = detail.charAt(0).toLowerCase() + detail.slice(1);
-  return pickBySeed(
-    [
-      `Особенно хочется вспомнить, как ${normalized}.`,
-      `Отдельное спасибо за то, что ${normalized}.`
-    ],
-    seed,
-    2
-  );
-};
-
-const buildWishSentence = (wishes: string[], seed: number) => {
-  const joined = joinItems(wishes);
-  return pickBySeed(
-    [
-      `От души желаю вам ${joined}.`,
-      `Пусть впереди у вас будет больше ${joined}.`
-    ],
-    seed,
-    3
-  );
-};
-
 const styleClosers: Record<AiStyle, string> = {
   "warm-simple": "Спасибо вам за то тепло, которое вы дарите людям рядом.",
   "short-no-pathos": "Пусть впереди будет больше спокойных и радостных дней.",
@@ -267,57 +159,79 @@ const styleClosers: Record<AiStyle, string> = {
   respectful: "Пусть ваше внимание к людям возвращается к вам благодарностью и уважением."
 };
 
+const buildShortVariant = (
+  recipientName: string,
+  wishClauses: string[],
+  valueClauses: string[],
+  generalClauses: string[],
+  seed: number
+) => {
+  const parts = [
+    buildWishSentence(wishClauses, seed),
+    buildValueSentence(valueClauses, seed),
+    buildGeneralSentence(generalClauses, seed)
+  ].filter(Boolean);
+
+  const text = parts.slice(0, 2).join(" ");
+
+  if (!text) {
+    return `${recipientName}, пусть впереди будет больше радости, тепла и хороших дней.`;
+  }
+
+  return `${recipientName}, ${text.charAt(0).toLowerCase()}${text.slice(1)}`;
+};
+
+const buildStyledVariant = (
+  recipientName: string,
+  opening: string,
+  wishSentence: string,
+  valueSentence: string,
+  generalSentence: string,
+  contextTail: string,
+  style: AiStyle
+) =>
+  [opening, valueSentence, generalSentence, wishSentence, contextTail, styleClosers[style]]
+    .filter(Boolean)
+    .join(" ");
+
 const buildVariants = (input: AiGenerationInput, generationIndex: number) => {
   const cleanedRecipientName = sanitizeSentence(input.recipientName);
-  const sanitizedQualities = sanitizeItems(input.qualities);
-  const cleanedQualities = toQualityNouns(sanitizedQualities);
-  const cleanedQualityObjects = toQualityObjects(sanitizedQualities);
-  const cleanedWishes = toWishPhrases(sanitizeItems(input.wishes));
-  const cleanedDetail = normalizePersonalDetail(input.personalDetail);
-  const relationCategory = resolveRelationCategory(input.relation);
-  const cleanedRelation = relationPrefix(input.relation, relationCategory);
+  const cleanedNotes = splitDraftNotes(input.draftNotes);
+  const wishClauses = extractWishClauses(cleanedNotes);
+  const valueClauses = extractValueClauses(cleanedNotes);
+  const generalClauses = extractGeneralClauses(cleanedNotes, wishClauses, valueClauses);
+
   const seed = hashText(
     [
       input.cardId,
       input.recipientName,
       input.occasion,
       input.occasionText,
-      input.relation,
-      input.qualities.join("|"),
-      input.wishes.join("|"),
-      input.personalDetail ?? "",
+      input.draftNotes,
       input.style,
       String(generationIndex)
     ].join("::")
   );
 
-  const opening = buildOpening(cleanedRecipientName, relationCategory, input.occasionText, seed);
-  const qualitiesSentence = buildQualitiesSentence(cleanedQualities, seed);
-  const detailSentence = buildDetailSentence(cleanedDetail, seed);
-  const wishSentence = buildWishSentence(cleanedWishes, seed);
+  const opening = buildOpening(cleanedRecipientName, input.occasionText, seed);
+  const valueSentence = buildValueSentence(valueClauses, seed);
+  const wishSentence = buildWishSentence(wishClauses, seed);
+  const generalSentence = buildGeneralSentence(generalClauses, seed);
   const contextTail = buildContextTail(input.occasionText);
 
-  const shortTemplates = [
-    `${cleanedRecipientName}, спасибо вам за ${joinItems(cleanedQualityObjects)}. Желаю вам ${joinItems(cleanedWishes)} и много светлых моментов впереди.`,
-    `${cleanedRecipientName}, очень хочется поблагодарить вас за ${joinItems(cleanedQualityObjects)}. Пусть впереди будет больше ${joinItems(cleanedWishes)}.`
-  ];
-
-  const short = pickBySeed(shortTemplates, seed, 4);
-
-  const heartfelt = [opening, qualitiesSentence, detailSentence, wishSentence, contextTail, styleClosers[input.style]]
+  const short = buildShortVariant(cleanedRecipientName, wishClauses, valueClauses, generalClauses, seed);
+  const heartfelt = [opening, wishSentence, valueSentence, generalSentence, styleClosers[input.style]]
     .filter(Boolean)
     .join(" ");
-
-  const styled = [
-    `${cleanedRecipientName}, хочу поздравить вас ${cleanedRelation}.`,
-    qualitiesSentence,
-    detailSentence,
+  const styled = buildStyledVariant(
+    cleanedRecipientName,
+    opening,
     wishSentence,
+    valueSentence,
+    generalSentence,
     contextTail,
-    styleClosers[input.style]
-  ]
-    .filter(Boolean)
-    .join(" ");
+    input.style
+  );
 
   return [
     { id: "short", label: "Короткий вариант", text: short },
@@ -342,7 +256,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
     generationType: "participant_message",
     inputJson: JSON.stringify(input),
     outputText: JSON.stringify(variants),
-    model: "local-template-v3",
+    model: "local-template-v4",
     createdAt: new Date().toISOString()
   };
 

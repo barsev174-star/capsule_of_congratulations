@@ -12,10 +12,7 @@ export type AiGenerationInput = {
   recipientName: string;
   occasion: OccasionId;
   occasionText: string;
-  relation: string;
-  qualities: string[];
-  wishes: string[];
-  personalDetail?: string;
+  draftNotes: string;
   style: AiStyle;
 };
 

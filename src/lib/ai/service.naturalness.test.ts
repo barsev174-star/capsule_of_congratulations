@@ -7,16 +7,14 @@ describe("AI draft naturalness", () => {
       recipientName: "Анидовна",
       occasion: "personal",
       occasionText: "собираем открытку для любимого воспитателя группы",
-      relation: "!Воспитатель.!",
-      qualities: ["!добрый", "внимательный!", "заботливый!"],
-      wishes: ["здоровья", "тепла", "новых возможностей"],
-      personalDetail: "!Умеет очень громко кричать!",
+      draftNotes:
+        "!Хочу пожелать любви, радости! Ценю доброту и заботу! Рядом с вами спокойно и тепло!",
       style: "humor"
     });
 
     const text = result.variants.map((item) => item.text).join(" ");
     expect(text).not.toContain("!");
-    expect(text).toContain("как человек");
+    expect(text).toContain("любви");
   });
 
   it("does not insert negative personal detail into the final text", async () => {
@@ -25,16 +23,12 @@ describe("AI draft naturalness", () => {
       recipientName: "Анидовна",
       occasion: "personal",
       occasionText: "собираем открытку в благодарность за заботу о детях",
-      relation: "ученик",
-      qualities: ["добрый", "заботливый"],
-      wishes: ["спокойствия", "новых возможностей"],
-      personalDetail: "Умеет очень громко кричать",
+      draftNotes: "Хочу пожелать спокойствия. Умеет очень громко кричать. Ценю доброту и заботу.",
       style: "humor"
     });
 
     const text = result.variants.map((item) => item.text).join(" ").toLowerCase();
     expect(text).not.toContain("крич");
-    expect(text).not.toContain("работать");
   });
 
   it("produces different drafts for repeated generations on the same card", async () => {
@@ -44,10 +38,8 @@ describe("AI draft naturalness", () => {
       recipientName: "Анна",
       occasion: "team",
       occasionText: "собираем открытку от команды продукта",
-      relation: "родитель",
-      qualities: ["добрый", "внимательный"],
-      wishes: ["здоровья", "радости"],
-      personalDetail: "Всегда поддерживает добрым словом",
+      draftNotes:
+        "Хочу пожелать радости и здоровья. Очень ценю твою надежность и то, как приятно с тобой работать.",
       style: "warm-simple"
     });
 
@@ -56,10 +48,8 @@ describe("AI draft naturalness", () => {
       recipientName: "Анна",
       occasion: "team",
       occasionText: "собираем открытку от команды продукта",
-      relation: "родитель",
-      qualities: ["добрый", "внимательный"],
-      wishes: ["здоровья", "радости"],
-      personalDetail: "Всегда поддерживает добрым словом",
+      draftNotes:
+        "Хочу пожелать радости и здоровья. Очень ценю твою надежность и то, как приятно с тобой работать.",
       style: "warm-simple"
     });
 

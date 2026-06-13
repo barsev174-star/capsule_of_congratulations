@@ -17,19 +17,6 @@ type Props = {
   onUseText: (text: string) => void;
 };
 
-const qualityOptions = ["добрый", "внимательный", "надежный", "мудрый", "заботливый", "вдохновляющий"];
-const wishOptions = ["здоровья", "радости", "спокойствия", "успехов", "тепла", "новых возможностей"];
-const relationOptions = [
-  { value: "ученик", label: "Ученик" },
-  { value: "родитель", label: "Родитель" },
-  { value: "коллега", label: "Коллега" },
-  { value: "друг", label: "Друг" },
-  { value: "родственник", label: "Родственник" },
-  { value: "руководитель", label: "Руководитель" },
-  { value: "знакомый", label: "Знакомый" },
-  { value: "другое", label: "Другое" }
-];
-
 export const AiHelper = ({ cardId, recipientName, occasion, occasionText, onUseText }: Props) => {
   const [issues, setIssues] = useState<string[]>([]);
   const [variants, setVariants] = useState<AiVariant[]>([]);
@@ -67,8 +54,8 @@ export const AiHelper = ({ cardId, recipientName, occasion, occasionText, onUseT
     <section className={styles.aiCard}>
       <h2 className={styles.sectionTitle}>Помочь с текстом через AI</h2>
       <p className={styles.hint}>
-        Ответьте на несколько коротких вопросов, и мы предложим 3 черновика поздравления. Потом можно выбрать лучший и
-        отредактировать его вручную.
+        Напишите мысли своими словами, даже в сыром виде. AI аккуратно соберет их в 3 черновика поздравления, и вы
+        выберете лучший.
       </p>
 
       <form
@@ -101,56 +88,21 @@ export const AiHelper = ({ cardId, recipientName, occasion, occasionText, onUseT
         ) : null}
 
         <div className={styles.field}>
-          <label htmlFor="relation">Какая у вас роль в этом поздравлении</label>
-          <select id="relation" name="relation" defaultValue="родитель" required>
-            {relationOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <span className={styles.hint}>Здесь выбирается именно ваша роль, а не профессия или статус получателя.</span>
-        </div>
-
-        <div className={styles.field}>
-          <label>Какие у него или у нее качества</label>
-          <div className={styles.checkGrid}>
-            {qualityOptions.map((option) => (
-              <label key={option} className={styles.checkCard}>
-                <input type="checkbox" name="qualities" value={option} />
-                <span>{option}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className={styles.field}>
-          <label>Что хочется пожелать</label>
-          <div className={styles.checkGrid}>
-            {wishOptions.map((option) => (
-              <label key={option} className={styles.checkCard}>
-                <input type="checkbox" name="wishes" value={option} />
-                <span>{option}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="personalDetail">Личная деталь, если есть</label>
+          <label htmlFor="draftNotes">Что хотите сказать своими словами</label>
           <textarea
-            id="personalDetail"
-            name="personalDetail"
-            placeholder="Например, за что вы особенно благодарны или какой теплый момент вспоминаете."
+            id="draftNotes"
+            name="draftNotes"
+            placeholder="Например: Хочу пожелать любви, радости. Ценю скромность, целеустремленность, рад с тобой работать. Оставайся такой же веселой."
+            required
           />
           <span className={styles.hint}>
-            AI будет опираться на контекст открытки: <strong>{occasionText}</strong>.
+            Можно писать неровно и по пунктам. AI опирается на контекст открытки: <strong>{occasionText}</strong>.
           </span>
         </div>
 
         <div className={styles.field}>
           <label htmlFor="style">Стиль поздравления</label>
-          <select id="style" name="style" defaultValue="warm-simple">
+          <select id="style" name="style" defaultValue="touching">
             <option value="warm-simple">Тепло и просто</option>
             <option value="short-no-pathos">Коротко без пафоса</option>
             <option value="humor">С легким юмором</option>

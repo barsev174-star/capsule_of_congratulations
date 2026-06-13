@@ -12,11 +12,6 @@ export type AiValidationResult =
 const normalizeText = (value: FormDataEntryValue | null) =>
   typeof value === "string" ? value.trim() : "";
 
-const normalizeMultiValue = (values: FormDataEntryValue[]) =>
-  values
-    .map((value) => (typeof value === "string" ? value.trim() : ""))
-    .filter(Boolean);
-
 const styles: AiStyle[] = ["warm-simple", "short-no-pathos", "humor", "touching", "respectful"];
 const occasions = ["personal", "team", "celebration", "teacher", "caregiver", "colleague"] as const;
 
@@ -27,10 +22,7 @@ export const validateAiGenerationFormData = (formData: FormData): AiValidationRe
   const recipientName = normalizeText(formData.get("recipientName"));
   const occasion = normalizeText(formData.get("occasion"));
   const occasionText = normalizeText(formData.get("occasionText"));
-  const relation = normalizeText(formData.get("relation"));
-  const qualities = normalizeMultiValue(formData.getAll("qualities"));
-  const wishes = normalizeMultiValue(formData.getAll("wishes"));
-  const personalDetail = normalizeText(formData.get("personalDetail"));
+  const draftNotes = normalizeText(formData.get("draftNotes"));
   const style = normalizeText(formData.get("style"));
 
   if (!cardId) {
@@ -49,24 +41,15 @@ export const validateAiGenerationFormData = (formData: FormData): AiValidationRe
     issues.push({ field: "occasionText", message: "Нужен короткий контекст: кого и по какому поводу поздравляют." });
   }
 
-  if (relation.length < 2) {
-    issues.push({ field: "relation", message: "Укажите, кем вам приходится этот человек." });
-  }
-
-  if (qualities.length === 0) {
-    issues.push({ field: "qualities", message: "Выберите хотя бы одну черту человека." });
-  }
-
-  if (wishes.length === 0) {
-    issues.push({ field: "wishes", message: "Выберите хотя бы одно пожелание." });
+  if (draftNotes.length < 12) {
+    issues.push({
+      field: "draftNotes",
+      message: "Напишите хотя бы пару мыслей своими словами: что цените и что хотите пожелать."
+    });
   }
 
   if (!styles.includes(style as AiStyle)) {
     issues.push({ field: "style", message: "Выберите стиль поздравления." });
-  }
-
-  if (personalDetail && personalDetail.length < 5) {
-    issues.push({ field: "personalDetail", message: "Если добавляете личную деталь, пусть она будет чуть конкретнее." });
   }
 
   if (issues.length > 0) {
@@ -80,10 +63,7 @@ export const validateAiGenerationFormData = (formData: FormData): AiValidationRe
       recipientName,
       occasion: occasion as AiGenerationInput["occasion"],
       occasionText,
-      relation,
-      qualities,
-      wishes,
-      personalDetail: personalDetail || undefined,
+      draftNotes,
       style: style as AiStyle
     }
   };

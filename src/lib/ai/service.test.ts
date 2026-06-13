@@ -7,10 +7,8 @@ describe("generateParticipantMessage", () => {
       recipientName: "Анна",
       occasion: "personal",
       occasionText: "благодарим за выпускной год в садике",
-      relation: "родитель",
-      qualities: ["добрый", "внимательный"],
-      wishes: ["здоровья", "радости"],
-      personalDetail: "Спасибо за поддержку детей.",
+      draftNotes:
+        "Хочу пожелать любви и радости. Ценю скромность, целеустремленность и то, как приятно с тобой работать.",
       style: "warm-simple"
     });
 
