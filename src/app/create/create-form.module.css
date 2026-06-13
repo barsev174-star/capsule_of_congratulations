@@ -1,0 +1,260 @@
+.page {
+  min-height: 100vh;
+  padding: 28px 20px 56px;
+}
+
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.lead {
+  display: grid;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.intro {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: linear-gradient(140deg, rgba(255, 250, 245, 0.96), rgba(243, 229, 217, 0.85));
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 0.98;
+}
+
+.subtitle {
+  max-width: 720px;
+  margin: 14px 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.tips {
+  display: grid;
+  gap: 16px;
+}
+
+.tipCard,
+.successCard,
+.formCard {
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+}
+
+.tipCard h2,
+.successCard h2,
+.formTitle {
+  margin: 0 0 10px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.35rem;
+}
+
+.tipCard p,
+.successCard p,
+.successCard li,
+.successCard code {
+  color: var(--muted);
+}
+
+.tipCard ul,
+.successCard ul {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.65;
+}
+
+.layout {
+  display: grid;
+  gap: 24px;
+}
+
+.formCard {
+  box-shadow: var(--shadow);
+}
+
+.form {
+  display: grid;
+  gap: 22px;
+}
+
+.section {
+  display: grid;
+  gap: 14px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.fieldGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field label,
+.sectionTitle {
+  color: var(--text);
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  border: 1px solid rgba(92, 67, 51, 0.18);
+  border-radius: 16px;
+  background: var(--surface-strong);
+  padding: 14px 16px;
+  color: var(--text);
+}
+
+.field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.radioGrid,
+.templateGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.radioCard,
+.templateCard {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid rgba(92, 67, 51, 0.16);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+}
+
+.radioCard input,
+.templateCard input {
+  margin: 0;
+}
+
+.templatePreview {
+  width: 100%;
+  height: 64px;
+  border-radius: 14px;
+}
+
+.templateName {
+  font-weight: 700;
+}
+
+.templateText,
+.errorList li {
+  color: var(--muted);
+}
+
+.errorBox {
+  padding: 16px 18px;
+  border: 1px solid rgba(171, 66, 50, 0.2);
+  border-radius: 18px;
+  background: rgba(255, 239, 236, 0.9);
+}
+
+.errorBox p {
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.errorList {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+
+.submitButton {
+  min-height: 52px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff8f3;
+  box-shadow: 0 14px 28px rgba(191, 108, 71, 0.25);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.submitButton:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.note {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.successCard code {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+@media (min-width: 900px) {
+  .lead {
+    grid-template-columns: 1.5fr 1fr;
+  }
+
+  .layout {
+    grid-template-columns: 1.25fr 0.85fr;
+    align-items: start;
+  }
+
+  .fieldGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .radioGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .templateGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

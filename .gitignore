@@ -4,6 +4,7 @@ node_modules/
 dist/
 coverage/
 .npm-cache/
+data/cards.json
 
 # Python
 __pycache__/
