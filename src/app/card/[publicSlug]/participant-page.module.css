@@ -62,7 +62,8 @@
 
 .formCard,
 .listCard,
-.successCard {
+.successCard,
+.aiCard {
   padding: 22px;
   border: 1px solid var(--line);
   border-radius: 24px;
@@ -97,7 +98,8 @@
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   border: 1px solid rgba(92, 67, 51, 0.18);
   border-radius: 16px;
@@ -109,6 +111,25 @@
 .field textarea {
   min-height: 180px;
   resize: vertical;
+}
+
+.multiSelect {
+  min-height: 160px;
+}
+
+.checkGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.checkCard {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid rgba(92, 67, 51, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.62);
 }
 
 .errorBox {
@@ -154,6 +175,34 @@
 .list {
   display: grid;
   gap: 14px;
+}
+
+.variants {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.variantCard {
+  padding: 16px;
+  border: 1px solid rgba(92, 67, 51, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.variantTitle {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.useButton {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-weight: 700;
 }
 
 .listItem {

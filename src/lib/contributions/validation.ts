@@ -17,6 +17,11 @@ const pushIssue = (issues: ContributionValidationIssue[], field: string, message
 };
 
 const hasSpamLikeContent = (message: string) => /(https?:\/\/|www\.|t\.me\/|bit\.ly)/i.test(message);
+const wordCount = (message: string) => message.split(/\s+/).filter(Boolean).length;
+const isTooGeneric = (message: string) => {
+  const normalized = message.toLowerCase().replace(/[!.,?]+/g, "").trim();
+  return ["поздравляю", "с праздником", "всего хорошего", "удачи"].includes(normalized);
+};
 
 export const validateContributionFormData = (formData: FormData): ContributionValidationResult => {
   const issues: ContributionValidationIssue[] = [];
@@ -38,12 +43,20 @@ export const validateContributionFormData = (formData: FormData): ContributionVa
     pushIssue(issues, "authorRole", "Подпись или роль должна быть не длиннее 80 символов.");
   }
 
-  if (message.length < 10 || message.length > 1500) {
-    pushIssue(issues, "message", "Текст поздравления должен быть от 10 до 1500 символов.");
+  if (message.length < 20 || message.length > 1500) {
+    pushIssue(issues, "message", "Текст поздравления должен быть от 20 до 1500 символов.");
+  }
+
+  if (wordCount(message) < 3) {
+    pushIssue(issues, "message", "Добавьте чуть больше смысла: хотя бы 3 слова.");
   }
 
   if (hasSpamLikeContent(message)) {
     pushIssue(issues, "message", "Ссылки в тексте пока не поддерживаются.");
+  }
+
+  if (isTooGeneric(message)) {
+    pushIssue(issues, "message", "Такой текст слишком короткий и общий. Добавьте хотя бы пару теплых деталей.");
   }
 
   if (issues.length > 0) {

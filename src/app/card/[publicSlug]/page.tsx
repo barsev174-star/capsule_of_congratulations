@@ -43,13 +43,18 @@ export default async function ParticipantCardPage({ params }: Props) {
         </section>
 
         <div className={styles.layout}>
-          <ParticipantForm cardId={card.id} publicSlug={publicSlug} />
+          <ParticipantForm
+            cardId={card.id}
+            publicSlug={publicSlug}
+            recipientName={card.recipientName}
+            occasion={card.occasion}
+          />
 
           <section className={styles.listCard}>
             <h2 className={styles.sectionTitle}>Что уже добавили</h2>
             <p className={styles.hint}>
-              Сейчас участники видят только уже отправленные теплые слова. Позже здесь добавим AI-помощника и
-              более красивый поток отправки.
+              Сейчас участники видят уже отправленные теплые слова. AI-помощник уже подключен как черновик
+              генерации, а дальше будем делать его умнее и тоньше.
             </p>
 
             {contributions.length === 0 ? (
