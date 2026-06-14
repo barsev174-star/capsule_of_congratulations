@@ -18,8 +18,22 @@ const styleClassMap = {
 const trimMessage = (message: string, maxChars: number) =>
   message.length > maxChars ? `${message.slice(0, maxChars - 1).trimEnd()}...` : message;
 
+const getMediaAssetBySlot = (mediaAssets: CardMediaAsset[], slot: CardMediaAsset["slot"]) =>
+  mediaAssets.find((item) => item.slot === slot);
+
+const resolveHeroMedia = (mediaAssets: CardMediaAsset[]) => {
+  const portrait = getMediaAssetBySlot(mediaAssets, "portrait");
+  const landscapeA = getMediaAssetBySlot(mediaAssets, "landscape-a");
+  const landscapeB = getMediaAssetBySlot(mediaAssets, "landscape-b");
+
+  return {
+    primary: portrait ?? landscapeA ?? mediaAssets[0],
+    secondary: landscapeB ?? (portrait ? landscapeA : mediaAssets[1])
+  };
+};
+
 const renderMessageCard = (item: Contribution, index: number, maxChars: number) => (
-  <article key={item.id} className={`${styles.card} ${index % 3 === 0 ? styles.cardAccent : ""}`}>
+  <article key={item.id} className={`${styles.card} ${index === 0 ? styles.cardSpotlight : index % 3 === 0 ? styles.cardAccent : ""}`}>
     <div className={styles.cardHeader}>
       <span className={styles.author}>{item.authorName}</span>
       {item.authorRole ? <span className={styles.role}>{item.authorRole}</span> : null}
@@ -28,23 +42,65 @@ const renderMessageCard = (item: Contribution, index: number, maxChars: number) 
   </article>
 );
 
-const getMediaAssetBySlot = (mediaAssets: CardMediaAsset[], slot: CardMediaAsset["slot"]) =>
-  mediaAssets.find((item) => item.slot === slot);
+const renderHeroAside = (model: FinalCardViewModel) => {
+  const { primary, secondary } = resolveHeroMedia(model.mediaAssets);
 
-const getPhotoFrameClassName = (slot: CardMediaAsset["slot"], baseClassName: string) => {
-  if (slot === "portrait") {
-    return `${baseClassName} ${styles.mediaFrameTiltLeft}`;
+  if (primary) {
+    return (
+      <aside className={styles.heroAside}>
+        <div className={styles.heroPhotoStack}>
+          <figure className={`${styles.heroPhotoFrame} ${styles.heroPhotoPrimary}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={primary.publicUrl}
+              alt={primary.captionTitle || primary.captionSubtitle || "Фото открытки"}
+              className={styles.heroPhotoImage}
+            />
+            <figcaption className={styles.heroPhotoCaption}>
+              {primary.captionTitle ? <strong>{primary.captionTitle}</strong> : null}
+              <span>{primary.captionSubtitle || primary.captionTitle || "Теплый момент для этой открытки"}</span>
+            </figcaption>
+          </figure>
+
+          {secondary ? (
+            <figure className={`${styles.heroPhotoFrame} ${styles.heroPhotoSecondary}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={secondary.publicUrl}
+                alt={secondary.captionTitle || secondary.captionSubtitle || "Еще одно фото открытки"}
+                className={styles.heroPhotoImage}
+              />
+            </figure>
+          ) : null}
+        </div>
+
+        <div className={styles.heroFactStrip}>
+          <div className={styles.heroFact}>
+            <span className={styles.heroFactLabel}>Собрали</span>
+            <strong>{model.participantCount}</strong>
+          </div>
+          <div className={styles.heroFact}>
+            <span className={styles.heroFactLabel}>Повод</span>
+            <strong>{model.occasionLabel}</strong>
+          </div>
+        </div>
+      </aside>
+    );
   }
 
-  if (slot === "landscape-a") {
-    return `${baseClassName} ${styles.mediaFrameTiltLeft}`;
-  }
-
-  if (slot === "landscape-b") {
-    return `${baseClassName} ${styles.mediaFrameTiltRight}`;
-  }
-
-  return baseClassName;
+  return (
+    <aside className={styles.heroAside}>
+      <div className={styles.heroStatCard}>
+        <span className={styles.heroStatLabel}>Собрано для тебя</span>
+        <strong className={styles.heroStatValue}>{model.participantCount}</strong>
+        <span className={styles.heroStatText}>личных сообщений и теплых слов</span>
+      </div>
+      <div className={styles.heroNoteCard}>
+        <span className={styles.heroNoteLabel}>Повод</span>
+        <p className={styles.heroNoteText}>{model.occasionLabel}</p>
+      </div>
+    </aside>
+  );
 };
 
 const renderMediaFigure = (
@@ -53,31 +109,40 @@ const renderMediaFigure = (
   title: string,
   fallbackText: string,
   className: string
-) => (
-  <figure className={getPhotoFrameClassName(slot, className)}>
-    {asset ? (
-      <>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={asset.publicUrl}
-          alt={asset.captionTitle || asset.captionSubtitle || title}
-          className={styles.mediaImage}
-        />
-        <figcaption className={styles.mediaCaption}>
-          {asset.captionTitle ? <strong className={styles.mediaCaptionTitle}>{asset.captionTitle}</strong> : null}
-          <span className={styles.mediaCaptionSubtitle}>
-            {asset.captionSubtitle || asset.captionTitle || title}
-          </span>
-        </figcaption>
-      </>
-    ) : (
-      <>
-        <span className={styles.mediaLabel}>{title}</span>
-        <p className={styles.mediaHint}>{fallbackText}</p>
-      </>
-    )}
-  </figure>
-);
+) => {
+  const frameClassName =
+    slot === "portrait"
+      ? `${className} ${styles.mediaFrameTiltLeft}`
+      : slot === "landscape-b"
+        ? `${className} ${styles.mediaFrameTiltRight}`
+        : `${className} ${styles.mediaFrameTiltLeft}`;
+
+  return (
+    <figure className={frameClassName}>
+      {asset ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={asset.publicUrl}
+            alt={asset.captionTitle || asset.captionSubtitle || title}
+            className={styles.mediaImage}
+          />
+          <figcaption className={styles.mediaCaption}>
+            {asset.captionTitle ? <strong className={styles.mediaCaptionTitle}>{asset.captionTitle}</strong> : null}
+            <span className={styles.mediaCaptionSubtitle}>
+              {asset.captionSubtitle || asset.captionTitle || title}
+            </span>
+          </figcaption>
+        </>
+      ) : (
+        <>
+          <span className={styles.mediaLabel}>{title}</span>
+          <p className={styles.mediaHint}>{fallbackText}</p>
+        </>
+      )}
+    </figure>
+  );
+};
 
 const renderMediaRail = (model: FinalCardViewModel) => {
   if (model.messageMediaLayout === "landscape-pair") {
@@ -137,7 +202,13 @@ const renderMessagesLayout = (model: FinalCardViewModel) => {
         ? styles.messageTrackRows2
         : styles.messageTrackRow1;
 
-  return <div className={scrollerClassName}>{model.contributions.map((item, itemIndex) => renderMessageCard(item, itemIndex, profile.maxChars))}</div>;
+  return (
+    <div className={styles.messagesStage}>
+      <div className={scrollerClassName}>
+        {model.contributions.map((item, itemIndex) => renderMessageCard(item, itemIndex, profile.maxChars))}
+      </div>
+    </div>
+  );
 };
 
 export const FinalCard = ({ model }: Props) => {
@@ -163,24 +234,15 @@ export const FinalCard = ({ model }: Props) => {
                     </div>
                   </div>
 
-                  <aside className={styles.heroAside}>
-                    <div className={styles.heroStatCard}>
-                      <span className={styles.heroStatLabel}>Собрано для тебя</span>
-                      <strong className={styles.heroStatValue}>{model.participantCount}</strong>
-                      <span className={styles.heroStatText}>личных сообщений и теплых слов</span>
-                    </div>
-                    <div className={styles.heroNoteCard}>
-                      <span className={styles.heroNoteLabel}>Повод</span>
-                      <p className={styles.heroNoteText}>{model.occasionLabel}</p>
-                    </div>
-                  </aside>
+                  {renderHeroAside(model)}
                 </section>
               );
             }
 
             if (block.id === "summary") {
               return (
-                <section key={block.id} className={`${styles.summary} ${styles.section}`}>
+                <section key={block.id} className={`${styles.summary} ${styles.section} ${styles.summaryPanel}`}>
+                  <div className={styles.sectionBadgeSoft}>Теплый контекст</div>
                   <p className={styles.sectionEyebrow}>Общий взгляд</p>
                   <h2 className={styles.sectionTitle}>{model.summaryTitle}</h2>
                   <p className={styles.sectionText}>{model.summaryText}</p>
@@ -190,7 +252,8 @@ export const FinalCard = ({ model }: Props) => {
 
             if (block.id === "qualities") {
               return (
-                <section key={block.id} className={`${styles.qualities} ${styles.section}`}>
+                <section key={block.id} className={`${styles.qualities} ${styles.section} ${styles.qualitiesPanel}`}>
+                  <div className={styles.sectionBadgeSoft}>Чувства рядом</div>
                   <p className={styles.sectionEyebrow}>Как тебя чувствуют рядом</p>
                   <h2 className={styles.sectionTitle}>Какой ты для нас</h2>
                   <div className={styles.chipList}>
@@ -214,6 +277,10 @@ export const FinalCard = ({ model }: Props) => {
                     </div>
                     <span className={styles.sectionBadge}>{model.contributions.length} сообщений</span>
                   </div>
+
+                  <p className={styles.messagesIntro}>
+                    Листай карточки и читай поздравления в том ритме, в котором их собирала группа.
+                  </p>
 
                   {renderMessagesLayout(model)}
 
@@ -291,7 +358,8 @@ export const FinalCard = ({ model }: Props) => {
 
             if (block.id === "ai-summary") {
               return (
-                <section key={block.id} className={`${styles.summary} ${styles.section}`}>
+                <section key={block.id} className={`${styles.summary} ${styles.section} ${styles.aiSummaryPanel}`}>
+                  <div className={styles.sectionBadgeSoft}>Общий итог</div>
                   <p className={styles.sectionEyebrow}>Собрано из всех слов</p>
                   <h2 className={styles.sectionTitle}>{model.aiSummaryTitle}</h2>
                   <p className={styles.sectionText}>{model.aiSummaryText}</p>
@@ -307,15 +375,15 @@ export const FinalCard = ({ model }: Props) => {
                     <h2 className={styles.sectionTitle}>Спасибо, что вы вместе</h2>
                     <p className={styles.sectionText}>
                       Это уже не просто список сообщений, а собранный цифровой подарок. Дальше мы будем усиливать
-                      медиа, публикацию и финальный вау-эффект вручения.
+                      медиа, публикацию и сам эффект вручения.
                     </p>
                   </div>
                   <div className={styles.actions}>
                     <button type="button" className={styles.primaryButton}>
-                      Сохранить открытку
+                      Сохранить как память
                     </button>
                     <button type="button" className={styles.secondaryButton}>
-                      Создать такую же
+                      Собрать похожую открытку
                     </button>
                   </div>
                 </section>
