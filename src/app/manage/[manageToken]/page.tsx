@@ -7,12 +7,12 @@ import {
 import { cardTemplates } from "@/lib/cards/templates";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
-import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import type { FinalCardOptionalBlockId } from "@/lib/final-card/types";
+import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { buildReminderText } from "@/lib/manage/reminder";
-import { moveContributionAction, setContributionStatusAction } from "./actions";
 import { BlockSettingsForm } from "./block-settings-form";
 import { ContributionEditor } from "./contribution-editor";
+import { moveContributionAction, setContributionStatusAction } from "./actions";
 import styles from "./manage-page.module.css";
 
 type Props = {
@@ -79,15 +79,18 @@ export default async function ManagePage({ params }: Props) {
               <p className={styles.eyebrow}>Секретная ссылка организатора</p>
               <h1 className={styles.title}>Управление открыткой для {card.recipientName}</h1>
               <p className={styles.subtitle}>
-                Здесь мы собираем не просто тексты, а сам финальный подарок: порядок поздравлений, структуру экрана и
-                способ, которым человек будет читать открытку.
+                Здесь мы собираем не просто тексты, а сам финальный подарок: порядок поздравлений, структуру экрана
+                и способ, которым человек будет читать открытку.
               </p>
             </div>
+
             <div className={styles.heroSummary}>
               <span className={styles.heroSummaryLabel}>Финальный формат поздравлений</span>
               <strong>{card.finalMessageSettings?.layoutMode ?? "grid-2"}</strong>
               <span className={styles.heroSummaryLabel}>
-                {card.finalMessageSettings?.showAllLink ? "Есть отдельный экран всех поздравлений" : "Без отдельного экрана"}
+                {card.finalMessageSettings?.showAllLink
+                  ? "Есть отдельный экран всех поздравлений"
+                  : "Без отдельного экрана"}
               </span>
             </div>
           </div>
@@ -107,8 +110,8 @@ export default async function ManagePage({ params }: Props) {
               <h2 className={styles.sectionTitle}>Состав открытки и блок поздравлений</h2>
             </div>
             <p className={styles.studioLead}>
-              Здесь главное не список настроек, а наглядная схема: что стоит выше, что ниже и как именно будет выглядеть
-              центральный блок с поздравлениями.
+              Здесь главное не список настроек, а наглядная схема: что стоит выше, что ниже и как именно будет
+              выглядеть центральный блок с поздравлениями.
             </p>
           </div>
 
@@ -138,73 +141,90 @@ export default async function ManagePage({ params }: Props) {
               <p className={styles.empty}>Пока поздравлений нет. Сначала участники должны добавить свои сообщения.</p>
             ) : (
               <div className={styles.contributionList}>
-                {allContributions.map((contribution) => (
-                  <article key={contribution.id} className={styles.contributionCard}>
-                    <div className={styles.row}>
-                      <div>
-                        <span className={styles.author}>{contribution.authorName}</span>
-                        {contribution.authorRole ? <span className={styles.meta}> · {contribution.authorRole}</span> : null}
+                {allContributions.map((contribution) => {
+                  const overflow = contribution.message.length - layoutProfile.maxChars;
+                  const isTooLong = overflow > 0;
+
+                  return (
+                    <article
+                      key={contribution.id}
+                      className={`${styles.contributionCard} ${isTooLong ? styles.contributionCardWarn : ""}`}
+                    >
+                      <div className={styles.contributionHeader}>
+                        <div className={styles.contributionIdentity}>
+                          <span className={styles.author}>{contribution.authorName}</span>
+                          {contribution.authorRole ? <span className={styles.meta}> · {contribution.authorRole}</span> : null}
+                        </div>
+
+                        <div className={styles.badgeRow}>
+                          <span className={styles.sortBadge}>#{contribution.sortOrder + 1}</span>
+                          <span className={styles.sortBadge} title="Символы / лимит">
+                            {contribution.message.length} / {layoutProfile.maxChars}
+                          </span>
+                          <span className={styles.statusBadge}>{contribution.status}</span>
+                        </div>
                       </div>
-                      <div className={styles.badgeRow}>
-                        <span className={styles.sortBadge}>#{contribution.sortOrder + 1}</span>
-                        <span className={styles.sortBadge}>
-                          {contribution.message.length} / {layoutProfile.maxChars}
+
+                      <div className={styles.contributionSummary}>
+                        <span className={isTooLong ? styles.limitWarning : styles.limitOk}>
+                          {isTooLong
+                            ? `Нужно сократить на ${overflow} символов`
+                            : "Карточка укладывается в текущий формат"}
                         </span>
-                        <span className={styles.statusBadge}>{contribution.status}</span>
                       </div>
-                    </div>
 
-                    <ContributionEditor
-                      contributionId={contribution.id}
-                      manageToken={manageToken}
-                      initialMessage={contribution.message}
-                      messageLimit={layoutProfile.maxChars}
-                    />
+                      <ContributionEditor
+                        contributionId={contribution.id}
+                        manageToken={manageToken}
+                        initialMessage={contribution.message}
+                        messageLimit={layoutProfile.maxChars}
+                      />
 
-                    <div className={styles.controls}>
-                      <form action={moveContributionAction}>
-                        <input type="hidden" name="manageToken" value={manageToken} />
-                        <input type="hidden" name="contributionId" value={contribution.id} />
-                        <input type="hidden" name="direction" value="up" />
-                        <button type="submit" className={styles.secondaryButton}>
-                          Выше
-                        </button>
-                      </form>
-                      <form action={moveContributionAction}>
-                        <input type="hidden" name="manageToken" value={manageToken} />
-                        <input type="hidden" name="contributionId" value={contribution.id} />
-                        <input type="hidden" name="direction" value="down" />
-                        <button type="submit" className={styles.secondaryButton}>
-                          Ниже
-                        </button>
-                      </form>
-                      <form action={setContributionStatusAction}>
-                        <input type="hidden" name="manageToken" value={manageToken} />
-                        <input type="hidden" name="contributionId" value={contribution.id} />
-                        <input type="hidden" name="status" value="visible" />
-                        <button type="submit" className={styles.button}>
-                          Показать
-                        </button>
-                      </form>
-                      <form action={setContributionStatusAction}>
-                        <input type="hidden" name="manageToken" value={manageToken} />
-                        <input type="hidden" name="contributionId" value={contribution.id} />
-                        <input type="hidden" name="status" value="hidden" />
-                        <button type="submit" className={styles.secondaryButton}>
-                          Скрыть
-                        </button>
-                      </form>
-                      <form action={setContributionStatusAction}>
-                        <input type="hidden" name="manageToken" value={manageToken} />
-                        <input type="hidden" name="contributionId" value={contribution.id} />
-                        <input type="hidden" name="status" value="deleted" />
-                        <button type="submit" className={styles.dangerButton}>
-                          Удалить
-                        </button>
-                      </form>
-                    </div>
-                  </article>
-                ))}
+                      <div className={styles.controls}>
+                        <form action={moveContributionAction}>
+                          <input type="hidden" name="manageToken" value={manageToken} />
+                          <input type="hidden" name="contributionId" value={contribution.id} />
+                          <input type="hidden" name="direction" value="up" />
+                          <button type="submit" className={styles.secondaryButton}>
+                            Выше
+                          </button>
+                        </form>
+                        <form action={moveContributionAction}>
+                          <input type="hidden" name="manageToken" value={manageToken} />
+                          <input type="hidden" name="contributionId" value={contribution.id} />
+                          <input type="hidden" name="direction" value="down" />
+                          <button type="submit" className={styles.secondaryButton}>
+                            Ниже
+                          </button>
+                        </form>
+                        <form action={setContributionStatusAction}>
+                          <input type="hidden" name="manageToken" value={manageToken} />
+                          <input type="hidden" name="contributionId" value={contribution.id} />
+                          <input type="hidden" name="status" value="visible" />
+                          <button type="submit" className={styles.button}>
+                            Показать
+                          </button>
+                        </form>
+                        <form action={setContributionStatusAction}>
+                          <input type="hidden" name="manageToken" value={manageToken} />
+                          <input type="hidden" name="contributionId" value={contribution.id} />
+                          <input type="hidden" name="status" value="hidden" />
+                          <button type="submit" className={styles.secondaryButton}>
+                            Скрыть
+                          </button>
+                        </form>
+                        <form action={setContributionStatusAction}>
+                          <input type="hidden" name="manageToken" value={manageToken} />
+                          <input type="hidden" name="contributionId" value={contribution.id} />
+                          <input type="hidden" name="status" value="deleted" />
+                          <button type="submit" className={styles.dangerButton}>
+                            Удалить
+                          </button>
+                        </form>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -261,4 +281,4 @@ export default async function ManagePage({ params }: Props) {
       </div>
     </main>
   );
-};
+}

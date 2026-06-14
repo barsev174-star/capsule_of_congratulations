@@ -403,18 +403,32 @@
 }
 
 .contributionCard {
+  display: grid;
+  gap: 10px;
   padding: 14px;
   border: 1px solid rgba(98, 72, 58, 0.12);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.62);
 }
 
-.row {
+.contributionCardWarn {
+  border-color: rgba(171, 66, 50, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(171, 66, 50, 0.08);
+}
+
+.contributionHeader {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 12px;
   align-items: flex-start;
   justify-content: space-between;
+}
+
+.contributionIdentity {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
 }
 
 .badgeRow,
@@ -430,6 +444,34 @@
   gap: 8px;
   justify-content: flex-end;
   align-items: center;
+}
+
+.contributionSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.limitOk,
+.limitWarning {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.limitOk {
+  background: rgba(77, 127, 92, 0.1);
+  color: #40644b;
+}
+
+.limitWarning {
+  background: rgba(171, 66, 50, 0.1);
+  color: #9f2a1d;
 }
 
 .author {
@@ -462,7 +504,7 @@
 }
 
 .editorTextarea {
-  min-height: 120px;
+  min-height: 104px;
   width: 100%;
   padding: 14px 16px;
   border: 1px solid rgba(98, 72, 58, 0.14);
@@ -498,7 +540,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 2px;
 }
 
 .button,
@@ -569,5 +611,13 @@
   .layout {
     grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
     align-items: start;
+  }
+
+  .contributionCard {
+    gap: 8px;
+  }
+
+  .editorForm {
+    gap: 6px;
   }
 }
