@@ -1042,6 +1042,7 @@
 .contentStudio {
   display: grid;
   gap: 18px;
+  overflow-anchor: none;
 }
 
 .contentStatusBar,
@@ -1255,6 +1256,7 @@
 .contentCards {
   display: grid;
   gap: 14px;
+  overflow-anchor: none;
 }
 
 .contentContributionCard {
@@ -1263,6 +1265,7 @@
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.78);
   overflow: hidden;
+  overflow-anchor: none;
   transition:
     transform 180ms ease,
     box-shadow 180ms ease,
@@ -1329,7 +1332,7 @@
 }
 
 .contentContributionLead {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .contentGrip {
@@ -1403,6 +1406,12 @@
   gap: 6px;
 }
 
+.contentIdentityStack {
+  display: grid;
+  gap: 7px;
+  align-self: center;
+}
+
 .contentIdentity strong,
 .contentIdentityInline strong,
 .contentPreviewMessageMeta strong {
@@ -1423,20 +1432,15 @@
 
 .contentCardHead {
   display: grid;
-  gap: 8px;
-  padding: 14px 18px 12px;
+  gap: 0;
+  padding: 14px 18px;
 }
 
-.contentCardTopRow,
-.contentCardSecondRow {
+.contentCardTopRow {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   align-items: center;
-}
-
-.contentCardSecondRow {
-  padding-left: 126px;
 }
 
 .contentTopControls {
@@ -1741,13 +1745,8 @@
     font-size: 2.25rem;
   }
 
-  .contentCardTopRow,
-  .contentCardSecondRow {
+  .contentCardTopRow {
     align-items: flex-start;
-  }
-
-  .contentCardSecondRow {
-    padding-left: 0;
   }
 
   .contentPreviewMessageCard {

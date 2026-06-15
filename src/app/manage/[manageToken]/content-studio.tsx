@@ -133,13 +133,7 @@ export const ContentStudio = ({
   };
 
   return (
-    <form action={formAction} className={styles.contentStudio}>
-      <input type="hidden" name="manageToken" value={manageToken} />
-
-      {contributionOrder.map((contributionId) => (
-        <input key={contributionId} type="hidden" name="orderedContributionIds" value={contributionId} />
-      ))}
-
+    <div className={styles.contentStudio}>
       <section className={styles.contentStatusBar}>
         <div className={styles.contentStatusItem}>
           <span className={`${styles.contentStatusDot} ${styles.contentStatusDotWarm}`} />
@@ -245,9 +239,14 @@ export const ContentStudio = ({
                           <div className={styles.contentAvatar}>
                             {contribution.authorName.trim().slice(0, 1).toUpperCase() || "?"}
                           </div>
-                          <div className={styles.contentIdentityInline}>
-                            <strong>{contribution.authorName}</strong>
-                            <span>· {contribution.authorRole?.trim() || "без роли"}</span>
+                          <div className={styles.contentIdentityStack}>
+                            <div className={styles.contentIdentityInline}>
+                              <strong>{contribution.authorName}</strong>
+                              <span>· {contribution.authorRole?.trim() || "без роли"}</span>
+                            </div>
+                            <span className={isTooLong ? styles.limitWarning : styles.limitOk}>
+                              {isTooLong ? `Нужно сократить на ${overflow} символов` : "Длина текста оптимальна"}
+                            </span>
                           </div>
                         </div>
 
@@ -286,11 +285,6 @@ export const ContentStudio = ({
                         </div>
                       </div>
 
-                      <div className={styles.contentCardSecondRow}>
-                        <span className={isTooLong ? styles.limitWarning : styles.limitOk}>
-                          {isTooLong ? `Нужно сократить на ${overflow} символов` : "Длина текста оптимальна"}
-                        </span>
-                      </div>
                     </div>
 
                     {isExpanded ? (
@@ -375,7 +369,11 @@ export const ContentStudio = ({
         </aside>
       </div>
 
-      <div className={styles.contentFooterBar}>
+      <form action={formAction} className={styles.contentFooterBar}>
+        <input type="hidden" name="manageToken" value={manageToken} />
+        {contributionOrder.map((contributionId) => (
+          <input key={contributionId} type="hidden" name="orderedContributionIds" value={contributionId} />
+        ))}
         <Link href={`/manage/${manageToken}?tab=design`} className={styles.contentBackButton}>
           ← Вернуться к оформлению
         </Link>
@@ -383,7 +381,7 @@ export const ContentStudio = ({
         <button type="submit" className={styles.contentPrimaryButton} disabled={isPending}>
           {isPending ? "Сохраняем..." : "Сохранить изменения"}
         </button>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 };
