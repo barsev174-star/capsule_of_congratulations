@@ -174,11 +174,11 @@
 ## Update 2026-06-15 Full Preview Tab
 
 1. Added a third organizer tab: `Предпросмотр`.
-2. The new tab shows a larger final-card-style preview instead of relying only on the narrow side preview.
+2. The new tab embeds the real public `/gift/[finalSlug]` card instead of showing a mockup.
 3. The preview tab includes:
-   - a large cover/message/closing card mock;
+   - the live public card inside the organizer workspace;
    - a readiness summary;
    - active block list;
    - warnings for long messages, missing media in media layout, and hidden contributions;
    - links to the public final version and back to editing.
-4. Side previews remain as quick orientation helpers and are not the main final review surface.
+4. Side previews remain as quick orientation helpers, while the `Предпросмотр` tab is the main final review surface.

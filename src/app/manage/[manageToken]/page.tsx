@@ -385,63 +385,22 @@ export default async function ManagePage({ params, searchParams }: Props) {
             </div>
 
             <div className={styles.fullPreviewLayout}>
-              <article
-                className={styles.fullPreviewCard}
-                style={
-                  {
-                    "--preview-accent": selectedTemplate.accent
-                  } as CSSProperties
-                }
-              >
-                <section className={styles.fullPreviewHero}>
-                  <div className={styles.fullPreviewGlow} />
-                  <span>Открытка для тебя</span>
-                  <h3>{recipientName}</h3>
-                  <p>{occasionText}</p>
-                  <small>
-                    от {card.fromLabel.trim() || "всей группы"}
-                    {formattedEventDate ? ` • ${formattedEventDate}` : ""}
-                  </small>
-                </section>
-
-                {model.summaryText ? (
-                  <section className={styles.fullPreviewSection}>
-                    <span>Вводный блок</span>
-                    <p>{model.summaryText}</p>
-                  </section>
-                ) : null}
-
-                <section className={styles.fullPreviewSection}>
-                  <span>Лучшие фразы</span>
-                  <blockquote>{quotePreview}</blockquote>
-                </section>
-
-                <section className={styles.fullPreviewMessages}>
-                  <div className={styles.fullPreviewSectionTitle}>
-                    <span>Поздравления</span>
-                    <strong>{visibleContributions.length}</strong>
+              <section className={styles.embeddedPreviewCard}>
+                <div className={styles.embeddedPreviewTop}>
+                  <div>
+                    <span className={styles.previewKicker}>Настоящий результат</span>
+                    <h3>Публичная открытка внутри редактора</h3>
                   </div>
-                  {(visibleContributions.length > 0 ? visibleContributions.slice(0, 3) : [previewMessage]).map((contribution, index) => (
-                    <article key={contribution?.id ?? index} className={styles.fullPreviewMessage}>
-                      <div className={styles.fullPreviewAvatar}>
-                        {contribution?.authorName?.trim().slice(0, 1).toUpperCase() || "?"}
-                      </div>
-                      <div>
-                        <strong>{contribution?.authorName || "Пока нет поздравлений"}</strong>
-                        <p>
-                          {contribution?.message.slice(0, 180) ||
-                            "Когда участники добавят первые теплые слова, они появятся здесь в выбранной раскладке."}
-                        </p>
-                      </div>
-                    </article>
-                  ))}
-                </section>
-
-                <section className={styles.fullPreviewClosing}>
-                  <span>Спасибо, что ты с нами!</span>
-                  <p>Вперед - к мечтам.</p>
-                </section>
-              </article>
+                  <Link href={`/gift/${card.finalSlug}`} target="_blank" className={styles.previewSecondaryLink}>
+                    Открыть отдельно
+                  </Link>
+                </div>
+                <iframe
+                  className={styles.embeddedPreviewFrame}
+                  src={`/gift/${card.finalSlug}`}
+                  title="Предпросмотр публичной открытки"
+                />
+              </section>
 
               <aside className={styles.fullPreviewChecklist}>
                 <section>
