@@ -85,6 +85,25 @@ export async function setContributionStatusAction(formData: FormData) {
       await reorderContributions(card.id, nextOrder);
     }
 
+    if (status === "visible") {
+      const siblings = await listAllContributionsByCardId(card.id);
+      const nextOrder = siblings
+        .map((contribution) => contribution.id)
+        .filter((id) => id !== contributionId);
+      const firstHiddenIndex = nextOrder.findIndex((id) => {
+        const contribution = siblings.find((item) => item.id === id);
+        return contribution?.status === "hidden";
+      });
+
+      if (firstHiddenIndex === -1) {
+        nextOrder.push(contributionId);
+      } else {
+        nextOrder.splice(firstHiddenIndex, 0, contributionId);
+      }
+
+      await reorderContributions(card.id, nextOrder);
+    }
+
     revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
   } else {
     revalidatePath(`/manage/${manageToken}`);

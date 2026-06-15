@@ -107,6 +107,35 @@ export const ContentStudio = ({
     setContributionOrder((current) => [...current.filter((item) => item !== contributionId), contributionId]);
   };
 
+  const moveContributionToActiveEnd = (contributionId: string) => {
+    setContributionOrder((current) => {
+      const withoutTarget = current.filter((item) => item !== contributionId);
+      const firstHiddenIndex = withoutTarget.findIndex((id) => {
+        const contribution = allContributions.find((item) => item.id === id);
+        return contribution?.status === "hidden";
+      });
+
+      if (firstHiddenIndex === -1) {
+        return [...withoutTarget, contributionId];
+      }
+
+      return [
+        ...withoutTarget.slice(0, firstHiddenIndex),
+        contributionId,
+        ...withoutTarget.slice(firstHiddenIndex)
+      ];
+    });
+  };
+
+  const handleVisibilityToggle = (contributionId: string, isHidden: boolean) => {
+    if (isHidden) {
+      moveContributionToActiveEnd(contributionId);
+      return;
+    }
+
+    moveContributionToEnd(contributionId);
+  };
+
   const handleDragStart = (event: ReactDragEvent<HTMLButtonElement>, contributionId: string) => {
     setDraggedContributionId(contributionId);
     setDropTarget(null);
@@ -336,11 +365,7 @@ export const ContentStudio = ({
                                 <button
                                   type="submit"
                                   className={`${styles.contentToggleView} ${!isHidden ? styles.contentToggleViewActive : ""}`}
-                                  onClick={() => {
-                                    if (!isHidden) {
-                                      moveContributionToEnd(contribution.id);
-                                    }
-                                  }}
+                                  onClick={() => handleVisibilityToggle(contribution.id, isHidden)}
                                   aria-label={isHidden ? "Показать поздравление" : "Скрыть поздравление"}
                                 >
                                   <span className={styles.contentToggleKnob} />
