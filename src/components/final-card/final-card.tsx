@@ -144,7 +144,11 @@ const renderMediaRail = (model: FinalCardViewModel) => {
 
   if (model.messageMediaLayout === "landscape-pair" || model.messageMediaLayout === "landscape-trio") {
     return (
-      <div className={styles.mediaRail}>
+      <div
+        className={`${styles.mediaRail} ${
+          model.messageMediaLayout === "landscape-trio" ? styles.mediaRailTrio : ""
+        }`}
+      >
         {renderMediaFigure(
           messageMediaAssets[0],
           "landscape-a",

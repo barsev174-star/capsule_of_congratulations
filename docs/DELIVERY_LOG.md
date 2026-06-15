@@ -221,3 +221,9 @@
 3. Final rendering now trims memory photos to the selected count.
 4. Added the `paper-birthday` final-card template with warm paper, confetti, taped-photo and handwritten-style visual direction.
 5. Registered the new template in card template selection and final-card layout planning.
+
+## Update 2026-06-16 Paper Birthday Visual Pass
+
+1. Fixed `3 horizontal photos` in the congratulations media block so all three selected images render.
+2. Kept horizontal media in a wide 16:9 photo format instead of square-like cropping.
+3. Moved the `paper-birthday` template closer to the reference with hero polaroids, taped photo cards, handwritten headings, and softer paper-style message cards.
