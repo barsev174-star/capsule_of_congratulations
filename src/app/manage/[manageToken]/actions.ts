@@ -8,8 +8,10 @@ import {
   deleteCardMediaAsset,
   getCardDraftById,
   getCardDraftByManageToken,
+  listContributionsByCardId,
   listCardMediaAssetsByCardId,
   moveContribution,
+  updateCardDraftBasics,
   updateCardFinalPresentationSettings,
   updateCardMediaAssetCaption,
   updateContributionMessage,
@@ -17,8 +19,10 @@ import {
   upsertCardMediaAsset
 } from "@/lib/cards/repository";
 import { buildCardMediaFileName, validateCardMediaFile } from "@/lib/cards/media";
-import type { CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
+import { isTemplateId } from "@/lib/cards/templates";
+import type { CardDraft, CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
 import { validateContributionMessage } from "@/lib/contributions/validation";
+import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type {
   FinalCardBlockSettings,
   FinalCardMessageLayoutMode,
@@ -32,6 +36,10 @@ const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "m
 const messageLayoutModes: FinalCardMessageLayoutMode[] = ["grid-2", "carousel-1", "carousel-2", "column-media"];
 const mediaLayouts: FinalCardMessageMediaLayout[] = ["portrait", "landscape-pair"];
 const mediaSlots: CardMediaSlot[] = ["portrait", "landscape-a", "landscape-b"];
+
+const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+const validateLength = (value: string, min: number, max: number) => value.length >= min && value.length <= max;
+const validateDate = (value: string) => value.length === 0 || !Number.isNaN(Date.parse(value));
 
 const revalidateCardSurfaces = (manageToken: string, publicSlug: string, finalSlug: string) => {
   revalidatePath(`/manage/${manageToken}`);
@@ -66,6 +74,83 @@ export async function setContributionStatusAction(formData: FormData) {
   } else {
     revalidatePath(`/manage/${manageToken}`);
   }
+}
+
+export async function updateCardBasicsAction(
+  _prevState: { ok: boolean; message: string },
+  formData: FormData
+) {
+  const manageToken = String(formData.get("manageToken") ?? "");
+
+  if (!manageToken) {
+    return { ok: false, message: "Не удалось сохранить основу открытки." };
+  }
+
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) {
+    return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+  }
+
+  const recipientName = String(formData.get("recipientName") ?? "").trim();
+  const fromLabel = String(formData.get("fromLabel") ?? "").trim();
+  const occasionText = String(formData.get("occasionText") ?? "").trim();
+  const organizerName = String(formData.get("organizerName") ?? "").trim();
+  const organizerEmail = String(formData.get("organizerEmail") ?? "").trim();
+  const eventDateValue = String(formData.get("eventDate") ?? "").trim();
+  const descriptionValue = String(formData.get("description") ?? "").trim();
+  const occasionValue = (String(formData.get("occasion") ?? "").trim() || card.occasion) as CardDraft["occasion"];
+
+  if (!validateLength(recipientName, 2, 80)) {
+    return { ok: false, message: "Укажите имя получателя длиной от 2 до 80 символов." };
+  }
+
+  if (!validateLength(fromLabel, 2, 80)) {
+    return { ok: false, message: "Укажите, от кого открытка, длиной от 2 до 80 символов." };
+  }
+
+  if (!validateLength(occasionText, 2, 120)) {
+    return { ok: false, message: "Коротко опишите повод или контекст поздравления." };
+  }
+
+  if (!validateLength(organizerName, 2, 80)) {
+    return { ok: false, message: "Укажите имя организатора длиной от 2 до 80 символов." };
+  }
+
+  if (!isValidEmail(organizerEmail)) {
+    return { ok: false, message: "Введите корректный email организатора." };
+  }
+
+  if (!validateDate(eventDateValue)) {
+    return { ok: false, message: "Дата события выглядит некорректно." };
+  }
+
+  if (descriptionValue && !validateLength(descriptionValue, 10, 300)) {
+    return { ok: false, message: "Описание должно быть от 10 до 300 символов." };
+  }
+
+  const updated = await updateCardDraftBasics(card.id, {
+    recipientName,
+    fromLabel,
+    occasion: occasionValue,
+    occasionText,
+    organizerName,
+    organizerEmail,
+    eventDate: eventDateValue || null,
+    description: descriptionValue || null
+  });
+
+  if (!updated) {
+    return { ok: false, message: "Не удалось обновить основу открытки." };
+  }
+
+  logger.info("manage.card_basics_updated", "Card basics updated by organizer", {
+    cardId: card.id,
+    occasion: occasionValue
+  });
+
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+
+  return { ok: true, message: "Основа открытки обновлена." };
 }
 
 export async function updateContributionMessageAction(
@@ -160,6 +245,10 @@ export async function updateFinalPresentationSettingsAction(
   const mediaLayout = mediaLayouts.includes(mediaLayoutValue as FinalCardMessageMediaLayout)
     ? (mediaLayoutValue as FinalCardMessageMediaLayout)
     : "portrait";
+  const rawTemplateId = String(formData.get("templateId") ?? "");
+  const templateId = isTemplateId(rawTemplateId) ? rawTemplateId : card.templateId;
+  const visibleContributions = await listContributionsByCardId(card.id);
+  const layoutProfile = getFinalCardMessageLayoutProfile(layoutMode);
 
   const finalBlockSettings = optionalBlockIds.reduce<FinalCardBlockSettings>((acc, blockId) => {
     acc[blockId] = formData.get(blockId) === "on";
@@ -169,16 +258,17 @@ export async function updateFinalPresentationSettingsAction(
   const finalMessageSettings: FinalCardMessageSettings = {
     layoutMode,
     mediaLayout,
-    showAllLink: formData.get("showAllLink") === "on"
+    showAllLink: visibleContributions.length > layoutProfile.cardsPerPage
   };
 
-  const updated = await updateCardFinalPresentationSettings(card.id, finalBlockSettings, finalMessageSettings);
+  const updated = await updateCardFinalPresentationSettings(card.id, templateId, finalBlockSettings, finalMessageSettings);
   if (!updated) {
     return { ok: false, message: "Не удалось сохранить состав финального экрана." };
   }
 
   logger.info("manage.final_presentation_settings_updated", "Final presentation settings updated by organizer", {
     cardId: card.id,
+    templateId,
     finalBlockSettings,
     finalMessageSettings
   });

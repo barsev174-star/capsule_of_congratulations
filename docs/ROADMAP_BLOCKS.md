@@ -209,3 +209,16 @@ MVP готов к первому аккуратному запуску и про
 5. Telegram/VK интеграции.
 6. Корпоративные кабинеты.
 7. Большую платформенность.
+## Update 2026-06-14
+
+### Current baseline
+
+1. Landing is a showcase, not the final place where configuration happens.
+2. A new draft opens straight into the manage experience.
+3. `Оформление открытки` now owns basics, structure, and template choice.
+4. `Поздравления и фото` stays separate as the content moderation area.
+
+### Next likely step
+
+1. Improve the self-explanatory hints inside each block card for blank and semi-empty drafts.
+2. Remove the remaining legacy `occasion` dependency from draft creation and storage over time.

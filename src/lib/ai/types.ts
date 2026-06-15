@@ -1,5 +1,3 @@
-import type { OccasionId } from "@/lib/cards/templates";
-
 export type AiStyle =
   | "warm-simple"
   | "short-no-pathos"
@@ -10,7 +8,6 @@ export type AiStyle =
 export type AiGenerationInput = {
   cardId: string;
   recipientName: string;
-  occasion: OccasionId;
   occasionText: string;
   draftNotes: string;
   style: AiStyle;

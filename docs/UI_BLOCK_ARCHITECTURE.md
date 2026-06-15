@@ -168,3 +168,11 @@
 1. новый блок;
 2. новую комбинацию блоков;
 3. новый визуальный стиль поверх уже существующих блоков.
+## Update 2026-06-14
+
+The organizer UI should mirror this architecture:
+
+1. First define the card basis and context.
+2. Then assemble the card through visible block cards.
+3. Then choose the visual template across all available variants.
+4. Keep congratulations and photo moderation in a separate content area.

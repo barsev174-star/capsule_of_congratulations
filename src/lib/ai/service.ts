@@ -263,7 +263,6 @@ const buildVariants = (input: AiGenerationInput, generationIndex: number) => {
     [
       input.cardId,
       input.recipientName,
-      input.occasion,
       input.occasionText,
       input.draftNotes,
       input.style,
@@ -317,7 +316,6 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
 
   logger.info("ai.participant_generated", "Participant AI draft generated", {
     cardId: input.cardId,
-    occasion: input.occasion,
     remainingCardGenerations
   });
 

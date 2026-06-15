@@ -1,4 +1,5 @@
 import { cardTemplates } from "@/lib/cards/templates";
+import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type { CardDraft, CardMediaAsset, Contribution } from "@/lib/cards/types";
 import { buildFinalCardLayout } from "@/lib/final-card/planner";
 import type {
@@ -94,6 +95,8 @@ export const buildFinalCardViewModel = (
   mediaAssets: CardMediaAsset[] = []
 ): FinalCardViewModel => {
   const style = resolveStyle(card.templateId);
+  const messageLayoutMode = card.finalMessageSettings?.layoutMode ?? "grid-2";
+  const layoutProfile = getFinalCardMessageLayoutProfile(messageLayoutMode);
   const qualities = extractQualities(contributions);
   const quotes = extractQuotes(contributions);
   const memories = buildMemories(contributions);
@@ -121,9 +124,9 @@ export const buildFinalCardViewModel = (
     contributions,
     memories,
     mediaAssets,
-    messageLayoutMode: card.finalMessageSettings?.layoutMode ?? "grid-2",
+    messageLayoutMode,
     messageMediaLayout: card.finalMessageSettings?.mediaLayout ?? "portrait",
-    showAllMessagesLink: card.finalMessageSettings?.showAllLink ?? true,
+    showAllMessagesLink: contributions.length > layoutProfile.cardsPerPage,
     blocks: buildFinalCardLayout(style, availability, card.finalBlockSettings).blocks
   };
 };

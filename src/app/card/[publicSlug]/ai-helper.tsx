@@ -12,13 +12,12 @@ type AiVariant = {
 type Props = {
   cardId: string;
   recipientName: string;
-  occasion: string;
   occasionText: string;
   messageLimit: number;
   onUseText: (text: string) => void;
 };
 
-export const AiHelper = ({ cardId, recipientName, occasion, occasionText, messageLimit, onUseText }: Props) => {
+export const AiHelper = ({ cardId, recipientName, occasionText, messageLimit, onUseText }: Props) => {
   const [issues, setIssues] = useState<string[]>([]);
   const [variants, setVariants] = useState<AiVariant[]>([]);
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -64,7 +63,6 @@ export const AiHelper = ({ cardId, recipientName, occasion, occasionText, messag
         action={(formData) => {
           formData.set("cardId", cardId);
           formData.set("recipientName", recipientName);
-          formData.set("occasion", occasion);
           formData.set("occasionText", occasionText);
           formData.set("messageLimit", String(messageLimit));
 
@@ -75,7 +73,6 @@ export const AiHelper = ({ cardId, recipientName, occasion, occasionText, messag
       >
         <input type="hidden" name="cardId" value={cardId} />
         <input type="hidden" name="recipientName" value={recipientName} />
-        <input type="hidden" name="occasion" value={occasion} />
         <input type="hidden" name="occasionText" value={occasionText} />
         <input type="hidden" name="messageLimit" value={messageLimit} />
 
@@ -95,7 +92,7 @@ export const AiHelper = ({ cardId, recipientName, occasion, occasionText, messag
           <textarea
             id="draftNotes"
             name="draftNotes"
-            placeholder="Например: Хочу пожелать любви, радости. Ценю скромность, целеустремленность, рад с тобой работать. Оставайся такой же веселой."
+            placeholder="Например: хочу пожелать любви, радости. Ценю скромность, целеустремленность, рад с тобой работать. Оставайся такой же веселой."
             required
           />
           <span className={styles.hint}>

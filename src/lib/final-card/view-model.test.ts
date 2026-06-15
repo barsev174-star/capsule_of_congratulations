@@ -67,7 +67,7 @@ describe("buildFinalCardViewModel", () => {
     expect(viewModel.finalSlug).toBe("final_1");
     expect(viewModel.messageLayoutMode).toBe("grid-2");
     expect(viewModel.messageMediaLayout).toBe("portrait");
-    expect(viewModel.showAllMessagesLink).toBe(true);
+    expect(viewModel.showAllMessagesLink).toBe(false);
   });
 
   it("hides optional blocks that organizer disabled", () => {
@@ -102,6 +102,19 @@ describe("buildFinalCardViewModel", () => {
     expect(viewModel.messageLayoutMode).toBe("carousel-2");
     expect(viewModel.messageMediaLayout).toBe("landscape-pair");
     expect(viewModel.showAllMessagesLink).toBe(false);
+  });
+
+  it("shows all-messages link automatically when current layout cannot fit all visible messages", () => {
+    const longList: Contribution[] = Array.from({ length: 5 }, (_, index) => ({
+      ...contributions[0],
+      id: `c${index + 1}`,
+      message: `${contributions[0].message} ${index + 1}`,
+      sortOrder: index
+    }));
+
+    const viewModel = buildFinalCardViewModel(card, longList);
+
+    expect(viewModel.showAllMessagesLink).toBe(true);
   });
 
   it("keeps uploaded media assets in the final model", () => {

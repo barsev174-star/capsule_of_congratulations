@@ -104,3 +104,10 @@
 1. Какой стек будет выбран для реализации первой версии.
 2. Какой точный прайс стартового тарифа выбрать: `399 ₽` или `490 ₽`.
 3. Какой точный сценарий оплаты делаем первым: фиксация тарифа, экран оплаты или сначала только статус-заглушка.
+## Update 2026-06-14
+
+1. The landing page now supports the showcase-first product direction.
+2. The visible `personal / team / celebration` selector was removed from the manage basics UI.
+3. Blank manage drafts now include softer guided empty states.
+4. AI generation now relies on `occasionText` plus template choice instead of an active `occasion` branch.
+5. `Состав открытки` was rebuilt into a card-based block constructor with remove/restore behavior and inline message-layout controls.

@@ -16,7 +16,6 @@ describe("validateAiGenerationFormData", () => {
       buildFormData({
         cardId: "card_1",
         recipientName: "Анна",
-        occasion: "personal",
         occasionText: "благодарим за заботу о группе",
         draftNotes: "Хочу пожелать любви и радости. Ценю скромность и то, как легко с тобой рядом.",
         style: "warm-simple",
@@ -37,7 +36,6 @@ describe("validateAiGenerationFormData", () => {
       buildFormData({
         cardId: "",
         recipientName: "",
-        occasion: "wrong",
         occasionText: "",
         draftNotes: "коротко",
         style: "none",
@@ -47,7 +45,7 @@ describe("validateAiGenerationFormData", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.issues.length).toBeGreaterThanOrEqual(6);
+      expect(result.issues.length).toBeGreaterThanOrEqual(5);
     }
   });
 });

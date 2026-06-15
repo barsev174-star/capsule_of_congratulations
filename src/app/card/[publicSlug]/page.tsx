@@ -20,19 +20,22 @@ export default async function ParticipantCardPage({ params }: Props) {
 
   const contributions = await listContributionsByCardId(card.id);
   const layoutProfile = getFinalCardMessageLayoutProfile(card.finalMessageSettings?.layoutMode ?? "grid-2");
+  const recipientName = card.recipientName || "дорогого человека";
+  const fromLabel = card.fromLabel || "группы";
+  const occasionText = card.occasionText || "повод пока уточняется";
 
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.hero}>
           <p className={styles.eyebrow}>Ссылка для участников</p>
-          <h1 className={styles.title}>Собираем открытку для {card.recipientName}</h1>
+          <h1 className={styles.title}>Собираем открытку для {recipientName}</h1>
           <p className={styles.subtitle}>
-            Открытку уже создали от группы <strong>{card.fromLabel}</strong>. Здесь можно добавить личное поздравление,
+            Открытку уже создали от группы <strong>{fromLabel}</strong>. Здесь можно добавить личное поздравление,
             которое увидят организатор и получатель.
           </p>
           <div className={styles.stats}>
-            <div className={styles.stat}>Повод: {card.occasionText}</div>
+            <div className={styles.stat}>Повод: {occasionText}</div>
             <div className={styles.stat}>Уже собрано: {contributions.length}</div>
             <div className={styles.stat}>Шаблон: {card.templateId}</div>
             <div className={styles.stat}>Лимит для текущего формата: {layoutProfile.maxChars} символов</div>
@@ -44,17 +47,16 @@ export default async function ParticipantCardPage({ params }: Props) {
           <ParticipantForm
             cardId={card.id}
             publicSlug={publicSlug}
-            recipientName={card.recipientName}
-            occasion={card.occasion}
-            occasionText={card.occasionText}
+            recipientName={recipientName}
+            occasionText={occasionText}
             messageLimit={layoutProfile.maxChars}
           />
 
           <section className={styles.listCard}>
             <h2 className={styles.sectionTitle}>Что уже добавили</h2>
             <p className={styles.hint}>
-              Повод открытки: <strong>{card.occasionText}</strong>. Ниже видны уже опубликованные поздравления, чтобы
-              можно было не повторяться.
+              Повод открытки: <strong>{occasionText}</strong>. Ниже видны уже опубликованные поздравления, чтобы можно
+              было не повторяться.
             </p>
 
             {contributions.length === 0 ? (

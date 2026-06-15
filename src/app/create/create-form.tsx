@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { occasions } from "@/lib/cards/templates";
 import styles from "./create-form.module.css";
-import { cardTemplates, occasions } from "@/lib/cards/templates";
 
 type CreatedCardPayload = {
   participantLink: string;
@@ -53,8 +53,8 @@ export const CreateCardForm = () => {
       <section className={styles.formCard}>
         <h2 className={styles.formTitle}>Собрать черновик открытки</h2>
         <p className={styles.hint}>
-          Здесь мы создаем основу: после этого сразу появятся ссылка для участников, секретная ссылка организатора и
-          адрес будущего финального экрана.
+          Здесь мы создаем только основу. Шаблон, блоки, сетку поздравлений и фото настроим уже на следующем экране,
+          когда станет понятен сам смысл подарка.
         </p>
 
         <form
@@ -100,7 +100,7 @@ export const CreateCardForm = () => {
           </section>
 
           <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>2. Какой должен быть формат</h3>
+            <h3 className={styles.sectionTitle}>2. Какой общий характер у открытки</h3>
             <div className={styles.radioGrid}>
               {occasions.map((occasion, index) => (
                 <label key={occasion.id} className={styles.radioCard}>
@@ -110,7 +110,8 @@ export const CreateCardForm = () => {
               ))}
             </div>
             <p className={styles.note}>
-              Это не справочник профессий. Здесь выбирается только настроение и формат будущей открытки.
+              Это не финальный стиль. Здесь выбирается только общее настроение, чтобы не заставлять человека рано
+              принимать лишнее решение.
             </p>
           </section>
 
@@ -123,13 +124,7 @@ export const CreateCardForm = () => {
               </div>
               <div className={styles.field}>
                 <label htmlFor="organizerEmail">Email организатора</label>
-                <input
-                  id="organizerEmail"
-                  name="organizerEmail"
-                  type="email"
-                  placeholder="name@example.com"
-                  required
-                />
+                <input id="organizerEmail" name="organizerEmail" type="email" placeholder="name@example.com" required />
               </div>
             </div>
           </section>
@@ -152,25 +147,13 @@ export const CreateCardForm = () => {
             </div>
           </section>
 
-          <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>5. Выберите визуальный шаблон</h3>
-            <div className={styles.templateGrid}>
-              {cardTemplates.map((template, index) => (
-                <label key={template.id} className={styles.templateCard}>
-                  <input type="radio" name="templateId" value={template.id} defaultChecked={index === 0} />
-                  <div className={styles.templatePreview} style={{ background: template.accent }} />
-                  <span className={styles.templateName}>{template.name}</span>
-                  <span className={styles.templateText}>{template.description}</span>
-                </label>
-              ))}
-            </div>
-          </section>
-
           <div className={styles.actions}>
             <button type="submit" className={styles.submitButton} disabled={isPending}>
               {isPending ? "Создаем черновик..." : "Создать открытку"}
             </button>
-            <p className={styles.note}>Пока делаем только путь создания, сбор поздравлений и финальный экран без оплаты.</p>
+            <p className={styles.note}>
+              После создания откроется экран оформления, где можно будет выбрать любой шаблон и собрать состав открытки.
+            </p>
           </div>
         </form>
       </section>
@@ -181,23 +164,23 @@ export const CreateCardForm = () => {
           <ul>
             <li>Ссылка для участников, которую можно сразу отправить в чат.</li>
             <li>Секретная ссылка управления для организатора.</li>
-            <li>Адрес будущего финального экрана, на котором уже будет собираться открытка.</li>
+            <li>Экран оформления, где уже можно выбрать шаблон, блоки и сетку поздравлений.</li>
           </ul>
         </section>
 
         <section className={styles.tipCard}>
           <h2>Как теперь устроен путь</h2>
           <ul>
-            <li>Организатор задает живой контекст своими словами, а не выбирает профессию получателя из справочника.</li>
-            <li>Визуальный шаблон отвечает за стиль, блоки и настроение экрана.</li>
-            <li>Смысл открытки формируется поздравлениями участников и содержимым, а не названием шаблона.</li>
+            <li>Сначала создаем черновик и фиксируем базовый смысл открытки.</li>
+            <li>Потом на экране оформления выбираем шаблон среди всех вариантов и собираем структуру.</li>
+            <li>После этого отдельно работаем с поздравлениями и фото, не смешивая все в одну длинную страницу.</li>
           </ul>
         </section>
 
         {result ? (
           <section className={styles.successCard} aria-live="polite">
             <h2>Черновик готов</h2>
-            <p>Теперь можно звать участников, смотреть админку и открывать будущий финальный экран.</p>
+            <p>Теперь можно открыть оформление, выбрать шаблон, настроить блоки и затем звать участников.</p>
             <ul>
               <li>
                 Ссылка для участников: <code>{result.participantLink}</code>

@@ -1,6 +1,7 @@
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { CardDraft, CardMediaAsset, Contribution } from "@/lib/cards/types";
+import type { CardTemplateId } from "@/lib/cards/templates";
 import type { FinalCardBlockSettings, FinalCardMessageSettings } from "@/lib/final-card/types";
 
 const cardsFilePath = join(process.cwd(), "data", "cards.json");
@@ -158,6 +159,7 @@ export const updateCardFinalBlockSettings = async (
 
 export const updateCardFinalPresentationSettings = async (
   cardId: string,
+  templateId: CardTemplateId,
   finalBlockSettings: FinalCardBlockSettings,
   finalMessageSettings: FinalCardMessageSettings
 ) => {
@@ -170,8 +172,41 @@ export const updateCardFinalPresentationSettings = async (
 
   const updated = {
     ...cards[index],
+    templateId,
     finalBlockSettings,
     finalMessageSettings,
+    updatedAt: new Date().toISOString()
+  };
+
+  cards[index] = updated;
+  await writeFile(cardsFilePath, JSON.stringify(cards, null, 2), "utf8");
+  return updated;
+};
+
+export const updateCardDraftBasics = async (
+  cardId: string,
+  basics: Pick<
+    CardDraft,
+    | "recipientName"
+    | "occasion"
+    | "occasionText"
+    | "fromLabel"
+    | "organizerName"
+    | "organizerEmail"
+    | "eventDate"
+    | "description"
+  >
+) => {
+  const cards = await readCards();
+  const index = cards.findIndex((card) => card.id === cardId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const updated = {
+    ...cards[index],
+    ...basics,
     updatedAt: new Date().toISOString()
   };
 

@@ -224,3 +224,29 @@
 Почему:
 
 На этом этапе продукту важнее выглядеть как цельный цифровой подарок, чем наращивать новые типы данных и сложные редакторы.
+## 2026-06-14
+
+### Update: landing is the showcase, manage page is the real editor
+
+Accepted:
+
+1. The landing page is treated as a showcase and entry point.
+2. After `Create card`, the organizer lands directly in the manage screen.
+3. Core card data is edited inside `Основа открытки`, not in a separate one-time creation step.
+
+### Update: no visible pre-selection of personal/team/celebration mode
+
+Accepted:
+
+1. The visible mode selector is removed from the organizer UI.
+2. `occasionText` is the main meaning source for the card.
+3. Legacy `occasion` stays only for compatibility with existing data.
+
+### Update: card composition is configured as block cards
+
+Accepted:
+
+1. Each block is represented as a card with a short explanation.
+2. Optional blocks can be removed directly from the card.
+3. Removed blocks are restored from a dedicated recovery area.
+4. Message grid settings live inside the `Поздравления` card.

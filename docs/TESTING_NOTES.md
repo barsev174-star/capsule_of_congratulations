@@ -61,3 +61,15 @@ npm.cmd run dev
 2. AI пока работает на внутреннем генераторе-шаблонизаторе, а не на внешней модели.
 3. Оплата и публикация еще не реализованы.
 4. Хранение пока локальное, не в базе данных.
+## Update 2026-06-14
+
+Check the new manage flow:
+
+1. The landing page clearly leads into card creation.
+2. Starting creation opens the manage page directly.
+3. `Основа открытки` can be filled and corrected without going back.
+4. Optional blocks can be removed from their cards.
+5. Removed blocks appear in a restore zone below.
+6. The `Поздравления` card changes the grid and updates the preview scheme.
+7. Template selection happens after structure, not before it.
+8. Participant AI still uses `occasionText` rather than a visible legacy category.

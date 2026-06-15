@@ -23,7 +23,14 @@ type Props = {
   options: BlockOption[];
   initialLayoutMode: FinalCardMessageLayoutMode;
   initialMediaLayout: FinalCardMessageMediaLayout;
-  initialShowAllLink: boolean;
+};
+
+type RenderedBlock = {
+  id: string;
+  label: string;
+  description: string;
+  removable: boolean;
+  disabled?: boolean;
 };
 
 const initialState = {
@@ -39,22 +46,22 @@ const layoutOptions: Array<{
   {
     id: "grid-2",
     label: 'Сетка "2 на 2"',
-    description: "4 карточки на экране, пролистывание по одному ряду."
+    description: "На первом экране видно 4 карточки, дальше можно листать."
   },
   {
     id: "carousel-1",
     label: "Один ряд",
-    description: "3 карточки в линию, пролистывание по одной."
+    description: "Карточки идут в одну линию и читаются как лента."
   },
   {
     id: "carousel-2",
     label: "Два ряда",
-    description: "6 карточек на экране, пролистывание по одной колонке."
+    description: "Более плотная сетка, когда хочется показать больше поздравлений сразу."
   },
   {
     id: "column-media",
-    label: "1 колонка + фото",
-    description: "4 карточки слева с прокруткой вниз, справа фиксированный медиа-блок."
+    label: "Колонка + фото",
+    description: "Слева идут поздравления, справа закрепляется отдельный фотоблок."
   }
 ];
 
@@ -62,255 +69,294 @@ const mediaLayoutOptions: Array<{
   id: FinalCardMessageMediaLayout;
   label: string;
 }> = [
-  { id: "portrait", label: "1 вертикальное" },
-  { id: "landscape-pair", label: "2 горизонтальных" }
+  { id: "portrait", label: "1 вертикальное фото" },
+  { id: "landscape-pair", label: "2 горизонтальных фото" }
 ];
 
-const canvasBlockMeta: Record<string, { label: string; size: "hero" | "medium" | "small" | "messages" | "closing" }> = {
-  hero: { label: "Обложка", size: "hero" },
-  summary: { label: "Вводный блок", size: "medium" },
-  qualities: { label: "Качества", size: "small" },
-  messages: { label: "Поздравления", size: "messages" },
-  memories: { label: "Моменты / фото", size: "medium" },
-  quotes: { label: "Лучшие фразы", size: "small" },
-  "ai-summary": { label: "Общее поздравление", size: "medium" },
-  closing: { label: "Финал", size: "closing" }
+const canvasBlockMeta: Record<
+  string,
+  {
+    label: string;
+    size: "hero" | "medium" | "small" | "messages" | "closing";
+    description: string;
+    required?: boolean;
+  }
+> = {
+  hero: {
+    label: "Обложка",
+    size: "hero",
+    description: "Первый экран с именем получателя, поводом и общим настроением открытки. Является обязательным.",
+    required: true
+  },
+  summary: {
+    label: "Вводный блок",
+    size: "medium",
+    description: "Коротко объясняет, по какому поводу собрана открытка. Сейчас блок включен в открытку."
+  },
+  qualities: {
+    label: "Качества",
+    size: "small",
+    description: "Подсвечивает, за что именно любят и ценят человека. Сейчас блок включен в открытку."
+  },
+  messages: {
+    label: "Поздравления",
+    size: "messages",
+    description: "Главный блок с карточками участников. Является обязательным.",
+    required: true
+  },
+  memories: {
+    label: "Моменты / фото",
+    size: "medium",
+    description: "Дает место под фотографии, подписи и теплые визуальные детали. Сейчас блок включен в открытку."
+  },
+  quotes: {
+    label: "Лучшие фразы",
+    size: "small",
+    description: "Выносит самые сильные короткие строки из поздравлений. Сейчас блок включен в открытку."
+  },
+  "ai-summary": {
+    label: "Общее поздравление",
+    size: "medium",
+    description: "Собирает общий голос группы в один сводный аккорд. Сейчас блок включен в открытку."
+  },
+  closing: {
+    label: "Финал",
+    size: "closing",
+    description: "Завершает открытку и собирает общее ощущение подарка. Является обязательным.",
+    required: true
+  }
 };
 
-const buildCanvasBlocks = (options: BlockOption[], blockState: Record<string, boolean>) => [
-  "hero",
-  ...options.filter((option) => !option.disabled && blockState[option.id]).map((option) => option.id),
-  "messages",
-  "closing"
+const buildCanvasBlocks = (options: BlockOption[], blockState: Record<string, boolean>): RenderedBlock[] => [
+  {
+    id: "hero",
+    label: canvasBlockMeta.hero.label,
+    description: canvasBlockMeta.hero.description,
+    removable: false
+  },
+  ...options
+    .filter((option) => !option.disabled && blockState[option.id])
+    .map((option) => ({
+      id: option.id,
+      label: option.label,
+      description: canvasBlockMeta[option.id].description,
+      removable: true,
+      disabled: option.disabled
+    })),
+  {
+    id: "messages",
+    label: canvasBlockMeta.messages.label,
+    description: canvasBlockMeta.messages.description,
+    removable: false
+  },
+  {
+    id: "closing",
+    label: canvasBlockMeta.closing.label,
+    description: canvasBlockMeta.closing.description,
+    removable: false
+  }
 ];
 
-export const BlockSettingsForm = ({
-  manageToken,
-  options,
-  initialLayoutMode,
-  initialMediaLayout,
-  initialShowAllLink
-}: Props) => {
+export const BlockSettingsForm = ({ manageToken, options, initialLayoutMode, initialMediaLayout }: Props) => {
   const [state, formAction, isPending] = useActionState(updateFinalPresentationSettingsAction, initialState);
   const [layoutMode, setLayoutMode] = useState<FinalCardMessageLayoutMode>(initialLayoutMode);
   const [mediaLayout, setMediaLayout] = useState<FinalCardMessageMediaLayout>(initialMediaLayout);
-  const [showAllLink, setShowAllLink] = useState(initialShowAllLink);
   const [blockState, setBlockState] = useState<Record<string, boolean>>(
     Object.fromEntries(options.map((option) => [option.id, option.checked]))
   );
 
   const canvasBlocks = useMemo(() => buildCanvasBlocks(options, blockState), [blockState, options]);
   const currentLayoutLabel = layoutOptions.find((option) => option.id === layoutMode)?.label ?? 'Сетка "2 на 2"';
+  const removedOptionalBlocks = options.filter((option) => !blockState[option.id]);
 
   return (
     <form action={formAction} className={styles.studioForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
+      <input type="hidden" name="layoutMode" value={layoutMode} />
+      <input type="hidden" name="mediaLayout" value={mediaLayout} />
+
+      {options.map((option) => (
+        <input key={option.id} type="hidden" name={option.id} value={blockState[option.id] ? "on" : ""} />
+      ))}
 
       <section className={styles.studioCanvasCard}>
         <div className={styles.studioCanvasHeader}>
           <div>
-            <p className={styles.eyebrowLabel}>Layout Studio</p>
-            <h3 className={styles.studioTitle}>Схема финальной открытки</h3>
+            <p className={styles.eyebrowLabel}>Шаг 2</p>
+            <h3 className={styles.studioTitle}>Состав открытки</h3>
           </div>
           <div className={styles.studioCanvasBadges}>
             <span className={styles.infoBadge}>{currentLayoutLabel}</span>
-            <span className={styles.infoBadge}>
-              {showAllLink ? "Есть кнопка со всеми поздравлениями" : "Без отдельного экрана поздравлений"}
-            </span>
           </div>
         </div>
 
         <div className={styles.canvasPhone}>
-          {canvasBlocks.map((blockId) => (
-            <div
-              key={blockId}
-              className={`${styles.canvasBlock} ${styles[`canvasBlock${canvasBlockMeta[blockId].size}`]}`}
+          {canvasBlocks.map((block) => (
+            <article
+              key={block.id}
+              className={`${styles.canvasBlock} ${styles[`canvasBlock${canvasBlockMeta[block.id].size}`]}`}
             >
               <div className={styles.canvasBlockHeader}>
-                <span>{canvasBlockMeta[blockId].label}</span>
+                <span>{block.label}</span>
+                {block.removable ? (
+                  <button
+                    type="button"
+                    className={styles.blockCardRemove}
+                    onClick={() =>
+                      setBlockState((current) => ({
+                        ...current,
+                        [block.id]: false
+                      }))
+                    }
+                    aria-label={`Убрать блок ${block.label}`}
+                  >
+                    ×
+                  </button>
+                ) : null}
               </div>
 
-              {blockId === "messages" ? (
-                <div className={styles.messageLayoutPreview} data-layout={layoutMode}>
-                  {layoutMode === "grid-2" ? (
-                    <>
-                      <span className={styles.messageSlot}>1</span>
-                      <span className={styles.messageSlot}>2</span>
-                      <span className={styles.messageSlot}>3</span>
-                      <span className={styles.messageSlot}>4</span>
-                    </>
-                  ) : null}
+              <p className={styles.canvasBlockDescription}>{block.description}</p>
 
-                  {layoutMode === "carousel-1" ? (
-                    <>
-                      <span className={styles.messageSlotWide}>1</span>
-                      <span className={styles.messageSlotWide}>2</span>
-                      <span className={styles.messageSlotWide}>3</span>
-                      <span className={styles.scrollHint}>↔</span>
-                    </>
-                  ) : null}
+              {block.id === "messages" ? (
+                <div className={styles.messagesCardControls}>
+                  <div className={styles.layoutChoiceGrid}>
+                    {layoutOptions.map((option) => {
+                      const profile = getFinalCardMessageLayoutProfile(option.id);
 
-                  {layoutMode === "carousel-2" ? (
-                    <>
-                      <div className={styles.messageSlotColumn}>
-                        <span className={styles.messageSlot}>1</span>
-                        <span className={styles.messageSlot}>2</span>
-                      </div>
-                      <div className={styles.messageSlotColumn}>
-                        <span className={styles.messageSlot}>3</span>
-                        <span className={styles.messageSlot}>4</span>
-                      </div>
-                      <span className={styles.scrollHint}>↔</span>
-                    </>
-                  ) : null}
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          className={`${styles.layoutChoiceCard} ${layoutMode === option.id ? styles.layoutChoiceCardActive : ""}`}
+                          onClick={() => setLayoutMode(option.id)}
+                        >
+                          <span className={styles.layoutChoiceTitle}>{option.label}</span>
+                          <span className={styles.layoutChoiceDescription}>{option.description}</span>
+                          <span className={styles.compactOptionMeta}>До {profile.maxChars} символов на карточку</span>
+                        </button>
+                      );
+                    })}
+                  </div>
 
                   {layoutMode === "column-media" ? (
-                    <>
-                      <div className={styles.columnMediaMessages}>
-                        <span className={styles.messageSlotTall}>1</span>
-                        <span className={styles.messageSlotTall}>2</span>
-                        <span className={styles.messageSlotTall}>3</span>
-                        <span className={styles.messageSlotTall}>4</span>
+                    <div className={styles.inlineSettingsStack}>
+                      <span className={styles.inlineSettingsLabel}>Как выглядит медиаблок рядом:</span>
+                      <div className={styles.inlinePillGroup}>
+                        {mediaLayoutOptions.map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            className={`${styles.inlinePillOption} ${mediaLayout === option.id ? styles.inlinePillOptionActive : ""}`}
+                            onClick={() => setMediaLayout(option.id)}
+                          >
+                            <span>{option.label}</span>
+                          </button>
+                        ))}
                       </div>
-                      <div className={styles.columnMediaAside}>
-                        {mediaLayout === "portrait" ? (
-                          <span className={styles.mediaSlotPortrait}>Фото</span>
-                        ) : (
-                          <>
-                            <span className={styles.mediaSlotLandscape}>Фото A</span>
-                            <span className={styles.mediaSlotLandscape}>Фото B</span>
-                          </>
-                        )}
-                      </div>
-                    </>
+                    </div>
                   ) : null}
+
+                  <div className={styles.messageLayoutPreview} data-layout={layoutMode}>
+                    {layoutMode === "grid-2" ? (
+                      <>
+                        <span className={styles.messageSlot}>1</span>
+                        <span className={styles.messageSlot}>2</span>
+                        <span className={styles.messageSlot}>3</span>
+                        <span className={styles.messageSlot}>4</span>
+                      </>
+                    ) : null}
+
+                    {layoutMode === "carousel-1" ? (
+                      <>
+                        <span className={styles.messageSlotWide}>1</span>
+                        <span className={styles.messageSlotWide}>2</span>
+                        <span className={styles.messageSlotWide}>3</span>
+                        <span className={styles.scrollHint}>↔</span>
+                      </>
+                    ) : null}
+
+                    {layoutMode === "carousel-2" ? (
+                      <>
+                        <div className={styles.messageSlotColumn}>
+                          <span className={styles.messageSlot}>1</span>
+                          <span className={styles.messageSlot}>2</span>
+                        </div>
+                        <div className={styles.messageSlotColumn}>
+                          <span className={styles.messageSlot}>3</span>
+                          <span className={styles.messageSlot}>4</span>
+                        </div>
+                        <span className={styles.scrollHint}>↔</span>
+                      </>
+                    ) : null}
+
+                    {layoutMode === "column-media" ? (
+                      <>
+                        <div className={styles.columnMediaMessages}>
+                          <span className={styles.messageSlotTall}>1</span>
+                          <span className={styles.messageSlotTall}>2</span>
+                          <span className={styles.messageSlotTall}>3</span>
+                          <span className={styles.messageSlotTall}>4</span>
+                        </div>
+                        <div className={styles.columnMediaAside}>
+                          {mediaLayout === "portrait" ? (
+                            <span className={styles.mediaSlotPortrait}>Фото</span>
+                          ) : (
+                            <>
+                              <span className={styles.mediaSlotLandscape}>Фото A</span>
+                              <span className={styles.mediaSlotLandscape}>Фото B</span>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
               ) : (
                 <div className={styles.canvasBlockFill} />
               )}
-            </div>
+            </article>
           ))}
         </div>
 
-        <p className={styles.canvasHint}>
-          Это не список блоков, а схема будущей открытки сверху вниз. По ней сразу видно, что окажется выше, ниже и как
-          именно устроен блок поздравлений.
-        </p>
-      </section>
-
-      <section className={styles.studioControlsGrid}>
-        <div className={styles.controlCard}>
-          <div className={styles.controlHeader}>
-            <h3 className={styles.controlTitle}>Формат поздравлений</h3>
-            <p className={styles.controlHint}>Выбираем не только вид, но и безопасный объем текста на карточку.</p>
+        <div className={styles.restoreZone}>
+          <div className={styles.restoreZoneHeader}>
+            <h4 className={styles.restoreZoneTitle}>Убранные блоки, которые можно восстановить</h4>
+            <p className={styles.controlHint}>
+              Если что-то убрали и передумали, блок возвращается отсюда без переходов назад.
+            </p>
           </div>
 
-          <div className={styles.compactOptionGrid}>
-            {layoutOptions.map((option) => {
-              const profile = getFinalCardMessageLayoutProfile(option.id);
-
-              return (
-                <label
-                  key={option.id}
-                  className={`${styles.compactOption} ${layoutMode === option.id ? styles.compactOptionActive : ""}`}
-                >
-                  <input
-                    type="radio"
-                    name="layoutMode"
-                    value={option.id}
-                    defaultChecked={option.id === initialLayoutMode}
-                    onChange={() => setLayoutMode(option.id)}
-                  />
-                  <span className={styles.compactOptionTitle}>{option.label}</span>
-                  <span className={styles.compactOptionDescription}>{option.description}</span>
-                  <span className={styles.compactOptionMeta}>До {profile.maxChars} символов на карточку</span>
-                </label>
-              );
-            })}
-          </div>
-
-          {layoutMode === "column-media" ? (
-            <div className={styles.inlineSettingsRow}>
-              <span className={styles.inlineSettingsLabel}>Медиаблок:</span>
-              <div className={styles.inlinePillGroup}>
-                {mediaLayoutOptions.map((option) => (
-                  <label
-                    key={option.id}
-                    className={`${styles.inlinePillOption} ${mediaLayout === option.id ? styles.inlinePillOptionActive : ""}`}
-                  >
-                    <input
-                      type="radio"
-                      name="mediaLayout"
-                      value={option.id}
-                      defaultChecked={option.id === initialMediaLayout}
-                      onChange={() => setMediaLayout(option.id)}
-                    />
-                    <span>{option.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
+          {removedOptionalBlocks.length === 0 ? (
+            <p className={styles.empty}>Сейчас ничего не убрано. Все доступные дополнительные блоки уже в составе открытки.</p>
           ) : (
-            <input type="hidden" name="mediaLayout" value={mediaLayout} />
-          )}
-        </div>
-
-        <div className={styles.controlCard}>
-          <div className={styles.controlHeader}>
-            <h3 className={styles.controlTitle}>Блоки открытки</h3>
-            <p className={styles.controlHint}>Включаем только то, что усиливает финальный экран.</p>
-          </div>
-
-          <div className={styles.toggleGrid}>
-            {options.map((option) => (
-              <label
-                key={option.id}
-                className={`${styles.toggleCard} ${option.disabled ? styles.toggleCardDisabled : ""} ${
-                  blockState[option.id] ? styles.toggleCardActive : ""
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  name={option.id}
-                  defaultChecked={option.checked}
-                  disabled={option.disabled}
-                  onChange={(event) =>
+            <div className={styles.restoreChipList}>
+              {removedOptionalBlocks.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={`${styles.restoreChip} ${option.disabled ? styles.restoreChipDisabled : ""}`}
+                  onClick={() =>
                     setBlockState((current) => ({
                       ...current,
-                      [option.id]: event.target.checked
+                      [option.id]: true
                     }))
                   }
-                />
-                <span className={styles.toggleCardTitle}>{option.label}</span>
-                <span className={styles.toggleCardDescription}>{option.description}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className={styles.controlCard}>
-          <div className={styles.controlHeader}>
-            <h3 className={styles.controlTitle}>Дополнительно</h3>
-            <p className={styles.controlHint}>Отдельные настройки, не связанные с сеткой карточек.</p>
-          </div>
-
-          <label className={`${styles.inlineToggle} ${showAllLink ? styles.inlineToggleActive : ""}`}>
-            <input
-              type="checkbox"
-              name="showAllLink"
-              defaultChecked={initialShowAllLink}
-              onChange={(event) => setShowAllLink(event.target.checked)}
-            />
-            <strong>Экран со всеми поздравлениями</strong>
-            <p className={styles.controlHint}>Открывает отдельную страницу, где удобно читать сообщения подряд.</p>
-            <span className={styles.inlineToggleMeta}>{showAllLink ? "Включено" : "Выключено"}</span>
-          </label>
+                  disabled={option.disabled}
+                >
+                  <span className={styles.restoreChipLabel}>Вернуть {option.label}</span>
+                  <span className={styles.restoreChipDescription}>
+                    {option.disabled ? "Сначала нужен контент для этого блока." : option.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
       <div className={styles.editorFooter}>
         <button type="submit" className={styles.button} disabled={isPending}>
-          {isPending ? "Сохраняем..." : "Сохранить структуру"}
+          {isPending ? "Сохраняем..." : "Сохранить состав открытки"}
         </button>
         {state.message ? (
           <span className={state.ok ? styles.editorSuccess : styles.editorError}>{state.message}</span>

@@ -1,19 +1,27 @@
 import Link from "next/link";
+import { cardTemplates } from "@/lib/cards/templates";
+import { startCardFromShowcaseAction } from "./home-actions";
 import styles from "./page.module.css";
 
 const highlights = [
   {
-    title: "Собрать без хаоса",
-    text: "Один человек создает ссылку, остальные добавляют поздравления без бесконечных сообщений в чате."
+    title: "Создать без хаоса",
+    text: "Один человек собирает открытку, остальные просто переходят по ссылке и оставляют теплые слова без бесконечных сообщений в чате."
   },
   {
-    title: "Помочь с текстом",
-    text: "AI-помощник подскажет теплый и уместный текст, если участник не знает, что написать."
+    title: "Собрать красиво",
+    text: "Шаблон выбирается уже после структуры, поэтому можно спокойно посмотреть все варианты и не бояться ошибиться на старте."
   },
   {
-    title: "Подарить красиво",
-    text: "Получатель открывает не просто страницу, а аккуратно собранную цифровую открытку с эффектом вручения."
+    title: "Подарить как событие",
+    text: "Получатель открывает не набор карточек, а цельную цифровую открытку с атмосферой, ритмом и ощущением общего подарка."
   }
+];
+
+const steps = [
+  "Нажмите «Создать открытку» и сразу попадите в экран управления новым черновиком.",
+  "Заполните основу открытки, выберите структуру, сетку поздравлений и шаблон среди всех вариантов.",
+  "Позовите участников, соберите поздравления и откройте финальную открытку."
 ];
 
 export default function HomePage() {
@@ -21,19 +29,38 @@ export default function HomePage() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.hero}>
-          <p className={styles.eyebrow}>MVP групповой открытки</p>
-          <h1 className={styles.title}>Соберите теплое поздравление от всей группы за несколько минут</h1>
+          <p className={styles.eyebrow}>Витрина групповой открытки</p>
+          <h1 className={styles.title}>Онлайн-открытка, которую хочется не просто прочитать, а подарить</h1>
           <p className={styles.subtitle}>
-            Начинаем с трех сценариев: для учителя, воспитателя и коллеги. Дальше будем усиливать
-            финальный вау-эффект, AI-помощника и оплату публикации.
+            Сначала смысл, потом структура, потом стиль. Без отдельного промежуточного экрана создания и без раннего
+            выбора шаблона, который мешает и ограничивает.
           </p>
           <div className={styles.actions}>
-            <Link href="/create" className={styles.primaryAction}>
-              Создать открытку
-            </Link>
+            <form action={startCardFromShowcaseAction}>
+              <button type="submit" className={styles.primaryAction}>
+                Создать открытку
+              </button>
+            </form>
             <Link href="/roadmap" className={styles.secondaryAction}>
               Посмотреть этапы
             </Link>
+          </div>
+        </section>
+
+        <section className={styles.previewSection} aria-label="Примеры готовых открыток">
+          <div className={styles.sectionHeading}>
+            <p className={styles.eyebrow}>Примеры</p>
+            <h2 className={styles.sectionTitle}>Готовые темы, между которыми можно выбирать уже внутри управления</h2>
+          </div>
+
+          <div className={styles.previewGrid}>
+            {cardTemplates.map((template) => (
+              <article key={template.id} className={styles.previewCard}>
+                <div className={styles.previewSwatch} style={{ background: template.accent }} />
+                <h3 className={styles.cardTitle}>{template.name}</h3>
+                <p className={styles.cardText}>{template.description}</p>
+              </article>
+            ))}
           </div>
         </section>
 
@@ -44,6 +71,22 @@ export default function HomePage() {
               <p className={styles.cardText}>{item.text}</p>
             </article>
           ))}
+        </section>
+
+        <section className={styles.stepsSection}>
+          <div className={styles.sectionHeading}>
+            <p className={styles.eyebrow}>Как это работает</p>
+            <h2 className={styles.sectionTitle}>Путь стал короче и понятнее</h2>
+          </div>
+
+          <div className={styles.stepsGrid}>
+            {steps.map((step, index) => (
+              <article key={step} className={styles.stepCard}>
+                <span className={styles.stepNumber}>0{index + 1}</span>
+                <p className={styles.cardText}>{step}</p>
+              </article>
+            ))}
+          </div>
         </section>
       </div>
     </main>

@@ -1,15 +1,33 @@
 import { randomBytes, randomUUID } from "node:crypto";
+import { getDefaultTemplateForOccasion } from "@/lib/cards/templates";
 import { logger } from "@/lib/logger";
 import { saveCardDraft, saveContribution } from "@/lib/cards/repository";
 import type {
+  CardDraft,
+  Contribution,
   CreateCardInput,
   CreateCardResult,
-  CardDraft,
-  CreateContributionInput,
-  Contribution
+  CreateContributionInput
 } from "@/lib/cards/types";
 
 const slug = (size = 8) => randomBytes(size).toString("hex");
+
+const buildDraftLinks = (card: CardDraft): CreateCardResult => {
+  const participantLink = `/card/${card.publicSlug}`;
+  const manageLink = `/manage/${card.manageToken}`;
+  const finalLink = `/gift/${card.finalSlug}`;
+  const chatMessage = `Друзья, собираем открытку для ${card.recipientName || "дорогого человека"}. Повод: ${
+    card.occasionText || "пока уточняется"
+  }. Перейдите по ссылке и напишите пару теплых слов, это займет минуту: ${participantLink}`;
+
+  return {
+    card,
+    participantLink,
+    manageLink,
+    finalLink,
+    chatMessage
+  };
+};
 
 export const createCardDraft = async (input: CreateCardInput): Promise<CreateCardResult> => {
   const now = new Date().toISOString();
@@ -46,18 +64,44 @@ export const createCardDraft = async (input: CreateCardInput): Promise<CreateCar
     organizerEmail: card.organizerEmail
   });
 
-  const participantLink = `/card/${card.publicSlug}`;
-  const manageLink = `/manage/${card.manageToken}`;
-  const finalLink = `/gift/${card.finalSlug}`;
-  const chatMessage = `Друзья, собираем открытку для ${card.recipientName}. Повод: ${card.occasionText}. Перейдите по ссылке и напишите пару теплых слов, это займет минуту: ${participantLink}`;
+  return buildDraftLinks(card);
+};
 
-  return {
-    card,
-    participantLink,
-    manageLink,
-    finalLink,
-    chatMessage
+export const createEmptyCardDraft = async (): Promise<CreateCardResult> => {
+  const now = new Date().toISOString();
+  const occasion = "personal";
+
+  const card: CardDraft = {
+    id: randomUUID(),
+    publicSlug: slug(5),
+    manageToken: slug(16),
+    finalSlug: slug(6),
+    recipientName: "",
+    occasion,
+    occasionText: "",
+    fromLabel: "",
+    organizerName: "",
+    organizerEmail: "",
+    eventDate: null,
+    description: null,
+    templateId: getDefaultTemplateForOccasion(occasion),
+    finalBlockSettings: null,
+    finalMessageSettings: null,
+    status: "draft",
+    paymentStatus: "unpaid",
+    createdAt: now,
+    updatedAt: now
   };
+
+  await saveCardDraft(card);
+
+  logger.info("funnel.card_created_blank", "Blank card draft created", {
+    cardId: card.id,
+    occasion: card.occasion,
+    templateId: card.templateId
+  });
+
+  return buildDraftLinks(card);
 };
 
 export const createContribution = async (input: CreateContributionInput) => {

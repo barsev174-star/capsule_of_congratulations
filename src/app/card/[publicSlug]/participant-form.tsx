@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import styles from "./participant-page.module.css";
 import { AiHelper } from "./ai-helper";
+import styles from "./participant-page.module.css";
 
 type ValidationIssue = {
   field: string;
@@ -13,7 +13,6 @@ type Props = {
   cardId: string;
   publicSlug: string;
   recipientName: string;
-  occasion: string;
   occasionText: string;
   messageLimit: number;
 };
@@ -22,7 +21,6 @@ export const ParticipantForm = ({
   cardId,
   publicSlug,
   recipientName,
-  occasion,
   occasionText,
   messageLimit
 }: Props) => {
@@ -122,7 +120,9 @@ export const ParticipantForm = ({
           <div className={styles.field}>
             <div className={styles.fieldLabelRow}>
               <label htmlFor="message">Текст поздравления</label>
-              <span className={styles.counter}>{message.length} / {messageLimit}</span>
+              <span className={styles.counter}>
+                {message.length} / {messageLimit}
+              </span>
             </div>
             <textarea
               id="message"
@@ -149,7 +149,6 @@ export const ParticipantForm = ({
       <AiHelper
         cardId={cardId}
         recipientName={recipientName}
-        occasion={occasion}
         occasionText={occasionText}
         messageLimit={messageLimit}
         onUseText={(text) => setMessage(text)}

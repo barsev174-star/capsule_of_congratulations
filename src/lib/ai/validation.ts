@@ -13,14 +13,12 @@ const normalizeText = (value: FormDataEntryValue | null) =>
   typeof value === "string" ? value.trim() : "";
 
 const styles: AiStyle[] = ["warm-simple", "short-no-pathos", "humor", "touching", "respectful"];
-const occasions = ["personal", "team", "celebration", "teacher", "caregiver", "colleague"] as const;
 
 export const validateAiGenerationFormData = (formData: FormData): AiValidationResult => {
   const issues: AiValidationIssue[] = [];
 
   const cardId = normalizeText(formData.get("cardId"));
   const recipientName = normalizeText(formData.get("recipientName"));
-  const occasion = normalizeText(formData.get("occasion"));
   const occasionText = normalizeText(formData.get("occasionText"));
   const draftNotes = normalizeText(formData.get("draftNotes"));
   const style = normalizeText(formData.get("style"));
@@ -33,10 +31,6 @@ export const validateAiGenerationFormData = (formData: FormData): AiValidationRe
 
   if (recipientName.length < 2) {
     issues.push({ field: "recipientName", message: "Нужно указать имя получателя." });
-  }
-
-  if (!occasions.includes(occasion as (typeof occasions)[number])) {
-    issues.push({ field: "occasion", message: "Формат открытки для AI-помощника не распознан." });
   }
 
   if (occasionText.length < 2) {
@@ -70,7 +64,6 @@ export const validateAiGenerationFormData = (formData: FormData): AiValidationRe
     data: {
       cardId,
       recipientName,
-      occasion: occasion as AiGenerationInput["occasion"],
       occasionText,
       draftNotes,
       style: style as AiStyle,
