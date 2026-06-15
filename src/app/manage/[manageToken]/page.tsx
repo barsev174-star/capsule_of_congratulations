@@ -343,7 +343,6 @@ export default async function ManagePage({ params, searchParams }: Props) {
           <ContentStudio
             manageToken={manageToken}
             allContributions={allContributions}
-            visibleCount={visibleContributions.length}
             mediaAssets={mediaAssets}
             mediaLayout={mediaLayout}
             messageLimit={layoutProfile.maxChars}

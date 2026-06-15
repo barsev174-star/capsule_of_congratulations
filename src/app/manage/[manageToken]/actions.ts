@@ -8,6 +8,7 @@ import {
   deleteCardMediaAsset,
   getCardDraftById,
   getCardDraftByManageToken,
+  listAllContributionsByCardId,
   listContributionsByCardId,
   listCardMediaAssetsByCardId,
   moveContribution,
@@ -74,6 +75,16 @@ export async function setContributionStatusAction(formData: FormData) {
   });
 
   if (card) {
+    if (status === "hidden") {
+      const siblings = await listAllContributionsByCardId(card.id);
+      const nextOrder = siblings
+        .map((contribution) => contribution.id)
+        .filter((id) => id !== contributionId);
+
+      nextOrder.push(contributionId);
+      await reorderContributions(card.id, nextOrder);
+    }
+
     revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
   } else {
     revalidatePath(`/manage/${manageToken}`);

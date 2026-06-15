@@ -1245,6 +1245,11 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.72);
   color: #7a6253;
+  font: inherit;
+}
+
+button.contentFilterPill {
+  cursor: pointer;
 }
 
 .contentFilterPillActive,
@@ -1411,6 +1416,13 @@
   display: grid;
   gap: 7px;
   align-self: center;
+}
+
+.contentContributionBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
 .contentIdentity strong,
@@ -2128,6 +2140,26 @@
 }
 
 .limitWarning {
+  background: rgba(171, 66, 50, 0.1);
+  color: #9f2a1d;
+}
+
+.contentVisibilityBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.contentVisibilityBadgeActive {
+  background: rgba(77, 127, 92, 0.1);
+  color: #3f714c;
+}
+
+.contentVisibilityBadgeHidden {
   background: rgba(171, 66, 50, 0.1);
   color: #9f2a1d;
 }

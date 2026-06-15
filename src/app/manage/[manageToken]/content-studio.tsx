@@ -12,7 +12,6 @@ import styles from "./manage-page.module.css";
 type Props = {
   manageToken: string;
   allContributions: Contribution[];
-  visibleCount: number;
   mediaAssets: CardMediaAsset[];
   mediaLayout: FinalCardMessageMediaLayout;
   messageLimit: number;
@@ -24,6 +23,8 @@ type DropTarget = {
   position: "before" | "after";
 };
 
+type ContributionFilter = "all" | "active" | "hidden" | "too-long" | "no-role";
+
 const initialState = {
   ok: false,
   message: ""
@@ -32,7 +33,6 @@ const initialState = {
 export const ContentStudio = ({
   manageToken,
   allContributions,
-  visibleCount,
   mediaAssets,
   mediaLayout,
   messageLimit,
@@ -43,10 +43,12 @@ export const ContentStudio = ({
   const [draggedContributionId, setDraggedContributionId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [expandedContributionIds, setExpandedContributionIds] = useState<string[]>([]);
+  const [activeFilter, setActiveFilter] = useState<ContributionFilter>("all");
 
   const tooLongCount = allContributions.filter((contribution) => contribution.message.length > messageLimit).length;
   const withinLimitCount = allContributions.length - tooLongCount;
   const hiddenCount = allContributions.filter((contribution) => contribution.status === "hidden").length;
+  const activeCount = allContributions.filter((contribution) => contribution.status === "visible").length;
   const noRoleCount = allContributions.filter((contribution) => !contribution.authorRole?.trim()).length;
 
   const orderedContributions = useMemo(() => {
@@ -55,6 +57,28 @@ export const ContentStudio = ({
       .map((contributionId) => map.get(contributionId))
       .filter((contribution): contribution is Contribution => Boolean(contribution));
   }, [allContributions, contributionOrder]);
+
+  const visibleContributions = useMemo(() => {
+    return orderedContributions.filter((contribution) => {
+      if (activeFilter === "active") {
+        return contribution.status === "visible";
+      }
+
+      if (activeFilter === "hidden") {
+        return contribution.status === "hidden";
+      }
+
+      if (activeFilter === "too-long") {
+        return contribution.message.length > messageLimit;
+      }
+
+      if (activeFilter === "no-role") {
+        return !contribution.authorRole?.trim();
+      }
+
+      return true;
+    });
+  }, [activeFilter, messageLimit, orderedContributions]);
 
   const moveContribution = (targetContributionId: string, pointerPosition: "before" | "after") => {
     if (!draggedContributionId || draggedContributionId === targetContributionId) {
@@ -186,18 +210,48 @@ export const ContentStudio = ({
           </div>
 
           <div className={styles.contentFilterRow}>
-            <span className={`${styles.contentFilterPill} ${styles.contentFilterPillActive}`}>Все {allContributions.length}</span>
-            <span className={styles.contentFilterPill}>Видимые {visibleCount}</span>
-            <span className={styles.contentFilterPill}>Слишком длинные {tooLongCount}</span>
-            <span className={styles.contentFilterPill}>Скрытые {hiddenCount}</span>
-            <span className={styles.contentFilterPill}>Без роли {noRoleCount}</span>
+            <button
+              type="button"
+              className={`${styles.contentFilterPill} ${activeFilter === "all" ? styles.contentFilterPillActive : ""}`}
+              onClick={() => setActiveFilter("all")}
+            >
+              Все {allContributions.length}
+            </button>
+            <button
+              type="button"
+              className={`${styles.contentFilterPill} ${activeFilter === "active" ? styles.contentFilterPillActive : ""}`}
+              onClick={() => setActiveFilter("active")}
+            >
+              Активные {activeCount}
+            </button>
+            <button
+              type="button"
+              className={`${styles.contentFilterPill} ${activeFilter === "hidden" ? styles.contentFilterPillActive : ""}`}
+              onClick={() => setActiveFilter("hidden")}
+            >
+              Скрытые {hiddenCount}
+            </button>
+            <button
+              type="button"
+              className={`${styles.contentFilterPill} ${activeFilter === "too-long" ? styles.contentFilterPillActive : ""}`}
+              onClick={() => setActiveFilter("too-long")}
+            >
+              Слишком длинные {tooLongCount}
+            </button>
+            <button
+              type="button"
+              className={`${styles.contentFilterPill} ${activeFilter === "no-role" ? styles.contentFilterPillActive : ""}`}
+              onClick={() => setActiveFilter("no-role")}
+            >
+              Без роли {noRoleCount}
+            </button>
           </div>
 
-          {orderedContributions.length === 0 ? (
+          {visibleContributions.length === 0 ? (
             <p className={styles.empty}>Пока поздравлений нет. Сначала участники должны добавить свои сообщения.</p>
           ) : (
             <div className={styles.contentCards}>
-              {orderedContributions.map((contribution, index) => {
+              {visibleContributions.map((contribution, index) => {
                 const overflow = contribution.message.length - messageLimit;
                 const isTooLong = overflow > 0;
                 const isHidden = contribution.status === "hidden";
@@ -252,9 +306,18 @@ export const ContentStudio = ({
                               <strong>{contribution.authorName}</strong>
                               <span>· {contribution.authorRole?.trim() || "без роли"}</span>
                             </div>
-                            <span className={isTooLong ? styles.limitWarning : styles.limitOk}>
-                              {isTooLong ? `Нужно сократить на ${overflow} символов` : "Длина текста оптимальна"}
-                            </span>
+                            <div className={styles.contentContributionBadges}>
+                              <span className={isTooLong ? styles.limitWarning : styles.limitOk}>
+                                {isTooLong ? `Нужно сократить на ${overflow} символов` : "Длина текста оптимальна"}
+                              </span>
+                              <span
+                                className={`${styles.contentVisibilityBadge} ${
+                                  isHidden ? styles.contentVisibilityBadgeHidden : styles.contentVisibilityBadgeActive
+                                }`}
+                              >
+                                {isHidden ? "Скрыто" : "Активно"}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
