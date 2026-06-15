@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { deleteContributionAction, updateContributionMessageAction } from "./actions";
+import { updateContributionMessageAction } from "./actions";
 import styles from "./manage-page.module.css";
 
 type Props = {
@@ -45,20 +45,16 @@ export const ContributionEditor = ({ contributionId, manageToken, initialMessage
       />
 
       <div className={styles.contentEditorFooter}>
-        <button type="submit" className={styles.contentSaveButton} disabled={isPending}>
-          {isPending ? "Сохраняем..." : "Сохранить"}
-        </button>
         <button type="button" className={styles.contentSoftButton}>
           ✨ Сократить текст
         </button>
-        <button type="submit" formAction={deleteContributionAction} className={styles.contentDeleteInlineButton}>
-          Удалить
+        <button type="submit" className={styles.contentSaveButton} disabled={isPending}>
+          {isPending ? "Сохраняем..." : "Сохранить"}
         </button>
+        {state.message ? (
+          <span className={state.ok ? styles.contentEditorSuccess : styles.contentEditorError}>{state.message}</span>
+        ) : null}
       </div>
-
-      {state.message ? (
-        <span className={state.ok ? styles.contentEditorSuccess : styles.contentEditorError}>{state.message}</span>
-      ) : null}
     </form>
   );
 };

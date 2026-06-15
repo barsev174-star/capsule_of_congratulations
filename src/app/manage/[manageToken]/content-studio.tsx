@@ -42,6 +42,7 @@ export const ContentStudio = ({
   const [contributionOrder, setContributionOrder] = useState(allContributions.map((item) => item.id));
   const [draggedContributionId, setDraggedContributionId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
+  const [expandedContributionId, setExpandedContributionId] = useState<string | null>(allContributions[0]?.id ?? null);
 
   const tooLongCount = allContributions.filter((contribution) => contribution.message.length > messageLimit).length;
   const withinLimitCount = allContributions.length - tooLongCount;
@@ -83,7 +84,7 @@ export const ContentStudio = ({
     setDropTarget(null);
     event.dataTransfer.effectAllowed = "move";
 
-    const card = event.currentTarget.closest("details");
+    const card = event.currentTarget.closest("article");
 
     if (card instanceof HTMLElement) {
       const rect = card.getBoundingClientRect();
@@ -198,14 +199,15 @@ export const ContentStudio = ({
                 const overflow = contribution.message.length - messageLimit;
                 const isTooLong = overflow > 0;
                 const isHidden = contribution.status === "hidden";
-                const detailId = `content-card-${contribution.id}`;
+                const isExpanded = expandedContributionId === contribution.id;
 
                 return (
-                  <details
+                  <article
                     key={contribution.id}
                     className={[
                       styles.contentContributionCard,
                       isTooLong ? styles.contentContributionCardWarn : "",
+                      isExpanded ? styles.contentContributionCardExpanded : "",
                       draggedContributionId === contribution.id ? styles.contentContributionCardDragging : "",
                       dropTarget?.contributionId === contribution.id ? styles.contentContributionCardDropTarget : "",
                       dropTarget?.contributionId === contribution.id && dropTarget.position === "before"
@@ -217,73 +219,91 @@ export const ContentStudio = ({
                     ]
                       .filter(Boolean)
                       .join(" ")}
-                    open={index === 0}
                     onDragOver={(event) => handleDragOver(event, contribution.id)}
                     onDragLeave={(event) => handleDragLeave(event, contribution.id)}
                     onDrop={(event) => handleDrop(event, contribution.id)}
                   >
-                    <summary className={styles.contentContributionSummary} aria-controls={detailId}>
-                      <div className={styles.contentContributionLead}>
-                        <button
-                          type="button"
-                          className={styles.contentGripButton}
-                          draggable
-                          onDragStart={(event) => handleDragStart(event, contribution.id)}
-                          onDragEnd={() => {
-                            setDraggedContributionId(null);
-                            setDropTarget(null);
-                          }}
-                          aria-label={`Перетащить поздравление ${contribution.authorName}`}
-                        >
-                          <span className={styles.contentGrip} aria-hidden="true">
-                            ⋮⋮
-                          </span>
-                        </button>
-                        <span className={styles.contentOrder}>#{index + 1}</span>
-                        <div className={styles.contentAvatar}>
-                          {contribution.authorName.trim().slice(0, 1).toUpperCase() || "?"}
+                    <div className={styles.contentCardHead}>
+                      <div className={styles.contentCardTopRow}>
+                        <div className={styles.contentContributionLead}>
+                          <button
+                            type="button"
+                            className={styles.contentGripButtonPlain}
+                            draggable
+                            onDragStart={(event) => handleDragStart(event, contribution.id)}
+                            onDragEnd={() => {
+                              setDraggedContributionId(null);
+                              setDropTarget(null);
+                            }}
+                            aria-label={`Перетащить поздравление ${contribution.authorName}`}
+                          >
+                            <span className={styles.contentGripPlain} aria-hidden="true">
+                              ⋮⋮
+                            </span>
+                          </button>
+                          <span className={styles.contentOrder}>#{index + 1}</span>
+                          <div className={styles.contentAvatar}>
+                            {contribution.authorName.trim().slice(0, 1).toUpperCase() || "?"}
+                          </div>
+                          <div className={styles.contentIdentityInline}>
+                            <strong>{contribution.authorName}</strong>
+                            <span>· {contribution.authorRole?.trim() || "без роли"}</span>
+                          </div>
                         </div>
-                        <div className={styles.contentIdentity}>
-                          <strong>{contribution.authorName}</strong>
-                          <span>{contribution.authorRole?.trim() || "без роли"}</span>
+
+                        <div className={styles.contentTopControls}>
+                          {isExpanded ? (
+                            <>
+                              <span className={styles.contentBodyLabelCompact}>Показывать в открытке</span>
+                              <form action={setContributionStatusAction}>
+                                <input type="hidden" name="manageToken" value={manageToken} />
+                                <input type="hidden" name="contributionId" value={contribution.id} />
+                                <input type="hidden" name="status" value={isHidden ? "visible" : "hidden"} />
+                                <button
+                                  type="submit"
+                                  className={`${styles.contentToggleView} ${!isHidden ? styles.contentToggleViewActive : ""}`}
+                                  aria-label={isHidden ? "Показать поздравление" : "Скрыть поздравление"}
+                                >
+                                  <span className={styles.contentToggleKnob} />
+                                </button>
+                              </form>
+                            </>
+                          ) : null}
+
+                          <button
+                            type="button"
+                            className={styles.contentChevronButton}
+                            onClick={() =>
+                              setExpandedContributionId((current) => (current === contribution.id ? null : contribution.id))
+                            }
+                            aria-expanded={isExpanded}
+                            aria-label={isExpanded ? "Свернуть поздравление" : "Развернуть поздравление"}
+                          >
+                            <span className={`${styles.contentChevron} ${isExpanded ? styles.contentChevronExpanded : ""}`}>
+                              ˅
+                            </span>
+                          </button>
                         </div>
                       </div>
 
-                      <div className={styles.contentContributionMeta}>
+                      <div className={styles.contentCardSecondRow}>
                         <span className={isTooLong ? styles.limitWarning : styles.limitOk}>
                           {isTooLong ? `Нужно сократить на ${overflow} символов` : "Длина текста оптимальна"}
                         </span>
-                        <span className={styles.contentChevron} aria-hidden="true">
-                          ˅
-                        </span>
                       </div>
-                    </summary>
-
-                    <div className={styles.contentContributionBody} id={detailId}>
-                      <div className={styles.contentContributionStatusRow}>
-                        <span className={styles.contentBodyLabelCompact}>Показывать в открытке</span>
-                        <form action={setContributionStatusAction}>
-                          <input type="hidden" name="manageToken" value={manageToken} />
-                          <input type="hidden" name="contributionId" value={contribution.id} />
-                          <input type="hidden" name="status" value={isHidden ? "visible" : "hidden"} />
-                          <button
-                            type="submit"
-                            className={`${styles.contentToggleView} ${!isHidden ? styles.contentToggleViewActive : ""}`}
-                            aria-label={isHidden ? "Показать поздравление" : "Скрыть поздравление"}
-                          >
-                            <span className={styles.contentToggleKnob} />
-                          </button>
-                        </form>
-                      </div>
-
-                      <ContributionEditor
-                        contributionId={contribution.id}
-                        manageToken={manageToken}
-                        initialMessage={contribution.message}
-                        messageLimit={messageLimit}
-                      />
                     </div>
-                  </details>
+
+                    {isExpanded ? (
+                      <div className={styles.contentContributionBody}>
+                        <ContributionEditor
+                          contributionId={contribution.id}
+                          manageToken={manageToken}
+                          initialMessage={contribution.message}
+                          messageLimit={messageLimit}
+                        />
+                      </div>
+                    ) : null}
+                  </article>
                 );
               })}
             </div>
@@ -348,7 +368,7 @@ export const ContentStudio = ({
             <h2 className={styles.contentRailTitle}>Подсказки</h2>
             <ul className={styles.contentTipsList}>
               <li>Тексты до {messageLimit} символов читаются лучше и выглядят аккуратнее.</li>
-              <li>Перетаскивайте карточки за левый хэндл, чтобы менять их порядок в открытке.</li>
+              <li>Перетаскивайте карточки за левый значок, чтобы менять их порядок в открытке.</li>
               <li>Не забудьте добавить фото — они делают открытку живой и теплой.</li>
             </ul>
           </section>

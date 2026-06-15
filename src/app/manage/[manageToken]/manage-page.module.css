@@ -1315,20 +1315,8 @@
   bottom: -7px;
 }
 
-.contentContributionSummary {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 96px;
-  padding: 14px 18px;
-  cursor: pointer;
-}
-
-.contentContributionSummary::-webkit-details-marker {
-  display: none;
+.contentContributionCardExpanded {
+  padding-bottom: 2px;
 }
 
 .contentContributionLead,
@@ -1350,22 +1338,28 @@
   letter-spacing: -0.18em;
 }
 
-.contentGripButton {
+.contentGripButtonPlain {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
   padding: 0;
-  border: 1px dashed rgba(184, 111, 74, 0.28);
-  border-radius: 999px;
-  background: rgba(255, 251, 247, 0.96);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   cursor: grab;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.66);
 }
 
-.contentGripButton:active {
+.contentGripButtonPlain:active {
   cursor: grabbing;
+}
+
+.contentGripPlain {
+  color: #b88970;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.18em;
 }
 
 .contentOrder {
@@ -1402,12 +1396,21 @@
   gap: 4px;
 }
 
+.contentIdentityInline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
 .contentIdentity strong,
+.contentIdentityInline strong,
 .contentPreviewMessageMeta strong {
   color: #34231d;
 }
 
 .contentIdentity span,
+.contentIdentityInline span,
 .contentPreviewMessageMeta span,
 .contentAutosave {
   color: #8a6b5a;
@@ -1415,6 +1418,30 @@
 
 .contentContributionMeta {
   margin-left: auto;
+  gap: 10px;
+}
+
+.contentCardHead {
+  display: grid;
+  gap: 8px;
+  padding: 14px 18px 12px;
+}
+
+.contentCardTopRow,
+.contentCardSecondRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.contentCardSecondRow {
+  padding-left: 126px;
+}
+
+.contentTopControls {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
@@ -1452,17 +1479,28 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  width: 18px;
+  height: 18px;
   color: #a67d66;
-  font-size: 1.15rem;
+  font-size: 1rem;
   line-height: 1;
   transition: transform 180ms ease;
 }
 
-.contentContributionCard[open] .contentChevron {
+.contentChevronExpanded {
   transform: rotate(180deg);
+}
+
+.contentChevronButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 .contentContributionBody {
@@ -1474,6 +1512,11 @@
 .contentContributionStatusRow,
 .contentCardFooter {
   justify-content: space-between;
+}
+
+.contentContributionStatusRow {
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .contentBodyLabel,
@@ -1503,6 +1546,7 @@
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .contentEditorHeader {
@@ -1695,6 +1739,15 @@
 @media (max-width: 979px) {
   .contentPanelTitle {
     font-size: 2.25rem;
+  }
+
+  .contentCardTopRow,
+  .contentCardSecondRow {
+    align-items: flex-start;
+  }
+
+  .contentCardSecondRow {
+    padding-left: 0;
   }
 
   .contentPreviewMessageCard {
