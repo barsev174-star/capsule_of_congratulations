@@ -315,3 +315,7 @@
 
 1. Removed the extra torn-paper background from `heroMain` after visual review showed a duplicated paper sheet.
 2. Extended the main hero torn-paper layer lower so the subtitle and CTA row remain inside the same visible paper block.
+
+## Update 2026-06-16 Paper Birthday Hero Paper Scale
+
+1. Expanded the main torn-paper layer vertically so it better matches the intended full sketch-paper silhouette behind the hero content.
