@@ -494,7 +494,7 @@
 }
 
 .paper-birthday .hero {
-  min-height: 520px;
+  min-height: 462px;
   overflow: visible;
   border: 0;
   border-radius: 8px;
@@ -502,7 +502,7 @@
   align-items: center;
   background:
     linear-gradient(rgba(255, 242, 218, 0.5), rgba(255, 230, 199, 0.46)),
-    var(--scrapbook-torn-section) center 58% / 122% 112% no-repeat,
+    var(--scrapbook-torn-section) center 47% / 126% 118% no-repeat,
     linear-gradient(180deg, rgba(255, 242, 218, 0.96), rgba(255, 230, 199, 0.86)),
     repeating-linear-gradient(0deg, rgba(111, 75, 46, 0.035) 0 1px, transparent 1px 22px);
   clip-path: polygon(0 4%, 7% 2%, 17% 4%, 28% 2%, 43% 4%, 56% 2%, 70% 4%, 84% 2%, 100% 4%, 99% 92%, 88% 94%, 73% 92%, 58% 95%, 42% 92%, 28% 95%, 14% 92%, 1% 95%);
@@ -557,7 +557,7 @@
   max-width: min(760px, 76vw);
   color: #2f1f1a;
   font-family: "Segoe Print", "Comic Sans MS", Georgia, serif;
-  font-size: clamp(3.9rem, 8.9vw, 7.6rem);
+  font-size: clamp(3.9rem, 8.7vw, 7.3rem);
   letter-spacing: -0.045em;
   transform: rotate(-1.5deg);
   text-shadow: 0 2px 0 rgba(255, 248, 231, 0.8);
@@ -615,7 +615,7 @@
   text-align: center;
   max-width: 880px;
   margin-inline: auto;
-  padding: 52px clamp(56px, 9vw, 132px) 34px;
+  padding: 26px clamp(56px, 9vw, 132px) 8px;
 }
 
 .paper-birthday .heroMain::before {
@@ -643,15 +643,8 @@
 .paper-birthday .subtitle {
   max-width: 620px;
   color: #4f372f;
-  font-size: 1.08rem;
-  line-height: 1.5;
-}
-
-.paper-birthday .eyebrow {
-  margin-bottom: -4px;
-  color: #df4f73;
-  font-size: 0.78rem;
-  letter-spacing: 0.14em;
+  font-size: 1rem;
+  line-height: 1.42;
 }
 
 .paper-birthday .heroCtaRow {
@@ -659,16 +652,16 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 18px 28px;
-  margin-top: 8px;
+  gap: 14px 24px;
+  margin-top: 2px;
 }
 
 .paper-birthday .heroParticipants {
   display: inline-grid;
   grid-template-columns: auto 1fr;
   align-items: center;
-  column-gap: 14px;
-  row-gap: 2px;
+  column-gap: 12px;
+  row-gap: 1px;
   text-align: left;
   color: #3e2a20;
 }
@@ -677,33 +670,36 @@
   grid-row: 1 / span 2;
   display: grid;
   place-items: center;
-  width: 58px;
-  height: 58px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #f9f0dc 0, #ead1a8 60%, #d3ad73 100%);
-  font-size: 1.85rem;
+  font-size: 1.55rem;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .paper-birthday .heroParticipants strong {
   display: block;
-  font-size: 2.25rem;
-  line-height: 0.92;
-  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.65rem;
+  line-height: 0.96;
+  font-family: "Segoe Print", Georgia, "Times New Roman", serif;
+  font-weight: 700;
 }
 
 .paper-birthday .heroParticipants span:last-child {
-  font-size: 0.98rem;
-  line-height: 1.25;
+  font-size: 0.92rem;
+  line-height: 1.18;
   color: #5f4639;
 }
 
 .paper-birthday .heroOpenButton {
-  min-height: 62px;
-  padding: 0 28px;
+  min-height: 52px;
+  padding: 0 24px;
   border-radius: 14px;
-  font-size: 1.08rem;
-  gap: 12px;
+  font-size: 0.96rem;
+  gap: 10px;
+  justify-content: center;
+  text-align: center;
   box-shadow: 0 16px 28px rgba(145, 61, 75, 0.24);
 }
 
@@ -740,7 +736,7 @@
 
 .paper-birthday .summaryPanel {
   max-width: 78%;
-  margin-inline: auto;
+  margin: -30px auto 0;
   clip-path: polygon(0 7%, 10% 3%, 24% 7%, 38% 2%, 52% 6%, 68% 3%, 84% 7%, 100% 4%, 99% 82%, 94% 88%, 87% 84%, 80% 90%, 72% 84%, 63% 89%, 54% 84%, 45% 90%, 36% 84%, 26% 88%, 17% 83%, 8% 89%, 0 84%);
   padding: 34px 44px 52px;
   background:

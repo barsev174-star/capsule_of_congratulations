@@ -292,3 +292,9 @@
 1. Removed the temporary right-side `Собрано для тебя` and `Повод` cards from the hero so the header no longer feels like an admin panel.
 2. Recentered the live heading on the paper sheet, increased the torn-paper backdrop scale, and removed the conflicting abstract square decoration near the title.
 3. Replaced the old pills under the description with a reference-style participants block and a red `Открыть поздравления` button that links to the congratulations section.
+
+## Update 2026-06-16 Paper Birthday Hero Density Pass
+
+1. Removed the top `Открытка от всей группы` line from the hero to free up vertical space.
+2. Pulled the hero content and the next summary block higher so the first screen uses the paper sheet area more efficiently.
+3. Tightened the participants block typography and reduced the red CTA button height so both controls sit more naturally inside the hero paper composition.

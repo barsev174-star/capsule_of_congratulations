@@ -182,7 +182,6 @@ export const FinalCard = ({ model }: Props) => {
                 <section key={block.id} className={styles.hero}>
                   <div className={styles.heroGlow} />
                   <div className={styles.heroMain}>
-                    <p className={styles.eyebrow}>Открытка от всей группы</p>
                     <h1 className={styles.title}>
                       <span className={styles.heroNameLine}>{model.recipientName},</span>
                       <span className={styles.heroOccasionLine}>{model.occasionLabel}!</span>
