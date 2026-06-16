@@ -340,3 +340,10 @@
 2. Removed the extra dried-flower accent from the summary strip to keep the paper edges cleaner and closer to the reference.
 3. Reworked the `РљР°РєР°СЏ С‚С‹ РґР»СЏ РЅР°СЃ` paper tags from equal-width columns into intrinsic paper labels so they no longer feel stretched across the row.
 4. Increased spacing and card height in `Р›СѓС‡С€РёРµ С„СЂР°Р·С‹` so the three quote cards read more like separate scrapbook notes instead of compressed tiles.
+
+## Update 2026-06-16 Scrapbook Asset Cleanup Pass
+
+1. Removed the extra color underlay from the `РіР»Р°Р·Р°РјРё РіСЂСѓРїРїС‹` strip and let the torn-paper asset carry the shape by itself.
+2. Switched the `РљР°РєР°СЏ С‚С‹ РґР»СЏ РЅР°СЃ` labels from the tag-with-hole asset to the shorter torn-paper strip asset, which fits the reference better.
+3. Removed the extra gradient fills from `Р›СѓС‡С€РёРµ С„СЂР°Р·С‹` so the quote-paper assets render directly without muddy underlayers.
+4. Replaced the broken public pink quote asset copy with the original transparent source to eliminate the dark background bleed.

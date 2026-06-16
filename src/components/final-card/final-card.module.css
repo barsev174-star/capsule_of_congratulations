@@ -758,14 +758,10 @@
 .paper-birthday .summaryPanel {
   max-width: 92%;
   margin: -18px auto 0;
-  clip-path: polygon(0 7%, 10% 3%, 24% 7%, 38% 2%, 52% 6%, 68% 3%, 84% 7%, 100% 4%, 99% 82%, 94% 88%, 87% 84%, 80% 90%, 72% 84%, 63% 89%, 54% 84%, 45% 90%, 36% 84%, 26% 88%, 17% 83%, 8% 89%, 0 84%);
-  padding: 26px 42px 40px;
-  background:
-    linear-gradient(rgba(255, 247, 229, 0.3), rgba(255, 232, 203, 0.26)),
-    var(--scrapbook-torn-summary) center / 100% 100% no-repeat,
-    linear-gradient(180deg, rgba(255, 247, 229, 0.98), rgba(255, 232, 203, 0.92)),
-    var(--fc-surface);
-  box-shadow: 0 16px 28px rgba(92, 58, 34, 0.12);
+  clip-path: none;
+  padding: 18px 36px 28px;
+  background: var(--scrapbook-torn-summary) center / 100% 100% no-repeat;
+  box-shadow: none;
   transform: rotate(-0.7deg);
 }
 
@@ -781,8 +777,8 @@
 
 .paper-birthday .summaryPanel .sectionTitle,
 .paper-birthday .summaryPanel .sectionText {
-  padding-left: 40px;
-  padding-right: 34px;
+  padding-left: 36px;
+  padding-right: 20px;
 }
 
 .paper-birthday .summaryPanel::after {
@@ -833,9 +829,7 @@
   font-weight: 800;
   font-size: 1rem;
   text-align: center;
-  background:
-    linear-gradient(rgba(255, 238, 218, 0.2), rgba(255, 238, 218, 0.2)),
-    var(--scrapbook-paper-tag-long) center / 100% 100% no-repeat;
+  background: var(--scrapbook-paper-tag-short) center / 100% 100% no-repeat;
   box-shadow:
     0 10px 16px rgba(92, 58, 34, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.45);
@@ -843,36 +837,36 @@
 
 .paper-birthday .chip:nth-child(5n + 1) {
   background:
-    linear-gradient(rgba(246, 199, 189, 0.4), rgba(246, 199, 189, 0.4)),
-    var(--scrapbook-paper-tag-long) center / 100% 100% no-repeat;
+    linear-gradient(rgba(246, 199, 189, 0.28), rgba(246, 199, 189, 0.28)),
+    var(--scrapbook-paper-tag-short) center / 100% 100% no-repeat;
   transform: rotate(-3deg);
 }
 
 .paper-birthday .chip:nth-child(5n + 2) {
   background:
-    linear-gradient(rgba(247, 225, 186, 0.44), rgba(247, 225, 186, 0.44)),
-    var(--scrapbook-paper-tag-long) center / 100% 100% no-repeat;
+    linear-gradient(rgba(247, 225, 186, 0.32), rgba(247, 225, 186, 0.32)),
+    var(--scrapbook-paper-tag-short) center / 100% 100% no-repeat;
   transform: rotate(2deg);
 }
 
 .paper-birthday .chip:nth-child(5n + 3) {
   background:
-    linear-gradient(rgba(220, 232, 243, 0.46), rgba(220, 232, 243, 0.46)),
-    var(--scrapbook-paper-tag-long) center / 100% 100% no-repeat;
+    linear-gradient(rgba(220, 232, 243, 0.34), rgba(220, 232, 243, 0.34)),
+    var(--scrapbook-paper-tag-short) center / 100% 100% no-repeat;
   transform: rotate(-1deg);
 }
 
 .paper-birthday .chip:nth-child(5n + 4) {
   background:
-    linear-gradient(rgba(244, 207, 199, 0.42), rgba(244, 207, 199, 0.42)),
-    var(--scrapbook-paper-tag-long) center / 100% 100% no-repeat;
+    linear-gradient(rgba(244, 207, 199, 0.3), rgba(244, 207, 199, 0.3)),
+    var(--scrapbook-paper-tag-short) center / 100% 100% no-repeat;
   transform: rotate(2.8deg);
 }
 
 .paper-birthday .chip:nth-child(5n) {
   background:
-    linear-gradient(rgba(243, 229, 201, 0.46), rgba(243, 229, 201, 0.46)),
-    var(--scrapbook-paper-tag-long) center / 100% 100% no-repeat;
+    linear-gradient(rgba(243, 229, 201, 0.3), rgba(243, 229, 201, 0.3)),
+    var(--scrapbook-paper-tag-short) center / 100% 100% no-repeat;
   transform: rotate(-2deg);
 }
 
@@ -947,8 +941,7 @@
 .paper-birthday .quotes {
   border: 0;
   padding: 16px 18px 28px;
-  background:
-    linear-gradient(180deg, rgba(255, 238, 213, 0.78), rgba(255, 226, 196, 0.72));
+  background: transparent;
   box-shadow: none;
 }
 
@@ -972,23 +965,17 @@
 }
 
 .paper-birthday .quoteCard:nth-child(3n + 1) {
-  background:
-    linear-gradient(rgba(255, 248, 243, 0.66), rgba(255, 240, 232, 0.66)),
-    var(--scrapbook-quote-pink) center / 100% 100% no-repeat;
+  background: var(--scrapbook-quote-pink) center / 100% 100% no-repeat;
   transform: rotate(-1.2deg);
 }
 
 .paper-birthday .quoteCard:nth-child(3n + 2) {
-  background:
-    linear-gradient(rgba(255, 240, 205, 0.14), rgba(255, 235, 211, 0.14)),
-    var(--scrapbook-quote-beige) center / 100% 100% no-repeat;
+  background: var(--scrapbook-quote-beige) center / 100% 100% no-repeat;
   transform: rotate(0.8deg);
 }
 
 .paper-birthday .quoteCard:nth-child(3n) {
-  background:
-    linear-gradient(rgba(224, 235, 247, 0.14), rgba(255, 235, 218, 0.14)),
-    var(--scrapbook-quote-blue) center / 100% 100% no-repeat;
+  background: var(--scrapbook-quote-blue) center / 100% 100% no-repeat;
   transform: rotate(-0.5deg);
 }
 
