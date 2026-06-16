@@ -243,3 +243,9 @@
 3. Kept the public card block order intact; `Наши воспоминания` stays as a lower horizontal ribbon rather than moving into a side column.
 4. Strengthened the reference look with a torn hero paper shape, polaroid-style hero accents, colored quality paper tags, greeting paper cards, camera/star title accents, and paper-like action buttons.
 5. Added mobile safeguards so decorative elements are reduced or hidden when they could interfere with reading.
+
+## Update 2026-06-16 Paper Birthday Layout Repair And Slots
+
+1. Restored the `Поздравления` column-media layout so the block again shows four greetings in the left scroll column and three selected photos in the right rail.
+2. Added explicit decorative photo-slot objects for the hero: a left cake polaroid and a right flower polaroid.
+3. Moved decorative hero objects behind the meaningful title/content layer so the card stays readable while keeping the scrapbook look.

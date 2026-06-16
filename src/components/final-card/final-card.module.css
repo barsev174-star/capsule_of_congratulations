@@ -291,6 +291,71 @@
   left: 28px;
 }
 
+.paper-birthday .polaroidCakeLeft,
+.paper-birthday .polaroidFlowersTopRight {
+  width: 186px;
+  height: 232px;
+  border: 14px solid #fff8ed;
+  border-bottom-width: 40px;
+  border-radius: 6px;
+  box-shadow: 0 20px 32px rgba(92, 58, 34, 0.19);
+}
+
+.paper-birthday .polaroidCakeLeft::before,
+.paper-birthday .polaroidFlowersTopRight::before {
+  content: "";
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  width: 86px;
+  height: 18px;
+  border-radius: 4px;
+  background: rgba(218, 190, 145, 0.54);
+  transform: translateX(-50%) rotate(-3deg);
+  box-shadow: 0 2px 7px rgba(92, 58, 34, 0.08);
+}
+
+.paper-birthday .polaroidCakeLeft::after,
+.paper-birthday .polaroidFlowersTopRight::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+}
+
+.paper-birthday .polaroidCakeLeft {
+  left: 4px;
+  top: 128px;
+  transform: scale(0.82) rotate(-11deg);
+  background: #f6dfb8;
+}
+
+.paper-birthday .polaroidCakeLeft::after {
+  background:
+    linear-gradient(#6b3a24, #6b3a24) 51% 12% / 4px 42px no-repeat,
+    radial-gradient(circle at 51% 12%, #f7d47a 0 8px, transparent 9px),
+    radial-gradient(circle at 31% 71%, rgba(223, 79, 115, 0.24) 0 22px, transparent 23px),
+    linear-gradient(180deg, transparent 0 47%, #f49cad 48% 63%, #f7d4bc 64% 75%, #d8885f 76% 100%);
+}
+
+.paper-birthday .polaroidFlowersTopRight {
+  right: 50px;
+  top: 58px;
+  transform: scale(0.94) rotate(7deg);
+  background: #f8e2bd;
+}
+
+.paper-birthday .polaroidFlowersTopRight::after {
+  background:
+    radial-gradient(circle at 38% 32%, #f5b0bd 0 18px, transparent 19px),
+    radial-gradient(circle at 56% 28%, #f0d38f 0 16px, transparent 17px),
+    radial-gradient(circle at 63% 47%, #df7890 0 15px, transparent 16px),
+    radial-gradient(circle at 42% 54%, #ffc8d0 0 13px, transparent 14px),
+    linear-gradient(30deg, transparent 0 39%, rgba(84, 113, 76, 0.48) 40% 43%, transparent 44%),
+    linear-gradient(-28deg, transparent 0 43%, rgba(84, 113, 76, 0.42) 44% 47%, transparent 48%),
+    linear-gradient(180deg, rgba(255, 244, 224, 0.8), rgba(232, 190, 140, 0.48));
+}
+
 .paper-birthday .heartStickerTopLeft::before,
 .paper-birthday .heartStickerTopLeft::after,
 .paper-birthday .pinkHeartMidRight::before,
@@ -445,6 +510,11 @@
     linear-gradient(135deg, rgba(255, 232, 206, 0.74), rgba(239, 198, 158, 0.48));
 }
 
+.paper-birthday .hero::before,
+.paper-birthday .hero::after {
+  display: none;
+}
+
 .paper-birthday .title {
   max-width: 13ch;
   color: var(--fc-accent);
@@ -457,6 +527,7 @@
 
 .paper-birthday .heroMain {
   position: relative;
+  z-index: 2;
   justify-items: center;
   text-align: center;
   padding: 24px clamp(12px, 4vw, 60px);
@@ -506,6 +577,7 @@
 }
 
 .paper-birthday .heroAside {
+  z-index: 2;
   align-content: center;
 }
 
@@ -1266,15 +1338,6 @@
   background:
     linear-gradient(180deg, rgba(255, 250, 239, 0.98), rgba(255, 245, 229, 0.98));
   transform: rotate(-2deg);
-}
-
-.paper-birthday .messageSplitFixed {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.paper-birthday .mediaRail {
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  height: auto;
 }
 
 .paper-birthday .mediaCardLandscape:nth-child(2) {

@@ -229,7 +229,9 @@ export const FinalCard = ({ model }: Props) => {
           <div className={styles.paperDecorLayer} aria-hidden="true">
             <span className={`${styles.paperDecor} ${styles.confettiTop}`} />
             <span className={`${styles.paperDecor} ${styles.heartStickerTopLeft}`} />
+            <span className={`${styles.paperDecor} ${styles.polaroidCakeLeft}`} />
             <span className={`${styles.paperDecor} ${styles.goldHeartLeft}`} />
+            <span className={`${styles.paperDecor} ${styles.polaroidFlowersTopRight}`} />
             <span className={`${styles.paperDecor} ${styles.stickyNoteToday}`}>Сегодня твой день!</span>
             <span className={`${styles.paperDecor} ${styles.rightConfettiScatter}`} />
             <span className={`${styles.paperDecor} ${styles.driedFlowersRight}`} />
