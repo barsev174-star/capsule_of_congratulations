@@ -286,3 +286,9 @@
 1. Adjusted the hero decorative polaroids after visual review so the left cake photo no longer covers the first letter of the recipient name.
 2. Reduced the hero height, service note, and right-side info card scale so the top block feels less cramped and more balanced.
 3. Kept the handmade title treatment from the previous pass while making the composition safer for real recipient names and longer occasions.
+
+## Update 2026-06-16 Paper Birthday Hero CTA Pass
+
+1. Removed the temporary right-side `Собрано для тебя` and `Повод` cards from the hero so the header no longer feels like an admin panel.
+2. Recentered the live heading on the paper sheet, increased the torn-paper backdrop scale, and removed the conflicting abstract square decoration near the title.
+3. Replaced the old pills under the description with a reference-style participants block and a red `Открыть поздравления` button that links to the congratulations section.

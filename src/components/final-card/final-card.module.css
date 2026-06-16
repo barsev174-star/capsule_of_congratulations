@@ -502,7 +502,7 @@
   align-items: center;
   background:
     linear-gradient(rgba(255, 242, 218, 0.5), rgba(255, 230, 199, 0.46)),
-    var(--scrapbook-torn-section) center / 100% 100% no-repeat,
+    var(--scrapbook-torn-section) center 58% / 122% 112% no-repeat,
     linear-gradient(180deg, rgba(255, 242, 218, 0.96), rgba(255, 230, 199, 0.86)),
     repeating-linear-gradient(0deg, rgba(111, 75, 46, 0.035) 0 1px, transparent 1px 22px);
   clip-path: polygon(0 4%, 7% 2%, 17% 4%, 28% 2%, 43% 4%, 56% 2%, 70% 4%, 84% 2%, 100% 4%, 99% 92%, 88% 94%, 73% 92%, 58% 95%, 42% 92%, 28% 95%, 14% 92%, 1% 95%);
@@ -556,8 +556,8 @@
   justify-items: center;
   max-width: min(760px, 76vw);
   color: #2f1f1a;
-  font-family: "Comic Sans MS", "Segoe Print", Georgia, serif;
-  font-size: clamp(3.4rem, 8.7vw, 7.2rem);
+  font-family: "Segoe Print", "Comic Sans MS", Georgia, serif;
+  font-size: clamp(3.9rem, 8.9vw, 7.6rem);
   letter-spacing: -0.045em;
   transform: rotate(-1.5deg);
   text-shadow: 0 2px 0 rgba(255, 248, 231, 0.8);
@@ -602,10 +602,10 @@
 .paper-birthday .heroOccasionLine {
   margin-top: -0.08em;
   color: #34201a;
-  font-size: 0.74em;
+  font-size: 0.7em;
   letter-spacing: -0.035em;
   text-transform: lowercase;
-  transform: translateX(26px) rotate(0.8deg);
+  transform: translateX(8px) rotate(0.8deg);
 }
 
 .paper-birthday .heroMain {
@@ -613,7 +613,9 @@
   z-index: 2;
   justify-items: center;
   text-align: center;
-  padding: 44px clamp(44px, 8vw, 112px) 28px;
+  max-width: 880px;
+  margin-inline: auto;
+  padding: 52px clamp(56px, 9vw, 132px) 34px;
 }
 
 .paper-birthday .heroMain::before {
@@ -635,22 +637,7 @@
 }
 
 .paper-birthday .heroMain::after {
-  content: "";
-  position: absolute;
-  right: -118px;
-  top: 62px;
-  width: 126px;
-  height: 148px;
-  border-radius: 18px 18px 44px 44px;
-  background:
-    radial-gradient(circle at 28% 20%, #f6b7c5 0 12px, transparent 13px),
-    radial-gradient(circle at 58% 16%, #f2d38e 0 11px, transparent 12px),
-    radial-gradient(circle at 72% 34%, #df7890 0 10px, transparent 11px),
-    linear-gradient(135deg, transparent 0 45%, rgba(95, 118, 82, 0.52) 46% 49%, transparent 50%),
-    linear-gradient(45deg, transparent 0 42%, rgba(95, 118, 82, 0.5) 43% 46%, transparent 47%),
-    linear-gradient(180deg, rgba(255, 250, 238, 0.64), rgba(225, 183, 134, 0.5));
-  box-shadow: 0 14px 24px rgba(92, 58, 34, 0.14);
-  transform: rotate(7deg);
+  display: none;
 }
 
 .paper-birthday .subtitle {
@@ -667,35 +654,57 @@
   letter-spacing: 0.14em;
 }
 
-.paper-birthday .heroMeta {
+.paper-birthday .heroCtaRow {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 16px;
+  align-items: center;
+  gap: 18px 28px;
+  margin-top: 8px;
 }
 
-.paper-birthday .metaPill {
-  min-height: 36px;
-  padding-inline: 16px;
-  border-color: rgba(161, 115, 67, 0.22);
-  background: rgba(255, 248, 236, 0.76);
-  box-shadow: 0 8px 16px rgba(92, 58, 34, 0.08);
+.paper-birthday .heroParticipants {
+  display: inline-grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 2px;
+  text-align: left;
+  color: #3e2a20;
 }
 
-.paper-birthday .heroAside {
-  z-index: 2;
-  align-content: center;
-  max-width: 178px;
-  transform: translateX(-6px) scale(0.86);
-  transform-origin: center right;
+.paper-birthday .heroParticipantsIcon {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f9f0dc 0, #ead1a8 60%, #d3ad73 100%);
+  font-size: 1.85rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-.paper-birthday .heroStatCard,
-.paper-birthday .heroNoteCard {
-  transform: rotate(-1.2deg);
-  border-radius: 8px;
+.paper-birthday .heroParticipants strong {
+  display: block;
+  font-size: 2.25rem;
+  line-height: 0.92;
+  font-family: Georgia, "Times New Roman", serif;
 }
 
-.paper-birthday .heroNoteCard {
-  transform: rotate(1.4deg);
+.paper-birthday .heroParticipants span:last-child {
+  font-size: 0.98rem;
+  line-height: 1.25;
+  color: #5f4639;
+}
+
+.paper-birthday .heroOpenButton {
+  min-height: 62px;
+  padding: 0 28px;
+  border-radius: 14px;
+  font-size: 1.08rem;
+  gap: 12px;
+  box-shadow: 0 16px 28px rgba(145, 61, 75, 0.24);
 }
 
 .paper-birthday .card,
@@ -1126,13 +1135,6 @@
   font-size: 1.02rem;
 }
 
-.heroMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.metaPill,
 .sectionBadge {
   display: inline-flex;
   align-items: center;
@@ -1142,25 +1144,6 @@
   border: 1px solid var(--fc-line);
   background: rgba(255, 255, 255, 0.58);
   backdrop-filter: blur(8px);
-}
-
-.heroAside {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 16px;
-  align-content: start;
-}
-
-.heroStatCard,
-.heroNoteCard {
-  display: grid;
-  gap: 8px;
-  padding: 18px;
-  border-radius: 24px;
-  border: 1px solid var(--fc-line);
-  background: rgba(255, 255, 255, 0.68);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .heroPhotoStack {

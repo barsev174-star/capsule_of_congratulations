@@ -19,9 +19,6 @@ const styleClassMap = {
 const trimMessage = (message: string, maxChars: number) =>
   message.length > maxChars ? `${message.slice(0, maxChars - 1).trimEnd()}...` : message;
 
-const getMediaAssetBySlot = (mediaAssets: CardMediaAsset[], slot: CardMediaAsset["slot"]) =>
-  mediaAssets.find((item) => item.slot === slot);
-
 const renderMessageCard = (item: Contribution, index: number, maxChars: number) => (
   <article
     key={item.id}
@@ -34,69 +31,6 @@ const renderMessageCard = (item: Contribution, index: number, maxChars: number) 
     <p className={styles.message}>{trimMessage(item.message, maxChars)}</p>
   </article>
 );
-
-const renderHeroAside = (model: FinalCardViewModel) => {
-  const allowHeroPhotos: boolean = false;
-  const primary = null as CardMediaAsset | null;
-  const secondary = null as CardMediaAsset | null;
-
-  if (allowHeroPhotos && primary) {
-    return (
-      <aside className={styles.heroAside}>
-        <div className={styles.heroPhotoStack}>
-          <figure className={`${styles.heroPhotoFrame} ${styles.heroPhotoPrimary}`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={primary.publicUrl}
-              alt={primary.captionTitle || primary.captionSubtitle || "Фото открытки"}
-              className={styles.heroPhotoImage}
-            />
-            <figcaption className={styles.heroPhotoCaption}>
-              {primary.captionTitle ? <strong>{primary.captionTitle}</strong> : null}
-              <span>{primary.captionSubtitle || primary.captionTitle || "Теплый момент для этой открытки"}</span>
-            </figcaption>
-          </figure>
-
-          {secondary ? (
-            <figure className={`${styles.heroPhotoFrame} ${styles.heroPhotoSecondary}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={secondary.publicUrl}
-                alt={secondary.captionTitle || secondary.captionSubtitle || "Еще одно фото открытки"}
-                className={styles.heroPhotoImage}
-              />
-            </figure>
-          ) : null}
-        </div>
-
-        <div className={styles.heroFactStrip}>
-          <div className={styles.heroFact}>
-            <span className={styles.heroFactLabel}>Собрали</span>
-            <strong>{model.participantCount}</strong>
-          </div>
-          <div className={styles.heroFact}>
-            <span className={styles.heroFactLabel}>Повод</span>
-            <strong>{model.occasionLabel}</strong>
-          </div>
-        </div>
-      </aside>
-    );
-  }
-
-  return (
-    <aside className={styles.heroAside}>
-      <div className={styles.heroStatCard}>
-        <span className={styles.heroStatLabel}>Собрано для тебя</span>
-        <strong className={styles.heroStatValue}>{model.participantCount}</strong>
-        <span className={styles.heroStatText}>личных сообщений и теплых слов</span>
-      </div>
-      <div className={styles.heroNoteCard}>
-        <span className={styles.heroNoteLabel}>Повод</span>
-        <p className={styles.heroNoteText}>{model.occasionLabel}</p>
-      </div>
-    </aside>
-  );
-};
 
 const renderMediaFigure = (
   asset: CardMediaAsset | undefined,
@@ -257,13 +191,18 @@ export const FinalCard = ({ model }: Props) => {
                       Эту открытку для тебя собрали <strong>{model.fromLabel}</strong>. Здесь уже живут теплые слова,
                       важные воспоминания и атмосфера общего подарка.
                     </p>
-                    <div className={styles.heroMeta}>
-                      <span className={styles.metaPill}>{model.participantCount} участников</span>
-                      <span className={styles.metaPill}>{model.occasionLabel}</span>
+                    <div className={styles.heroCtaRow}>
+                      <span className={styles.heroParticipants}>
+                        <span className={styles.heroParticipantsIcon}>👥</span>
+                        <strong>{model.participantCount} человек</strong>
+                        <span>оставили для тебя поздравления</span>
+                      </span>
+                      <a href="#messages" className={`${styles.button} ${styles.primaryButton} ${styles.heroOpenButton}`}>
+                        <span aria-hidden="true">💌</span>
+                        Открыть поздравления
+                      </a>
                     </div>
                   </div>
-
-                  {renderHeroAside(model)}
                 </section>
               );
             }
@@ -294,7 +233,7 @@ export const FinalCard = ({ model }: Props) => {
 
             if (block.id === "messages") {
               return (
-                <section key={block.id} className={`${styles.messages} ${styles.section}`}>
+                <section id="messages" key={block.id} className={`${styles.messages} ${styles.section}`}>
                   <div className={styles.sectionHeader}>
                     <h2 className={styles.sectionTitle}>Поздравления</h2>
                     <span className={styles.sectionBadge}>{model.contributions.length} сообщений</span>
