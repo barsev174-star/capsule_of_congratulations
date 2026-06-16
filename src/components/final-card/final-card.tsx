@@ -233,11 +233,14 @@ export const FinalCard = ({ model }: Props) => {
             <span className={`${styles.paperDecor} ${styles.goldHeartLeft}`} />
             <span className={`${styles.paperDecor} ${styles.polaroidFlowersTopRight}`} />
             <span className={`${styles.paperDecor} ${styles.stickyNoteToday}`}>Сегодня твой день!</span>
+            <span className={`${styles.paperDecor} ${styles.watercolorStainPink}`} />
+            <span className={`${styles.paperDecor} ${styles.watercolorStainBeige}`} />
             <span className={`${styles.paperDecor} ${styles.rightConfettiScatter}`} />
             <span className={`${styles.paperDecor} ${styles.driedFlowersRight}`} />
             <span className={`${styles.paperDecor} ${styles.pinkHeartMidRight}`} />
             <span className={`${styles.paperDecor} ${styles.goldHeartBottomRight}`} />
             <span className={`${styles.paperDecor} ${styles.driedFlowersBottomLeft}`} />
+            <span className={`${styles.paperDecor} ${styles.footerFloralCluster}`} />
           </div>
           {model.blocks.map((block) => {
             if (block.id === "hero") {

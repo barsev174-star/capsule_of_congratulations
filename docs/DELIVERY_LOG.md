@@ -265,3 +265,11 @@
 3. Connected paper tag assets to the `Какая ты для нас` quality labels.
 4. Connected greeting-card and quote-card assets to the live congratulations and best-phrase cards without replacing text content.
 5. Kept the existing polaroid layout unchanged while evaluating the new assets in the public final card.
+
+## Update 2026-06-16 Expanded Scrapbook Asset Set
+
+1. Added the remaining scrapbook decorative assets to the `paper-birthday` public template: puffy hearts, taped strips, watercolor stains, hero cake/bouquet polaroids, extra quote-card papers, and the footer floral cluster.
+2. Kept all meaningful content live in HTML: recipient name, organizer text, greetings, media photos, memory captions, and action buttons are not flattened into a single background image.
+3. Replaced CSS-only hero/photo decorations where real assets are now available, while preserving the current polaroid and memory-strip layout for further visual tuning.
+4. Removed accidental utility-only generated files from the public clean asset set so only usable template resources are shipped.
+5. Remaining polish candidate: tune asset scale, density, and exact placement against the reference after reviewing the full card visually.
