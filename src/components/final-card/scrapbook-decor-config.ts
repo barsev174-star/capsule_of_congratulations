@@ -10,9 +10,36 @@ export type ScrapbookDecorAssetMobileOverrides = {
   visible?: boolean;
 };
 
+export const SCRAPBOOK_DECOR_ANCHORS = [
+  "templateRoot",
+  "hero",
+  "summary",
+  "qualities",
+  "greetings",
+  "memories",
+  "bestPhrases",
+  "footer"
+] as const;
+
+export type ScrapbookDecorAnchor = (typeof SCRAPBOOK_DECOR_ANCHORS)[number];
+
+export const SCRAPBOOK_DECOR_GROUPS = [
+  "All",
+  "Background",
+  "Stickers",
+  "Photo frames",
+  "Flowers",
+  "Notes",
+  "Confetti"
+] as const;
+
+export type ScrapbookDecorGroup = Exclude<(typeof SCRAPBOOK_DECOR_GROUPS)[number], "All">;
+
 export type ScrapbookDecorAsset = {
   id: string;
   label: string;
+  anchor: ScrapbookDecorAnchor;
+  group: ScrapbookDecorGroup;
   src: string;
   top?: string;
   left?: string;
@@ -33,6 +60,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "confettiTop",
     label: "Confetti Top",
+    anchor: "hero",
+    group: "Confetti",
     src: "/templates/scrapbook-clean/confetti-top.svg",
     top: "10px",
     left: "7%",
@@ -46,6 +75,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "heartStickerTopLeft",
     label: "Heart Sticker Top Left",
+    anchor: "hero",
+    group: "Stickers",
     src: "/templates/scrapbook-clean/heart-sticker-puffy-pink.png",
     top: "28px",
     left: "28px",
@@ -59,6 +90,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "polaroidCakeLeft",
     label: "Polaroid Cake Left",
+    anchor: "hero",
+    group: "Photo frames",
     src: "/templates/scrapbook-clean/top-polaroid-cake.png",
     top: "108px",
     left: "-18px",
@@ -72,6 +105,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "goldHeartLeft",
     label: "Gold Heart Left",
+    anchor: "hero",
+    group: "Stickers",
     src: "/templates/scrapbook-clean/heart-sticker-puffy-gold.png",
     top: "360px",
     left: "64px",
@@ -85,6 +120,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "polaroidFlowersTopRight",
     label: "Polaroid Flowers Top Right",
+    anchor: "hero",
+    group: "Photo frames",
     src: "/templates/scrapbook-clean/top-polaroid-bouquet.png",
     top: "34px",
     right: "26px",
@@ -98,6 +135,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "stickyNoteToday",
     label: "Sticky Note Today",
+    anchor: "hero",
+    group: "Notes",
     src: "/templates/scrapbook-clean/sticky-note-irregular.png",
     top: "220px",
     right: "54px",
@@ -113,6 +152,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "watercolorStainPink",
     label: "Watercolor Pink",
+    anchor: "bestPhrases",
+    group: "Background",
     src: "/templates/scrapbook-clean/watercolor-stain-pink.png",
     top: "820px",
     left: "-26px",
@@ -126,6 +167,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "watercolorStainBeige",
     label: "Watercolor Beige",
+    anchor: "greetings",
+    group: "Background",
     src: "/templates/scrapbook-clean/watercolor-stain-beige.png",
     top: "1260px",
     right: "-34px",
@@ -139,6 +182,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "rightConfettiScatter",
     label: "Confetti Right",
+    anchor: "templateRoot",
+    group: "Confetti",
     src: "/templates/scrapbook-clean/confetti-right.svg",
     top: "310px",
     right: "10px",
@@ -152,6 +197,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "driedFlowersRight",
     label: "Dried Flowers Right",
+    anchor: "summary",
+    group: "Flowers",
     src: "/templates/scrapbook-clean/dried-flowers-right.png",
     top: "560px",
     right: "-24px",
@@ -165,6 +212,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "pinkHeartMidRight",
     label: "Pink Heart Mid Right",
+    anchor: "memories",
+    group: "Stickers",
     src: "/templates/scrapbook-clean/heart-sticker-puffy-pink.png",
     top: "59%",
     right: "52px",
@@ -178,6 +227,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "goldHeartBottomRight",
     label: "Gold Heart Bottom Right",
+    anchor: "memories",
+    group: "Stickers",
     src: "/templates/scrapbook-clean/heart-sticker-puffy-gold.png",
     bottom: "310px",
     right: "72px",
@@ -191,6 +242,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "driedFlowersBottomLeft",
     label: "Dried Flowers Bottom Left",
+    anchor: "footer",
+    group: "Flowers",
     src: "/templates/scrapbook-clean/dried-flowers-bottom-left.png",
     bottom: "140px",
     left: "-24px",
@@ -204,6 +257,8 @@ export const scrapbookDecorAssets: ScrapbookDecorAsset[] = [
   {
     id: "footerFloralCluster",
     label: "Footer Floral Cluster",
+    anchor: "footer",
+    group: "Flowers",
     src: "/templates/scrapbook-clean/footer-floral-cluster.png",
     bottom: "64px",
     right: "32px",

@@ -256,6 +256,16 @@
   pointer-events: none;
 }
 
+.decorAnchor {
+  position: relative;
+  isolation: isolate;
+}
+
+.decorAnchor > :not(.paperDecorLayer) {
+  position: relative;
+  z-index: 2;
+}
+
 .paper-birthday .paperDecor {
   position: absolute;
   display: block;
@@ -319,6 +329,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin-bottom: 12px;
+}
+
+.assetDebugActions {
+  display: flex;
+  gap: 8px;
   margin-bottom: 12px;
 }
 

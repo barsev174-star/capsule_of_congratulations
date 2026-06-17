@@ -374,3 +374,11 @@
 2. Kept all meaningful content live in HTML while moving only visual scrapbook decoration into the debugged asset layer, so the same approach can be extended to other templates later.
 3. Locked the debug panel behind development mode plus `?debugAssets=1`, making it safe for production while still usable for visual calibration.
 4. Left section-anchored assets and component-background tuning for the next phase, so the current base remains small, testable, and easy to extend.
+
+## Update 2026-06-17 Universal Visual Tuning Phase 2
+
+1. Added section anchors for scrapbook floating assets: `templateRoot`, `hero`, `summary`, `qualities`, `greetings`, `memories`, `bestPhrases`, and `footer`.
+2. Reworked scrapbook debug rendering into a shared provider so multiple decor layers can read one live config and still update instantly from a single panel.
+3. Attached decor layers directly to the corresponding content sections, so visual elements now move with their block when the layout height changes.
+4. Added asset grouping plus live `anchor` reassignment inside the debug panel, making the tuning flow noticeably closer to a universal template-adjustment tool.
+5. Kept this phase limited to floating visuals only; component backgrounds, paper sheets, frames, and per-block inset tuning remain the next extension point.
