@@ -111,23 +111,23 @@ const renderMediaRail = (model: FinalCardViewModel) => {
         {renderMediaFigure(
           messageMediaAssets[0],
           "landscape-a",
-          "Р“РѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕРµ С„РѕС‚Рѕ A",
-          "Р—РґРµСЃСЊ РјРѕР¶РµС‚ РїРѕСЏРІРёС‚СЊСЃСЏ РїРµСЂРІРѕРµ РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕРµ С„РѕС‚Рѕ.",
+          "Горизонтальное фото A",
+          "Здесь может появиться первое горизонтальное фото.",
           styles.mediaCardLandscape
         )}
         {renderMediaFigure(
           messageMediaAssets[1],
           "landscape-b",
-          "Р“РѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕРµ С„РѕС‚Рѕ B",
-          "Р—РґРµСЃСЊ РјРѕР¶РµС‚ РїРѕСЏРІРёС‚СЊСЃСЏ РІС‚РѕСЂРѕРµ РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕРµ С„РѕС‚Рѕ.",
+          "Горизонтальное фото B",
+          "Здесь может появиться второе горизонтальное фото.",
           styles.mediaCardLandscape
         )}
         {model.messageMediaLayout === "landscape-trio"
           ? renderMediaFigure(
               messageMediaAssets[2],
               "landscape-c",
-              "Р“РѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕРµ С„РѕС‚Рѕ C",
-              "Р—РґРµСЃСЊ РјРѕР¶РµС‚ РїРѕСЏРІРёС‚СЊСЃСЏ С‚СЂРµС‚СЊРµ РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕРµ С„РѕС‚Рѕ.",
+              "Горизонтальное фото C",
+              "Здесь может появиться третье горизонтальное фото.",
               styles.mediaCardLandscape
             )
           : null}
@@ -140,8 +140,8 @@ const renderMediaRail = (model: FinalCardViewModel) => {
       {renderMediaFigure(
         messageMediaAssets[0],
         "portrait",
-        "Р’РµСЂС‚РёРєР°Р»СЊРЅРѕРµ С„РѕС‚Рѕ",
-        "Р—РґРµСЃСЊ РїСЂРµРґСѓСЃРјРѕС‚СЂРµРЅРѕ РјРµСЃС‚Рѕ РїРѕРґ РѕРґРЅРѕ Р·Р°РјРµС‚РЅРѕРµ РІРµСЂС‚РёРєР°Р»СЊРЅРѕРµ С„РѕС‚Рѕ.",
+        "Вертикальное фото",
+        "Здесь предусмотрено место под одно заметное вертикальное фото.",
         styles.mediaCardPortrait
       )}
     </div>
@@ -198,7 +198,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
           <span className={`${styles.paperDecor} ${styles.polaroidCakeLeft}`} />
           <span className={`${styles.paperDecor} ${styles.goldHeartLeft}`} />
           <span className={`${styles.paperDecor} ${styles.polaroidFlowersTopRight}`} />
-          <span className={`${styles.paperDecor} ${styles.stickyNoteToday}`}>РЎРµРіРѕРґРЅСЏ С‚РІРѕР№ РґРµРЅСЊ!</span>
+          <span className={`${styles.paperDecor} ${styles.stickyNoteToday}`}>Сегодня твой день!</span>
           <span className={`${styles.paperDecor} ${styles.watercolorStainPink}`} />
           <span className={`${styles.paperDecor} ${styles.watercolorStainBeige}`} />
           <span className={`${styles.paperDecor} ${styles.rightConfettiScatter}`} />
@@ -225,19 +225,18 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                   <span className={styles.heroOccasionLine}>{model.occasionLabel}!</span>
                 </h1>
                 <p className={styles.subtitle}>
-                  Р­С‚Сѓ РѕС‚РєСЂС‹С‚РєСѓ РґР»СЏ С‚РµР±СЏ СЃРѕР±СЂР°Р»Рё <strong>{model.fromLabel}</strong>. Р—РґРµСЃСЊ СѓР¶Рµ
-                  Р¶РёРІСѓС‚ С‚РµРїР»С‹Рµ СЃР»РѕРІР°, РІР°Р¶РЅС‹Рµ РІРѕСЃРїРѕРјРёРЅР°РЅРёСЏ Рё Р°С‚РјРѕСЃС„РµСЂР° РѕР±С‰РµРіРѕ
-                  РїРѕРґР°СЂРєР°.
+                  Эту открытку для тебя собрали <strong>{model.fromLabel}</strong>. Здесь уже живут теплые слова,
+                  важные воспоминания и атмосфера общего подарка.
                 </p>
                 <div className={styles.heroCtaRow}>
                   <span className={styles.heroParticipants}>
-                    <span className={styles.heroParticipantsIcon}>рџ‘Ґ</span>
-                    <strong>{model.participantCount} С‡РµР»РѕРІРµРє</strong>
-                    <span>РѕСЃС‚Р°РІРёР»Рё РґР»СЏ С‚РµР±СЏ РїРѕР·РґСЂР°РІР»РµРЅРёСЏ</span>
+                    <span className={styles.heroParticipantsIcon}>👥</span>
+                    <strong>{model.participantCount} человек</strong>
+                    <span>оставили для тебя поздравления</span>
                   </span>
                   <a href="#messages" className={`${styles.button} ${styles.primaryButton} ${styles.heroOpenButton}`}>
-                    <span aria-hidden="true">рџ’Њ</span>
-                    РћС‚РєСЂС‹С‚СЊ РїРѕР·РґСЂР°РІР»РµРЅРёСЏ
+                    <span aria-hidden="true">💌</span>
+                    Открыть поздравления
                   </a>
                 </div>
               </div>
@@ -269,7 +268,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
               }`}
             >
               {renderAnchorLayer("qualities")}
-              <h2 className={styles.sectionTitle}>РљР°РєР°СЏ С‚С‹ РґР»СЏ РЅР°СЃ</h2>
+              <h2 className={styles.sectionTitle}>Какая ты для нас</h2>
               <div className={styles.chipList}>
                 {model.qualities.map((quality) => (
                   <span key={quality} className={styles.chip}>
@@ -290,8 +289,8 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
             >
               {renderAnchorLayer("greetings")}
               <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>РџРѕР·РґСЂР°РІР»РµРЅРёСЏ</h2>
-                <span className={styles.sectionBadge}>{model.contributions.length} СЃРѕРѕР±С‰РµРЅРёР№</span>
+                <h2 className={styles.sectionTitle}>Поздравления</h2>
+                <span className={styles.sectionBadge}>{model.contributions.length} сообщений</span>
               </div>
 
               {renderMessagesLayout(model)}
@@ -299,7 +298,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
               {model.showAllMessagesLink ? (
                 <div className={styles.sectionFooter}>
                   <Link href={`/gift/${model.finalSlug}/messages`} className={styles.inlineLinkButton}>
-                    РЎРјРѕС‚СЂРµС‚СЊ РІСЃРµ РїРѕР·РґСЂР°РІР»РµРЅРёСЏ
+                    Смотреть все поздравления
                   </Link>
                 </div>
               ) : null}
@@ -316,10 +315,10 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
               className={`${styles.memories} ${styles.section} ${isPaperBirthday ? styles.decorAnchor : ""}`}
             >
               {renderAnchorLayer("memories")}
-              <h2 className={styles.sectionTitle}>РќР°С€Рё РІРѕСЃРїРѕРјРёРЅР°РЅРёСЏ</h2>
+              <h2 className={styles.sectionTitle}>Наши воспоминания</h2>
               <div className={styles.memoriesStrip}>
                 <article className={styles.memoryIntroCard}>
-                  <span className={styles.memoryIntroIcon}>в™Ў</span>
+                  <span className={styles.memoryIntroIcon}>♡</span>
                   <h2 className={styles.sectionTitle}>{model.memoryTitle}</h2>
                   <p className={styles.sectionText}>{model.memoryDescription}</p>
                 </article>
@@ -334,7 +333,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={asset.publicUrl}
-                          alt={asset.captionTitle || asset.captionSubtitle || "Р¤РѕС‚Рѕ РѕС‚РєСЂС‹С‚РєРё"}
+                          alt={asset.captionTitle || asset.captionSubtitle || "Фото открытки"}
                           className={styles.memoryPhotoImage}
                         />
                         <div className={styles.memoryPhotoCaptionWrap}>
@@ -342,7 +341,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                             <strong className={styles.memoryPhotoCaptionTitle}>{asset.captionTitle}</strong>
                           ) : null}
                           <p className={styles.memoryPhotoCaption}>
-                            {asset.captionSubtitle || asset.captionTitle || "Р¤РѕС‚Рѕ РґР»СЏ РѕС‚РєСЂС‹С‚РєРё"}
+                            {asset.captionSubtitle || asset.captionTitle || "Фото для открытки"}
                           </p>
                         </div>
                       </article>
@@ -368,7 +367,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
               className={`${styles.quotes} ${styles.section} ${isPaperBirthday ? styles.decorAnchor : ""}`}
             >
               {renderAnchorLayer("bestPhrases")}
-              <h2 className={styles.sectionTitle}>Р›СѓС‡С€РёРµ С„СЂР°Р·С‹</h2>
+              <h2 className={styles.sectionTitle}>Лучшие фразы</h2>
               <div className={`${styles.grid} ${styles.quotesGrid}`}>
                 {model.quotes.map((quote) => (
                   <article key={quote} className={styles.quoteCard}>
@@ -401,19 +400,18 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
             <section key={block.id} className={`${styles.closing} ${isPaperBirthday ? styles.decorAnchor : ""}`}>
               {renderAnchorLayer("footer")}
               <div className={styles.closingContent}>
-                <h2 className={styles.sectionTitle}>РЎРїР°СЃРёР±Рѕ, С‡С‚Рѕ РІС‹ РІРјРµСЃС‚Рµ</h2>
+                <h2 className={styles.sectionTitle}>Спасибо, что вы вместе</h2>
                 <p className={styles.sectionText}>
-                  Р­С‚Рѕ СѓР¶Рµ РЅРµ РїСЂРѕСЃС‚Рѕ СЃРїРёСЃРѕРє СЃРѕРѕР±С‰РµРЅРёР№, Р° СЃРѕР±СЂР°РЅРЅС‹Р№ С†РёС„СЂРѕРІРѕР№
-                  РїРѕРґР°СЂРѕРє. Р”Р°Р»СЊС€Рµ РјС‹ Р±СѓРґРµРј СѓСЃРёР»РёРІР°С‚СЊ РјРµРґРёР°, РїСѓР±Р»РёРєР°С†РёСЋ Рё
-                  СЃР°Рј СЌС„С„РµРєС‚ РІСЂСѓС‡РµРЅРёСЏ.
+                  Это уже не просто список сообщений, а собранный цифровой подарок. Дальше мы будем усиливать
+                  медиа, публикацию и сам эффект вручения.
                 </p>
               </div>
               <div className={styles.actions}>
                 <button type="button" className={styles.primaryButton}>
-                  РЎРѕС…СЂР°РЅРёС‚СЊ РєР°Рє РїР°РјСЏС‚СЊ
+                  Сохранить как память
                 </button>
                 <button type="button" className={styles.secondaryButton}>
-                  РЎРѕР±СЂР°С‚СЊ РїРѕС…РѕР¶СѓСЋ РѕС‚РєСЂС‹С‚РєСѓ
+                  Собрать похожую открытку
                 </button>
               </div>
             </section>
