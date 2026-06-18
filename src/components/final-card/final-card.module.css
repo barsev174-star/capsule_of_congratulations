@@ -321,6 +321,11 @@
 }
 
 .componentAssetFrame::before {
+  content: none;
+}
+
+.componentAssetPaperLayer,
+.componentAssetOverlayLayer {
   content: "";
   position: absolute;
   top: var(--component-asset-paper-top, 0);
@@ -338,6 +343,32 @@
   opacity: var(--component-asset-opacity, 1);
   transform: rotate(var(--component-asset-rotate, 0deg));
   transform-origin: center;
+}
+
+.componentAssetPaperLayer {
+  z-index: 0;
+}
+
+.componentAssetOverlayLayer {
+  display: none;
+  z-index: 2;
+}
+
+.componentAssetFrame[data-component-group="Photo frames"] .componentAssetPaperLayer {
+  display: none;
+}
+
+.componentAssetFrame[data-component-group="Photo frames"] .componentAssetOverlayLayer {
+  display: block;
+}
+
+.componentAssetFrame[data-component-asset-id="heroPaper"] .componentAssetPaperLayer {
+  background-position: var(--component-asset-bg-position-x, center) var(--component-asset-bg-position-y, center);
+  background-size: var(--component-asset-bg-size, 100% 100%);
+}
+
+.componentAssetFrame[data-component-group="Photo frames"] .componentAssetOverlayLayer {
+  filter: drop-shadow(0 12px 18px rgba(92, 58, 34, 0.16));
 }
 
 .componentAssetContent {
@@ -369,7 +400,8 @@
       var(--component-asset-mobile-padding-left, var(--component-asset-padding-left, 0));
   }
 
-  .componentAssetFrame::before {
+  .componentAssetPaperLayer,
+  .componentAssetOverlayLayer {
     background-image: var(--component-asset-mobile-image, var(--component-asset-image, none));
     background-size: var(--component-asset-mobile-bg-size, var(--component-asset-bg-size, 100% 100%));
     background-position:

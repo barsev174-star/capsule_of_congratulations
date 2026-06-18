@@ -572,8 +572,16 @@ export const ScrapbookComponentFrame = ({ assetId, children, id, className, cont
   }
 
   return (
-    <Tag id={id} className={`${styles.componentAssetFrame} ${className ?? ""}`.trim()} style={toComponentAssetStyle(asset)}>
+    <Tag
+      id={id}
+      className={`${styles.componentAssetFrame} ${className ?? ""}`.trim()}
+      style={toComponentAssetStyle(asset)}
+      data-component-group={asset.group}
+      data-component-asset-id={asset.id}
+    >
+      <span className={styles.componentAssetPaperLayer} aria-hidden="true" />
       <div className={`${styles.componentAssetContent} ${contentClassName ?? ""}`.trim()}>{children}</div>
+      <span className={styles.componentAssetOverlayLayer} aria-hidden="true" />
     </Tag>
   );
 };
