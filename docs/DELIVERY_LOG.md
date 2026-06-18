@@ -415,3 +415,8 @@
 
 1. Fixed component paper layers that disappeared when debug config used `auto` or tiny placeholder values for paper width and height.
 2. Paper-layer `auto` sizing now renders as full-frame sizing, so Hero Paper, Summary Paper, and AI Summary Paper stay visible while still accepting live debug tuning.
+
+## Update 2026-06-18 Scrapbook Asset Cleanup
+
+1. Restored `paperRight` tuning for component paper layers by letting `auto` paper sizes stretch between the configured paper offsets.
+2. Cleaned generated public scrapbook paper assets so checkerboard backgrounds around torn sheets, tags, quote cards, and greeting cards render as transparent pixels.
