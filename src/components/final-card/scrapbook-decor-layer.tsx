@@ -128,7 +128,7 @@ const safePaperSize = (value?: string) => {
 const defaultFloatingAssetsById = new Map(scrapbookFloatingAssets.map((asset) => [asset.id, asset]));
 const defaultComponentAssetsById = new Map(scrapbookComponentAssets.map((asset) => [asset.id, asset]));
 const LOCAL_CONFIG_STORAGE_KEY = "scrapbook-visual-config";
-const paperAssetsWithSizedDefaults = new Set(["heroPaper", "summaryPaper", "aiSummaryPaper"]);
+const paperAssetsWithSizedDefaults = new Set(["heroPaper", "summaryPaper", "aiSummaryPaper", "closingPaper"]);
 
 const parseVisualConfig = (payload: unknown): StoredVisualConfig | null => {
   if (!payload || typeof payload !== "object") {
@@ -156,6 +156,16 @@ const mergeAssetList = <T extends ScrapbookVisualAsset>(defaultAssets: T[], inco
   return [...mergedDefaults, ...customAssets] as T[];
 };
 
+const parsePixelValue = (value?: string) => {
+  if (!value) {
+    return null;
+  }
+
+  const match = value.trim().match(/^(-?\d+(?:\.\d+)?)px$/);
+
+  return match ? Number(match[1]) : null;
+};
+
 const restoreSizedPaperDefaults = (asset: ScrapbookComponentAsset): ScrapbookComponentAsset => {
   if (!paperAssetsWithSizedDefaults.has(asset.id)) {
     return asset;
@@ -164,8 +174,9 @@ const restoreSizedPaperDefaults = (asset: ScrapbookComponentAsset): ScrapbookCom
   const defaultAsset = defaultComponentAssetsById.get(asset.id);
   const hasCollapsedPaperSize =
     !asset.paperWidth || asset.paperWidth === "auto" || !asset.paperHeight || asset.paperHeight === "auto";
+  const hasBrokenPaperOffset = Math.abs(parsePixelValue(asset.paperRight) ?? 0) >= 300;
 
-  if (!defaultAsset || !hasCollapsedPaperSize) {
+  if (!defaultAsset || (!hasCollapsedPaperSize && !hasBrokenPaperOffset)) {
     return asset;
   }
 

@@ -426,3 +426,9 @@
 1. Applied the tuned Hero Paper debug values to the source scrapbook visual config.
 2. Gave Summary Paper and AI Summary Paper explicit paper-layer sizes and offsets so their torn-paper sheets render reliably like Hero Paper.
 3. Added a small debug-config migration so older locally saved `auto` paper sizes are restored to the current sized defaults on load.
+
+## Update 2026-06-18 Scrapbook Paper Layer Stabilization
+
+1. Made every scrapbook component asset frame its own isolated stacking layer so paper backgrounds stay visible behind live text.
+2. Added explicit Closing Paper layer sizing and offsets, matching the same paper-layer model used by Hero, Summary, and AI Summary.
+3. Extended debug-config migration to repair old broken paper offsets such as oversized `paperRight` values that pushed paper sheets away from their content.

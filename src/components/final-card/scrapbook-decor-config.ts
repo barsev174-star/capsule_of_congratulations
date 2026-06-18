@@ -406,6 +406,7 @@ export const scrapbookComponentAssets: ScrapbookComponentAsset[] = [
     paddingBottom: "30px",
     paddingLeft: "70px",
     minHeight: "126px",
+    zIndex: 1,
     mobile: {
       backgroundSize: "118% 118%",
       paddingTop: "18px",
@@ -723,7 +724,8 @@ export const scrapbookComponentAssets: ScrapbookComponentAsset[] = [
     paddingRight: "78px",
     paddingBottom: "34px",
     paddingLeft: "75px",
-    minHeight: "150px"
+    minHeight: "150px",
+    zIndex: 1
   },
   {
     type: "component",
@@ -732,15 +734,22 @@ export const scrapbookComponentAssets: ScrapbookComponentAsset[] = [
     group: "Paper layers",
     src: "/templates/scrapbook-clean/torn-paper-section1.png",
     visible: true,
-    backgroundSize: "111% 130%",
-    backgroundPositionX: "-70px",
-    backgroundPositionY: "center",
+    backgroundSize: "100% 110%",
+    backgroundPositionX: "25px",
+    backgroundPositionY: "-10px",
     opacity: 0.72,
-    paddingTop: "28px",
-    paddingRight: "32px",
-    paddingBottom: "30px",
-    paddingLeft: "32px",
-    minHeight: "156px"
+    paperTop: "-30px",
+    paperLeft: "0px",
+    paperRight: "auto",
+    paperBottom: "auto",
+    paperWidth: "1000px",
+    paperHeight: "200px",
+    paddingTop: "34px",
+    paddingRight: "42px",
+    paddingBottom: "38px",
+    paddingLeft: "42px",
+    minHeight: "156px",
+    zIndex: 1
   }
 ];
 

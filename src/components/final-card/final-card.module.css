@@ -317,6 +317,7 @@
   max-width: var(--component-asset-max-width, none);
   min-height: var(--component-asset-min-height, auto);
   z-index: var(--component-asset-z-index, auto);
+  isolation: isolate;
   overflow: visible;
 }
 
