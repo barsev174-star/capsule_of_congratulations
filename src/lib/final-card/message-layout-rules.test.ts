@@ -30,7 +30,7 @@ describe("getFinalCardMessageLayoutProfile", () => {
     const profile = getFinalCardMessageLayoutProfile("column-media");
 
     expect(profile.cardsPerPage).toBe(4);
-    expect(profile.maxChars).toBe(220);
+    expect(profile.maxChars).toBe(280);
     expect(profile.pageVariant).toBe("column-media");
   });
 });

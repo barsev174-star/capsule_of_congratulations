@@ -16,7 +16,7 @@ export const getFinalCardMessageLayoutProfile = (
     return {
       cardsPerPage: 3,
       advanceBy: 1,
-      maxChars: 300,
+      maxChars: 340,
       pageColumns: 3,
       pageRows: 1,
       pageVariant: "grid"
@@ -27,7 +27,7 @@ export const getFinalCardMessageLayoutProfile = (
     return {
       cardsPerPage: 6,
       advanceBy: 1,
-      maxChars: 170,
+      maxChars: 200,
       pageColumns: 3,
       pageRows: 2,
       pageVariant: "grid"
@@ -38,7 +38,7 @@ export const getFinalCardMessageLayoutProfile = (
     return {
       cardsPerPage: 4,
       advanceBy: 1,
-      maxChars: 220,
+      maxChars: 280,
       pageColumns: 1,
       pageRows: 4,
       pageVariant: "column-media"
@@ -48,7 +48,7 @@ export const getFinalCardMessageLayoutProfile = (
   return {
     cardsPerPage: 4,
     advanceBy: 1,
-    maxChars: 220,
+    maxChars: 280,
     pageColumns: 2,
     pageRows: 2,
     pageVariant: "grid"

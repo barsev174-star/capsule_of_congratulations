@@ -32,6 +32,7 @@ const defaultFinalMemorySettings: FinalCardMemorySettings = {
 const normalizeCard = (card: CardDraft): CardDraft => ({
   ...card,
   occasionText: card.occasionText ?? card.description ?? card.occasion,
+  signature: card.signature ?? null,
   finalBlockSettings: card.finalBlockSettings ?? null,
   finalBlockOrder: card.finalBlockOrder ?? null,
   finalMemorySettings: card.finalMemorySettings
@@ -68,6 +69,7 @@ const normalizeContribution = (
 
   return {
     ...contribution,
+    authorAvatarUrl: contribution.authorAvatarUrl ?? null,
     sortOrder:
       typeof contribution.sortOrder === "number" && Number.isFinite(contribution.sortOrder)
         ? contribution.sortOrder
@@ -223,6 +225,7 @@ export const updateCardDraftBasics = async (
     | "organizerEmail"
     | "eventDate"
     | "description"
+    | "signature"
   >
 ) => {
   const cards = await readCards();

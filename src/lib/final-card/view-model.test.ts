@@ -14,10 +14,12 @@ const card: CardDraft = {
   organizerEmail: "irina@example.com",
   eventDate: null,
   description: "Спасибо за поддержку, энергию и человеческое тепло.",
+  signature: null,
   templateId: "team-modern",
   finalBlockSettings: null,
   finalBlockOrder: null,
   finalMessageSettings: null,
+  finalMemorySettings: null,
   status: "draft",
   paymentStatus: "unpaid",
   createdAt: "2026-01-01T00:00:00.000Z",
@@ -30,6 +32,7 @@ const contributions: Contribution[] = [
     cardId: "card_1",
     authorName: "Мария",
     authorRole: "UX Designer",
+    authorAvatarUrl: null,
     message: "С тобой всегда чувствуется поддержка, внимание и тепло. Спасибо за мудрость и заботу.",
     sortOrder: 0,
     status: "visible",
@@ -87,13 +90,15 @@ describe("buildFinalCardViewModel", () => {
     expect(viewModel.blocks.map((block) => block.id)).toEqual(["hero", "qualities", "messages", "memories", "closing"]);
   });
 
-  it("passes message presentation settings to the final screen", () => {
+    it("passes message presentation settings to the final screen", () => {
     const viewModel = buildFinalCardViewModel(
       {
         ...card,
         finalMessageSettings: {
           layoutMode: "carousel-2",
           mediaLayout: "landscape-pair",
+          mediaSlots: [],
+          mediaAssetIds: [],
           showAllLink: false
         }
       },

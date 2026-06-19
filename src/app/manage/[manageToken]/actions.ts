@@ -222,6 +222,7 @@ export async function updateCardBasicsAction(
   const organizerEmail = String(formData.get("organizerEmail") ?? "").trim();
   const eventDateValue = String(formData.get("eventDate") ?? "").trim();
   const descriptionValue = String(formData.get("description") ?? "").trim();
+  const signatureValue = String(formData.get("signature") ?? "").trim();
   const occasionValue = (String(formData.get("occasion") ?? "").trim() || card.occasion) as CardDraft["occasion"];
 
   if (!validateLength(recipientName, 2, 80)) {
@@ -252,6 +253,10 @@ export async function updateCardBasicsAction(
     return { ok: false, message: "Описание должно быть от 10 до 300 символов." };
   }
 
+  if (signatureValue && !validateLength(signatureValue, 2, 120)) {
+    return { ok: false, message: "Подпись должна быть от 2 до 120 символов." };
+  }
+
   const updated = await updateCardDraftBasics(card.id, {
     recipientName,
     fromLabel,
@@ -260,7 +265,8 @@ export async function updateCardBasicsAction(
     organizerName,
     organizerEmail,
     eventDate: eventDateValue || null,
-    description: descriptionValue || null
+    description: descriptionValue || null,
+    signature: signatureValue || null
   });
 
   if (!updated) {

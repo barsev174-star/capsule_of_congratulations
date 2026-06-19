@@ -77,14 +77,24 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
           <input id="eventDate" name="eventDate" type="date" defaultValue={card.eventDate ?? ""} />
         </div>
         <div className={styles.field}>
-          <label htmlFor="description">Короткое описание</label>
-          <textarea
-            id="description"
-            name="description"
-            defaultValue={card.description ?? ""}
-            placeholder="Например, хотим собрать личную и красивую открытку от всей группы."
+          <label htmlFor="signature">Подпись в конце открытки</label>
+          <input
+            id="signature"
+            name="signature"
+            defaultValue={card.signature ?? ""}
+            placeholder="Например, С любовью, команда Product & Design"
           />
         </div>
+      </div>
+
+      <div className={styles.field}>
+        <label htmlFor="description">Короткое описание</label>
+        <textarea
+          id="description"
+          name="description"
+          defaultValue={card.description ?? ""}
+          placeholder="Например, хотим собрать личную и красивую открытку от всей группы."
+        />
       </div>
 
       <div className={styles.editorFooter}>

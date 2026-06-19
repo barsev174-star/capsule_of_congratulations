@@ -1,5 +1,16 @@
 import type { Metadata } from "next";
+import { Inter, Caveat } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-inter"
+});
+
+const caveat = Caveat({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-caveat"
+});
 
 export const metadata: Metadata = {
   title: "Открытка от всех",
@@ -13,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body>{children}</body>
+      <body className={`${inter.variable} ${caveat.variable}`}>{children}</body>
     </html>
   );
 }

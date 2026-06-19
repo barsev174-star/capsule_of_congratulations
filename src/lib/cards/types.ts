@@ -22,6 +22,7 @@ export type CardDraft = {
   organizerEmail: string;
   eventDate: string | null;
   description: string | null;
+  signature: string | null;
   templateId: CardTemplateId;
   finalBlockSettings: FinalCardBlockSettings | null;
   finalBlockOrder: FinalCardBlockOrder | null;
@@ -42,6 +43,7 @@ export type CreateCardInput = {
   organizerEmail: string;
   eventDate?: string;
   description?: string;
+  signature?: string;
   templateId: CardTemplateId;
 };
 
@@ -69,6 +71,7 @@ export type Contribution = {
   cardId: string;
   authorName: string;
   authorRole: string | null;
+  authorAvatarUrl: string | null;
   message: string;
   sortOrder: number;
   status: ContributionStatus;
@@ -81,6 +84,7 @@ export type CreateContributionInput = {
   cardId: string;
   authorName: string;
   authorRole?: string;
+  authorAvatarUrl?: string;
   message: string;
 };
 

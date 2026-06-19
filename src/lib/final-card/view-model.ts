@@ -37,14 +37,53 @@ export type FinalCardViewModel = {
   messageLayoutMode: FinalCardMessageLayoutMode;
   messageMediaLayout: FinalCardMessageMediaLayout;
   showAllMessagesLink: boolean;
+  footerSignature: string;
   blocks: ReturnType<typeof buildFinalCardLayout>["blocks"];
 };
 
 const extractQualities = (contributions: Contribution[]) => {
-  const tags = ["доброта", "забота", "внимание", "поддержка", "тепло", "мудрость", "надежность", "вдохновение"];
+  const adjectives = [
+    "надежная",
+    "внимательная",
+    "добрая",
+    "заботливая",
+    "теплая",
+    "мудрая",
+    "вдохновляющая",
+    "смелая",
+    "искренняя",
+    "светлая",
+    "поддерживающая",
+    "целеустремленная",
+    "креативная",
+    "понимающая",
+    "яркая"
+  ];
+  const nounToAdjective: Record<string, string> = {
+    доброта: "добрая",
+    забота: "заботливая",
+    внимание: "внимательная",
+    поддержка: "поддерживающая",
+    тепло: "теплая",
+    мудрость: "мудрая",
+    надежность: "надежная",
+    вдохновение: "вдохновляющая"
+  };
   const source = contributions.map((item) => item.message.toLowerCase()).join(" ");
 
-  return tags.filter((tag) => source.includes(tag)).slice(0, 5);
+  const matchedAdjectives = adjectives.filter((adj) => source.includes(adj));
+  const matchedNouns = Object.entries(nounToAdjective)
+    .filter(([noun]) => source.includes(noun))
+    .map(([, adj]) => adj);
+
+  const unique = Array.from(new Set([...matchedAdjectives, ...matchedNouns]));
+  return unique.slice(0, 6);
+};
+
+const getGenderSuffix = (name: string) => {
+  const femaleEndings = ["а", "я", "ия", "ея"];
+  const trimmed = name.trim().toLowerCase();
+  return femaleEndings.some((ending) => trimmed.endsWith(ending)) ? "ая" : "ой";
 };
 
 const extractQuotes = (contributions: Contribution[]) =>
@@ -59,10 +98,10 @@ const buildSummaryText = (card: CardDraft, contributions: Contribution[]) => {
   }
 
   if (contributions.length === 0) {
-    return `Эту открытку для ${card.recipientName} собирает ${card.fromLabel}. Повод: ${card.occasionText}. Скоро здесь появятся теплые слова от всей группы.`;
+    return `Дорог${getGenderSuffix(card.recipientName)} ${card.recipientName}!\n\nСкоро здесь появятся теплые слова от ${card.fromLabel}. Мы готовим для тебя особенную открытку по случаю «${card.occasionText}».`;
   }
 
-  return `Эту открытку для ${card.recipientName} уже собрали ${contributions.length} участников. Повод: ${card.occasionText}. Здесь будут жить теплые слова, важные воспоминания и лучшие фразы от ${card.fromLabel}.`;
+  return `Дорог${getGenderSuffix(card.recipientName)} ${card.recipientName}!\n\nМы, ${card.fromLabel}, собрались, чтобы поздравить тебя с ${card.occasionText}. Каждое слово в этой открытке — от сердца к сердцу.`;
 };
 
 const buildAiSummaryText = (card: CardDraft, contributions: Contribution[]) => {
@@ -141,7 +180,7 @@ export const buildFinalCardViewModel = (
     fromLabel: card.fromLabel,
     participantCount: contributions.length,
     finalSlug: card.finalSlug,
-    summaryTitle: `${card.recipientName} глазами группы`,
+    summaryTitle: `${card.recipientName} глазами ${card.fromLabel}`,
     summaryText: buildSummaryText(card, contributions),
     aiSummaryTitle: "Общее поздравление",
     aiSummaryText: buildAiSummaryText(card, contributions),
@@ -172,6 +211,7 @@ export const buildFinalCardViewModel = (
     messageLayoutMode,
     messageMediaLayout,
     showAllMessagesLink: contributions.length > layoutProfile.cardsPerPage,
+    footerSignature: card.signature ?? `С любовью, ${card.fromLabel}`,
     blocks: buildFinalCardLayout(style, availability, card.finalBlockSettings, card.finalBlockOrder).blocks
   };
 };

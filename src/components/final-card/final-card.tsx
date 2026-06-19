@@ -45,6 +45,74 @@ const getPaperBirthdayHeroScaleClass = (recipientName: string) => {
   return "";
 };
 
+const getInitials = (name: string) =>
+  name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+
+const PeopleIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="9" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
+    <circle cx="17" cy="9" r="2.8" stroke="currentColor" strokeWidth="1.6" />
+    <path
+      d="M3 19c0-2.8 2.5-5 6-5s6 2.2 6 5"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+    <path
+      d="M15 17.5c0-2.2 1.8-4 4-4s4 1.8 4 4"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const HeartEnvelopeIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M20 6.5l-8 6.5-8-6.5"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M4 6.5h16v11H4z"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M12 12.7l2.2-2.5a1.6 1.6 0 012.3 2.2L12 17l-4.5-4.6a1.6 1.6 0 012.3-2.2l2.2 2.5z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const HeartIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+  </svg>
+);
+
+const SparkleIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z" />
+  </svg>
+);
+
+const DownloadIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M12 15V3m0 12l-4-4m4 4l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 const getQualityAssetId = (index: number) => {
   const cycle = ["qualityTagShort1", "qualityTagShort2", "qualityTagShort3", "qualityTagShort1", "qualityTagShort2"] as const;
   return cycle[index % cycle.length];
@@ -65,8 +133,17 @@ const renderMessageCard = (item: Contribution, index: number, maxChars: number, 
   const content = (
     <>
       <div className={styles.cardHeader}>
-        <span className={styles.author}>{item.authorName}</span>
-        {item.authorRole ? <span className={styles.role}>{item.authorRole}</span> : null}
+        <div className={styles.authorAvatar}>
+          {item.authorAvatarUrl ? (
+            <img src={item.authorAvatarUrl} alt="" className={styles.authorAvatarImage} />
+          ) : (
+            <span className={styles.authorAvatarInitials}>{getInitials(item.authorName)}</span>
+          )}
+        </div>
+        <div className={styles.authorMeta}>
+          <span className={styles.author}>{item.authorName}</span>
+          {item.authorRole ? <span className={styles.role}>{item.authorRole}</span> : null}
+        </div>
       </div>
       <p className={styles.message}>{trimMessage(item.message, maxChars)}</p>
     </>
@@ -266,22 +343,26 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
               {renderAnchorLayer("hero")}
               <div className={styles.heroGlow} />
               <div className={styles.heroMain}>
+                <div className={styles.heroPretitle}>{model.occasionLabel}</div>
                 <h1 className={styles.title}>
-                  <span className={styles.heroNameLine}>{model.recipientName},</span>
-                  <span className={styles.heroOccasionLine}>{model.occasionLabel}!</span>
+                  <span className={styles.heroNameLine}>{model.recipientName}</span>
                 </h1>
                 <p className={styles.subtitle}>
-                  Эту открытку для тебя собрали <strong>{model.fromLabel}</strong>. Здесь уже живут теплые слова,
-                  важные воспоминания и атмосфера общего подарка.
+                  Эту открытку для тебя собрали <strong>{model.fromLabel}</strong>. Здесь теплые слова,
+                  важные воспоминания и общий подарок от всей группы.
                 </p>
                 <div className={styles.heroCtaRow}>
                   <span className={styles.heroParticipants}>
-                    <span className={styles.heroParticipantsIcon}>👥</span>
+                    <span className={styles.heroParticipantsIcon}>
+                      <PeopleIcon />
+                    </span>
                     <strong>{model.participantCount} человек</strong>
-                    <span>оставили для тебя поздравления</span>
+                    <span>оставили поздравления</span>
                   </span>
                   <a href="#messages" className={`${styles.button} ${styles.primaryButton} ${styles.heroOpenButton}`}>
-                    <span aria-hidden="true">💌</span>
+                    <span aria-hidden="true">
+                      <HeartEnvelopeIcon />
+                    </span>
                     Открыть поздравления
                   </a>
                 </div>
@@ -331,39 +412,42 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
         }
 
         if (block.id === "qualities") {
-          return (
-            <section
-              key={block.id}
-              className={`${styles.qualities} ${styles.section} ${styles.qualitiesPanel} ${
-                isPaperBirthday ? styles.decorAnchor : ""
-              }`}
-            >
-              {renderAnchorLayer("qualities")}
-              {isPaperBirthday ? (
-                <ScrapbookComponentFrame assetId="qualitiesTitlePaper" className={styles.qualitiesTitleFrame}>
-                  <h2 className={styles.sectionTitle}>Какая ты для нас</h2>
-                </ScrapbookComponentFrame>
-              ) : (
-                <h2 className={styles.sectionTitle}>Какая ты для нас</h2>
-              )}
+          const chipColors = ["rose", "blue", "amber", "green", "violet", "teal"];
+          const visibleQualities = model.qualities.slice(0, 5);
+
+          const content = (
+            <>
+              <h2 className={styles.sectionTitle}>Какая ты для нас</h2>
+              <p className={styles.sectionSubtitle}>Те слова, которые приходят на ум первыми</p>
               <div className={styles.chipList}>
-                {model.qualities.map((quality, index) =>
-                  isPaperBirthday ? (
-                    <ScrapbookComponentFrame
+                {visibleQualities.map((quality, index) => {
+                  const color = chipColors[index % chipColors.length];
+                  return (
+                    <span
                       key={quality}
-                      assetId={getQualityAssetId(index)}
-                      className={styles.qualityChipFrame}
-                      contentClassName={styles.qualityChipContent}
+                      className={`${styles.chip} ${styles[`chip${color.charAt(0).toUpperCase() + color.slice(1)}`]}`}
                     >
-                      <span className={styles.chip}>{quality}</span>
-                    </ScrapbookComponentFrame>
-                  ) : (
-                    <span key={quality} className={styles.chip}>
                       {quality}
                     </span>
-                  )
-                )}
+                  );
+                })}
               </div>
+            </>
+          );
+
+          return isPaperBirthday ? (
+            <ScrapbookComponentFrame
+              key={block.id}
+              as="section"
+              assetId="qualitiesPaper"
+              className={`${styles.qualities} ${styles.section} ${styles.qualitiesPanel} ${styles.decorAnchor}`}
+            >
+              {renderAnchorLayer("qualities")}
+              {content}
+            </ScrapbookComponentFrame>
+          ) : (
+            <section key={block.id} className={`${styles.qualities} ${styles.section} ${styles.qualitiesPanel}`}>
+              {content}
             </section>
           );
         }
@@ -377,7 +461,11 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                 <span className={styles.sectionBadge}>{model.contributions.length} сообщений</span>
               </div>
 
-              {renderMessagesLayout(model)}
+              {model.contributions.length === 0 ? (
+                <p className={styles.sectionText}>Пока нет поздравлений. Скоро здесь появятся теплые слова от группы.</p>
+              ) : (
+                renderMessagesLayout(model)
+              )}
 
               {model.showAllMessagesLink ? (
                 <div className={styles.sectionFooter}>
@@ -488,11 +576,8 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
         }
 
         if (block.id === "quotes") {
-          return (
-            <section
-              key={block.id}
-              className={`${styles.quotes} ${styles.section} ${isPaperBirthday ? styles.decorAnchor : ""}`}
-            >
+          const content = (
+            <>
               {renderAnchorLayer("bestPhrases")}
               <h2 className={styles.sectionTitle}>Лучшие фразы</h2>
               <div className={`${styles.grid} ${styles.quotesGrid}`}>
@@ -514,6 +599,21 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                   )
                 )}
               </div>
+            </>
+          );
+
+          return isPaperBirthday ? (
+            <ScrapbookComponentFrame
+              key={block.id}
+              as="section"
+              assetId="quotesPaper"
+              className={`${styles.quotes} ${styles.section} ${styles.decorAnchor}`}
+            >
+              {content}
+            </ScrapbookComponentFrame>
+          ) : (
+            <section key={block.id} className={`${styles.quotes} ${styles.section}`}>
+              {content}
             </section>
           );
         }
@@ -548,18 +648,26 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
             <>
               {renderAnchorLayer("footer")}
               <div className={styles.closingContent}>
-                <h2 className={styles.sectionTitle}>Спасибо, что вы вместе</h2>
-                <p className={styles.sectionText}>
-                  Это уже не просто список сообщений, а собранный цифровой подарок. Дальше мы будем усиливать медиа,
-                  публикацию и сам эффект вручения.
-                </p>
+                <p className={styles.closingSignature}>{model.footerSignature}</p>
               </div>
               <div className={styles.actions}>
-                <button type="button" className={styles.primaryButton}>
-                  Сохранить как память
+                <button type="button" className={`${styles.button} ${styles.primaryButton}`}>
+                  <span aria-hidden="true">
+                    <HeartIcon />
+                  </span>
+                  Спасибо всем
                 </button>
-                <button type="button" className={styles.secondaryButton}>
-                  Собрать похожую открытку
+                <button type="button" className={`${styles.button} ${styles.secondaryButton}`}>
+                  <span aria-hidden="true">
+                    <DownloadIcon />
+                  </span>
+                  Сохранить открытку
+                </button>
+                <button type="button" className={`${styles.button} ${styles.secondaryButton}`}>
+                  <span aria-hidden="true">
+                    <SparkleIcon />
+                  </span>
+                  Создать такую же
                 </button>
               </div>
             </>

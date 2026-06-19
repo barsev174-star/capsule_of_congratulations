@@ -267,8 +267,15 @@ const toFloatingAssetStyle = (asset: ScrapbookFloatingAsset) =>
     "--asset-mobile-z-index": String(asset.mobile?.zIndex ?? asset.zIndex)
   }) as CSSProperties;
 
-const toComponentAssetStyle = (asset: ScrapbookComponentAsset) =>
-  ({
+const toComponentAssetStyle = (asset: ScrapbookComponentAsset) => {
+  const hasFixedPaperWidth = safePaperSize(asset.paperWidth) !== "auto";
+  const hasFixedPaperHeight = safePaperSize(asset.paperHeight) !== "auto";
+  const mobilePaperWidth = asset.mobile?.paperWidth ?? asset.paperWidth;
+  const mobilePaperHeight = asset.mobile?.paperHeight ?? asset.paperHeight;
+  const hasFixedMobilePaperWidth = safePaperSize(mobilePaperWidth) !== "auto";
+  const hasFixedMobilePaperHeight = safePaperSize(mobilePaperHeight) !== "auto";
+
+  return {
     "--component-asset-image": asset.visible ? `url(${asset.src})` : "none",
     "--component-asset-bg-size": asset.backgroundSize,
     "--component-asset-bg-position-x": asset.backgroundPositionX,
@@ -276,8 +283,8 @@ const toComponentAssetStyle = (asset: ScrapbookComponentAsset) =>
     "--component-asset-opacity": String(asset.visible ? asset.opacity : 0),
     "--component-asset-paper-top": asset.paperTop ?? "0",
     "--component-asset-paper-left": asset.paperLeft ?? "0",
-    "--component-asset-paper-right": asset.paperRight ?? "0",
-    "--component-asset-paper-bottom": asset.paperBottom ?? "0",
+    "--component-asset-paper-right": hasFixedPaperWidth ? "auto" : asset.paperRight,
+    "--component-asset-paper-bottom": hasFixedPaperHeight ? "auto" : asset.paperBottom,
     "--component-asset-paper-width": safePaperSize(asset.paperWidth),
     "--component-asset-paper-height": safePaperSize(asset.paperHeight),
     "--component-asset-width": asset.width ?? "auto",
@@ -296,8 +303,12 @@ const toComponentAssetStyle = (asset: ScrapbookComponentAsset) =>
     "--component-asset-mobile-opacity": String(asset.mobile?.visible === false ? 0 : asset.mobile?.opacity ?? asset.opacity),
     "--component-asset-mobile-paper-top": asset.mobile?.paperTop ?? asset.paperTop ?? "0",
     "--component-asset-mobile-paper-left": asset.mobile?.paperLeft ?? asset.paperLeft ?? "0",
-    "--component-asset-mobile-paper-right": asset.mobile?.paperRight ?? asset.paperRight ?? "0",
-    "--component-asset-mobile-paper-bottom": asset.mobile?.paperBottom ?? asset.paperBottom ?? "0",
+    "--component-asset-mobile-paper-right": hasFixedMobilePaperWidth
+      ? "auto"
+      : (asset.mobile?.paperRight ?? asset.paperRight),
+    "--component-asset-mobile-paper-bottom": hasFixedMobilePaperHeight
+      ? "auto"
+      : (asset.mobile?.paperBottom ?? asset.paperBottom),
     "--component-asset-mobile-paper-width": safePaperSize(asset.mobile?.paperWidth ?? asset.paperWidth),
     "--component-asset-mobile-paper-height": safePaperSize(asset.mobile?.paperHeight ?? asset.paperHeight),
     "--component-asset-mobile-width": asset.mobile?.width ?? asset.width ?? "auto",
@@ -309,7 +320,8 @@ const toComponentAssetStyle = (asset: ScrapbookComponentAsset) =>
     "--component-asset-mobile-padding-bottom": asset.mobile?.paddingBottom ?? asset.paddingBottom,
     "--component-asset-mobile-padding-left": asset.mobile?.paddingLeft ?? asset.paddingLeft,
     "--component-asset-mobile-min-height": asset.mobile?.minHeight ?? asset.minHeight ?? "auto"
-  }) as CSSProperties;
+  } as CSSProperties;
+};
 
 const useDecorContext = () => {
   const value = useContext(ScrapbookDecorContext);
