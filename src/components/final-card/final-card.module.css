@@ -264,7 +264,7 @@
   isolation: isolate;
 }
 
-.decorAnchor > :not(.paperDecorLayer):not(.assetDebugPanel) {
+.decorAnchor > :not(.paperDecorLayer):not(.assetDebugPanel):not(.componentAssetPaperLayer):not(.componentAssetOverlayLayer):not(.componentAssetContent) {
   position: relative;
   z-index: 2;
 }
@@ -310,6 +310,30 @@
   text-align: center;
 }
 
+.paper-birthday [data-selected="true"] {
+  outline: 2px dashed #df4f73;
+  outline-offset: 4px;
+}
+
+.paper-birthday [data-selected="true"]::after {
+  content: attr(data-component-asset-id);
+  position: absolute;
+  top: -20px;
+  left: 0;
+  z-index: 9999;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #df4f73;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.paper-birthday [data-asset-id][data-selected="true"]::after {
+  content: attr(data-asset-id);
+}
+
 .componentAssetFrame {
   position: relative;
   box-sizing: border-box;
@@ -328,6 +352,7 @@
 .componentAssetPaperLayer,
 .componentAssetOverlayLayer {
   content: "";
+  display: block;
   position: absolute;
   top: var(--component-asset-paper-top, 0);
   left: var(--component-asset-paper-left, 0);
@@ -344,6 +369,12 @@
   opacity: var(--component-asset-opacity, 1);
   transform: rotate(var(--component-asset-rotate, 0deg));
   transform-origin: center;
+}
+
+.paper-birthday .componentAssetFrame > .componentAssetPaperLayer,
+.paper-birthday .componentAssetFrame > .componentAssetOverlayLayer {
+  position: absolute;
+  z-index: 0;
 }
 
 .componentAssetPaperLayer {
@@ -492,6 +523,32 @@
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.94);
   font: 0.82rem/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.assetDebugComputed {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid rgba(104, 68, 45, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.assetDebugComputed summary {
+  color: #4b372c;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.assetDebugComputedCode {
+  margin: 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.94);
+  font: 0.78rem/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+  overflow: auto;
+  max-height: 240px;
 }
 
 .assetDebugGrid {
@@ -2193,6 +2250,54 @@
   .heroFactStrip {
     grid-template-columns: 1fr;
   }
+}
+
+body[data-scrapbook-mobile-preview] .paperDecorAsset {
+  top: var(--asset-mobile-top, var(--asset-top, auto));
+  left: var(--asset-mobile-left, var(--asset-left, auto));
+  right: var(--asset-mobile-right, var(--asset-right, auto));
+  bottom: var(--asset-mobile-bottom, var(--asset-bottom, auto));
+  width: var(--asset-mobile-width, var(--asset-width));
+  opacity: var(--asset-mobile-opacity, var(--asset-opacity, 1));
+  transform: rotate(var(--asset-mobile-rotate, var(--asset-rotate, 0deg)));
+  z-index: var(--asset-mobile-z-index, var(--asset-z-index, 1));
+}
+
+body[data-scrapbook-mobile-preview] .paperDecorAsset[data-hide-on-mobile="true"],
+body[data-scrapbook-mobile-preview] .paperDecorAsset[data-mobile-visible="false"] {
+  display: none;
+}
+
+body[data-scrapbook-mobile-preview] .componentAssetFrame {
+  width: var(--component-asset-mobile-width, var(--component-asset-width, auto));
+  max-width: var(--component-asset-mobile-max-width, var(--component-asset-max-width, none));
+  min-height: var(--component-asset-mobile-min-height, var(--component-asset-min-height, auto));
+  z-index: var(--component-asset-mobile-z-index, var(--component-asset-z-index, auto));
+}
+
+body[data-scrapbook-mobile-preview] .componentAssetContent {
+  padding:
+    var(--component-asset-mobile-padding-top, var(--component-asset-padding-top, 0))
+    var(--component-asset-mobile-padding-right, var(--component-asset-padding-right, 0))
+    var(--component-asset-mobile-padding-bottom, var(--component-asset-padding-bottom, 0))
+    var(--component-asset-mobile-padding-left, var(--component-asset-padding-left, 0));
+}
+
+body[data-scrapbook-mobile-preview] .componentAssetPaperLayer,
+body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
+  background-image: var(--component-asset-mobile-image, var(--component-asset-image, none));
+  background-size: var(--component-asset-mobile-bg-size, var(--component-asset-bg-size, 100% 100%));
+  background-position:
+    var(--component-asset-mobile-bg-position-x, var(--component-asset-bg-position-x, center))
+    var(--component-asset-mobile-bg-position-y, var(--component-asset-bg-position-y, center));
+  top: var(--component-asset-mobile-paper-top, var(--component-asset-paper-top, 0));
+  left: var(--component-asset-mobile-paper-left, var(--component-asset-paper-left, 0));
+  right: var(--component-asset-mobile-paper-right, var(--component-asset-paper-right, 0));
+  bottom: var(--component-asset-mobile-paper-bottom, var(--component-asset-paper-bottom, 0));
+  width: var(--component-asset-mobile-paper-width, var(--component-asset-paper-width, auto));
+  height: var(--component-asset-mobile-paper-height, var(--component-asset-paper-height, auto));
+  opacity: var(--component-asset-mobile-opacity, var(--component-asset-opacity, 1));
+  transform: rotate(var(--component-asset-mobile-rotate, var(--component-asset-rotate, 0deg)));
 }
 
 @media (min-width: 900px) {

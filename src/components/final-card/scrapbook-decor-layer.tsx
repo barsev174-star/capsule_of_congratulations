@@ -82,6 +82,10 @@ type DecorContextValue = {
   selectedGroup: (typeof SCRAPBOOK_VISUAL_GROUPS)[number];
   selectedAsset?: ScrapbookVisualAsset;
   filteredAssets: ScrapbookVisualAsset[];
+  highlightEnabled: boolean;
+  setHighlightEnabled: (enabled: boolean) => void;
+  mobilePreview: boolean;
+  setMobilePreview: (enabled: boolean) => void;
   setSelectedAssetId: (assetId: string) => void;
   setSelectedGroup: (group: (typeof SCRAPBOOK_VISUAL_GROUPS)[number]) => void;
   updateFloatingField: (field: FloatingField, value: string | boolean) => void;
@@ -109,7 +113,7 @@ const ScrapbookDecorContext = createContext<DecorContextValue | null>(null);
 const toCssValue = (value?: string) => value ?? "auto";
 const normalizeString = (value: string) => (value.trim() === "" ? undefined : value);
 const numberField = (value: number) => String(value);
-const safePaperSize = (value?: string) => {
+export const safePaperSize = (value?: string) => {
   const normalized = value?.trim();
 
   if (!normalized || normalized === "auto") {
@@ -129,6 +133,67 @@ const defaultFloatingAssetsById = new Map(scrapbookFloatingAssets.map((asset) =>
 const defaultComponentAssetsById = new Map(scrapbookComponentAssets.map((asset) => [asset.id, asset]));
 const LOCAL_CONFIG_STORAGE_KEY = "scrapbook-visual-config";
 const paperAssetsWithSizedDefaults = new Set(["heroPaper", "summaryPaper", "aiSummaryPaper", "closingPaper"]);
+
+const parsePixelValue = (value?: string) => {
+  if (!value) {
+    return null;
+  }
+
+  const match = value.trim().match(/^(-?\d+(?:\.\d+)?)px$/);
+
+  return match ? Number(match[1]) : null;
+};
+
+const isFixedPixelSize = (value?: string) => {
+  const parsed = parsePixelValue(value);
+
+  return parsed !== null && parsed > 2;
+};
+
+const hasBrokenPaperOffset = (asset: ScrapbookComponentAsset) => {
+  const offsets = [
+    parsePixelValue(asset.paperTop),
+    parsePixelValue(asset.paperLeft),
+    parsePixelValue(asset.paperRight),
+    parsePixelValue(asset.paperBottom)
+  ];
+
+  return offsets.some((value) => value !== null && Math.abs(value) >= 300);
+};
+
+export const restoreSizedPaperDefaults = (asset: ScrapbookComponentAsset): ScrapbookComponentAsset => {
+  if (!paperAssetsWithSizedDefaults.has(asset.id)) {
+    return asset;
+  }
+
+  const defaultAsset = defaultComponentAssetsById.get(asset.id);
+
+  if (!defaultAsset) {
+    return asset;
+  }
+
+  const hasCollapsedPaperSize =
+    !asset.paperWidth || asset.paperWidth === "auto" || !asset.paperHeight || asset.paperHeight === "auto";
+  const hasOldFixedSizing = isFixedPixelSize(asset.paperWidth) || isFixedPixelSize(asset.paperHeight);
+  const needsReset = hasCollapsedPaperSize || hasOldFixedSizing || hasBrokenPaperOffset(asset);
+
+  if (!needsReset) {
+    return asset;
+  }
+
+  return {
+    ...asset,
+    backgroundSize: defaultAsset.backgroundSize,
+    backgroundPositionX: defaultAsset.backgroundPositionX,
+    backgroundPositionY: defaultAsset.backgroundPositionY,
+    paperTop: defaultAsset.paperTop,
+    paperLeft: defaultAsset.paperLeft,
+    paperRight: defaultAsset.paperRight,
+    paperBottom: defaultAsset.paperBottom,
+    paperWidth: defaultAsset.paperWidth,
+    paperHeight: defaultAsset.paperHeight
+  };
+};
 
 const parseVisualConfig = (payload: unknown): StoredVisualConfig | null => {
   if (!payload || typeof payload !== "object") {
@@ -154,44 +219,6 @@ const mergeAssetList = <T extends ScrapbookVisualAsset>(defaultAssets: T[], inco
   const customAssets = incomingAssets.filter((asset) => !defaultIds.has(asset.id));
 
   return [...mergedDefaults, ...customAssets] as T[];
-};
-
-const parsePixelValue = (value?: string) => {
-  if (!value) {
-    return null;
-  }
-
-  const match = value.trim().match(/^(-?\d+(?:\.\d+)?)px$/);
-
-  return match ? Number(match[1]) : null;
-};
-
-const restoreSizedPaperDefaults = (asset: ScrapbookComponentAsset): ScrapbookComponentAsset => {
-  if (!paperAssetsWithSizedDefaults.has(asset.id)) {
-    return asset;
-  }
-
-  const defaultAsset = defaultComponentAssetsById.get(asset.id);
-  const hasCollapsedPaperSize =
-    !asset.paperWidth || asset.paperWidth === "auto" || !asset.paperHeight || asset.paperHeight === "auto";
-  const hasBrokenPaperOffset = Math.abs(parsePixelValue(asset.paperRight) ?? 0) >= 300;
-
-  if (!defaultAsset || (!hasCollapsedPaperSize && !hasBrokenPaperOffset)) {
-    return asset;
-  }
-
-  return {
-    ...asset,
-    backgroundSize: defaultAsset.backgroundSize,
-    backgroundPositionX: defaultAsset.backgroundPositionX,
-    backgroundPositionY: defaultAsset.backgroundPositionY,
-    paperTop: defaultAsset.paperTop,
-    paperLeft: defaultAsset.paperLeft,
-    paperRight: defaultAsset.paperRight,
-    paperBottom: defaultAsset.paperBottom,
-    paperWidth: defaultAsset.paperWidth,
-    paperHeight: defaultAsset.paperHeight
-  };
 };
 
 const mergeVisualConfig = (config: StoredVisualConfig): StoredVisualConfig => ({
@@ -309,6 +336,8 @@ export const ScrapbookDecorProvider = ({ children, debugEnabled }: ProviderProps
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
   const [importConfigText, setImportConfigText] = useState(() => readLocalVisualConfig(debugEnabled).raw);
   const [importState, setImportState] = useState<"idle" | "applied" | "failed">("idle");
+  const [highlightEnabled, setHighlightEnabled] = useState(true);
+  const [mobilePreview, setMobilePreview] = useState(false);
 
   const allAssets = useMemo(() => [...floatingAssets, ...componentAssets], [floatingAssets, componentAssets]);
 
@@ -338,7 +367,16 @@ export const ScrapbookDecorProvider = ({ children, debugEnabled }: ProviderProps
 
     setFloatingAssets(mergedConfig.floatingAssets);
     setComponentAssets(mergedConfig.componentAssets);
-    setSelectedAssetId(mergedConfig.floatingAssets[0]?.id ?? mergedConfig.componentAssets[0]?.id ?? "");
+    setSelectedAssetId((current) => {
+      const allIds = new Set([
+        ...mergedConfig.floatingAssets.map((asset) => asset.id),
+        ...mergedConfig.componentAssets.map((asset) => asset.id)
+      ]);
+
+      return allIds.has(current)
+        ? current
+        : (mergedConfig.floatingAssets[0]?.id ?? mergedConfig.componentAssets[0]?.id ?? "");
+    });
 
     return true;
   };
@@ -551,6 +589,10 @@ export const ScrapbookDecorProvider = ({ children, debugEnabled }: ProviderProps
         selectedGroup,
         selectedAsset,
         filteredAssets,
+        highlightEnabled,
+        setHighlightEnabled,
+        mobilePreview,
+        setMobilePreview,
         setSelectedAssetId,
         setSelectedGroup,
         updateFloatingField,
@@ -574,7 +616,7 @@ export const ScrapbookDecorProvider = ({ children, debugEnabled }: ProviderProps
 };
 
 export const ScrapbookDecorLayer = ({ anchor }: LayerProps) => {
-  const { floatingAssets } = useDecorContext();
+  const { floatingAssets, selectedAssetId, highlightEnabled } = useDecorContext();
   const anchorAssets = floatingAssets.filter((asset) => asset.visible && asset.anchor === anchor);
 
   if (anchorAssets.length === 0) {
@@ -596,6 +638,8 @@ export const ScrapbookDecorLayer = ({ anchor }: LayerProps) => {
             style={toFloatingAssetStyle(asset)}
             data-hide-on-mobile={asset.hideOnMobile}
             data-mobile-visible={asset.mobile?.visible ?? true}
+            data-asset-id={asset.id}
+            data-selected={highlightEnabled && asset.id === selectedAssetId ? "true" : undefined}
           >
             {asset.kind === "note" ? (
               <div className={styles.paperDecorNoteInner} style={{ backgroundImage: `url(${asset.src})` }}>
@@ -613,7 +657,7 @@ export const ScrapbookDecorLayer = ({ anchor }: LayerProps) => {
 };
 
 export const ScrapbookComponentFrame = ({ assetId, children, id, className, contentClassName, as }: FrameProps) => {
-  const { componentAssets } = useDecorContext();
+  const { componentAssets, selectedAssetId, highlightEnabled } = useDecorContext();
   const asset = componentAssets.find((item) => item.id === assetId);
   const Tag = (as ?? "div") as ElementType;
 
@@ -632,6 +676,7 @@ export const ScrapbookComponentFrame = ({ assetId, children, id, className, cont
       style={toComponentAssetStyle(asset)}
       data-component-group={asset.group}
       data-component-asset-id={asset.id}
+      data-selected={highlightEnabled && asset.id === selectedAssetId ? "true" : undefined}
     >
       <span className={styles.componentAssetPaperLayer} aria-hidden="true" />
       <div className={`${styles.componentAssetContent} ${contentClassName ?? ""}`.trim()}>{children}</div>
@@ -647,6 +692,10 @@ export const ScrapbookDecorDebugPanel = () => {
     selectedAsset,
     selectedGroup,
     filteredAssets,
+    highlightEnabled,
+    setHighlightEnabled,
+    mobilePreview,
+    setMobilePreview,
     setSelectedAssetId,
     setSelectedGroup,
     updateFloatingField,
@@ -663,6 +712,34 @@ export const ScrapbookDecorDebugPanel = () => {
     resetSelectedAsset,
     copyState
   } = useDecorContext();
+
+  const computedStyle = useMemo(() => {
+    if (selectedAsset?.type === "floating") {
+      return toFloatingAssetStyle(selectedAsset);
+    }
+
+    if (selectedAsset?.type === "component") {
+      return toComponentAssetStyle(selectedAsset);
+    }
+
+    return {} as CSSProperties;
+  }, [selectedAsset]);
+
+  useEffect(() => {
+    if (!debugEnabled) {
+      return;
+    }
+
+    if (mobilePreview) {
+      document.body.setAttribute("data-scrapbook-mobile-preview", "");
+    } else {
+      document.body.removeAttribute("data-scrapbook-mobile-preview");
+    }
+
+    return () => {
+      document.body.removeAttribute("data-scrapbook-mobile-preview");
+    };
+  }, [debugEnabled, mobilePreview]);
 
   if (!debugEnabled || !selectedAsset) {
     return null;
@@ -684,6 +761,25 @@ export const ScrapbookDecorDebugPanel = () => {
         <button type="button" className={styles.assetDebugCopyButton} onClick={resetSelectedAsset}>
           Reset asset
         </button>
+      </div>
+
+      <div className={styles.assetDebugToggles}>
+        <label>
+          <input
+            type="checkbox"
+            checked={highlightEnabled}
+            onChange={(event) => setHighlightEnabled(event.target.checked)}
+          />
+          <span>Highlight selected</span>
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={mobilePreview}
+            onChange={(event) => setMobilePreview(event.target.checked)}
+          />
+          <span>Mobile preview</span>
+        </label>
       </div>
 
       <details className={styles.assetDebugImport}>
@@ -738,6 +834,11 @@ export const ScrapbookDecorDebugPanel = () => {
         </select>
       </label>
 
+      <details className={styles.assetDebugComputed}>
+        <summary>Computed values ({selectedAsset.type})</summary>
+        <pre className={styles.assetDebugComputedCode}>{JSON.stringify(computedStyle, null, 2)}</pre>
+      </details>
+
       {selectedAsset.type === "floating" ? (
         <>
           <label className={styles.assetDebugField}>
@@ -787,6 +888,8 @@ export const ScrapbookDecorDebugPanel = () => {
               <span>opacity</span>
               <input
                 type="number"
+                min="0"
+                max="1"
                 step="0.05"
                 value={numberField(selectedAsset.opacity)}
                 onChange={(event) => updateFloatingField("opacity", event.target.value)}
@@ -923,6 +1026,8 @@ export const ScrapbookDecorDebugPanel = () => {
               <span>opacity</span>
               <input
                 type="number"
+                min="0"
+                max="1"
                 step="0.05"
                 value={numberField(selectedAsset.opacity)}
                 onChange={(event) => updateComponentField("opacity", event.target.value)}
