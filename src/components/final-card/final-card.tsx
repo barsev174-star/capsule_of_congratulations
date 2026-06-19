@@ -348,8 +348,10 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                   <span className={styles.heroNameLine}>{model.recipientName}</span>
                 </h1>
                 <p className={styles.subtitle}>
-                  Эту открытку для тебя собрали <strong>{model.fromLabel}</strong>. Здесь теплые слова,
-                  важные воспоминания и общий подарок от всей группы.
+                  <span>
+                    Эту открытку для тебя собрали <strong>{model.fromLabel}</strong>. Здесь теплые слова,
+                  </span>
+                  <span>важные воспоминания и общий подарок от всей группы.</span>
                 </p>
                 <div className={styles.heroCtaRow}>
                   <span className={styles.heroParticipants}>

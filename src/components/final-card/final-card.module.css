@@ -2392,6 +2392,14 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   background: transparent;
   border-radius: 0;
   box-shadow: none;
+  justify-items: stretch;
+}
+
+.paper-birthday .componentAssetFrame[data-component-asset-id="heroPaper"] > .componentAssetContent {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 100%;
+  justify-self: stretch;
 }
 
 .paper-birthday .hero::before,
@@ -2413,6 +2421,14 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   margin: 0;
   padding: 44px 48px 28px;
   text-align: center;
+}
+
+@media (min-width: 900px) {
+  .paper-birthday .heroMain {
+    width: min(100%, 760px);
+    margin-inline: auto;
+    transform: translateX(clamp(56px, 8vw, 124px));
+  }
 }
 
 .paper-birthday .heroPretitle {
@@ -2457,11 +2473,19 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
 }
 
 .paper-birthday .subtitle {
-  max-width: 520px;
+  display: grid;
+  justify-items: center;
+  width: min(100%, 640px);
+  max-width: 640px;
   margin: 0 auto 18px;
   color: var(--fc-muted);
-  font-size: 1rem;
-  line-height: 1.55;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.paper-birthday .subtitle span {
+  display: block;
 }
 
 .paper-birthday .heroCtaRow {
