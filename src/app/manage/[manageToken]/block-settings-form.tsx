@@ -35,6 +35,9 @@ type Props = {
   initialMemoryPhotoCount: 2 | 3;
   initialMemoryTitle: string;
   initialMemoryDescription: string;
+  requiredBlockIds: FinalCardBlockId[];
+  initialMainGreetingContributionId: string | null;
+  mainGreetingStatusText: string;
 };
 
 type RenderedBlock = {
@@ -117,9 +120,9 @@ const blockMeta: Record<
     details: "Обязательный блок. Он открывает открытку и задаёт первое впечатление."
   },
   summary: {
-    label: "Вводный блок",
-    summary: "Коротко вступление и повод, по которому собрана открытка.",
-    details: "Помогает задать контекст до поздравлений и делает открытие открытки более личным."
+    label: "Главное поздравление",
+    summary: "Выбранное поздравление, которое станет большим личным блоком в открытке.",
+    details: "Обязательный блок. Выберите поздравление во вкладке «Поздравления и фото», и оно появится в открытке как «Самые важные слова»."
   },
   qualities: {
     label: "Качества",
@@ -153,16 +156,29 @@ const blockMeta: Record<
   }
 };
 
-const requiredBlockIds: FinalCardBlockId[] = ["hero", "messages", "closing"];
 const fixedBlockIds: FinalCardBlockId[] = ["hero", "closing"];
 
-const buildCanvasBlocks = (options: BlockOption[], blockState: Record<string, boolean>): RenderedBlock[] => [
+const buildRequiredCanvasBlock = (blockId: FinalCardBlockId): RenderedBlock => ({
+  id: blockId,
+  label: blockMeta[blockId].label,
+  description: blockMeta[blockId].summary,
+  removable: false
+});
+
+const buildCanvasBlocks = (
+  options: BlockOption[],
+  blockState: Record<string, boolean>,
+  requiredBlockIds: FinalCardBlockId[]
+): RenderedBlock[] => [
   {
     id: "hero",
     label: blockMeta.hero.label,
     description: blockMeta.hero.summary,
     removable: false
   },
+  ...requiredBlockIds
+    .filter((blockId) => !["hero", "messages", "closing"].includes(blockId))
+    .map((blockId) => buildRequiredCanvasBlock(blockId)),
   ...options
     .filter((option) => !option.disabled && blockState[option.id])
     .map((option) => ({
@@ -454,7 +470,10 @@ export const BlockSettingsForm = ({
   initialMemoryMediaAssetIds,
   initialMemoryPhotoCount,
   initialMemoryTitle,
-  initialMemoryDescription
+  initialMemoryDescription,
+  requiredBlockIds,
+  initialMainGreetingContributionId,
+  mainGreetingStatusText
 }: Props) => {
   const [state, formAction, isPending] = useActionState(updateFinalPresentationSettingsAction, initialState);
   const [layoutMode, setLayoutMode] = useState<FinalCardMessageLayoutMode>(initialLayoutMode);
@@ -474,7 +493,10 @@ export const BlockSettingsForm = ({
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [expandedBlocks, setExpandedBlocks] = useState<ExpandedState>(initialExpandedState);
 
-  const activeBlocks = useMemo(() => buildCanvasBlocks(options, blockState), [blockState, options]);
+  const activeBlocks = useMemo(
+    () => buildCanvasBlocks(options, blockState, requiredBlockIds),
+    [blockState, options, requiredBlockIds]
+  );
 
   const canvasBlocks = useMemo(() => {
     const activeMap = new Map(activeBlocks.map((block) => [block.id, block]));
@@ -606,6 +628,7 @@ export const BlockSettingsForm = ({
       <input type="hidden" name="memoryTitle" value={memoryTitle} />
       <input type="hidden" name="memoryDescription" value={memoryDescription} />
       <input type="hidden" name="memoryPhotoCount" value={memoryPhotoCount} />
+      <input type="hidden" name="mainGreetingContributionId" value={initialMainGreetingContributionId ?? ""} />
 
       {normalizeSelectedSlots(messageMediaSlots, activeMessageMediaSlots, activeMessageMediaSlots.length).map((slot, index) => (
         <input key={`message-media-${slot}-${index}`} type="hidden" name="messageMediaSlots" value={slot} />
@@ -739,6 +762,18 @@ export const BlockSettingsForm = ({
                 <div className={`${styles.compositionAccordion} ${isExpanded ? styles.compositionAccordionOpen : ""}`}>
                   <div className={styles.compositionAccordionInner}>
                     <p className={styles.compositionDetails}>{blockMeta[block.id].details}</p>
+
+                    {block.id === "summary" ? (
+                      <div className={styles.messageSettings}>
+                        <div className={styles.messageSettingsGroup}>
+                          <h4 className={styles.messageSettingsTitle}>Главное поздравление</h4>
+                          <p>{mainGreetingStatusText}</p>
+                          <a className={styles.previewSecondaryLink} href={`/manage/${manageToken}?tab=content`}>
+                            Выбрать поздравление
+                          </a>
+                        </div>
+                      </div>
+                    ) : null}
 
                     {block.id === "messages" ? (
                       <div className={styles.messageSettings}>

@@ -2,6 +2,7 @@ import type { CardTemplateId, OccasionId } from "@/lib/cards/templates";
 import type {
   FinalCardBlockOrder,
   FinalCardBlockSettings,
+  FinalCardMainGreetingSettings,
   FinalCardMemorySettings,
   FinalCardMessageSettings
 } from "@/lib/final-card/types";
@@ -27,6 +28,7 @@ export type CardDraft = {
   finalBlockSettings: FinalCardBlockSettings | null;
   finalBlockOrder: FinalCardBlockOrder | null;
   finalMessageSettings: FinalCardMessageSettings | null;
+  finalMainGreetingSettings: FinalCardMainGreetingSettings | null;
   finalMemorySettings: FinalCardMemorySettings | null;
   status: CardStatus;
   paymentStatus: PaymentStatus;

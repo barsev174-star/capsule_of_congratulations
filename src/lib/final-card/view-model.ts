@@ -18,6 +18,7 @@ export type FinalCardViewModel = {
   finalSlug: string;
   summaryTitle: string;
   summaryText: string;
+  mainGreetingContributionId: string | null;
   aiSummaryTitle: string;
   aiSummaryText: string;
   qualities: string[];
@@ -42,42 +43,31 @@ export type FinalCardViewModel = {
 };
 
 const extractQualities = (contributions: Contribution[]) => {
-  const adjectives = [
-    "надежная",
-    "внимательная",
-    "добрая",
-    "заботливая",
-    "теплая",
-    "мудрая",
-    "вдохновляющая",
-    "смелая",
-    "искренняя",
-    "светлая",
-    "поддерживающая",
-    "целеустремленная",
-    "креативная",
-    "понимающая",
-    "яркая"
-  ];
-  const nounToAdjective: Record<string, string> = {
-    доброта: "добрая",
-    забота: "заботливая",
-    внимание: "внимательная",
-    поддержка: "поддерживающая",
-    тепло: "теплая",
-    мудрость: "мудрая",
-    надежность: "надежная",
-    вдохновение: "вдохновляющая"
+  const qualityKeywords: Record<string, string[]> = {
+    доброта: ["добр", "доброт"],
+    забота: ["забот"],
+    надежность: ["надеж", "надёж"],
+    вдохновение: ["вдохнов"],
+    поддержка: ["поддерж"],
+    тепло: ["тепл", "тёпл"],
+    юмор: ["юмор", "весел", "весёл"],
+    искренность: ["искрен"],
+    энергия: ["энерг"],
+    мудрость: ["мудр"],
+    внимание: ["вниматель", "внимание"],
+    свет: ["светл", "свет"],
+    спокойствие: ["спокой"],
+    радость: ["радост", "радость"]
   };
   const source = contributions.map((item) => item.message.toLowerCase()).join(" ");
 
-  const matchedAdjectives = adjectives.filter((adj) => source.includes(adj));
-  const matchedNouns = Object.entries(nounToAdjective)
-    .filter(([noun]) => source.includes(noun))
-    .map(([, adj]) => adj);
+  const matched = Object.entries(qualityKeywords)
+    .filter(([, keywords]) => keywords.some((keyword) => source.includes(keyword)))
+    .map(([quality]) => quality);
 
-  const unique = Array.from(new Set([...matchedAdjectives, ...matchedNouns]));
-  return unique.slice(0, 6);
+  const fallback = ["доброта", "забота", "тепло", "поддержка", "искренность"];
+  const unique = Array.from(new Set([...matched, ...fallback]));
+  return unique.slice(0, 5);
 };
 
 const getGenderSuffix = (name: string) => {
@@ -102,6 +92,25 @@ const buildSummaryText = (card: CardDraft, contributions: Contribution[]) => {
   }
 
   return `Дорог${getGenderSuffix(card.recipientName)} ${card.recipientName}!\n\nМы, ${card.fromLabel}, собрались, чтобы поздравить тебя с ${card.occasionText}. Каждое слово в этой открытке — от сердца к сердцу.`;
+};
+
+const trimMainGreetingText = (value: string) => {
+  const normalized = value.trim();
+
+  if (normalized.length <= 500) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, 499).trimEnd()}…`;
+};
+
+const resolveMainGreeting = (card: CardDraft, contributions: Contribution[]) => {
+  const selectedContributionId = card.finalMainGreetingSettings?.contributionId;
+  const selectedContribution = selectedContributionId
+    ? contributions.find((contribution) => contribution.id === selectedContributionId)
+    : null;
+
+  return selectedContribution ?? contributions[0] ?? null;
 };
 
 const buildAiSummaryText = (card: CardDraft, contributions: Contribution[]) => {
@@ -165,6 +174,7 @@ export const buildFinalCardViewModel = (
   const qualities = extractQualities(contributions);
   const quotes = extractQuotes(contributions);
   const memories = buildMemories(contributions);
+  const mainGreeting = resolveMainGreeting(card, contributions);
   const availability: FinalCardContentAvailability = {
     hasSummary: true,
     hasQualities: qualities.length > 0,
@@ -180,8 +190,9 @@ export const buildFinalCardViewModel = (
     fromLabel: card.fromLabel,
     participantCount: contributions.length,
     finalSlug: card.finalSlug,
-    summaryTitle: `${card.recipientName} глазами ${card.fromLabel}`,
-    summaryText: buildSummaryText(card, contributions),
+    summaryTitle: "Самые важные слова",
+    summaryText: mainGreeting ? trimMainGreetingText(mainGreeting.message) : buildSummaryText(card, contributions),
+    mainGreetingContributionId: mainGreeting?.id ?? null,
     aiSummaryTitle: "Общее поздравление",
     aiSummaryText: buildAiSummaryText(card, contributions),
     qualities,

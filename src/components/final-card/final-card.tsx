@@ -114,7 +114,7 @@ const DownloadIcon = () => (
 );
 
 const getQualityAssetId = (index: number) => {
-  const cycle = ["qualityTagShort1", "qualityTagShort2", "qualityTagShort3", "qualityTagShort1", "qualityTagShort2"] as const;
+  const cycle = ["qualityCardPink", "qualityCardViolet", "qualityCardBeige", "qualityCardGreen", "qualityCardBlue"] as const;
   return cycle[index % cycle.length];
 };
 
@@ -124,7 +124,7 @@ const getQuoteAssetId = (index: number) => {
 };
 
 const getGreetingAssetId = (index: number) => {
-  const cycle = ["greetingCardPink", "greetingCardCream", "greetingCardBlue", "greetingCardCream"] as const;
+  const cycle = ["greetingCardPink", "greetingCardCream", "greetingCardBlue", "greetingCardLavender"] as const;
   return cycle[index % cycle.length];
 };
 
@@ -419,8 +419,8 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
 
           const content = (
             <>
-              <h2 className={styles.sectionTitle}>Какая ты для нас</h2>
-              <p className={styles.sectionSubtitle}>Те слова, которые приходят на ум первыми</p>
+              <h2 className={styles.sectionTitle}>За что тебя ценят</h2>
+              <p className={styles.sectionSubtitle}>Собрано из поздравлений</p>
               <div className={styles.chipList}>
                 {visibleQualities.map((quality, index) => {
                   const color = chipColors[index % chipColors.length];
@@ -586,7 +586,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                 {model.quotes.map((quote, index) =>
                   isPaperBirthday ? (
                     <ScrapbookComponentFrame
-                      key={quote}
+                      key={`${quote}-${index}`}
                       assetId={getQuoteAssetId(index)}
                       className={`${styles.quoteCard} ${styles.paperBirthdayQuoteFrame}`}
                     >
@@ -594,7 +594,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                       <p className={styles.message}>{quote}</p>
                     </ScrapbookComponentFrame>
                   ) : (
-                    <article key={quote} className={styles.quoteCard}>
+                    <article key={`${quote}-${index}`} className={styles.quoteCard}>
                       <span className={styles.quoteMark}>&quot;</span>
                       <p className={styles.message}>{quote}</p>
                     </article>
@@ -657,7 +657,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                   <span aria-hidden="true">
                     <HeartIcon />
                   </span>
-                  Спасибо всем
+                  Спасибо, очень приятно!
                 </button>
                 <button type="button" className={`${styles.button} ${styles.secondaryButton}`}>
                   <span aria-hidden="true">
@@ -669,7 +669,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                   <span aria-hidden="true">
                     <SparkleIcon />
                   </span>
-                  Создать такую же
+                  Создать такую же открытку
                 </button>
               </div>
             </>

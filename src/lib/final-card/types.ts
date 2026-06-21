@@ -59,6 +59,10 @@ export type FinalCardMessageSettings = {
   showAllLink: boolean;
 };
 
+export type FinalCardMainGreetingSettings = {
+  contributionId: string | null;
+};
+
 export type FinalCardMemorySettings = {
   title: string;
   description: string;

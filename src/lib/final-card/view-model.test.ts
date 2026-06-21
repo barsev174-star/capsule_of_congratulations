@@ -20,6 +20,7 @@ const card: CardDraft = {
   finalBlockOrder: null,
   finalMessageSettings: null,
   finalMemorySettings: null,
+  finalMainGreetingSettings: null,
   status: "draft",
   paymentStatus: "unpaid",
   createdAt: "2026-01-01T00:00:00.000Z",
@@ -66,7 +67,8 @@ describe("buildFinalCardViewModel", () => {
     expect(viewModel.style).toBe("team-modern");
     expect(viewModel.participantCount).toBe(1);
     expect(viewModel.blocks.length).toBeGreaterThan(0);
-    expect(viewModel.summaryTitle).toContain("Анна");
+    expect(viewModel.summaryTitle).toBe("Самые важные слова");
+    expect(viewModel.mainGreetingContributionId).toBe("c1");
     expect(viewModel.occasionLabel).toBe("собираем открытку от команды Product & Design");
     expect(viewModel.finalSlug).toBe("final_1");
     expect(viewModel.messageLayoutMode).toBe("grid-2");

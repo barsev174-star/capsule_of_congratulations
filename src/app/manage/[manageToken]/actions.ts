@@ -15,6 +15,7 @@ import {
   reorderContributions,
   updateCardDraftBasics,
   updateCardFinalPresentationSettings,
+  updateCardMainGreetingSettings,
   updateCardMediaAssetCaption,
   updateContributionMessage,
   updateContributionStatus,
@@ -454,6 +455,13 @@ export async function updateFinalPresentationSettingsAction(
     mediaAssetIds: messageMediaAssetIds,
     showAllLink: visibleContributions.length > layoutProfile.cardsPerPage
   };
+  const mainGreetingContributionIdValue = String(formData.get("mainGreetingContributionId") ?? "");
+  const validVisibleContributionIds = new Set(visibleContributions.map((contribution) => contribution.id));
+  const finalMainGreetingSettings = {
+    contributionId: validVisibleContributionIds.has(mainGreetingContributionIdValue)
+      ? mainGreetingContributionIdValue
+      : card.finalMainGreetingSettings?.contributionId ?? null
+  };
   const finalMemorySettings: FinalCardMemorySettings = {
     title: memoryTitle,
     description: memoryDescription,
@@ -468,6 +476,7 @@ export async function updateFinalPresentationSettingsAction(
     finalBlockSettings,
     finalBlockOrder.length > 0 ? (finalBlockOrder as FinalCardBlockOrder) : card.finalBlockOrder,
     finalMessageSettings,
+    finalMainGreetingSettings,
     finalMemorySettings
   );
   if (!updated) {
@@ -479,12 +488,41 @@ export async function updateFinalPresentationSettingsAction(
     templateId,
     finalBlockSettings,
     finalMessageSettings,
+    finalMainGreetingSettings,
     finalMemorySettings
   });
 
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 
   return { ok: true, message: "Настройки финального экрана обновлены." };
+}
+
+export async function setMainGreetingAction(formData: FormData) {
+  const contributionId = String(formData.get("contributionId") ?? "");
+  const manageToken = String(formData.get("manageToken") ?? "");
+
+  if (!manageToken) {
+    return;
+  }
+
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) {
+    return;
+  }
+
+  const visibleContributions = await listContributionsByCardId(card.id);
+  const selectedContribution = visibleContributions.find((contribution) => contribution.id === contributionId);
+
+  await updateCardMainGreetingSettings(card.id, {
+    contributionId: selectedContribution?.id ?? null
+  });
+
+  logger.info("manage.main_greeting_selected", "Main greeting selected by organizer", {
+    cardId: card.id,
+    contributionId: selectedContribution?.id ?? null
+  });
+
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 }
 
 export async function saveCardMediaAction(

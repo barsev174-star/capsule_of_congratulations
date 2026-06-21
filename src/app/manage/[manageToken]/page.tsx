@@ -58,7 +58,7 @@ const layoutModeLabels: Record<string, string> = {
 };
 
 const blockPreviewLabels: Partial<Record<FinalCardBlockId, string>> = {
-  summary: "Вводный блок",
+  summary: "Главное поздравление",
   quotes: "Лучшие фразы",
   messages: "Поздравления"
 };
@@ -109,12 +109,20 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const memoryDescription =
     card.finalMemorySettings?.description ?? "Столько ярких моментов, с которыми мы идём рядом с тобой.";
   const layoutProfile = getFinalCardMessageLayoutProfile(layoutMode);
+  const requiredLayoutBlockIds = finalCardLayouts[style].blocks
+    .filter((block) => block.required)
+    .map((block) => block.id);
   const optionalLayoutBlocks = finalCardLayouts[style].blocks.filter((block) => !block.required);
+  const mainGreetingContributionId = card.finalMainGreetingSettings?.contributionId ?? model.mainGreetingContributionId;
+  const mainGreetingContribution = visibleContributions.find((contribution) => contribution.id === mainGreetingContributionId);
+  const mainGreetingStatusText = mainGreetingContribution
+    ? `Выбрано поздравление от ${mainGreetingContribution.authorName}. В открытке оно будет показано как «Самые важные слова».`
+    : "Главное поздравление пока не выбрано. Откройте вкладку «Поздравления и фото» и отметьте одно активное поздравление.";
 
   const blockMeta: Record<FinalCardOptionalBlockId, { label: string; description: string }> = {
     summary: {
-      label: "Вводный блок",
-      description: "Коротко объясняет, по какому поводу собрана открытка."
+      label: "Главное поздравление",
+      description: "Большой личный блок с выбранным поздравлением до общей ленты."
     },
     qualities: {
       label: "Качества",
@@ -302,6 +310,9 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   initialMemoryPhotoCount={memoryPhotoCount}
                   initialMemoryTitle={memoryTitle}
                   initialMemoryDescription={memoryDescription}
+                  requiredBlockIds={requiredLayoutBlockIds}
+                  initialMainGreetingContributionId={mainGreetingContributionId}
+                  mainGreetingStatusText={mainGreetingStatusText}
                 />
               </section>
             </div>
@@ -475,6 +486,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
             finalSlug={card.finalSlug}
             templateAccent={selectedTemplate.accent}
             previewMessage={previewMessage}
+            cardId={card.id}
+            mainGreetingContributionId={mainGreetingContributionId}
           />
         )}
       </div>

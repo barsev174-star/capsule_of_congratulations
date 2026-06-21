@@ -5,6 +5,7 @@ import type { CardTemplateId } from "@/lib/cards/templates";
 import type {
   FinalCardBlockOrder,
   FinalCardBlockSettings,
+  FinalCardMainGreetingSettings,
   FinalCardMemorySettings,
   FinalCardMessageSettings
 } from "@/lib/final-card/types";
@@ -29,12 +30,22 @@ const defaultFinalMemorySettings: FinalCardMemorySettings = {
   photoCount: 3
 };
 
+const defaultFinalMainGreetingSettings: FinalCardMainGreetingSettings = {
+  contributionId: null
+};
+
 const normalizeCard = (card: CardDraft): CardDraft => ({
   ...card,
   occasionText: card.occasionText ?? card.description ?? card.occasion,
   signature: card.signature ?? null,
   finalBlockSettings: card.finalBlockSettings ?? null,
   finalBlockOrder: card.finalBlockOrder ?? null,
+  finalMainGreetingSettings: card.finalMainGreetingSettings
+    ? {
+        ...defaultFinalMainGreetingSettings,
+        ...card.finalMainGreetingSettings
+      }
+    : defaultFinalMainGreetingSettings,
   finalMemorySettings: card.finalMemorySettings
     ? {
         ...defaultFinalMemorySettings,
@@ -189,6 +200,7 @@ export const updateCardFinalPresentationSettings = async (
   finalBlockSettings: FinalCardBlockSettings,
   finalBlockOrder: FinalCardBlockOrder | null,
   finalMessageSettings: FinalCardMessageSettings,
+  finalMainGreetingSettings: FinalCardMainGreetingSettings,
   finalMemorySettings: FinalCardMemorySettings
 ) => {
   const cards = await readCards();
@@ -204,7 +216,30 @@ export const updateCardFinalPresentationSettings = async (
     finalBlockSettings,
     finalBlockOrder,
     finalMessageSettings,
+    finalMainGreetingSettings,
     finalMemorySettings,
+    updatedAt: new Date().toISOString()
+  };
+
+  cards[index] = updated;
+  await writeFile(cardsFilePath, JSON.stringify(cards, null, 2), "utf8");
+  return updated;
+};
+
+export const updateCardMainGreetingSettings = async (
+  cardId: string,
+  finalMainGreetingSettings: FinalCardMainGreetingSettings
+) => {
+  const cards = await readCards();
+  const index = cards.findIndex((card) => card.id === cardId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const updated = {
+    ...cards[index],
+    finalMainGreetingSettings,
     updatedAt: new Date().toISOString()
   };
 

@@ -5,9 +5,15 @@ import { useActionState, useMemo, useState, useTransition, type CSSProperties, t
 import { useRouter } from "next/navigation";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
+import { AiHelper } from "@/app/card/[publicSlug]/ai-helper";
 import { ContributionEditor } from "./contribution-editor";
 import { MediaManager } from "./media-manager";
-import { addManualContributionAction, reorderContributionsAction, setContributionStatusAction } from "./actions";
+import {
+  addManualContributionAction,
+  reorderContributionsAction,
+  setContributionStatusAction,
+  setMainGreetingAction
+} from "./actions";
 import styles from "./manage-page.module.css";
 
 type Props = {
@@ -23,6 +29,8 @@ type Props = {
   finalSlug: string;
   templateAccent: string;
   previewMessage?: Contribution;
+  cardId: string;
+  mainGreetingContributionId: string | null;
 };
 
 type DropTarget = {
@@ -49,7 +57,9 @@ export const ContentStudio = ({
   publicSlug,
   finalSlug,
   templateAccent,
-  previewMessage
+  previewMessage,
+  cardId,
+  mainGreetingContributionId
 }: Props) => {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(reorderContributionsAction, initialState);
@@ -61,6 +71,7 @@ export const ContentStudio = ({
   const [expandedContributionIds, setExpandedContributionIds] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<ContributionFilter>("all");
   const [isManualFormOpen, setIsManualFormOpen] = useState(false);
+  const [manualMessage, setManualMessage] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [copyMessage, setCopyMessage] = useState("");
 
@@ -71,6 +82,7 @@ export const ContentStudio = ({
   const noRoleCount = allContributions.filter((contribution) => !contribution.authorRole?.trim()).length;
   const participantUrl = `/card/${publicSlug}`;
   const inviteText = `Собираем открытку для ${recipientName}. Добавьте пару теплых слов по ссылке: ${participantUrl}`;
+  const mainGreetingContribution = allContributions.find((contribution) => contribution.id === mainGreetingContributionId);
 
   const orderedContributions = useMemo(() => {
     const map = new Map(allContributions.map((contribution) => [contribution.id, contribution]));
@@ -239,6 +251,7 @@ export const ContentStudio = ({
       setManualState(result);
 
       if (result.ok) {
+        setManualMessage("");
         setIsManualFormOpen(false);
         setActiveFilter("all");
         router.refresh();
@@ -269,6 +282,20 @@ export const ContentStudio = ({
 
       <div className={styles.contentLayout}>
         <section className={styles.contentPanel}>
+          <section className={styles.contentAssistantCard}>
+            <div>
+              <h3 className={styles.contentAssistantTitle}>Главное поздравление</h3>
+              <p className={styles.contentAssistantText}>
+                {mainGreetingContribution
+                  ? `Сейчас в блок «Самые важные слова» попадет поздравление от ${mainGreetingContribution.authorName}.`
+                  : "Выберите одно активное поздравление для большого блока «Самые важные слова». Если не выбрать, открытка возьмет первое активное поздравление."}
+              </p>
+            </div>
+            <Link href={`/gift/${finalSlug}`} target="_blank" className={styles.contentOutlineButton}>
+              Проверить в открытке
+            </Link>
+          </section>
+
           <div className={styles.contentPanelHeader}>
             <div className={styles.contentPanelTopRow}>
               <h2 className={styles.contentPanelTitle}>Поздравления</h2>
@@ -339,12 +366,22 @@ export const ContentStudio = ({
                 <textarea
                   name="message"
                   placeholder="Вставьте или напишите поздравление от участника..."
+                  value={manualMessage}
+                  onChange={(event) => setManualMessage(event.target.value)}
                   required
                   minLength={20}
                   maxLength={1500}
                   rows={5}
                 />
               </label>
+
+              <AiHelper
+                cardId={cardId}
+                recipientName={recipientName}
+                occasionText={occasionText}
+                messageLimit={500}
+                onUseText={setManualMessage}
+              />
 
               <div className={styles.manualContributionFooter}>
                 <button type="submit" className={styles.contentPrimaryButton} disabled={isManualPending}>
@@ -468,6 +505,20 @@ export const ContentStudio = ({
                         </div>
 
                         <div className={styles.contentTopControls}>
+                          <form action={setMainGreetingAction}>
+                            <input type="hidden" name="manageToken" value={manageToken} />
+                            <input type="hidden" name="contributionId" value={mainGreetingContributionId === contribution.id ? "" : contribution.id} />
+                            <button
+                              type="submit"
+                              className={`${styles.contentSoftButton} ${
+                                mainGreetingContributionId === contribution.id ? styles.contentFilterPillActive : ""
+                              }`}
+                              disabled={isHidden}
+                              title={isHidden ? "Сначала покажите поздравление в открытке" : "Сделать главным поздравлением"}
+                            >
+                              {mainGreetingContributionId === contribution.id ? "Главное" : "В главное"}
+                            </button>
+                          </form>
                           {isExpanded ? (
                             <>
                               <span className={styles.contentBodyLabelCompact}>Показывать в открытке</span>
