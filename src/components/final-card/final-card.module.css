@@ -2724,24 +2724,48 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   padding: 2px;
 }
 
-.paper-birthday .messageTrackGrid2 {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
+.paper-birthday .messageTrackGrid2,
 .paper-birthday .messageTrackRow1,
 .paper-birthday .messageTrackRows2 {
-  display: flex;
+  display: grid;
   gap: 14px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   padding-bottom: 8px;
+  align-items: stretch;
+  scrollbar-width: thin;
+}
+
+.paper-birthday .messageTrackGrid2 {
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, minmax(190px, auto));
+  grid-auto-columns: calc((100% - 14px) / 2);
+  min-height: 394px;
+}
+
+.paper-birthday .messageTrackRow1 {
+  grid-auto-flow: column;
+  grid-template-rows: minmax(190px, auto);
+  grid-auto-columns: calc((100% - 28px) / 3);
+  min-height: 206px;
+}
+
+.paper-birthday .messageTrackRows2 {
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, minmax(190px, auto));
+  grid-auto-columns: calc((100% - 28px) / 3);
+  min-height: 394px;
 }
 
 .paper-birthday .messageTrackRow1 .card,
+.paper-birthday .messageTrackGrid2 .card,
 .paper-birthday .messageTrackRows2 .card {
-  flex: 0 0 min(340px, 82vw);
+  width: 100%;
+  min-width: 0;
+  height: 100%;
   scroll-snap-align: start;
 }
 
@@ -3057,8 +3081,12 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
     padding: 24px 20px;
   }
 
-  .paper-birthday .messageTrackGrid2 {
-    grid-template-columns: 1fr;
+  .paper-birthday .messageTrackGrid2,
+  .paper-birthday .messageTrackRow1,
+  .paper-birthday .messageTrackRows2 {
+    grid-template-rows: unset;
+    grid-auto-columns: minmax(260px, 82vw);
+    min-height: auto;
   }
 
   .paper-birthday .messageSplitFixed {
