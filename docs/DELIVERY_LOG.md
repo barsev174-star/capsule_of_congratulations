@@ -432,3 +432,20 @@
 1. Made every scrapbook component asset frame its own isolated stacking layer so paper backgrounds stay visible behind live text.
 2. Added explicit Closing Paper layer sizing and offsets, matching the same paper-layer model used by Hero, Summary, and AI Summary.
 3. Extended debug-config migration to repair old broken paper offsets such as oversized `paperRight` values that pushed paper sheets away from their content.
+
+## Update 2026-06-22 MVP-flow Kickoff
+
+1. Froze the current scrapbook design direction as the baseline for the next product phase.
+2. Added card lifecycle statuses: `draft`, `collecting`, `ready`, and `closed`.
+3. Added organizer controls for status switching and the three core links:
+   - participant link;
+   - manage link;
+   - final gift link.
+4. Added copy buttons for those links in the organizer screen.
+5. Made the participant API reject new contributions when the card is `closed`.
+6. Added a closed-state message on the participant page.
+7. Turned the final-card bottom buttons into MVP actions:
+   - “Спасибо” shows a local confirmation;
+   - “Сохранить открытку” opens browser print/save;
+   - “Создать такую же открытку” goes to creation.
+8. Kept AI, payment, registration, service admin, and persistent production storage out of the immediate MVP-flow.

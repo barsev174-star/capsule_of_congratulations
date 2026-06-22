@@ -225,6 +225,116 @@
   background: rgba(255, 255, 255, 0.72);
 }
 
+.flowPanel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(98, 72, 58, 0.12);
+  border-radius: 24px;
+  background: rgba(255, 250, 245, 0.82);
+}
+
+.flowStatus {
+  display: grid;
+  gap: 4px;
+}
+
+.flowLabel {
+  color: #9a7867;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.flowStatus strong {
+  color: #4a3026;
+  font-size: 1.12rem;
+}
+
+.flowStatus p {
+  margin: 0;
+  color: #786052;
+  line-height: 1.5;
+}
+
+.statusForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.statusForm label {
+  color: #61483b;
+  font-weight: 800;
+}
+
+.statusForm select,
+.statusForm button {
+  min-height: 40px;
+  border-radius: 999px;
+  font: inherit;
+}
+
+.statusForm select {
+  padding: 0 14px;
+  border: 1px solid rgba(98, 72, 58, 0.16);
+  background: #fffdf9;
+  color: #4e382e;
+}
+
+.statusForm button,
+.copyLinkButton {
+  border: 0;
+  background: #c86b7a;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.statusForm button {
+  padding: 0 16px;
+}
+
+.linkGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.linkCard {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(98, 72, 58, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.linkCard span {
+  color: #9a7867;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.linkCard a {
+  overflow: hidden;
+  color: #4d342b;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copyLinkButton {
+  justify-self: start;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font: inherit;
+}
+
 .studioPanel,
 .panel,
 .actionsCard {
@@ -2959,6 +3069,25 @@ button.contentFilterPill {
   color: #fff8f3;
   border-color: transparent;
   box-shadow: 0 10px 24px rgba(194, 120, 84, 0.24);
+}
+
+.flowPanel {
+  margin-top: 6px;
+}
+
+@media (max-width: 780px) {
+  .linkGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statusForm {
+    align-items: stretch;
+  }
+
+  .statusForm select,
+  .statusForm button {
+    width: 100%;
+  }
 }
 
 .heroTemplateCard {

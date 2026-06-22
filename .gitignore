@@ -4,10 +4,14 @@ node_modules/
 dist/
 coverage/
 .npm-cache/
+screenshots/
+tsconfig.tsbuildinfo
 data/cards.json
 data/contributions.json
 data/ai-generations.json
 public/uploads/
+docs/*.png
+!docs/Аватары.png
 
 # Python
 __pycache__/

@@ -296,3 +296,32 @@ Accepted:
 Why:
 
 The status action is moderation, not text editing. Once the organizer changes visibility, the card should return to compact list mode and move cleanly to its new group.
+
+## 2026-06-22
+
+### Decision: stop visual polishing and move to MVP-flow
+
+Accepted:
+
+1. The first scrapbook visual direction is good enough to freeze as the current baseline.
+2. The next product milestone is a working one-card lifecycle, not more visual tuning.
+3. The MVP-flow runs without registration, payment, full admin, or mandatory AI.
+4. Organizer control happens through a secret manage link.
+5. Participant collection happens through a public participant link.
+6. Recipient viewing happens through a final gift link.
+
+Why:
+
+The project now needs proof that the greeting-card flow works end to end. Visual quality matters, but more polishing has lower leverage than making the prototype usable by a real organizer.
+
+### Decision: use lifecycle statuses before accounts
+
+Accepted:
+
+1. Cards now use `draft`, `collecting`, `ready`, and `closed`.
+2. `closed` prevents new participant congratulations.
+3. Status is controlled from the organizer screen.
+
+Why:
+
+Statuses give enough operational control for MVP without introducing accounts, roles, or a service admin panel too early.

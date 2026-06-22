@@ -15,6 +15,8 @@ import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { BasicsSettingsForm } from "./basics-settings-form";
 import { BlockSettingsForm } from "./block-settings-form";
 import { ContentStudio } from "./content-studio";
+import { CopyLinkButton } from "./copy-link-button";
+import { updateCardStatusAction } from "./actions";
 import { TemplateSettingsForm } from "./template-settings-form";
 import styles from "./manage-page.module.css";
 
@@ -61,6 +63,20 @@ const blockPreviewLabels: Partial<Record<FinalCardBlockId, string>> = {
   summary: "Главное поздравление",
   quotes: "Лучшие фразы",
   messages: "Поздравления"
+};
+
+const statusLabels: Record<string, string> = {
+  draft: "Черновик",
+  collecting: "Сбор поздравлений",
+  ready: "Готова к отправке",
+  closed: "Сбор закрыт"
+};
+
+const statusHints: Record<string, string> = {
+  draft: "Настройте основу открытки и проверьте оформление.",
+  collecting: "Можно отправлять ссылку участникам и собирать поздравления.",
+  ready: "Открытка готова, можно отправлять финальную ссылку получателю.",
+  closed: "Новые поздравления больше не принимаются."
 };
 
 const formatEventDate = (value: string | null) => {
@@ -194,6 +210,10 @@ export default async function ManagePage({ params, searchParams }: Props) {
 
     return blockPreviewLabels[block.id] ?? block.id;
   });
+  const participantLink = `/card/${card.publicSlug}`;
+  const manageLink = `/manage/${card.manageToken}`;
+  const finalLink = `/gift/${card.finalSlug}`;
+  const currentStatus = card.status ?? "draft";
 
   return (
     <main className={styles.page}>
@@ -213,10 +233,43 @@ export default async function ManagePage({ params, searchParams }: Props) {
 
               <div className={styles.stats}>
                 <div className={styles.stat}>Повод: {occasionText}</div>
-                <div className={styles.stat}>Сообщений: {allContributions.length}</div>
+                <div className={styles.stat}>Поздравлений: {allContributions.length}</div>
                 <div className={styles.stat}>Видимых: {visibleContributions.length}</div>
+                <div className={styles.stat}>Статус: {statusLabels[currentStatus] ?? currentStatus}</div>
                 <div className={styles.stat}>Сетка: {layoutModeLabels[layoutMode] ?? layoutMode}</div>
               </div>
+
+              <section className={styles.flowPanel} aria-label="MVP-flow открытки">
+                <div className={styles.flowStatus}>
+                  <span className={styles.flowLabel}>Текущий этап</span>
+                  <strong>{statusLabels[currentStatus] ?? currentStatus}</strong>
+                  <p>{statusHints[currentStatus] ?? "Статус открытки обновлен."}</p>
+                </div>
+                <form action={updateCardStatusAction} className={styles.statusForm}>
+                  <input type="hidden" name="manageToken" value={manageToken} />
+                  <label htmlFor="cardStatus">Изменить статус</label>
+                  <select id="cardStatus" name="status" defaultValue={currentStatus}>
+                    <option value="draft">Черновик</option>
+                    <option value="collecting">Сбор поздравлений</option>
+                    <option value="ready">Готова к отправке</option>
+                    <option value="closed">Сбор закрыт</option>
+                  </select>
+                  <button type="submit">Сохранить статус</button>
+                </form>
+                <div className={styles.linkGrid}>
+                  {[
+                    { label: "Участникам", href: participantLink },
+                    { label: "Организатору", href: manageLink },
+                    { label: "Получателю", href: finalLink }
+                  ].map((item) => (
+                    <div key={item.href} className={styles.linkCard}>
+                      <span>{item.label}</span>
+                      <Link href={item.href}>{item.href}</Link>
+                      <CopyLinkButton value={item.href} />
+                    </div>
+                  ))}
+                </div>
+              </section>
 
               <nav className={styles.tabBar} aria-label="Разделы управления открыткой">
                 {tabItems.map((item) => (

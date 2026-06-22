@@ -2140,6 +2140,15 @@
   gap: 12px;
 }
 
+.actionFeedback {
+  margin: 12px auto 0;
+  max-width: 560px;
+  color: var(--fc-muted);
+  font-size: 0.94rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .sectionFooter {
   display: flex;
   justify-content: flex-start;

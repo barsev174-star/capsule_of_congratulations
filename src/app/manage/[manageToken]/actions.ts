@@ -14,6 +14,7 @@ import {
   moveContribution,
   reorderContributions,
   updateCardDraftBasics,
+  updateCardStatus,
   updateCardFinalPresentationSettings,
   updateCardMainGreetingSettings,
   updateCardMediaAssetCaption,
@@ -46,6 +47,7 @@ const messageLayoutModes: FinalCardMessageLayoutMode[] = ["grid-2", "carousel-1"
 const mediaLayouts: FinalCardMessageMediaLayout[] = ["portrait", "landscape-pair", "landscape-trio"];
 const mediaSlots: CardMediaSlot[] = ["portrait", "landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c"];
 const finalMediaSlots: FinalCardMediaSlot[] = ["portrait", "landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c"];
+const cardStatuses: CardDraft["status"][] = ["draft", "collecting", "ready", "closed"];
 
 const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 const validateLength = (value: string, min: number, max: number) => value.length >= min && value.length <= max;
@@ -282,6 +284,28 @@ export async function updateCardBasicsAction(
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 
   return { ok: true, message: "Основа открытки обновлена." };
+}
+
+export async function updateCardStatusAction(formData: FormData) {
+  const manageToken = String(formData.get("manageToken") ?? "");
+  const statusValue = String(formData.get("status") ?? "") as CardDraft["status"];
+
+  if (!manageToken || !cardStatuses.includes(statusValue)) {
+    return;
+  }
+
+  const card = await getCardDraftByManageToken(manageToken);
+
+  if (!card) {
+    return;
+  }
+
+  await updateCardStatus(card.id, statusValue);
+  logger.info("manage.card_status_updated", "Card lifecycle status updated by organizer", {
+    cardId: card.id,
+    status: statusValue
+  });
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 }
 
 export async function updateContributionMessageAction(

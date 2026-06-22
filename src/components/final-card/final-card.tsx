@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type { FinalCardViewModel } from "@/lib/final-card/view-model";
+import { FinalCardActions } from "@/components/final-card/final-card-actions";
 import type { ScrapbookDecorAnchor } from "./scrapbook-decor-config";
 import {
   ScrapbookComponentFrame,
@@ -673,26 +674,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
               <div className={styles.closingContent}>
                 <p className={styles.closingSignature}>{model.footerSignature}</p>
               </div>
-              <div className={styles.actions}>
-                <button type="button" className={`${styles.button} ${styles.primaryButton}`}>
-                  <span aria-hidden="true">
-                    <HeartIcon />
-                  </span>
-                  Спасибо, очень приятно!
-                </button>
-                <button type="button" className={`${styles.button} ${styles.secondaryButton}`}>
-                  <span aria-hidden="true">
-                    <DownloadIcon />
-                  </span>
-                  Сохранить открытку
-                </button>
-                <button type="button" className={`${styles.button} ${styles.secondaryButton}`}>
-                  <span aria-hidden="true">
-                    <SparkleIcon />
-                  </span>
-                  Создать такую же открытку
-                </button>
-              </div>
+              <FinalCardActions />
             </>
           );
 

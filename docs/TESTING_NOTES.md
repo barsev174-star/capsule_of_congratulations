@@ -57,10 +57,11 @@ npm.cmd run dev
 
 ## Что пока ожидаемо не готово
 
-1. Секретная панель организатора еще не реализована.
-2. AI пока работает на внутреннем генераторе-шаблонизаторе, а не на внешней модели.
-3. Оплата и публикация еще не реализованы.
+1. AI пока не является частью обязательного MVP-flow.
+2. Оплата и публикация по тарифу еще не реализованы.
+3. Регистрация и полноценная админка сервиса еще не реализованы.
 4. Хранение пока локальное, не в базе данных.
+5. “Спасибо” на финальной открытке пока локальная реакция, без отправки организатору.
 ## Update 2026-06-14
 
 Check the new manage flow:
@@ -106,3 +107,23 @@ Manual checks for the current manage editor:
 7. Confirm that hidden contributions do not appear on participant/public visible surfaces.
 8. Click `Добавить вручную`, add a valid author and message, and confirm the new contribution appears in the moderation list after submit.
 9. Open the overflow menu next to `Добавить вручную` and confirm participant link and invitation text can be copied.
+
+## Update 2026-06-22 MVP-flow checks
+
+Manual checks for the current MVP-flow:
+
+1. Open the organizer manage page.
+2. Confirm the hero panel shows:
+   - current lifecycle status;
+   - participant link;
+   - organizer link;
+   - recipient/final link.
+3. Copy each link and confirm the copied value opens from the browser address bar.
+4. Change status to `Сбор закрыт`.
+5. Open the participant link and confirm the form is replaced by the closed-state message.
+6. Try posting to `/api/contributions` for the closed card and confirm it returns an error.
+7. Change status back to `Сбор поздравлений` and confirm the participant form is visible again.
+8. Open the final gift link.
+9. Click `Спасибо, очень приятно!` and confirm a local confirmation message appears.
+10. Click `Сохранить открытку` and confirm the browser print/save dialog opens.
+11. Click `Создать такую же открытку` and confirm it navigates to `/create`.

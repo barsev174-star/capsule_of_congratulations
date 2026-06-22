@@ -23,6 +23,7 @@ export default async function ParticipantCardPage({ params }: Props) {
   const recipientName = card.recipientName || "дорогого человека";
   const fromLabel = card.fromLabel || "группы";
   const occasionText = card.occasionText || "повод пока уточняется";
+  const isClosed = card.status === "closed";
 
   return (
     <main className={styles.page}>
@@ -44,13 +45,22 @@ export default async function ParticipantCardPage({ params }: Props) {
         </section>
 
         <div className={styles.layout}>
-          <ParticipantForm
-            cardId={card.id}
-            publicSlug={publicSlug}
-            recipientName={recipientName}
-            occasionText={occasionText}
-            messageLimit={layoutProfile.maxChars}
-          />
+          {isClosed ? (
+            <section className={styles.formCard}>
+              <h2 className={styles.sectionTitle}>Сбор поздравлений закрыт</h2>
+              <p className={styles.hint}>
+                Организатор уже завершил сбор материалов для этой открытки. Спасибо, что заглянули по ссылке.
+              </p>
+            </section>
+          ) : (
+            <ParticipantForm
+              cardId={card.id}
+              publicSlug={publicSlug}
+              recipientName={recipientName}
+              occasionText={occasionText}
+              messageLimit={layoutProfile.maxChars}
+            />
+          )}
 
           <section className={styles.listCard}>
             <h2 className={styles.sectionTitle}>Что уже добавили</h2>

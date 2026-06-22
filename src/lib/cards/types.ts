@@ -7,7 +7,7 @@ import type {
   FinalCardMessageSettings
 } from "@/lib/final-card/types";
 
-export type CardStatus = "draft";
+export type CardStatus = "draft" | "collecting" | "ready" | "closed";
 export type PaymentStatus = "unpaid";
 
 export type CardDraft = {

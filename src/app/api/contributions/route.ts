@@ -17,6 +17,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (card?.status === "closed") {
+    return NextResponse.json(
+      { ok: false, message: "Сбор поздравлений для этой открытки уже закрыт организатором." },
+      { status: 403 }
+    );
+  }
+
   const validation = validateContributionFormData(formData, {
     layoutMode: card?.finalMessageSettings?.layoutMode ?? "grid-2"
   });
