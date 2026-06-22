@@ -3468,3 +3468,125 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
     padding-right: 8px;
   }
 }
+
+/* ===== Scrapbook layout polish ===== */
+.paper-birthday .heroPretitle {
+  margin-bottom: 2px;
+  transform: translateY(14px);
+}
+
+.paper-birthday .hero.paperBirthdayHeroExpanded .heroPretitle {
+  transform: translateY(18px);
+}
+
+.paper-birthday .hero.paperBirthdayHeroExpanded .title {
+  margin-top: 4px;
+}
+
+.paper-birthday .hero.paperBirthdayHeroExpanded .subtitle {
+  margin-top: 8px;
+}
+
+.paper-birthday .hero.paperBirthdayHeroExpanded .heroCtaRow {
+  margin-top: 10px;
+}
+
+.paper-birthday .qualitiesPanel {
+  max-width: 1120px;
+}
+
+.paper-birthday .qualitiesPanel .chipList {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 10px;
+  padding-inline: 8px;
+}
+
+.paper-birthday .qualitiesPanel .qualityChipFrame {
+  width: calc((100% - 40px) / 5);
+  min-width: 0;
+  max-width: 196px;
+}
+
+.paper-birthday .messageSplitFixed {
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 0.78fr);
+  gap: 14px;
+}
+
+.paper-birthday .mediaRail,
+.paper-birthday .mediaRailTrio {
+  gap: 8px;
+}
+
+.paper-birthday .mediaCardLandscape {
+  aspect-ratio: 1.45 / 1;
+}
+
+.paper-birthday .componentAssetFrame.mediaCardLandscape .componentAssetContent {
+  padding: 8px 8px 14px;
+}
+
+.paper-birthday .mediaCaption {
+  padding: 6px 8px;
+}
+
+.paper-birthday .componentAssetFrame.memories {
+  width: 100%;
+  max-width: 1100px;
+  margin-inline: auto;
+}
+
+.paper-birthday .memories {
+  padding: 20px 24px 18px;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.paper-birthday .memories::after {
+  content: none;
+}
+
+.paper-birthday .memoriesStrip {
+  grid-template-columns: minmax(160px, 0.52fr) minmax(280px, 1.28fr) minmax(220px, 0.9fr) minmax(220px, 0.9fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.paper-birthday .memoryIntroCard {
+  align-self: start;
+  margin-top: -10px;
+  min-height: 118px;
+  padding: 16px 18px;
+}
+
+.paper-birthday .memoryPhotoCard:first-of-type .memoryPhotoImage,
+.paper-birthday .memoryPhotoImage {
+  aspect-ratio: 1.46 / 1;
+}
+
+.paper-birthday .memoryPhotoCaptionWrap {
+  margin-top: 4px;
+}
+
+@media (max-width: 899px) {
+  .paper-birthday .qualitiesPanel .chipList {
+    flex-wrap: wrap;
+  }
+
+  .paper-birthday .qualitiesPanel .qualityChipFrame {
+    width: var(--component-asset-width, 196px);
+    min-width: var(--component-asset-width, 196px);
+  }
+
+  .paper-birthday .messageSplitFixed,
+  .paper-birthday .memoriesStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .paper-birthday .heroPretitle,
+  .paper-birthday .hero.paperBirthdayHeroExpanded .heroPretitle {
+    transform: none;
+  }
+}

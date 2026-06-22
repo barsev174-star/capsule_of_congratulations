@@ -628,7 +628,7 @@ export const ScrapbookDecorProvider = ({ children, debugEnabled }: ProviderProps
 };
 
 export const ScrapbookDecorLayer = ({ anchor }: LayerProps) => {
-  const { floatingAssets, selectedAssetId, highlightEnabled } = useDecorContext();
+  const { floatingAssets, selectedAssetId, highlightEnabled, debugEnabled } = useDecorContext();
   const anchorAssets = floatingAssets.filter((asset) => asset.visible && asset.anchor === anchor);
 
   if (anchorAssets.length === 0) {
@@ -651,7 +651,7 @@ export const ScrapbookDecorLayer = ({ anchor }: LayerProps) => {
             data-hide-on-mobile={asset.hideOnMobile}
             data-mobile-visible={asset.mobile?.visible ?? true}
             data-asset-id={asset.id}
-            data-selected={highlightEnabled && asset.id === selectedAssetId ? "true" : undefined}
+            data-selected={debugEnabled && highlightEnabled && asset.id === selectedAssetId ? "true" : undefined}
           >
             {asset.kind === "note" ? (
               <div className={styles.paperDecorNoteInner} style={{ backgroundImage: `url(${asset.src})` }}>
@@ -669,7 +669,7 @@ export const ScrapbookDecorLayer = ({ anchor }: LayerProps) => {
 };
 
 export const ScrapbookComponentFrame = ({ assetId, children, id, className, contentClassName, as }: FrameProps) => {
-  const { componentAssets, selectedAssetId, highlightEnabled } = useDecorContext();
+  const { componentAssets, selectedAssetId, highlightEnabled, debugEnabled } = useDecorContext();
   const asset = componentAssets.find((item) => item.id === assetId);
   const Tag = (as ?? "div") as ElementType;
 
@@ -688,7 +688,7 @@ export const ScrapbookComponentFrame = ({ assetId, children, id, className, cont
       style={toComponentAssetStyle(asset)}
       data-component-group={asset.group}
       data-component-asset-id={asset.id}
-      data-selected={highlightEnabled && asset.id === selectedAssetId ? "true" : undefined}
+      data-selected={debugEnabled && highlightEnabled && asset.id === selectedAssetId ? "true" : undefined}
     >
       <span className={styles.componentAssetPaperLayer} aria-hidden="true" />
       <div className={`${styles.componentAssetContent} ${contentClassName ?? ""}`.trim()}>{children}</div>
