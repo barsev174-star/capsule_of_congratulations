@@ -581,18 +581,6 @@ export const ContentStudio = ({
             </div>
           )}
 
-          <section className={styles.contentAssistantCard}>
-            <div>
-              <h3 className={styles.contentAssistantTitle}>AI-общее поздравление</h3>
-              <p className={styles.contentAssistantText}>
-                Сгенерировать единое поздравление от команды на основании уже добавленных поздравлений. Этот текст
-                появится в отдельном блоке, который нужно включить во вкладке «Оформление открытки».
-              </p>
-            </div>
-            <button type="button" className={styles.contentOutlineButton}>
-              AI Сгенерировать общее поздравление
-            </button>
-          </section>
         </section>
 
         <aside className={styles.contentRail}>

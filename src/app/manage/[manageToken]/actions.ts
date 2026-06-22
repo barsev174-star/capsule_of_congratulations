@@ -40,8 +40,8 @@ import type {
 } from "@/lib/final-card/types";
 import { logger } from "@/lib/logger";
 
-const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes", "ai-summary"];
-const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "ai-summary", "closing"];
+const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
+const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
 const messageLayoutModes: FinalCardMessageLayoutMode[] = ["grid-2", "carousel-1", "carousel-2", "column-media"];
 const mediaLayouts: FinalCardMessageMediaLayout[] = ["portrait", "landscape-pair", "landscape-trio"];
 const mediaSlots: CardMediaSlot[] = ["portrait", "landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c"];
@@ -432,10 +432,10 @@ export async function updateFinalPresentationSettingsAction(
     .getAll("memoryMediaAssetIds")
     .map((value) => String(value))
     .filter((value) => cardMediaAssetIds.has(value));
-  const memoryTitle = String(formData.get("memoryTitle") ?? "").trim().slice(0, 80) || "Наши воспоминания";
+  const memoryTitle = String(formData.get("memoryTitle") ?? "").trim().slice(0, 80) || "Моменты";
   const memoryDescription =
     String(formData.get("memoryDescription") ?? "").trim().slice(0, 180) ||
-    "Столько ярких моментов, с которыми мы идём рядом с тобой.";
+    "Фото, которые хочется сохранить";
   const memoryPhotoCountValue = Number(formData.get("memoryPhotoCount"));
   const memoryPhotoCount: FinalCardMemorySettings["photoCount"] = memoryPhotoCountValue === 2 ? 2 : 3;
   const finalBlockOrder = formData

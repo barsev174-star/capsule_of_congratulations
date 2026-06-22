@@ -254,8 +254,8 @@ export const scrapbookFloatingAssets: ScrapbookFloatingAsset[] = [
     anchor: "memories",
     group: "Stickers",
     src: "/templates/scrapbook-clean/camera.png",
-    top: "4px",
-    right: "662px",
+    top: "24px",
+    right: "522px",
     width: "118px",
     rotate: 8,
     opacity: 1,
@@ -472,14 +472,14 @@ export const scrapbookFloatingAssets: ScrapbookFloatingAsset[] = [
     anchor: "memories",
     group: "Stickers",
     src: "/templates/scrapbook-clean/heart-sticker-puffy-pink.png",
-    top: "82px",
-    left: "206px",
-    width: "46px",
+    top: "9%",
+    width: "66px",
     rotate: 14,
     opacity: 1,
-    zIndex: 14,
+    zIndex: 1,
     visible: true,
-    hideOnMobile: true
+    hideOnMobile: true,
+    right: "112px"
   },
   {
     type: "floating",
@@ -488,8 +488,8 @@ export const scrapbookFloatingAssets: ScrapbookFloatingAsset[] = [
     anchor: "memories",
     group: "Stickers",
     src: "/templates/scrapbook-clean/heart-sticker-puffy-gold.png",
-    bottom: "50px",
-    right: "-2px",
+    bottom: "20px",
+    right: "600px",
     width: "106px",
     rotate: 23,
     opacity: 1,
@@ -526,11 +526,10 @@ export const scrapbookFloatingAssets: ScrapbookFloatingAsset[] = [
     rotate: -1,
     opacity: 0.65,
     zIndex: 1,
-    visible: true,
+    visible: false,
     hideOnMobile: true
   }
 ];
-
 export const scrapbookComponentAssets: ScrapbookComponentAsset[] = [
   {
     type: "component",
@@ -1174,7 +1173,6 @@ export const scrapbookComponentAssets: ScrapbookComponentAsset[] = [
     }
   }
 ];
-
 export const scrapbookVisualAssets: ScrapbookVisualAsset[] = [
   ...scrapbookFloatingAssets,
   ...scrapbookComponentAssets

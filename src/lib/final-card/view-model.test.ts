@@ -149,7 +149,6 @@ describe("buildFinalCardViewModel", () => {
       "summary",
       "qualities",
       "quotes",
-      "ai-summary",
       "closing",
       "memories"
     ]);

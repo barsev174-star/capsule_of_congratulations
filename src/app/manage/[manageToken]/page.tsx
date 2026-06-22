@@ -48,7 +48,7 @@ const stepItems = [
   }
 ] as const;
 
-const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "ai-summary", "closing"];
+const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
 
 const layoutModeLabels: Record<string, string> = {
   "grid-2": "grid-2",
@@ -105,14 +105,20 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const messageMediaAssetIds = card.finalMessageSettings?.mediaAssetIds ?? [];
   const memoryMediaAssetIds = card.finalMemorySettings?.mediaAssetIds ?? [];
   const memoryPhotoCount = card.finalMemorySettings?.photoCount ?? 3;
-  const memoryTitle = card.finalMemorySettings?.title ?? "Наши воспоминания";
+  const savedMemoryTitle = card.finalMemorySettings?.title?.trim();
+  const savedMemoryDescription = card.finalMemorySettings?.description?.trim();
+  const memoryTitle = !savedMemoryTitle || savedMemoryTitle === "Наши воспоминания" ? "Моменты" : savedMemoryTitle;
   const memoryDescription =
-    card.finalMemorySettings?.description ?? "Столько ярких моментов, с которыми мы идём рядом с тобой.";
+    !savedMemoryDescription || savedMemoryDescription === "Столько ярких моментов, с которыми мы идём рядом с тобой."
+      ? "Фото, которые хочется сохранить"
+      : savedMemoryDescription;
   const layoutProfile = getFinalCardMessageLayoutProfile(layoutMode);
   const requiredLayoutBlockIds = finalCardLayouts[style].blocks
     .filter((block) => block.required)
     .map((block) => block.id);
-  const optionalLayoutBlocks = finalCardLayouts[style].blocks.filter((block) => !block.required);
+  const optionalLayoutBlocks = finalCardLayouts[style].blocks.filter(
+    (block) => !block.required && managedBlockIds.includes(block.id)
+  );
   const mainGreetingContributionId = card.finalMainGreetingSettings?.contributionId ?? model.mainGreetingContributionId;
   const mainGreetingContribution = visibleContributions.find((contribution) => contribution.id === mainGreetingContributionId);
   const mainGreetingStatusText = mainGreetingContribution
@@ -129,7 +135,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
       description: "Подсвечивает, за что именно любят и ценят человека."
     },
     memories: {
-      label: "Наши воспоминания",
+      label: "Моменты",
       description: "Добавляет до трех фото с короткими подписями в отдельный теплый блок."
     },
     quotes: {

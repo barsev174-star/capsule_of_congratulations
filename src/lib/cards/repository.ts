@@ -23,8 +23,8 @@ const defaultFinalMessageSettings: FinalCardMessageSettings = {
 };
 
 const defaultFinalMemorySettings: FinalCardMemorySettings = {
-  title: "Наши воспоминания",
-  description: "Столько ярких моментов, с которыми мы идём рядом с тобой.",
+  title: "Моменты",
+  description: "Фото, которые хочется сохранить",
   mediaSlots: [],
   mediaAssetIds: [],
   photoCount: 3

@@ -43,6 +43,11 @@ export type FinalCardViewModel = {
   blocks: ReturnType<typeof buildFinalCardLayout>["blocks"];
 };
 
+const DEFAULT_MEMORY_TITLE = "Моменты";
+const DEFAULT_MEMORY_DESCRIPTION = "Фото, которые хочется сохранить";
+const LEGACY_MEMORY_TITLE = "Наши воспоминания";
+const LEGACY_MEMORY_DESCRIPTION = "Столько ярких моментов, с которыми мы идём рядом с тобой.";
+
 const extractQualities = (contributions: Contribution[]) => {
   const qualityKeywords: Record<string, string[]> = {
     доброта: ["добр", "доброт"],
@@ -126,6 +131,16 @@ const buildAiSummaryText = (card: CardDraft, contributions: Contribution[]) => {
   return `Здесь позже появится общее поздравление для ${card.recipientName}, собранное по мотивам всех сообщений группы. Пока это аккуратная заглушка под будущий AI-результат.`;
 };
 
+const normalizeMemoryTitle = (value: string | null | undefined) => {
+  const title = value?.trim();
+  return !title || title === LEGACY_MEMORY_TITLE ? DEFAULT_MEMORY_TITLE : title;
+};
+
+const normalizeMemoryDescription = (value: string | null | undefined) => {
+  const description = value?.trim();
+  return !description || description === LEGACY_MEMORY_DESCRIPTION ? DEFAULT_MEMORY_DESCRIPTION : description;
+};
+
 const buildMemories = (contributions: Contribution[]) => {
   if (contributions.length === 0) {
     return [];
@@ -184,7 +199,7 @@ export const buildFinalCardViewModel = (
     hasQualities: qualities.length > 0,
     hasMemories: true,
     hasQuotes: quotes.length > 0,
-    hasAiSummary: true
+    hasAiSummary: false
   };
 
   return {
@@ -221,13 +236,14 @@ export const buildFinalCardViewModel = (
       card.finalMemorySettings?.mediaSlots ?? [],
       ["memory-a", "memory-b", "memory-c"]
     ).slice(0, card.finalMemorySettings?.photoCount ?? 3),
-    memoryTitle: card.finalMemorySettings?.title ?? "Наши воспоминания",
-    memoryDescription: card.finalMemorySettings?.description ?? "Столько ярких моментов, с которыми мы идём рядом с тобой.",
+    memoryTitle: normalizeMemoryTitle(card.finalMemorySettings?.title),
+    memoryDescription: normalizeMemoryDescription(card.finalMemorySettings?.description),
     memoryPhotoCount: card.finalMemorySettings?.photoCount ?? 3,
     messageLayoutMode,
     messageMediaLayout,
     showAllMessagesLink: visibleMessageContributions.length > layoutProfile.cardsPerPage,
-    footerSignature: card.signature ?? `С любовью, ${card.fromLabel}`,
+    footerSignature:
+      !card.signature || card.signature === `С любовью, ${card.fromLabel}` ? "От тех, кто тебя ценит" : card.signature,
     blocks: buildFinalCardLayout(style, availability, card.finalBlockSettings, card.finalBlockOrder).blocks
   };
 };

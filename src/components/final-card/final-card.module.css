@@ -1354,6 +1354,10 @@
   font-size: 1.4rem;
 }
 
+.paper-birthday .cardAccent::before {
+  content: none;
+}
+
 .canvas::before {
   content: "";
   position: absolute;
@@ -1665,6 +1669,10 @@
 }
 
 .mediaRailTrio {
+  align-content: start;
+}
+
+.mediaRailPair {
   align-content: start;
 }
 
@@ -3524,12 +3532,63 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   gap: 8px;
 }
 
+.paper-birthday .mediaRailPair {
+  gap: 24px;
+  padding-top: 28px;
+}
+
+.paper-birthday .mediaRailPair .mediaCardLandscape {
+  width: 94%;
+  margin-inline: auto;
+}
+
 .paper-birthday .mediaCardLandscape {
   aspect-ratio: 1.45 / 1;
 }
 
 .paper-birthday .componentAssetFrame.mediaCardLandscape .componentAssetContent {
   padding: 8px 8px 14px;
+}
+
+.paper-birthday .componentAssetFrame.mediaCardPortrait {
+  overflow: visible;
+}
+
+.paper-birthday .componentAssetFrame.mediaCardPortrait .componentAssetContent {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: 14px 14px 34px;
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 246, 0.96), rgba(248, 239, 224, 0.96)),
+    var(--component-asset-image, none) center / 100% 100% no-repeat;
+  box-shadow:
+    0 18px 30px rgba(78, 52, 35, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+}
+
+.paper-birthday .mediaCardPortrait .mediaImage {
+  border-radius: 4px;
+}
+
+.paper-birthday .mediaCardPortrait .mediaCaption {
+  padding: 6px 6px 0;
+}
+
+.paper-birthday .mediaFrameTiltLeft {
+  transform: rotate(-2.5deg);
+}
+
+.paper-birthday .mediaFrameTiltRight {
+  transform: rotate(2.2deg);
+}
+
+.paper-birthday .componentAssetFrame.mediaFrameTiltLeft {
+  transform: rotate(-2.5deg);
+}
+
+.paper-birthday .componentAssetFrame.mediaFrameTiltRight {
+  transform: rotate(2.2deg);
 }
 
 .paper-birthday .mediaCaption {
@@ -3547,7 +3606,7 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
 }
 
 .paper-birthday .memories {
-  padding: 20px 24px 18px;
+  padding: 18px 24px 20px;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -3558,27 +3617,54 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
 }
 
 .paper-birthday .memoriesStrip {
-  grid-template-columns: minmax(210px, 0.62fr) minmax(280px, 1.18fr) minmax(210px, 0.86fr) minmax(210px, 0.86fr);
-  gap: 14px;
-  align-items: center;
+  grid-template-columns: minmax(330px, 1.24fr) minmax(235px, 0.88fr) minmax(235px, 0.88fr);
+  grid-template-rows: auto minmax(150px, 1fr);
+  gap: 12px 18px;
+  align-items: end;
 }
 
 .paper-birthday .memoryIntroCard {
-  align-self: start;
-  margin-top: -10px;
-  min-height: 118px;
-  padding: 16px 18px;
+  grid-column: 2 / 4;
+  grid-row: 1;
+  align-self: end;
+  justify-self: center;
+  min-height: 0;
+  width: auto;
+  padding: 0 10px 4px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
 }
 
 .paper-birthday .memories > .sectionTitle {
-  overflow: visible;
-  white-space: nowrap;
-  padding-right: 30px;
-  margin-right: 18px;
+  display: none;
+}
+
+.paper-birthday .memories > .componentAssetContent > .sectionTitle {
+  display: none;
 }
 
 .paper-birthday .memoryIntroCard .sectionTitle {
+  margin: 0;
+  color: #2f2a29;
+  font-family: "Segoe Print", "Comic Sans MS", cursive;
+  font-size: clamp(1.45rem, 2vw, 2rem);
+  font-weight: 800;
   overflow: visible;
+}
+
+.paper-birthday .memoryIntroCard .sectionText {
+  margin-top: 2px;
+  color: #6a4b3d;
+  font-family: "Segoe Print", "Comic Sans MS", cursive;
+  font-size: 0.96rem;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.paper-birthday .memoryIntroIcon {
+  display: none;
 }
 
 .paper-birthday .memoryPhotoCard:first-of-type .memoryPhotoImage,
@@ -3586,13 +3672,57 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   aspect-ratio: 1.46 / 1;
 }
 
+.paper-birthday .memoryPhotoCard:nth-child(2) {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  align-self: center;
+  justify-self: start;
+  width: 104%;
+  transform: rotate(-3.2deg);
+}
+
+.paper-birthday .memoryPhotoCard:nth-child(3) {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+  width: 104%;
+  transform: rotate(1.8deg);
+}
+
+.paper-birthday .memoryPhotoCard:nth-child(4) {
+  grid-column: 3;
+  grid-row: 2;
+  align-self: start;
+  width: 104%;
+  transform: rotate(-1.2deg);
+}
+
+.paper-birthday .memoryPhotoCard:nth-child(2) .componentAssetContent {
+  padding: 12px 12px 20px;
+}
+
+.paper-birthday .memoryPhotoCard:nth-child(3) .componentAssetContent,
+.paper-birthday .memoryPhotoCard:nth-child(4) .componentAssetContent {
+  padding: 10px 10px 18px;
+}
+
+.paper-birthday .memoryPhotoCard:nth-child(2) .memoryPhotoImage {
+  aspect-ratio: 1.5 / 1;
+}
+
+.paper-birthday .memoryPhotoCard:nth-child(3) .memoryPhotoImage,
+.paper-birthday .memoryPhotoCard:nth-child(4) .memoryPhotoImage {
+  aspect-ratio: 1.45 / 1;
+}
+
 .paper-birthday .memoryPhotoCaptionWrap {
   margin-top: 4px;
 }
 
 .paper-birthday .quoteMark {
-  top: 4px;
-  left: 10px;
+  top: -12px;
+  left: 6px;
+  z-index: 2;
   pointer-events: none;
 }
 
@@ -3605,15 +3735,10 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   line-height: 1.25;
 }
 
-.paper-birthday .memoryIntroCard {
-  min-width: 205px;
-  padding-right: 12px;
-}
-
 .paper-birthday .memoryIntroCard .sectionTitle {
   width: max-content;
   max-width: none;
-  white-space: normal;
+  white-space: nowrap;
   overflow: visible;
   line-height: 1.18;
 }

@@ -222,7 +222,7 @@ const renderMediaRail = (model: FinalCardViewModel) => {
     return (
       <div
         className={`${styles.mediaRail} ${
-          model.messageMediaLayout === "landscape-trio" ? styles.mediaRailTrio : ""
+          model.messageMediaLayout === "landscape-trio" ? styles.mediaRailTrio : styles.mediaRailPair
         }`}
       >
         {renderMediaFigure(
@@ -359,10 +359,8 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                   <span className={styles.heroNameLine}>{heroNameContent}</span>
                 </h1>
                 <p className={styles.subtitle}>
-                  <span>
-                    Эту открытку для тебя собрали <strong>{model.fromLabel}</strong>. Здесь теплые слова,
-                  </span>
-                  <span>важные воспоминания и общий подарок от всей группы.</span>
+                  <span>Эту открытку для тебя собрали близкие люди.</span>
+                  <span>Здесь — теплые слова, фотографии и приятные моменты.</span>
                 </p>
                 <div className={styles.heroCtaRow}>
                   <span className={styles.heroParticipants}>
@@ -528,7 +526,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
           const memoriesContent = (
             <>
               {renderAnchorLayer("memories")}
-              <h2 className={styles.sectionTitle}>Наши воспоминания</h2>
+              <h2 className={styles.sectionTitle}>{model.memoryTitle}</h2>
               <div className={styles.memoriesStrip}>
                 <article className={styles.memoryIntroCard}>
                   <span className={styles.memoryIntroIcon}>♡</span>
