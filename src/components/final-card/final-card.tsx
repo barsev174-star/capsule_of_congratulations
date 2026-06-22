@@ -186,7 +186,6 @@ const renderMediaFigure = (
             className={styles.mediaImage}
           />
           <figcaption className={styles.mediaCaption}>
-            {asset.captionTitle ? <strong className={styles.mediaCaptionTitle}>{asset.captionTitle}</strong> : null}
             <span className={styles.mediaCaptionSubtitle}>
               {asset.captionSubtitle || asset.captionTitle || title}
             </span>
@@ -487,7 +486,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
               {renderAnchorLayer("greetings")}
               <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Поздравления</h2>
-                <span className={styles.sectionBadge}>{model.contributions.length} сообщений</span>
+                <span className={styles.sectionBadge}>{model.contributions.length} поздравлений</span>
               </div>
 
               {model.contributions.length === 0 ? (
@@ -550,9 +549,6 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                           className={styles.memoryPhotoImage}
                         />
                         <div className={styles.memoryPhotoCaptionWrap}>
-                          {asset.captionTitle ? (
-                            <strong className={styles.memoryPhotoCaptionTitle}>{asset.captionTitle}</strong>
-                          ) : null}
                           <p className={styles.memoryPhotoCaption}>
                             {asset.captionSubtitle || asset.captionTitle || "Фото для открытки"}
                           </p>

@@ -3471,12 +3471,12 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
 
 /* ===== Scrapbook layout polish ===== */
 .paper-birthday .heroPretitle {
-  margin-bottom: 2px;
-  transform: translateY(14px);
+  margin-bottom: -4px;
+  transform: translateY(28px);
 }
 
 .paper-birthday .hero.paperBirthdayHeroExpanded .heroPretitle {
-  transform: translateY(18px);
+  transform: translateY(32px);
 }
 
 .paper-birthday .hero.paperBirthdayHeroExpanded .title {
@@ -3495,12 +3495,17 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   max-width: 1120px;
 }
 
+.paper-birthday .qualitiesPanel .sectionSubtitle {
+  margin-bottom: 2px;
+}
+
 .paper-birthday .qualitiesPanel .chipList {
   display: flex;
   flex-wrap: nowrap;
   justify-content: center;
   gap: 10px;
-  padding-inline: 8px;
+  margin-top: 2px;
+  padding: 2px 8px 0;
 }
 
 .paper-birthday .qualitiesPanel .qualityChipFrame {
@@ -3529,6 +3534,10 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
 
 .paper-birthday .mediaCaption {
   padding: 6px 8px;
+}
+
+.paper-birthday .mediaCaptionTitle {
+  display: none;
 }
 
 .paper-birthday .componentAssetFrame.memories {
@@ -3561,6 +3570,17 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   padding: 16px 18px;
 }
 
+.paper-birthday .memories > .sectionTitle {
+  overflow: visible;
+  white-space: nowrap;
+  padding-right: 30px;
+  margin-right: 18px;
+}
+
+.paper-birthday .memoryIntroCard .sectionTitle {
+  overflow: visible;
+}
+
 .paper-birthday .memoryPhotoCard:first-of-type .memoryPhotoImage,
 .paper-birthday .memoryPhotoImage {
   aspect-ratio: 1.46 / 1;
@@ -3568,6 +3588,12 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
 
 .paper-birthday .memoryPhotoCaptionWrap {
   margin-top: 4px;
+}
+
+.paper-birthday .quoteMark {
+  top: 18px;
+  left: 22px;
+  pointer-events: none;
 }
 
 @media (max-width: 899px) {

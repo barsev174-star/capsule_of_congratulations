@@ -9,9 +9,9 @@
     "mimeType": "image/jpeg",
     "sizeBytes": 3661211,
     "captionTitle": "1",
-    "captionSubtitle": "1",
+    "captionSubtitle": "Первое описание",
     "createdAt": "2026-06-15T19:06:07.671Z",
-    "updatedAt": "2026-06-15T19:06:07.671Z"
+    "updatedAt": "2026-06-22T07:24:41.434Z"
   },
   {
     "id": "abe2b8c8-3dda-4b0f-8c4e-bd311971d6ad",
@@ -23,9 +23,9 @@
     "mimeType": "image/jpeg",
     "sizeBytes": 3400030,
     "captionTitle": "2",
-    "captionSubtitle": "2",
+    "captionSubtitle": "Второе описание",
     "createdAt": "2026-06-15T19:06:12.750Z",
-    "updatedAt": "2026-06-15T19:06:12.750Z"
+    "updatedAt": "2026-06-22T07:24:40.537Z"
   },
   {
     "id": "bdee37ee-df3a-4b5e-811a-f8ee13e2d714",
@@ -37,9 +37,9 @@
     "mimeType": "image/jpeg",
     "sizeBytes": 3760599,
     "captionTitle": "3",
-    "captionSubtitle": "3",
+    "captionSubtitle": "третье описание",
     "createdAt": "2026-06-15T19:06:17.542Z",
-    "updatedAt": "2026-06-15T19:06:17.542Z"
+    "updatedAt": "2026-06-22T07:24:39.149Z"
   },
   {
     "id": "51c3bb67-4a22-4747-b218-f6b5d3aa06b0",
@@ -51,9 +51,9 @@
     "mimeType": "image/jpeg",
     "sizeBytes": 2805351,
     "captionTitle": "4",
-    "captionSubtitle": "4",
+    "captionSubtitle": "Четвертое описание",
     "createdAt": "2026-06-15T19:06:24.920Z",
-    "updatedAt": "2026-06-15T19:06:24.920Z"
+    "updatedAt": "2026-06-22T07:24:37.986Z"
   },
   {
     "id": "d883c829-71e0-4495-938c-1ca610c95683",
@@ -65,9 +65,9 @@
     "mimeType": "image/jpeg",
     "sizeBytes": 3927404,
     "captionTitle": "5",
-    "captionSubtitle": "5",
+    "captionSubtitle": "Пятое описание",
     "createdAt": "2026-06-15T19:06:32.388Z",
-    "updatedAt": "2026-06-15T19:06:32.388Z"
+    "updatedAt": "2026-06-22T07:24:37.030Z"
   },
   {
     "id": "8a27b69c-cea3-42f2-81e3-a9f9f87b6371",
