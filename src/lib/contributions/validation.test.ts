@@ -65,7 +65,7 @@ describe("validateContributionFormData", () => {
     }
   });
 
-  it("applies current layout length limits", () => {
+  it("allows messages over the current layout recommendation", () => {
     const result = validateContributionFormData(
       buildFormData({
         cardId: "card_123",
@@ -77,11 +77,7 @@ describe("validateContributionFormData", () => {
       { layoutMode: "grid-2" }
     );
 
-    expect(result.success).toBe(false);
-
-    if (!result.success) {
-      expect(result.issues.some((issue) => issue.message.includes("сократить"))).toBe(true);
-    }
+    expect(result.success).toBe(true);
   });
 
   it("reuses message rules for organizer editing", () => {

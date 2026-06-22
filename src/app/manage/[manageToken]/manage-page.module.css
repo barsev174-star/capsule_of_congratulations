@@ -1562,6 +1562,7 @@ button.contentFilterPill {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 0 0 auto;
 }
 
 .contentToggleView {
@@ -1628,6 +1629,20 @@ button.contentFilterPill {
   padding: 0 18px 18px;
 }
 
+.contentExpandedActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.contentExpandedToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .contentContributionStatusRow,
 .contentCardFooter {
   justify-content: space-between;
@@ -1679,6 +1694,13 @@ button.contentFilterPill {
 
 .contentEditorCounterWarning {
   color: #d07043;
+}
+
+.contentEditorHint {
+  margin: -4px 0 0;
+  color: #9f6c48;
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .contentEditorTextarea,
@@ -2372,6 +2394,26 @@ button.contentFilterPill {
 .limitWarning {
   background: rgba(171, 66, 50, 0.1);
   color: #9f2a1d;
+}
+
+.contentMainBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(188, 138, 53, 0.28);
+  background: rgba(233, 193, 108, 0.18);
+  color: #9a6b1c;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.contentMainActionActive {
+  border-color: rgba(188, 138, 53, 0.36);
+  background: rgba(233, 193, 108, 0.2);
+  color: #8d621d;
 }
 
 .contentVisibilityBadge {

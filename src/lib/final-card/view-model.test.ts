@@ -113,7 +113,7 @@ describe("buildFinalCardViewModel", () => {
   });
 
   it("shows all-messages link automatically when current layout cannot fit all visible messages", () => {
-    const longList: Contribution[] = Array.from({ length: 5 }, (_, index) => ({
+    const longList: Contribution[] = Array.from({ length: 6 }, (_, index) => ({
       ...contributions[0],
       id: `c${index + 1}`,
       message: `${contributions[0].message} ${index + 1}`,

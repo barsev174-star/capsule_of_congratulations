@@ -19,6 +19,7 @@ export type FinalCardViewModel = {
   summaryTitle: string;
   summaryText: string;
   mainGreetingContributionId: string | null;
+  mainGreetingAuthorName: string | null;
   aiSummaryTitle: string;
   aiSummaryText: string;
   qualities: string[];
@@ -175,6 +176,9 @@ export const buildFinalCardViewModel = (
   const quotes = extractQuotes(contributions);
   const memories = buildMemories(contributions);
   const mainGreeting = resolveMainGreeting(card, contributions);
+  const visibleMessageContributions = mainGreeting
+    ? contributions.filter((contribution) => contribution.id !== mainGreeting.id)
+    : contributions;
   const availability: FinalCardContentAvailability = {
     hasSummary: true,
     hasQualities: qualities.length > 0,
@@ -193,11 +197,12 @@ export const buildFinalCardViewModel = (
     summaryTitle: "Самые важные слова",
     summaryText: mainGreeting ? trimMainGreetingText(mainGreeting.message) : buildSummaryText(card, contributions),
     mainGreetingContributionId: mainGreeting?.id ?? null,
+    mainGreetingAuthorName: mainGreeting?.authorName ?? null,
     aiSummaryTitle: "Общее поздравление",
     aiSummaryText: buildAiSummaryText(card, contributions),
     qualities,
     quotes,
-    contributions,
+    contributions: visibleMessageContributions,
     memories,
     mediaAssets,
     messageMediaAssets: resolveOrderedMediaAssets(
@@ -221,7 +226,7 @@ export const buildFinalCardViewModel = (
     memoryPhotoCount: card.finalMemorySettings?.photoCount ?? 3,
     messageLayoutMode,
     messageMediaLayout,
-    showAllMessagesLink: contributions.length > layoutProfile.cardsPerPage,
+    showAllMessagesLink: visibleMessageContributions.length > layoutProfile.cardsPerPage,
     footerSignature: card.signature ?? `С любовью, ${card.fromLabel}`,
     blocks: buildFinalCardLayout(style, availability, card.finalBlockSettings, card.finalBlockOrder).blocks
   };

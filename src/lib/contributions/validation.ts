@@ -1,6 +1,5 @@
 import type { CreateContributionInput } from "@/lib/cards/types";
 import type { FinalCardMessageLayoutMode } from "@/lib/final-card/types";
-import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 
 export type ContributionValidationIssue = {
   field: string;
@@ -33,20 +32,10 @@ const isTooGeneric = (message: string) => {
 const validateMessageAgainstRules = (
   issues: ContributionValidationIssue[],
   message: string,
-  options?: ContributionValidationOptions
+  _options?: ContributionValidationOptions
 ) => {
-  const profile = getFinalCardMessageLayoutProfile(options?.layoutMode ?? "grid-2");
-
   if (message.length < 20 || message.length > 1500) {
     pushIssue(issues, "message", "Текст поздравления должен быть от 20 до 1500 символов.");
-  }
-
-  if (message.length > profile.maxChars) {
-    pushIssue(
-      issues,
-      "message",
-      `Для текущего формата открытки текст стоит сократить до ${profile.maxChars} символов, чтобы карточка выглядела аккуратно.`
-    );
   }
 };
 

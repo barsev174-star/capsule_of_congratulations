@@ -163,13 +163,16 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const previewMessage = previewMessages[0];
   const formattedEventDate = formatEventDate(card.eventDate ?? null);
   const hiddenContributions = allContributions.filter((contribution) => contribution.status === "hidden");
-  const tooLongContributions = visibleContributions.filter((contribution) => contribution.message.length > layoutProfile.maxChars);
+  const tooLongContributions = visibleContributions.filter((contribution) => {
+    const recommendedLimit = contribution.id === mainGreetingContributionId ? 500 : layoutProfile.maxChars;
+    return contribution.message.length > recommendedLimit;
+  });
   const needsMedia = layoutMode === "column-media";
   const messageMediaAssets = mediaAssets.filter((asset) => ["portrait", "landscape-a", "landscape-b", "landscape-c"].includes(asset.slot));
   const missingMedia = needsMedia && messageMediaAssets.length === 0;
   const previewWarnings = [
     tooLongContributions.length > 0
-      ? `${tooLongContributions.length} поздравлений длиннее ${layoutProfile.maxChars} символов.`
+      ? `${tooLongContributions.length} поздравлений длиннее рекомендованной длины.`
       : "",
     missingMedia ? "Для выбранной раскладки рядом с поздравлениями стоит добавить фото." : "",
     hiddenContributions.length > 0 ? `${hiddenContributions.length} поздравлений скрыто и не попадет в открытку.` : ""

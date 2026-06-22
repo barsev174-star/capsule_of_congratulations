@@ -45,6 +45,8 @@ const initialState = {
   message: ""
 };
 
+const MAIN_GREETING_MESSAGE_LIMIT = 500;
+
 export const ContentStudio = ({
   manageToken,
   allContributions,
@@ -75,7 +77,11 @@ export const ContentStudio = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [copyMessage, setCopyMessage] = useState("");
 
-  const tooLongCount = allContributions.filter((contribution) => contribution.message.length > messageLimit).length;
+  const getRecommendedMessageLimit = (contribution: Contribution) =>
+    contribution.id === mainGreetingContributionId ? MAIN_GREETING_MESSAGE_LIMIT : messageLimit;
+  const getRecommendedOverflow = (contribution: Contribution) => contribution.message.length - getRecommendedMessageLimit(contribution);
+
+  const tooLongCount = allContributions.filter((contribution) => getRecommendedOverflow(contribution) > 0).length;
   const withinLimitCount = allContributions.length - tooLongCount;
   const hiddenCount = allContributions.filter((contribution) => contribution.status === "hidden").length;
   const activeCount = allContributions.filter((contribution) => contribution.status === "visible").length;
@@ -102,7 +108,7 @@ export const ContentStudio = ({
       }
 
       if (activeFilter === "too-long") {
-        return contribution.message.length > messageLimit;
+        return getRecommendedOverflow(contribution) > 0;
       }
 
       if (activeFilter === "no-role") {
@@ -111,7 +117,7 @@ export const ContentStudio = ({
 
       return true;
     });
-  }, [activeFilter, messageLimit, orderedContributions]);
+  }, [activeFilter, mainGreetingContributionId, messageLimit, orderedContributions]);
 
   const moveContribution = (targetContributionId: string, pointerPosition: "before" | "after") => {
     if (!draggedContributionId || draggedContributionId === targetContributionId) {
@@ -387,7 +393,9 @@ export const ContentStudio = ({
                 <button type="submit" className={styles.contentPrimaryButton} disabled={isManualPending}>
                   {isManualPending ? "Добавляем..." : "Добавить поздравление"}
                 </button>
-                <span className={manualState.ok ? styles.limitOk : styles.limitWarning}>{manualState.message || `Лучше уложиться до ${messageLimit} символов для текущей сетки.`}</span>
+                <span className={manualState.ok ? styles.limitOk : styles.limitWarning}>
+                  {manualState.message || `Рекомендуем до ${messageLimit} символов для текущей сетки. Если текст длиннее, администратор сможет сократить его для лаконичного вида.`}
+                </span>
               </div>
             </form>
           ) : null}
@@ -435,10 +443,12 @@ export const ContentStudio = ({
           ) : (
             <div className={styles.contentCards}>
               {visibleContributions.map((contribution, index) => {
-                const overflow = contribution.message.length - messageLimit;
+                const recommendedLimit = getRecommendedMessageLimit(contribution);
+                const overflow = contribution.message.length - recommendedLimit;
                 const isTooLong = overflow > 0;
                 const isHidden = contribution.status === "hidden";
                 const isExpanded = expandedContributionIds.includes(contribution.id);
+                const isMainGreeting = mainGreetingContributionId === contribution.id;
 
                 return (
                   <article
@@ -491,8 +501,9 @@ export const ContentStudio = ({
                             </div>
                             <div className={styles.contentContributionBadges}>
                               <span className={isTooLong ? styles.limitWarning : styles.limitOk}>
-                                {isTooLong ? `Нужно сократить на ${overflow} символов` : "Длина текста оптимальна"}
+                                {isTooLong ? `Длиннее рекомендации на ${overflow} символов` : "Длина текста оптимальна"}
                               </span>
+                              {isMainGreeting ? <span className={styles.contentMainBadge}>Главное</span> : null}
                               <span
                                 className={`${styles.contentVisibilityBadge} ${
                                   isHidden ? styles.contentVisibilityBadgeHidden : styles.contentVisibilityBadgeActive
@@ -505,41 +516,6 @@ export const ContentStudio = ({
                         </div>
 
                         <div className={styles.contentTopControls}>
-                          <form action={setMainGreetingAction}>
-                            <input type="hidden" name="manageToken" value={manageToken} />
-                            <input type="hidden" name="contributionId" value={mainGreetingContributionId === contribution.id ? "" : contribution.id} />
-                            <button
-                              type="submit"
-                              className={`${styles.contentSoftButton} ${
-                                mainGreetingContributionId === contribution.id ? styles.contentFilterPillActive : ""
-                              }`}
-                              disabled={isHidden}
-                              title={isHidden ? "Сначала покажите поздравление в открытке" : "Сделать главным поздравлением"}
-                            >
-                              {mainGreetingContributionId === contribution.id ? "Главное" : "В главное"}
-                            </button>
-                          </form>
-                          {isExpanded ? (
-                            <>
-                              <span className={styles.contentBodyLabelCompact}>Показывать в открытке</span>
-                              <form action={setContributionStatusAction}>
-                                <input type="hidden" name="manageToken" value={manageToken} />
-                                <input type="hidden" name="contributionId" value={contribution.id} />
-                                <input type="hidden" name="status" value={isHidden ? "visible" : "hidden"} />
-                                <button
-                                  type="submit"
-                                  className={`${styles.contentToggleView} ${!isHidden ? styles.contentToggleViewActive : ""}`}
-                                  onClick={() => {
-                                    window.setTimeout(() => handleVisibilityToggle(contribution.id, isHidden), 0);
-                                  }}
-                                  aria-label={isHidden ? "Показать поздравление" : "Скрыть поздравление"}
-                                >
-                                  <span className={styles.contentToggleKnob} />
-                                </button>
-                              </form>
-                            </>
-                          ) : null}
-
                           <button
                             type="button"
                             className={styles.contentChevronButton}
@@ -559,11 +535,43 @@ export const ContentStudio = ({
 
                     {isExpanded ? (
                       <div className={styles.contentContributionBody}>
+                        <div className={styles.contentExpandedActions}>
+                          <form action={setMainGreetingAction}>
+                            <input type="hidden" name="manageToken" value={manageToken} />
+                            <input type="hidden" name="contributionId" value={isMainGreeting ? "" : contribution.id} />
+                            <button
+                              type="submit"
+                              className={`${styles.contentSoftButton} ${isMainGreeting ? styles.contentMainActionActive : ""}`}
+                              disabled={isHidden}
+                              title={isHidden ? "Сначала покажите поздравление в открытке" : "Показать в блоке «Самые важные слова»"}
+                            >
+                              {isMainGreeting ? "Убрать из главного" : "В главное"}
+                            </button>
+                          </form>
+                          <div className={styles.contentExpandedToggle}>
+                            <span className={styles.contentBodyLabelCompact}>Показывать в открытке</span>
+                            <form action={setContributionStatusAction}>
+                              <input type="hidden" name="manageToken" value={manageToken} />
+                              <input type="hidden" name="contributionId" value={contribution.id} />
+                              <input type="hidden" name="status" value={isHidden ? "visible" : "hidden"} />
+                              <button
+                                type="submit"
+                                className={`${styles.contentToggleView} ${!isHidden ? styles.contentToggleViewActive : ""}`}
+                                onClick={() => {
+                                  window.setTimeout(() => handleVisibilityToggle(contribution.id, isHidden), 0);
+                                }}
+                                aria-label={isHidden ? "Показать поздравление" : "Скрыть поздравление"}
+                              >
+                                <span className={styles.contentToggleKnob} />
+                              </button>
+                            </form>
+                          </div>
+                        </div>
                         <ContributionEditor
                           contributionId={contribution.id}
                           manageToken={manageToken}
                           initialMessage={contribution.message}
-                          messageLimit={messageLimit}
+                          messageLimit={recommendedLimit}
                         />
                       </div>
                     ) : null}

@@ -309,6 +309,18 @@ const renderMessagesLayout = (model: FinalCardViewModel) => {
 export const FinalCard = ({ model, debugAssets = false }: Props) => {
   const isPaperBirthday = model.style === "paper-birthday";
   const heroScaleClass = isPaperBirthday ? getPaperBirthdayHeroScaleClass(model.recipientName) : "";
+  const heroNameWords = model.recipientName
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const heroNameContent =
+    isPaperBirthday && heroNameWords.length > 1
+      ? heroNameWords.map((word, index) => (
+          <span key={`${word}-${index}`} className={styles.heroNameWord}>
+            {word}
+          </span>
+        ))
+      : model.recipientName;
 
   const renderAnchorLayer = (anchor: ScrapbookDecorAnchor) =>
     isPaperBirthday ? <ScrapbookDecorLayer anchor={anchor} /> : null;
@@ -345,7 +357,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
               <div className={styles.heroMain}>
                 <div className={styles.heroPretitle}>{model.occasionLabel}</div>
                 <h1 className={styles.title}>
-                  <span className={styles.heroNameLine}>{model.recipientName}</span>
+                  <span className={styles.heroNameLine}>{heroNameContent}</span>
                 </h1>
                 <p className={styles.subtitle}>
                   <span>
@@ -394,6 +406,9 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
               {renderAnchorLayer("summary")}
               <h2 className={styles.sectionTitle}>{model.summaryTitle}</h2>
               <p className={styles.sectionText}>{model.summaryText}</p>
+              {model.mainGreetingAuthorName ? (
+                <p className={styles.summaryAuthor}>- {model.mainGreetingAuthorName}</p>
+              ) : null}
             </>
           );
 
@@ -424,13 +439,25 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
               <div className={styles.chipList}>
                 {visibleQualities.map((quality, index) => {
                   const color = chipColors[index % chipColors.length];
-                  return (
+                  const chip = (
                     <span
                       key={quality}
                       className={`${styles.chip} ${styles[`chip${color.charAt(0).toUpperCase() + color.slice(1)}`]}`}
                     >
                       {quality}
                     </span>
+                  );
+
+                  return isPaperBirthday ? (
+                    <ScrapbookComponentFrame
+                      key={quality}
+                      assetId={getQualityAssetId(index)}
+                      className={styles.qualityChipFrame}
+                    >
+                      {chip}
+                    </ScrapbookComponentFrame>
+                  ) : (
+                    chip
                   );
                 })}
               </div>
@@ -590,7 +617,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                       assetId={getQuoteAssetId(index)}
                       className={`${styles.quoteCard} ${styles.paperBirthdayQuoteFrame}`}
                     >
-                      <span className={styles.quoteMark}>&quot;</span>
+                      <span className={styles.quoteMark}>,,</span>
                       <p className={styles.message}>{quote}</p>
                     </ScrapbookComponentFrame>
                   ) : (

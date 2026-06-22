@@ -44,6 +44,12 @@ export const ContributionEditor = ({ contributionId, manageToken, initialMessage
         maxLength={1500}
       />
 
+      {remaining < 0 ? (
+        <p className={styles.contentEditorHint}>
+          Текст длиннее рекомендации. Администратор может сократить его, чтобы поздравление лаконично смотрелось в открытке.
+        </p>
+      ) : null}
+
       <div className={styles.contentEditorFooter}>
         <button type="button" className={styles.contentSoftButton}>
           ✨ Сократить текст

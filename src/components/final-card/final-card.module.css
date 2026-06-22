@@ -3302,3 +3302,169 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
     transform: none;
   }
 }
+
+.paper-birthday .hero {
+  height: 405px;
+  min-height: 405px;
+}
+
+.paper-birthday .heroMain {
+  min-height: 314px;
+  gap: 12px;
+  padding: 12px 0 8px;
+}
+
+.paper-birthday .title {
+  line-height: 0.86;
+}
+
+.paper-birthday .hero.paperBirthdayHeroExpanded .title {
+  font-size: clamp(3.8rem, 6.1vw, 5.8rem);
+  line-height: 0.92;
+}
+
+.paper-birthday .heroNameWord {
+  display: block;
+}
+
+.paper-birthday .hero.paperBirthdayHeroExpanded .subtitle {
+  margin-top: 2px;
+}
+
+.paper-birthday .hero.paperBirthdayHeroExpanded .heroCtaRow {
+  margin-top: 2px;
+}
+
+.paper-birthday .summaryPanel {
+  width: 96%;
+  max-width: 1060px;
+  margin-top: 10px;
+}
+
+.paper-birthday .summaryPanel .sectionText {
+  max-width: 860px;
+  margin-bottom: 0;
+}
+
+.summaryAuthor {
+  margin: 8px 0 0;
+  padding-right: clamp(10px, 5vw, 78px);
+  color: #6f4b3b;
+  font-family: "Segoe Print", "Comic Sans MS", Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: right;
+}
+
+.paper-birthday .qualitiesPanel {
+  width: 96%;
+  max-width: 1040px;
+}
+
+.paper-birthday .qualitiesPanel .sectionTitle,
+.paper-birthday .qualitiesPanel .sectionSubtitle {
+  text-align: center;
+}
+
+.paper-birthday .qualitiesPanel .chipList {
+  gap: 12px 16px;
+  padding: 16px 20px 4px;
+}
+
+.paper-birthday .qualitiesPanel .qualityChipFrame {
+  width: var(--component-asset-width, 196px);
+  min-width: var(--component-asset-width, 196px);
+  max-width: var(--component-asset-max-width, 196px);
+}
+
+.paper-birthday .qualitiesPanel .qualityChipFrame .chip {
+  color: #513126;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.paper-birthday .messageColumnScroller {
+  position: relative;
+  padding-right: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 97, 67, 0.35) transparent;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
+}
+
+.paper-birthday .messageColumnScroller:hover {
+  scrollbar-color: rgba(139, 97, 67, 0.7) transparent;
+}
+
+.paper-birthday .messageColumnScroller::-webkit-scrollbar {
+  width: 7px;
+}
+
+.paper-birthday .messageColumnScroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.paper-birthday .messageColumnScroller::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-color: rgba(139, 97, 67, 0.35);
+}
+
+.paper-birthday .messageColumnScroller:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(139, 97, 67, 0.7);
+}
+
+.paper-birthday .quotes {
+  padding: 0;
+}
+
+.paper-birthday .quotesGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.paper-birthday .paperBirthdayQuoteFrame {
+  max-width: 278px;
+}
+
+.paper-birthday .quoteCard {
+  min-height: 132px;
+  padding: 18px 22px 20px;
+}
+
+.paper-birthday .quoteCard .message {
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+
+.paper-birthday .quoteMark {
+  top: 6px;
+  left: 14px;
+  color: rgba(204, 118, 128, 0.5);
+  font-size: 2.6rem;
+}
+
+@media (max-width: 899px) {
+  .paper-birthday .hero {
+    height: auto;
+    min-height: auto;
+  }
+
+  .paper-birthday .hero.paperBirthdayHeroExpanded .title {
+    font-size: clamp(2.7rem, 13vw, 4.2rem);
+  }
+
+  .paper-birthday .summaryPanel,
+  .paper-birthday .qualitiesPanel {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .summaryAuthor {
+    padding-right: 0;
+  }
+
+  .paper-birthday .messageColumnScroller {
+    padding-right: 8px;
+  }
+}
