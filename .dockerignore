@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.npm-cache
+coverage
+screenshots
+data/*.json
+public/uploads
+.env
+.env.local
+.env.*.local
+.env.production
+*.log
+tsconfig.tsbuildinfo

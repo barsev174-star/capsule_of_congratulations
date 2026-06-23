@@ -160,3 +160,13 @@ Manual checks for the current MVP URL structure:
 3. Open old `/card/[slug]` and confirm it redirects to `/join/[slug]`.
 4. Open `/preview/[manageToken]` and confirm it lands on the organizer preview tab.
 5. Set `NEXT_PUBLIC_SITE_URL=https://steplom.ru` and confirm copied/generated links use `https://steplom.ru/...`.
+
+## Update 2026-06-23 Production compose checks
+
+Before touching the VPS, validate locally:
+
+1. Run `PROD_ENV_FILE=.env.production.example docker compose -f docker-compose.prod.yml --env-file .env.production.example config`.
+2. Confirm the project name is `capsule`.
+3. Confirm public host binding is `127.0.0.1:3100:3000`.
+4. Confirm uploads are mounted from `./public/uploads` to `/app/public/uploads`.
+5. If doing a full local compose run, copy `.env.production.example` to `.env.production`, set a safe password, build, run migrations, then create a test card.

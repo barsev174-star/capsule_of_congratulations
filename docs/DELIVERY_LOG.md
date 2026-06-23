@@ -473,3 +473,11 @@
 3. Added `/join/[slug]` as the participant route and kept `/card/[slug]` as a compatibility redirect.
 4. Added `/preview/[manageToken]` as an organizer preview redirect.
 5. Restored `/create` as the explicit creation screen and moved the landing CTA there.
+
+## Update 2026-06-23 Production Compose Prep
+
+1. Added `Dockerfile.prod` for a Next.js production container.
+2. Added `docker-compose.prod.yml` with separate `web` and `postgres` services under project name `capsule`.
+3. Added `.env.production.example` for VPS deployment.
+4. Added `.dockerignore` to keep local build artifacts, JSON data, uploads, and secrets out of Docker build context.
+5. Documented how this stack should live beside Prognozist without taking over ports `80/443`.

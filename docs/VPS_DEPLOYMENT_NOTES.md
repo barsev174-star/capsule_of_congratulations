@@ -140,6 +140,114 @@ public/uploads/cards/<cardId>/<fileName>
 7. Добавлен `.env.example` с единственной обязательной production-переменной на текущем этапе: `DATABASE_URL`.
 8. Добавлен локальный storage-слой для фото открыток: `src/lib/media/local-card-media-storage.ts`.
 9. Добавлен route-helper `src/lib/routes/card-links.ts`; production-ссылки строятся через `NEXT_PUBLIC_SITE_URL=https://steplom.ru`.
+10. Добавлены production-файлы для отдельного Docker Compose stack:
+    - `Dockerfile.prod`;
+    - `docker-compose.prod.yml`;
+    - `.env.production.example`;
+    - `.dockerignore`.
+
+## Production compose для открыток
+
+Открытки поднимаются отдельным compose project:
+
+```yaml
+name: capsule
+```
+
+Сервисы:
+
+1. `postgres` — отдельная база открыток, не база Прогнозиста.
+2. `web` — Next.js production server.
+
+Порт:
+
+```text
+127.0.0.1:3100 -> web:3000
+```
+
+Так приложение не занимает публичные `80/443`. Публичный HTTPS должен остаться за Caddy.
+
+Uploads:
+
+```text
+./public/uploads -> /app/public/uploads
+```
+
+Это bind mount, чтобы загруженные фото не исчезали при пересборке контейнера.
+
+## First production setup
+
+На VPS, в отдельной папке проекта открыток:
+
+```bash
+cp .env.production.example .env.production
+```
+
+В `.env.production` обязательно заменить:
+
+1. `POSTGRES_PASSWORD`;
+2. пароль внутри `DATABASE_URL`;
+3. при необходимости `WEB_PORT`, если `3100` занят.
+
+Проверить compose config:
+
+```bash
+PROD_ENV_FILE=.env.production.example \
+docker compose -f docker-compose.prod.yml --env-file .env.production config
+```
+
+На Windows PowerShell для dry-run:
+
+```powershell
+$env:PROD_ENV_FILE=".env.production.example"
+docker compose -f docker-compose.prod.yml --env-file .env.production.example config
+```
+
+Запустить stack:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+```
+
+Запустить миграции:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production exec web npm run db:migrate
+```
+
+Проверить контейнеры:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production ps
+```
+
+Локальная проверка с VPS:
+
+```bash
+curl -I http://127.0.0.1:3100
+```
+
+## Caddy рядом с Prognozist
+
+Так как public `80/443` уже занимает Caddy из Прогнозиста, для `steplom.ru` нужно добавить второй site block в production Caddyfile Прогнозиста или вынести Caddy в общий infra-layer позже.
+
+Минимальный site block:
+
+```caddyfile
+steplom.ru {
+  encode gzip zstd
+  reverse_proxy host.docker.internal:3100
+}
+```
+
+На Linux для доступа Caddy-контейнера к host port может понадобиться добавить в сервис `caddy` проекта Прогнозист:
+
+```yaml
+extra_hosts:
+  - "host.docker.internal:host-gateway"
+```
+
+Альтернатива чище, но требует аккуратной настройки: подключить Caddy и `capsule-web` к общей external Docker network и проксировать напрямую на `capsule-web:3000`. Для первого MVP проще начать с local host port `3100`.
 
 ## Пример запуска миграций
 
@@ -182,15 +290,17 @@ npm run db:migrate
    - какие контейнеры слушают `80/443`;
    - где лежит production Caddy config.
 3. Подготовить DNS `steplom.ru` на IP VPS.
-4. Подготовить отдельный compose-stack для открыток.
-5. Скопировать `.env.example` в production env и заполнить:
+4. Скопировать `.env.production.example` в `.env.production`.
+5. Заполнить:
    - `DATABASE_URL`;
    - `NEXT_PUBLIC_SITE_URL=https://steplom.ru`.
-6. Запустить миграции.
-7. Создать новую открытку с главной страницы и пройти ручной цикл:
+6. Запустить `docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build`.
+7. Запустить миграции.
+8. Добавить Caddy site block для `steplom.ru`.
+9. Создать новую открытку с главной страницы и пройти ручной цикл:
    - заполнить основу;
    - открыть ссылку участника;
    - добавить поздравления;
    - загрузить до 6 фото;
    - проверить финальную ссылку.
-8. После этого зафиксировать backup-процедуру для PostgreSQL и `public/uploads/cards`.
+10. После этого зафиксировать backup-процедуру для PostgreSQL и `public/uploads/cards`.
