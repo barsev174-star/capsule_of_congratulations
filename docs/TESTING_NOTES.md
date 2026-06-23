@@ -150,3 +150,13 @@ Manual checks for the current local uploads layer:
 4. Replace a photo in the same slot and confirm the old file is removed from `public/uploads/cards`.
 5. Delete a photo and confirm the file disappears from `public/uploads/cards`.
 6. Repeat the same checks with `DATABASE_URL` enabled, because metadata then lives in PostgreSQL while files still live on disk.
+
+## Update 2026-06-23 Single-domain route checks
+
+Manual checks for the current MVP URL structure:
+
+1. Open `/` and confirm the main CTA goes to `/create`.
+2. Create a card from `/create` and confirm generated participant links use `/join/[slug]`.
+3. Open old `/card/[slug]` and confirm it redirects to `/join/[slug]`.
+4. Open `/preview/[manageToken]` and confirm it lands on the organizer preview tab.
+5. Set `NEXT_PUBLIC_SITE_URL=https://steplom.ru` and confirm copied/generated links use `https://steplom.ru/...`.

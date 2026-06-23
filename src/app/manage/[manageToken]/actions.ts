@@ -39,6 +39,7 @@ import type {
 } from "@/lib/final-card/types";
 import { logger } from "@/lib/logger";
 import { saveCardMediaFile } from "@/lib/media/local-card-media-storage";
+import { getGiftPath, getJoinPath, getManagePath } from "@/lib/routes/card-links";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
@@ -87,10 +88,10 @@ const cardBasicsError = (message: string, fields?: CardBasicsFields): CardBasics
 });
 
 const revalidateCardSurfaces = (manageToken: string, publicSlug: string, finalSlug: string) => {
-  revalidatePath(`/manage/${manageToken}`);
-  revalidatePath(`/card/${publicSlug}`);
-  revalidatePath(`/gift/${finalSlug}`);
-  revalidatePath(`/gift/${finalSlug}/messages`);
+  revalidatePath(getManagePath(manageToken));
+  revalidatePath(getJoinPath(publicSlug));
+  revalidatePath(getGiftPath(finalSlug));
+  revalidatePath(`${getGiftPath(finalSlug)}/messages`);
 };
 
 export async function setContributionStatusAction(formData: FormData) {
@@ -146,7 +147,7 @@ export async function setContributionStatusAction(formData: FormData) {
 
     revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
   } else {
-    revalidatePath(`/manage/${manageToken}`);
+    revalidatePath(getManagePath(manageToken));
   }
 }
 
@@ -232,7 +233,7 @@ export async function deleteContributionAction(formData: FormData) {
   if (card) {
     revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
   } else {
-    revalidatePath(`/manage/${manageToken}`);
+    revalidatePath(getManagePath(manageToken));
   }
 }
 

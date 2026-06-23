@@ -10,6 +10,7 @@ import {
 import { cardTemplates } from "@/lib/cards/templates";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
+import { getGiftPath, getGiftUrl, getJoinUrl, getManagePath, getManageUrl, getPreviewUrl } from "@/lib/routes/card-links";
 import type { FinalCardBlockId, FinalCardOptionalBlockId } from "@/lib/final-card/types";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { BasicsSettingsForm } from "./basics-settings-form";
@@ -212,9 +213,10 @@ export default async function ManagePage({ params, searchParams }: Props) {
 
     return blockPreviewLabels[block.id] ?? block.id;
   });
-  const participantLink = `/card/${card.publicSlug}`;
-  const manageLink = `/manage/${card.manageToken}`;
-  const finalLink = `/gift/${card.finalSlug}`;
+  const participantLink = getJoinUrl(card.publicSlug);
+  const manageLink = getManageUrl(card.manageToken);
+  const previewLink = getPreviewUrl(card.manageToken);
+  const finalLink = getGiftUrl(card.finalSlug);
   const currentStatus = card.status ?? "draft";
 
   return (
@@ -262,6 +264,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   {[
                     { label: "Участникам", href: participantLink },
                     { label: "Организатору", href: manageLink },
+                    { label: "Предпросмотр", href: previewLink },
                     { label: "Получателю", href: finalLink }
                   ].map((item) => (
                     <div key={item.href} className={styles.linkCard}>
@@ -277,7 +280,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 {tabItems.map((item) => (
                   <Link
                     key={item.id}
-                    href={`/manage/${manageToken}?tab=${item.id}`}
+                    href={`${getManagePath(manageToken)}?tab=${item.id}`}
                     className={`${styles.tabLink} ${activeTab === item.id ? styles.tabLinkActive : ""}`}
                   >
                     {item.label}
@@ -450,7 +453,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   </article>
                 </div>
 
-                <Link href={`/gift/${card.finalSlug}`} target="_blank" className={styles.previewLinkButton}>
+                <Link href={getGiftPath(card.finalSlug)} target="_blank" className={styles.previewLinkButton}>
                   Открыть полный просмотр
                 </Link>
               </section>
@@ -467,10 +470,10 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 </p>
               </div>
               <div className={styles.fullPreviewActions}>
-                <Link href={`/gift/${card.finalSlug}`} target="_blank" className={styles.previewPrimaryLink}>
+                <Link href={getGiftPath(card.finalSlug)} target="_blank" className={styles.previewPrimaryLink}>
                   Открыть публичную версию
                 </Link>
-                <Link href={`/manage/${manageToken}?tab=design`} className={styles.previewSecondaryLink}>
+                <Link href={`${getManagePath(manageToken)}?tab=design`} className={styles.previewSecondaryLink}>
                   Вернуться к оформлению
                 </Link>
               </div>
@@ -483,13 +486,13 @@ export default async function ManagePage({ params, searchParams }: Props) {
                     <span className={styles.previewKicker}>Настоящий результат</span>
                     <h3>Публичная открытка внутри редактора</h3>
                   </div>
-                  <Link href={`/gift/${card.finalSlug}`} target="_blank" className={styles.previewSecondaryLink}>
+                  <Link href={getGiftPath(card.finalSlug)} target="_blank" className={styles.previewSecondaryLink}>
                     Открыть отдельно
                   </Link>
                 </div>
                 <iframe
                   className={styles.embeddedPreviewFrame}
-                  src={`/gift/${card.finalSlug}`}
+                  src={getGiftPath(card.finalSlug)}
                   title="Предпросмотр публичной открытки"
                 />
               </section>

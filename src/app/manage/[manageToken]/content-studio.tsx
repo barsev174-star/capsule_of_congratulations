@@ -5,6 +5,7 @@ import { useActionState, useMemo, useState, useTransition, type CSSProperties, t
 import { useRouter } from "next/navigation";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
+import { getGiftPath, getJoinUrl, getManagePath } from "@/lib/routes/card-links";
 import { AiHelper } from "@/app/card/[publicSlug]/ai-helper";
 import { ContributionEditor } from "./contribution-editor";
 import { MediaManager } from "./media-manager";
@@ -86,7 +87,7 @@ export const ContentStudio = ({
   const hiddenCount = allContributions.filter((contribution) => contribution.status === "hidden").length;
   const activeCount = allContributions.filter((contribution) => contribution.status === "visible").length;
   const noRoleCount = allContributions.filter((contribution) => !contribution.authorRole?.trim()).length;
-  const participantUrl = `/card/${publicSlug}`;
+  const participantUrl = getJoinUrl(publicSlug);
   const inviteText = `Собираем открытку для ${recipientName}. Добавьте пару теплых слов по ссылке: ${participantUrl}`;
   const mainGreetingContribution = allContributions.find((contribution) => contribution.id === mainGreetingContributionId);
 
@@ -240,7 +241,7 @@ export const ContentStudio = ({
 
   const copyToClipboard = async (value: string, successMessage: string) => {
     const origin = typeof window === "undefined" ? "" : window.location.origin;
-    const normalizedValue = value.startsWith("/") ? `${origin}${value}` : value.replace(participantUrl, `${origin}${participantUrl}`);
+    const normalizedValue = value.startsWith("/") ? `${origin}${value}` : value;
 
     try {
       await navigator.clipboard.writeText(normalizedValue);
@@ -297,7 +298,7 @@ export const ContentStudio = ({
                   : "Выберите одно активное поздравление для большого блока «Самые важные слова». Если не выбрать, открытка возьмет первое активное поздравление."}
               </p>
             </div>
-            <Link href={`/gift/${finalSlug}`} target="_blank" className={styles.contentOutlineButton}>
+            <Link href={getGiftPath(finalSlug)} target="_blank" className={styles.contentOutlineButton}>
               Проверить в открытке
             </Link>
           </section>
@@ -642,7 +643,7 @@ export const ContentStudio = ({
               </button>
             </div>
 
-            <Link href={`/gift/${finalSlug}`} target="_blank" className={styles.previewLinkButton}>
+            <Link href={getGiftPath(finalSlug)} target="_blank" className={styles.previewLinkButton}>
               Открыть полный просмотр
             </Link>
           </section>
@@ -665,7 +666,7 @@ export const ContentStudio = ({
         {contributionOrder.map((contributionId) => (
           <input key={contributionId} type="hidden" name="orderedContributionIds" value={contributionId} />
         ))}
-        <Link href={`/manage/${manageToken}?tab=design`} className={styles.contentBackButton}>
+        <Link href={`${getManagePath(manageToken)}?tab=design`} className={styles.contentBackButton}>
           ← Вернуться к оформлению
         </Link>
         <span className={styles.contentAutosave}>{state.message || "Изменения порядка сохраняются отдельно"}</span>

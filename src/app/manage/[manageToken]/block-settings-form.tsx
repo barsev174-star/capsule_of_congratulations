@@ -10,6 +10,7 @@ import type {
   FinalCardMessageMediaLayout,
   FinalCardOptionalBlockId
 } from "@/lib/final-card/types";
+import { getManagePath } from "@/lib/routes/card-links";
 import { updateFinalPresentationSettingsAction } from "./actions";
 import styles from "./manage-page.module.css";
 
@@ -768,7 +769,7 @@ export const BlockSettingsForm = ({
                         <div className={styles.messageSettingsGroup}>
                           <h4 className={styles.messageSettingsTitle}>Главное поздравление</h4>
                           <p>{mainGreetingStatusText}</p>
-                          <a className={styles.previewSecondaryLink} href={`/manage/${manageToken}?tab=content`}>
+                          <a className={styles.previewSecondaryLink} href={`${getManagePath(manageToken)}?tab=content`}>
                             Выбрать поздравление
                           </a>
                         </div>

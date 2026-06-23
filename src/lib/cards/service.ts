@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { getDefaultTemplateForOccasion } from "@/lib/cards/templates";
 import { logger } from "@/lib/logger";
 import { saveCardDraft, saveContribution } from "@/lib/cards/repository";
+import { getGiftUrl, getJoinUrl, getManageUrl } from "@/lib/routes/card-links";
 import type {
   CardDraft,
   Contribution,
@@ -13,9 +14,9 @@ import type {
 const slug = (size = 8) => randomBytes(size).toString("hex");
 
 const buildDraftLinks = (card: CardDraft): CreateCardResult => {
-  const participantLink = `/card/${card.publicSlug}`;
-  const manageLink = `/manage/${card.manageToken}`;
-  const finalLink = `/gift/${card.finalSlug}`;
+  const participantLink = getJoinUrl(card.publicSlug);
+  const manageLink = getManageUrl(card.manageToken);
+  const finalLink = getGiftUrl(card.finalSlug);
   const chatMessage = `Друзья, собираем открытку для ${card.recipientName || "дорогого человека"}. Повод: ${
     card.occasionText || "пока уточняется"
   }. Перейдите по ссылке и напишите пару теплых слов, это займет минуту: ${participantLink}`;

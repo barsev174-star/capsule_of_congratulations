@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type { FinalCardViewModel } from "@/lib/final-card/view-model";
+import { getGiftPath } from "@/lib/routes/card-links";
 import { FinalCardActions } from "@/components/final-card/final-card-actions";
 import type { ScrapbookDecorAnchor } from "./scrapbook-decor-config";
 import {
@@ -496,7 +497,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
 
               {model.showAllMessagesLink ? (
                 <div className={styles.sectionFooter}>
-                  <Link href={`/gift/${model.finalSlug}/messages`} className={styles.inlineLinkButton}>
+                  <Link href={`${getGiftPath(model.finalSlug)}/messages`} className={styles.inlineLinkButton}>
                     Смотреть все поздравления
                   </Link>
                 </div>

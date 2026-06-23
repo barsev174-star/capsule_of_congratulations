@@ -465,3 +465,11 @@
 3. Limited physical file deletion to the uploads root for safer metadata cleanup.
 4. Kept media metadata in the active repository mode: JSON locally or PostgreSQL with `DATABASE_URL`.
 5. Documented uploads backup and manual verification steps for the VPS path.
+
+## Update 2026-06-23 Single Domain MVP Routes
+
+1. Accepted one-domain MVP routing with `steplom.ru` as the production base URL.
+2. Added route helpers for join, manage, preview, and gift links.
+3. Added `/join/[slug]` as the participant route and kept `/card/[slug]` as a compatibility redirect.
+4. Added `/preview/[manageToken]` as an organizer preview redirect.
+5. Restored `/create` as the explicit creation screen and moved the landing CTA there.

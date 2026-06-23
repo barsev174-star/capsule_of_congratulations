@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { listCardDrafts, listContributionsByCardId } from "@/lib/cards/repository";
+import { getGiftPath } from "@/lib/routes/card-links";
 import styles from "./page.module.css";
 
 type Props = {
@@ -33,7 +34,7 @@ export default async function GiftMessagesPage({ params }: Props) {
             <span className={styles.pill}>{contributions.length} сообщений</span>
             <span className={styles.pill}>{card.occasionText}</span>
           </div>
-          <Link href={`/gift/${card.finalSlug}`} className={styles.backLink}>
+          <Link href={getGiftPath(card.finalSlug)} className={styles.backLink}>
             Вернуться к открытке
           </Link>
         </section>
