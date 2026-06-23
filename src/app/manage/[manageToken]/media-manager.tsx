@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import type { CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
+import { CARD_MEDIA_MAX_COUNT } from "@/lib/cards/media";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
 import { deleteCardMediaAction, saveCardMediaAction } from "./actions";
 import styles from "./manage-page.module.css";
@@ -190,7 +191,7 @@ export const MediaManager = ({ manageToken, mediaAssets, mediaLayout }: Props) =
     <section className={styles.mediaManagerStack}>
       <MediaLibraryGroup
         title="Горизонтальные фото"
-        hint="Общая библиотека для блока «Колонка + фото» и «Наши воспоминания»."
+        hint={`Общая библиотека для блока «Колонка + фото» и «Моменты». Всего в открытке можно использовать до ${CARD_MEDIA_MAX_COUNT} фото.`}
         manageToken={manageToken}
         assets={mediaAssets}
         slots={horizontalSlots}

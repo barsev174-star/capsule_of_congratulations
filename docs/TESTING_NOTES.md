@@ -127,3 +127,5 @@ Manual checks for the current MVP-flow:
 9. Click `Спасибо, очень приятно!` and confirm a local confirmation message appears.
 10. Click `Сохранить открытку` and confirm the browser print/save dialog opens.
 11. Click `Создать такую же открытку` and confirm it navigates to `/create`.
+12. Upload up to 6 photos and confirm the next new upload is rejected with a clear limit message.
+13. Replace an existing photo after the 6-photo limit and confirm replacement still works.

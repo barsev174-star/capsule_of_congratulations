@@ -1,5 +1,7 @@
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { isPostgresConfigured } from "@/lib/db/postgres";
+import * as postgresRepository from "@/lib/cards/repository-postgres";
 import type { CardDraft, CardMediaAsset, CardStatus, Contribution } from "@/lib/cards/types";
 import type { CardTemplateId } from "@/lib/cards/templates";
 import type {
@@ -149,24 +151,40 @@ const removeStoredMediaFile = async (storagePath: string) => {
 };
 
 export const saveCardDraft = async (card: CardDraft) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.saveCardDraft(card);
+  }
+
   const existingCards = await readCards();
   existingCards.push(card);
   await writeFile(cardsFilePath, JSON.stringify(existingCards, null, 2), "utf8");
 };
 
-export const listCardDrafts = async () => readCards();
+export const listCardDrafts = async () => (isPostgresConfigured() ? postgresRepository.listCardDrafts() : readCards());
 
 export const getCardDraftByPublicSlug = async (publicSlug: string) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.getCardDraftByPublicSlug(publicSlug);
+  }
+
   const cards = await readCards();
   return cards.find((card) => card.publicSlug === publicSlug) ?? null;
 };
 
 export const getCardDraftByManageToken = async (manageToken: string) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.getCardDraftByManageToken(manageToken);
+  }
+
   const cards = await readCards();
   return cards.find((card) => card.manageToken === manageToken) ?? null;
 };
 
 export const getCardDraftById = async (cardId: string) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.getCardDraftById(cardId);
+  }
+
   const cards = await readCards();
   return cards.find((card) => card.id === cardId) ?? null;
 };
@@ -176,6 +194,10 @@ export const updateCardFinalBlockSettings = async (
   finalBlockSettings: FinalCardBlockSettings,
   finalBlockOrder: FinalCardBlockOrder | null
 ) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.updateCardFinalBlockSettings(cardId, finalBlockSettings, finalBlockOrder);
+  }
+
   const cards = await readCards();
   const index = cards.findIndex((card) => card.id === cardId);
 
@@ -204,6 +226,18 @@ export const updateCardFinalPresentationSettings = async (
   finalMainGreetingSettings: FinalCardMainGreetingSettings,
   finalMemorySettings: FinalCardMemorySettings
 ) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.updateCardFinalPresentationSettings(
+      cardId,
+      templateId,
+      finalBlockSettings,
+      finalBlockOrder,
+      finalMessageSettings,
+      finalMainGreetingSettings,
+      finalMemorySettings
+    );
+  }
+
   const cards = await readCards();
   const index = cards.findIndex((card) => card.id === cardId);
 
@@ -231,6 +265,10 @@ export const updateCardMainGreetingSettings = async (
   cardId: string,
   finalMainGreetingSettings: FinalCardMainGreetingSettings
 ) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.updateCardMainGreetingSettings(cardId, finalMainGreetingSettings);
+  }
+
   const cards = await readCards();
   const index = cards.findIndex((card) => card.id === cardId);
 
@@ -264,6 +302,10 @@ export const updateCardDraftBasics = async (
     | "signature"
   >
 ) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.updateCardDraftBasics(cardId, basics);
+  }
+
   const cards = await readCards();
   const index = cards.findIndex((card) => card.id === cardId);
 
@@ -283,6 +325,10 @@ export const updateCardDraftBasics = async (
 };
 
 export const updateCardStatus = async (cardId: string, status: CardStatus) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.updateCardStatus(cardId, status);
+  }
+
   const cards = await readCards();
   const index = cards.findIndex((card) => card.id === cardId);
 
@@ -302,6 +348,10 @@ export const updateCardStatus = async (cardId: string, status: CardStatus) => {
 };
 
 export const listCardMediaAssetsByCardId = async (cardId: string) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.listCardMediaAssetsByCardId(cardId);
+  }
+
   const assets = await readMediaAssets();
   return assets
     .filter((item) => item.cardId === cardId)
@@ -309,6 +359,10 @@ export const listCardMediaAssetsByCardId = async (cardId: string) => {
 };
 
 export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.upsertCardMediaAsset(asset);
+  }
+
   const assets = await readMediaAssets();
   const existing = assets.find((item) => item.cardId === asset.cardId && item.slot === asset.slot);
   const nextAssets = assets.filter((item) => item.id !== existing?.id);
@@ -327,6 +381,10 @@ export const updateCardMediaAssetCaption = async (
   captionTitle: string,
   captionSubtitle: string
 ) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.updateCardMediaAssetCaption(assetId, captionTitle, captionSubtitle);
+  }
+
   const assets = await readMediaAssets();
   const index = assets.findIndex((item) => item.id === assetId);
 
@@ -347,6 +405,10 @@ export const updateCardMediaAssetCaption = async (
 };
 
 export const deleteCardMediaAsset = async (assetId: string) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.deleteCardMediaAsset(assetId);
+  }
+
   const assets = await readMediaAssets();
   const current = assets.find((item) => item.id === assetId);
 
@@ -375,6 +437,10 @@ const readContributions = async (): Promise<Contribution[]> => {
 };
 
 export const saveContribution = async (contribution: Contribution) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.saveContribution(contribution);
+  }
+
   const contributions = await readContributions();
   const maxSortOrder = contributions
     .filter((item) => item.cardId === contribution.cardId)
@@ -391,6 +457,10 @@ export const saveContribution = async (contribution: Contribution) => {
 };
 
 export const listContributionsByCardId = async (cardId: string) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.listContributionsByCardId(cardId);
+  }
+
   const contributions = await readContributions();
   return contributions
     .filter((item) => item.cardId === cardId && item.status === "visible")
@@ -398,6 +468,10 @@ export const listContributionsByCardId = async (cardId: string) => {
 };
 
 export const listAllContributionsByCardId = async (cardId: string) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.listAllContributionsByCardId(cardId);
+  }
+
   const contributions = await readContributions();
   return contributions.filter((item) => item.cardId === cardId).sort(compareContributions);
 };
@@ -406,6 +480,10 @@ export const updateContributionStatus = async (
   contributionId: string,
   status: Contribution["status"]
 ) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.updateContributionStatus(contributionId, status);
+  }
+
   const contributions = await readContributions();
   const index = contributions.findIndex((item) => item.id === contributionId);
 
@@ -425,6 +503,10 @@ export const updateContributionStatus = async (
 };
 
 export const moveContribution = async (contributionId: string, direction: "up" | "down") => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.moveContribution(contributionId, direction);
+  }
+
   const contributions = await readContributions();
   const current = contributions.find((item) => item.id === contributionId);
 
@@ -468,6 +550,10 @@ export const moveContribution = async (contributionId: string, direction: "up" |
 };
 
 export const reorderContributions = async (cardId: string, orderedContributionIds: string[]) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.reorderContributions(cardId, orderedContributionIds);
+  }
+
   const contributions = await readContributions();
   const siblings = contributions.filter((item) => item.cardId === cardId).sort(compareContributions);
 
@@ -512,6 +598,10 @@ export const updateContributionMessage = async (
   contributionId: string,
   message: Contribution["message"]
 ) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.updateContributionMessage(contributionId, message);
+  }
+
   const contributions = await readContributions();
   const index = contributions.findIndex((item) => item.id === contributionId);
 

@@ -8,11 +8,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "db:migrate": "node scripts/migrate-postgres.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
     "next": "^16.0.1",
+    "pg": "^8.22.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
@@ -21,6 +23,7 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.10.1",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "eslint": "^9.39.1",

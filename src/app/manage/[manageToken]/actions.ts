@@ -22,7 +22,7 @@ import {
   updateContributionStatus,
   upsertCardMediaAsset
 } from "@/lib/cards/repository";
-import { buildCardMediaFileName, validateCardMediaFile } from "@/lib/cards/media";
+import { CARD_MEDIA_MAX_COUNT, buildCardMediaFileName, validateCardMediaFile } from "@/lib/cards/media";
 import { createContribution } from "@/lib/cards/service";
 import { isTemplateId } from "@/lib/cards/templates";
 import type { CardDraft, CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
@@ -576,6 +576,17 @@ export async function saveCardMediaAction(
       return { ok: false, message: issue };
     }
 
+    const currentAssets = await listCardMediaAssetsByCardId(card.id);
+    const existingSlotAsset = currentAssets.find((item) => item.slot === slot);
+    const isReplacingExistingAsset = Boolean(existingAssetId || existingSlotAsset);
+
+    if (!isReplacingExistingAsset && currentAssets.length >= CARD_MEDIA_MAX_COUNT) {
+      return {
+        ok: false,
+        message: `В одной открытке можно использовать до ${CARD_MEDIA_MAX_COUNT} фото. Удалите или замените одно из уже добавленных.`
+      };
+    }
+
     const fileName = buildCardMediaFileName(slot, file.name, file.type);
     const absolutePath = join(process.cwd(), "public", "uploads", "cards", card.id, fileName);
     const publicUrl = `/uploads/cards/${card.id}/${fileName}`;
@@ -599,7 +610,6 @@ export async function saveCardMediaAction(
       updatedAt: now
     };
 
-    const existingSlotAsset = (await listCardMediaAssetsByCardId(card.id)).find((item) => item.slot === slot);
     if (existingSlotAsset) {
       asset.id = existingSlotAsset.id;
       asset.createdAt = existingSlotAsset.createdAt;

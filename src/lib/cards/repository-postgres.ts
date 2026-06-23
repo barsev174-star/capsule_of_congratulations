@@ -1,0 +1,572 @@
+import { unlink } from "node:fs/promises";
+import { getPostgresPool } from "@/lib/db/postgres";
+import type { CardTemplateId } from "@/lib/cards/templates";
+import type { CardDraft, CardMediaAsset, CardStatus, Contribution } from "@/lib/cards/types";
+import type {
+  FinalCardBlockOrder,
+  FinalCardBlockSettings,
+  FinalCardMainGreetingSettings,
+  FinalCardMemorySettings,
+  FinalCardMessageSettings
+} from "@/lib/final-card/types";
+
+type CardRow = {
+  id: string;
+  public_slug: string;
+  manage_token: string;
+  final_slug: string;
+  recipient_name: string;
+  occasion: CardDraft["occasion"];
+  occasion_text: string;
+  from_label: string;
+  organizer_name: string;
+  organizer_email: string;
+  event_date: Date | string | null;
+  description: string | null;
+  signature: string | null;
+  template_id: CardTemplateId;
+  final_block_settings: FinalCardBlockSettings | null;
+  final_block_order: FinalCardBlockOrder | null;
+  final_message_settings: FinalCardMessageSettings | null;
+  final_main_greeting_settings: FinalCardMainGreetingSettings | null;
+  final_memory_settings: FinalCardMemorySettings | null;
+  status: CardStatus;
+  payment_status: CardDraft["paymentStatus"];
+  created_at: Date | string;
+  updated_at: Date | string;
+};
+
+type ContributionRow = {
+  id: string;
+  card_id: string;
+  author_name: string;
+  author_role: string | null;
+  author_avatar_url: string | null;
+  message: string;
+  sort_order: number;
+  status: Contribution["status"];
+  source: Contribution["source"];
+  created_at: Date | string;
+  updated_at: Date | string;
+};
+
+type MediaRow = {
+  id: string;
+  card_id: string;
+  slot: CardMediaAsset["slot"];
+  public_url: string;
+  storage_path: string;
+  file_name: string;
+  mime_type: string;
+  size_bytes: number;
+  caption_title: string;
+  caption_subtitle: string;
+  created_at: Date | string;
+  updated_at: Date | string;
+};
+
+const toIso = (value: Date | string) => (value instanceof Date ? value.toISOString() : value);
+const toDateOnly = (value: Date | string | null) => {
+  if (!value) {
+    return null;
+  }
+
+  return value instanceof Date ? value.toISOString().slice(0, 10) : value;
+};
+
+const jsonParam = (value: unknown) => (value === null || value === undefined ? null : JSON.stringify(value));
+
+const mapCard = (row: CardRow): CardDraft => ({
+  id: row.id,
+  publicSlug: row.public_slug,
+  manageToken: row.manage_token,
+  finalSlug: row.final_slug,
+  recipientName: row.recipient_name,
+  occasion: row.occasion,
+  occasionText: row.occasion_text,
+  fromLabel: row.from_label,
+  organizerName: row.organizer_name,
+  organizerEmail: row.organizer_email,
+  eventDate: toDateOnly(row.event_date),
+  description: row.description,
+  signature: row.signature,
+  templateId: row.template_id,
+  finalBlockSettings: row.final_block_settings,
+  finalBlockOrder: row.final_block_order,
+  finalMessageSettings: row.final_message_settings,
+  finalMainGreetingSettings: row.final_main_greeting_settings,
+  finalMemorySettings: row.final_memory_settings,
+  status: row.status,
+  paymentStatus: row.payment_status,
+  createdAt: toIso(row.created_at),
+  updatedAt: toIso(row.updated_at)
+});
+
+const mapContribution = (row: ContributionRow): Contribution => ({
+  id: row.id,
+  cardId: row.card_id,
+  authorName: row.author_name,
+  authorRole: row.author_role,
+  authorAvatarUrl: row.author_avatar_url,
+  message: row.message,
+  sortOrder: row.sort_order,
+  status: row.status,
+  source: row.source,
+  createdAt: toIso(row.created_at),
+  updatedAt: toIso(row.updated_at)
+});
+
+const mapMedia = (row: MediaRow): CardMediaAsset => ({
+  id: row.id,
+  cardId: row.card_id,
+  slot: row.slot,
+  publicUrl: row.public_url,
+  storagePath: row.storage_path,
+  fileName: row.file_name,
+  mimeType: row.mime_type,
+  sizeBytes: row.size_bytes,
+  captionTitle: row.caption_title,
+  captionSubtitle: row.caption_subtitle,
+  createdAt: toIso(row.created_at),
+  updatedAt: toIso(row.updated_at)
+});
+
+const selectCardBy = async (column: "id" | "public_slug" | "manage_token", value: string) => {
+  const result = await getPostgresPool().query<CardRow>(`SELECT * FROM cards WHERE ${column} = $1 LIMIT 1`, [value]);
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+
+const removeStoredMediaFile = async (storagePath: string) => {
+  try {
+    await unlink(storagePath);
+  } catch {
+    // Ignore missing files so organizer actions stay resilient.
+  }
+};
+
+export const saveCardDraft = async (card: CardDraft) => {
+  await getPostgresPool().query(
+    `
+      INSERT INTO cards (
+        id, public_slug, manage_token, final_slug, recipient_name, occasion, occasion_text,
+        from_label, organizer_name, organizer_email, event_date, description, signature,
+        template_id, final_block_settings, final_block_order, final_message_settings,
+        final_main_greeting_settings, final_memory_settings, status, payment_status,
+        created_at, updated_at
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7,
+        $8, $9, $10, $11, $12, $13,
+        $14, $15::jsonb, $16::jsonb, $17::jsonb,
+        $18::jsonb, $19::jsonb, $20, $21,
+        $22, $23
+      )
+    `,
+    [
+      card.id,
+      card.publicSlug,
+      card.manageToken,
+      card.finalSlug,
+      card.recipientName,
+      card.occasion,
+      card.occasionText,
+      card.fromLabel,
+      card.organizerName,
+      card.organizerEmail,
+      card.eventDate,
+      card.description,
+      card.signature,
+      card.templateId,
+      jsonParam(card.finalBlockSettings),
+      jsonParam(card.finalBlockOrder),
+      jsonParam(card.finalMessageSettings),
+      jsonParam(card.finalMainGreetingSettings),
+      jsonParam(card.finalMemorySettings),
+      card.status,
+      card.paymentStatus,
+      card.createdAt,
+      card.updatedAt
+    ]
+  );
+};
+
+export const listCardDrafts = async () => {
+  const result = await getPostgresPool().query<CardRow>("SELECT * FROM cards ORDER BY created_at DESC");
+  return result.rows.map(mapCard);
+};
+
+export const getCardDraftByPublicSlug = (publicSlug: string) => selectCardBy("public_slug", publicSlug);
+export const getCardDraftByManageToken = (manageToken: string) => selectCardBy("manage_token", manageToken);
+export const getCardDraftById = (cardId: string) => selectCardBy("id", cardId);
+
+export const updateCardFinalBlockSettings = async (
+  cardId: string,
+  finalBlockSettings: FinalCardBlockSettings,
+  finalBlockOrder: FinalCardBlockOrder | null
+) => {
+  const result = await getPostgresPool().query<CardRow>(
+    `
+      UPDATE cards
+      SET final_block_settings = $2::jsonb,
+          final_block_order = $3::jsonb,
+          updated_at = now()
+      WHERE id = $1
+      RETURNING *
+    `,
+    [cardId, jsonParam(finalBlockSettings), jsonParam(finalBlockOrder)]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+
+export const updateCardFinalPresentationSettings = async (
+  cardId: string,
+  templateId: CardTemplateId,
+  finalBlockSettings: FinalCardBlockSettings,
+  finalBlockOrder: FinalCardBlockOrder | null,
+  finalMessageSettings: FinalCardMessageSettings,
+  finalMainGreetingSettings: FinalCardMainGreetingSettings,
+  finalMemorySettings: FinalCardMemorySettings
+) => {
+  const result = await getPostgresPool().query<CardRow>(
+    `
+      UPDATE cards
+      SET template_id = $2,
+          final_block_settings = $3::jsonb,
+          final_block_order = $4::jsonb,
+          final_message_settings = $5::jsonb,
+          final_main_greeting_settings = $6::jsonb,
+          final_memory_settings = $7::jsonb,
+          updated_at = now()
+      WHERE id = $1
+      RETURNING *
+    `,
+    [
+      cardId,
+      templateId,
+      jsonParam(finalBlockSettings),
+      jsonParam(finalBlockOrder),
+      jsonParam(finalMessageSettings),
+      jsonParam(finalMainGreetingSettings),
+      jsonParam(finalMemorySettings)
+    ]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+
+export const updateCardMainGreetingSettings = async (
+  cardId: string,
+  finalMainGreetingSettings: FinalCardMainGreetingSettings
+) => {
+  const result = await getPostgresPool().query<CardRow>(
+    `
+      UPDATE cards
+      SET final_main_greeting_settings = $2::jsonb,
+          updated_at = now()
+      WHERE id = $1
+      RETURNING *
+    `,
+    [cardId, jsonParam(finalMainGreetingSettings)]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+
+export const updateCardDraftBasics = async (
+  cardId: string,
+  basics: Pick<
+    CardDraft,
+    | "recipientName"
+    | "occasion"
+    | "occasionText"
+    | "fromLabel"
+    | "organizerName"
+    | "organizerEmail"
+    | "eventDate"
+    | "description"
+    | "signature"
+  >
+) => {
+  const result = await getPostgresPool().query<CardRow>(
+    `
+      UPDATE cards
+      SET recipient_name = $2,
+          occasion = $3,
+          occasion_text = $4,
+          from_label = $5,
+          organizer_name = $6,
+          organizer_email = $7,
+          event_date = $8,
+          description = $9,
+          signature = $10,
+          updated_at = now()
+      WHERE id = $1
+      RETURNING *
+    `,
+    [
+      cardId,
+      basics.recipientName,
+      basics.occasion,
+      basics.occasionText,
+      basics.fromLabel,
+      basics.organizerName,
+      basics.organizerEmail,
+      basics.eventDate,
+      basics.description,
+      basics.signature
+    ]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+
+export const updateCardStatus = async (cardId: string, status: CardStatus) => {
+  const result = await getPostgresPool().query<CardRow>(
+    "UPDATE cards SET status = $2, updated_at = now() WHERE id = $1 RETURNING *",
+    [cardId, status]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+
+export const listCardMediaAssetsByCardId = async (cardId: string) => {
+  const result = await getPostgresPool().query<MediaRow>(
+    "SELECT * FROM card_media_assets WHERE card_id = $1 ORDER BY created_at ASC",
+    [cardId]
+  );
+  return result.rows.map(mapMedia);
+};
+
+export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
+  const existingResult = await getPostgresPool().query<MediaRow>(
+    "SELECT * FROM card_media_assets WHERE card_id = $1 AND slot = $2 LIMIT 1",
+    [asset.cardId, asset.slot]
+  );
+  const existing = existingResult.rows[0] ? mapMedia(existingResult.rows[0]) : null;
+  const nextAsset = existing ? { ...asset, id: existing.id, createdAt: existing.createdAt } : asset;
+
+  if (existing && existing.storagePath !== asset.storagePath) {
+    await removeStoredMediaFile(existing.storagePath);
+  }
+
+  await getPostgresPool().query(
+    `
+      INSERT INTO card_media_assets (
+        id, card_id, slot, public_url, storage_path, file_name, mime_type,
+        size_bytes, caption_title, caption_subtitle, created_at, updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      ON CONFLICT (card_id, slot) DO UPDATE
+      SET public_url = EXCLUDED.public_url,
+          storage_path = EXCLUDED.storage_path,
+          file_name = EXCLUDED.file_name,
+          mime_type = EXCLUDED.mime_type,
+          size_bytes = EXCLUDED.size_bytes,
+          caption_title = EXCLUDED.caption_title,
+          caption_subtitle = EXCLUDED.caption_subtitle,
+          updated_at = EXCLUDED.updated_at
+    `,
+    [
+      nextAsset.id,
+      nextAsset.cardId,
+      nextAsset.slot,
+      nextAsset.publicUrl,
+      nextAsset.storagePath,
+      nextAsset.fileName,
+      nextAsset.mimeType,
+      nextAsset.sizeBytes,
+      nextAsset.captionTitle,
+      nextAsset.captionSubtitle,
+      nextAsset.createdAt,
+      nextAsset.updatedAt
+    ]
+  );
+  return nextAsset;
+};
+
+export const updateCardMediaAssetCaption = async (
+  assetId: string,
+  captionTitle: string,
+  captionSubtitle: string
+) => {
+  const result = await getPostgresPool().query<MediaRow>(
+    `
+      UPDATE card_media_assets
+      SET caption_title = $2,
+          caption_subtitle = $3,
+          updated_at = now()
+      WHERE id = $1
+      RETURNING *
+    `,
+    [assetId, captionTitle, captionSubtitle]
+  );
+  return result.rows[0] ? mapMedia(result.rows[0]) : null;
+};
+
+export const deleteCardMediaAsset = async (assetId: string) => {
+  const result = await getPostgresPool().query<MediaRow>(
+    "DELETE FROM card_media_assets WHERE id = $1 RETURNING *",
+    [assetId]
+  );
+  const current = result.rows[0] ? mapMedia(result.rows[0]) : null;
+
+  if (current) {
+    await removeStoredMediaFile(current.storagePath);
+  }
+
+  return current;
+};
+
+export const saveContribution = async (contribution: Contribution) => {
+  const orderResult = await getPostgresPool().query<{ next_order: number }>(
+    "SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM contributions WHERE card_id = $1",
+    [contribution.cardId]
+  );
+  const sortOrder =
+    typeof contribution.sortOrder === "number" && Number.isFinite(contribution.sortOrder)
+      ? contribution.sortOrder
+      : orderResult.rows[0]?.next_order ?? 0;
+
+  await getPostgresPool().query(
+    `
+      INSERT INTO contributions (
+        id, card_id, author_name, author_role, author_avatar_url, message,
+        sort_order, status, source, created_at, updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    `,
+    [
+      contribution.id,
+      contribution.cardId,
+      contribution.authorName,
+      contribution.authorRole,
+      contribution.authorAvatarUrl,
+      contribution.message,
+      sortOrder,
+      contribution.status,
+      contribution.source,
+      contribution.createdAt,
+      contribution.updatedAt
+    ]
+  );
+};
+
+export const listContributionsByCardId = async (cardId: string) => {
+  const result = await getPostgresPool().query<ContributionRow>(
+    "SELECT * FROM contributions WHERE card_id = $1 AND status = 'visible' ORDER BY sort_order ASC, created_at ASC",
+    [cardId]
+  );
+  return result.rows.map(mapContribution);
+};
+
+export const listAllContributionsByCardId = async (cardId: string) => {
+  const result = await getPostgresPool().query<ContributionRow>(
+    "SELECT * FROM contributions WHERE card_id = $1 ORDER BY sort_order ASC, created_at ASC",
+    [cardId]
+  );
+  return result.rows.map(mapContribution);
+};
+
+export const updateContributionStatus = async (
+  contributionId: string,
+  status: Contribution["status"]
+) => {
+  const result = await getPostgresPool().query<ContributionRow>(
+    "UPDATE contributions SET status = $2, updated_at = now() WHERE id = $1 RETURNING *",
+    [contributionId, status]
+  );
+  return result.rows[0] ? mapContribution(result.rows[0]) : null;
+};
+
+export const moveContribution = async (contributionId: string, direction: "up" | "down") => {
+  const client = await getPostgresPool().connect();
+
+  try {
+    await client.query("BEGIN");
+    const currentResult = await client.query<ContributionRow>("SELECT * FROM contributions WHERE id = $1", [contributionId]);
+    const current = currentResult.rows[0];
+
+    if (!current) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    const siblingsResult = await client.query<ContributionRow>(
+      "SELECT * FROM contributions WHERE card_id = $1 ORDER BY sort_order ASC, created_at ASC",
+      [current.card_id]
+    );
+    const siblings = siblingsResult.rows;
+    const currentIndex = siblings.findIndex((item) => item.id === contributionId);
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+    if (currentIndex === -1 || targetIndex < 0 || targetIndex >= siblings.length) {
+      await client.query("COMMIT");
+      return mapContribution(current);
+    }
+
+    const target = siblings[targetIndex];
+    await client.query("UPDATE contributions SET sort_order = $2, updated_at = now() WHERE id = $1", [
+      current.id,
+      target.sort_order
+    ]);
+    await client.query("UPDATE contributions SET sort_order = $2, updated_at = now() WHERE id = $1", [
+      target.id,
+      current.sort_order
+    ]);
+    await client.query("COMMIT");
+
+    const updated = await getPostgresPool().query<ContributionRow>("SELECT * FROM contributions WHERE id = $1", [
+      contributionId
+    ]);
+    return updated.rows[0] ? mapContribution(updated.rows[0]) : null;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const reorderContributions = async (cardId: string, orderedContributionIds: string[]) => {
+  const client = await getPostgresPool().connect();
+
+  try {
+    await client.query("BEGIN");
+    const siblingsResult = await client.query<ContributionRow>(
+      "SELECT * FROM contributions WHERE card_id = $1 ORDER BY sort_order ASC, created_at ASC",
+      [cardId]
+    );
+    const siblings = siblingsResult.rows;
+    const siblingIds = new Set(siblings.map((item) => item.id));
+    const normalizedOrder = orderedContributionIds.filter((id) => siblingIds.has(id));
+
+    for (const item of siblings) {
+      if (!normalizedOrder.includes(item.id)) {
+        normalizedOrder.push(item.id);
+      }
+    }
+
+    for (const [index, id] of normalizedOrder.entries()) {
+      await client.query("UPDATE contributions SET sort_order = $2, updated_at = now() WHERE id = $1", [id, index]);
+    }
+
+    await client.query("COMMIT");
+    const updated = await getPostgresPool().query<ContributionRow>(
+      "SELECT * FROM contributions WHERE card_id = $1 ORDER BY sort_order ASC, created_at ASC",
+      [cardId]
+    );
+    return updated.rows.map(mapContribution);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const updateContributionMessage = async (
+  contributionId: string,
+  message: Contribution["message"]
+) => {
+  const result = await getPostgresPool().query<ContributionRow>(
+    "UPDATE contributions SET message = $2, updated_at = now() WHERE id = $1 RETURNING *",
+    [contributionId, message]
+  );
+  return result.rows[0] ? mapContribution(result.rows[0]) : null;
+};

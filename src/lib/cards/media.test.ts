@@ -1,4 +1,5 @@
 import {
+  CARD_MEDIA_MAX_COUNT,
   CARD_MEDIA_MAX_BYTES,
   buildCardMediaFileName,
   isSupportedCardMediaMimeType,
@@ -6,6 +7,10 @@ import {
 } from "@/lib/cards/media";
 
 describe("card media helpers", () => {
+  it("keeps the MVP photo count limit explicit", () => {
+    expect(CARD_MEDIA_MAX_COUNT).toBe(6);
+  });
+
   it("accepts supported image mime types", () => {
     expect(isSupportedCardMediaMimeType("image/jpeg")).toBe(true);
     expect(isSupportedCardMediaMimeType("image/png")).toBe(true);
