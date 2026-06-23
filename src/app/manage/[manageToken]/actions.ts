@@ -1,7 +1,5 @@
 "use server";
 
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import {
@@ -22,7 +20,7 @@ import {
   updateContributionStatus,
   upsertCardMediaAsset
 } from "@/lib/cards/repository";
-import { CARD_MEDIA_MAX_COUNT, buildCardMediaFileName, validateCardMediaFile } from "@/lib/cards/media";
+import { CARD_MEDIA_MAX_COUNT, validateCardMediaFile } from "@/lib/cards/media";
 import { createContribution } from "@/lib/cards/service";
 import { isTemplateId } from "@/lib/cards/templates";
 import type { CardDraft, CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
@@ -40,6 +38,7 @@ import type {
   FinalCardOptionalBlockId
 } from "@/lib/final-card/types";
 import { logger } from "@/lib/logger";
+import { saveCardMediaFile } from "@/lib/media/local-card-media-storage";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
@@ -614,20 +613,15 @@ export async function saveCardMediaAction(
       };
     }
 
-    const fileName = buildCardMediaFileName(slot, file.name, file.type);
-    const absolutePath = join(process.cwd(), "public", "uploads", "cards", card.id, fileName);
-    const publicUrl = `/uploads/cards/${card.id}/${fileName}`;
+    const savedFile = await saveCardMediaFile({ cardId: card.id, slot, file });
     const now = new Date().toISOString();
-
-    await mkdir(dirname(absolutePath), { recursive: true });
-    await writeFile(absolutePath, Buffer.from(await file.arrayBuffer()));
 
     const asset: CardMediaAsset = {
       id: existingAssetId || randomUUID(),
       cardId: card.id,
       slot,
-      publicUrl,
-      storagePath: absolutePath,
+      publicUrl: savedFile.publicUrl,
+      storagePath: savedFile.storagePath,
       fileName: file.name,
       mimeType: file.type,
       sizeBytes: file.size,

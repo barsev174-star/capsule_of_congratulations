@@ -139,3 +139,14 @@ Manual checks added after the storage preparation pass:
 3. Fill the basics form and confirm the manage header, participant page, and final preview use the saved values.
 4. Without `DATABASE_URL`, confirm local JSON storage still works.
 5. With `DATABASE_URL`, run `npm run db:migrate` and repeat the same create/manage/participant/final flow on PostgreSQL.
+
+## Update 2026-06-23 Local uploads storage checks
+
+Manual checks for the current local uploads layer:
+
+1. Upload a photo in the organizer media manager.
+2. Confirm the image appears in the editor preview and final card.
+3. Confirm the file exists under `public/uploads/cards/<cardId>/`.
+4. Replace a photo in the same slot and confirm the old file is removed from `public/uploads/cards`.
+5. Delete a photo and confirm the file disappears from `public/uploads/cards`.
+6. Repeat the same checks with `DATABASE_URL` enabled, because metadata then lives in PostgreSQL while files still live on disk.

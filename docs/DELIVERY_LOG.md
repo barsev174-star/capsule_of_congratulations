@@ -457,3 +457,11 @@
 3. Limited each card to 6 uploaded photos and documented the split between greeting photos and the “Моменты” block.
 4. Added `.env.example` for the current environment contract.
 5. Fixed the new-card manage screen so empty drafts no longer look like the old filled demo card.
+
+## Update 2026-06-23 Local Uploads Storage Layer
+
+1. Moved card photo file writes into `src/lib/media/local-card-media-storage.ts`.
+2. Kept the first VPS storage target as `public/uploads/cards`.
+3. Limited physical file deletion to the uploads root for safer metadata cleanup.
+4. Kept media metadata in the active repository mode: JSON locally or PostgreSQL with `DATABASE_URL`.
+5. Documented uploads backup and manual verification steps for the VPS path.

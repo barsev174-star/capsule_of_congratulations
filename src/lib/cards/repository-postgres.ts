@@ -1,7 +1,7 @@
-import { unlink } from "node:fs/promises";
 import { getPostgresPool } from "@/lib/db/postgres";
 import type { CardTemplateId } from "@/lib/cards/templates";
 import type { CardDraft, CardMediaAsset, CardStatus, Contribution } from "@/lib/cards/types";
+import { deleteStoredCardMediaFile } from "@/lib/media/local-card-media-storage";
 import type {
   FinalCardBlockOrder,
   FinalCardBlockSettings,
@@ -134,14 +134,6 @@ const mapMedia = (row: MediaRow): CardMediaAsset => ({
 const selectCardBy = async (column: "id" | "public_slug" | "manage_token", value: string) => {
   const result = await getPostgresPool().query<CardRow>(`SELECT * FROM cards WHERE ${column} = $1 LIMIT 1`, [value]);
   return result.rows[0] ? mapCard(result.rows[0]) : null;
-};
-
-const removeStoredMediaFile = async (storagePath: string) => {
-  try {
-    await unlink(storagePath);
-  } catch {
-    // Ignore missing files so organizer actions stay resilient.
-  }
 };
 
 export const saveCardDraft = async (card: CardDraft) => {
@@ -342,7 +334,7 @@ export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
   const nextAsset = existing ? { ...asset, id: existing.id, createdAt: existing.createdAt } : asset;
 
   if (existing && existing.storagePath !== asset.storagePath) {
-    await removeStoredMediaFile(existing.storagePath);
+    await deleteStoredCardMediaFile(existing.storagePath);
   }
 
   await getPostgresPool().query(
@@ -407,7 +399,7 @@ export const deleteCardMediaAsset = async (assetId: string) => {
   const current = result.rows[0] ? mapMedia(result.rows[0]) : null;
 
   if (current) {
-    await removeStoredMediaFile(current.storagePath);
+    await deleteStoredCardMediaFile(current.storagePath);
   }
 
   return current;

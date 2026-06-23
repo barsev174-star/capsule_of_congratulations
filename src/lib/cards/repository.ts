@@ -1,9 +1,10 @@
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { isPostgresConfigured } from "@/lib/db/postgres";
 import * as postgresRepository from "@/lib/cards/repository-postgres";
 import type { CardDraft, CardMediaAsset, CardStatus, Contribution } from "@/lib/cards/types";
 import type { CardTemplateId } from "@/lib/cards/templates";
+import { deleteStoredCardMediaFile } from "@/lib/media/local-card-media-storage";
 import type {
   FinalCardBlockOrder,
   FinalCardBlockSettings,
@@ -139,14 +140,6 @@ const readMediaAssets = async (): Promise<CardMediaAsset[]> => {
       : [];
   } catch {
     return [];
-  }
-};
-
-const removeStoredMediaFile = async (storagePath: string) => {
-  try {
-    await unlink(storagePath);
-  } catch {
-    // Ignore missing files so organizer actions stay resilient.
   }
 };
 
@@ -368,7 +361,7 @@ export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
   const nextAssets = assets.filter((item) => item.id !== existing?.id);
 
   if (existing && existing.storagePath !== asset.storagePath) {
-    await removeStoredMediaFile(existing.storagePath);
+    await deleteStoredCardMediaFile(existing.storagePath);
   }
 
   nextAssets.push(asset);
@@ -417,7 +410,7 @@ export const deleteCardMediaAsset = async (assetId: string) => {
   }
 
   const nextAssets = assets.filter((item) => item.id !== assetId);
-  await removeStoredMediaFile(current.storagePath);
+  await deleteStoredCardMediaFile(current.storagePath);
   await writeFile(mediaAssetsFilePath, JSON.stringify(nextAssets, null, 2), "utf8");
   return current;
 };
