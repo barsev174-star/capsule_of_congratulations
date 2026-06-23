@@ -4315,3 +4315,619 @@ button.contentFilterPill {
     min-height: 104px;
   }
 }
+
+/* Warm trust polish */
+
+.page {
+  box-sizing: border-box;
+  color: #332722;
+  scrollbar-color: rgba(194, 120, 84, 0.42) rgba(255, 247, 240, 0.86);
+  scrollbar-width: thin;
+}
+
+.page *,
+.page *::before,
+.page *::after {
+  box-sizing: inherit;
+}
+
+.page ::selection {
+  background: rgba(194, 120, 84, 0.22);
+  color: #33231d;
+}
+
+.page * {
+  scrollbar-color: rgba(194, 120, 84, 0.4) rgba(255, 247, 240, 0.72);
+  scrollbar-width: thin;
+}
+
+.page *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.page *::-webkit-scrollbar-track {
+  background: rgba(255, 247, 240, 0.72);
+  border-radius: 999px;
+}
+
+.page *::-webkit-scrollbar-thumb {
+  background: rgba(194, 120, 84, 0.38);
+  border: 3px solid rgba(255, 247, 240, 0.72);
+  border-radius: 999px;
+}
+
+.page *::-webkit-scrollbar-thumb:hover {
+  background: rgba(194, 120, 84, 0.55);
+}
+
+.hero,
+.panel,
+.studioPanel,
+.previewPanel,
+.stepperCard,
+.heroTemplateCard {
+  min-width: 0;
+  border-color: transparent;
+  box-shadow:
+    0 0 0 1px rgba(92, 62, 46, 0.07),
+    0 1px 2px -1px rgba(92, 62, 46, 0.08),
+    0 20px 46px rgba(73, 49, 35, 0.08);
+}
+
+.shell,
+.heroTop,
+.heroContent,
+.heroTemplateCard,
+.heroTemplateInfo,
+.templateHeroForm,
+.designStudio,
+.designMain,
+.designRail,
+.flowPanel,
+.fieldGrid,
+.field,
+.studioForm,
+.compositionRow,
+.compositionText,
+.previewPanel,
+.previewMock {
+  min-width: 0;
+}
+
+.hero {
+  padding: 32px 34px;
+}
+
+.heroContent {
+  gap: 18px;
+}
+
+.heroBreadcrumbs,
+.subtitle,
+.flowStatus p,
+.compositionToolbarText,
+.compositionDescription,
+.compositionDetails,
+.layoutCardDescription,
+.layoutCardMeta,
+.previewQuoteCard p,
+.previewSingleBody p,
+.restoreEmptyText,
+.photoSequenceHeader p,
+.photoSequenceEmpty {
+  text-wrap: pretty;
+}
+
+.title,
+.sectionTitle,
+.heroTemplateName,
+.previewHeroTitle,
+.stepperText strong,
+.compositionTitle,
+.messageSettingsTitle {
+  text-wrap: balance;
+}
+
+.title {
+  letter-spacing: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.subtitle {
+  max-width: 690px;
+}
+
+.stat,
+.tabLink,
+.statusForm select,
+.statusForm button,
+.copyLinkButton,
+.linkCard,
+.templateHeroSelect,
+.secondaryButton,
+.button,
+.field input,
+.field textarea,
+.layoutCard,
+.mediaVariantTab,
+.modernToggle,
+.chevronButton,
+.compositionGrip,
+.restoreChip,
+.restoreAddButton,
+.previewLinkButton,
+.previewPrimaryLink,
+.previewSecondaryLink,
+.photoSequenceRow select,
+.memoryCaptionInput,
+.memoryCaptionTextarea {
+  transition-property: transform, box-shadow, border-color, background-color, color, opacity, scale;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.tabLink,
+.statusForm button,
+.copyLinkButton,
+.secondaryButton,
+.button,
+.mediaVariantTab,
+.layoutCard,
+.modernToggle,
+.chevronButton,
+.compositionGrip,
+.restoreChip,
+.previewLinkButton,
+.previewPrimaryLink,
+.previewSecondaryLink {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tabLink:hover,
+.previewLinkButton:hover,
+.previewSecondaryLink:hover,
+.secondaryButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(194, 120, 84, 0.24);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 22px rgba(121, 72, 48, 0.08);
+}
+
+.tabLink:active,
+.statusForm button:active,
+.copyLinkButton:active,
+.secondaryButton:active,
+.button:active,
+.layoutCard:active,
+.mediaVariantTab:active,
+.modernToggle:active,
+.restoreChip:active,
+.previewLinkButton:active,
+.previewPrimaryLink:active,
+.previewSecondaryLink:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.tabLinkActive:hover {
+  background: #c27854;
+  color: #fff8f3;
+  box-shadow: 0 12px 26px rgba(194, 120, 84, 0.26);
+}
+
+.statusForm button,
+.copyLinkButton,
+.button,
+.previewPrimaryLink {
+  box-shadow: 0 12px 24px rgba(190, 94, 75, 0.18);
+}
+
+.statusForm button:hover,
+.copyLinkButton:hover,
+.button:hover,
+.previewPrimaryLink:hover {
+  background: #b95f6f;
+  box-shadow: 0 14px 28px rgba(190, 94, 75, 0.24);
+  transform: translateY(-1px);
+}
+
+.button:hover {
+  background: #ad6642;
+}
+
+.statusForm button:disabled,
+.button:disabled,
+.secondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+  box-shadow: none;
+}
+
+.flowPanel {
+  border-color: transparent;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.78), transparent 30%),
+    rgba(255, 250, 245, 0.88);
+  box-shadow:
+    inset 0 0 0 1px rgba(92, 62, 46, 0.07),
+    0 12px 28px rgba(89, 61, 44, 0.05);
+}
+
+.flowStatus strong {
+  text-wrap: balance;
+}
+
+.linkGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.linkCard {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.76);
+  padding: 10px 12px;
+  box-shadow:
+    0 0 0 1px rgba(92, 62, 46, 0.07),
+    0 1px 2px -1px rgba(92, 62, 46, 0.07);
+}
+
+.linkCard:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow:
+    0 0 0 1px rgba(194, 120, 84, 0.16),
+    0 12px 24px rgba(121, 72, 48, 0.08);
+}
+
+.linkCard a {
+  outline: 0;
+  max-width: 100%;
+}
+
+.linkCard a:focus-visible,
+.tabLink:focus-visible,
+.statusForm select:focus-visible,
+.statusForm button:focus-visible,
+.copyLinkButton:focus-visible,
+.templateHeroSelect:focus-visible,
+.secondaryButton:focus-visible,
+.button:focus-visible,
+.field input:focus-visible,
+.field textarea:focus-visible,
+.layoutCard:focus-visible,
+.mediaVariantTab:focus-visible,
+.modernToggle:focus-visible,
+.chevronButton:focus-visible,
+.compositionGrip:focus-visible,
+.restoreChip:focus-visible,
+.previewLinkButton:focus-visible,
+.previewPrimaryLink:focus-visible,
+.previewSecondaryLink:focus-visible,
+.photoSequenceRow select:focus-visible,
+.memoryCaptionInput:focus-visible,
+.memoryCaptionTextarea:focus-visible {
+  outline: 3px solid rgba(194, 120, 84, 0.22);
+  outline-offset: 3px;
+}
+
+.statusForm select,
+.templateHeroSelect,
+.field input,
+.field textarea,
+.photoSequenceRow select,
+.memoryCaptionInput,
+.memoryCaptionTextarea {
+  min-width: 0;
+  box-shadow:
+    0 0 0 1px rgba(92, 62, 46, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.statusForm select:hover,
+.templateHeroSelect:hover,
+.field input:hover,
+.field textarea:hover,
+.photoSequenceRow select:hover,
+.memoryCaptionInput:hover,
+.memoryCaptionTextarea:hover {
+  border-color: rgba(194, 120, 84, 0.24);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.field input:focus,
+.field textarea:focus,
+.statusForm select:focus,
+.templateHeroSelect:focus,
+.photoSequenceRow select:focus,
+.memoryCaptionInput:focus,
+.memoryCaptionTextarea:focus {
+  border-color: rgba(194, 120, 84, 0.42);
+  background: #fffdf9;
+  box-shadow:
+    0 0 0 4px rgba(194, 120, 84, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: rgba(120, 96, 82, 0.58);
+}
+
+.field textarea,
+.memoryCaptionTextarea {
+  line-height: 1.62;
+}
+
+.stepperCard,
+.panel,
+.studioPanel {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.62), transparent 28%),
+    rgba(255, 250, 245, 0.96);
+}
+
+.stepperDot {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.64);
+}
+
+.stepperDotActive,
+.sectionStepNumber {
+  box-shadow: 0 10px 22px rgba(194, 120, 84, 0.18);
+}
+
+.compositionToolbar {
+  padding: 2px 2px 4px;
+}
+
+.compositionHelpLink {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(194, 120, 84, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.68);
+  transition-property: background-color, color, transform;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.compositionHelpLink:hover {
+  border-color: rgba(194, 120, 84, 0.22);
+  background: rgba(194, 120, 84, 0.1);
+  color: #7d4e35;
+}
+
+.compositionHelpLink:active {
+  transform: scale(0.96);
+}
+
+.compositionRow {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 1px rgba(92, 62, 46, 0.07),
+    0 1px 2px -1px rgba(92, 62, 46, 0.06);
+}
+
+.compositionRow:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 0 0 1px rgba(194, 120, 84, 0.14),
+    0 14px 28px rgba(96, 68, 51, 0.08);
+}
+
+.compositionRowExpanded {
+  background: rgba(255, 252, 248, 0.98);
+}
+
+.compositionGrip {
+  border-radius: 999px;
+}
+
+.compositionGrip:not(:disabled):hover {
+  background: rgba(194, 120, 84, 0.1);
+  color: #9f6244;
+}
+
+.compositionGrip:not(:disabled):active {
+  cursor: grabbing;
+  scale: 0.96;
+}
+
+.compositionIconBox,
+.restoreChipIcon,
+.layoutCardDiagram {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
+}
+
+.modernToggle {
+  box-shadow: inset 0 1px 2px rgba(92, 62, 46, 0.12);
+}
+
+.modernToggle:hover {
+  background: rgba(194, 120, 84, 0.34);
+}
+
+.modernToggleActive:hover {
+  background: #b96943;
+}
+
+.chevronButton {
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 999px;
+}
+
+.chevronButton:hover {
+  background: rgba(194, 120, 84, 0.1);
+  color: #8d583f;
+}
+
+.chevronButton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.chevronIconExpanded {
+  transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.compositionAccordion {
+  transition: grid-template-rows 220ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.compositionAccordionInner {
+  transition: padding 220ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.layoutCard {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 1px rgba(92, 62, 46, 0.07),
+    0 1px 2px -1px rgba(92, 62, 46, 0.06);
+}
+
+.layoutCard:hover {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 1px rgba(194, 120, 84, 0.18),
+    0 12px 24px rgba(96, 68, 51, 0.08);
+}
+
+.layoutCardActive {
+  box-shadow:
+    0 0 0 1px rgba(194, 120, 84, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 14px 28px rgba(194, 120, 84, 0.1);
+}
+
+.layoutCardCheck {
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 5px 12px rgba(121, 72, 48, 0.1);
+}
+
+.mediaVariantTab:hover,
+.restoreChip:hover:not(:disabled) {
+  border-color: rgba(194, 120, 84, 0.24);
+  background: rgba(255, 250, 245, 0.96);
+}
+
+.mediaVariantTabActive {
+  box-shadow:
+    0 0 0 1px rgba(194, 120, 84, 0.18),
+    0 8px 18px rgba(121, 72, 48, 0.06);
+}
+
+.restoreAddButton {
+  background: rgba(255, 250, 245, 0.72);
+}
+
+.restoreAddButton:hover {
+  border-color: rgba(194, 120, 84, 0.44);
+  background: rgba(255, 246, 239, 0.92);
+}
+
+.editorFooter {
+  padding-top: 4px;
+}
+
+.editorSuccess,
+.editorError {
+  padding: 8px 12px;
+  border-radius: 999px;
+}
+
+.editorSuccess {
+  background: rgba(77, 127, 92, 0.1);
+}
+
+.editorError {
+  background: rgba(171, 66, 50, 0.1);
+}
+
+.previewPanel {
+  scrollbar-gutter: stable;
+}
+
+.previewMock {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 1px 2px -1px rgba(92, 62, 46, 0.08),
+    0 18px 34px rgba(89, 61, 44, 0.08);
+}
+
+.previewHeroCard,
+.previewQuoteCard,
+.previewMessageSection,
+.previewFinalCard,
+.photoSequencePanel {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 1px rgba(92, 62, 46, 0.06),
+    0 1px 2px -1px rgba(92, 62, 46, 0.06);
+}
+
+.photoSequencePreview img {
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+
+@media (min-width: 900px) {
+  .flowPanel {
+    max-width: 760px;
+  }
+}
+
+@media (max-width: 899px) {
+  .hero {
+    width: 100%;
+    padding: 24px 18px;
+  }
+
+  .title {
+    font-size: clamp(2.25rem, 13vw, 3.4rem);
+    line-height: 1;
+    word-break: break-word;
+  }
+
+  .linkGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .compositionToolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .compositionRowHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .compositionControls {
+    align-self: stretch;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .compositionAccordionInner,
+  .messageSettings,
+  .messageSettingsGroup,
+  .layoutCardGrid,
+  .layoutCard,
+  .layoutCardDiagram,
+  .layoutCardTitle,
+  .layoutCardDescription,
+  .layoutCardMeta {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .layoutCard {
+    min-height: 0;
+  }
+}
