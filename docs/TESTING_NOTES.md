@@ -170,3 +170,13 @@ Before touching the VPS, validate locally:
 3. Confirm public host binding is `127.0.0.1:3100:3000`.
 4. Confirm uploads are mounted from `./public/uploads` to `/app/public/uploads`.
 5. If doing a full local compose run, copy `.env.production.example` to `.env.production`, set a safe password, build, run migrations, then create a test card.
+
+## Update 2026-06-23 Production operations checks
+
+On a Linux/VPS shell after the stack is running:
+
+1. Run `bash infra/scripts/backup-postgres.sh` and confirm `backups/postgres-*.sql.gz` appears.
+2. Run `bash infra/scripts/backup-uploads.sh` and confirm `backups/uploads-*.tar.gz` appears.
+3. Run `bash infra/scripts/run-nightly-backup.sh` and confirm checksum files and latest symlinks appear.
+4. Run `BASE_URL=https://steplom.ru bash infra/scripts/check-production-health.sh`.
+5. Do not store `.env.production` in git.

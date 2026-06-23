@@ -481,3 +481,11 @@
 3. Added `.env.production.example` for VPS deployment.
 4. Added `.dockerignore` to keep local build artifacts, JSON data, uploads, and secrets out of Docker build context.
 5. Documented how this stack should live beside Prognozist without taking over ports `80/443`.
+
+## Update 2026-06-23 Production Operations Prep
+
+1. Added PostgreSQL backup script.
+2. Added uploads backup script for `public/uploads/cards`.
+3. Added nightly backup wrapper with checksums and latest symlinks.
+4. Added old-backup cleanup script.
+5. Added production smoke-check script for `/` and `/create`.

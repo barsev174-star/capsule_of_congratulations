@@ -249,6 +249,35 @@ extra_hosts:
 
 Альтернатива чище, но требует аккуратной настройки: подключить Caddy и `capsule-web` к общей external Docker network и проксировать напрямую на `capsule-web:3000`. Для первого MVP проще начать с local host port `3100`.
 
+## Backup and health scripts
+
+Добавлены production-скрипты:
+
+1. `infra/scripts/backup-postgres.sh` — делает `pg_dump` из контейнера `postgres`.
+2. `infra/scripts/backup-uploads.sh` — архивирует `public/uploads/cards`.
+3. `infra/scripts/run-nightly-backup.sh` — делает оба backup, checksum и latest symlink.
+4. `infra/scripts/cleanup-old-backups.sh` — удаляет старые backup-файлы.
+5. `infra/scripts/check-production-health.sh` — проверяет `/` и `/create` на production URL.
+
+Ручной backup:
+
+```bash
+bash infra/scripts/run-nightly-backup.sh
+```
+
+Рекомендуемый cron:
+
+```cron
+35 3 * * * cd /home/deploy/capsule && BACKUP_DIR=/var/backups/capsule RETENTION_DAYS=14 bash infra/scripts/run-nightly-backup.sh >> /var/log/capsule-backup.log 2>&1
+```
+
+Минимум для восстановления:
+
+1. свежий `postgres-*.sql.gz`;
+2. свежий `uploads-*.tar.gz`;
+3. соответствующие `.sha256` файлы;
+4. копия `.env.production` в безопасном месте вне репозитория.
+
 ## Пример запуска миграций
 
 ```bash
