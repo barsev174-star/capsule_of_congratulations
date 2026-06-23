@@ -53,6 +53,40 @@ const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 const validateLength = (value: string, min: number, max: number) => value.length >= min && value.length <= max;
 const validateDate = (value: string) => value.length === 0 || !Number.isNaN(Date.parse(value));
 
+type CardBasicsFields = {
+  recipientName: string;
+  fromLabel: string;
+  occasionText: string;
+  organizerName: string;
+  organizerEmail: string;
+  eventDate: string;
+  description: string;
+  signature: string;
+};
+
+export type CardBasicsFormState = {
+  ok: boolean;
+  message: string;
+  fields?: CardBasicsFields;
+};
+
+const getCardBasicsFields = (formData: FormData): CardBasicsFields => ({
+  recipientName: String(formData.get("recipientName") ?? "").trim(),
+  fromLabel: String(formData.get("fromLabel") ?? "").trim(),
+  occasionText: String(formData.get("occasionText") ?? "").trim(),
+  organizerName: String(formData.get("organizerName") ?? "").trim(),
+  organizerEmail: String(formData.get("organizerEmail") ?? "").trim(),
+  eventDate: String(formData.get("eventDate") ?? "").trim(),
+  description: String(formData.get("description") ?? "").trim(),
+  signature: String(formData.get("signature") ?? "").trim()
+});
+
+const cardBasicsError = (message: string, fields?: CardBasicsFields): CardBasicsFormState => ({
+  ok: false,
+  message,
+  fields
+});
+
 const revalidateCardSurfaces = (manageToken: string, publicSlug: string, finalSlug: string) => {
   revalidatePath(`/manage/${manageToken}`);
   revalidatePath(`/card/${publicSlug}`);
@@ -204,76 +238,69 @@ export async function deleteContributionAction(formData: FormData) {
 }
 
 export async function updateCardBasicsAction(
-  _prevState: { ok: boolean; message: string },
+  _prevState: CardBasicsFormState,
   formData: FormData
-) {
+): Promise<CardBasicsFormState> {
   const manageToken = String(formData.get("manageToken") ?? "");
+  const fields = getCardBasicsFields(formData);
 
   if (!manageToken) {
-    return { ok: false, message: "Не удалось сохранить основу открытки." };
+    return cardBasicsError("Не удалось сохранить основу открытки.", fields);
   }
 
   const card = await getCardDraftByManageToken(manageToken);
   if (!card) {
-    return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+    return cardBasicsError("Секретная ссылка управления больше не актуальна.", fields);
   }
 
-  const recipientName = String(formData.get("recipientName") ?? "").trim();
-  const fromLabel = String(formData.get("fromLabel") ?? "").trim();
-  const occasionText = String(formData.get("occasionText") ?? "").trim();
-  const organizerName = String(formData.get("organizerName") ?? "").trim();
-  const organizerEmail = String(formData.get("organizerEmail") ?? "").trim();
-  const eventDateValue = String(formData.get("eventDate") ?? "").trim();
-  const descriptionValue = String(formData.get("description") ?? "").trim();
-  const signatureValue = String(formData.get("signature") ?? "").trim();
   const occasionValue = (String(formData.get("occasion") ?? "").trim() || card.occasion) as CardDraft["occasion"];
 
-  if (!validateLength(recipientName, 2, 80)) {
-    return { ok: false, message: "Укажите имя получателя длиной от 2 до 80 символов." };
+  if (!validateLength(fields.recipientName, 2, 80)) {
+    return cardBasicsError("Укажите имя получателя длиной от 2 до 80 символов.", fields);
   }
 
-  if (!validateLength(fromLabel, 2, 80)) {
-    return { ok: false, message: "Укажите, от кого открытка, длиной от 2 до 80 символов." };
+  if (!validateLength(fields.fromLabel, 2, 80)) {
+    return cardBasicsError("Укажите, от кого открытка, длиной от 2 до 80 символов.", fields);
   }
 
-  if (!validateLength(occasionText, 2, 120)) {
-    return { ok: false, message: "Коротко опишите повод или контекст поздравления." };
+  if (!validateLength(fields.occasionText, 2, 120)) {
+    return cardBasicsError("Коротко опишите повод или контекст поздравления.", fields);
   }
 
-  if (!validateLength(organizerName, 2, 80)) {
-    return { ok: false, message: "Укажите имя организатора длиной от 2 до 80 символов." };
+  if (!validateLength(fields.organizerName, 2, 80)) {
+    return cardBasicsError("Укажите имя организатора длиной от 2 до 80 символов.", fields);
   }
 
-  if (!isValidEmail(organizerEmail)) {
-    return { ok: false, message: "Введите корректный email организатора." };
+  if (fields.organizerEmail && !isValidEmail(fields.organizerEmail)) {
+    return cardBasicsError("Введите корректный email организатора или оставьте поле пустым.", fields);
   }
 
-  if (!validateDate(eventDateValue)) {
-    return { ok: false, message: "Дата события выглядит некорректно." };
+  if (!validateDate(fields.eventDate)) {
+    return cardBasicsError("Дата события выглядит некорректно.", fields);
   }
 
-  if (descriptionValue && !validateLength(descriptionValue, 10, 300)) {
-    return { ok: false, message: "Описание должно быть от 10 до 300 символов." };
+  if (fields.description && !validateLength(fields.description, 10, 300)) {
+    return cardBasicsError("Описание должно быть от 10 до 300 символов.", fields);
   }
 
-  if (signatureValue && !validateLength(signatureValue, 2, 120)) {
-    return { ok: false, message: "Подпись должна быть от 2 до 120 символов." };
+  if (fields.signature && !validateLength(fields.signature, 2, 120)) {
+    return cardBasicsError("Подпись должна быть от 2 до 120 символов.", fields);
   }
 
   const updated = await updateCardDraftBasics(card.id, {
-    recipientName,
-    fromLabel,
+    recipientName: fields.recipientName,
+    fromLabel: fields.fromLabel,
     occasion: occasionValue,
-    occasionText,
-    organizerName,
-    organizerEmail,
-    eventDate: eventDateValue || null,
-    description: descriptionValue || null,
-    signature: signatureValue || null
+    occasionText: fields.occasionText,
+    organizerName: fields.organizerName,
+    organizerEmail: fields.organizerEmail,
+    eventDate: fields.eventDate || null,
+    description: fields.description || null,
+    signature: fields.signature || null
   });
 
   if (!updated) {
-    return { ok: false, message: "Не удалось обновить основу открытки." };
+    return cardBasicsError("Не удалось обновить основу открытки.", fields);
   }
 
   logger.info("manage.card_basics_updated", "Card basics updated by organizer", {
@@ -283,7 +310,7 @@ export async function updateCardBasicsAction(
 
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 
-  return { ok: true, message: "Основа открытки обновлена." };
+  return { ok: true, message: "Основа открытки обновлена.", fields };
 }
 
 export async function updateCardStatusAction(formData: FormData) {

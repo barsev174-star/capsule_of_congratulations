@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import type { CardDraft } from "@/lib/cards/types";
+import type { CardBasicsFormState } from "./actions";
 import { updateCardBasicsAction } from "./actions";
 import styles from "./manage-page.module.css";
 
@@ -10,16 +11,27 @@ type Props = {
   card: CardDraft;
 };
 
-const initialState = {
+const initialState: CardBasicsFormState = {
   ok: false,
   message: ""
 };
 
 export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
   const [state, formAction, isPending] = useActionState(updateCardBasicsAction, initialState);
+  const fields = state.fields ?? {
+    recipientName: card.recipientName,
+    fromLabel: card.fromLabel,
+    occasionText: card.occasionText,
+    organizerName: card.organizerName,
+    organizerEmail: card.organizerEmail,
+    eventDate: card.eventDate ?? "",
+    description: card.description ?? "",
+    signature: card.signature ?? ""
+  };
+  const formKey = state.fields ? JSON.stringify(state.fields) : card.updatedAt;
 
   return (
-    <form action={formAction} className={styles.basicsForm}>
+    <form key={formKey} action={formAction} className={styles.basicsForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
       <input type="hidden" name="occasion" value={card.occasion} />
 
@@ -29,7 +41,7 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
           <input
             id="recipientName"
             name="recipientName"
-            defaultValue={card.recipientName}
+            defaultValue={fields.recipientName}
             placeholder="Например, Анна Викторовна"
           />
         </div>
@@ -38,7 +50,7 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
           <input
             id="fromLabel"
             name="fromLabel"
-            defaultValue={card.fromLabel}
+            defaultValue={fields.fromLabel}
             placeholder="Например, от 5Б класса"
           />
         </div>
@@ -49,7 +61,7 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
         <input
           id="occasionText"
           name="occasionText"
-          defaultValue={card.occasionText}
+          defaultValue={fields.occasionText}
           placeholder="Например, благодарим за выпускной год в садике"
         />
       </div>
@@ -57,7 +69,7 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
       <div className={styles.fieldGrid}>
         <div className={styles.field}>
           <label htmlFor="organizerName">Имя организатора</label>
-          <input id="organizerName" name="organizerName" defaultValue={card.organizerName} placeholder="Ваше имя" />
+          <input id="organizerName" name="organizerName" defaultValue={fields.organizerName} placeholder="Ваше имя" />
         </div>
         <div className={styles.field}>
           <label htmlFor="organizerEmail">Email организатора</label>
@@ -65,8 +77,8 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
             id="organizerEmail"
             name="organizerEmail"
             type="email"
-            defaultValue={card.organizerEmail}
-            placeholder="name@example.com"
+            defaultValue={fields.organizerEmail}
+            placeholder="Можно оставить пустым"
           />
         </div>
       </div>
@@ -74,14 +86,14 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
       <div className={styles.fieldGrid}>
         <div className={styles.field}>
           <label htmlFor="eventDate">Дата события</label>
-          <input id="eventDate" name="eventDate" type="date" defaultValue={card.eventDate ?? ""} />
+          <input id="eventDate" name="eventDate" type="date" defaultValue={fields.eventDate} />
         </div>
         <div className={styles.field}>
           <label htmlFor="signature">Подпись в конце открытки</label>
           <input
             id="signature"
             name="signature"
-            defaultValue={card.signature ?? ""}
+            defaultValue={fields.signature}
             placeholder="Например, С любовью, команда Product & Design"
           />
         </div>
@@ -92,7 +104,7 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
         <textarea
           id="description"
           name="description"
-          defaultValue={card.description ?? ""}
+          defaultValue={fields.description}
           placeholder="Например, хотим собрать личную и красивую открытку от всей группы."
         />
       </div>
