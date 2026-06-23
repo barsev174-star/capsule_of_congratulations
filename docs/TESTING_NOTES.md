@@ -1,5 +1,7 @@
 # Как тестировать текущую версию
 
+Актуальная точка входа для нового чата и текущего статуса: `docs/PROJECT_HANDOFF_2026-06-23.md`.
+
 ## Что уже можно тестировать
 
 После `Блока 3` можно вручную проверить:
@@ -138,6 +140,25 @@ Manual checks added after the storage preparation pass:
 2. Confirm the opened manage page is a new empty draft and does not show demo values like `Кристина` or `Евсей`.
 3. Fill the basics form and confirm the manage header, participant page, and final preview use the saved values.
 4. Without `DATABASE_URL`, confirm local JSON storage still works.
+
+## Update 2026-06-23 Landing CTA regression
+
+Manual check after the latest fix:
+
+1. Open `http://localhost:3000/`.
+2. Click `Создать открытку`.
+3. Confirm the browser does not navigate to `/create`.
+4. Confirm a new URL like `/manage/[manageToken]` opens.
+5. Confirm the opened draft is empty and ready for organizer setup.
+6. Current verified example: `http://localhost:3000/manage/79bbe39fe81322660ebbdb58c36055d3`.
+
+Build check:
+
+```powershell
+npm.cmd run build
+```
+
+Result on 2026-06-23: passed.
 5. With `DATABASE_URL`, run `npm run db:migrate` and repeat the same create/manage/participant/final flow on PostgreSQL.
 
 ## Update 2026-06-23 Local uploads storage checks

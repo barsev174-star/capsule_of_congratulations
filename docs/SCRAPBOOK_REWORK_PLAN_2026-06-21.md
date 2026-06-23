@@ -1,5 +1,7 @@
 # Scrapbook rework plan, 2026-06-21
 
+Актуальный статус после завершения первичного scrapbook-дизайна см. в `docs/PROJECT_HANDOFF_2026-06-23.md`. Этот файл остается историческим планом визуальной переработки.
+
 ## Baseline
 
 The current scrapbook card state is being fixed as a rollback point before the next visual and product rework.

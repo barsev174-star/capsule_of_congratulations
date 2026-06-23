@@ -1,5 +1,7 @@
 # Дорожная карта разработки блоками
 
+Актуальный handoff для нового чата: `docs/PROJECT_HANDOFF_2026-06-23.md`.
+
 ## Текущий фокус на 2026-06-23
 
 Первичный дизайн scrapbook-открытки завершен. Дальше проект переводится из локального визуального прототипа в рабочий MVP-flow:
@@ -263,3 +265,13 @@ Lower priority for now:
 2. Per-contribution photos.
 3. PDF/export.
 4. Complex analytics or external database migration.
+
+## Current Focus After 2026-06-23 MVP-flow Pass
+
+The visual scrapbook card has a fixed first design baseline. The next useful block is participant conversion polish:
+
+1. Improve `/join/[slug]` where a participant writes a greeting.
+2. Make the form feel clear, friendly, and complete on desktop and mobile.
+3. Keep the final card visual mostly stable unless a new explicit design task appears.
+4. Use `make-interfaces-feel-better` principles for typography, surfaces, animation, hit areas, and interaction states.
+5. After participant UX, return to Postgres/VPS manual flow and production launch checklist.

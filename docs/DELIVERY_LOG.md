@@ -1,5 +1,14 @@
 # Журнал поставки
 
+## Update 2026-06-23 Handoff and landing create CTA
+
+1. Добавлен `docs/PROJECT_HANDOFF_2026-06-23.md` — его нужно читать первым в новом чате.
+2. Кнопка `Создать открытку` на `/` больше не ведет на старый `/create`; теперь она создает новый пустой черновик и открывает `/manage/[manageToken]`.
+3. Старый `/create` оставлен как отдельный резервный маршрут, но не является основным стартом MVP-flow.
+4. Проверено в браузере: после клика с лендинга открыт новый manage URL.
+5. `npm.cmd run build` прошел успешно после правки.
+6. Skill `make-interfaces-feel-better` установлен в `C:\Users\zapra\.codex\skills\make-interfaces-feel-better`, но текущая сессия Codex его не видит как активный skill; в новом чате нужно проверить еще раз.
+
 ## Update 2026-06-18 Scrapbook Debug Controls
 
 1. В `debugAssets=1` для component-ассетов добавлены настройки `width`, `maxWidth` и `rotate`.

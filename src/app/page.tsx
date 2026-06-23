@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cardTemplates } from "@/lib/cards/templates";
+import { startCardFromShowcaseAction } from "./home-actions";
 import styles from "./page.module.css";
 
 const highlights = [
@@ -35,9 +36,11 @@ export default function HomePage() {
             выбора шаблона, который мешает и ограничивает.
           </p>
           <div className={styles.actions}>
-            <Link href="/create" className={styles.primaryAction}>
-              Создать открытку
-            </Link>
+            <form action={startCardFromShowcaseAction}>
+              <button type="submit" className={styles.primaryAction}>
+                Создать открытку
+              </button>
+            </form>
             <Link href="/roadmap" className={styles.secondaryAction}>
               Посмотреть этапы
             </Link>

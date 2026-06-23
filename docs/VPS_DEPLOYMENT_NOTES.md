@@ -1,5 +1,7 @@
 # VPS deployment notes
 
+Актуальный handoff перед переносом на VPS: `docs/PROJECT_HANDOFF_2026-06-23.md`.
+
 Дата: 2026-06-23
 
 ## Подойдёт ли VPS
@@ -333,3 +335,13 @@ npm run db:migrate
    - загрузить до 6 фото;
    - проверить финальную ссылку.
 10. После этого зафиксировать backup-процедуру для PostgreSQL и `public/uploads/cards`.
+
+## Local state before first VPS move
+
+Перед деплоем убедиться, что локально зафиксировано:
+
+1. `/` создает новый пустой черновик и редиректит в `/manage/[manageToken]`.
+2. `/join/[slug]` — следующий экран для UX-polish.
+3. PostgreSQL container для локальной проверки можно поднять как `capsule-postgres`.
+4. Для Windows PowerShell использовать `npm.cmd`, если обычный `npm` блокируется Execution Policy.
+5. На VPS не трогать рабочий Prognozist stack без явной необходимости.
