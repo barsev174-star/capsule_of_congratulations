@@ -449,3 +449,11 @@
    - “Сохранить открытку” opens browser print/save;
    - “Создать такую же открытку” goes to creation.
 8. Kept AI, payment, registration, service admin, and persistent production storage out of the immediate MVP-flow.
+
+## Update 2026-06-23 MVP Storage And Draft Clarity
+
+1. Prepared PostgreSQL as the production-ready data path while preserving JSON storage for local development without `DATABASE_URL`.
+2. Added the first SQL migration plus `npm run db:migrate`.
+3. Limited each card to 6 uploaded photos and documented the split between greeting photos and the “Моменты” block.
+4. Added `.env.example` for the current environment contract.
+5. Fixed the new-card manage screen so empty drafts no longer look like the old filled demo card.

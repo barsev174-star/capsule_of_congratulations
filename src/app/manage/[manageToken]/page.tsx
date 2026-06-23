@@ -178,8 +178,10 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const savedBlockOrder = card.finalBlockOrder?.filter((blockId) => managedBlockIds.includes(blockId)) ?? [];
   const initialBlockOrder = [...savedBlockOrder, ...managedBlockIds.filter((blockId) => !savedBlockOrder.includes(blockId))];
 
-  const recipientName = card.recipientName.trim() || "Кристина";
-  const occasionText = card.occasionText.trim() || "За выпускной";
+  const recipientName = card.recipientName.trim() || "нового получателя";
+  const organizerName = card.organizerName.trim() || "не указан";
+  const fromLabel = card.fromLabel.trim() || "группы";
+  const occasionText = card.occasionText.trim() || "повод пока не указан";
   const previewMessages = visibleContributions.slice(0, 1);
   const quotePreview = model.quotes[0] || "Спасибо тебе за твою доброту, поддержку и за то, что ты такая, какая есть.";
   const previewMessage = previewMessages[0];
@@ -222,7 +224,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
           <div className={styles.heroTop}>
             <div className={styles.heroContent}>
               <p className={styles.heroBreadcrumbs}>
-                <span>Организатор: {card.organizerName.trim() || "Евсей"}</span>
+                <span>Организатор: {organizerName}</span>
                 <span>Повод: {occasionText}</span>
               </p>
               <h1 className={styles.title}>Открытка для {recipientName}</h1>
@@ -409,7 +411,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                       <div className={styles.previewHeroOccasion}>
                         <strong>{occasionText}</strong>
                         <span>
-                          от {card.fromLabel.trim() || "Евсея и всей группы"}
+                          от {fromLabel}
                           {formattedEventDate ? ` • ${formattedEventDate}` : ""}
                         </span>
                       </div>
@@ -432,10 +434,10 @@ export default async function ManagePage({ params, searchParams }: Props) {
                       <article className={styles.previewSingleMessage}>
                         <div className={styles.previewSingleAvatar} />
                         <div className={styles.previewSingleBody}>
-                          <strong>{previewMessage?.authorName || "Аня"}</strong>
+                          <strong>{previewMessage?.authorName || "Участник"}</strong>
                           <p>
                             {previewMessage?.message.slice(0, 118) ||
-                              "Крис, ты невероятная! Пусть новый этап жизни принесёт много счастья и возможностей!"}
+                              "Здесь появится короткий пример поздравления, когда участники добавят первые теплые слова."}
                           </p>
                         </div>
                       </article>
@@ -543,7 +545,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
             messageLimit={layoutProfile.maxChars}
             recipientName={recipientName}
             occasionText={occasionText}
-            fromLabel={card.fromLabel}
+            fromLabel={fromLabel}
             publicSlug={card.publicSlug}
             finalSlug={card.finalSlug}
             templateAccent={selectedTemplate.accent}

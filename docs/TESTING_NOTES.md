@@ -129,3 +129,13 @@ Manual checks for the current MVP-flow:
 11. Click `Создать такую же открытку` and confirm it navigates to `/create`.
 12. Upload up to 6 photos and confirm the next new upload is rejected with a clear limit message.
 13. Replace an existing photo after the 6-photo limit and confirm replacement still works.
+
+## Update 2026-06-23 Postgres and new draft checks
+
+Manual checks added after the storage preparation pass:
+
+1. Open `/` and click `Создать открытку`.
+2. Confirm the opened manage page is a new empty draft and does not show demo values like `Кристина` or `Евсей`.
+3. Fill the basics form and confirm the manage header, participant page, and final preview use the saved values.
+4. Without `DATABASE_URL`, confirm local JSON storage still works.
+5. With `DATABASE_URL`, run `npm run db:migrate` and repeat the same create/manage/participant/final flow on PostgreSQL.
