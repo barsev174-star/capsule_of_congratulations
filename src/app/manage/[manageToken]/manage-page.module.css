@@ -3851,6 +3851,53 @@ button.contentFilterPill {
   opacity: 0.35;
 }
 
+.compositionMoveButtons {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.compositionMoveButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(110, 84, 66, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #9d6a50;
+  cursor: pointer;
+  transition-property: transform, box-shadow, border-color, background-color, color, opacity;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.compositionMoveButton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.moveIconDown {
+  transform: rotate(180deg);
+}
+
+.compositionMoveButton:hover:not(:disabled) {
+  border-color: rgba(194, 120, 84, 0.24);
+  background: rgba(255, 250, 245, 0.96);
+  box-shadow: 0 8px 16px rgba(96, 68, 51, 0.08);
+  transform: translateY(-1px);
+}
+
+.compositionMoveButton:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.compositionMoveButton:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
 .compositionIconBox {
   display: inline-flex;
   align-items: center;
@@ -4606,6 +4653,7 @@ button.contentFilterPill {
 .modernToggle:focus-visible,
 .chevronButton:focus-visible,
 .compositionGrip:focus-visible,
+.compositionMoveButton:focus-visible,
 .restoreChip:focus-visible,
 .previewLinkButton:focus-visible,
 .previewPrimaryLink:focus-visible,

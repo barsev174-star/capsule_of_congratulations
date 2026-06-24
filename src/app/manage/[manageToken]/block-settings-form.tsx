@@ -233,6 +233,13 @@ const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
   </svg>
 );
 
+const ArrowIcon = ({ direction }: { direction: "up" | "down" }) => (
+  <svg viewBox="0 0 20 20" aria-hidden="true" className={direction === "down" ? styles.moveIconDown : ""}>
+    <path d="M10 15V5.5" {...iconStrokeProps} />
+    <path d="m6.2 9.2 3.8-3.8 3.8 3.8" {...iconStrokeProps} />
+  </svg>
+);
+
 const CheckIcon = () => (
   <svg viewBox="0 0 20 20" aria-hidden="true">
     <path d="m5.5 10.2 2.8 2.8 6.2-6.2" {...iconStrokeProps} />
@@ -553,6 +560,40 @@ export const BlockSettingsForm = ({
     setDropTarget(null);
   };
 
+  const moveBlockByStep = (blockId: FinalCardBlockId, direction: "up" | "down") => {
+    if (fixedBlockIds.includes(blockId)) {
+      return;
+    }
+
+    const activeBlockIds = activeBlocks.map((block) => block.id);
+
+    setBlockOrder((current) => {
+      const visibleOrder = current.filter((currentBlockId) => activeBlockIds.includes(currentBlockId));
+      const currentVisibleIndex = visibleOrder.indexOf(blockId);
+      const targetVisibleIndex = direction === "up" ? currentVisibleIndex - 1 : currentVisibleIndex + 1;
+      const targetBlockId = visibleOrder[targetVisibleIndex];
+
+      if (currentVisibleIndex === -1 || !targetBlockId || fixedBlockIds.includes(targetBlockId)) {
+        return current;
+      }
+
+      const withoutMovedBlock = current.filter((currentBlockId) => currentBlockId !== blockId);
+      const targetIndex = withoutMovedBlock.indexOf(targetBlockId);
+
+      if (targetIndex === -1) {
+        return current;
+      }
+
+      const next = [...withoutMovedBlock];
+      const insertIndex = direction === "up" ? targetIndex : targetIndex + 1;
+      next.splice(insertIndex, 0, blockId);
+      return next;
+    });
+
+    setDraggedBlockId(null);
+    setDropTarget(null);
+  };
+
   const handleDragStart = (event: ReactDragEvent<HTMLButtonElement>, blockId: FinalCardBlockId) => {
     setDraggedBlockId(blockId);
     setDropTarget(null);
@@ -670,7 +711,7 @@ export const BlockSettingsForm = ({
       <section className={styles.studioCanvasCard}>
         <div className={styles.compositionToolbar}>
           <p className={styles.compositionToolbarText}>
-            Перетаскивайте блоки, чтобы менять их порядок. Обязательные блоки отключить нельзя.
+            Перетаскивайте блоки или используйте кнопки выше/ниже. Обязательные блоки отключить нельзя.
           </p>
           <button type="button" className={styles.compositionHelpLink}>
             Как это работает?
@@ -678,11 +719,13 @@ export const BlockSettingsForm = ({
         </div>
 
         <div className={styles.compositionList}>
-          {canvasBlocks.map((block) => {
+          {canvasBlocks.map((block, index) => {
             const isExpanded = Boolean(expandedBlocks[block.id]);
             const isRequired = requiredBlockIds.includes(block.id);
             const isFixed = fixedBlockIds.includes(block.id);
             const isEnabled = isRequired || blockState[block.id];
+            const canMoveUp = !isFixed && index > 1;
+            const canMoveDown = !isFixed && index < canvasBlocks.length - 2;
 
             return (
               <article
@@ -717,6 +760,29 @@ export const BlockSettingsForm = ({
                     >
                       <GripIcon />
                     </button>
+
+                    {!isFixed ? (
+                      <div className={styles.compositionMoveButtons} aria-label={`Порядок блока ${block.label}`}>
+                        <button
+                          type="button"
+                          className={styles.compositionMoveButton}
+                          onClick={() => moveBlockByStep(block.id, "up")}
+                          disabled={!canMoveUp}
+                          aria-label={`Поднять блок ${block.label}`}
+                        >
+                          <ArrowIcon direction="up" />
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.compositionMoveButton}
+                          onClick={() => moveBlockByStep(block.id, "down")}
+                          disabled={!canMoveDown}
+                          aria-label={`Опустить блок ${block.label}`}
+                        >
+                          <ArrowIcon direction="down" />
+                        </button>
+                      </div>
+                    ) : null}
 
                     <span className={styles.compositionIconBox}>
                       <BlockIcon blockId={block.id} />
