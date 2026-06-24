@@ -4937,3 +4937,333 @@ button.contentFilterPill {
     min-height: 0;
   }
 }
+
+/* Mobile manager usability pass */
+
+.tabBar {
+  scrollbar-width: none;
+}
+
+.tabBar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .page {
+    padding: 12px 10px 34px;
+  }
+
+  .shell {
+    gap: 14px;
+  }
+
+  .hero,
+  .panel,
+  .studioPanel,
+  .previewPanel,
+  .stepperCard,
+  .actionsCard {
+    border-radius: 20px;
+  }
+
+  .hero {
+    padding: 16px;
+  }
+
+  .heroTop,
+  .designStudio,
+  .designMain,
+  .designRail,
+  .layout,
+  .mediaManagerGrid,
+  .templateGrid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .heroContent {
+    gap: 12px;
+  }
+
+  .heroBreadcrumbs {
+    display: grid;
+    gap: 4px;
+    font-size: 0.82rem;
+  }
+
+  .title {
+    max-width: 100%;
+    font-size: clamp(1.9rem, 9.8vw, 2.7rem);
+    line-height: 1.04;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+
+  .subtitle {
+    max-width: 100%;
+    font-size: 0.96rem;
+    line-height: 1.56;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .stat {
+    min-width: 0;
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 0.84rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stat:nth-child(5) {
+    display: none;
+  }
+
+  .flowPanel {
+    gap: 12px;
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .flowStatus {
+    gap: 2px;
+  }
+
+  .flowLabel,
+  .flowStatus p,
+  .statusForm label,
+  .templateHeroPickerLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    clip: rect(0 0 0 0);
+    overflow: hidden;
+  }
+
+  .flowStatus strong {
+    font-size: 1rem;
+  }
+
+  .statusForm {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .statusForm select,
+  .statusForm button {
+    width: 100%;
+    min-height: 44px;
+    border-radius: 14px;
+  }
+
+  .linkGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .linkCard {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 11px;
+    border-radius: 16px;
+  }
+
+  .linkCard span {
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .linkCard a {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    clip: rect(0 0 0 0);
+    overflow: hidden;
+    font-size: 0.88rem;
+  }
+
+  .copyLinkButton {
+    justify-self: stretch;
+    min-height: 38px;
+    padding: 0 12px;
+  }
+
+  .heroTemplateCard {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .heroTemplateLabel {
+    font-size: 0.78rem;
+  }
+
+  .heroTemplateName {
+    font-size: 1.18rem;
+    line-height: 1.1;
+  }
+
+  .heroTemplateThumb {
+    display: none;
+  }
+
+  .templateHeroActions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .templateHeroForm {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 8px;
+  }
+
+  .templateHeroPicker {
+    gap: 0;
+  }
+
+  .templateHeroActions .secondaryButton {
+    width: auto;
+    min-width: 108px;
+    padding-inline: 14px;
+  }
+
+  .tabBar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin: 0 -10px;
+    padding: 8px 10px;
+    overflow-x: auto;
+    background: rgba(255, 247, 240, 0.84);
+    backdrop-filter: blur(14px);
+  }
+
+  .tabLink {
+    flex: 0 0 auto;
+    min-height: 42px;
+    padding: 0 14px;
+    white-space: nowrap;
+  }
+
+  .stepperCard {
+    display: none;
+  }
+
+  .panel,
+  .studioPanel,
+  .previewPanel {
+    padding: 16px;
+  }
+
+  .sectionStepHeader {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .sectionStepNumber {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+  }
+
+  .sectionTitle {
+    font-size: clamp(1.45rem, 7vw, 2rem);
+    line-height: 1.08;
+  }
+
+  .fieldGrid,
+  .basicsForm,
+  .studioForm {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .field {
+    gap: 7px;
+  }
+
+  .field input,
+  .field textarea,
+  .templateHeroSelect,
+  .photoSequenceRow select,
+  .memoryCaptionInput,
+  .memoryCaptionTextarea,
+  .editorTextarea {
+    min-height: 46px;
+    border-radius: 14px;
+    font-size: 16px;
+  }
+
+  .field textarea,
+  .memoryCaptionTextarea,
+  .editorTextarea {
+    min-height: 104px;
+  }
+
+  .editorFooter,
+  .controls,
+  .templateCompactFooter {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .button,
+  .secondaryButton,
+  .dangerButton,
+  .previewLinkButton,
+  .previewPrimaryLink,
+  .previewSecondaryLink {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .compositionToolbar,
+  .compositionRowHeader {
+    gap: 10px;
+  }
+
+  .compositionControls,
+  .badgeRow,
+  .contributionSummary {
+    justify-content: flex-start;
+  }
+
+  .previewPanel {
+    max-height: none;
+  }
+
+  .previewFrame {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .previewMock {
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 520px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .heroBreadcrumbs {
+    display: none;
+  }
+
+  .flowPanel {
+    margin-top: 0;
+  }
+}
