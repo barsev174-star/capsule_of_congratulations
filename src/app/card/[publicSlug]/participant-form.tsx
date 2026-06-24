@@ -50,17 +50,17 @@ export const ParticipantForm = ({
       return;
     }
 
-    setSuccessMessage("Ваше поздравление добавлено. После обновления страницы оно появится в списке.");
+    setSuccessMessage("Готово, поздравление добавлено. После обновления страницы оно появится в списке.");
     setMessage("");
   };
 
   return (
     <>
       <section className={styles.formCard}>
-        <h2 className={styles.sectionTitle}>Добавить поздравление</h2>
+        <h2 className={styles.sectionTitle}>Ваше поздравление</h2>
         <p className={styles.hint}>
-          Можно написать самостоятельно или сначала попросить AI подготовить черновик. Для текущего формата открытки
-          лучше держать текст в пределах {messageLimit} символов, чтобы карточка красиво помещалась в финальный экран.
+          Напишите сами или попросите AI помочь с черновиком. Лучше уложиться в {messageLimit} символов, чтобы текст
+          красиво смотрелся в готовой открытке.
         </p>
 
         <form
@@ -106,11 +106,11 @@ export const ParticipantForm = ({
             </div>
 
             <div className={styles.field}>
-              <label htmlFor="authorRole">Подпись или роль</label>
+              <label htmlFor="authorRole">Подпись под именем</label>
               <input
                 id="authorRole"
                 name="authorRole"
-                placeholder="Например, родитель / коллега / ученик"
+                placeholder="Коллега, друг, семья, 11 Б..."
                 value={authorRole}
                 onChange={(event) => setAuthorRole(event.target.value)}
               />
@@ -127,14 +127,14 @@ export const ParticipantForm = ({
             <textarea
               id="message"
               name="message"
-              placeholder="Напишите несколько теплых слов. Сейчас просим хотя бы 3 слова и чуть больше конкретики, чем просто «Поздравляю!»."
+              placeholder="Напишите несколько теплых слов: что цените, за что благодарны, какой момент хочется вспомнить."
               required
               maxLength={1500}
               value={message}
               onChange={(event) => setMessage(event.target.value)}
             />
             <span className={styles.hint}>
-              Текст можно сначала набросать как есть, а потом отредактировать или уточнить через AI.
+              Можно набросать как есть, а потом спокойно поправить или уточнить через AI.
             </span>
           </div>
 

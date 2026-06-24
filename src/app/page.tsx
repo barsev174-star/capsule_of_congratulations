@@ -29,11 +29,11 @@ export default function HomePage() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.hero}>
-          <p className={styles.eyebrow}>Витрина групповой открытки</p>
-          <h1 className={styles.title}>Онлайн-открытка, которую хочется не просто прочитать, а подарить</h1>
+          <p className={styles.eyebrow}>Дари слова</p>
+          <h1 className={styles.title}>Теплая онлайн-открытка, которую хочется сохранить</h1>
           <p className={styles.subtitle}>
-            Сначала смысл, потом структура, потом стиль. Без отдельного промежуточного экрана создания и без раннего
-            выбора шаблона, который мешает и ограничивает.
+            Соберите поздравления, фото и самые важные слова в одну живую открытку. Можно подарить от всей компании
+            или сделать личное послание от человека человеку.
           </p>
           <div className={styles.actions}>
             <form action={startCardFromShowcaseAction}>

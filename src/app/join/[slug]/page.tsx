@@ -21,7 +21,7 @@ export default async function JoinCardPage({ params }: Props) {
   const contributions = await listContributionsByCardId(card.id);
   const layoutProfile = getFinalCardMessageLayoutProfile(card.finalMessageSettings?.layoutMode ?? "grid-2");
   const recipientName = card.recipientName || "дорогого человека";
-  const fromLabel = card.fromLabel || "группы";
+  const fromLabel = card.fromLabel || "команды";
   const occasionText = card.occasionText || "повод пока уточняется";
   const isClosed = card.status === "closed";
 
@@ -29,17 +29,17 @@ export default async function JoinCardPage({ params }: Props) {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.hero}>
-          <p className={styles.eyebrow}>Ссылка для участников</p>
-          <h1 className={styles.title}>Собираем открытку для {recipientName}</h1>
+          <p className={styles.eyebrow}>Дари слова</p>
+          <h1 className={styles.title}>Добавьте теплые слова для {recipientName}</h1>
           <p className={styles.subtitle}>
-            Открытку уже создали от группы <strong>{fromLabel}</strong>. Здесь можно добавить личное поздравление,
-            которое увидят организатор и получатель.
+            Организатор уже подготовил открытку от <strong>{fromLabel}</strong>. Напишите коротко и по-настоящему:
+            ваше поздравление попадет в общий подарок и не потеряется в чате.
           </p>
           <div className={styles.stats}>
             <div className={styles.stat}>Повод: {occasionText}</div>
-            <div className={styles.stat}>Уже собрано: {contributions.length}</div>
-            <div className={styles.stat}>Шаблон: {card.templateId}</div>
-            <div className={styles.stat}>Лимит для текущего формата: {layoutProfile.maxChars} символов</div>
+            <div className={styles.stat}>Уже добавили: {contributions.length}</div>
+            <div className={styles.stat}>Формат: {card.templateId}</div>
+            <div className={styles.stat}>Лучше до {layoutProfile.maxChars} символов</div>
             {card.eventDate ? <div className={styles.stat}>Дата события: {card.eventDate}</div> : null}
           </div>
         </section>
@@ -63,10 +63,10 @@ export default async function JoinCardPage({ params }: Props) {
           )}
 
           <section className={styles.listCard}>
-            <h2 className={styles.sectionTitle}>Что уже добавили</h2>
+            <h2 className={styles.sectionTitle}>Уже есть в открытке</h2>
             <p className={styles.hint}>
-              Повод открытки: <strong>{occasionText}</strong>. Ниже видны уже опубликованные поздравления, чтобы можно
-              было не повторяться.
+              Повод открытки: <strong>{occasionText}</strong>. Посмотрите, что уже написали другие, и добавьте свой
+              личный штрих.
             </p>
 
             {contributions.length === 0 ? (

@@ -13,8 +13,8 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Открытка от всех",
-  description: "Сервис групповых поздравлений и цифровых открыток."
+  title: "Дари слова",
+  description: "Теплые цифровые открытки от одного человека или всей компании."
 };
 
 export default function RootLayout({

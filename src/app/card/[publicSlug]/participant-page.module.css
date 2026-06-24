@@ -12,10 +12,11 @@
   display: grid;
   gap: 20px;
   padding: 28px;
-  border: 1px solid var(--line);
   border-radius: 28px;
   background: linear-gradient(140deg, rgba(255, 250, 245, 0.95), rgba(243, 229, 217, 0.88));
-  box-shadow: var(--shadow);
+  box-shadow:
+    0 0 0 1px rgba(92, 67, 51, 0.11),
+    0 18px 60px rgba(72, 49, 37, 0.12);
 }
 
 .eyebrow {
@@ -32,6 +33,7 @@
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(2rem, 5vw, 4rem);
   line-height: 0.98;
+  text-wrap: balance;
 }
 
 .subtitle {
@@ -39,6 +41,7 @@
   color: var(--muted);
   line-height: 1.7;
   max-width: 720px;
+  text-wrap: pretty;
 }
 
 .stats {
@@ -49,9 +52,10 @@
 
 .stat {
   padding: 12px 14px;
-  border: 1px solid var(--line);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 1px rgba(92, 67, 51, 0.11);
+  font-variant-numeric: tabular-nums;
 }
 
 .layout {
@@ -65,21 +69,25 @@
 .successCard,
 .aiCard {
   padding: 22px;
-  border: 1px solid var(--line);
   border-radius: 24px;
   background: var(--surface);
+  box-shadow:
+    0 0 0 1px rgba(92, 67, 51, 0.1),
+    0 12px 34px rgba(72, 49, 37, 0.08);
 }
 
 .sectionTitle {
   margin: 0 0 10px;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 1.4rem;
+  text-wrap: balance;
 }
 
 .hint {
   margin: 0 0 18px;
   color: var(--muted);
   line-height: 1.6;
+  text-wrap: pretty;
 }
 
 .form {
@@ -108,6 +116,7 @@
 .note {
   color: var(--muted);
   font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .field input,
@@ -119,6 +128,28 @@
   background: var(--surface-strong);
   padding: 14px 16px;
   color: var(--text);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.75) inset;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.field input:hover,
+.field textarea:hover,
+.field select:hover {
+  border-color: rgba(92, 67, 51, 0.3);
+  background: #fffdf9;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  border-color: rgba(191, 108, 71, 0.55);
+  box-shadow:
+    0 0 0 4px rgba(191, 108, 71, 0.13),
+    0 1px 0 rgba(255, 255, 255, 0.75) inset;
+  outline: none;
 }
 
 .field textarea {
@@ -147,9 +178,9 @@
 
 .errorBox {
   padding: 16px 18px;
-  border: 1px solid rgba(171, 66, 50, 0.2);
   border-radius: 18px;
   background: rgba(255, 239, 236, 0.9);
+  box-shadow: 0 0 0 1px rgba(171, 66, 50, 0.2);
 }
 
 .errorList {
@@ -171,6 +202,11 @@
   padding: 0 22px;
   border-radius: 999px;
   font-weight: 700;
+  transition:
+    transform 150ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
 }
 
 .submitButton {
@@ -178,11 +214,44 @@
   background: var(--accent);
   color: #fff8f3;
   cursor: pointer;
+  box-shadow: 0 12px 24px rgba(191, 108, 71, 0.22);
+}
+
+.submitButton:hover {
+  background: #ad5d3d;
+  box-shadow: 0 14px 28px rgba(191, 108, 71, 0.28);
+  transform: translateY(-1px);
+}
+
+.submitButton:active,
+.aiButton:active,
+.useButton:active {
+  transform: scale(0.96);
+}
+
+.submitButton:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  transform: none;
 }
 
 .aiButton {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+}
+
+.aiButton:hover,
+.useButton:hover {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 18px rgba(72, 49, 37, 0.08);
+}
+
+.submitButton:focus-visible,
+.aiButton:focus-visible,
+.useButton:focus-visible {
+  outline: 3px solid rgba(191, 108, 71, 0.28);
+  outline-offset: 3px;
 }
 
 .list {
@@ -198,9 +267,9 @@
 
 .variantCard {
   padding: 16px;
-  border: 1px solid rgba(92, 67, 51, 0.12);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(92, 67, 51, 0.1);
 }
 
 .variantTitle {
@@ -211,18 +280,23 @@
 .useButton {
   min-height: 44px;
   padding: 0 18px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.7);
   cursor: pointer;
   font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(92, 67, 51, 0.14);
+  transition:
+    transform 150ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
 }
 
 .listItem {
   padding: 16px;
-  border: 1px solid rgba(92, 67, 51, 0.12);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(92, 67, 51, 0.1);
 }
 
 .listHeader {
@@ -246,11 +320,13 @@
   color: var(--text);
   line-height: 1.7;
   white-space: pre-wrap;
+  text-wrap: pretty;
 }
 
 .empty {
   color: var(--muted);
   line-height: 1.7;
+  text-wrap: pretty;
 }
 
 .successCard p,
