@@ -1,5 +1,36 @@
 # Журнал поставки
 
+## Update 2026-06-24 Production Launch On darislova.ru
+
+1. Куплен и выбран основной домен MVP: `darislova.ru`.
+2. DNS настроен на VPS `168.222.141.120`:
+   - `darislova.ru` -> `168.222.141.120`;
+   - `www.darislova.ru` -> `168.222.141.120`.
+3. Проект открыток развернут на VPS в `/home/deploy/capsule`.
+4. Production stack `capsule` поднят отдельно от Prognozist:
+   - `capsule-postgres-1` healthy;
+   - `capsule-web-1` healthy;
+   - web опубликован только локально: `127.0.0.1:3100->3000`.
+5. PostgreSQL migration `0001_initial_mvp_flow.sql` применена через `npm run db:migrate`.
+6. Caddy из production stack Prognozist подключен к Docker network `capsule_default`.
+7. В Caddy добавлен site block для `darislova.ru, www.darislova.ru`, reverse proxy идет на `capsule-web-1:3000`.
+8. Caddy автоматически выпустил HTTPS-сертификаты для `darislova.ru` и `www.darislova.ru`.
+9. Проверено:
+   - `curl -I https://darislova.ru` -> `HTTP/2 200`;
+   - `curl -I https://www.darislova.ru` -> `HTTP/2 200`;
+   - создание открытки с лендинга открывает `/manage/[manageToken]`;
+   - `/join/[slug]` открывается.
+10. Ручной backup прошел успешно:
+    - `postgres-*.sql.gz`;
+    - `uploads-*.tar.gz`;
+    - `.sha256`;
+    - `latest` symlinks.
+11. Настроен ежедневный root cron backup:
+    - `35 3 * * * cd /home/deploy/capsule && BACKUP_DIR=/home/deploy/capsule/backups RETENTION_DAYS=14 bash infra/scripts/run-nightly-backup.sh >> /var/log/capsule-backup.log 2>&1`.
+12. Production health check прошел:
+    - `BASE_URL=https://darislova.ru bash infra/scripts/check-production-health.sh`;
+    - результат: `Production health checks passed`.
+
 ## Update 2026-06-23 Handoff and landing create CTA
 
 1. Добавлен `docs/PROJECT_HANDOFF_2026-06-23.md` — его нужно читать первым в новом чате.
@@ -477,7 +508,7 @@
 
 ## Update 2026-06-23 Single Domain MVP Routes
 
-1. Accepted one-domain MVP routing with `steplom.ru` as the production base URL.
+1. Accepted one-domain MVP routing with `darislova.ru` as the production base URL.
 2. Added route helpers for join, manage, preview, and gift links.
 3. Added `/join/[slug]` as the participant route and kept `/card/[slug]` as a compatibility redirect.
 4. Added `/preview/[manageToken]` as an organizer preview redirect.

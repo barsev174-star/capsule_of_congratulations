@@ -2,7 +2,58 @@
 
 Актуальный handoff перед переносом на VPS: `docs/PROJECT_HANDOFF_2026-06-23.md`.
 
-Дата: 2026-06-23
+Дата: 2026-06-24
+
+## Текущий production-статус
+
+VPS-размещение MVP завершено.
+
+Рабочие URL:
+
+1. `https://darislova.ru`
+2. `https://www.darislova.ru`
+
+Фактическая схема:
+
+1. Проект лежит на VPS в `/home/deploy/capsule`.
+2. Compose project: `capsule`.
+3. Контейнеры:
+   - `capsule-postgres-1` — PostgreSQL;
+   - `capsule-web-1` — Next.js production server.
+4. `capsule-web-1` опубликован только на host loopback: `127.0.0.1:3100->3000`.
+5. Публичные `80/443` обслуживает существующий Caddy из production stack Prognozist.
+6. Caddy подключен к Docker network `capsule_default`.
+7. Caddy site block:
+
+```caddyfile
+darislova.ru, www.darislova.ru {
+  encode gzip zstd
+  reverse_proxy capsule-web-1:3000
+}
+```
+
+8. HTTPS-сертификаты выпущены Caddy автоматически.
+9. PostgreSQL migration применена.
+10. Ручной backup базы и uploads проверен.
+11. Root cron backup настроен:
+
+```cron
+35 3 * * * cd /home/deploy/capsule && BACKUP_DIR=/home/deploy/capsule/backups RETENTION_DAYS=14 bash infra/scripts/run-nightly-backup.sh >> /var/log/capsule-backup.log 2>&1
+```
+
+12. Health check пройден:
+
+```bash
+BASE_URL=https://darislova.ru bash infra/scripts/check-production-health.sh
+```
+
+Результат:
+
+```text
+Production health checks passed
+```
+
+Важный нюанс: Caddy был подключен к `capsule_default` вручную через `docker network connect`. Если контейнер Caddy будет пересоздан, это подключение может пропасть. Тогда его нужно повторить или закрепить общую сеть в compose-конфигурации Prognozist.
 
 ## Подойдёт ли VPS
 
@@ -19,8 +70,8 @@
 
 ## Рекомендуемая схема MVP
 
-1. `nginx` принимает HTTPS и проксирует в Next.js.
-2. Next.js работает через `npm run start` под `systemd` или `pm2`.
+1. Caddy принимает HTTPS и проксирует в Next.js.
+2. Next.js работает в Docker Compose service `web`.
 3. PostgreSQL живёт на той же VPS.
 4. Загруженные фото хранятся локально.
 5. База и папка загрузок регулярно бэкапятся.
@@ -52,7 +103,7 @@
    - `capsule-postgres`;
 5. отдельный volume PostgreSQL, например `capsule-postgres-data`;
 6. отдельная папка uploads, например `/home/deploy/capsule/public/uploads/cards`;
-7. один основной домен для MVP: `https://steplom.ru`.
+7. один основной домен для MVP: `https://darislova.ru`.
 
 URL-структура MVP на одном домене:
 
@@ -71,7 +122,7 @@ Reverse proxy:
 2. если ставим nginx, сначала нужно понять, не занят ли уже `80/443` Caddy из Прогнозиста;
 3. одновременно Caddy и nginx на одних и тех же публичных портах запускать нельзя.
 
-Практически лучше использовать существующий Caddy-подход: он уже получает HTTPS-сертификаты и обслуживает Prognozist. Для открыток нужен отдельный site block на `steplom.ru`, который проксирует в `capsule-web`.
+Практически лучше использовать существующий Caddy-подход: он уже получает HTTPS-сертификаты и обслуживает Prognozist. Для открыток нужен отдельный site block на `darislova.ru`, который проксирует в `capsule-web`.
 
 ## Ограничение фото
 
@@ -141,7 +192,7 @@ public/uploads/cards/<cardId>/<fileName>
 6. Текущий `repository.ts` автоматически использует Postgres, если задан `DATABASE_URL`; без него локальная разработка остаётся на JSON.
 7. Добавлен `.env.example` с единственной обязательной production-переменной на текущем этапе: `DATABASE_URL`.
 8. Добавлен локальный storage-слой для фото открыток: `src/lib/media/local-card-media-storage.ts`.
-9. Добавлен route-helper `src/lib/routes/card-links.ts`; production-ссылки строятся через `NEXT_PUBLIC_SITE_URL=https://steplom.ru`.
+9. Добавлен route-helper `src/lib/routes/card-links.ts`; production-ссылки строятся через `NEXT_PUBLIC_SITE_URL=https://darislova.ru`.
 10. Добавлены production-файлы для отдельного Docker Compose stack:
     - `Dockerfile.prod`;
     - `docker-compose.prod.yml`;
@@ -231,12 +282,12 @@ curl -I http://127.0.0.1:3100
 
 ## Caddy рядом с Prognozist
 
-Так как public `80/443` уже занимает Caddy из Прогнозиста, для `steplom.ru` нужно добавить второй site block в production Caddyfile Прогнозиста или вынести Caddy в общий infra-layer позже.
+Так как public `80/443` уже занимает Caddy из Прогнозиста, для `darislova.ru` нужно добавить второй site block в production Caddyfile Прогнозиста или вынести Caddy в общий infra-layer позже.
 
 Минимальный site block:
 
 ```caddyfile
-steplom.ru {
+darislova.ru {
   encode gzip zstd
   reverse_proxy host.docker.internal:3100
 }
@@ -315,26 +366,23 @@ npm run db:migrate
 
 ## Следующий практический шаг
 
-1. Использовать основной домен открыток: `steplom.ru`.
-2. На VPS проверить текущие контейнеры Прогнозиста:
-   - `docker ps`;
-   - какие контейнеры слушают `80/443`;
-   - где лежит production Caddy config.
-3. Подготовить DNS `steplom.ru` на IP VPS.
-4. Скопировать `.env.production.example` в `.env.production`.
-5. Заполнить:
-   - `DATABASE_URL`;
-   - `NEXT_PUBLIC_SITE_URL=https://steplom.ru`.
-6. Запустить `docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build`.
-7. Запустить миграции.
-8. Добавить Caddy site block для `steplom.ru`.
-9. Создать новую открытку с главной страницы и пройти ручной цикл:
+1. Пройти полный production smoke-flow с реальной тестовой открыткой:
+   - создать открытку с `https://darislova.ru`;
    - заполнить основу;
    - открыть ссылку участника;
-   - добавить поздравления;
-   - загрузить до 6 фото;
-   - проверить финальную ссылку.
-10. После этого зафиксировать backup-процедуру для PostgreSQL и `public/uploads/cards`.
+   - добавить поздравление;
+   - загрузить тестовое фото;
+   - открыть `/gift/[slug]`;
+   - проверить, что текст и фото отображаются после обновления страницы.
+2. Через сутки проверить, что cron создал новый backup:
+
+```bash
+ls -lh /home/deploy/capsule/backups
+tail -80 /var/log/capsule-backup.log
+```
+
+3. Закрепить подключение Caddy к сети `capsule_default` в инфраструктуре, чтобы оно не зависело от ручного `docker network connect`.
+4. После проверки production flow вернуться к продуктовой работе: бренд “Дари слова”, тексты лендинга и UX-polish `/join/[slug]`.
 
 ## Local state before first VPS move
 

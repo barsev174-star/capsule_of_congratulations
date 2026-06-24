@@ -180,7 +180,7 @@ Manual checks for the current MVP URL structure:
 2. Create a card from `/create` and confirm generated participant links use `/join/[slug]`.
 3. Open old `/card/[slug]` and confirm it redirects to `/join/[slug]`.
 4. Open `/preview/[manageToken]` and confirm it lands on the organizer preview tab.
-5. Set `NEXT_PUBLIC_SITE_URL=https://steplom.ru` and confirm copied/generated links use `https://steplom.ru/...`.
+5. Set `NEXT_PUBLIC_SITE_URL=https://darislova.ru` and confirm copied/generated links use `https://darislova.ru/...`.
 
 ## Update 2026-06-23 Production compose checks
 
@@ -199,5 +199,24 @@ On a Linux/VPS shell after the stack is running:
 1. Run `bash infra/scripts/backup-postgres.sh` and confirm `backups/postgres-*.sql.gz` appears.
 2. Run `bash infra/scripts/backup-uploads.sh` and confirm `backups/uploads-*.tar.gz` appears.
 3. Run `bash infra/scripts/run-nightly-backup.sh` and confirm checksum files and latest symlinks appear.
-4. Run `BASE_URL=https://steplom.ru bash infra/scripts/check-production-health.sh`.
+4. Run `BASE_URL=https://darislova.ru bash infra/scripts/check-production-health.sh`.
 5. Do not store `.env.production` in git.
+
+## Production verification — 2026-06-24
+
+Production MVP на `https://darislova.ru` проверен после первого VPS-запуска.
+
+Проверено:
+
+1. `curl -I https://darislova.ru` возвращает `HTTP/2 200`.
+2. `curl -I https://www.darislova.ru` возвращает `HTTP/2 200`.
+3. `capsule-postgres-1` healthy.
+4. `capsule-web-1` healthy.
+5. Landing page создает новую открытку и открывает `/manage/[manageToken]`.
+6. `/join/[slug]` открывается.
+7. PostgreSQL migration завершилась сообщением `migrations complete`.
+8. Ручной backup `bash infra/scripts/run-nightly-backup.sh` завершился успешно.
+9. Root cron backup добавлен на `03:35`.
+10. `BASE_URL=https://darislova.ru bash infra/scripts/check-production-health.sh` завершился сообщением `Production health checks passed`.
+
+Следующая обязательная ручная проверка перед активным использованием: пройти полный flow с тестовым фото и финальной `/gift/[slug]`.
