@@ -68,8 +68,8 @@ export const validateCreateCardFormData = (formData: FormData): ValidationResult
     pushIssue(issues, "occasion", "Выберите формат будущей открытки.");
   }
 
-  if (!validateLength(occasionText, 2, 120)) {
-    pushIssue(issues, "occasionText", "Коротко опишите повод или контекст поздравления.");
+  if (!validateLength(occasionText, 2, 40)) {
+    pushIssue(issues, "occasionText", "Укажите короткую надпись события: от 2 до 40 символов.");
   }
 
   if (!validateLength(fromLabel, 2, 80)) {

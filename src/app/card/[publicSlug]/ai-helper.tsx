@@ -15,17 +15,22 @@ type Props = {
   occasionText: string;
   messageLimit: number;
   onUseText: (text: string) => void;
+  variant?: "default" | "join";
 };
 
-export const AiHelper = ({ cardId, recipientName, occasionText, messageLimit, onUseText }: Props) => {
+export const AiHelper = ({ cardId, recipientName, occasionText, messageLimit, onUseText, variant = "default" }: Props) => {
   const [issues, setIssues] = useState<string[]>([]);
   const [variants, setVariants] = useState<AiVariant[]>([]);
+  const [activeVariantIndex, setActiveVariantIndex] = useState(0);
+  const [insertFeedback, setInsertFeedback] = useState("");
+  const [draftNotes, setDraftNotes] = useState("");
   const [remaining, setRemaining] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleGenerate = async (formData: FormData) => {
     setIssues([]);
     setVariants([]);
+    setInsertFeedback("");
 
     const response = await fetch("/api/ai/participant-message", {
       method: "POST",
@@ -47,24 +52,41 @@ export const AiHelper = ({ cardId, recipientName, occasionText, messageLimit, on
     }
 
     setVariants(payload.result.variants);
+    setActiveVariantIndex(0);
     setRemaining(payload.result.remainingCardGenerations);
   };
 
+  const isJoinVariant = variant === "join";
+  const activeVariant = variants[activeVariantIndex] ?? variants[0];
+  const variantTabs = ["Короткий", "Душевный", "Ваш стиль"];
+  const aiFormId = `ai-helper-${cardId}`;
+  const showRemaining = remaining !== null && remaining < 10;
+
   return (
-    <section className={styles.aiCard}>
-      <h2 className={styles.sectionTitle}>Помочь с текстом через AI</h2>
-      <p className={styles.hint}>
-        Напишите мысли своими словами, даже в сыром виде. AI аккуратно соберет их в 3 черновика поздравления, и вы
-        выберете лучший. Варианты сразу подстраиваются под лимит карточки: до {messageLimit} символов.
-      </p>
+    <section className={`${styles.aiCard} ${isJoinVariant ? styles.joinAiCard : ""}`}>
+      <div className={styles.aiHeader}>
+        <div>
+          <h2 className={styles.sectionTitle}>
+            {isJoinVariant ? "Нужна помощь с текстом?" : "Помочь с текстом через AI"}
+          </h2>
+          <p className={styles.hint}>
+            {isJoinVariant
+              ? "Набросайте мысли своими словами — AI соберет из них 3 варианта."
+              : `Напишите мысли своими словами, даже в сыром виде. AI аккуратно соберет их в 3 черновика поздравления, и вы выберете лучший. Варианты сразу подстраиваются под лимит карточки: до ${messageLimit} символов.`}
+          </p>
+        </div>
+        {isJoinVariant ? <span className={styles.wandIcon} aria-hidden="true" /> : null}
+      </div>
 
       <form
+        id={aiFormId}
         className={styles.form}
         action={(formData) => {
           formData.set("cardId", cardId);
           formData.set("recipientName", recipientName);
           formData.set("occasionText", occasionText);
           formData.set("messageLimit", String(messageLimit));
+          formData.set("draftNotes", draftNotes);
 
           startTransition(async () => {
             await handleGenerate(formData);
@@ -88,16 +110,28 @@ export const AiHelper = ({ cardId, recipientName, occasionText, messageLimit, on
         ) : null}
 
         <div className={styles.field}>
-          <label htmlFor="draftNotes">Что хотите сказать своими словами</label>
+          <div className={styles.fieldLabelRow}>
+            <label htmlFor="draftNotes">{isJoinVariant ? "Что хотите сказать?" : "Что хотите сказать своими словами"}</label>
+            {isJoinVariant ? <span className={styles.counter}>{draftNotes.length} / {messageLimit}</span> : null}
+          </div>
           <textarea
             id="draftNotes"
             name="draftNotes"
-            placeholder="Например: хочу пожелать любви, радости. Ценю скромность, целеустремленность, рад с тобой работать. Оставайся такой же веселой."
+            className={isJoinVariant ? styles.aiTextarea : undefined}
+            value={draftNotes}
+            onChange={(event) => setDraftNotes(event.target.value)}
+            placeholder={
+              isJoinVariant
+                ? "Например: хочу пожелать здоровья, больше радости, чтобы все получалось. Ценю его поддержку и чувство юмора."
+                : "Например: хочу пожелать любви, радости. Ценю скромность, целеустремленность, рад с тобой работать. Оставайся такой же веселой."
+            }
             required
           />
-          <span className={styles.hint}>
-            Можно писать неровно и по пунктам. AI опирается на контекст открытки: <strong>{occasionText}</strong>.
-          </span>
+          {!isJoinVariant ? (
+            <span className={styles.hint}>
+              Можно писать неровно и по пунктам. AI опирается на контекст открытки: <strong>{occasionText}</strong>.
+            </span>
+          ) : null}
         </div>
 
         <div className={styles.field}>
@@ -112,24 +146,50 @@ export const AiHelper = ({ cardId, recipientName, occasionText, messageLimit, on
         </div>
 
         <div className={styles.actions}>
-          <button type="submit" className={styles.submitButton} disabled={isPending}>
+          <button type="submit" className={isJoinVariant ? styles.aiButton : styles.submitButton} disabled={isPending}>
+            {isJoinVariant ? <span className={styles.aiButtonIcon} aria-hidden="true" /> : null}
             {isPending ? "Готовим варианты..." : "Получить 3 варианта"}
           </button>
-          {remaining !== null ? <span className={styles.note}>Осталось AI-генераций для открытки: {remaining}</span> : null}
+          {showRemaining ? <span className={styles.note}>Можно попробовать ещё {remaining} раз</span> : null}
         </div>
       </form>
 
-      {variants.length > 0 ? (
+      {isJoinVariant ? <p className={styles.privacyNote}>Ваш черновик нужен только для подготовки вариантов текста.</p> : null}
+
+      {activeVariant ? (
         <div className={styles.variants}>
-          {variants.map((variant) => (
-            <article key={variant.id} className={styles.variantCard}>
-              <h3 className={styles.variantTitle}>{variant.label}</h3>
-              <p className={styles.message}>{variant.text}</p>
-              <button type="button" className={styles.useButton} onClick={() => onUseText(variant.text)}>
-                Использовать этот текст
+          <div className={styles.variantTabs} role="tablist" aria-label="Варианты поздравления">
+            {variants.map((item, index) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`${styles.variantTab} ${index === activeVariantIndex ? styles.variantTabActive : ""}`}
+                onClick={() => setActiveVariantIndex(index)}
+              >
+                {variantTabs[index] ?? item.label}
               </button>
-            </article>
-          ))}
+            ))}
+          </div>
+          <article className={styles.variantCard}>
+            <h3 className={styles.variantTitle}>{variantTabs[activeVariantIndex] ?? activeVariant.label}</h3>
+            <p className={styles.message}>{activeVariant.text}</p>
+            <div className={styles.variantActions}>
+              <button
+                type="button"
+                className={styles.useButton}
+                onClick={() => {
+                  onUseText(activeVariant.text);
+                  setInsertFeedback("Текст вставлен в поздравление");
+                }}
+              >
+                Вставить в поздравление
+              </button>
+              <button type="submit" form={aiFormId} className={styles.retryButton}>
+                Попробовать ещё
+              </button>
+            </div>
+            {insertFeedback ? <p className={styles.insertFeedback} aria-live="polite">{insertFeedback}</p> : null}
+          </article>
         </div>
       ) : null}
     </section>

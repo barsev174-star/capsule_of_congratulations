@@ -89,11 +89,14 @@ export const CreateCardForm = () => {
               </div>
             </div>
             <div className={styles.field}>
-              <label htmlFor="occasionText">Повод или контекст</label>
+              <label htmlFor="occasionText">Надпись события</label>
+              <span className={styles.fieldHint}>Короткая надпись, которая появится на обложке открытки.</span>
               <input
                 id="occasionText"
                 name="occasionText"
-                placeholder="Например, благодарим за выпускной год в садике"
+                placeholder="С днём рождения!"
+                minLength={2}
+                maxLength={40}
                 required
               />
             </div>

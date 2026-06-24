@@ -263,8 +263,8 @@ export async function updateCardBasicsAction(
     return cardBasicsError("Укажите, от кого открытка, длиной от 2 до 80 символов.", fields);
   }
 
-  if (!validateLength(fields.occasionText, 2, 120)) {
-    return cardBasicsError("Коротко опишите повод или контекст поздравления.", fields);
+  if (!validateLength(fields.occasionText, 2, 40)) {
+    return cardBasicsError("Укажите короткую надпись события: от 2 до 40 символов.", fields);
   }
 
   if (!validateLength(fields.organizerName, 2, 80)) {

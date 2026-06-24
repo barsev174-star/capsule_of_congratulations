@@ -134,6 +134,12 @@
   color: var(--text);
 }
 
+.fieldHint {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
 .field input,
 .field textarea,
 .field select {

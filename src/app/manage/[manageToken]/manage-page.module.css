@@ -2414,6 +2414,12 @@ button.contentFilterPill {
   font-weight: 700;
 }
 
+.fieldHint {
+  color: #7f6558;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
 .field input,
 .field textarea {
   width: 100%;

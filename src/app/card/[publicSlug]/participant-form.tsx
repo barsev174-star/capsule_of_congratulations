@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { AiHelper } from "./ai-helper";
 import styles from "./participant-page.module.css";
 
@@ -15,6 +16,7 @@ type Props = {
   recipientName: string;
   occasionText: string;
   messageLimit: number;
+  variant?: "default" | "join";
 };
 
 export const ParticipantForm = ({
@@ -22,7 +24,8 @@ export const ParticipantForm = ({
   publicSlug,
   recipientName,
   occasionText,
-  messageLimit
+  messageLimit,
+  variant = "default"
 }: Props) => {
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
@@ -30,6 +33,7 @@ export const ParticipantForm = ({
   const [authorRole, setAuthorRole] = useState("");
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const handleSubmit = async (formData: FormData) => {
     setIssues([]);
@@ -50,18 +54,25 @@ export const ParticipantForm = ({
       return;
     }
 
-    setSuccessMessage("Готово, поздравление добавлено. После обновления страницы оно появится в списке.");
+    setSuccessMessage("Поздравление добавлено в открытку.");
     setMessage("");
+    router.refresh();
   };
 
   return (
     <>
       <section className={styles.formCard}>
-        <h2 className={styles.sectionTitle}>Ваше поздравление</h2>
-        <p className={styles.hint}>
-          Напишите сами или попросите AI помочь с черновиком. Лучше уложиться в {messageLimit} символов, чтобы текст
-          красиво смотрелся в готовой открытке.
-        </p>
+        <div className={styles.cardHeader}>
+          {variant === "join" ? <span className={`${styles.cardIcon} ${styles.pencilIcon}`} aria-hidden="true" /> : null}
+          <div>
+            <h2 className={styles.sectionTitle}>Ваше поздравление</h2>
+            <p className={styles.hint}>
+              {variant === "join"
+                ? "Напишите от себя — просто и по-настоящему"
+                : `Напишите сами или попросите AI помочь с черновиком. Лучше уложиться в ${messageLimit} символов, чтобы текст красиво смотрелся в готовой открытке.`}
+            </p>
+          </div>
+        </div>
 
         <form
           className={styles.form}
@@ -86,6 +97,7 @@ export const ParticipantForm = ({
 
           {successMessage ? (
             <div className={styles.successCard} aria-live="polite">
+              <strong>💌 Слова подарены</strong>
               <p>{successMessage}</p>
             </div>
           ) : null}
@@ -110,7 +122,7 @@ export const ParticipantForm = ({
               <input
                 id="authorRole"
                 name="authorRole"
-                placeholder="Коллега, друг, семья, 11 Б..."
+                placeholder="коллега, друг, семья..."
                 value={authorRole}
                 onChange={(event) => setAuthorRole(event.target.value)}
               />
@@ -127,21 +139,23 @@ export const ParticipantForm = ({
             <textarea
               id="message"
               name="message"
-              placeholder="Напишите несколько теплых слов: что цените, за что благодарны, какой момент хочется вспомнить."
+              placeholder="Напишите несколько теплых слов: что цените, за что благодарны, какой момент хочется вспомнить..."
               required
               maxLength={1500}
               value={message}
               onChange={(event) => setMessage(event.target.value)}
             />
-            <span className={styles.hint}>
-              Можно набросать как есть, а потом спокойно поправить или уточнить через AI.
+            <span className={styles.fieldHint}>
+              Пишите просто и по-настоящему. Даже несколько теплых фраз уже много значат.
             </span>
           </div>
 
           <div className={styles.actions}>
-            <button type="submit" className={styles.submitButton} disabled={isPending}>
-              {isPending ? "Сохраняем..." : "Добавить поздравление"}
+            <button type="submit" className={styles.submitButton} disabled={isPending || Boolean(successMessage)}>
+              {!successMessage ? <span className={styles.buttonIcon} aria-hidden="true" /> : null}
+              {successMessage ? "✓ Слова подарены" : isPending ? "Добавляем..." : "Подарить слова"}
             </button>
+            <p className={styles.submitHint}>Ваше поздравление попадёт в открытку.</p>
           </div>
         </form>
       </section>
@@ -152,6 +166,7 @@ export const ParticipantForm = ({
         occasionText={occasionText}
         messageLimit={messageLimit}
         onUseText={(text) => setMessage(text)}
+        variant={variant}
       />
     </>
   );
