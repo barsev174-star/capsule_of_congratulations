@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useMemo, useState, useTransition, type CSSProperties, type DragEvent as ReactDragEvent } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties, type DragEvent as ReactDragEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
@@ -95,7 +95,37 @@ export const ContentStudio = ({
   const participantUrl = getJoinUrl(publicSlug);
   const inviteText = `Собираем открытку для ${recipientName}. Добавьте пару теплых слов по ссылке: ${participantUrl}`;
   const currentContributionOrderKey = contributionOrder.join(":");
-  const isContributionOrderDirty = savedContributionOrderKey !== currentContributionOrderKey;
+  const [isContributionOrderDirty, setIsContributionOrderDirty] = useState(false);
+  const [orderSaveStatus, setOrderSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const orderFormRef = useRef<HTMLFormElement>(null);
+
+  // Auto-save contribution order with debounce
+  useEffect(() => {
+    if (!isContributionOrderDirty || orderSaveStatus === "saving") return;
+    const timer = setTimeout(() => {
+      if (orderFormRef.current) {
+        setOrderSaveStatus("saving");
+        orderFormRef.current.requestSubmit();
+      }
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [isContributionOrderDirty, orderSaveStatus, contributionOrder]);
+
+  useEffect(() => {
+    if (state.ok) {
+      setOrderSaveStatus("saved");
+      setIsContributionOrderDirty(false);
+    }
+  }, [state]);
+
+  // Track dirty state separately from server state
+  useEffect(() => {
+    const dirty = savedContributionOrderKey !== currentContributionOrderKey;
+    setIsContributionOrderDirty(dirty);
+    if (dirty && orderSaveStatus === "saved") {
+      setOrderSaveStatus("idle");
+    }
+  }, [savedContributionOrderKey, currentContributionOrderKey, orderSaveStatus]);
 
   const orderedContributions = useMemo(() => {
     const map = new Map(allContributions.map((contribution) => [contribution.id, contribution]));
@@ -730,23 +760,30 @@ export const ContentStudio = ({
       </div>
 
       <form
+        ref={orderFormRef}
         action={formAction}
-        className={`${styles.contentFooterBar} ${isContributionOrderDirty ? styles.contentFooterBarDirty : ""}`}
+        className={styles.contentAutoSaveForm}
       >
         <input type="hidden" name="manageToken" value={manageToken} />
         {contributionOrder.map((contributionId) => (
           <input key={contributionId} type="hidden" name="orderedContributionIds" value={contributionId} />
         ))}
+      </form>
+
+      <div className={styles.contentOrderStatus}>
         <Link href={`${getManagePath(manageToken)}?tab=design`} className={styles.contentBackButton}>
           ← Вернуться к оформлению
         </Link>
-        <span className={styles.contentAutosave}>
-          {state.message || (isContributionOrderDirty ? "Порядок изменён. Сохраните, чтобы он попал в открытку." : "Порядок сохранён")}
+        <span className={styles.contentOrderStatusText}>
+          {orderSaveStatus === "saving"
+            ? "Сохраняем порядок…"
+            : orderSaveStatus === "saved"
+              ? "Порядок сохранён"
+              : isContributionOrderDirty
+                ? "Порядок изменён"
+                : null}
         </span>
-        <button type="submit" className={styles.contentPrimaryButton} disabled={isPending || !isContributionOrderDirty}>
-          {isPending ? "Сохраняем..." : isContributionOrderDirty ? "Сохранить порядок" : "Порядок сохранён"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 };

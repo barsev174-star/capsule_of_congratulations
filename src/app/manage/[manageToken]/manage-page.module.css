@@ -2295,6 +2295,31 @@ button.contentFilterPill {
     0 20px 48px rgba(121, 72, 48, 0.16);
 }
 
+.contentAutoSaveForm {
+  display: none;
+}
+
+.contentOrderStatus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 4px 8px;
+  margin-top: 8px;
+  border-top: 1px solid rgba(98, 72, 58, 0.1);
+}
+
+.contentOrderStatusText {
+  color: #8a6b5a;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+}
+
 .contentBackButton {
   text-decoration: none;
 }
