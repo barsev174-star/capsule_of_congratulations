@@ -164,18 +164,22 @@ const resolveOrderedMediaAssets = (
   slots: string[],
   fallbackSlots: string[]
 ) => {
-  const selectedById = assetIds
-    .map((id) => mediaAssets.find((asset) => asset.id === id))
-    .filter((asset): asset is CardMediaAsset => Boolean(asset));
+  const selected: CardMediaAsset[] = [];
+  const selectedIds = new Set<string>();
+  const selectedSlots = [...slots, ...fallbackSlots.filter((slot) => !slots.includes(slot))].slice(0, fallbackSlots.length);
+  const addAsset = (asset: CardMediaAsset | undefined) => {
+    if (!asset || selectedIds.has(asset.id)) {
+      return;
+    }
 
-  if (selectedById.length > 0) {
-    return selectedById;
-  }
+    selected.push(asset);
+    selectedIds.add(asset.id);
+  };
 
-  const selectedSlots = slots.length > 0 ? slots : fallbackSlots;
-  return selectedSlots
-    .map((slot) => mediaAssets.find((asset) => asset.slot === slot))
-    .filter((asset): asset is CardMediaAsset => Boolean(asset));
+  selectedSlots.forEach((slot) => addAsset(mediaAssets.find((asset) => asset.slot === slot)));
+  assetIds.forEach((id) => addAsset(mediaAssets.find((asset) => asset.id === id)));
+
+  return selected.slice(0, selectedSlots.length);
 };
 
 export const buildFinalCardViewModel = (
@@ -183,6 +187,10 @@ export const buildFinalCardViewModel = (
   contributions: Contribution[],
   mediaAssets: CardMediaAsset[] = []
 ): FinalCardViewModel => {
+  const normalizedMediaAssets = mediaAssets.map((asset) => ({
+    ...asset,
+    captionSubtitle: asset.captionTitle || asset.captionSubtitle
+  }));
   const style = resolveStyle(card.templateId);
   const messageLayoutMode = card.finalMessageSettings?.layoutMode ?? "grid-2";
   const messageMediaLayout = card.finalMessageSettings?.mediaLayout ?? "portrait";
@@ -219,9 +227,9 @@ export const buildFinalCardViewModel = (
     quotes,
     contributions: visibleMessageContributions,
     memories,
-    mediaAssets,
+    mediaAssets: normalizedMediaAssets,
     messageMediaAssets: resolveOrderedMediaAssets(
-      mediaAssets,
+      normalizedMediaAssets,
       card.finalMessageSettings?.mediaAssetIds ?? [],
       card.finalMessageSettings?.mediaSlots ?? [],
       messageMediaLayout === "portrait"
@@ -231,7 +239,7 @@ export const buildFinalCardViewModel = (
           : ["landscape-a", "landscape-b", "landscape-c"]
     ),
     memoryMediaAssets: resolveOrderedMediaAssets(
-      mediaAssets,
+      normalizedMediaAssets,
       card.finalMemorySettings?.mediaAssetIds ?? [],
       card.finalMemorySettings?.mediaSlots ?? [],
       ["memory-a", "memory-b", "memory-c"]

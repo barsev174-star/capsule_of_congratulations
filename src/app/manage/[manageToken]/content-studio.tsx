@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo, useState, useTransition, type CSSProperties, type DragEvent as ReactDragEvent } from "react";
+import { useActionState, useEffect, useMemo, useState, useTransition, type CSSProperties, type DragEvent as ReactDragEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
@@ -77,6 +77,9 @@ export const ContentStudio = ({
   const [manualMessage, setManualMessage] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [copyMessage, setCopyMessage] = useState("");
+  const [savedContributionOrderKey, setSavedContributionOrderKey] = useState(
+    allContributions.map((contribution) => contribution.id).join(":")
+  );
 
   const getRecommendedMessageLimit = (contribution: Contribution) =>
     contribution.id === mainGreetingContributionId ? MAIN_GREETING_MESSAGE_LIMIT : messageLimit;
@@ -89,7 +92,8 @@ export const ContentStudio = ({
   const noRoleCount = allContributions.filter((contribution) => !contribution.authorRole?.trim()).length;
   const participantUrl = getJoinUrl(publicSlug);
   const inviteText = `Собираем открытку для ${recipientName}. Добавьте пару теплых слов по ссылке: ${participantUrl}`;
-  const mainGreetingContribution = allContributions.find((contribution) => contribution.id === mainGreetingContributionId);
+  const currentContributionOrderKey = contributionOrder.join(":");
+  const isContributionOrderDirty = savedContributionOrderKey !== currentContributionOrderKey;
 
   const orderedContributions = useMemo(() => {
     const map = new Map(allContributions.map((contribution) => [contribution.id, contribution]));
@@ -120,6 +124,12 @@ export const ContentStudio = ({
     });
   }, [activeFilter, mainGreetingContributionId, messageLimit, orderedContributions]);
 
+  useEffect(() => {
+    if (state.ok) {
+      setSavedContributionOrderKey(currentContributionOrderKey);
+    }
+  }, [currentContributionOrderKey, state.ok]);
+
   const moveContribution = (targetContributionId: string, pointerPosition: "before" | "after") => {
     if (!draggedContributionId || draggedContributionId === targetContributionId) {
       return;
@@ -141,6 +151,29 @@ export const ContentStudio = ({
 
     setDraggedContributionId(null);
     setDropTarget(null);
+  };
+
+  const moveContributionByStep = (contributionId: string, direction: "up" | "down") => {
+    const visibleIds = visibleContributions.map((contribution) => contribution.id);
+    const currentVisibleIndex = visibleIds.indexOf(contributionId);
+    const targetVisibleId = visibleIds[direction === "up" ? currentVisibleIndex - 1 : currentVisibleIndex + 1];
+
+    if (currentVisibleIndex === -1 || !targetVisibleId) {
+      return;
+    }
+
+    setContributionOrder((current) => {
+      const withoutMoved = current.filter((id) => id !== contributionId);
+      const targetIndex = withoutMoved.indexOf(targetVisibleId);
+
+      if (targetIndex === -1) {
+        return current;
+      }
+
+      const next = [...withoutMoved];
+      next.splice(direction === "up" ? targetIndex : targetIndex + 1, 0, contributionId);
+      return next;
+    });
   };
 
   const moveContributionToEnd = (contributionId: string) => {
@@ -235,7 +268,7 @@ export const ContentStudio = ({
     setExpandedContributionIds((current) =>
       current.includes(contributionId)
         ? current.filter((id) => id !== contributionId)
-        : [...current, contributionId]
+        : [contributionId]
     );
   };
 
@@ -289,25 +322,15 @@ export const ContentStudio = ({
 
       <div className={styles.contentLayout}>
         <section className={styles.contentPanel}>
-          <section className={styles.contentAssistantCard}>
-            <div>
-              <h3 className={styles.contentAssistantTitle}>Главное поздравление</h3>
-              <p className={styles.contentAssistantText}>
-                {mainGreetingContribution
-                  ? `Сейчас в блок «Самые важные слова» попадет поздравление от ${mainGreetingContribution.authorName}.`
-                  : "Выберите одно активное поздравление для большого блока «Самые важные слова». Если не выбрать, открытка возьмет первое активное поздравление."}
-              </p>
-            </div>
-            <Link href={getGiftPath(finalSlug)} target="_blank" className={styles.contentOutlineButton}>
-              Проверить в открытке
-            </Link>
-          </section>
-
           <div className={styles.contentPanelHeader}>
             <div className={styles.contentPanelTopRow}>
               <h2 className={styles.contentPanelTitle}>Поздравления</h2>
               <div className={styles.contentToolbar}>
-                <button type="button" className={styles.contentGhostButton} onClick={() => setIsManualFormOpen((current) => !current)}>
+                <button
+                  type="button"
+                  className={`${styles.mediaLibraryUploadButton} ${styles.mediaManagerActionButton}`}
+                  onClick={() => setIsManualFormOpen((current) => !current)}
+                >
                   <span>+</span>
                   <span>Добавить вручную</span>
                 </button>
@@ -336,12 +359,47 @@ export const ContentStudio = ({
             </div>
 
             <div>
-              <p className={styles.contentPanelText}>Проверьте тексты, порядок и видимость поздравлений.</p>
-              <p className={styles.contentPanelText}>
-                Тексты длиннее {messageLimit} символов лучше сократить для выбранного макета.
-              </p>
+              <p className={styles.contentPanelText}>Модерируйте поздравления, выделяйте главное и изменяйте порядок.</p>
             </div>
             {copyMessage ? <p className={styles.contentInlineNotice}>{copyMessage}</p> : null}
+          </div>
+
+          <div className={styles.contentFilterRow}>
+            <button
+              type="button"
+              className={`${styles.contentFilterPill} ${activeFilter === "all" ? styles.contentFilterPillActive : ""}`}
+              onClick={() => setActiveFilter("all")}
+            >
+              Все {allContributions.length}
+            </button>
+            <button
+              type="button"
+              className={`${styles.contentFilterPill} ${activeFilter === "active" ? styles.contentFilterPillActive : ""}`}
+              onClick={() => setActiveFilter("active")}
+            >
+              Активные {activeCount}
+            </button>
+            <button
+              type="button"
+              className={`${styles.contentFilterPill} ${activeFilter === "hidden" ? styles.contentFilterPillActive : ""}`}
+              onClick={() => setActiveFilter("hidden")}
+            >
+              Скрытые {hiddenCount}
+            </button>
+            <button
+              type="button"
+              className={`${styles.contentFilterPill} ${activeFilter === "too-long" ? styles.contentFilterPillActive : ""}`}
+              onClick={() => setActiveFilter("too-long")}
+            >
+              Слишком длинные {tooLongCount}
+            </button>
+            <button
+              type="button"
+              className={`${styles.contentFilterPill} ${activeFilter === "no-role" ? styles.contentFilterPillActive : ""}`}
+              onClick={() => setActiveFilter("no-role")}
+            >
+              Без роли {noRoleCount}
+            </button>
           </div>
 
           {isManualFormOpen ? (
@@ -382,62 +440,28 @@ export const ContentStudio = ({
                 />
               </label>
 
-              <AiHelper
-                cardId={cardId}
-                recipientName={recipientName}
-                occasionText={occasionText}
-                messageLimit={500}
-                onUseText={setManualMessage}
-              />
+              <div className={styles.manualContributionAi}>
+                <AiHelper
+                  cardId={cardId}
+                  recipientName={recipientName}
+                  occasionText={occasionText}
+                  messageLimit={500}
+                  onUseText={setManualMessage}
+                  variant="join"
+                />
+              </div>
 
               <div className={styles.manualContributionFooter}>
                 <button type="submit" className={styles.contentPrimaryButton} disabled={isManualPending}>
                   {isManualPending ? "Добавляем..." : "Добавить поздравление"}
                 </button>
+                <span className={styles.manualContributionCount}>{manualMessage.length} / 1500</span>
                 <span className={manualState.ok ? styles.limitOk : styles.limitWarning}>
                   {manualState.message || `Рекомендуем до ${messageLimit} символов для текущей сетки. Если текст длиннее, администратор сможет сократить его для лаконичного вида.`}
                 </span>
               </div>
             </form>
           ) : null}
-
-          <div className={styles.contentFilterRow}>
-            <button
-              type="button"
-              className={`${styles.contentFilterPill} ${activeFilter === "all" ? styles.contentFilterPillActive : ""}`}
-              onClick={() => setActiveFilter("all")}
-            >
-              Все {allContributions.length}
-            </button>
-            <button
-              type="button"
-              className={`${styles.contentFilterPill} ${activeFilter === "active" ? styles.contentFilterPillActive : ""}`}
-              onClick={() => setActiveFilter("active")}
-            >
-              Активные {activeCount}
-            </button>
-            <button
-              type="button"
-              className={`${styles.contentFilterPill} ${activeFilter === "hidden" ? styles.contentFilterPillActive : ""}`}
-              onClick={() => setActiveFilter("hidden")}
-            >
-              Скрытые {hiddenCount}
-            </button>
-            <button
-              type="button"
-              className={`${styles.contentFilterPill} ${activeFilter === "too-long" ? styles.contentFilterPillActive : ""}`}
-              onClick={() => setActiveFilter("too-long")}
-            >
-              Слишком длинные {tooLongCount}
-            </button>
-            <button
-              type="button"
-              className={`${styles.contentFilterPill} ${activeFilter === "no-role" ? styles.contentFilterPillActive : ""}`}
-              onClick={() => setActiveFilter("no-role")}
-            >
-              Без роли {noRoleCount}
-            </button>
-          </div>
 
           {visibleContributions.length === 0 ? (
             <p className={styles.empty}>Пока поздравлений нет. Сначала участники должны добавить свои сообщения.</p>
@@ -517,6 +541,26 @@ export const ContentStudio = ({
                         </div>
 
                         <div className={styles.contentTopControls}>
+                          <div className={styles.contentMoveButtons} aria-label={`Порядок поздравления ${contribution.authorName}`}>
+                            <button
+                              type="button"
+                              className={styles.contentMoveButton}
+                              onClick={() => moveContributionByStep(contribution.id, "up")}
+                              disabled={index === 0}
+                              aria-label={`Поднять поздравление ${contribution.authorName}`}
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.contentMoveButton}
+                              onClick={() => moveContributionByStep(contribution.id, "down")}
+                              disabled={index === visibleContributions.length - 1}
+                              aria-label={`Опустить поздравление ${contribution.authorName}`}
+                            >
+                              ↓
+                            </button>
+                          </div>
                           <button
                             type="button"
                             className={styles.contentChevronButton}
@@ -532,6 +576,9 @@ export const ContentStudio = ({
                         </div>
                       </div>
 
+                      {!isExpanded ? (
+                        <p className={styles.contentContributionExcerpt}>{contribution.message}</p>
+                      ) : null}
                     </div>
 
                     {isExpanded ? (
@@ -661,7 +708,10 @@ export const ContentStudio = ({
         </aside>
       </div>
 
-      <form action={formAction} className={styles.contentFooterBar}>
+      <form
+        action={formAction}
+        className={`${styles.contentFooterBar} ${isContributionOrderDirty ? styles.contentFooterBarDirty : ""}`}
+      >
         <input type="hidden" name="manageToken" value={manageToken} />
         {contributionOrder.map((contributionId) => (
           <input key={contributionId} type="hidden" name="orderedContributionIds" value={contributionId} />
@@ -669,9 +719,11 @@ export const ContentStudio = ({
         <Link href={`${getManagePath(manageToken)}?tab=design`} className={styles.contentBackButton}>
           ← Вернуться к оформлению
         </Link>
-        <span className={styles.contentAutosave}>{state.message || "Изменения порядка сохраняются отдельно"}</span>
-        <button type="submit" className={styles.contentPrimaryButton} disabled={isPending}>
-          {isPending ? "Сохраняем..." : "Сохранить изменения"}
+        <span className={styles.contentAutosave}>
+          {state.message || (isContributionOrderDirty ? "Порядок изменён. Сохраните, чтобы он попал в открытку." : "Порядок сохранён")}
+        </span>
+        <button type="submit" className={styles.contentPrimaryButton} disabled={isPending || !isContributionOrderDirty}>
+          {isPending ? "Сохраняем..." : isContributionOrderDirty ? "Сохранить порядок" : "Порядок сохранён"}
         </button>
       </form>
     </div>

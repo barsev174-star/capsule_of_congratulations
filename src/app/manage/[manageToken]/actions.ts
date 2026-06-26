@@ -11,6 +11,7 @@ import {
   listCardMediaAssetsByCardId,
   moveContribution,
   reorderContributions,
+  swapCardMediaAssetSlots,
   updateCardDraftBasics,
   updateCardStatus,
   updateCardFinalPresentationSettings,
@@ -654,7 +655,20 @@ export async function saveCardMediaAction(
     return { ok: false, message: "Выберите файл для загрузки." };
   }
 
-  const updated = await updateCardMediaAssetCaption(existingAssetId, captionTitle, captionSubtitle);
+  const currentAssets = await listCardMediaAssetsByCardId(card.id);
+  const currentAsset = currentAssets.find((item) => item.id === existingAssetId);
+  const targetSlotAsset = currentAssets.find((item) => item.slot === slot && item.id !== existingAssetId);
+
+  if (currentAsset && targetSlotAsset && currentAsset.slot !== slot) {
+    await swapCardMediaAssetSlots(card.id, existingAssetId, targetSlotAsset.id);
+  }
+
+  const updated = await updateCardMediaAssetCaption(
+    existingAssetId,
+    captionTitle,
+    captionSubtitle,
+    targetSlotAsset ? undefined : slot
+  );
   if (!updated || updated.cardId !== card.id) {
     return { ok: false, message: "Не удалось обновить подпись к фото." };
   }

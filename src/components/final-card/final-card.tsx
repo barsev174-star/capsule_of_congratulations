@@ -189,7 +189,7 @@ const renderMediaFigure = (
           />
           <figcaption className={styles.mediaCaption}>
             <span className={styles.mediaCaptionSubtitle}>
-              {asset.captionSubtitle || asset.captionTitle || title}
+              {asset.captionTitle || asset.captionSubtitle || title}
             </span>
           </figcaption>
         </>

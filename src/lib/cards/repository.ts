@@ -372,10 +372,11 @@ export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
 export const updateCardMediaAssetCaption = async (
   assetId: string,
   captionTitle: string,
-  captionSubtitle: string
+  captionSubtitle: string,
+  slot?: CardMediaAsset["slot"]
 ) => {
   if (isPostgresConfigured()) {
-    return postgresRepository.updateCardMediaAssetCaption(assetId, captionTitle, captionSubtitle);
+    return postgresRepository.updateCardMediaAssetCaption(assetId, captionTitle, captionSubtitle, slot);
   }
 
   const assets = await readMediaAssets();
@@ -387,6 +388,7 @@ export const updateCardMediaAssetCaption = async (
 
   const updated = {
     ...assets[index],
+    slot: slot ?? assets[index].slot,
     captionTitle,
     captionSubtitle,
     updatedAt: new Date().toISOString()
@@ -395,6 +397,28 @@ export const updateCardMediaAssetCaption = async (
   assets[index] = updated;
   await writeFile(mediaAssetsFilePath, JSON.stringify(assets, null, 2), "utf8");
   return updated;
+};
+
+export const swapCardMediaAssetSlots = async (cardId: string, leftAssetId: string, rightAssetId: string) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.swapCardMediaAssetSlots(cardId, leftAssetId, rightAssetId);
+  }
+
+  const assets = await readMediaAssets();
+  const leftIndex = assets.findIndex((item) => item.cardId === cardId && item.id === leftAssetId);
+  const rightIndex = assets.findIndex((item) => item.cardId === cardId && item.id === rightAssetId);
+
+  if (leftIndex === -1 || rightIndex === -1) {
+    return [];
+  }
+
+  const now = new Date().toISOString();
+  const leftSlot = assets[leftIndex].slot;
+  assets[leftIndex] = { ...assets[leftIndex], slot: assets[rightIndex].slot, updatedAt: now };
+  assets[rightIndex] = { ...assets[rightIndex], slot: leftSlot, updatedAt: now };
+
+  await writeFile(mediaAssetsFilePath, JSON.stringify(assets, null, 2), "utf8");
+  return [assets[leftIndex], assets[rightIndex]];
 };
 
 export const deleteCardMediaAsset = async (assetId: string) => {

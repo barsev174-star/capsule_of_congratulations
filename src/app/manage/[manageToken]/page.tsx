@@ -10,7 +10,7 @@ import {
 import { cardTemplates } from "@/lib/cards/templates";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
-import { getGiftPath, getGiftUrl, getJoinUrl, getManagePath, getManageUrl, getPreviewUrl } from "@/lib/routes/card-links";
+import { getGiftPath, getJoinUrl, getManagePath, getPreviewPath, getPreviewUrl } from "@/lib/routes/card-links";
 import type { FinalCardBlockId, FinalCardOptionalBlockId } from "@/lib/final-card/types";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { BasicsSettingsForm } from "./basics-settings-form";
@@ -31,71 +31,19 @@ type Props = {
 };
 
 const tabItems = [
-  { id: "design", label: "Оформление открытки" },
-  { id: "content", label: "Поздравления и фото" },
-  { id: "preview", label: "Предпросмотр" }
+  { id: "design", label: "Оформление" },
+  { id: "content", label: "Поздравления и фото" }
 ] as const;
 
 type ManageTab = (typeof tabItems)[number]["id"];
 
-const stepItems = [
-  {
-    id: 1,
-    title: "Основа открытки",
-    subtitle: "Заполните основные данные"
-  },
-  {
-    id: 2,
-    title: "Состав открытки",
-    subtitle: "Настройте структуру и блоки"
-  }
-] as const;
-
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
-
-const layoutModeLabels: Record<string, string> = {
-  "grid-2": "grid-2",
-  "carousel-1": "carousel-1",
-  "carousel-2": "carousel-2",
-  "column-media": "column-media"
-};
-
-const blockPreviewLabels: Partial<Record<FinalCardBlockId, string>> = {
-  summary: "Главное поздравление",
-  quotes: "Лучшие фразы",
-  messages: "Поздравления"
-};
 
 const statusLabels: Record<string, string> = {
   draft: "Черновик",
   collecting: "Сбор поздравлений",
   ready: "Готова к отправке",
   closed: "Сбор закрыт"
-};
-
-const statusHints: Record<string, string> = {
-  draft: "Настройте основу открытки и проверьте оформление.",
-  collecting: "Можно отправлять ссылку участникам и собирать поздравления.",
-  ready: "Открытка готова, можно отправлять финальную ссылку получателю.",
-  closed: "Новые поздравления больше не принимаются."
-};
-
-const formatEventDate = (value: string | null) => {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(`${value}T12:00:00`);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "numeric",
-    month: "long",
-    year: "numeric"
-  }).format(date);
 };
 
 export default async function ManagePage({ params, searchParams }: Props) {
@@ -180,169 +128,70 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const initialBlockOrder = [...savedBlockOrder, ...managedBlockIds.filter((blockId) => !savedBlockOrder.includes(blockId))];
 
   const recipientName = card.recipientName.trim() || "нового получателя";
-  const organizerName = card.organizerName.trim() || "не указан";
   const fromLabel = card.fromLabel.trim() || "группы";
-  const occasionText = card.occasionText.trim() || "повод пока не указан";
+  const occasionText = card.occasionText.trim() || "повод не указан";
   const previewMessages = visibleContributions.slice(0, 1);
-  const quotePreview = model.quotes[0] || "Спасибо тебе за твою доброту, поддержку и за то, что ты такая, какая есть.";
   const previewMessage = previewMessages[0];
-  const formattedEventDate = formatEventDate(card.eventDate ?? null);
-  const hiddenContributions = allContributions.filter((contribution) => contribution.status === "hidden");
-  const tooLongContributions = visibleContributions.filter((contribution) => {
-    const recommendedLimit = contribution.id === mainGreetingContributionId ? 500 : layoutProfile.maxChars;
-    return contribution.message.length > recommendedLimit;
-  });
-  const needsMedia = layoutMode === "column-media";
-  const messageMediaAssets = mediaAssets.filter((asset) => ["portrait", "landscape-a", "landscape-b", "landscape-c"].includes(asset.slot));
-  const missingMedia = needsMedia && messageMediaAssets.length === 0;
-  const previewWarnings = [
-    tooLongContributions.length > 0
-      ? `${tooLongContributions.length} поздравлений длиннее рекомендованной длины.`
-      : "",
-    missingMedia ? "Для выбранной раскладки рядом с поздравлениями стоит добавить фото." : "",
-    hiddenContributions.length > 0 ? `${hiddenContributions.length} поздравлений скрыто и не попадет в открытку.` : ""
-  ].filter(Boolean);
-  const activeBlockLabels = model.blocks.map((block) => {
-    if (block.id === "hero") {
-      return "Обложка";
-    }
-
-    if (block.id === "closing") {
-      return "Финал";
-    }
-
-    return blockPreviewLabels[block.id] ?? block.id;
-  });
   const participantLink = getJoinUrl(card.publicSlug);
-  const manageLink = getManageUrl(card.manageToken);
   const previewLink = getPreviewUrl(card.manageToken);
-  const finalLink = getGiftUrl(card.finalSlug);
   const currentStatus = card.status ?? "draft";
+  const aiLimitTotal = 5;
+  const aiLimitRemaining = Math.max(0, aiLimitTotal - 3);
+  const templatePalette = ["#eaded2", "#f4c59e", selectedTemplate.accent, "#5a3927", "#a8b792"];
 
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
-        <section className={styles.hero}>
-          <div className={styles.heroTop}>
-            <div className={styles.heroContent}>
-              <p className={styles.heroBreadcrumbs}>
-                <span>Организатор: {organizerName}</span>
-                <span>Повод: {occasionText}</span>
-              </p>
-              <h1 className={styles.title}>Открытка для {recipientName}</h1>
-              <p className={styles.subtitle}>
-                Создайте красивую открытку и соберите искренние поздравления от всех участников. Всё сохранится,
-                ничего не потеряется между шагами.
-              </p>
-
-              <div className={styles.stats}>
-                <div className={styles.stat}>Повод: {occasionText}</div>
-                <div className={styles.stat}>Поздравлений: {allContributions.length}</div>
-                <div className={styles.stat}>Видимых: {visibleContributions.length}</div>
-                <div className={styles.stat}>Статус: {statusLabels[currentStatus] ?? currentStatus}</div>
-                <div className={styles.stat}>Сетка: {layoutModeLabels[layoutMode] ?? layoutMode}</div>
-              </div>
-
-              <section className={styles.flowPanel} aria-label="MVP-flow открытки">
-                <div className={styles.flowStatus}>
-                  <span className={styles.flowLabel}>Текущий этап</span>
-                  <strong>{statusLabels[currentStatus] ?? currentStatus}</strong>
-                  <p>{statusHints[currentStatus] ?? "Статус открытки обновлен."}</p>
-                </div>
-                <form action={updateCardStatusAction} className={styles.statusForm}>
-                  <input type="hidden" name="manageToken" value={manageToken} />
-                  <label htmlFor="cardStatus">Изменить статус</label>
-                  <select id="cardStatus" name="status" defaultValue={currentStatus}>
-                    <option value="draft">Черновик</option>
-                    <option value="collecting">Сбор поздравлений</option>
-                    <option value="ready">Готова к отправке</option>
-                    <option value="closed">Сбор закрыт</option>
-                  </select>
-                  <button type="submit">Сохранить статус</button>
-                </form>
-                <div className={styles.linkGrid}>
-                  {[
-                    { label: "Участникам", href: participantLink },
-                    { label: "Организатору", href: manageLink },
-                    { label: "Предпросмотр", href: previewLink },
-                    { label: "Получателю", href: finalLink }
-                  ].map((item) => (
-                    <div key={item.href} className={styles.linkCard}>
-                      <span>{item.label}</span>
-                      <Link href={item.href}>{item.href}</Link>
-                      <CopyLinkButton value={item.href} />
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <nav className={styles.tabBar} aria-label="Разделы управления открыткой">
-                {tabItems.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`${getManagePath(manageToken)}?tab=${item.id}`}
-                    className={`${styles.tabLink} ${activeTab === item.id ? styles.tabLinkActive : ""}`}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
-            </div>
-
-            <aside className={styles.heroTemplateCard}>
-              <div className={styles.heroTemplateInfo}>
-                <span className={styles.heroTemplateLabel}>Текущий шаблон</span>
-                <strong className={styles.heroTemplateName}>{selectedTemplate.name}</strong>
-              </div>
-
-              <div
-                className={styles.heroTemplateThumb}
-                style={
-                  {
-                    "--template-accent": selectedTemplate.accent
-                  } as CSSProperties
-                }
-                aria-hidden="true"
-              >
-                <div className={styles.heroTemplateThumbPaper}>
-                  <span>{recipientName}</span>
-                </div>
-              </div>
-
-              <TemplateSettingsForm
-                manageToken={manageToken}
-                templates={cardTemplates}
-                initialTemplateId={selectedTemplate.id}
-                initialLayoutMode={layoutMode}
-                initialMediaLayout={mediaLayout}
-                initialBlockOrder={initialBlockOrder}
-                blockState={blockState}
-                variant="hero"
-              />
-            </aside>
+        <header className={styles.managerHeader}>
+          <div className={styles.managerBrand}>
+            <Link href="/" className={styles.brandName}>
+              Дари слова<span aria-hidden="true">♡</span>
+            </Link>
+            <span className={styles.brandTagline}>теплые открытки от близких</span>
           </div>
-        </section>
+
+          <div className={styles.managerTitleGroup}>
+            <span className={styles.managerKicker}>Редактор открытки</span>
+            <h1 className={styles.managerTitle}>{recipientName}</h1>
+            <div className={styles.managerChips} aria-label="Сводка открытки">
+              <span>{statusLabels[currentStatus] ?? currentStatus}</span>
+              <span>{fromLabel}</span>
+              <span>{allContributions.length} поздравлений</span>
+              <span>{mediaAssets.length} фото</span>
+              <span className={styles.aiChip}>AI: осталось {aiLimitRemaining} из {aiLimitTotal}</span>
+            </div>
+          </div>
+
+          <div className={styles.managerActions}>
+            <CopyLinkButton value={participantLink} label="Скопировать ссылку для участников" />
+            <Link href={getGiftPath(card.finalSlug)} target="_blank" className={styles.previewPrimaryLink}>
+              Посмотреть открытку
+            </Link>
+            <button type="button" className={styles.managerMoreButton} aria-label="Дополнительные действия">
+              ...
+            </button>
+            <div className={styles.publishNote}>
+              <span>Финальная ссылка и анимация откроются после публикации</span>
+              <strong>Публикация открытки — 399 ₽</strong>
+            </div>
+          </div>
+        </header>
+
+        <nav className={styles.tabBar} aria-label="Разделы управления открыткой">
+          {tabItems.map((item) => (
+            <Link
+              key={item.id}
+              href={`${getManagePath(manageToken)}?tab=${item.id}`}
+              className={`${styles.tabLink} ${activeTab === item.id ? styles.tabLinkActive : ""}`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
 
         {activeTab === "design" ? (
           <div className={styles.designStudio}>
             <div className={styles.designMain}>
-              <section className={styles.stepperCard}>
-                <div className={styles.stepperGrid}>
-                  {stepItems.map((item, index) => (
-                    <div key={item.id} className={styles.stepperItem}>
-                      <div className={`${styles.stepperDot} ${index === 0 ? styles.stepperDotActive : ""}`}>{item.id}</div>
-                      <div className={styles.stepperText}>
-                        <strong>{item.title}</strong>
-                        <span>{item.subtitle}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className={styles.stepperLine}>
-                  <span className={styles.stepperLineFill} />
-                  <span className={styles.stepperLineKnob} />
-                </div>
-              </section>
 
               <section className={styles.panel} id="basics-section">
                 <div className={styles.sectionStepHeader}>
@@ -385,159 +234,129 @@ export default async function ManagePage({ params, searchParams }: Props) {
             </div>
 
             <aside className={styles.designRail}>
-              <section className={styles.previewPanel}>
-                <div className={styles.previewPanelHeader}>
+              <section className={styles.sidebarCard}>
+                <div className={styles.sidebarCardHeader}>
                   <div>
-                    <h2 className={styles.sectionTitle}>Предпросмотр</h2>
-                    <p className={styles.previewStatusLine}>
-                      <span className={styles.previewStatusDot} />
-                      <span>Предпросмотр обновляется автоматически</span>
+                    <h2>Шаблон открытки</h2>
+                    <p>Выбранный стиль и настроение</p>
+                  </div>
+                </div>
+
+                <div className={styles.templateSummary}>
+                  <div
+                    className={styles.templateArtwork}
+                    style={
+                      {
+                        "--template-accent": selectedTemplate.accent
+                      } as CSSProperties
+                    }
+                    aria-hidden="true"
+                  />
+                  <div className={styles.templateSummaryText}>
+                    <div className={styles.templateNameRow}>
+                      <strong>{selectedTemplate.name}</strong>
+                      <span>Рекомендуем</span>
+                    </div>
+                    <p>{selectedTemplate.description}</p>
+                    <div className={styles.paletteRow} aria-label="Цветовая палитра">
+                      {templatePalette.map((color) => (
+                        <span key={color} style={{ backgroundColor: color }} />
+                      ))}
+                    </div>
+                    <TemplateSettingsForm
+                      manageToken={manageToken}
+                      templates={cardTemplates}
+                      initialTemplateId={selectedTemplate.id}
+                      initialLayoutMode={layoutMode}
+                      initialMediaLayout={mediaLayout}
+                      initialBlockOrder={initialBlockOrder}
+                      blockState={blockState}
+                      variant="hero"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section className={styles.sidebarCard}>
+                <div className={styles.sidebarCardHeader}>
+                  <div>
+                    <h2>Анимация открытки</h2>
+                    <p>Как получатель увидит вашу открытку</p>
+                  </div>
+                </div>
+                <div className={styles.animationRow}>
+                  <div className={styles.envelopeIcon} aria-hidden="true">
+                    <span />
+                  </div>
+                  <div>
+                    <div className={styles.templateNameRow}>
+                      <strong>Конверт с открыткой</strong>
+                      <span>Выбрано</span>
+                    </div>
+                    <p>Красивый момент вручения: конверт открывается, и открытка появляется плавно и с теплом.</p>
+                  </div>
+                </div>
+                <p className={styles.lockedHint}>Анимация будет доступна получателю после публикации.</p>
+              </section>
+
+              <section className={styles.sidebarCard}>
+                <div className={styles.sidebarCardHeader}>
+                  <div>
+                    <h2>Ссылки и доступ</h2>
+                    <p>Управляйте доступом к открытке</p>
+                  </div>
+                </div>
+                <div className={styles.accessList}>
+                  <div className={styles.accessItem}>
+                    <div>
+                      <strong>Ссылка для участников</strong>
+                      <span>Пригласите близких добавить поздравления</span>
+                    </div>
+                    <Link href={participantLink}>{participantLink.replace(/^https?:\/\//, "")}</Link>
+                    <CopyLinkButton value={participantLink} />
+                  </div>
+                  <div className={styles.accessItem}>
+                    <div>
+                      <strong>Предпросмотр открытки</strong>
+                      <span>Только для вас</span>
+                    </div>
+                    <Link href={previewLink} target="_blank" className={styles.secondaryButton}>
+                      Посмотреть
+                    </Link>
+                  </div>
+                </div>
+              </section>
+
+              <section className={`${styles.sidebarCard} ${styles.publishCard}`}>
+                <div className={styles.sidebarCardHeader}>
+                  <div>
+                    <h2>Публикация открытки</h2>
+                    <p>
+                      Финальная ссылка для получателя, анимация открытия и больше AI-помощи станут доступны после публикации.
                     </p>
                   </div>
                 </div>
-
-                <div className={styles.previewFrame}>
-                  <article
-                    className={styles.previewMock}
-                    style={
-                      {
-                        "--preview-accent": selectedTemplate.accent
-                      } as CSSProperties
-                    }
-                  >
-                    <section className={styles.previewHeroCard}>
-                      <div className={styles.previewHeroFloral} />
-                      <div className={styles.previewHeroText}>
-                        <h3 className={styles.previewHeroTitle}>{recipientName},</h3>
-                        <p className={styles.previewHeroSubtitle}>эта открытка для тебя!</p>
-                      </div>
-                      <div className={styles.previewHeroOccasion}>
-                        <strong>{occasionText}</strong>
-                        <span>
-                          от {fromLabel}
-                          {formattedEventDate ? ` • ${formattedEventDate}` : ""}
-                        </span>
-                      </div>
-                    </section>
-
-                    <section className={styles.previewQuoteCard}>
-                      <span className={styles.previewQuoteMark}>“</span>
-                      <p>{quotePreview}</p>
-                      <div className={styles.previewDots}>
-                        <span />
-                        <span />
-                        <span />
-                        <span />
-                        <span />
-                      </div>
-                    </section>
-
-                    <section className={styles.previewMessageSection}>
-                      <span className={styles.previewMessageLabel}>{blockPreviewLabels.messages}</span>
-                      <article className={styles.previewSingleMessage}>
-                        <div className={styles.previewSingleAvatar} />
-                        <div className={styles.previewSingleBody}>
-                          <strong>{previewMessage?.authorName || "Участник"}</strong>
-                          <p>
-                            {previewMessage?.message.slice(0, 118) ||
-                              "Здесь появится короткий пример поздравления, когда участники добавят первые теплые слова."}
-                          </p>
-                        </div>
-                      </article>
-                    </section>
-
-                    <section className={styles.previewFinalCard}>
-                      <span>Спасибо, что ты с нами!</span>
-                      <p>Вперёд — к мечтам!</p>
-                    </section>
-                  </article>
+                <form action={updateCardStatusAction} className={styles.statusForm}>
+                  <input type="hidden" name="manageToken" value={manageToken} />
+                  <label htmlFor="cardStatus">Статус открытки</label>
+                  <select id="cardStatus" name="status" defaultValue={currentStatus}>
+                    <option value="draft">Черновик</option>
+                    <option value="collecting">Сбор поздравлений</option>
+                    <option value="ready">Готова к отправке</option>
+                    <option value="closed">Сбор закрыт</option>
+                  </select>
+                  <button type="submit">Сохранить статус</button>
+                </form>
+                <div className={styles.publishPriceRow}>
+                  <strong>399 ₽</strong>
+                  <button type="button" className={styles.publishButton}>
+                    Опубликовать открытку
+                  </button>
                 </div>
-
-                <Link href={getGiftPath(card.finalSlug)} target="_blank" className={styles.previewLinkButton}>
-                  Открыть полный просмотр
-                </Link>
+                <p className={styles.paymentFineprint}>Оплата безопасна через ЮKassa · Без скрытых платежей</p>
               </section>
             </aside>
           </div>
-        ) : activeTab === "preview" ? (
-          <section className={styles.fullPreviewStage}>
-            <div className={styles.fullPreviewHeader}>
-              <div>
-                <span className={styles.previewKicker}>Финальная проверка</span>
-                <h2>Предпросмотр открытки</h2>
-                <p>
-                  Здесь можно спокойно посмотреть, как открытка ощущается целиком, перед тем как отправлять ссылку или переходить к публикации.
-                </p>
-              </div>
-              <div className={styles.fullPreviewActions}>
-                <Link href={getGiftPath(card.finalSlug)} target="_blank" className={styles.previewPrimaryLink}>
-                  Открыть публичную версию
-                </Link>
-                <Link href={`${getManagePath(manageToken)}?tab=design`} className={styles.previewSecondaryLink}>
-                  Вернуться к оформлению
-                </Link>
-              </div>
-            </div>
-
-            <div className={styles.fullPreviewLayout}>
-              <section className={styles.embeddedPreviewCard}>
-                <div className={styles.embeddedPreviewTop}>
-                  <div>
-                    <span className={styles.previewKicker}>Настоящий результат</span>
-                    <h3>Публичная открытка внутри редактора</h3>
-                  </div>
-                  <Link href={getGiftPath(card.finalSlug)} target="_blank" className={styles.previewSecondaryLink}>
-                    Открыть отдельно
-                  </Link>
-                </div>
-                <iframe
-                  className={styles.embeddedPreviewFrame}
-                  src={getGiftPath(card.finalSlug)}
-                  title="Предпросмотр публичной открытки"
-                />
-              </section>
-
-              <aside className={styles.fullPreviewChecklist}>
-                <section>
-                  <h3>Готовность</h3>
-                  <div className={styles.fullPreviewMetric}>
-                    <span>Активных поздравлений</span>
-                    <strong>{visibleContributions.length}</strong>
-                  </div>
-                  <div className={styles.fullPreviewMetric}>
-                    <span>Фото добавлено</span>
-                    <strong>{mediaAssets.length}</strong>
-                  </div>
-                  <div className={styles.fullPreviewMetric}>
-                    <span>Шаблон</span>
-                    <strong>{selectedTemplate.name}</strong>
-                  </div>
-                </section>
-
-                <section>
-                  <h3>Что входит в открытку</h3>
-                  <div className={styles.fullPreviewBlockList}>
-                    {activeBlockLabels.map((label) => (
-                      <span key={label}>{label}</span>
-                    ))}
-                  </div>
-                </section>
-
-                <section>
-                  <h3>Проверить перед отправкой</h3>
-                  {previewWarnings.length > 0 ? (
-                    <ul className={styles.fullPreviewWarnings}>
-                      {previewWarnings.map((warning) => (
-                        <li key={warning}>{warning}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className={styles.fullPreviewOk}>Критичных предупреждений нет. Можно открыть публичную версию и посмотреть финальный экран.</p>
-                  )}
-                </section>
-              </aside>
-            </div>
-          </section>
         ) : (
           <ContentStudio
             key={allContributions.map((contribution) => contribution.id).join(":")}

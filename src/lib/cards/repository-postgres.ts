@@ -375,20 +375,79 @@ export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
 export const updateCardMediaAssetCaption = async (
   assetId: string,
   captionTitle: string,
-  captionSubtitle: string
+  captionSubtitle: string,
+  slot?: CardMediaAsset["slot"]
 ) => {
   const result = await getPostgresPool().query<MediaRow>(
     `
       UPDATE card_media_assets
       SET caption_title = $2,
           caption_subtitle = $3,
+          slot = COALESCE($4, slot),
           updated_at = now()
       WHERE id = $1
       RETURNING *
     `,
-    [assetId, captionTitle, captionSubtitle]
+    [assetId, captionTitle, captionSubtitle, slot ?? null]
   );
   return result.rows[0] ? mapMedia(result.rows[0]) : null;
+};
+
+export const swapCardMediaAssetSlots = async (cardId: string, leftAssetId: string, rightAssetId: string) => {
+  const client = await getPostgresPool().connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const currentResult = await client.query<MediaRow>(
+      "SELECT * FROM card_media_assets WHERE card_id = $1 AND id IN ($2, $3) ORDER BY id",
+      [cardId, leftAssetId, rightAssetId]
+    );
+    const left = currentResult.rows.find((row) => row.id === leftAssetId);
+    const right = currentResult.rows.find((row) => row.id === rightAssetId);
+
+    if (!left || !right) {
+      await client.query("ROLLBACK");
+      return [];
+    }
+
+    await client.query("DELETE FROM card_media_assets WHERE id = $1", [rightAssetId]);
+    const leftResult = await client.query<MediaRow>(
+      "UPDATE card_media_assets SET slot = $2, updated_at = now() WHERE id = $1 RETURNING *",
+      [leftAssetId, right.slot]
+    );
+    const rightResult = await client.query<MediaRow>(
+      `
+        INSERT INTO card_media_assets (
+          id, card_id, slot, public_url, storage_path, file_name, mime_type,
+          size_bytes, caption_title, caption_subtitle, created_at, updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now())
+        RETURNING *
+      `,
+      [
+        right.id,
+        right.card_id,
+        left.slot,
+        right.public_url,
+        right.storage_path,
+        right.file_name,
+        right.mime_type,
+        right.size_bytes,
+        right.caption_title,
+        right.caption_subtitle,
+        right.created_at
+      ]
+    );
+
+    await client.query("COMMIT");
+    return [...leftResult.rows, ...rightResult.rows].map(mapMedia);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 export const deleteCardMediaAsset = async (assetId: string) => {

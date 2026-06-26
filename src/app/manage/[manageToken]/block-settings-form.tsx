@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState, type DragEvent as ReactDragEvent } from "react";
+import { useActionState, useEffect, useMemo, useState, type DragEvent as ReactDragEvent } from "react";
 import type { CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type {
@@ -65,19 +65,20 @@ const layoutOptions: Array<{
   label: string;
   description: string;
 }> = [
-  { id: "grid-2", label: "Сетка 2 на 2", description: "Карточки в сетке 2х2." },
-  { id: "carousel-1", label: "Один ряд", description: "Карточки в одну линию." },
-  { id: "carousel-2", label: "Два ряда", description: "Сначала один ряд, затем второй." },
+  { id: "carousel-1", label: "В один ряд", description: "До 340 символов" },
+  { id: "carousel-2", label: "В два ряда", description: "До 280 символов" },
+  { id: "grid-2", label: "Сетка 2x2", description: "До 280 символов" },
   { id: "column-media", label: "Колонка + фото", description: "Текст поздравления справа, фото слева." }
 ];
 
 const mediaLayoutOptions: Array<{
   id: FinalCardMessageMediaLayout;
   label: string;
+  description: string;
 }> = [
-  { id: "portrait", label: "1 Вертикальное фото" },
-  { id: "landscape-pair", label: "2 Горизонтальных фото" },
-  { id: "landscape-trio", label: "3 горизонтальных фото" }
+  { id: "portrait", label: "+ 1 вертикальное фото", description: "До 280 символов" },
+  { id: "landscape-pair", label: "+ 2 горизонтальных фото", description: "До 280 символов" },
+  { id: "landscape-trio", label: "+ 3 горизонтальных фото", description: "До 280 символов" }
 ];
 
 const mediaSlotsByLayout: Record<FinalCardMessageMediaLayout, CardMediaSlot[]> = {
@@ -353,6 +354,26 @@ const LayoutDiagram = ({ mode }: { mode: FinalCardMessageLayoutMode }) => {
   );
 };
 
+const MediaLayoutDiagram = ({ mode }: { mode: FinalCardMessageMediaLayout }) => {
+  const photoCount = mode === "portrait" ? 1 : mode === "landscape-pair" ? 2 : 3;
+
+  return (
+    <div className={styles.mediaLayoutDiagram} data-media-layout={mode}>
+      <div className={styles.mediaLayoutMessages}>
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+      <div className={styles.mediaLayoutPhotos}>
+        {Array.from({ length: photoCount }).map((_, index) => (
+          <span key={index} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const getAssetLabel = (asset: CardMediaAsset) =>
   asset.captionTitle || asset.captionSubtitle || slotLabelMap[asset.slot] || "Фото";
 
@@ -493,13 +514,24 @@ export const BlockSettingsForm = ({
   const [messageMediaSlots] = useState<FinalCardMediaSlot[]>(initialMessageMediaSlots);
   const [memoryMediaSlots] = useState<FinalCardMediaSlot[]>(initialMemoryMediaSlots);
   const [messageMediaAssetIds, setMessageMediaAssetIds] = useState<string[]>(initialMessageMediaAssetIds);
-  const [memoryMediaAssetIds, setMemoryMediaAssetIds] = useState<string[]>(initialMemoryMediaAssetIds);
+  const [memoryMediaAssetIds] = useState<string[]>(initialMemoryMediaAssetIds);
   const [memoryPhotoCount, setMemoryPhotoCount] = useState<2 | 3>(initialMemoryPhotoCount);
   const [memoryTitle, setMemoryTitle] = useState(initialMemoryTitle);
   const [memoryDescription, setMemoryDescription] = useState(initialMemoryDescription);
   const [draggedBlockId, setDraggedBlockId] = useState<FinalCardBlockId | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [expandedBlocks, setExpandedBlocks] = useState<ExpandedState>(initialExpandedState);
+  const [savedCompositionKey, setSavedCompositionKey] = useState(() =>
+    JSON.stringify({
+      blockOrder: initialBlockOrder,
+      blockState: Object.fromEntries(options.map((option) => [option.id, option.checked])),
+      layoutMode: initialLayoutMode,
+      mediaLayout: initialMediaLayout,
+      memoryTitle: initialMemoryTitle,
+      memoryDescription: initialMemoryDescription,
+      memoryPhotoCount: initialMemoryPhotoCount
+    })
+  );
 
   const activeBlocks = useMemo(
     () => buildCanvasBlocks(options, blockState, requiredBlockIds),
@@ -517,8 +549,24 @@ export const BlockSettingsForm = ({
     .filter((blockId) => !requiredBlockIds.includes(blockId) && !blockState[blockId])
     .map((blockId) => options.find((option) => option.id === blockId))
     .filter((option): option is BlockOption => Boolean(option));
+  const currentCompositionKey = JSON.stringify({
+    blockOrder,
+    blockState,
+    layoutMode,
+    mediaLayout,
+    memoryTitle,
+    memoryDescription,
+    memoryPhotoCount
+  });
+  const isCompositionDirty = savedCompositionKey !== currentCompositionKey;
   const activeMessageMediaSlots = mediaSlotsByLayout[mediaLayout];
   const activeMessagePickerSlots = mediaLayout === "portrait" ? activeMessageMediaSlots : horizontalMediaSlots;
+
+  useEffect(() => {
+    if (state.ok) {
+      setSavedCompositionKey(currentCompositionKey);
+    }
+  }, [currentCompositionKey, state.ok]);
 
   const resolveDropPosition = (
     targetBlockId: FinalCardBlockId,
@@ -711,7 +759,7 @@ export const BlockSettingsForm = ({
       <section className={styles.studioCanvasCard}>
         <div className={styles.compositionToolbar}>
           <p className={styles.compositionToolbarText}>
-            Перетаскивайте блоки или используйте кнопки выше/ниже. Обязательные блоки отключить нельзя.
+            На компьютере перетаскивайте блоки. На телефоне используйте кнопки выше/ниже. Обязательные блоки отключить нельзя.
           </p>
           <button type="button" className={styles.compositionHelpLink}>
             Как это работает?
@@ -845,57 +893,97 @@ export const BlockSettingsForm = ({
                     {block.id === "messages" ? (
                       <div className={styles.messageSettings}>
                         <div className={styles.messageSettingsGroup}>
-                          <h4 className={styles.messageSettingsTitle}>Выберите вид отображения поздравлений</h4>
-                          <div className={styles.layoutCardGrid}>
-                            {layoutOptions.map((option) => {
-                              const profile = getFinalCardMessageLayoutProfile(option.id);
-                              const selected = layoutMode === option.id;
-
-                              return (
-                                <button
-                                  key={option.id}
-                                  type="button"
-                                  className={`${styles.layoutCard} ${selected ? styles.layoutCardActive : ""}`}
-                                  onClick={() => setLayoutMode(option.id)}
-                                >
-                                  <span className={styles.layoutCardCheck}>{selected ? <CheckIcon /> : null}</span>
-                                  <span className={styles.layoutCardDiagram}>
-                                    <LayoutDiagram mode={option.id} />
-                                  </span>
-                                  <span className={styles.layoutCardTitle}>{option.label}</span>
-                                  <span className={styles.layoutCardDescription}>{option.description}</span>
-                                  <span className={styles.layoutCardMeta}>До {profile.maxChars} символов</span>
-                                </button>
-                              );
-                            })}
+                          <h4 className={styles.messageSettingsTitle}>Как показывать поздравления</h4>
+                          <div className={styles.mediaVariantTabs}>
+                            <button
+                              type="button"
+                              className={`${styles.mediaVariantTab} ${layoutMode !== "column-media" ? styles.mediaVariantTabActive : ""}`}
+                              onClick={() => setLayoutMode(layoutMode === "column-media" ? "carousel-1" : layoutMode)}
+                            >
+                              Без фото
+                            </button>
+                            <button
+                              type="button"
+                              className={`${styles.mediaVariantTab} ${layoutMode === "column-media" ? styles.mediaVariantTabActive : ""}`}
+                              onClick={() => setLayoutMode("column-media")}
+                            >
+                              С фото
+                            </button>
                           </div>
+
+                          {layoutMode === "column-media" ? (
+                            <div className={styles.layoutCardGrid}>
+                              {mediaLayoutOptions.map((option) => {
+                                const selected = mediaLayout === option.id;
+
+                                return (
+                                  <button
+                                    key={option.id}
+                                    type="button"
+                                    className={`${styles.layoutCard} ${selected ? styles.layoutCardActive : ""}`}
+                                    onClick={() => setMediaLayout(option.id)}
+                                  >
+                                    <span className={styles.layoutCardCheck}>{selected ? <CheckIcon /> : null}</span>
+                                    <span className={styles.layoutCardDiagram}>
+                                      <MediaLayoutDiagram mode={option.id} />
+                                    </span>
+                                    <span className={styles.layoutCardTitle}>{option.label}</span>
+                                    <span className={styles.layoutCardMeta}>{option.description}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className={styles.layoutCardGrid}>
+                              {layoutOptions
+                                .filter((option) => option.id !== "column-media")
+                                .map((option) => {
+                                  const profile = getFinalCardMessageLayoutProfile(option.id);
+                                  const selected = layoutMode === option.id;
+
+                                  return (
+                                    <button
+                                      key={option.id}
+                                      type="button"
+                                      className={`${styles.layoutCard} ${selected ? styles.layoutCardActive : ""}`}
+                                      onClick={() => setLayoutMode(option.id)}
+                                    >
+                                      <span className={styles.layoutCardCheck}>{selected ? <CheckIcon /> : null}</span>
+                                      <span className={styles.layoutCardDiagram}>
+                                        <LayoutDiagram mode={option.id} />
+                                      </span>
+                                      <span className={styles.layoutCardTitle}>{option.label}</span>
+                                      <span className={styles.layoutCardMeta}>До {profile.maxChars} символов</span>
+                                    </button>
+                                  );
+                                })}
+                            </div>
+                          )}
                         </div>
 
                         {layoutMode === "column-media" ? (
                           <div className={styles.messageSettingsGroup}>
-                            <h4 className={styles.messageSettingsTitle}>Как выглядит медиаблок рядом с поздравлением</h4>
-                            <div className={styles.mediaVariantTabs}>
-                              {mediaLayoutOptions.map((option) => (
-                                <button
-                                  key={option.id}
-                                  type="button"
-                                  className={`${styles.mediaVariantTab} ${mediaLayout === option.id ? styles.mediaVariantTabActive : ""}`}
-                                  onClick={() => setMediaLayout(option.id)}
-                                >
-                                  {option.label}
-                                </button>
-                              ))}
+                            <div className={styles.photoReadinessPanel}>
+                              <div>
+                                <strong>Фото для выбранного вида</strong>
+                                <p>
+                                  Для этого варианта нужно {activeMessageMediaSlots.length}{" "}
+                                  {mediaLayout === "portrait" ? "вертикальное фото" : "горизонтальных фото"}.
+                                </p>
+                              </div>
+                              <span>
+                                Готово:{" "}
+                                {
+                                  mediaAssets.filter((asset) =>
+                                    activeMessagePickerSlots.includes(asset.slot as CardMediaSlot)
+                                  ).length
+                                }{" "}
+                                из {activeMessageMediaSlots.length} фото
+                              </span>
+                              <a href={`${getManagePath(manageToken)}?tab=content`} className={styles.previewSecondaryLink}>
+                                Перейти к фото
+                              </a>
                             </div>
-                          <PhotoSequencePicker
-                              title="Фото и последовательность"
-                              description="Выберите, какие фото и в каком порядке попадут рядом с поздравлениями."
-                              assets={mediaAssets}
-                              allowedSlots={activeMessagePickerSlots}
-                              slotCount={activeMessageMediaSlots.length}
-                              selectedAssetIds={messageMediaAssetIds}
-                              legacySelectedSlots={messageMediaSlots}
-                              onChange={setMessageMediaAssetIds}
-                            />
                           </div>
                         ) : null}
                       </div>
@@ -938,16 +1026,20 @@ export const BlockSettingsForm = ({
                             </button>
                           ))}
                         </div>
-                        <PhotoSequencePicker
-                          title="Фото и последовательность"
-                          description="Выберите до трех фото для блока воспоминаний."
-                          assets={mediaAssets}
-                          allowedSlots={horizontalMediaSlots}
-                          slotCount={memoryPhotoCount}
-                          selectedAssetIds={memoryMediaAssetIds}
-                          legacySelectedSlots={memoryMediaSlots}
-                          onChange={setMemoryMediaAssetIds}
-                        />
+                        <div className={styles.photoReadinessPanel}>
+                          <div>
+                            <strong>Фото для блока “Моменты”</strong>
+                            <p>Для выбранного вида нужно {memoryPhotoCount} горизонтальных фото.</p>
+                          </div>
+                          <span>
+                            Готово:{" "}
+                            {mediaAssets.filter((asset) => horizontalMediaSlots.includes(asset.slot as CardMediaSlot)).length}{" "}
+                            из {memoryPhotoCount} фото
+                          </span>
+                          <a href={`${getManagePath(manageToken)}?tab=content`} className={styles.previewSecondaryLink}>
+                            Перейти к фото
+                          </a>
+                        </div>
                       </div>
                     ) : null}
                   </div>
@@ -996,13 +1088,17 @@ export const BlockSettingsForm = ({
         </div>
       </section>
 
-      <div className={styles.editorFooter}>
-        <button type="submit" className={styles.button} disabled={isPending}>
-          {isPending ? "Сохраняем..." : "Сохранить состав открытки"}
+      <div className={`${styles.editorFooter} ${styles.compositionSaveFooter} ${isCompositionDirty ? styles.editorFooterDirty : ""}`}>
+        <button type="submit" className={styles.button} disabled={isPending || !isCompositionDirty}>
+          {isPending ? "Сохраняем..." : isCompositionDirty ? "Сохранить изменения" : "Состав сохранён"}
         </button>
         {state.message ? (
           <span className={state.ok ? styles.editorSuccess : styles.editorError}>{state.message}</span>
-        ) : null}
+        ) : (
+          <span className={styles.editorMuted}>
+            {isCompositionDirty ? "Есть несохранённые изменения оформления. Сохраните, чтобы они попали в открытку." : "Настройки состава сохраняются этой кнопкой."}
+          </span>
+        )}
       </div>
     </form>
   );

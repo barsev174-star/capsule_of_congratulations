@@ -5,9 +5,10 @@ import styles from "./manage-page.module.css";
 
 type Props = {
   value: string;
+  label?: string;
 };
 
-export const CopyLinkButton = ({ value }: Props) => {
+export const CopyLinkButton = ({ value, label = "Копировать" }: Props) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -19,7 +20,7 @@ export const CopyLinkButton = ({ value }: Props) => {
 
   return (
     <button type="button" className={styles.copyLinkButton} onClick={handleCopy}>
-      {copied ? "Скопировано" : "Копировать"}
+      {copied ? "Скопировано" : label}
     </button>
   );
 };
