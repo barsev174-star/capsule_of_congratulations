@@ -2440,12 +2440,12 @@ button.contentFilterPill {
   }
 
   .mediaLibraryItem {
-    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-columns: 80px minmax(0, 1fr);
     gap: 10px;
   }
 
   .mediaLibraryThumb {
-    width: 72px;
+    width: 80px;
     height: 72px;
     border-radius: 14px;
   }
@@ -3397,7 +3397,7 @@ button.contentFilterPill {
 
 .mediaLibraryItem {
   display: grid;
-  grid-template-columns: 118px minmax(0, 1fr);
+  grid-template-columns: 140px minmax(0, 1fr);
   gap: 14px;
   align-items: start;
   min-width: 0;
@@ -3430,8 +3430,8 @@ button.contentFilterPill {
 }
 
 .mediaLibraryThumb {
-  width: 118px;
-  height: 92px;
+  width: 140px;
+  height: 110px;
   overflow: hidden;
   border-radius: 18px;
   background: #fffaf4;
@@ -3450,13 +3450,13 @@ button.contentFilterPill {
   align-items: center;
   justify-content: center;
   max-width: 100%;
-  min-height: 24px;
-  padding: 4px 8px;
+  min-height: 22px;
+  padding: 3px 10px;
   border-radius: 999px;
-  background: rgba(255, 246, 238, 0.9);
-  color: #9a7a65;
-  font-size: 0.75rem;
-  font-weight: 800;
+  background: rgba(184, 111, 74, 0.1);
+  color: #9a6b4a;
+  font-size: 0.76rem;
+  font-weight: 600;
   line-height: 1;
   text-align: center;
 }
@@ -3514,6 +3514,51 @@ button.contentFilterPill {
 
 .mediaLibraryDeleteForm {
   display: contents;
+}
+
+.mediaLibraryMenuWrap {
+  position: relative;
+}
+
+.mediaLibraryMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 10;
+  display: grid;
+  gap: 2px;
+  min-width: 140px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid rgba(98, 72, 58, 0.12);
+  background: rgba(255, 250, 245, 0.98);
+  box-shadow: 0 12px 32px rgba(89, 61, 44, 0.12);
+}
+
+.mediaLibraryMenuItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 0;
+  background: transparent;
+  color: #9f2a1d;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.mediaLibraryMenuItem:hover {
+  background: rgba(159, 42, 29, 0.08);
+}
+
+.mediaLibraryMenuItem:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .mediaLibraryEmpty,

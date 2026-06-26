@@ -110,6 +110,7 @@ const MediaAssetRow = ({
 }) => {
   const [saveState, saveAction, savePending] = useActionState(saveCardMediaAction, initialState);
   const [deleteState, deleteAction, deletePending] = useActionState(deleteCardMediaAction, initialState);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const saveFormId = `media-save-${asset.id}`;
 
   return (
@@ -133,7 +134,7 @@ const MediaAssetRow = ({
               name="captionTitle"
               defaultValue={asset.captionTitle}
               className={styles.contentPhotoInput}
-              placeholder="Подпись"
+              placeholder="Например, Закат на море"
               maxLength={60}
             />
           </label>
@@ -144,16 +145,31 @@ const MediaAssetRow = ({
         </form>
 
         <div className={styles.mediaLibraryActions}>
-          <button type="submit" form={saveFormId} className={styles.contentOutlineButton} disabled={savePending}>
+          <button type="submit" form={saveFormId} className={styles.contentSoftButton} disabled={savePending}>
             {savePending ? "Сохраняем..." : "Сохранить"}
           </button>
-          <form action={deleteAction} className={styles.mediaLibraryDeleteForm}>
-            <input type="hidden" name="manageToken" value={manageToken} />
-            <input type="hidden" name="assetId" value={asset.id} />
-            <button type="submit" className={styles.contentDeleteSecondaryButton} disabled={deletePending}>
-              {deletePending ? "Удаляем..." : "Удалить"}
+          <div className={styles.mediaLibraryMenuWrap}>
+            <button
+              type="button"
+              className={styles.contentIconButton}
+              onClick={() => setIsMenuOpen((current) => !current)}
+              aria-expanded={isMenuOpen}
+              aria-label="Действия с фото"
+            >
+              ⋮
             </button>
-          </form>
+            {isMenuOpen ? (
+              <div className={styles.mediaLibraryMenu}>
+                <form action={deleteAction} className={styles.mediaLibraryDeleteForm}>
+                  <input type="hidden" name="manageToken" value={manageToken} />
+                  <input type="hidden" name="assetId" value={asset.id} />
+                  <button type="submit" className={styles.mediaLibraryMenuItem} disabled={deletePending}>
+                    {deletePending ? "Удаляем..." : "Удалить"}
+                  </button>
+                </form>
+              </div>
+            ) : null}
+          </div>
         </div>
         {deleteState.message ? (
           <span className={deleteState.ok ? styles.contentEditorSuccess : styles.contentEditorError}>{deleteState.message}</span>
