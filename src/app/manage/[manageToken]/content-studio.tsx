@@ -75,6 +75,8 @@ export const ContentStudio = ({
   const [activeFilter, setActiveFilter] = useState<ContributionFilter>("all");
   const [isManualFormOpen, setIsManualFormOpen] = useState(false);
   const [manualMessage, setManualMessage] = useState("");
+  const [isAiHelpOpen, setIsAiHelpOpen] = useState(false);
+  const [isTipsOpen, setIsTipsOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [copyMessage, setCopyMessage] = useState("");
   const [savedContributionOrderKey, setSavedContributionOrderKey] = useState(
@@ -441,14 +443,23 @@ export const ContentStudio = ({
               </label>
 
               <div className={styles.manualContributionAi}>
-                <AiHelper
-                  cardId={cardId}
-                  recipientName={recipientName}
-                  occasionText={occasionText}
-                  messageLimit={500}
-                  onUseText={setManualMessage}
-                  variant="join"
-                />
+                <button
+                  type="button"
+                  className={styles.contentAiButton}
+                  onClick={() => setIsAiHelpOpen((current) => !current)}
+                >
+                  {isAiHelpOpen ? "✨ Скрыть помощь" : "✨ Нужна помощь с текстом?"}
+                </button>
+                {isAiHelpOpen ? (
+                  <AiHelper
+                    cardId={cardId}
+                    recipientName={recipientName}
+                    occasionText={occasionText}
+                    messageLimit={500}
+                    onUseText={setManualMessage}
+                    variant="join"
+                  />
+                ) : null}
               </div>
 
               <div className={styles.manualContributionFooter}>
@@ -698,12 +709,22 @@ export const ContentStudio = ({
           <MediaManager manageToken={manageToken} mediaAssets={mediaAssets} mediaLayout={mediaLayout} />
 
           <section className={styles.contentTipsCard}>
-            <h2 className={styles.contentRailTitle}>Подсказки</h2>
-            <ul className={styles.contentTipsList}>
-              <li>Тексты до {messageLimit} символов читаются лучше и выглядят аккуратнее.</li>
-              <li>Перетаскивайте карточки за левый значок, чтобы менять их порядок в открытке.</li>
-              <li>Не забудьте добавить фото — они делают открытку живой и теплой.</li>
-            </ul>
+            <button
+              type="button"
+              className={styles.contentTipsToggle}
+              onClick={() => setIsTipsOpen((current) => !current)}
+              aria-expanded={isTipsOpen}
+            >
+              <h2 className={styles.contentRailTitle}>Подсказки по фото и поздравлениям</h2>
+              <span className={`${styles.contentTipsChevron} ${isTipsOpen ? styles.contentTipsChevronOpen : ""}`}>˅</span>
+            </button>
+            {isTipsOpen ? (
+              <ul className={styles.contentTipsList}>
+                <li>Тексты до {messageLimit} символов читаются лучше и выглядят аккуратнее.</li>
+                <li>Перетаскивайте карточки за левый значок, чтобы менять их порядок в открытке.</li>
+                <li>Не забудьте добавить фото — они делают открытку живой и теплой.</li>
+              </ul>
+            ) : null}
           </section>
         </aside>
       </div>

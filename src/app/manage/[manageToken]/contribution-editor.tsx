@@ -51,7 +51,7 @@ export const ContributionEditor = ({ contributionId, manageToken, initialMessage
       ) : null}
 
       <div className={styles.contentEditorFooter}>
-        <button type="button" className={styles.contentSoftButton}>
+        <button type="button" className={styles.contentAiButton}>
           ✨ Сократить текст
         </button>
         <button type="submit" className={styles.contentSaveButton} disabled={isPending}>
