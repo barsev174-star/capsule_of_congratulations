@@ -33,17 +33,17 @@ const horizontalSlots: CardMediaSlot[] = [...messageLandscapeSlots, ...memorySlo
 const allSlots: CardMediaSlot[] = [...messageLandscapeSlots, ...memorySlots, ...verticalSlots];
 
 const slotLabels: Record<CardMediaSlot, string> = {
-  portrait: "Вертикальное фото",
-  "landscape-a": "Фото поздравлений 1",
-  "landscape-b": "Фото поздравлений 2",
-  "landscape-c": "Фото поздравлений 3",
-  "memory-a": "Воспоминание 1",
-  "memory-b": "Воспоминание 2",
-  "memory-c": "Воспоминание 3"
+  portrait: "Рядом с поздравлениями (вертикальное)",
+  "landscape-a": "Рядом с поздравлениями (1)",
+  "landscape-b": "Рядом с поздравлениями (2)",
+  "landscape-c": "Рядом с поздравлениями (3)",
+  "memory-a": "Моменты (1)",
+  "memory-b": "Моменты (2)",
+  "memory-c": "Моменты (3)"
 };
 
 const slotHints: Record<CardMediaSlot, string> = {
-  portrait: "Для макета поздравлений с вертикальным фото",
+  portrait: "Вертикальное фото рядом с поздравлениями",
   "landscape-a": "Рядом с поздравлениями",
   "landscape-b": "Рядом с поздравлениями",
   "landscape-c": "Рядом с поздравлениями",
@@ -75,7 +75,7 @@ const SlotSelect = ({
 
   return (
     <label className={styles.mediaLibrarySlotSelect}>
-      <span>Место в открытке</span>
+      <span>Использовать в блоке</span>
       <select name="slot" defaultValue={defaultSlot}>
         {slots.map((slot) => {
           const usedAsset = assets.find((asset) => asset.slot === slot);
@@ -87,12 +87,12 @@ const SlotSelect = ({
           return (
             <option key={slot} value={slot}>
               {slotLabels[slot]}
-              {usedAsset ? " ↔" : ""}
+              {usedAsset ? " (занято)" : ""}
             </option>
           );
         })}
       </select>
-      {hasOccupiedSlots && !hideOccupied ? <small>↔ поменяет фото местами</small> : null}
+      {hasOccupiedSlots && !hideOccupied ? <small>Если выбрать занятое место, фото поменяются местами</small> : null}
     </label>
   );
 };
@@ -320,13 +320,13 @@ export const MediaManager = ({ manageToken, mediaAssets, mediaLayout }: Props) =
       <section className={`${styles.contentPhotoCard} ${styles.mediaLibraryUnifiedCard}`}>
         <div className={`${styles.contentPanelHeader} ${styles.mediaLibraryHeader}`}>
           <div className={styles.contentPanelTopRow}>
-            <h2 className={styles.contentPanelTitle}>Библиотека фото</h2>
+            <h2 className={styles.contentPanelTitle}>Фото открытки</h2>
             <div className={styles.contentToolbar}>
               <MediaUploadForm manageToken={manageToken} assets={mediaAssets} defaultSlot={defaultUploadSlot} />
             </div>
           </div>
           <p className={`${styles.contentPhotoHint} ${styles.mediaLibraryHint}`}>
-            Управляйте всеми фото в открытке: назначайте блок, позицию и подпись.
+            Добавляйте фото и выбирайте, где они появятся в открытке.
           </p>
         </div>
 
