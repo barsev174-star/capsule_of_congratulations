@@ -268,14 +268,6 @@ export async function updateCardBasicsAction(
     return cardBasicsError("Укажите короткую надпись события: от 2 до 40 символов.", fields);
   }
 
-  if (!validateLength(fields.organizerName, 2, 80)) {
-    return cardBasicsError("Укажите имя организатора длиной от 2 до 80 символов.", fields);
-  }
-
-  if (fields.organizerEmail && !isValidEmail(fields.organizerEmail)) {
-    return cardBasicsError("Введите корректный email организатора или оставьте поле пустым.", fields);
-  }
-
   if (!validateDate(fields.eventDate)) {
     return cardBasicsError("Дата события выглядит некорректно.", fields);
   }

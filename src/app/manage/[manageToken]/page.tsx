@@ -17,7 +17,6 @@ import { BasicsSettingsForm } from "./basics-settings-form";
 import { BlockSettingsForm } from "./block-settings-form";
 import { ContentStudio } from "./content-studio";
 import { CopyLinkButton } from "./copy-link-button";
-import { updateCardStatusAction } from "./actions";
 import { TemplateSettingsForm } from "./template-settings-form";
 import styles from "./manage-page.module.css";
 
@@ -163,7 +162,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
           </div>
 
           <div className={styles.managerActions}>
-            <CopyLinkButton value={participantLink} label="Скопировать ссылку для участников" />
+            <CopyLinkButton value={participantLink} label="Скопировать ссылку" />
             <Link href={getGiftPath(card.finalSlug)} target="_blank" className={styles.previewPrimaryLink}>
               Посмотреть открытку
             </Link>
@@ -171,8 +170,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
               ...
             </button>
             <div className={styles.publishNote}>
-              <span>Финальная ссылка и анимация откроются после публикации</span>
-              <strong>Публикация открытки — 399 ₽</strong>
+              <span>Финальная ссылка откроется после публикации.</span>
             </div>
           </div>
         </header>
@@ -336,17 +334,6 @@ export default async function ManagePage({ params, searchParams }: Props) {
                     </p>
                   </div>
                 </div>
-                <form action={updateCardStatusAction} className={styles.statusForm}>
-                  <input type="hidden" name="manageToken" value={manageToken} />
-                  <label htmlFor="cardStatus">Статус открытки</label>
-                  <select id="cardStatus" name="status" defaultValue={currentStatus}>
-                    <option value="draft">Черновик</option>
-                    <option value="collecting">Сбор поздравлений</option>
-                    <option value="ready">Готова к отправке</option>
-                    <option value="closed">Сбор закрыт</option>
-                  </select>
-                  <button type="submit">Сохранить статус</button>
-                </form>
                 <div className={styles.publishPriceRow}>
                   <strong>399 ₽</strong>
                   <button type="button" className={styles.publishButton}>

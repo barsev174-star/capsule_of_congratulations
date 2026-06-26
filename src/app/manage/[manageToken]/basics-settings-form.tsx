@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import type { CardDraft } from "@/lib/cards/types";
 import type { CardBasicsFormState } from "./actions";
 import { updateCardBasicsAction } from "./actions";
@@ -18,22 +18,51 @@ const initialState: CardBasicsFormState = {
 
 export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
   const [state, formAction, isPending] = useActionState(updateCardBasicsAction, initialState);
-  const fields = state.fields ?? {
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const [fields, setFields] = useState({
     recipientName: card.recipientName,
     fromLabel: card.fromLabel,
     occasionText: card.occasionText,
-    organizerName: card.organizerName,
-    organizerEmail: card.organizerEmail,
     eventDate: card.eventDate ?? "",
     description: card.description ?? "",
     signature: card.signature ?? ""
+  });
+
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  // Auto-save with debounce
+  useEffect(() => {
+    if (saveStatus === "idle") return;
+    const timer = setTimeout(() => {
+      if (!formRef.current) return;
+      const fd = new FormData(formRef.current);
+      formAction(fd);
+      setSaveStatus("saving");
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [fields, saveStatus, formAction]);
+
+  useEffect(() => {
+    if (state.ok) {
+      setSaveStatus("saved");
+    } else if (state.message && !isPending) {
+      setSaveStatus("error");
+    }
+  }, [state, isPending]);
+
+  const handleChange = (key: keyof typeof fields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFields((prev) => ({ ...prev, [key]: e.target.value }));
+    setSaveStatus("saving");
   };
-  const formKey = state.fields ? JSON.stringify(state.fields) : card.updatedAt;
 
   return (
-    <form key={formKey} action={formAction} className={styles.basicsForm}>
+    <form ref={formRef} action={formAction} className={styles.basicsForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
       <input type="hidden" name="occasion" value={card.occasion} />
+      {/* Preserve existing organizer data without showing fields */}
+      <input type="hidden" name="organizerName" value={card.organizerName} />
+      <input type="hidden" name="organizerEmail" value={card.organizerEmail} />
 
       <div className={styles.fieldGrid}>
         <div className={styles.field}>
@@ -41,8 +70,11 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
           <input
             id="recipientName"
             name="recipientName"
-            defaultValue={fields.recipientName}
+            value={fields.recipientName}
+            onChange={handleChange("recipientName")}
             placeholder="Например, Анна Викторовна"
+            minLength={2}
+            maxLength={80}
           />
         </div>
         <div className={styles.field}>
@@ -50,8 +82,11 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
           <input
             id="fromLabel"
             name="fromLabel"
-            defaultValue={fields.fromLabel}
-            placeholder="Например, от 5Б класса"
+            value={fields.fromLabel}
+            onChange={handleChange("fromLabel")}
+            placeholder="Например, от коллег, от семьи, от друзей"
+            minLength={2}
+            maxLength={80}
           />
         </div>
       </div>
@@ -62,7 +97,8 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
         <input
           id="occasionText"
           name="occasionText"
-          defaultValue={fields.occasionText}
+          value={fields.occasionText}
+          onChange={handleChange("occasionText")}
           placeholder="С днём рождения!"
           minLength={2}
           maxLength={40}
@@ -71,32 +107,22 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
 
       <div className={styles.fieldGrid}>
         <div className={styles.field}>
-          <label htmlFor="organizerName">Имя организатора</label>
-          <input id="organizerName" name="organizerName" defaultValue={fields.organizerName} placeholder="Ваше имя" />
-        </div>
-        <div className={styles.field}>
-          <label htmlFor="organizerEmail">Email организатора</label>
-          <input
-            id="organizerEmail"
-            name="organizerEmail"
-            type="email"
-            defaultValue={fields.organizerEmail}
-            placeholder="Можно оставить пустым"
-          />
-        </div>
-      </div>
-
-      <div className={styles.fieldGrid}>
-        <div className={styles.field}>
           <label htmlFor="eventDate">Дата события</label>
-          <input id="eventDate" name="eventDate" type="date" defaultValue={fields.eventDate} />
+          <input
+            id="eventDate"
+            name="eventDate"
+            type="date"
+            value={fields.eventDate}
+            onChange={handleChange("eventDate")}
+          />
         </div>
         <div className={styles.field}>
           <label htmlFor="signature">Подпись в конце открытки</label>
           <input
             id="signature"
             name="signature"
-            defaultValue={fields.signature}
+            value={fields.signature}
+            onChange={handleChange("signature")}
             placeholder="Например, С любовью, команда Product & Design"
           />
         </div>
@@ -107,18 +133,20 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
         <textarea
           id="description"
           name="description"
-          defaultValue={fields.description}
+          value={fields.description}
+          onChange={handleChange("description")}
           placeholder="Например, хотим собрать личную и красивую открытку от всей группы."
         />
       </div>
 
-      <div className={styles.editorFooter}>
-        <button type="submit" className={styles.button} disabled={isPending}>
-          {isPending ? "Сохраняем основу..." : "Сохранить основу открытки"}
-        </button>
-        {state.message ? (
-          <span className={state.ok ? styles.editorSuccess : styles.editorError}>{state.message}</span>
-        ) : null}
+      <div className={styles.autoSaveStatus}>
+        {isPending || saveStatus === "saving"
+          ? "Сохраняем…"
+          : saveStatus === "saved"
+            ? "Изменения сохранены"
+            : saveStatus === "error"
+              ? state.message
+              : null}
       </div>
     </form>
   );
