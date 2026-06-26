@@ -241,21 +241,19 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 </div>
 
                 <div className={styles.templateSummary}>
-                  <div
-                    className={styles.templateArtwork}
-                    style={
-                      {
-                        "--template-accent": selectedTemplate.accent
-                      } as CSSProperties
-                    }
-                    aria-hidden="true"
-                  />
+                  <div className={styles.templatePreviewWrap}>
+                    <img
+                      src="/templates/warm-classic-preview.png"
+                      alt="Тёплый классический"
+                      className={styles.templatePreviewImage}
+                    />
+                  </div>
                   <div className={styles.templateSummaryText}>
                     <div className={styles.templateNameRow}>
-                      <strong>{selectedTemplate.name}</strong>
+                      <strong>Тёплый классический</strong>
                       <span>Рекомендуем</span>
                     </div>
-                    <p>{selectedTemplate.description}</p>
+                    <p>Кремовая бумага, мягкая типографика, конверт, сухоцветы и тёплые акценты.</p>
                     <div className={styles.paletteRow} aria-label="Цветовая палитра">
                       {templatePalette.map((color) => (
                         <span key={color} style={{ backgroundColor: color }} />

@@ -6217,9 +6217,9 @@ button.contentFilterPill {
 .managerHeader {
   display: grid;
   grid-template-columns: minmax(170px, 0.8fr) minmax(280px, 1.6fr) minmax(320px, 1fr);
-  gap: 22px;
+  gap: 16px;
   align-items: start;
-  padding: 10px 4px 2px;
+  padding: 6px 4px 0;
 }
 
 .managerBrand {
@@ -6260,7 +6260,7 @@ button.contentFilterPill {
 
 .managerTitleGroup {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -6432,6 +6432,22 @@ button.contentFilterPill {
   display: grid;
   grid-template-columns: minmax(160px, 0.72fr) minmax(0, 1fr);
   gap: 18px;
+}
+
+.templatePreviewWrap {
+  min-height: 168px;
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+
+.templatePreviewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .templateArtwork {
