@@ -8,7 +8,7 @@ type Props = {
   label?: string;
 };
 
-export const CopyLinkButton = ({ value, label = "Копировать" }: Props) => {
+export const CopyLinkButton = ({ value, label = "Копировать ссылку" }: Props) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {

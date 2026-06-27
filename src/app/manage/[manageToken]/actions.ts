@@ -651,7 +651,10 @@ export async function saveCardMediaAction(
   const currentAsset = currentAssets.find((item) => item.id === existingAssetId);
   const targetSlotAsset = currentAssets.find((item) => item.slot === slot && item.id !== existingAssetId);
 
-  if (currentAsset && targetSlotAsset && currentAsset.slot !== slot) {
+  const isSlotChanged = currentAsset && currentAsset.slot !== slot;
+  const isCaptionChanged = currentAsset && currentAsset.captionTitle !== captionTitle;
+
+  if (isSlotChanged && targetSlotAsset) {
     await swapCardMediaAssetSlots(card.id, existingAssetId, targetSlotAsset.id);
   }
 
@@ -662,7 +665,7 @@ export async function saveCardMediaAction(
     targetSlotAsset ? undefined : slot
   );
   if (!updated || updated.cardId !== card.id) {
-    return { ok: false, message: "Не удалось обновить подпись к фото." };
+    return { ok: false, message: "Не удалось обновить фото." };
   }
 
   logger.info("manage.card_media_caption_updated", "Card media caption updated by organizer", {
@@ -672,7 +675,16 @@ export async function saveCardMediaAction(
   });
 
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
-  return { ok: true, message: "Подпись к фото обновлена." };
+
+  if (isSlotChanged) {
+    return { ok: true, message: targetSlotAsset ? "Фото поменяны местами." : "Фото перемещено." };
+  }
+
+  if (isCaptionChanged) {
+    return { ok: true, message: "Подпись к фото обновлена." };
+  }
+
+  return { ok: true, message: "Изменения сохранены." };
 }
 
 export async function deleteCardMediaAction(

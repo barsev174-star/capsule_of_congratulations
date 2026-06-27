@@ -162,13 +162,10 @@ export default async function ManagePage({ params, searchParams }: Props) {
           </div>
 
           <div className={styles.managerActions}>
-            <CopyLinkButton value={participantLink} label="Скопировать ссылку" />
+            <CopyLinkButton value={participantLink} label="Копировать ссылку" />
             <Link href={getGiftPath(card.finalSlug)} target="_blank" className={styles.previewPrimaryLink}>
               Посмотреть открытку
             </Link>
-            <button type="button" className={styles.managerMoreButton} aria-label="Дополнительные действия">
-              ...
-            </button>
             <div className={styles.publishNote}>
               <span>Финальная ссылка откроется после публикации.</span>
             </div>
@@ -241,11 +238,11 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 </div>
 
                 <div className={styles.templateSummary}>
-                  {selectedTemplate.id === "warm-classic" ? (
+                  {selectedTemplate.id === "paper-birthday" ? (
                     <div className={styles.templatePreviewWrap}>
                       <img
                         src="/templates/warm-classic-preview.png"
-                        alt="Тёплый классический"
+                        alt={selectedTemplate.name}
                         className={styles.templatePreviewImage}
                       />
                     </div>
@@ -311,21 +308,25 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 </div>
                 <div className={styles.accessList}>
                   <div className={styles.accessItem}>
-                    <div>
+                    <div className={styles.accessItemInfo}>
                       <strong>Ссылка для участников</strong>
                       <span>Пригласите близких добавить поздравления</span>
                     </div>
-                    <Link href={participantLink}>{participantLink.replace(/^https?:\/\//, "")}</Link>
-                    <CopyLinkButton value={participantLink} />
+                    <div className={styles.accessItemActions}>
+                      <Link href={participantLink}>{participantLink.replace(/^https?:\/\//, "")}</Link>
+                      <CopyLinkButton value={participantLink} />
+                    </div>
                   </div>
                   <div className={styles.accessItem}>
-                    <div>
+                    <div className={styles.accessItemInfo}>
                       <strong>Предпросмотр открытки</strong>
                       <span>Только для вас</span>
                     </div>
-                    <Link href={previewLink} target="_blank" className={styles.secondaryButton}>
-                      Посмотреть
-                    </Link>
+                    <div className={styles.accessItemActions}>
+                      <Link href={previewLink} target="_blank" className={styles.secondaryButton}>
+                        Посмотреть
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </section>

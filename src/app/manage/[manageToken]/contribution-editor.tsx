@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { updateContributionMessageAction } from "./actions";
 import styles from "./manage-page.module.css";
 
@@ -19,10 +19,24 @@ const initialState = {
 export const ContributionEditor = ({ contributionId, manageToken, initialMessage, messageLimit }: Props) => {
   const [state, formAction, isPending] = useActionState(updateContributionMessageAction, initialState);
   const [message, setMessage] = useState(initialMessage);
+  const [lastSubmitted, setLastSubmitted] = useState(initialMessage);
+  const formRef = useRef<HTMLFormElement>(null);
   const remaining = messageLimit - message.length;
 
+  useEffect(() => {
+    if (message === lastSubmitted) return;
+    const timer = window.setTimeout(() => {
+      if (!formRef.current) return;
+      setLastSubmitted(message);
+      formRef.current.requestSubmit();
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [message, lastSubmitted]);
+
+  const saveStatus = isPending ? "saving" : state.ok && lastSubmitted === message ? "saved" : "idle";
+
   return (
-    <form action={formAction} className={styles.contentEditorForm}>
+    <form ref={formRef} action={formAction} className={styles.contentEditorForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
       <input type="hidden" name="contributionId" value={contributionId} />
 
@@ -51,12 +65,16 @@ export const ContributionEditor = ({ contributionId, manageToken, initialMessage
       ) : null}
 
       <div className={styles.contentEditorFooter}>
-        <button type="button" className={styles.contentAiGhost}>
+        <button type="button" className={styles.contentAiButton}>
           ✨ Сократить текст
         </button>
-        <button type="submit" className={styles.contentSaveButton} disabled={isPending}>
-          {isPending ? "Сохраняем..." : "Сохранить"}
-        </button>
+        <span className={styles.autoSaveStatus}>
+          {saveStatus === "saving"
+            ? "Сохраняем…"
+            : saveStatus === "saved"
+              ? "Изменения сохранены"
+              : null}
+        </span>
         {state.message ? (
           <span className={state.ok ? styles.contentEditorSuccess : styles.contentEditorError}>{state.message}</span>
         ) : null}

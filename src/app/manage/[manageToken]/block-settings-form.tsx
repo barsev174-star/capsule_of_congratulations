@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState, type DragEvent as ReactDragEvent } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent } from "react";
 import type { CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type {
@@ -119,42 +119,42 @@ const blockMeta: Record<
   hero: {
     label: "Обложка",
     summary: "Первый экран с именем получателя и настроением открытки.",
-    details: "Обязательный блок. Он открывает открытку и задаёт первое впечатление."
+    details: "Первый экран: имя получателя и настроение открытки."
   },
   summary: {
     label: "Главное поздравление",
     summary: "Выбранное поздравление, которое станет большим личным блоком в открытке.",
-    details: "Обязательный блок. Выберите поздравление во вкладке «Поздравления и фото», и оно появится в открытке как «Самые важные слова»."
+    details: "Выбранное поздравление станет большим личным блоком."
   },
   qualities: {
     label: "Качества",
     summary: "Показывает, за что именно любят и ценят человека.",
-    details: "Собирает повторяющиеся тёплые формулировки и превращает их в отдельный ритмичный блок."
+    details: "Показывает, за что любят и ценят человека."
   },
   messages: {
     label: "Поздравления",
     summary: "Главный блок с карточками поздравлений от участников.",
-    details: "Обязательный блок. Здесь настраивается сетка поздравлений и медиаблок рядом с ними."
+    details: "Здесь настраивается сетка поздравлений и фото рядом с ними."
   },
   memories: {
     label: "Моменты",
     summary: "Секция для ярких фото, коротких подписей и общей визуальной истории.",
-    details: "Можно добавить до трех фото из загруженных материалов. Подписи показываются в одну строку, чтобы блок оставался легким и похожим на живую галерею."
+    details: "До трёх фото с короткими подписями."
   },
   quotes: {
     label: "Лучшие фразы",
     summary: "Сильные и тёплые строки из поздравлений участников.",
-    details: "Подходит как акцентный эмоциональный блок между основными секциями открытки."
+    details: "Самые сильные короткие строки из поздравлений."
   },
   "ai-summary": {
     label: "Общее поздравление",
     summary: "Общее обращение от всей группы.",
-    details: "Сводный аккорд, который собирает настроение всех поздравлений в один тёплый текст."
+    details: "Общий тёплый текст от всей группы."
   },
   closing: {
     label: "Финал",
     summary: "Завершение открытки и общее тёплое пожелание.",
-    details: "Обязательный блок. Он завершает сценарий и оставляет финальное впечатление."
+    details: "Финальное пожелание в конце открытки."
   }
 };
 
@@ -204,7 +204,7 @@ const buildCanvasBlocks = (
 ];
 
 const initialExpandedState: ExpandedState = {
-  messages: true
+  messages: false
 };
 
 const iconStrokeProps = {
@@ -333,8 +333,10 @@ const LayoutDiagram = ({ mode }: { mode: FinalCardMessageLayoutMode }) => {
         <div>
           <span />
           <span />
+          <span />
         </div>
         <div>
+          <span />
           <span />
           <span />
         </div>
@@ -568,6 +570,21 @@ export const BlockSettingsForm = ({
     }
   }, [currentCompositionKey, state.ok]);
 
+  const formRef = useRef<HTMLFormElement>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+
+  useEffect(() => {
+    if (!isCompositionDirty || !formRef.current || isPending) return;
+    setSaveStatus("saving");
+    formRef.current.requestSubmit();
+  }, [isCompositionDirty, isPending]);
+
+  useEffect(() => {
+    if (state.ok) {
+      setSaveStatus("saved");
+    }
+  }, [state]);
+
   const resolveDropPosition = (
     targetBlockId: FinalCardBlockId,
     pointerPosition: "before" | "after"
@@ -711,7 +728,7 @@ export const BlockSettingsForm = ({
   };
 
   return (
-    <form action={formAction} className={styles.studioForm}>
+    <form ref={formRef} action={formAction} className={styles.studioForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
       <input type="hidden" name="layoutMode" value={layoutMode} />
       <input type="hidden" name="mediaLayout" value={mediaLayout} />
@@ -972,13 +989,12 @@ export const BlockSettingsForm = ({
                                 </p>
                               </div>
                               <span>
-                                Готово:{" "}
+                                Для блока нужно {activeMessageMediaSlots.length} фото · доступно{" "}
                                 {
                                   mediaAssets.filter((asset) =>
                                     activeMessagePickerSlots.includes(asset.slot as CardMediaSlot)
                                   ).length
-                                }{" "}
-                                из {activeMessageMediaSlots.length} фото
+                                }
                               </span>
                               <a href={`${getManagePath(manageToken)}?tab=content`} className={styles.previewSecondaryLink}>
                                 Перейти к фото
@@ -1032,9 +1048,8 @@ export const BlockSettingsForm = ({
                             <p>Для выбранного вида нужно {memoryPhotoCount} горизонтальных фото.</p>
                           </div>
                           <span>
-                            Готово:{" "}
-                            {mediaAssets.filter((asset) => horizontalMediaSlots.includes(asset.slot as CardMediaSlot)).length}{" "}
-                            из {memoryPhotoCount} фото
+                            Для блока нужно {memoryPhotoCount} фото · доступно{" "}
+                            {mediaAssets.filter((asset) => horizontalMediaSlots.includes(asset.slot as CardMediaSlot)).length}
                           </span>
                           <a href={`${getManagePath(manageToken)}?tab=content`} className={styles.previewSecondaryLink}>
                             Перейти к фото
@@ -1088,17 +1103,12 @@ export const BlockSettingsForm = ({
         </div>
       </section>
 
-      <div className={`${styles.editorFooter} ${styles.compositionSaveFooter} ${isCompositionDirty ? styles.editorFooterDirty : ""}`}>
-        <button type="submit" className={styles.button} disabled={isPending || !isCompositionDirty}>
-          {isPending ? "Сохраняем..." : isCompositionDirty ? "Сохранить изменения" : "Состав сохранён"}
-        </button>
-        {state.message ? (
-          <span className={state.ok ? styles.editorSuccess : styles.editorError}>{state.message}</span>
-        ) : (
-          <span className={styles.editorMuted}>
-            {isCompositionDirty ? "Есть несохранённые изменения оформления. Сохраните, чтобы они попали в открытку." : "Настройки состава сохраняются этой кнопкой."}
-          </span>
-        )}
+      <div className={styles.compositionAutoSaveStatus}>
+        {isPending || saveStatus === "saving"
+          ? "Сохраняем..."
+          : saveStatus === "saved"
+            ? "Изменения сохранены"
+            : null}
       </div>
     </form>
   );

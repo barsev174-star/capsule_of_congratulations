@@ -5,7 +5,7 @@ import { useActionState, useEffect, useMemo, useRef, useState, useTransition, ty
 import { useRouter } from "next/navigation";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
-import { getGiftPath, getJoinUrl, getManagePath } from "@/lib/routes/card-links";
+import { getGiftPath, getManagePath } from "@/lib/routes/card-links";
 import { AiHelper } from "@/app/card/[publicSlug]/ai-helper";
 import { ContributionEditor } from "./contribution-editor";
 import { MediaManager } from "./media-manager";
@@ -77,8 +77,6 @@ export const ContentStudio = ({
   const [manualMessage, setManualMessage] = useState("");
   const [isAiHelpOpen, setIsAiHelpOpen] = useState(false);
   const [isTipsOpen, setIsTipsOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [copyMessage, setCopyMessage] = useState("");
   const [savedContributionOrderKey, setSavedContributionOrderKey] = useState(
     allContributions.map((contribution) => contribution.id).join(":")
   );
@@ -92,8 +90,6 @@ export const ContentStudio = ({
   const hiddenCount = allContributions.filter((contribution) => contribution.status === "hidden").length;
   const activeCount = allContributions.filter((contribution) => contribution.status === "visible").length;
   const noRoleCount = allContributions.filter((contribution) => !contribution.authorRole?.trim()).length;
-  const participantUrl = getJoinUrl(publicSlug);
-  const inviteText = `Собираем открытку для ${recipientName}. Добавьте пару теплых слов по ссылке: ${participantUrl}`;
   const currentContributionOrderKey = contributionOrder.join(":");
   const [orderSaveStatus, setOrderSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const orderFormRef = useRef<HTMLFormElement>(null);
@@ -292,19 +288,6 @@ export const ContentStudio = ({
     );
   };
 
-  const copyToClipboard = async (value: string, successMessage: string) => {
-    const origin = typeof window === "undefined" ? "" : window.location.origin;
-    const normalizedValue = value.startsWith("/") ? `${origin}${value}` : value;
-
-    try {
-      await navigator.clipboard.writeText(normalizedValue);
-      setCopyMessage(successMessage);
-      setIsMenuOpen(false);
-    } catch {
-      setCopyMessage("Не удалось скопировать автоматически.");
-    }
-  };
-
   const handleManualContributionSubmit = (formData: FormData) => {
     startManualTransition(async () => {
       const result = await addManualContributionAction(initialState, formData);
@@ -348,47 +331,25 @@ export const ContentStudio = ({
                 <h2 className={styles.contentPanelTitle}>Поздравления</h2>
                 {orderSaveStatus !== "idle" ? (
                   <span className={styles.contentOrderStatusText}>
-                    {orderSaveStatus === "saving" ? "Сохраняем порядок…" : "Порядок сохранён"}
+                    {orderSaveStatus === "saving" ? "Сохраняем…" : "Изменения сохранены"}
                   </span>
                 ) : null}
               </div>
               <div className={styles.contentToolbar}>
                 <button
                   type="button"
-                  className={`${styles.mediaLibraryUploadButton} ${styles.mediaManagerActionButton}`}
+                  className={`${styles.mediaLibraryUploadToggle} ${styles.mediaManagerActionButton}`}
                   onClick={() => setIsManualFormOpen((current) => !current)}
                 >
-                  <span>+</span>
-                  <span>Добавить вручную</span>
+                  <span>{isManualFormOpen ? "−" : "+"}</span>
+                  <span>{isManualFormOpen ? "Скрыть форму" : "Добавить вручную"}</span>
                 </button>
-                <div className={styles.contentMenuWrap}>
-                  <button
-                    type="button"
-                    className={styles.contentIconButton}
-                    onClick={() => setIsMenuOpen((current) => !current)}
-                    aria-expanded={isMenuOpen}
-                    aria-label="Дополнительные действия"
-                  >
-                    …
-                  </button>
-                  {isMenuOpen ? (
-                    <div className={styles.contentMenu}>
-                      <button type="button" onClick={() => copyToClipboard(participantUrl, "Ссылка для участников скопирована.")}>
-                        Скопировать ссылку для участников
-                      </button>
-                      <button type="button" onClick={() => copyToClipboard(inviteText, "Текст приглашения скопирован.")}>
-                        Скопировать текст приглашения
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
               </div>
             </div>
 
             <div>
               <p className={styles.contentPanelText}>Модерируйте поздравления, выделяйте главное и изменяйте порядок.</p>
             </div>
-            {copyMessage ? <p className={styles.contentInlineNotice}>{copyMessage}</p> : null}
           </div>
 
           <div className={styles.contentFilterRow}>
@@ -493,7 +454,7 @@ export const ContentStudio = ({
                 </button>
                 <span className={styles.manualContributionCount}>{manualMessage.length} / 1500</span>
                 <span className={manualState.ok ? styles.limitOk : styles.limitWarning}>
-                  {manualState.message || `Рекомендуем до ${messageLimit} символов для текущей сетки. Если текст длиннее, администратор сможет сократить его для лаконичного вида.`}
+                  {manualState.message || `Рекомендуется до ${messageLimit} символов.`}
                 </span>
               </div>
             </form>
@@ -547,9 +508,21 @@ export const ContentStudio = ({
                             }}
                             aria-label={`Перетащить поздравление ${contribution.authorName}`}
                           >
-                            <span className={styles.contentGripPlain} aria-hidden="true">
-                              ⋮⋮
-                            </span>
+                            <svg
+                              className={styles.contentGripPlain}
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <circle cx="4" cy="4" r="1.5" fill="currentColor" />
+                              <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+                              <circle cx="4" cy="8" r="1.5" fill="currentColor" />
+                              <circle cx="12" cy="8" r="1.5" fill="currentColor" />
+                              <circle cx="4" cy="12" r="1.5" fill="currentColor" />
+                              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                            </svg>
                           </button>
                           <span className={styles.contentOrder}>#{index + 1}</span>
                           <div className={styles.contentAvatar}>

@@ -114,8 +114,8 @@ export const TemplateSettingsForm = ({
           </div>
 
           <div className={styles.editorFooter}>
-            <button type="submit" className={styles.button} disabled={isPending}>
-              {isPending ? "Применяем шаблон..." : showApplied ? "Шаблон применен ✓" : "Сохранить шаблон"}
+            <button type="submit" className={styles.secondaryButton} disabled={isPending}>
+              {isPending ? "Применяем..." : showApplied ? "Шаблон применен ✓" : "Применить"}
             </button>
           </div>
         </>
