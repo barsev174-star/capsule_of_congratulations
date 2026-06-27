@@ -1281,6 +1281,34 @@
   font-size: 2.35rem;
 }
 
+.contentPanelTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.contentOrderStatusText {
+  color: #8a6b5a;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.contentOrderStatusText::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #b86f4a;
+  opacity: 0.6;
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
 .contentRailTitle {
   font-size: 1.75rem;
 }
