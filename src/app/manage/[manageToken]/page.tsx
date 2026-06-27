@@ -241,11 +241,11 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 </div>
 
                 <div className={styles.templateSummary}>
-                  {selectedTemplate.id === "paper-birthday" ? (
+                  {selectedTemplate.id === "warm-classic" ? (
                     <div className={styles.templatePreviewWrap}>
                       <img
                         src="/templates/warm-classic-preview.png"
-                        alt="Бумажный классический"
+                        alt="Тёплый классический"
                         className={styles.templatePreviewImage}
                       />
                     </div>

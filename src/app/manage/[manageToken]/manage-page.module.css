@@ -1414,13 +1414,22 @@
     background 160ms ease;
 }
 
-.contentAiButton {
-  border-color: rgba(194, 120, 84, 0.3);
-  background: rgba(255, 248, 242, 0.92);
-  color: #a25a34;
-  font-weight: 700;
+.contentAiGhost {
   min-height: 40px;
-  padding: 0 16px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #c67546;
+  font-weight: 700;
+  font: inherit;
+  transition: color 120ms ease, background 120ms ease;
+  cursor: pointer;
+}
+
+.contentAiGhost:hover {
+  background: rgba(198, 117, 70, 0.08);
+  color: #a25a34;
 }
 
 .contentGhostButton:hover,
@@ -2012,7 +2021,27 @@ button.contentFilterPill {
   min-width: 0;
 }
 
-.contentSaveButton,
+.contentSaveButton {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid rgba(198, 117, 70, 0.45);
+  border-radius: 16px;
+  background: rgba(255, 250, 245, 0.92);
+  color: #c67546;
+  font-weight: 700;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.contentSaveButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(198, 117, 70, 0.6);
+  box-shadow: 0 10px 22px rgba(121, 72, 48, 0.08);
+}
+
 .contentPrimaryButton {
   min-height: 40px;
   padding: 0 16px;
