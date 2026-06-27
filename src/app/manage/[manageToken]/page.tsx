@@ -241,19 +241,26 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 </div>
 
                 <div className={styles.templateSummary}>
-                  <div className={styles.templatePreviewWrap}>
-                    <img
-                      src="/templates/warm-classic-preview.png"
-                      alt="Тёплый классический"
-                      className={styles.templatePreviewImage}
-                    />
-                  </div>
+                  {selectedTemplate.id === "warm-classic" ? (
+                    <div className={styles.templatePreviewWrap}>
+                      <img
+                        src="/templates/warm-classic-preview.png"
+                        alt="Тёплый классический"
+                        className={styles.templatePreviewImage}
+                      />
+                    </div>
+                  ) : (
+                    <div className={styles.templatePreviewPlaceholder}>
+                      <span className={styles.templatePreviewPlaceholderIcon}>🎨</span>
+                      <span className={styles.templatePreviewPlaceholderText}>Другие шаблоны появятся позже</span>
+                    </div>
+                  )}
                   <div className={styles.templateSummaryText}>
                     <div className={styles.templateNameRow}>
-                      <strong>Тёплый классический</strong>
+                      <strong>{selectedTemplate.name}</strong>
                       <span>Рекомендуем</span>
                     </div>
-                    <p>Кремовая бумага, мягкая типографика, конверт, сухоцветы и тёплые акценты.</p>
+                    <p>{selectedTemplate.description}</p>
                     <div className={styles.paletteRow} aria-label="Цветовая палитра">
                       {templatePalette.map((color) => (
                         <span key={color} style={{ backgroundColor: color }} />

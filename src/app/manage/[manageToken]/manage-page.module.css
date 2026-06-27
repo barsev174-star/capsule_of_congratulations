@@ -6475,6 +6475,31 @@ button.contentFilterPill {
   display: block;
 }
 
+.templatePreviewPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 168px;
+  border-radius: 18px;
+  background: rgba(255, 250, 245, 0.92);
+  border: 1px dashed rgba(184, 111, 74, 0.25);
+  padding: 24px;
+}
+
+.templatePreviewPlaceholderIcon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.templatePreviewPlaceholderText {
+  color: #9a7a65;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: center;
+}
+
 .templateArtwork {
   min-height: 168px;
   border-radius: 18px;

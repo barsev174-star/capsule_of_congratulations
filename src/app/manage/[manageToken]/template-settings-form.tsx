@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import type { CardTemplate } from "@/lib/cards/templates";
 import type {
   FinalCardBlockId,
@@ -39,6 +39,19 @@ export const TemplateSettingsForm = ({
 }: Props) => {
   const [state, formAction, isPending] = useActionState(updateFinalPresentationSettingsAction, initialState);
   const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId);
+  const [showApplied, setShowApplied] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (state.ok) {
+      setShowApplied(true);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setShowApplied(false), 2000);
+    }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [state]);
 
   return (
     <form action={formAction} className={variant === "hero" ? styles.templateHeroForm : styles.templateForm}>
@@ -74,11 +87,8 @@ export const TemplateSettingsForm = ({
 
           <div className={styles.templateHeroActions}>
             <button type="submit" className={styles.secondaryButton} disabled={isPending}>
-              {isPending ? "Применяем..." : "Применить"}
+              {isPending ? "Применяем..." : showApplied ? "Шаблон применен ✓" : "Применить"}
             </button>
-            {state.message ? (
-              <span className={state.ok ? styles.editorSuccess : styles.editorError}>{state.message}</span>
-            ) : null}
           </div>
         </>
       ) : (
@@ -105,11 +115,8 @@ export const TemplateSettingsForm = ({
 
           <div className={styles.editorFooter}>
             <button type="submit" className={styles.button} disabled={isPending}>
-              {isPending ? "Применяем шаблон..." : "Сохранить шаблон"}
+              {isPending ? "Применяем шаблон..." : showApplied ? "Шаблон применен ✓" : "Сохранить шаблон"}
             </button>
-            {state.message ? (
-              <span className={state.ok ? styles.editorSuccess : styles.editorError}>{state.message}</span>
-            ) : null}
           </div>
         </>
       )}
