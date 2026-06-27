@@ -1420,7 +1420,7 @@
   color: #a25a34;
   font-weight: 700;
   min-height: 40px;
-  padding: 0 14px;
+  padding: 0 16px;
 }
 
 .contentGhostButton:hover,
@@ -2014,8 +2014,8 @@ button.contentFilterPill {
 
 .contentSaveButton,
 .contentPrimaryButton {
-  min-height: 48px;
-  padding: 0 20px;
+  min-height: 40px;
+  padding: 0 16px;
   background: #c67546;
   color: #fff8f3;
   font-weight: 700;

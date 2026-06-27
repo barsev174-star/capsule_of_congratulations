@@ -23,6 +23,13 @@ export type CardTemplate = {
 
 export const cardTemplates: CardTemplate[] = [
   {
+    id: "paper-birthday",
+    name: "Бумажный классический",
+    description: "Праздничная открытка с бумажными листами, скотчем, полароидами и рукописным настроением.",
+    recommendedFor: ["personal", "celebration", "colleague"],
+    accent: "#df4f73"
+  },
+  {
     id: "warm-classic",
     name: "Тёплый классический",
     description: "Кремовая бумага, мягкая типографика, конверт, сухоцветы и тёплые акценты.",
@@ -49,13 +56,6 @@ export const cardTemplates: CardTemplate[] = [
     description: "Воздушная открытка с природными деталями и мягкой атмосферой близости.",
     recommendedFor: ["personal", "caregiver", "teacher"],
     accent: "#b97c73"
-  },
-  {
-    id: "paper-birthday",
-    name: "Бумажный день рождения",
-    description: "Праздничная открытка с бумажными листами, скотчем, полароидами и рукописным настроением.",
-    recommendedFor: ["personal", "celebration", "colleague"],
-    accent: "#df4f73"
   }
 ];
 
