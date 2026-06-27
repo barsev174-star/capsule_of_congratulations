@@ -88,8 +88,9 @@
 
 ## Что осталось сделать
 
-1. Закоммитить текущие изменения (после последнего QA нет нового коммита).
-2. Сделать push и обновить VPS.
+1. ~~Закоммитить текущие изменения~~ — сделано: `0d48231 Polish /manage UI per plan.md: photo cards, custom slot dropdown, upload form, docs updates`.
+2. ~~Сделать push~~ — сделано: `main` на `origin` обновлён.
+3. Обновить VPS и проверить production health check.
 3. Проверить на телефоне:
    - `https://darislova.ru`;
    - manager content tab;

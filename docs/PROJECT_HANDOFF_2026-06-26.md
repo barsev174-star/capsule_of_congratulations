@@ -135,7 +135,13 @@ http://localhost:3000/manage/5bc64fce98ef97e6d1432d8e03aceb82?tab=content
 npm.cmd run build
 ```
 
-Статус на момент обновления 2026-06-27: скриншотный QA плана `docs/plan.md` и локальный `npm.cmd run build` пройдены. Manager rework **не закоммичен** после последнего QA; следующий шаг — commit, push, обновление VPS.
+Статус на момент обновления 2026-06-27: скриншотный QA плана `docs/plan.md` и локальный `npm.cmd run build` пройдены. Manager rework **закоммичен и запушен**:
+
+```text
+0d48231 Polish /manage UI per plan.md: photo cards, custom slot dropdown, upload form, docs updates
+```
+
+Следующий шаг — обновить VPS и проверить production.
 
 ## Что осталось сделать
 

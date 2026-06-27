@@ -38,8 +38,8 @@
 
 ## Что осталось
 
-1. Закоммитить изменения.
-2. Сделать push.
+1. ~~Закоммитить изменения~~ — сделано: `0d48231 Polish /manage UI per plan.md: photo cards, custom slot dropdown, upload form, docs updates`.
+2. ~~Сделать push~~ — сделано: `main` на `origin` обновлён.
 3. Обновить VPS и проверить production health check.
 4. Пройти mobile QA на реальном телефоне:
    - загрузка фото;
