@@ -48,20 +48,20 @@ export function HeroSection() {
               <Image
                 src={heroMainSrc}
                 alt=""
-                width={1536}
-                height={1024}
+                width={1019}
+                height={868}
                 className={styles.heroAsset}
                 priority
-                sizes="(max-width: 1023px) 90vw, 520px"
+                sizes="(max-width: 1023px) 90vw, 540px"
               />
               {heroDecorSrc ? (
                 <Image
                   src={heroDecorSrc}
                   alt=""
-                  width={1536}
-                  height={1024}
+                  width={1280}
+                  height={853}
                   className={styles.heroDecor}
-                  sizes="(max-width: 1023px) 90vw, 520px"
+                  sizes="(max-width: 1023px) 90vw, 540px"
                 />
               ) : null}
             </div>
