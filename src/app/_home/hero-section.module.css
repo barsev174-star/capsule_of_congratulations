@@ -1,0 +1,512 @@
+.section {
+  padding: 28px 0 56px;
+  overflow: hidden;
+}
+
+.shell {
+  display: grid;
+  align-items: center;
+  gap: 36px;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.1rem, 5.2vw, 3.4rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  max-width: 520px;
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.primaryAction,
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  padding: 0 26px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.primaryAction {
+  background: linear-gradient(180deg, #ef7240 0%, #df5f2e 100%);
+  color: #fff9f4;
+  box-shadow: 0 14px 34px rgba(233, 101, 47, 0.26);
+}
+
+.primaryAction:hover {
+  background: linear-gradient(180deg, #ec6b37 0%, #d95a2a 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 38px rgba(233, 101, 47, 0.32);
+}
+
+.primaryAction:active {
+  transform: scale(0.96);
+}
+
+.secondaryAction {
+  border-color: var(--accent-soft);
+  background: var(--accent-light);
+  color: var(--accent-strong);
+}
+
+.secondaryAction:hover {
+  background: #ffe8d9;
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.secondaryAction:active {
+  transform: scale(0.96);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.visual {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-height: 420px;
+}
+
+@media (min-width: 1024px) {
+  .visual {
+    justify-content: flex-end;
+  }
+}
+
+.composition {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  height: 420px;
+  transform-style: preserve-3d;
+}
+
+.glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 420px;
+  height: 420px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(191, 108, 71, 0.12), transparent 65%);
+  pointer-events: none;
+}
+
+/* Gift card */
+.giftCard {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-4deg);
+  width: 260px;
+  padding: 24px 22px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #fffaf5 0%, #f8eee6 100%);
+  border: 1px solid var(--line);
+  box-shadow: 0 20px 50px rgba(191, 108, 71, 0.12);
+  text-align: center;
+  z-index: 1;
+}
+
+.giftCardHeart {
+  display: block;
+  color: var(--accent);
+  font-size: 1.6rem;
+  margin-bottom: 10px;
+}
+
+.giftCardName {
+  margin: 0 0 6px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.giftCardOccasion {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Envelope */
+.envelope {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -42%);
+  width: 260px;
+  height: 170px;
+  z-index: 3;
+}
+
+.envelopeBack {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f0d8cb 0%, #e4c2b0 100%);
+  box-shadow: 0 24px 60px rgba(191, 108, 71, 0.18);
+}
+
+.envelopeLetter {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  height: 120px;
+  padding: 18px;
+  border-radius: 12px;
+  background: #fffaf5;
+  box-shadow: 0 4px 12px rgba(191, 108, 71, 0.1);
+}
+
+.letterHeart {
+  display: block;
+  color: var(--accent);
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+}
+
+.letterLines {
+  display: grid;
+  gap: 8px;
+}
+
+.letterLines span {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--accent-soft);
+}
+
+.letterLines span:nth-child(1) { width: 100%; }
+.letterLines span:nth-child(2) { width: 80%; }
+.letterLines span:nth-child(3) { width: 60%; }
+
+.envelopeFlapLeft,
+.envelopeFlapRight,
+.envelopeFlapBottom {
+  position: absolute;
+  border-radius: 0 0 16px 16px;
+}
+
+.envelopeFlapLeft {
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  height: 100px;
+  background: linear-gradient(135deg, #e4c2b0 0%, #dab6a4 100%);
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+
+.envelopeFlapRight {
+  bottom: 0;
+  right: 0;
+  width: 50%;
+  height: 100px;
+  background: linear-gradient(225deg, #e4c2b0 0%, #dab6a4 100%);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.envelopeFlapBottom {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 90px;
+  background: linear-gradient(to top, #d6b29c 0%, #e4c4b2 100%);
+  clip-path: polygon(0 0, 50% 100%, 100% 0);
+  border-radius: 0 0 16px 16px;
+}
+
+.envelopeSeal {
+  position: absolute;
+  top: 62%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff9f4;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 14px rgba(191, 108, 71, 0.35);
+  z-index: 4;
+}
+
+/* Floating notes */
+.noteCardTop,
+.noteCardRight,
+.polaroid {
+  position: absolute;
+  background: var(--surface-strong);
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(191, 108, 71, 0.1), 0 4px 8px rgba(191, 108, 71, 0.05);
+  border: 1px solid var(--line);
+  z-index: 4;
+}
+
+.noteCardTop {
+  top: 40px;
+  left: -10px;
+  max-width: 170px;
+  padding: 14px 16px;
+  transform: rotate(-8deg);
+}
+
+.noteCardRight {
+  top: 80px;
+  right: -20px;
+  max-width: 160px;
+  padding: 14px 16px;
+  transform: rotate(7deg);
+}
+
+.noteHeart {
+  display: block;
+  color: var(--accent);
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.noteText {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.noteAuthor {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+/* Polaroid */
+.polaroid {
+  bottom: 20px;
+  left: 10px;
+  padding: 10px 10px 14px;
+  transform: rotate(-5deg);
+}
+
+.polaroidFrame {
+  width: 110px;
+  height: 110px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--surface-warm), var(--surface-soft));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.polaroidPhoto {
+  opacity: 0.6;
+}
+
+.polaroidCaption {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Decorative elements */
+.decor {
+  position: absolute;
+  color: var(--accent);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.decorHeart1 {
+  top: 30px;
+  right: 40px;
+  font-size: 1.4rem;
+  transform: rotate(15deg);
+}
+
+.decorHeart2 {
+  bottom: 80px;
+  right: 20px;
+  font-size: 1.1rem;
+  transform: rotate(-10deg);
+}
+
+.decorSparkle1 {
+  top: 120px;
+  left: 10px;
+  font-size: 1.2rem;
+}
+
+.decorSparkle2 {
+  bottom: 140px;
+  right: 0;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding: 24px 0 40px;
+  }
+
+  .visual {
+    min-height: 380px;
+  }
+
+  .composition {
+    height: 380px;
+    transform: scale(0.88);
+  }
+
+  .giftCard {
+    width: 230px;
+    padding: 18px 16px;
+  }
+
+  .envelope {
+    transform: translate(-50%, -40%) scale(0.95);
+  }
+
+  .noteCardTop {
+    top: 50px;
+    left: -20px;
+    max-width: 140px;
+  }
+
+  .noteCardRight {
+    top: 90px;
+    right: -30px;
+    max-width: 140px;
+  }
+
+  .polaroid {
+    bottom: 10px;
+    left: -10px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section {
+    padding: 36px 0 64px;
+  }
+
+  .shell {
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 40px;
+  }
+
+  .title {
+    max-width: none;
+  }
+
+  .visual {
+    min-height: 500px;
+    justify-content: flex-end;
+  }
+
+  .composition {
+    height: 500px;
+    max-width: 480px;
+    transform: scale(0.96);
+  }
+
+  .giftCard {
+    top: 20px;
+    left: 55%;
+    width: 260px;
+    padding: 22px 18px;
+  }
+
+  .envelope {
+    width: 260px;
+    height: 170px;
+    transform: translate(-25%, -40%);
+  }
+
+  .envelopeLetter {
+    width: 220px;
+    height: 120px;
+  }
+
+  .noteCardTop {
+    top: 60px;
+    left: 80px;
+    max-width: 150px;
+  }
+
+  .noteCardRight {
+    top: 120px;
+    right: 30px;
+    max-width: 130px;
+  }
+
+  .polaroid {
+    bottom: 70px;
+    left: 100px;
+  }
+}

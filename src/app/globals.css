@@ -2,12 +2,19 @@
   --background: #f6efe7;
   --surface: rgba(255, 251, 247, 0.88);
   --surface-strong: #fffaf5;
+  --surface-warm: #fdf3ea;
+  --surface-soft: #f8f0e8;
   --text: #332722;
   --muted: #7b675d;
   --line: rgba(92, 67, 51, 0.15);
+  --line-strong: rgba(92, 67, 51, 0.22);
   --accent: #bf6c47;
-  --accent-strong: #8e4f34;
+  --accent-strong: #d45a27;
+  --accent-soft: #f3d8cc;
+  --accent-light: #fff0e5;
   --shadow: 0 18px 60px rgba(72, 49, 37, 0.12);
+  --shadow-soft: 0 18px 50px rgba(76, 45, 25, 0.08);
+  --shadow-card: 0 12px 32px rgba(72, 49, 37, 0.08), 0 4px 8px rgba(72, 49, 37, 0.04);
 }
 
 * {
@@ -44,6 +51,14 @@ select {
 
 ::selection {
   background: rgba(191, 108, 71, 0.22);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
 }
 
 * {

@@ -1,0 +1,11 @@
+export { HomeHeader } from "./header";
+export { HeroSection } from "./hero-section";
+export { ValueSection } from "./value-section";
+export { HowItWorksSection } from "./how-it-works-section";
+export { CasesSection } from "./cases-section";
+export { TemplatesSection } from "./templates-section";
+export { AiSection } from "./ai-section";
+export { InsideSection } from "./inside-section";
+export { FaqSection } from "./faq-section";
+export { FinalCtaSection } from "./final-cta-section";
+export { landingAssetPaths, getLandingAsset, getTemplateAsset } from "./landing-assets";

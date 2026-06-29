@@ -1,0 +1,236 @@
+.section {
+  padding: 44px 0;
+}
+
+.shell {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.heading {
+  max-width: 720px;
+  margin: 0 auto 32px;
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 10px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  line-height: 1.12;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.card {
+  padding: 10px 10px 22px;
+  border-radius: 22px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.preview,
+.assetPreview {
+  position: relative;
+  height: 150px;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.assetPreview {
+  background: var(--surface-warm);
+}
+
+.accentWash {
+  position: absolute;
+  inset: 0;
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.assetImage {
+  object-fit: cover;
+}
+
+/* CSS miniature base */
+.preview {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--surface-strong) 0%, var(--surface-warm) 100%);
+}
+
+.paperSheet {
+  position: absolute;
+  width: 72px;
+  height: 96px;
+  border-radius: 8px;
+  background: rgba(255, 250, 245, 0.92);
+  box-shadow: 0 6px 16px rgba(191, 108, 71, 0.12);
+  transform: rotate(-6deg);
+  display: grid;
+  gap: 8px;
+  padding: 14px 10px;
+}
+
+.paperLine {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(191, 108, 71, 0.18);
+  width: 100%;
+}
+
+.paperLineShort {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(191, 108, 71, 0.18);
+  width: 65%;
+}
+
+.miniEnvelope {
+  position: absolute;
+  bottom: 22px;
+  right: 24px;
+  width: 58px;
+  height: 40px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(255, 250, 245, 0.95), rgba(248, 238, 230, 0.95));
+  box-shadow: 0 5px 14px rgba(191, 108, 71, 0.14);
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-size: 1rem;
+  transform: rotate(8deg);
+}
+
+.miniEnvelope::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 22px;
+  background: rgba(191, 108, 71, 0.1);
+  clip-path: polygon(0 0, 50% 100%, 100% 0);
+  border-radius: 0 0 6px 6px;
+}
+
+.miniHeart {
+  position: absolute;
+  top: 22px;
+  right: 34px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 6px rgba(191, 108, 71, 0.12);
+}
+
+.miniHeart::after {
+  content: "♥";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.65rem;
+  color: var(--accent);
+}
+
+.miniStripe {
+  position: absolute;
+  bottom: 18px;
+  left: 22px;
+  width: 42px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.45);
+  transform: rotate(-3deg);
+}
+
+/* Template-specific moods */
+.paperClassic .paperSheet {
+  background: #fffaf5;
+  border: 1px solid rgba(191, 108, 71, 0.15);
+}
+
+.warmClassic .paperSheet {
+  background: #fff8f2;
+}
+
+.teamModern .paperSheet {
+  background: #f7f4f2;
+  transform: rotate(0deg);
+  border-radius: 4px;
+}
+
+.teamModern .miniEnvelope {
+  border-radius: 4px;
+  transform: rotate(0deg);
+}
+
+.brightParty .paperSheet {
+  background: #fffbf7;
+  transform: rotate(4deg);
+}
+
+.brightParty .miniHeart {
+  width: 20px;
+  height: 20px;
+}
+
+.brightParty .miniHeart::after {
+  font-size: 0.75rem;
+}
+
+.softPersonal .paperSheet {
+  background: #fff5f2;
+  border-radius: 12px;
+}
+
+.cardTitle {
+  margin: 0 10px 6px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.1rem;
+}
+
+.cardText {
+  margin: 0 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .section {
+    padding: 56px 0;
+  }
+
+  .grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
