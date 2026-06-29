@@ -7,7 +7,7 @@ import {
   listCardMediaAssetsByCardId,
   listContributionsByCardId
 } from "@/lib/cards/repository";
-import { cardTemplates } from "@/lib/cards/templates";
+import { getCardTemplates } from "@/lib/cards/templates-server";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import { getGiftPath, getJoinUrl, getManagePath, getPreviewPath, getPreviewUrl } from "@/lib/routes/card-links";
@@ -55,7 +55,10 @@ export default async function ManagePage({ params, searchParams }: Props) {
     notFound();
   }
 
-  const allContributions = await listAllContributionsByCardId(card.id);
+  const [allContributions, cardTemplates] = await Promise.all([
+    listAllContributionsByCardId(card.id),
+    getCardTemplates()
+  ]);
   const visibleContributions = await listContributionsByCardId(card.id);
   const mediaAssets = await listCardMediaAssetsByCardId(card.id);
   const model = buildFinalCardViewModel(card, visibleContributions, mediaAssets);

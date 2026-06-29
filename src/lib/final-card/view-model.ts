@@ -1,4 +1,4 @@
-import { cardTemplates } from "@/lib/cards/templates";
+import { isTemplateId } from "@/lib/cards/templates";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type { CardDraft, CardMediaAsset, Contribution } from "@/lib/cards/types";
 import { buildFinalCardLayout } from "@/lib/final-card/planner";
@@ -153,10 +153,8 @@ const buildMemories = (contributions: Contribution[]) => {
   }));
 };
 
-const resolveStyle = (templateId: CardDraft["templateId"]): FinalCardStyleId => {
-  const matched = cardTemplates.find((item) => item.id === templateId);
-  return matched?.id ?? "warm-classic";
-};
+const resolveStyle = (templateId: CardDraft["templateId"]): FinalCardStyleId =>
+  isTemplateId(templateId) ? templateId : "warm-classic";
 
 const resolveOrderedMediaAssets = (
   mediaAssets: CardMediaAsset[],
