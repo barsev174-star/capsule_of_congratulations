@@ -15,10 +15,10 @@ export function FinalCtaSection() {
               <Image
                 src={ctaEnvelopeSrc}
                 alt=""
-                width={180}
-                height={135}
+                width={260}
+                height={195}
                 className={styles.decorImage}
-                sizes="180px"
+                sizes="260px"
               />
             ) : (
               <div className={styles.decorEnvelope}>
