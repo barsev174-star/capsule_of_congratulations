@@ -1,0 +1,1068 @@
+:root {
+  --gi-bg-top: #faf4ed;
+  --gi-bg-bottom: #f2e6d8;
+  --gi-text: #3b2b23;
+  --gi-muted: #7b675d;
+  --gi-accent: #bf6c47;
+  --gi-accent-strong: #8e4f34;
+  --gi-envelope: #f5ebe0;
+  --gi-envelope-dark: #e8dacd;
+  --gi-envelope-darker: #d9ccc0;
+  --gi-card: #fffaf5;
+  --gi-shadow: rgba(72, 49, 37, 0.16);
+  --gi-shadow-soft: rgba(72, 49, 37, 0.08);
+  --gi-serif: Georgia, "Times New Roman", "Noto Serif", serif;
+}
+
+/* Page wrapper */
+.page {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.72), transparent 35%),
+    radial-gradient(circle at 70% 80%, rgba(255, 248, 240, 0.6), transparent 35%),
+    linear-gradient(180deg, var(--gi-bg-top) 0%, var(--gi-bg-bottom) 100%);
+  color: var(--gi-text);
+  overflow: hidden;
+  animation: pageFadeIn 0.6s ease-out;
+  transition:
+    opacity 0.6s ease,
+    visibility 0.6s ease;
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.revealGift .page,
+.done .page {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 40%, rgba(72, 49, 37, 0.07) 100%);
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.press .vignette,
+.sealBreak .vignette,
+.flapOpen .vignette,
+.pause .vignette,
+.cardPull .vignette,
+.cardHero .vignette,
+.revealGift .vignette {
+  opacity: 1;
+}
+
+/* Intro content layout */
+.introContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 34px;
+  width: 100%;
+  max-width: 480px;
+  transition:
+    opacity 0.5s ease,
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.revealGift .introContent {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+/* Title block */
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.nameLine {
+  font-family: var(--gi-serif);
+  font-size: clamp(32px, 7vw, 46px);
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--gi-text);
+  letter-spacing: -0.01em;
+  position: relative;
+}
+
+.nameLine::after {
+  content: "♡";
+  position: absolute;
+  right: -22px;
+  top: -6px;
+  font-size: 16px;
+  color: var(--gi-accent);
+  opacity: 0.55;
+  font-family: serif;
+}
+
+.subtitleLine {
+  margin: 0;
+  font-size: clamp(15px, 3.6vw, 18px);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--gi-muted);
+  max-width: 340px;
+}
+
+/* Envelope scene */
+.envelopeScene {
+  width: 280px;
+  height: 190px;
+  perspective: 1400px;
+  transform-style: preserve-3d;
+  animation: envelopeFloat 4.2s ease-in-out infinite;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes envelopeFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-6px) rotate(0.9deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(-4px) rotate(-0.7deg); }
+}
+
+.ctaHover .envelopeScene {
+  transform: translateY(-10px) scale(1.03);
+}
+
+.envelope {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition:
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.45s ease;
+  animation: envelopeBreathe 3.4s ease-in-out infinite;
+}
+
+@keyframes envelopeBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.envelopeBack {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--gi-envelope) 0%, var(--gi-envelope-dark) 100%);
+  box-shadow:
+    0 24px 64px var(--gi-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: opacity 0.45s ease;
+  transform: translateZ(-20px);
+}
+
+.envelopeGlow {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 20%;
+  height: 70%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255, 220, 190, 0.55), transparent 65%);
+  opacity: 0;
+  transition: opacity 0.7s ease;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.flapOpen .envelopeGlow,
+.pause .envelopeGlow,
+.cardPull .envelopeGlow,
+.cardHero .envelopeGlow {
+  opacity: 1;
+}
+
+/* Inner card */
+.envelopeCard {
+  --gi-card-preview-scale: 0.205;
+  position: absolute;
+  left: 5%;
+  bottom: 10%;
+  width: 90%;
+  height: 88%;
+  transform: translateY(10%) translateZ(-6px) scale(0.96);
+  transform-style: preserve-3d;
+  transition:
+    transform 0.82s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.5s ease;
+  z-index: 2;
+  will-change: transform, opacity;
+}
+
+.envelopeCardFront,
+.envelopeCardInside,
+.envelopeCardInsideTop {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  backface-visibility: hidden;
+}
+
+.envelopeCardInside {
+  background: linear-gradient(180deg, #fffdfb 0%, #faf5ee 100%);
+  box-shadow:
+    0 6px 18px var(--gi-shadow-soft),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  z-index: 1;
+}
+
+.cardTemplatePreview {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--gi-card);
+  pointer-events: none;
+}
+
+.cardTemplateCanvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1212px;
+  transform: scale(var(--gi-card-preview-scale));
+  transform-origin: top left;
+  pointer-events: none;
+}
+
+.cardTemplateCanvas :is(a, button, input, select, textarea) {
+  pointer-events: none;
+}
+
+.cardTemplatePreviewLower .cardTemplateCanvas {
+  top: -100%;
+}
+
+.envelopeCardFold {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  transform: rotateX(0deg);
+  transform-origin: top center;
+  transform-style: preserve-3d;
+  transition: transform 1.05s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.envelopeCardFront {
+  background:
+    radial-gradient(circle at 14% 20%, rgba(214, 124, 86, 0.08), transparent 20%),
+    radial-gradient(circle at 88% 82%, rgba(191, 108, 71, 0.07), transparent 24%),
+    linear-gradient(145deg, #fffdf9 0%, var(--gi-card) 50%, #f8eee4 100%);
+  box-shadow:
+    0 6px 18px var(--gi-shadow-soft),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  transform: translateZ(1px);
+  z-index: 2;
+}
+
+.envelopeCardInsideTop {
+  background: linear-gradient(180deg, #fffdfb 0%, #faf5ee 100%);
+  box-shadow:
+    0 6px 18px var(--gi-shadow-soft),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: rotateX(180deg) translateZ(1px);
+  z-index: 1;
+}
+
+.cardFoldLine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139, 110, 92, 0.18), transparent);
+  z-index: 2;
+}
+
+.cardPaperLines {
+  position: absolute;
+  inset: 14px;
+  border: 1px solid rgba(139, 110, 92, 0.12);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.cardPaperLines::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 5px;
+}
+
+.cardAccent,
+.cardAccentInside {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  opacity: 0.78;
+}
+
+.cardHeart,
+.cardHeartInside {
+  font-size: 28px;
+  line-height: 1;
+  color: var(--gi-accent);
+  opacity: 0.9;
+  position: relative;
+  z-index: 1;
+}
+
+.cardBackEmblem {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: var(--gi-accent);
+  background: rgba(255, 252, 248, 0.86);
+  box-shadow:
+    0 0 0 1px rgba(191, 108, 71, 0.14),
+    0 8px 22px rgba(72, 49, 37, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.cardBackBrand {
+  position: relative;
+  z-index: 2;
+  margin-top: 1px;
+  font-family: var(--gi-serif);
+  font-size: 17px;
+  line-height: 1;
+  color: var(--gi-text);
+}
+
+.cardBackCaption {
+  position: relative;
+  z-index: 2;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--gi-muted);
+  letter-spacing: 0.04em;
+}
+
+.cardBackSprig {
+  position: absolute;
+  z-index: 1;
+  bottom: 14px;
+  width: 30px;
+  height: 54px;
+  border-left: 1px solid rgba(191, 108, 71, 0.3);
+  border-radius: 50%;
+  opacity: 0.72;
+}
+
+.cardBackSprig::before,
+.cardBackSprig::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 13px;
+  border: 1px solid rgba(191, 108, 71, 0.24);
+  border-radius: 70% 30% 70% 30%;
+  background: rgba(255, 250, 245, 0.54);
+}
+
+.cardBackSprig::before {
+  left: -2px;
+  top: 12px;
+  transform: rotate(-34deg);
+}
+
+.cardBackSprig::after {
+  left: 5px;
+  top: 27px;
+  transform: rotate(38deg);
+}
+
+.cardBackSprigLeft {
+  left: 25px;
+  transform: rotate(-31deg);
+}
+
+.cardBackSprigRight {
+  right: 25px;
+  transform: scaleX(-1) rotate(-31deg);
+}
+
+.cardText,
+.cardTextInside {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--gi-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+}
+
+.cardHint,
+.cardHintInside {
+  font-size: 12px;
+  color: var(--gi-muted);
+  opacity: 0.7;
+  position: relative;
+  z-index: 1;
+}
+
+/* Envelope sides and front */
+.envelopeLeft,
+.envelopeRight {
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 3;
+  transition: opacity 0.45s ease;
+}
+
+.envelopeLeft {
+  left: 0;
+  border-top: 95px solid transparent;
+  border-bottom: 95px solid transparent;
+  border-left: 140px solid var(--gi-envelope-dark);
+}
+
+.envelopeRight {
+  right: 0;
+  border-top: 95px solid transparent;
+  border-bottom: 95px solid transparent;
+  border-right: 140px solid var(--gi-envelope-dark);
+}
+
+.envelopeBottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 140px solid transparent;
+  border-right: 140px solid transparent;
+  border-bottom: 78px solid var(--gi-envelope-darker);
+  z-index: 4;
+  transition: opacity 0.45s ease;
+}
+
+/* Top flap */
+.envelopeFlap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 110px;
+  transform-origin: top center;
+  transform: rotateX(0deg);
+  transform-style: preserve-3d;
+  transition:
+    transform 0.72s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.45s ease;
+  z-index: 5;
+  will-change: transform;
+}
+
+.envelopeFlapFront,
+.envelopeFlapBack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #f8eee4 0%, var(--gi-envelope) 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  backface-visibility: hidden;
+  transform-origin: top center;
+  pointer-events: none;
+}
+
+.envelopeFlapFront {
+  filter: drop-shadow(0 3px 5px rgba(72, 49, 37, 0.1));
+}
+
+.envelopeFlapBack {
+  background: linear-gradient(180deg, #eadbcf 0%, #f4e8dc 100%);
+  transform: rotateX(180deg);
+  filter: drop-shadow(0 -5px 8px rgba(72, 49, 37, 0.1));
+}
+
+/* Seal */
+.envelopeSeal {
+  position: absolute;
+  top: 68px;
+  left: 50%;
+  width: 38px;
+  height: 38px;
+  margin-left: -19px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c97a58 0%, var(--gi-accent-strong) 100%);
+  box-shadow: 0 4px 12px rgba(140, 80, 55, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  color: var(--gi-card);
+  z-index: 6;
+  transition:
+    transform 0.35s ease,
+    opacity 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+/* Floating hearts */
+.heartFloat1,
+.heartFloat2,
+.heartFloat3 {
+  position: absolute;
+  color: var(--gi-accent);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 7;
+  font-family: serif;
+}
+
+.heartFloat1 {
+  left: -28px;
+  top: 20px;
+  font-size: 18px;
+  animation: heart1 5s ease-in-out infinite;
+}
+
+.heartFloat2 {
+  right: -22px;
+  top: 50px;
+  font-size: 14px;
+  animation: heart2 6s ease-in-out infinite;
+}
+
+.heartFloat3 {
+  right: -36px;
+  bottom: 30px;
+  font-size: 20px;
+  animation: heart3 5.5s ease-in-out infinite;
+}
+
+@keyframes heart1 {
+  0%, 100% { transform: translateY(0) rotate(-8deg); opacity: 0.35; }
+  50% { transform: translateY(-10px) rotate(0deg); opacity: 0.6; }
+}
+
+@keyframes heart2 {
+  0%, 100% { transform: translateY(0) rotate(6deg); opacity: 0.25; }
+  50% { transform: translateY(-8px) rotate(0deg); opacity: 0.45; }
+}
+
+@keyframes heart3 {
+  0%, 100% { transform: translateY(0) rotate(-5deg); opacity: 0.3; }
+  50% { transform: translateY(-12px) rotate(5deg); opacity: 0.55; }
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.ctaButton {
+  appearance: none;
+  border: none;
+  margin: 0;
+  padding: 15px 36px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #d67c56 0%, var(--gi-accent) 100%);
+  color: #fffaf5;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow:
+    0 8px 26px rgba(191, 108, 71, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ctaButton:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 32px rgba(191, 108, 71, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.ctaButton:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.ctaButton:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 4px rgba(191, 108, 71, 0.35),
+    0 8px 26px rgba(191, 108, 71, 0.32);
+}
+
+.ctaButton:disabled {
+  cursor: default;
+}
+
+.skipLink {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 6px 12px;
+  color: var(--gi-muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.skipLink:hover,
+.skipLink:focus-visible {
+  opacity: 1;
+  color: var(--gi-accent-strong);
+}
+
+.skipLink:focus-visible {
+  outline: none;
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px rgba(191, 108, 71, 0.2);
+}
+
+/* Stage animations */
+.idle .envelopeCard,
+.press .envelopeCard,
+.sealBreak .envelopeCard {
+  opacity: 0;
+}
+
+.press .introContent,
+.sealBreak .introContent,
+.flapOpen .introContent,
+.pause .introContent,
+.cardPull .introContent,
+.cardHero .introContent {
+  transform: translateY(82px);
+}
+
+.press .envelopeScene,
+.sealBreak .envelopeScene,
+.flapOpen .envelopeScene,
+.pause .envelopeScene,
+.cardPull .envelopeScene,
+.cardHero .envelopeScene,
+.revealGift .envelopeScene {
+  animation: none;
+}
+
+.press .envelope,
+.sealBreak .envelope,
+.flapOpen .envelope,
+.pause .envelope,
+.cardPull .envelope,
+.cardHero .envelope,
+.revealGift .envelope {
+  animation: none;
+}
+
+.press .envelopeScene {
+  transform: scale(0.98);
+}
+
+.press .envelope {
+  transform: scale(0.96);
+}
+
+.sealBreak .envelopeSeal {
+  transform: scale(1.15) translateY(-4px);
+  box-shadow:
+    0 0 20px rgba(191, 108, 71, 0.45),
+    0 4px 12px rgba(140, 80, 55, 0.28);
+}
+
+.flapOpen .envelopeSeal,
+.pause .envelopeSeal,
+.cardPull .envelopeSeal,
+.cardHero .envelopeSeal,
+.revealGift .envelopeSeal {
+  transform: scale(0.15);
+  opacity: 0;
+}
+
+.flapOpen .envelope {
+  transform: scale(1.02) translateY(2px);
+}
+
+.flapOpen .envelopeCard,
+.pause .envelopeCard {
+  transform: translateY(0) translateZ(-8px) scale(0.96);
+}
+
+.flapOpen .envelopeFlap,
+.pause .envelopeFlap,
+.cardPull .envelopeFlap,
+.cardHero .envelopeFlap,
+.revealGift .envelopeFlap {
+  transform: scaleY(-1);
+  z-index: 1;
+}
+
+.pause .envelope {
+  transform: scale(1.02) translateY(2px);
+}
+
+.cardPull .envelope {
+  transform: scale(0.96) translateY(18px);
+}
+
+.cardPull .envelopeCard {
+  transform: translateY(-44px) translateZ(50px) scale(1.06);
+  z-index: 8;
+}
+
+.cardHero .envelope {
+  transform: scale(0.9) translateY(34px);
+  opacity: 1;
+}
+
+.cardHero .envelopeCard {
+  transform: translateY(-38px) translateZ(110px) scale(1.26);
+  z-index: 8;
+}
+
+.cardHero .envelopeBack,
+.cardHero .envelopeGlow,
+.cardHero .envelopeLeft,
+.cardHero .envelopeRight,
+.cardHero .envelopeBottom {
+  opacity: 0.18;
+}
+
+.cardHero .envelopeFlap {
+  opacity: 0.42;
+}
+
+.cardHero .envelopeCardFold {
+  transform: rotateX(-178deg);
+}
+
+.revealGift .envelope {
+  transform: scale(0.84) translateY(48px);
+  opacity: 0;
+}
+
+.revealGift .envelopeCard {
+  transform: translateY(-42px) translateZ(200px) scale(1.9);
+  opacity: 0;
+}
+
+.revealGift .envelopeCardFold {
+  transform: rotateX(-178deg);
+}
+
+.press .textGroup,
+.sealBreak .textGroup,
+.flapOpen .textGroup,
+.pause .textGroup,
+.cardPull .textGroup,
+.cardHero .textGroup,
+.revealGift .textGroup {
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+}
+
+/* Final card reveal */
+.finalReveal {
+  position: relative;
+  z-index: 0;
+  animation: finalFadeIn 0.65s ease-out forwards;
+}
+
+@keyframes finalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Replay */
+.giftWrapper {
+  position: relative;
+}
+
+.replayBar {
+  display: flex;
+  justify-content: center;
+  padding: 28px 16px 48px;
+  background:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.5), transparent 70%),
+    linear-gradient(180deg, transparent, rgba(250, 244, 237, 0.9) 30%);
+}
+
+.replayButton {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 10px 18px;
+  color: var(--gi-muted);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.replayButton:hover,
+.replayButton:focus-visible {
+  opacity: 1;
+  color: var(--gi-accent-strong);
+  transform: translateY(-1px);
+}
+
+.replayButton:focus-visible {
+  outline: none;
+  border-radius: 10px;
+  box-shadow: 0 0 0 3px rgba(191, 108, 71, 0.2);
+}
+
+/* Reduced motion */
+.reducedMotion .envelopeScene {
+  animation: none;
+}
+
+.reducedMotion .envelope {
+  animation: none;
+}
+
+.reducedMotion .heartFloat1,
+.reducedMotion .heartFloat2,
+.reducedMotion .heartFloat3 {
+  animation: none;
+  opacity: 0;
+}
+
+.reducedMotion .envelopeFlap {
+  transition-duration: 0.4s;
+}
+
+.reducedMotion .envelopeCard {
+  transition-duration: 0.45s;
+}
+
+.reducedMotion .envelopeCardFold {
+  transition-duration: 0.45s;
+}
+
+.reducedMotion.flapOpen .envelopeFlap,
+.reducedMotion.pause .envelopeFlap,
+.reducedMotion.cardPull .envelopeFlap,
+.reducedMotion.cardHero .envelopeFlap,
+.reducedMotion.revealGift .envelopeFlap {
+  transform: scaleY(-1);
+}
+
+.reducedMotion.cardPull .envelopeCard,
+.reducedMotion.cardHero .envelopeCard {
+  transform: translateY(-72px) translateZ(50px) scale(1.08);
+}
+
+.reducedMotion.cardHero .envelopeCardFold,
+.reducedMotion.revealGift .envelopeCardFold {
+  transform: rotateX(-178deg);
+}
+
+.reducedMotion.revealGift .introContent {
+  opacity: 0;
+  transform: none;
+}
+
+.reducedMotion.revealGift .envelope {
+  opacity: 0;
+}
+
+/* Placeholder */
+.placeholder {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.7), transparent 35%),
+    radial-gradient(circle at 70% 80%, rgba(255, 248, 240, 0.6), transparent 35%),
+    linear-gradient(180deg, var(--gi-bg-top) 0%, var(--gi-bg-bottom) 100%);
+  color: var(--gi-text);
+}
+
+.placeholderCard {
+  max-width: 420px;
+  text-align: center;
+  padding: 42px 34px;
+  border-radius: 26px;
+  background: rgba(255, 250, 245, 0.78);
+  box-shadow:
+    0 20px 64px rgba(72, 49, 37, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.placeholderIcon {
+  font-size: 58px;
+  line-height: 1;
+  margin-bottom: 20px;
+  color: var(--gi-accent);
+  opacity: 0.85;
+}
+
+.placeholderTitle {
+  margin: 0 0 12px;
+  font-size: 23px;
+  font-weight: 500;
+}
+
+.placeholderText {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--gi-muted);
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .envelopeCard {
+    --gi-card-preview-scale: 0.176;
+  }
+
+  .envelopeScene {
+    width: 240px;
+    height: 162px;
+  }
+
+  .envelopeFlap {
+    height: 94px;
+  }
+
+  .envelopeFlapFront,
+  .envelopeFlapBack {
+    width: 100%;
+    height: 100%;
+  }
+
+  .envelopeLeft,
+  .envelopeRight {
+    border-top-width: 81px;
+    border-bottom-width: 81px;
+  }
+
+  .envelopeLeft {
+    border-left-width: 120px;
+  }
+
+  .envelopeRight {
+    border-right-width: 120px;
+  }
+
+  .envelopeBottom {
+    border-left-width: 120px;
+    border-right-width: 120px;
+    border-bottom-width: 64px;
+  }
+
+  .envelopeSeal {
+    top: 56px;
+    width: 34px;
+    height: 34px;
+    margin-left: -17px;
+    font-size: 17px;
+  }
+
+  .cardHeart {
+    font-size: 26px;
+  }
+
+  .cardText {
+    font-size: 12px;
+  }
+
+  .ctaButton {
+    padding: 14px 28px;
+    font-size: 15px;
+  }
+
+  .nameLine {
+    font-size: clamp(28px, 8vw, 38px);
+  }
+
+  .nameLine::after {
+    right: -18px;
+    top: -4px;
+    font-size: 14px;
+  }
+
+  .press .introContent,
+  .sealBreak .introContent,
+  .flapOpen .introContent,
+  .pause .introContent,
+  .cardPull .introContent,
+  .cardHero .introContent {
+    transform: translateY(68px);
+  }
+
+  .cardPull .envelopeCard {
+    transform: translateY(-36px) translateZ(44px) scale(1.04);
+  }
+
+  .cardHero .envelopeCard {
+    transform: translateY(-28px) translateZ(90px) scale(1.12);
+  }
+
+  .revealGift .envelopeCard {
+    transform: translateY(-32px) translateZ(160px) scale(1.72);
+  }
+}
