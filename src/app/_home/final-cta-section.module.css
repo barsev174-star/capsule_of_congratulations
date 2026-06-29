@@ -109,7 +109,15 @@
 }
 
 .decorImage {
-  opacity: 0.9;
+  width: 140px;
+  height: auto;
+  opacity: 0.95;
+}
+
+@media (min-width: 768px) {
+  .decorImage {
+    width: 180px;
+  }
 }
 
 .decorEnvelope {

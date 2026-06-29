@@ -4,17 +4,15 @@ import { resolve } from "node:path";
 const LANDING_ASSETS_DIR = "public/assets/landing";
 
 export type LandingAssetConfig = {
-  heroEnvelope: string;
-  heroGiftCard: string;
-  heroPolaroid: string;
+  heroMain: string;
+  heroDecor: string;
   ctaEnvelope: string;
   templates: Record<string, string>;
 };
 
 export const landingAssetPaths: LandingAssetConfig = {
-  heroEnvelope: "/assets/landing/hero-envelope.png",
-  heroGiftCard: "/assets/landing/hero-gift-card.png",
-  heroPolaroid: "/assets/landing/hero-polaroid.png",
+  heroMain: "/assets/landing/hero-asset.png",
+  heroDecor: "/assets/landing/hero-decor.png",
   ctaEnvelope: "/assets/landing/cta-envelope.png",
   templates: {
     "paper-classic": "/assets/landing/template-paper-classic.png",

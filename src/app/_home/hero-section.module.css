@@ -120,13 +120,40 @@
   position: relative;
   display: flex;
   justify-content: center;
-  min-height: 420px;
+  min-height: 320px;
 }
 
 @media (min-width: 1024px) {
   .visual {
     justify-content: flex-end;
+    min-height: 420px;
   }
+}
+
+.assetWrap {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroAsset {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.heroDecor {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60%;
+  height: auto;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .composition {

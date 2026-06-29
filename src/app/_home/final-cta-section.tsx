@@ -12,7 +12,14 @@ export function FinalCtaSection() {
         <div className={styles.card}>
           <div className={styles.decorLeft} aria-hidden="true">
             {ctaEnvelopeSrc ? (
-              <Image src={ctaEnvelopeSrc} alt="" width={120} height={120} className={styles.decorImage} />
+              <Image
+                src={ctaEnvelopeSrc}
+                alt=""
+                width={180}
+                height={135}
+                className={styles.decorImage}
+                sizes="180px"
+              />
             ) : (
               <div className={styles.decorEnvelope}>
                 <span>♥</span>
