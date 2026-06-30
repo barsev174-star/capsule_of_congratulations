@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import { listCardDrafts, listCardMediaAssetsByCardId, listContributionsByCardId } from "@/lib/cards/repository";
 import { cardTemplates } from "@/lib/cards/templates";
+import { isGiftPublished } from "@/lib/cards/status";
 import { FinalCard } from "@/components/final-card/final-card";
 import { GiftIntro, GiftPlaceholder } from "@/components/gift-intro/gift-intro";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
+import { getAiCardInsight } from "@/lib/ai/repository";
 
 type Props = {
   params: Promise<{
@@ -15,8 +17,6 @@ type Props = {
   }>;
 };
 
-const isCardPublished = (status: string) => status === "ready" || status === "closed";
-
 export default async function GiftPage({ params, searchParams }: Props) {
   const [{ finalSlug }, { debugAssets, forceIntro }] = await Promise.all([params, searchParams]);
   const cards = await listCardDrafts();
@@ -26,15 +26,20 @@ export default async function GiftPage({ params, searchParams }: Props) {
     notFound();
   }
 
-  const [contributions, mediaAssets] = await Promise.all([
+  const [contributions, mediaAssets, quotesInsight, qualitiesInsight] = await Promise.all([
     listContributionsByCardId(card.id),
-    listCardMediaAssetsByCardId(card.id)
+    listCardMediaAssetsByCardId(card.id),
+    getAiCardInsight(card.id, "quotes"),
+    getAiCardInsight(card.id, "qualities")
   ]);
   const template = cardTemplates.find((item) => item.id === card.templateId);
-  const model = buildFinalCardViewModel(card, contributions, mediaAssets);
+  const model = buildFinalCardViewModel(card, contributions, mediaAssets, {
+    quotes: quotesInsight?.items.map((item) => item.text),
+    qualities: qualitiesInsight?.items.map((item) => item.text)
+  });
   const isAssetDebugEnabled = process.env.NODE_ENV === "development" && debugAssets === "1";
   const isForceIntroEnabled = process.env.NODE_ENV === "development" && forceIntro === "1";
-  const published = isCardPublished(card.status) || isForceIntroEnabled;
+  const published = isGiftPublished(card) || isForceIntroEnabled;
 
   if (!published) {
     return <GiftPlaceholder recipientName={card.recipientName} />;

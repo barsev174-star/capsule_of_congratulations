@@ -317,6 +317,17 @@ export const updateCardStatus = async (cardId: string, status: CardStatus) => {
   return result.rows[0] ? mapCard(result.rows[0]) : null;
 };
 
+export const updateCardPaymentStatus = async (
+  cardId: string,
+  paymentStatus: CardDraft["paymentStatus"]
+) => {
+  const result = await getPostgresPool().query<CardRow>(
+    "UPDATE cards SET payment_status = $2, updated_at = now() WHERE id = $1 RETURNING *",
+    [cardId, paymentStatus]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+
 export const listCardMediaAssetsByCardId = async (cardId: string) => {
   const result = await getPostgresPool().query<MediaRow>(
     "SELECT * FROM card_media_assets WHERE card_id = $1 ORDER BY created_at ASC",
@@ -465,37 +476,49 @@ export const deleteCardMediaAsset = async (assetId: string) => {
 };
 
 export const saveContribution = async (contribution: Contribution) => {
-  const orderResult = await getPostgresPool().query<{ next_order: number }>(
-    "SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM contributions WHERE card_id = $1",
-    [contribution.cardId]
-  );
-  const sortOrder =
-    typeof contribution.sortOrder === "number" && Number.isFinite(contribution.sortOrder)
-      ? contribution.sortOrder
-      : orderResult.rows[0]?.next_order ?? 0;
+  const client = await getPostgresPool().connect();
 
-  await getPostgresPool().query(
-    `
-      INSERT INTO contributions (
-        id, card_id, author_name, author_role, author_avatar_url, message,
-        sort_order, status, source, created_at, updated_at
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-    `,
-    [
-      contribution.id,
-      contribution.cardId,
-      contribution.authorName,
-      contribution.authorRole,
-      contribution.authorAvatarUrl,
-      contribution.message,
-      sortOrder,
-      contribution.status,
-      contribution.source,
-      contribution.createdAt,
-      contribution.updatedAt
-    ]
-  );
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT id FROM cards WHERE id = $1 FOR UPDATE", [contribution.cardId]);
+    const orderResult = await client.query<{ next_order: number }>(
+      "SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM contributions WHERE card_id = $1",
+      [contribution.cardId]
+    );
+    const sortOrder =
+      typeof contribution.sortOrder === "number" && Number.isFinite(contribution.sortOrder)
+        ? contribution.sortOrder
+        : orderResult.rows[0]?.next_order ?? 0;
+
+    await client.query(
+      `
+        INSERT INTO contributions (
+          id, card_id, author_name, author_role, author_avatar_url, message,
+          sort_order, status, source, created_at, updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `,
+      [
+        contribution.id,
+        contribution.cardId,
+        contribution.authorName,
+        contribution.authorRole,
+        contribution.authorAvatarUrl,
+        contribution.message,
+        sortOrder,
+        contribution.status,
+        contribution.source,
+        contribution.createdAt,
+        contribution.updatedAt
+      ]
+    );
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 export const listContributionsByCardId = async (cardId: string) => {

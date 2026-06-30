@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
+import { publishCardAction } from "@/lib/cards/actions";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type { FinalCardViewModel } from "@/lib/final-card/view-model";
 import { getGiftPath } from "@/lib/routes/card-links";
@@ -16,6 +17,8 @@ import styles from "./final-card.module.css";
 type Props = {
   model: FinalCardViewModel;
   debugAssets?: boolean;
+  mode?: "gift" | "preview";
+  manageToken?: string;
 };
 
 const styleClassMap = {
@@ -307,7 +310,8 @@ const renderMessagesLayout = (model: FinalCardViewModel) => {
   );
 };
 
-export const FinalCard = ({ model, debugAssets = false }: Props) => {
+export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageToken }: Props) => {
+  const isPreview = mode === "preview";
   const isPaperBirthday = model.style === "paper-birthday";
   const heroScaleClass = isPaperBirthday ? getPaperBirthdayHeroScaleClass(model.recipientName) : "";
   const heroNameWords = model.recipientName
@@ -355,6 +359,17 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
             <>
               {renderAnchorLayer("hero")}
               <div className={styles.heroGlow} />
+              {isPreview ? (
+                <div className={styles.previewAnimationNote}>
+                  <span className={styles.previewAnimationIcon} aria-hidden="true">
+                    <HeartEnvelopeIcon />
+                  </span>
+                  <div>
+                    <strong>Анимация открытия: Конверт с открыткой</strong>
+                    <span>Будет доступна получателю после публикации.</span>
+                  </div>
+                </div>
+              ) : null}
               <div className={styles.heroMain}>
                 <div className={styles.heroPretitle}>{model.occasionLabel}</div>
                 <h1 className={styles.title}>
@@ -495,7 +510,7 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
                 renderMessagesLayout(model)
               )}
 
-              {model.showAllMessagesLink ? (
+              {!isPreview && model.showAllMessagesLink ? (
                 <div className={styles.sectionFooter}>
                   <Link href={`${getGiftPath(model.finalSlug)}/messages`} className={styles.inlineLinkButton}>
                     Смотреть все поздравления
@@ -669,7 +684,26 @@ export const FinalCard = ({ model, debugAssets = false }: Props) => {
         }
 
         if (block.id === "closing") {
-          const closingContent = (
+          const closingContent = isPreview ? (
+            <>
+              {renderAnchorLayer("footer")}
+              <div className={styles.previewClosing}>
+                <p className={styles.previewClosingTitle}>Это предпросмотр</p>
+                <p className={styles.previewClosingText}>
+                  После публикации здесь будет финальная открытка без водяного знака, с анимацией
+                  открытия и ссылкой для получателя.
+                </p>
+                {manageToken ? (
+                  <form action={publishCardAction}>
+                    <input type="hidden" name="manageToken" value={manageToken} />
+                    <button type="submit" className={`${styles.button} ${styles.primaryButton}`}>
+                      Опубликовать открытку
+                    </button>
+                  </form>
+                ) : null}
+              </div>
+            </>
+          ) : (
             <>
               {renderAnchorLayer("footer")}
               <div className={styles.closingContent}>

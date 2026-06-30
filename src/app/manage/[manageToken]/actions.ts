@@ -26,6 +26,7 @@ import { createContribution } from "@/lib/cards/service";
 import { isTemplateId } from "@/lib/cards/templates";
 import type { CardDraft, CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
 import { validateContributionFormData, validateContributionMessage } from "@/lib/contributions/validation";
+import { generateBestQuotes, generateQualities } from "@/lib/ai/service";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type {
   FinalCardBlockId,
@@ -716,4 +717,58 @@ export async function deleteCardMediaAction(
 
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
   return { ok: true, message: "Фото удалено." };
+}
+
+export async function generateBestQuotesAction(
+  manageToken: string
+): Promise<{ ok: boolean; message: string; quotes: string[]; usage: import("@/lib/ai/types").AiUsage }> {
+  const card = await getCardDraftByManageToken(manageToken);
+
+  if (!card) {
+    return { ok: false, message: "Секретная ссылка управления больше не актуальна.", quotes: [], usage: { used: 0, limit: 0, remaining: 0 } };
+  }
+
+  const contributions = await listContributionsByCardId(card.id);
+  const result = await generateBestQuotes({
+    cardId: card.id,
+    recipientName: card.recipientName,
+    occasionText: card.occasionText,
+    contributions
+  });
+
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+
+  return {
+    ok: true,
+    message: "Лучшие фразы обновлены.",
+    quotes: result.insight.items.map((item) => item.text),
+    usage: result.usage
+  };
+}
+
+export async function generateQualitiesAction(
+  manageToken: string
+): Promise<{ ok: boolean; message: string; qualities: string[]; usage: import("@/lib/ai/types").AiUsage }> {
+  const card = await getCardDraftByManageToken(manageToken);
+
+  if (!card) {
+    return { ok: false, message: "Секретная ссылка управления больше не актуальна.", qualities: [], usage: { used: 0, limit: 0, remaining: 0 } };
+  }
+
+  const contributions = await listContributionsByCardId(card.id);
+  const result = await generateQualities({
+    cardId: card.id,
+    recipientName: card.recipientName,
+    occasionText: card.occasionText,
+    contributions
+  });
+
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+
+  return {
+    ok: true,
+    message: "Качества обновлены.",
+    qualities: result.insight.items.map((item) => item.text),
+    usage: result.usage
+  };
 }

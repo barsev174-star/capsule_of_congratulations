@@ -10,7 +10,7 @@ import {
 import { getCardTemplates } from "@/lib/cards/templates-server";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
-import { getGiftPath, getJoinUrl, getManagePath, getPreviewPath, getPreviewUrl } from "@/lib/routes/card-links";
+import { getGiftPath, getJoinUrl, getManagePath, getPreviewPath } from "@/lib/routes/card-links";
 import type { FinalCardBlockId, FinalCardOptionalBlockId } from "@/lib/final-card/types";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { BasicsSettingsForm } from "./basics-settings-form";
@@ -19,6 +19,10 @@ import { ContentStudio } from "./content-studio";
 import { CopyLinkButton } from "./copy-link-button";
 import { TemplateSettingsForm } from "./template-settings-form";
 import styles from "./manage-page.module.css";
+import { getAiCardInsight, getAiUsageSummary } from "@/lib/ai/repository";
+import { buildContributionFingerprint } from "@/lib/ai/card-insights";
+import { isGiftPublished } from "@/lib/cards/status";
+import { publishCardAction } from "@/lib/cards/actions";
 
 type Props = {
   params: Promise<{
@@ -42,7 +46,8 @@ const statusLabels: Record<string, string> = {
   draft: "Черновик",
   collecting: "Сбор поздравлений",
   ready: "Готова к отправке",
-  closed: "Сбор закрыт"
+  closed: "Сбор закрыт",
+  published: "Опубликована"
 };
 
 export default async function ManagePage({ params, searchParams }: Props) {
@@ -55,14 +60,28 @@ export default async function ManagePage({ params, searchParams }: Props) {
     notFound();
   }
 
-  const [allContributions, cardTemplates] = await Promise.all([
+  const [allContributions, cardTemplates, visibleContributions, mediaAssets, aiUsage, quotesInsight, qualitiesInsight] = await Promise.all([
     listAllContributionsByCardId(card.id),
-    getCardTemplates()
+    getCardTemplates(),
+    listContributionsByCardId(card.id),
+    listCardMediaAssetsByCardId(card.id),
+    getAiUsageSummary(card.id),
+    getAiCardInsight(card.id, "quotes"),
+    getAiCardInsight(card.id, "qualities")
   ]);
-  const visibleContributions = await listContributionsByCardId(card.id);
-  const mediaAssets = await listCardMediaAssetsByCardId(card.id);
-  const model = buildFinalCardViewModel(card, visibleContributions, mediaAssets);
-  const availableModel = buildFinalCardViewModel({ ...card, finalBlockSettings: null }, visibleContributions, mediaAssets);
+  const generatedQuotes = quotesInsight?.items.map((item) => item.text) ?? [];
+  const generatedQualities = qualitiesInsight?.items.map((item) => item.text) ?? [];
+  const contributionFingerprint = buildContributionFingerprint(visibleContributions);
+  const quotesAreStale = Boolean(quotesInsight && quotesInsight.sourceFingerprint !== contributionFingerprint);
+  const qualitiesAreStale = Boolean(qualitiesInsight && qualitiesInsight.sourceFingerprint !== contributionFingerprint);
+  const aiContent = { quotes: generatedQuotes, qualities: generatedQualities };
+  const model = buildFinalCardViewModel(card, visibleContributions, mediaAssets, aiContent);
+  const availableModel = buildFinalCardViewModel(
+    { ...card, finalBlockSettings: null },
+    visibleContributions,
+    mediaAssets,
+    aiContent
+  );
   const style = cardTemplates.find((template) => template.id === card.templateId)?.id ?? "warm-classic";
   const selectedTemplate = cardTemplates.find((template) => template.id === card.templateId) ?? cardTemplates[0];
   const layoutMode = card.finalMessageSettings?.layoutMode ?? "grid-2";
@@ -135,10 +154,10 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const previewMessages = visibleContributions.slice(0, 1);
   const previewMessage = previewMessages[0];
   const participantLink = getJoinUrl(card.publicSlug);
-  const previewLink = getPreviewUrl(card.manageToken);
   const currentStatus = card.status ?? "draft";
-  const aiLimitTotal = 5;
-  const aiLimitRemaining = Math.max(0, aiLimitTotal - 3);
+  const published = isGiftPublished(card);
+  const aiLimitTotal = aiUsage.limit;
+  const aiLimitRemaining = aiUsage.remaining;
   const templatePalette = ["#eaded2", "#f4c59e", selectedTemplate.accent, "#5a3927", "#a8b792"];
 
   return (
@@ -166,7 +185,11 @@ export default async function ManagePage({ params, searchParams }: Props) {
 
           <div className={styles.managerActions}>
             <CopyLinkButton value={participantLink} label="Копировать ссылку" />
-            <Link href={getGiftPath(card.finalSlug)} target="_blank" className={styles.previewPrimaryLink}>
+            <Link
+              href={published ? getGiftPath(card.finalSlug) : getPreviewPath(card.manageToken)}
+              target="_blank"
+              className={styles.previewPrimaryLink}
+            >
               Посмотреть открытку
             </Link>
             <div className={styles.publishNote}>
@@ -227,6 +250,13 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   requiredBlockIds={requiredLayoutBlockIds}
                   initialMainGreetingContributionId={mainGreetingContributionId}
                   mainGreetingStatusText={mainGreetingStatusText}
+                  initialBestQuotes={generatedQuotes}
+                  bestQuotesAreStale={quotesAreStale}
+                  canGenerateBestQuotes={visibleContributions.length >= 2}
+                  initialQualities={generatedQualities}
+                  qualitiesAreStale={qualitiesAreStale}
+                  canGenerateQualities={visibleContributions.length >= 2}
+                  initialAiUsage={aiUsage}
                 />
               </section>
             </div>
@@ -320,17 +350,6 @@ export default async function ManagePage({ params, searchParams }: Props) {
                       <CopyLinkButton value={participantLink} />
                     </div>
                   </div>
-                  <div className={styles.accessItem}>
-                    <div className={styles.accessItemInfo}>
-                      <strong>Предпросмотр открытки</strong>
-                      <span>Только для вас</span>
-                    </div>
-                    <div className={styles.accessItemActions}>
-                      <Link href={previewLink} target="_blank" className={styles.secondaryButton}>
-                        Посмотреть
-                      </Link>
-                    </div>
-                  </div>
                 </div>
               </section>
 
@@ -343,12 +362,13 @@ export default async function ManagePage({ params, searchParams }: Props) {
                     </p>
                   </div>
                 </div>
-                <div className={styles.publishPriceRow}>
+                <form action={publishCardAction} className={styles.publishPriceRow}>
+                  <input type="hidden" name="manageToken" value={manageToken} />
                   <strong>399 ₽</strong>
-                  <button type="button" className={styles.publishButton}>
+                  <button type="submit" className={styles.publishButton}>
                     Опубликовать открытку
                   </button>
-                </div>
+                </form>
                 <p className={styles.paymentFineprint}>Оплата безопасна через ЮKassa · Без скрытых платежей</p>
               </section>
             </aside>

@@ -340,6 +340,29 @@ export const updateCardStatus = async (cardId: string, status: CardStatus) => {
   return updated;
 };
 
+export const updateCardPaymentStatus = async (cardId: string, paymentStatus: CardDraft["paymentStatus"]) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.updateCardPaymentStatus(cardId, paymentStatus);
+  }
+
+  const cards = await readCards();
+  const index = cards.findIndex((card) => card.id === cardId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const updated = {
+    ...cards[index],
+    paymentStatus,
+    updatedAt: new Date().toISOString()
+  };
+
+  cards[index] = updated;
+  await writeFile(cardsFilePath, JSON.stringify(cards, null, 2), "utf8");
+  return updated;
+};
+
 export const listCardMediaAssetsByCardId = async (cardId: string) => {
   if (isPostgresConfigured()) {
     return postgresRepository.listCardMediaAssetsByCardId(cardId);

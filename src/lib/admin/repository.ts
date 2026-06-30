@@ -62,7 +62,8 @@ export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => 
       draft: 0,
       collecting: 0,
       ready: 0,
-      closed: 0
+      closed: 0,
+      published: 0
     };
 
     for (const row of cardsResult.rows) {
@@ -107,7 +108,8 @@ export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => 
     draft: 0,
     collecting: 0,
     ready: 0,
-    closed: 0
+    closed: 0,
+    published: 0
   };
 
   for (const card of cards) {

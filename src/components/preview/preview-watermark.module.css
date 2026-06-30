@@ -1,0 +1,40 @@
+.watermark {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.watermarkInner {
+  position: absolute;
+  inset: -50%;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 80px 120px;
+  transform: rotate(-24deg);
+  opacity: 0.14;
+}
+
+.mark {
+  flex: 0 0 auto;
+  color: #5a3927;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  user-select: none;
+}
+
+@media (max-width: 560px) {
+  .watermarkInner {
+    gap: 56px 80px;
+  }
+
+  .mark {
+    font-size: clamp(1.4rem, 6vw, 2.2rem);
+  }
+}
