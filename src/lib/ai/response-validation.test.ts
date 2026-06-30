@@ -145,7 +145,7 @@ describe("AI provider response validation", () => {
     expect(result).toBeNull();
   });
 
-  it("rejects literal repetition of a wish list", () => {
+  it("keeps a literal wish list as a soft quality warning", () => {
     const result = inspectProviderVariants({
       value: {
         variants: variants.map((variant, index) =>
@@ -159,13 +159,13 @@ describe("AI provider response validation", () => {
       existingMessages: []
     });
 
-    expect(result.variants).toHaveLength(2);
+    expect(result.variants).toHaveLength(3);
     expect(result.issues).toEqual(expect.arrayContaining([
       expect.objectContaining({ type: "short", code: "FORBIDDEN_PHRASE", severity: "soft" })
     ]));
   });
 
-  it("rejects a wish list repeated with shallow synonyms", () => {
+  it("keeps shallow wish-list wording as a soft quality warning", () => {
     const result = inspectProviderVariants({
       value: {
         variants: variants.map((variant, index) =>
@@ -179,7 +179,7 @@ describe("AI provider response validation", () => {
       existingMessages: []
     });
 
-    expect(result.variants).toHaveLength(2);
+    expect(result.variants).toHaveLength(3);
     expect(result.issues).toEqual(expect.arrayContaining([
       expect.objectContaining({ type: "short", code: "FORBIDDEN_PHRASE" })
     ]));

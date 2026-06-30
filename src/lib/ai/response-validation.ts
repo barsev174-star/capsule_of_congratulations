@@ -254,14 +254,12 @@ export const inspectProviderVariants = (input: ProviderValidationInput): Provide
         "soft",
         "не повторяй карьерные клише; скажи живее: работа, куда хочется идти, место, где ценят, доход, который радует"
       );
-      continue;
     }
     if (
       input.enforcePromptRules !== false &&
       weakCareerPatterns.some((pattern) => pattern.test(text) && !pattern.test(input.draftNotes))
     ) {
       reject("FORBIDDEN_PHRASE", "soft", "убери добавленное моделью общее карьерное клише");
-      continue;
     }
     if (input.enforcePromptRules !== false && promptLeakagePatterns.some((pattern) => pattern.test(text))) {
       reject("FORBIDDEN_PHRASE", "soft", "убери служебную формулировку из черновика или prompt");
@@ -291,7 +289,6 @@ export const inspectProviderVariants = (input: ProviderValidationInput): Provide
         "soft",
         "не повторяй пожелания списком; преобразуй их в естественную человеческую фразу"
       );
-      continue;
     }
     if (
       input.enforcePromptRules !== false &&

@@ -97,6 +97,24 @@ describe("AI greeting service validation flow", () => {
     delete process.env.AI_GREETING_PROVIDER;
   });
 
+  it("does not discard all variants because of soft career wording", async () => {
+    process.env.AI_GREETING_PROVIDER = "openai";
+    mocks.generateWithOpenAi.mockResolvedValue({
+      model: "gpt-5-mini",
+      variants: [
+        { id: "short", label: "Короткий", text: "Анна, поздравляю с выпускным! Пусть найдётся работа мечты и достойная зарплата." },
+        { id: "warm", label: "Душевный", text: "Спасибо за помощь во время учёбы. Желаю тебе уверенного карьерного роста и любимой работы." },
+        { id: "style", label: "Ваш стиль", text: "С выпускным! Пусть впереди ждут работа по душе, хороший доход и новые профессиональные возможности." }
+      ]
+    });
+
+    const result = await generateParticipantMessage(input);
+
+    expect(result.variants).toHaveLength(3);
+    expect(mocks.generateWithOpenAi).toHaveBeenCalledOnce();
+    delete process.env.AI_GREETING_PROVIDER;
+  });
+
   it("returns AI_VALIDATION_FAILED for valid JSON with a forbidden phrase", async () => {
     const badResult = {
       ...goodResult,
