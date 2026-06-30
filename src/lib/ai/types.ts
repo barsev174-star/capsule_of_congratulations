@@ -6,7 +6,7 @@ export type AiStyle =
   | "respectful";
 
 export type AiVariantType = "short" | "warm" | "style";
-export type AiProviderName = "mock" | "gigachat";
+export type AiProviderName = "mock" | "gigachat" | "openai";
 export type AiGenerationMode = "compose" | "improve" | "shorten";
 export type AiGenerationType = "participant_message" | "best_quotes" | "qualities";
 export type AiCardInsightType = "quotes" | "qualities";

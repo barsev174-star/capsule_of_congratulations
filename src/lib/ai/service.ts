@@ -8,6 +8,7 @@ import {
   saveAiCardInsight
 } from "@/lib/ai/repository";
 import { generateBestQuotesWithGigaChat, generateQualitiesWithGigaChat, generateWithGigaChat } from "@/lib/ai/gigachat-provider";
+import { generateWithOpenAi } from "@/lib/ai/openai-provider";
 import {
   buildContributionFingerprint,
   buildMockBestQuotes,
@@ -341,8 +342,16 @@ const buildShortenedVariants = (input: AiGenerationInput): AiVariant[] => {
   ];
 };
 
+const getProviderName = (value?: string): AiProviderName =>
+  value === "gigachat" || value === "openai" ? value : "mock";
+
+const getInsightsProviderName = (): AiProviderName =>
+  (process.env.AI_INSIGHTS_PROVIDER ?? (process.env.GIGACHAT_AUTH_KEY ? "gigachat" : "mock")) === "gigachat"
+    ? "gigachat"
+    : "mock";
+
 export const generateParticipantMessage = async (input: AiGenerationInput): Promise<AiGenerationResult> => {
-  const providerName: AiProviderName = process.env.AI_PROVIDER === "gigachat" ? "gigachat" : "mock";
+  const providerName = getProviderName(process.env.AI_GREETING_PROVIDER ?? process.env.AI_PROVIDER);
   const usageSummary = await getAiUsageSummary(input.cardId);
   const generationId = randomUUID();
   const reservation = await reserveAiGeneration({ id: generationId, cardId: input.cardId, limit: usageSummary.limit });
@@ -362,15 +371,18 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
   try {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
-        providerResult = providerName === "gigachat"
-          ? await generateWithGigaChat({
+        const providerInput = {
               ...input,
               existingMessages,
               fromLabel: input.fromLabel ?? "",
               attempt,
               validationFeedback
-            })
-          : {
+            };
+        providerResult = providerName === "gigachat"
+          ? await generateWithGigaChat(providerInput)
+          : providerName === "openai"
+            ? await generateWithOpenAi(providerInput)
+            : {
               variants: input.mode === "shorten"
                 ? buildShortenedVariants(input)
                 : buildVariants(input, reservation.usage.used - 1 + attempt),
@@ -410,14 +422,14 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         style: input.style,
         recipientName: input.recipientName,
         relationshipContext: input.relationshipContext,
-        enforcePromptRules: providerName === "gigachat"
+        enforcePromptRules: providerName !== "mock"
       });
 
       lastValidationIssues = validation.issues;
       validationFeedback = validation.issues.map((issue) => issue.message);
 
       if (process.env.NODE_ENV !== "production" && validation.issues.length > 0) {
-        logger.warn("ai.gigachat_validation_failed", "GigaChat variants failed validation", {
+        logger.warn("ai.participant_validation_failed", "AI greeting variants failed validation", {
           cardId: input.cardId,
           attempt: attempt + 1,
           parsedVariants: providerResult.variants,
@@ -506,7 +518,7 @@ export const generateBestQuotes = async (input: {
     throw new AiError("VALIDATION", "Для выбора лучших фраз нужно хотя бы два поздравления.");
   }
 
-  const providerName: AiProviderName = process.env.AI_PROVIDER === "gigachat" ? "gigachat" : "mock";
+  const providerName = getInsightsProviderName();
   const usageSummary = await getAiUsageSummary(input.cardId);
   const generationId = randomUUID();
   const reservation = await reserveAiGeneration({
@@ -579,7 +591,7 @@ export const generateQualities = async (input: {
     throw new AiError("VALIDATION", "Для определения качеств нужно хотя бы два поздравления.");
   }
 
-  const providerName: AiProviderName = process.env.AI_PROVIDER === "gigachat" ? "gigachat" : "mock";
+  const providerName = getInsightsProviderName();
   const usageSummary = await getAiUsageSummary(input.cardId);
   const generationId = randomUUID();
   const reservation = await reserveAiGeneration({

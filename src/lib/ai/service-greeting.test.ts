@@ -4,6 +4,7 @@ import type { AiGenerationInput, AiProviderResult } from "@/lib/ai/types";
 
 const mocks = vi.hoisted(() => ({
   generateWithGigaChat: vi.fn(),
+  generateWithOpenAi: vi.fn(),
   completeAiGeneration: vi.fn(),
   releaseAiGeneration: vi.fn()
 }));
@@ -12,6 +13,10 @@ vi.mock("@/lib/ai/gigachat-provider", () => ({
   generateWithGigaChat: mocks.generateWithGigaChat,
   generateBestQuotesWithGigaChat: vi.fn(),
   generateQualitiesWithGigaChat: vi.fn()
+}));
+
+vi.mock("@/lib/ai/openai-provider", () => ({
+  generateWithOpenAi: mocks.generateWithOpenAi
 }));
 
 vi.mock("@/lib/ai/repository", () => ({
@@ -64,7 +69,9 @@ const goodResult: AiProviderResult = {
 describe("AI greeting service validation flow", () => {
   beforeEach(() => {
     process.env.AI_PROVIDER = "gigachat";
+    delete process.env.AI_GREETING_PROVIDER;
     mocks.generateWithGigaChat.mockReset();
+    mocks.generateWithOpenAi.mockReset();
     mocks.completeAiGeneration.mockClear();
     mocks.releaseAiGeneration.mockClear();
   });
@@ -76,6 +83,18 @@ describe("AI greeting service validation flow", () => {
 
     expect(result.variants).toHaveLength(3);
     expect(mocks.completeAiGeneration).toHaveBeenCalledOnce();
+  });
+
+  it("routes greeting generation to the OpenAI provider", async () => {
+    process.env.AI_GREETING_PROVIDER = "openai";
+    mocks.generateWithOpenAi.mockResolvedValue({ ...goodResult, model: "gpt-5-mini" });
+
+    const result = await generateParticipantMessage(input);
+
+    expect(result.variants).toHaveLength(3);
+    expect(mocks.generateWithOpenAi).toHaveBeenCalledOnce();
+    expect(mocks.generateWithGigaChat).not.toHaveBeenCalled();
+    delete process.env.AI_GREETING_PROVIDER;
   });
 
   it("returns AI_VALIDATION_FAILED for valid JSON with a forbidden phrase", async () => {
