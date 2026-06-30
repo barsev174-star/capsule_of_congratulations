@@ -8,7 +8,7 @@ import {
   saveAiCardInsight
 } from "@/lib/ai/repository";
 import { generateBestQuotesWithGigaChat, generateQualitiesWithGigaChat, generateWithGigaChat } from "@/lib/ai/gigachat-provider";
-import { generateWithOpenAi } from "@/lib/ai/openai-provider";
+import { generateWithOpenAi, OPENAI_GREETING_PROMPT_VERSION } from "@/lib/ai/openai-provider";
 import {
   buildContributionFingerprint,
   buildMockBestQuotes,
@@ -376,7 +376,9 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
               existingMessages,
               fromLabel: input.fromLabel ?? "",
               attempt,
-              validationFeedback
+              validationFeedback,
+              requestedVariantTypes: (["short", "warm", "style"] as const)
+                .filter((type) => !acceptedVariants.has(type))
             };
         providerResult = providerName === "gigachat"
           ? await generateWithGigaChat(providerInput)
@@ -427,6 +429,19 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
 
       lastValidationIssues = validation.issues;
       validationFeedback = validation.issues.map((issue) => issue.message);
+
+      if (process.env.NODE_ENV !== "production") {
+        logger.info("ai.participant_validation_result", "AI greeting validation completed", {
+          provider: providerName,
+          model: providerResult.model,
+          mode: input.mode ?? "compose",
+          style: input.style,
+          promptVersion: providerName === "openai" ? OPENAI_GREETING_PROMPT_VERSION : undefined,
+          attempt: attempt + 1,
+          acceptedTypes: validation.variants.map((variant) => variant.id),
+          issueCodes: validation.issues.map((issue) => issue.code)
+        });
+      }
 
       if (process.env.NODE_ENV !== "production" && validation.issues.length > 0) {
         logger.warn("ai.participant_validation_failed", "AI greeting variants failed validation", {

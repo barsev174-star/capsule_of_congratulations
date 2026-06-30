@@ -16,7 +16,8 @@ vi.mock("@/lib/ai/gigachat-provider", () => ({
 }));
 
 vi.mock("@/lib/ai/openai-provider", () => ({
-  generateWithOpenAi: mocks.generateWithOpenAi
+  generateWithOpenAi: mocks.generateWithOpenAi,
+  OPENAI_GREETING_PROMPT_VERSION: "greeting-openai-v2"
 }));
 
 vi.mock("@/lib/ai/repository", () => ({
@@ -97,14 +98,14 @@ describe("AI greeting service validation flow", () => {
     delete process.env.AI_GREETING_PROVIDER;
   });
 
-  it("does not discard all variants because of soft career wording", async () => {
+  it("accepts naturally rephrased career wishes", async () => {
     process.env.AI_GREETING_PROVIDER = "openai";
     mocks.generateWithOpenAi.mockResolvedValue({
       model: "gpt-5-mini",
       variants: [
-        { id: "short", label: "Короткий", text: "Анна, поздравляю с выпускным! Пусть найдётся работа мечты и достойная зарплата." },
-        { id: "warm", label: "Душевный", text: "Спасибо за помощь во время учёбы. Желаю тебе уверенного карьерного роста и любимой работы." },
-        { id: "style", label: "Ваш стиль", text: "С выпускным! Пусть впереди ждут работа по душе, хороший доход и новые профессиональные возможности." }
+        { id: "short", label: "Короткий", text: "Анна, поздравляю с выпускным! Пусть найдётся дело по душе и место, где тебя ценят." },
+        { id: "warm", label: "Душевный", text: "Спасибо за помощь во время учёбы. Желаю тебе интересных задач и возможности уверенно расти." },
+        { id: "style", label: "Ваш стиль", text: "С выпускным! Пусть впереди ждут любимое дело, хороший коллектив и доход, который радует." }
       ]
     });
 
@@ -142,6 +143,7 @@ describe("AI greeting service validation flow", () => {
 
     expect(result.variants).toHaveLength(3);
     expect(mocks.generateWithGigaChat).toHaveBeenCalledTimes(2);
+    expect(mocks.generateWithGigaChat.mock.calls[1][0].requestedVariantTypes).toEqual(["short"]);
   });
 
   it("preserves INVALID_JSON after two malformed provider responses", async () => {
@@ -149,5 +151,32 @@ describe("AI greeting service validation flow", () => {
 
     await expect(generateParticipantMessage(input)).rejects.toMatchObject({ code: "INVALID_JSON" });
     expect(mocks.generateWithGigaChat).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps good OpenAI variants and retries only the rejected type", async () => {
+    process.env.AI_GREETING_PROVIDER = "openai";
+    mocks.generateWithOpenAi
+      .mockResolvedValueOnce({
+        ...goodResult,
+        model: "gpt-5-mini",
+        variants: goodResult.variants.map((variant, index) =>
+          index === 0 ? { ...variant, text: "Анна, желаю тебе найти работу мечты и добиться карьерного роста." } : variant
+        )
+      })
+      .mockResolvedValueOnce({
+        model: "gpt-5-mini",
+        variants: [{
+          id: "short",
+          label: "Короткий",
+          text: "Анна, пусть после выпуска найдётся дело по душе и место, где тебя ценят."
+        }]
+      });
+
+    const result = await generateParticipantMessage(input);
+
+    expect(result.variants).toHaveLength(3);
+    expect(mocks.generateWithOpenAi).toHaveBeenCalledTimes(2);
+    expect(mocks.generateWithOpenAi.mock.calls[1][0].requestedVariantTypes).toEqual(["short"]);
+    delete process.env.AI_GREETING_PROVIDER;
   });
 });

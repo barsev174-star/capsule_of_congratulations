@@ -10,6 +10,8 @@ Greeting generation supports three server-side providers:
 
 The OpenAI-compatible provider is currently configured for RouterAI and `openai/gpt-5-mini`. It generates participant greetings in `compose`, `improve` and `shorten` modes. The response schema requires exactly three variants: `short`, `warm` and `style`.
 
+Current participant prompt: `greeting-openai-v2`.
+
 Best quotes and recipient qualities remain on GigaChat. This separation is intentional and controlled by two variables:
 
 ```env
@@ -38,9 +40,11 @@ The key is stored only in `.env.local` or `.env.production`. Never commit `.env.
 - The provider requests strict JSON Schema output with exactly three typed variants.
 - The existing hard and soft quality validation remains active.
 - One retry is available with short validation feedback.
+- Valid variants survive the first attempt; retry requests only rejected variant types.
 - Failed provider calls release the reserved AI action and do not consume the card limit.
 - Existing greetings are passed as anti-duplication context without author names.
 - GigaChat code and configuration are retained for immediate rollback.
+- Hard validation rejects copied drafts, prompt leakage, wrong author voice, invented work details and exact career clichés. Natural rephrasing remains accepted.
 
 RouterAI accepted the production schema and returned valid structured output during the integration check. A later live request experienced elevated provider latency, so the application timeout remains mandatory.
 

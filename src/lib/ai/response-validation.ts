@@ -44,19 +44,31 @@ const careerClichePatterns = [
   /замечательн\p{L}*\s+работ/iu
 ];
 
+const hardClichePatterns = [
+  /(?<!\p{L})работ\p{L}*\s+мечт\p{L}*(?!\p{L})/iu,
+  /(?<!\p{L})(?:высок\p{L}*|достойн\p{L}*)\s+зарплат\p{L}*(?!\p{L})/iu,
+  /(?<!\p{L})(?:карьерн\p{L}*|профессиональн\p{L}*)\s+рост\p{L}*(?!\p{L})/iu,
+  /(?<!\p{L})стремительн\p{L}*\s+карьерн\p{L}*/iu,
+  /(?<!\p{L})карьерн\p{L}*\s+(?:взл[её]т\p{L}*|лестниц\p{L}*|развити\p{L}*)/iu,
+  /(?<!\p{L})рост\p{L}*\s+по\s+служб\p{L}*(?!\p{L})/iu,
+  /(?<!\p{L})достойн\p{L}*\s+оплат\p{L}*\s+труд\p{L}*(?!\p{L})/iu,
+  /(?<!\p{L})высок\p{L}*\s+доход\p{L}*(?!\p{L})/iu,
+  /(?<!\p{L})оставайся\s+так\p{L}*\s+же(?!\p{L})/iu
+];
+
 const weakCareerPatterns = [
   /интересн\p{L}*\s+проект/iu,
   /больш\p{L}*\s+успех/iu
 ];
 
 const promptLeakagePatterns = [
-  /\bхочу\s+поздравить\b/iu,
-  /\bнужно\s+пожелать\b/iu,
-  /\bмысли\s+пользователя\b/iu,
-  /\bвыбранн\p{L}*\s+стил/iu,
-  /\bполучатель\s*:/iu,
-  /\bнадпись\s+события\b/iu,
-  /\bпоздравить\p{L}*\s+(?:с\s+\p{L}+[,.]?\s+)?сокурсни/iu
+  /(?<!\p{L})хочу\s+поздравить(?!\p{L})/iu,
+  /(?<!\p{L})нужно\s+пожелать(?!\p{L})/iu,
+  /(?<!\p{L})мысли\s+пользователя(?!\p{L})/iu,
+  /(?<!\p{L})выбранн\p{L}*\s+стил/iu,
+  /(?<!\p{L})получатель\s*:/iu,
+  /(?<!\p{L})надпись\s+события(?!\p{L})/iu,
+  /(?<!\p{L})поздравить\p{L}*\s+(?:с\s+\p{L}+[,.]?\s+)?сокурсни/iu
 ];
 
 const negativeHumorPatterns = [/головн\p{L}*\s+бол/iu];
@@ -87,11 +99,20 @@ const formalPronounPattern = /(?<!\p{L})(?:вы|вас|вам|вами|ваш|в
 const inventedFormalRolePattern = /(?:наставник|наставниц|учител|преподавател|руководител|начальник|мудрост|ваши\s+советы)/iu;
 const emojiPattern = /\p{Extended_Pictographic}/u;
 const inventedDiminutivePattern = /^(?:(?:дорогая|дорогой)\s+)?[А-ЯЁ][а-яё]*(?:ечк|еньк|оньк|ушк|юшк|очк)[а-яё]*,/u;
+const inventedCloseAddressPattern = /^(?:дорогая|дорогой|любимая|любимый)(?!\p{L})/iu;
+const genderPlaceholderPattern = /\p{L}+\([а-яё]\)/iu;
+const singularAuthorPattern = /(?<!\p{L})(?:я|мне|меня|мой|моя|моё|мои|хочу|желаю|поздравляю)(?!\p{L})/iu;
+const pluralAuthorPattern = /(?<!\p{L})(?:мы|нам|нас|наши|поздравляем|желаем)(?!\p{L})/iu;
+const stiffPeerPattern = /(?<!\p{L})профессионализм\p{L}*(?!\p{L})/iu;
+const inventedWorkStereotypePattern = /(?<!\p{L})(?:начальств\p{L}*|работодател\p{L}*|преми\p{L}*|отпуск\p{L}*|опаздыва\p{L}*)(?!\p{L})/iu;
 
 const normalizeComparable = (value: string) =>
   value
+    .normalize("NFKC")
     .toLocaleLowerCase("ru-RU")
     .replace(/ё/g, "е")
+    .replace(/[‐‑‒–—―]/g, "-")
+    .replace(/[«»„“”]/g, '"')
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -219,15 +240,21 @@ export const inspectProviderVariants = (input: ProviderValidationInput): Provide
       continue;
     }
     if (containsTechnicalText(text)) {
-      reject("FORBIDDEN_PHRASE", "soft", "убери технические инструкции и служебный текст");
+      reject("FORBIDDEN_PHRASE", "hard", "убери технические инструкции и служебный текст");
       continue;
     }
     if (input.mode === "shorten" && countCharacters(text) >= countCharacters(input.draftNotes)) {
       reject("COPIED_DRAFT", "soft", "сделай текст короче исходного");
       continue;
     }
-    if (textSimilarity(text, input.draftNotes) === 1) {
-      reject("COPIED_DRAFT", "soft", "не копируй исходный текст дословно");
+    const normalizedText = normalizeComparable(text);
+    const normalizedDraft = normalizeComparable(input.draftNotes);
+    const draftSimilarity = textSimilarity(text, input.draftNotes);
+    const substantiallyCopiesDraft = normalizedDraft.length >= 40 &&
+      normalizedText.length >= normalizedDraft.length * 0.72 &&
+      draftSimilarity >= 0.82;
+    if (draftSimilarity === 1 || substantiallyCopiesDraft) {
+      reject("COPIED_DRAFT", "hard", "полностью перепиши черновик, сохранив только его смысл и факты");
       continue;
     }
     if (input.existingMessages.some((message) => textSimilarity(text, message) >= 0.9)) {
@@ -255,6 +282,14 @@ export const inspectProviderVariants = (input: ProviderValidationInput): Provide
         "не повторяй карьерные клише; скажи живее: работа, куда хочется идти, место, где ценят, доход, который радует"
       );
     }
+    if (input.enforcePromptRules !== false && hardClichePatterns.some((pattern) => pattern.test(text))) {
+      reject(
+        "FORBIDDEN_PHRASE",
+        "hard",
+        "не используй карьерные клише: перефразируй как дело по душе, место, где ценят, доход, который радует"
+      );
+      continue;
+    }
     if (
       input.enforcePromptRules !== false &&
       weakCareerPatterns.some((pattern) => pattern.test(text) && !pattern.test(input.draftNotes))
@@ -262,7 +297,28 @@ export const inspectProviderVariants = (input: ProviderValidationInput): Provide
       reject("FORBIDDEN_PHRASE", "soft", "убери добавленное моделью общее карьерное клише");
     }
     if (input.enforcePromptRules !== false && promptLeakagePatterns.some((pattern) => pattern.test(text))) {
-      reject("FORBIDDEN_PHRASE", "soft", "убери служебную формулировку из черновика или prompt");
+      reject("FORBIDDEN_PHRASE", "hard", "убери служебную формулировку из черновика или prompt");
+      continue;
+    }
+    if (input.enforcePromptRules !== false && genderPlaceholderPattern.test(text)) {
+      reject("FORBIDDEN_PHRASE", "hard", "не используй скобки или варианты рода в готовом поздравлении");
+      continue;
+    }
+    if (
+      input.enforcePromptRules !== false &&
+      inventedCloseAddressPattern.test(text) &&
+      !inventedCloseAddressPattern.test(input.draftNotes)
+    ) {
+      reject("FORBIDDEN_PHRASE", "hard", "не добавляй обращение, которое придумывает степень близости");
+      continue;
+    }
+    if (
+      input.enforcePromptRules !== false &&
+      singularAuthorPattern.test(input.draftNotes) &&
+      !pluralAuthorPattern.test(input.draftNotes) &&
+      pluralAuthorPattern.test(text)
+    ) {
+      reject("FORBIDDEN_PHRASE", "hard", "сохрани личный голос автора: используй я/поздравляю/желаю, а не мы/поздравляем/желаем");
       continue;
     }
     if (input.enforcePromptRules !== false && negativeHumorPatterns.some((pattern) => pattern.test(text))) {
@@ -304,7 +360,7 @@ export const inspectProviderVariants = (input: ProviderValidationInput): Provide
       !patronymicPattern.test(input.recipientName) &&
       patronymicPattern.test(text)
     ) {
-      reject("FORBIDDEN_PHRASE", "soft", "не добавляй отчество, которого нет во входных данных");
+      reject("FORBIDDEN_PHRASE", "hard", "не добавляй отчество, которого нет во входных данных");
       continue;
     }
 
@@ -314,7 +370,19 @@ export const inspectProviderVariants = (input: ProviderValidationInput): Provide
     const requiresInformal = draftUsesInformal || (!draftUsesFormal && informalRolePattern.test(relationship));
     const requiresFormal = draftUsesFormal || (!draftUsesInformal && formalRolePattern.test(relationship));
     if (input.enforcePromptRules !== false && requiresInformal && formalPronounPattern.test(text)) {
-      reject("FORMAL_ADDRESS_FOR_PEER", "soft", "используй обращение на ты, без вы/вам/вас/ваш");
+      reject("FORMAL_ADDRESS_FOR_PEER", "hard", "используй обращение на ты, без вы/вам/вас/ваш");
+      continue;
+    }
+    if (input.enforcePromptRules !== false && stiffPeerPattern.test(text) && !stiffPeerPattern.test(input.draftNotes)) {
+      reject("FORBIDDEN_PHRASE", "hard", "для равного человека замени слово «профессионализм» живой конкретной формулировкой");
+      continue;
+    }
+    if (
+      input.enforcePromptRules !== false &&
+      inventedWorkStereotypePattern.test(text) &&
+      !inventedWorkStereotypePattern.test(input.draftNotes)
+    ) {
+      reject("FORBIDDEN_PHRASE", "hard", "не придумывай работодателей, начальство, премии, отпуск или другие рабочие детали");
       continue;
     }
     if (

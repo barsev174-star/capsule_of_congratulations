@@ -145,7 +145,7 @@ describe("AI provider response validation", () => {
     expect(result).toBeNull();
   });
 
-  it("keeps a literal wish list as a soft quality warning", () => {
+  it("rejects a literal wish list built from exact clichés", () => {
     const result = inspectProviderVariants({
       value: {
         variants: variants.map((variant, index) =>
@@ -159,9 +159,9 @@ describe("AI provider response validation", () => {
       existingMessages: []
     });
 
-    expect(result.variants).toHaveLength(3);
+    expect(result.variants).toHaveLength(2);
     expect(result.issues).toEqual(expect.arrayContaining([
-      expect.objectContaining({ type: "short", code: "FORBIDDEN_PHRASE", severity: "soft" })
+      expect.objectContaining({ type: "short", code: "FORBIDDEN_PHRASE", severity: "hard" })
     ]));
   });
 
@@ -286,5 +286,66 @@ describe("AI provider response validation", () => {
     });
 
     expect(result).toBeNull();
+  });
+
+  it("rejects a substantially copied draft", () => {
+    const draft = "Хочу поздравить Анну с выпускным. Всю учёбу она помогала мне и всегда приходила на помощь. Желаю ей найти любимое дело и уверенно развиваться.";
+    const result = inspectProviderVariants({
+      value: {
+        variants: variants.map((variant, index) =>
+          index === 0 ? { ...variant, text: draft } : variant
+        )
+      },
+      maxLength: 280,
+      draftNotes: draft,
+      existingMessages: []
+    });
+
+    expect(result.variants.map((variant) => variant.id)).not.toContain("short");
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "short", code: "COPIED_DRAFT", severity: "hard" })
+    ]));
+  });
+
+  it.each([
+    "работа мечты",
+    "высокая зарплата",
+    "карьерный рост",
+    "рост по службе",
+    "оставайся такой же",
+    "твой профессионализм",
+    "пусть работодатели ставят тебе пятёрки"
+  ])("rejects the exact cliché: %s", (phrase) => {
+    const result = inspectProviderVariants({
+      value: {
+        variants: variants.map((variant, index) =>
+          index === 0 ? { ...variant, text: `Анна, поздравляю с выпускным! Желаю тебе: ${phrase}.` } : variant
+        )
+      },
+      maxLength: 280,
+      draftNotes: "Хочу поздравить Анну с выпускным и пожелать ей хорошего старта после учёбы.",
+      existingMessages: []
+    });
+
+    expect(result.variants.map((variant) => variant.id)).not.toContain("short");
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "short", code: "FORBIDDEN_PHRASE", severity: "hard" })
+    ]));
+  });
+
+  it.each([
+    "Анна, пусть впереди будет работа по душе и доход, который радует.",
+    "Анна, желаю найти место, где тебя ценят и дают браться за интересные задачи."
+  ])("accepts a natural career wish: %s", (text) => {
+    const result = inspectProviderVariants({
+      value: {
+        variants: variants.map((variant, index) => index === 0 ? { ...variant, text } : variant)
+      },
+      maxLength: 280,
+      draftNotes: "Хочу поздравить Анну с выпускным и пожелать ей хорошей работы и возможности развиваться.",
+      existingMessages: []
+    });
+
+    expect(result.variants.map((variant) => variant.id)).toContain("short");
   });
 });

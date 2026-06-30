@@ -29,4 +29,14 @@ describe("OpenAI greeting response", () => {
       variants: [{ type: "short", text: "Только один" }]
     }))).toThrowError(expect.objectContaining({ code: "INVALID_PROVIDER_RESPONSE" }));
   });
+
+  it("parses only the variant requested during retry", () => {
+    const variants = parseOpenAiGreetingContent(JSON.stringify({
+      variants: [{ type: "style", text: "Новый вариант в выбранном стиле" }]
+    }), ["style"]);
+
+    expect(variants).toEqual([
+      { id: "style", label: "Ваш стиль", text: "Новый вариант в выбранном стиле" }
+    ]);
+  });
 });
