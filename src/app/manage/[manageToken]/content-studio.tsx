@@ -75,6 +75,7 @@ export const ContentStudio = ({
   const [activeFilter, setActiveFilter] = useState<ContributionFilter>("all");
   const [isManualFormOpen, setIsManualFormOpen] = useState(false);
   const [manualMessage, setManualMessage] = useState("");
+  const [manualAiGenerationIds, setManualAiGenerationIds] = useState<string[]>([]);
   const [isAiHelpOpen, setIsAiHelpOpen] = useState(false);
   const [isTipsOpen, setIsTipsOpen] = useState(false);
   const [savedContributionOrderKey, setSavedContributionOrderKey] = useState(
@@ -295,6 +296,7 @@ export const ContentStudio = ({
 
       if (result.ok) {
         setManualMessage("");
+        setManualAiGenerationIds([]);
         setIsManualFormOpen(false);
         setActiveFilter("all");
         router.refresh();
@@ -393,6 +395,7 @@ export const ContentStudio = ({
           {isManualFormOpen ? (
             <form action={handleManualContributionSubmit} className={styles.manualContributionForm}>
               <input type="hidden" name="manageToken" value={manageToken} />
+              <input type="hidden" name="aiGenerationIds" value={manualAiGenerationIds.join(",")} />
               <div className={styles.manualContributionHeader}>
                 <div>
                   <h3>Добавить поздравление вручную</h3>
@@ -439,10 +442,17 @@ export const ContentStudio = ({
                 {isAiHelpOpen ? (
                   <AiHelper
                     cardId={cardId}
-                    recipientName={recipientName}
+                    manageToken={manageToken}
                     occasionText={occasionText}
-                    messageLimit={500}
-                    onUseText={setManualMessage}
+                    messageLimit={messageLimit}
+                    onUseText={(text) => {
+                      setManualMessage(text);
+                    }}
+                    onGeneration={(generationId) => {
+                      setManualAiGenerationIds((current) =>
+                        current.includes(generationId) ? current : [...current, generationId]
+                      );
+                    }}
                     variant="join"
                   />
                 ) : null}
@@ -625,6 +635,7 @@ export const ContentStudio = ({
                           </div>
                         </div>
                         <ContributionEditor
+                          cardId={cardId}
                           contributionId={contribution.id}
                           manageToken={manageToken}
                           initialMessage={contribution.message}

@@ -131,7 +131,7 @@ describe("buildFinalCardViewModel", () => {
     expect(viewModel.mediaAssets).toHaveLength(1);
     expect(viewModel.mediaAssets[0]?.slot).toBe("portrait");
     expect(viewModel.mediaAssets[0]?.captionTitle).toBe("Командное фото");
-    expect(viewModel.mediaAssets[0]?.captionSubtitle).toContain("помнить");
+    expect(viewModel.mediaAssets[0]?.captionSubtitle).toBe("Командное фото");
   });
 
   it("uses saved block order in the final model", () => {

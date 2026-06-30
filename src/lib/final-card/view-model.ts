@@ -4,6 +4,7 @@ import type { CardDraft, CardMediaAsset, Contribution } from "@/lib/cards/types"
 import { buildFinalCardLayout } from "@/lib/final-card/planner";
 import type {
   FinalCardContentAvailability,
+  FinalCardAiContent,
   FinalCardMessageLayoutMode,
   FinalCardMessageMediaLayout,
   FinalCardStyleId
@@ -183,7 +184,8 @@ const resolveOrderedMediaAssets = (
 export const buildFinalCardViewModel = (
   card: CardDraft,
   contributions: Contribution[],
-  mediaAssets: CardMediaAsset[] = []
+  mediaAssets: CardMediaAsset[] = [],
+  aiContent: FinalCardAiContent = {}
 ): FinalCardViewModel => {
   const normalizedMediaAssets = mediaAssets.map((asset) => ({
     ...asset,
@@ -193,8 +195,8 @@ export const buildFinalCardViewModel = (
   const messageLayoutMode = card.finalMessageSettings?.layoutMode ?? "grid-2";
   const messageMediaLayout = card.finalMessageSettings?.mediaLayout ?? "portrait";
   const layoutProfile = getFinalCardMessageLayoutProfile(messageLayoutMode);
-  const qualities = extractQualities(contributions);
-  const quotes = extractQuotes(contributions);
+  const qualities = aiContent.qualities?.length ? aiContent.qualities.slice(0, 5) : extractQualities(contributions);
+  const quotes = aiContent.quotes?.length ? aiContent.quotes.slice(0, 3) : extractQuotes(contributions);
   const memories = buildMemories(contributions);
   const mainGreeting = resolveMainGreeting(card, contributions);
   const visibleMessageContributions = mainGreeting

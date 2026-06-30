@@ -35,6 +35,11 @@ export type FinalCardContentAvailability = {
   hasAiSummary: boolean;
 };
 
+export type FinalCardAiContent = {
+  quotes?: string[];
+  qualities?: string[];
+};
+
 export type FinalCardBlockSettings = Partial<Record<FinalCardOptionalBlockId, boolean>>;
 export type FinalCardBlockOrder = FinalCardBlockId[];
 

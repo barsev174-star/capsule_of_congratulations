@@ -32,6 +32,7 @@ export const ParticipantForm = ({
   const [authorName, setAuthorName] = useState("");
   const [authorRole, setAuthorRole] = useState("");
   const [message, setMessage] = useState("");
+  const [aiGenerationIds, setAiGenerationIds] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -56,6 +57,7 @@ export const ParticipantForm = ({
 
     setSuccessMessage("Поздравление добавлено в открытку.");
     setMessage("");
+    setAiGenerationIds([]);
     router.refresh();
   };
 
@@ -103,6 +105,7 @@ export const ParticipantForm = ({
           ) : null}
 
           <input type="hidden" name="cardId" value={cardId} />
+          <input type="hidden" name="aiGenerationIds" value={aiGenerationIds.join(",")} />
 
           <div className={styles.fieldGrid}>
             <div className={styles.field}>
@@ -162,10 +165,16 @@ export const ParticipantForm = ({
 
       <AiHelper
         cardId={cardId}
-        recipientName={recipientName}
+        publicSlug={publicSlug}
         occasionText={occasionText}
+        relationshipContext={authorRole}
         messageLimit={messageLimit}
-        onUseText={(text) => setMessage(text)}
+        onUseText={(text) => {
+          setMessage(text);
+        }}
+        onGeneration={(generationId) => {
+          setAiGenerationIds((current) => current.includes(generationId) ? current : [...current, generationId]);
+        }}
         variant={variant}
       />
     </>

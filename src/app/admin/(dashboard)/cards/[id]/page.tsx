@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAdminCardById } from "@/lib/admin/repository";
-import { updateCardStatusAdminAction } from "../../../actions";
+import { getAiUsageSummary } from "@/lib/ai/repository";
+import { updateAiBonusLimitAdminAction, updateCardStatusAdminAction } from "../../../actions";
 import styles from "../../../admin.module.css";
 
 const statusLabels: Record<string, string> = {
@@ -39,6 +40,7 @@ export default async function AdminCardDetailPage({ params }: Props) {
   }
 
   const { card, contributions, mediaAssets } = detail;
+  const aiUsage = await getAiUsageSummary(card.id);
 
   return (
     <>
@@ -102,6 +104,24 @@ export default async function AdminCardDetailPage({ params }: Props) {
             Предпросмотр
           </Link>
         </div>
+      </section>
+
+      <section className={styles.panel} style={{ marginBottom: 24 }}>
+        <div className={styles.aiLimitHeader}>
+          <div>
+            <h2 className={styles.panelTitle}>AI-лимит</h2>
+            <p>Базовый лимит: {aiUsage.baseLimit}. Использовано: {aiUsage.used}. Осталось: {aiUsage.remaining}.</p>
+          </div>
+          <span className={styles.aiLimitValue}>{aiUsage.limit}</span>
+        </div>
+        <form action={updateAiBonusLimitAdminAction} className={styles.aiLimitForm}>
+          <input type="hidden" name="cardId" value={card.id} />
+          <label className={styles.aiLimitField}>
+            <span>Дополнительные генерации</span>
+            <input name="bonusLimit" type="number" min="0" max="1000" step="1" defaultValue={aiUsage.bonusLimit} />
+          </label>
+          <button type="submit" className={styles.filterButton}>Сохранить лимит</button>
+        </form>
       </section>
 
       <section className={styles.panel} style={{ marginBottom: 24 }}>

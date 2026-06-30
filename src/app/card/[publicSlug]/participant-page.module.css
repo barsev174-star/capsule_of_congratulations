@@ -654,14 +654,16 @@
 }
 
 .errorBox {
-  padding: 16px 18px;
-  border-radius: 18px;
-  background: rgba(255, 239, 236, 0.9);
-  box-shadow: 0 0 0 1px rgba(171, 66, 50, 0.2);
+  padding: 13px 16px;
+  border-radius: 16px;
+  background: rgba(255, 246, 231, 0.92);
+  box-shadow:
+    0 0 0 1px rgba(187, 124, 66, 0.16),
+    0 8px 20px rgba(83, 49, 28, 0.04);
 }
 
 .errorList {
-  margin: 8px 0 0;
+  margin: 0;
   padding-left: 18px;
   color: var(--muted);
 }
@@ -724,7 +726,9 @@
   transform: scale(0.96);
 }
 
-.submitButton:disabled {
+.submitButton:disabled,
+.aiButton:disabled,
+.retryButton:disabled {
   cursor: wait;
   opacity: 0.72;
   transform: none;
@@ -734,6 +738,11 @@
   box-shadow:
     0 14px 28px rgba(233, 101, 47, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.aiButton:disabled,
+.retryButton:disabled {
+  cursor: not-allowed;
 }
 
 .aiButton {

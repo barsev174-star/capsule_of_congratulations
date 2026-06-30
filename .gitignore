@@ -9,6 +9,9 @@ tsconfig.tsbuildinfo
 data/cards.json
 data/contributions.json
 data/ai-generations.json
+data/ai-card-insights.json
+data/ai-card-allowances.json
+data/payment-orders.json
 public/uploads/
 docs/*.png
 !docs/Аватары.png
@@ -33,3 +36,4 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+key.txt

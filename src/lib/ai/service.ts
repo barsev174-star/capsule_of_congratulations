@@ -1,9 +1,34 @@
 import { randomUUID } from "node:crypto";
-import { countAiGenerationsByCardId, saveAiGenerationLog } from "@/lib/ai/repository";
-import type { AiGenerationInput, AiGenerationLog, AiGenerationResult, AiStyle } from "@/lib/ai/types";
+import {
+  completeAiUsageEvent,
+  completeAiGeneration,
+  getAiUsageSummary,
+  releaseAiGeneration,
+  reserveAiGeneration,
+  saveAiCardInsight
+} from "@/lib/ai/repository";
+import { generateBestQuotesWithGigaChat, generateQualitiesWithGigaChat, generateWithGigaChat } from "@/lib/ai/gigachat-provider";
+import {
+  buildContributionFingerprint,
+  buildMockBestQuotes,
+  buildMockQualities,
+  validateBestQuoteCandidates,
+  validateQualityCandidates
+} from "@/lib/ai/card-insights";
+import { inspectProviderVariants, textSimilarity } from "@/lib/ai/response-validation";
+import type { ProviderVariantValidationIssue } from "@/lib/ai/response-validation";
+import { AiError } from "@/lib/ai/types";
+import type {
+  AiGenerationInput,
+  AiGenerationResult,
+  AiBestQuotesResult,
+  AiQualitiesResult,
+  AiProviderName,
+  AiProviderResult,
+  AiStyle,
+  AiVariant
+} from "@/lib/ai/types";
 import { logger } from "@/lib/logger";
-
-const CARD_GENERATION_LIMIT = 50;
 
 const negativePatterns = [/крич/i, /ор[её]/i, /руг/i, /зл/i, /бесит/i, /ненав/i, /туп/i];
 
@@ -251,7 +276,7 @@ const buildStyledVariant = (
     .filter(Boolean)
     .join(" ");
 
-const buildVariants = (input: AiGenerationInput, generationIndex: number) => {
+const buildVariants = (input: AiGenerationInput, generationIndex: number): AiVariant[] => {
   const messageLimit = Number.isFinite(input.messageLimit) ? input.messageLimit : 240;
   const cleanedRecipientName = sanitizeSentence(input.recipientName);
   const cleanedNotes = splitDraftNotes(input.draftNotes);
@@ -268,7 +293,7 @@ const buildVariants = (input: AiGenerationInput, generationIndex: number) => {
       input.style,
       String(generationIndex)
     ].join("::")
-  );
+  ) + generationIndex * 7;
 
   const opening = buildOpening(cleanedRecipientName, input.occasionText, seed);
   const valueSentence = buildValueSentence(valueClauses, seed);
@@ -283,44 +308,336 @@ const buildVariants = (input: AiGenerationInput, generationIndex: number) => {
   const styled = buildStyledVariant(opening, wishSentence, valueSentence, generalSentence, contextTail, input.style);
 
   return [
-    { id: "short", label: "Короткий вариант", text: short },
-    { id: "heartfelt", label: "Душевный вариант", text: heartfelt },
-    { id: "styled", label: "В выбранном стиле", text: styled }
+    { id: "short" as const, label: "Короткий вариант", text: short },
+    { id: "warm" as const, label: "Душевный", text: heartfelt },
+    { id: "style" as const, label: "Ваш стиль", text: styled }
   ].map((variant) => ({
     ...variant,
     text: fitTextToLimit(variant.text, messageLimit)
   }));
 };
 
-export const generateParticipantMessage = async (input: AiGenerationInput): Promise<AiGenerationResult> => {
-  const usedCount = await countAiGenerationsByCardId(input.cardId);
+const shortenAtWordBoundary = (value: string, limit: number) => {
+  const normalized = cleanText(value);
+  if (normalized.length <= limit) return normalized;
 
-  if (usedCount >= CARD_GENERATION_LIMIT) {
-    throw new Error("CARD_AI_LIMIT_REACHED");
+  const slice = normalized.slice(0, Math.max(1, limit - 1));
+  const boundary = slice.lastIndexOf(" ");
+  const shortened = slice.slice(0, boundary > 40 ? boundary : slice.length).replace(/[,:;\s]+$/, "");
+  return `${shortened}…`;
+};
+
+const buildShortenedVariants = (input: AiGenerationInput): AiVariant[] => {
+  const targets = [
+    input.messageLimit,
+    Math.max(60, input.messageLimit - 24),
+    Math.max(48, Math.floor(input.messageLimit * 0.72))
+  ];
+
+  return [
+    { id: "short" as const, label: "Бережно", text: shortenAtWordBoundary(input.draftNotes, targets[0]) },
+    { id: "warm" as const, label: "Короче", text: shortenAtWordBoundary(input.draftNotes, targets[1]) },
+    { id: "style" as const, label: "Самое короткое", text: shortenAtWordBoundary(input.draftNotes, targets[2]) }
+  ];
+};
+
+export const generateParticipantMessage = async (input: AiGenerationInput): Promise<AiGenerationResult> => {
+  const providerName: AiProviderName = process.env.AI_PROVIDER === "gigachat" ? "gigachat" : "mock";
+  const usageSummary = await getAiUsageSummary(input.cardId);
+  const generationId = randomUUID();
+  const reservation = await reserveAiGeneration({ id: generationId, cardId: input.cardId, limit: usageSummary.limit });
+
+  if (!reservation) {
+    throw new AiError("LIMIT_REACHED", "AI generation limit reached for this card.");
   }
 
-  const variants = buildVariants(input, usedCount);
-  const remainingCardGenerations = CARD_GENERATION_LIMIT - usedCount - 1;
+  const existingMessages = input.existingMessages ?? [];
+  let providerResult: AiProviderResult | null = null;
+  let variants: AiVariant[] | null = null;
+  const acceptedVariants = new Map<AiVariant["id"], AiVariant>();
+  let validationFeedback: string[] = [];
+  let lastProviderError: AiError | null = null;
+  let lastValidationIssues: ProviderVariantValidationIssue[] = [];
 
-  const logEntry: AiGenerationLog = {
-    id: randomUUID(),
+  try {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        providerResult = providerName === "gigachat"
+          ? await generateWithGigaChat({
+              ...input,
+              existingMessages,
+              fromLabel: input.fromLabel ?? "",
+              attempt,
+              validationFeedback
+            })
+          : {
+              variants: input.mode === "shorten"
+                ? buildShortenedVariants(input)
+                : buildVariants(input, reservation.usage.used - 1 + attempt),
+              model: "local-template-v5"
+            };
+      } catch (error) {
+        if (
+          error instanceof AiError &&
+          (
+            error.code === "PROVIDER_UNAVAILABLE" ||
+            error.code === "INVALID_PROVIDER_RESPONSE" ||
+            error.code === "INVALID_JSON"
+          )
+        ) {
+          lastProviderError = error;
+          if (error.code === "INVALID_JSON") {
+            validationFeedback = ["верни синтаксически валидный JSON указанной структуры"];
+          }
+          logger.warn("ai.participant_provider_retry", "Greeting provider response requires another attempt", {
+            cardId: input.cardId,
+            provider: providerName,
+            attempt: attempt + 1,
+            errorCode: error.code
+          });
+          if (attempt === 0) continue;
+          break;
+        }
+        throw error;
+      }
+
+      const validation = inspectProviderVariants({
+        value: providerResult.variants,
+        maxLength: input.messageLimit,
+        draftNotes: input.draftNotes,
+        existingMessages,
+        mode: input.mode ?? "compose",
+        style: input.style,
+        recipientName: input.recipientName,
+        relationshipContext: input.relationshipContext,
+        enforcePromptRules: providerName === "gigachat"
+      });
+
+      lastValidationIssues = validation.issues;
+      validationFeedback = validation.issues.map((issue) => issue.message);
+
+      if (process.env.NODE_ENV !== "production" && validation.issues.length > 0) {
+        logger.warn("ai.gigachat_validation_failed", "GigaChat variants failed validation", {
+          cardId: input.cardId,
+          attempt: attempt + 1,
+          parsedVariants: providerResult.variants,
+          reasons: validation.issues.map((issue) => ({
+            type: issue.type,
+            code: issue.code,
+            severity: issue.severity,
+            message: issue.message
+          }))
+        });
+      }
+      for (const candidate of validation.variants) {
+        const duplicatesAcceptedType = [...acceptedVariants.values()].some(
+          (accepted) => accepted.id !== candidate.id && textSimilarity(accepted.text, candidate.text) === 1
+        );
+        if (duplicatesAcceptedType) {
+          validationFeedback.push(`${candidate.id}: сделай текст отличающимся от уже принятого варианта`);
+          continue;
+        }
+        if (!acceptedVariants.has(candidate.id)) acceptedVariants.set(candidate.id, candidate);
+      }
+
+      if (acceptedVariants.size === 3) {
+        variants = (["short", "warm", "style"] as const).map((type) => acceptedVariants.get(type)!);
+        break;
+      }
+
+      logger.warn("ai.participant_validation_retry", "Greeting variants require another attempt", {
+        cardId: input.cardId,
+        provider: providerName,
+        attempt: attempt + 1,
+        acceptedTypes: [...acceptedVariants.keys()],
+        issueCodes: validation.issues.map((issue) => issue.code)
+      });
+    }
+
+    if (!variants) {
+      if (lastValidationIssues.length > 0) {
+        throw new AiError(
+          "AI_VALIDATION_FAILED",
+          `Greeting quality validation failed: ${[...new Set(lastValidationIssues.map((issue) => issue.code))].join(", ")}`
+        );
+      }
+      if (lastProviderError) throw lastProviderError;
+      throw new AiError("AI_VALIDATION_FAILED", "Greeting quality validation failed.");
+    }
+
+    if (!providerResult) {
+      throw new AiError("INVALID_PROVIDER_RESPONSE", "Provider result is missing.");
+    }
+
+    await completeAiGeneration({
+      id: generationId,
+      cardId: input.cardId,
+      generationInput: { ...input, existingMessages },
+      variants,
+      provider: providerName,
+      model: providerResult.model
+    });
+
+    logger.info("ai.participant_generated", "Participant AI draft generated", {
+      cardId: input.cardId,
+      provider: providerName,
+      remainingCardGenerations: reservation.usage.remaining
+    });
+
+    return {
+      generationId,
+      variants,
+      usage: reservation.usage,
+      messageLimit: input.messageLimit
+    };
+  } catch (error) {
+    await releaseAiGeneration(generationId);
+    throw error;
+  }
+};
+
+export const generateBestQuotes = async (input: {
+  cardId: string;
+  recipientName: string;
+  occasionText: string;
+  contributions: Array<import("@/lib/cards/types").Contribution>;
+}): Promise<AiBestQuotesResult> => {
+  if (input.contributions.length < 2) {
+    throw new AiError("VALIDATION", "Для выбора лучших фраз нужно хотя бы два поздравления.");
+  }
+
+  const providerName: AiProviderName = process.env.AI_PROVIDER === "gigachat" ? "gigachat" : "mock";
+  const usageSummary = await getAiUsageSummary(input.cardId);
+  const generationId = randomUUID();
+  const reservation = await reserveAiGeneration({
+    id: generationId,
     cardId: input.cardId,
-    generationType: "participant_message",
-    inputJson: JSON.stringify(input),
-    outputText: JSON.stringify(variants),
-    model: "local-template-v5",
-    createdAt: new Date().toISOString()
-  };
-
-  await saveAiGenerationLog(logEntry);
-
-  logger.info("ai.participant_generated", "Participant AI draft generated", {
-    cardId: input.cardId,
-    remainingCardGenerations
+    limit: usageSummary.limit,
+    generationType: "best_quotes"
   });
+  if (!reservation) throw new AiError("LIMIT_REACHED", "AI generation limit reached for this card.");
 
-  return {
-    variants,
-    remainingCardGenerations
-  };
+  try {
+    let selectedItems = null;
+    let model = "local-insights-v1";
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const providerResult = providerName === "gigachat"
+        ? await generateBestQuotesWithGigaChat({
+            recipientName: input.recipientName,
+            occasionText: input.occasionText,
+            contributions: input.contributions.map(({ id, message }) => ({ id, message })),
+            attempt
+          })
+        : { quotes: buildMockBestQuotes(input.contributions), model };
+      model = providerResult.model;
+      selectedItems = validateBestQuoteCandidates(providerResult.quotes, input.contributions);
+      if (selectedItems) break;
+    }
+
+    if (!selectedItems) {
+      selectedItems = validateBestQuoteCandidates(buildMockBestQuotes(input.contributions), input.contributions);
+      model = `${model}-source-fallback`;
+    }
+
+    if (!selectedItems) {
+      throw new AiError("INVALID_PROVIDER_RESPONSE", "Provider returned unsuitable best quotes.");
+    }
+
+    const insight = {
+      cardId: input.cardId,
+      type: "quotes" as const,
+      items: selectedItems,
+      sourceFingerprint: buildContributionFingerprint(input.contributions),
+      provider: providerName,
+      model,
+      updatedAt: new Date().toISOString()
+    };
+    await saveAiCardInsight(insight);
+    await completeAiUsageEvent({ id: generationId, provider: providerName, model });
+
+    logger.info("ai.best_quotes_generated", "Best quotes generated for card", {
+      cardId: input.cardId,
+      provider: providerName,
+      remainingCardGenerations: reservation.usage.remaining
+    });
+
+    return { insight, usage: reservation.usage };
+  } catch (error) {
+    await releaseAiGeneration(generationId);
+    throw error;
+  }
+};
+
+export const generateQualities = async (input: {
+  cardId: string;
+  recipientName: string;
+  occasionText: string;
+  contributions: Array<import("@/lib/cards/types").Contribution>;
+}): Promise<AiQualitiesResult> => {
+  if (input.contributions.length < 2) {
+    throw new AiError("VALIDATION", "Для определения качеств нужно хотя бы два поздравления.");
+  }
+
+  const providerName: AiProviderName = process.env.AI_PROVIDER === "gigachat" ? "gigachat" : "mock";
+  const usageSummary = await getAiUsageSummary(input.cardId);
+  const generationId = randomUUID();
+  const reservation = await reserveAiGeneration({
+    id: generationId,
+    cardId: input.cardId,
+    limit: usageSummary.limit,
+    generationType: "qualities"
+  });
+  if (!reservation) throw new AiError("LIMIT_REACHED", "AI generation limit reached for this card.");
+
+  try {
+    let selectedItems = null;
+    let model = "local-insights-v1";
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const providerResult = providerName === "gigachat"
+        ? await generateQualitiesWithGigaChat({
+            recipientName: input.recipientName,
+            occasionText: input.occasionText,
+            contributions: input.contributions.map(({ id, message }) => ({ id, message })),
+            attempt
+          })
+        : { qualities: buildMockQualities(input.contributions), model };
+      model = providerResult.model;
+      selectedItems = validateQualityCandidates(providerResult.qualities, input.contributions);
+      if (selectedItems) break;
+    }
+
+    if (!selectedItems) {
+      selectedItems = validateQualityCandidates(buildMockQualities(input.contributions), input.contributions);
+      model = `${model}-source-fallback`;
+    }
+
+    if (!selectedItems) {
+      throw new AiError("INVALID_PROVIDER_RESPONSE", "Provider returned unsuitable qualities.");
+    }
+
+    const insight = {
+      cardId: input.cardId,
+      type: "qualities" as const,
+      items: selectedItems,
+      sourceFingerprint: buildContributionFingerprint(input.contributions),
+      provider: providerName,
+      model,
+      updatedAt: new Date().toISOString()
+    };
+    await saveAiCardInsight(insight);
+    await completeAiUsageEvent({ id: generationId, provider: providerName, model });
+
+    logger.info("ai.qualities_generated", "Qualities generated for card", {
+      cardId: input.cardId,
+      provider: providerName,
+      remainingCardGenerations: reservation.usage.remaining
+    });
+
+    return { insight, usage: reservation.usage };
+  } catch (error) {
+    await releaseAiGeneration(generationId);
+    throw error;
+  }
 };

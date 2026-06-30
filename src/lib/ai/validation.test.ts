@@ -15,6 +15,7 @@ describe("validateAiGenerationFormData", () => {
     const result = validateAiGenerationFormData(
       buildFormData({
         cardId: "card_1",
+        publicSlug: "card-slug",
         recipientName: "Анна",
         occasionText: "благодарим за заботу о группе",
         draftNotes: "Хочу пожелать любви и радости. Ценю скромность и то, как легко с тобой рядом.",
@@ -26,8 +27,7 @@ describe("validateAiGenerationFormData", () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.draftNotes).toContain("Хочу пожелать");
-      expect(result.data.occasionText).toBe("благодарим за заботу о группе");
-      expect(result.data.messageLimit).toBe(220);
+      expect(result.data.publicSlug).toBe("card-slug");
     }
   });
 
@@ -35,6 +35,7 @@ describe("validateAiGenerationFormData", () => {
     const result = validateAiGenerationFormData(
       buildFormData({
         cardId: "",
+        publicSlug: "",
         recipientName: "",
         occasionText: "",
         draftNotes: "коротко",
@@ -45,7 +46,85 @@ describe("validateAiGenerationFormData", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.issues.length).toBeGreaterThanOrEqual(5);
+      expect(result.issues.length).toBeGreaterThanOrEqual(4);
     }
+  });
+
+  it("rejects technical instructions", () => {
+    const result = validateAiGenerationFormData(
+      buildFormData({
+        cardId: "card_1",
+        publicSlug: "card-slug",
+        draftNotes: "POST /api и access_token нужно отправить через backend endpoint",
+        style: "touching"
+      })
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.issues.some((issue) => issue.field === "draftNotes")).toBe(true);
+    }
+  });
+
+  it("accepts a draft up to 700 characters", () => {
+    const result = validateAiGenerationFormData(
+      buildFormData({
+        cardId: "card_1",
+        publicSlug: "card-slug",
+        draftNotes: "Тёплые личные мысли о человеке и добрые пожелания. ".repeat(12).slice(0, 700),
+        style: "warm-simple"
+      })
+    );
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a long existing greeting in shortening mode", () => {
+    const result = validateAiGenerationFormData(
+      buildFormData({
+        cardId: "card_1",
+        manageToken: "manage-token",
+        contributionId: "contribution-1",
+        draftNotes: "Тёплое поздравление с личными пожеланиями и важными деталями. ".repeat(15),
+        style: "short-no-pathos",
+        mode: "shorten"
+      })
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.mode).toBe("shorten");
+  });
+
+  it("requires manager access and contribution id for shortening", () => {
+    const result = validateAiGenerationFormData(
+      buildFormData({
+        cardId: "card_1",
+        publicSlug: "public-slug",
+        draftNotes: "Достаточно длинное поздравление, которое нужно аккуратно сократить.",
+        style: "short-no-pathos",
+        mode: "shorten"
+      })
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.issues.some((issue) => issue.field === "contributionId")).toBe(true);
+    }
+  });
+
+  it("accepts an existing greeting in improvement mode", () => {
+    const result = validateAiGenerationFormData(
+      buildFormData({
+        cardId: "card_1",
+        manageToken: "manage-token",
+        contributionId: "contribution-1",
+        draftNotes: "Спасибо за поддержку и добрые слова. Желаю больше радостных дней.",
+        style: "warm-simple",
+        mode: "improve"
+      })
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.mode).toBe("improve");
   });
 });

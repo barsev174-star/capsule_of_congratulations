@@ -1485,6 +1485,18 @@
   transform: scale(0.96);
 }
 
+.contentAiButtonSecondary {
+  border-color: rgba(98, 72, 58, 0.14);
+  background: rgba(255, 255, 255, 0.72);
+  color: #6f574a;
+}
+
+.contentAiButtonSecondary:hover {
+  border-color: rgba(98, 72, 58, 0.24);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 18px rgba(98, 72, 58, 0.07);
+}
+
 .contentIconButton,
 .contentPagerButton {
   width: 46px;
@@ -2155,6 +2167,226 @@ button.contentFilterPill {
 
 .contentEditorError {
   color: #ca6e43;
+}
+
+.contentAiPreview {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 248, 240, 0.82);
+  box-shadow:
+    0 0 0 1px rgba(233, 101, 47, 0.12),
+    0 8px 24px rgba(121, 72, 48, 0.06);
+}
+
+.contentAiPreviewHeader,
+.contentAiPreviewHeader > div,
+.contentAiPreviewActions,
+.contentAiVariantTabs {
+  display: flex;
+  align-items: center;
+}
+
+.contentAiPreviewHeader {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.contentAiPreviewHeader > div {
+  gap: 8px;
+  min-width: 0;
+}
+
+.contentAiPreviewHeader strong {
+  color: #4e382d;
+}
+
+.contentAiPreviewHeader span {
+  color: #927562;
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.contentAiVariantTabs {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.contentAiVariantTab,
+.contentAiCancelButton {
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  color: #7b6456;
+  font: inherit;
+  cursor: pointer;
+}
+
+.contentAiVariantTab {
+  padding: 0 12px;
+  border-radius: 10px;
+  transition-property: color, background, box-shadow, transform;
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
+}
+
+.contentAiVariantTab:hover,
+.contentAiVariantTabActive {
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--m-accent);
+  box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.16);
+}
+
+.contentAiVariantTab:active,
+.contentAiCancelButton:active {
+  transform: scale(0.96);
+}
+
+.contentAiPreviewText {
+  margin: 0;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #4a352d;
+  line-height: 1.55;
+  text-wrap: pretty;
+  box-shadow: 0 0 0 1px rgba(98, 72, 58, 0.08);
+}
+
+.contentAiPreviewActions {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.contentAiEditActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.aiInsightPanel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 248, 240, 0.72);
+  box-shadow:
+    0 0 0 1px rgba(233, 101, 47, 0.12),
+    0 8px 24px rgba(121, 72, 48, 0.05);
+}
+
+.aiInsightHeader,
+.aiInsightActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.aiInsightHeader p,
+.aiInsightEmpty,
+.aiInsightStale {
+  margin: 4px 0 0;
+  color: #7b6456;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.aiInsightUsage {
+  flex: 0 0 auto;
+  color: #927562;
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.aiInsightStale {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(233, 151, 77, 0.11);
+  color: #9a633d;
+}
+
+.aiInsightList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: best-quotes;
+}
+
+.aiInsightList li {
+  position: relative;
+  margin: 0;
+  padding: 12px 14px 12px 42px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #4a352d;
+  line-height: 1.5;
+  text-wrap: pretty;
+  box-shadow: 0 0 0 1px rgba(98, 72, 58, 0.08);
+  counter-increment: best-quotes;
+}
+
+.aiInsightList li::before {
+  content: counter(best-quotes);
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  color: var(--m-accent);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.aiQualityList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aiQualityList li {
+  padding: 9px 13px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #5a4035;
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-wrap: balance;
+  box-shadow:
+    0 0 0 1px rgba(98, 72, 58, 0.08),
+    0 2px 6px rgba(121, 72, 48, 0.04);
+}
+
+.aiInsightActions {
+  justify-content: flex-start;
+}
+
+.aiInsightActions > span {
+  color: #927562;
+  font-size: 0.88rem;
+}
+
+.contentAiPreviewActions .contentSoftButton {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+}
+
+.contentAiCancelButton {
+  padding: 0 10px;
+  transition-property: color, transform;
+  transition-duration: 160ms;
+}
+
+.contentAiCancelButton:hover {
+  color: #4e382d;
 }
 
 .contentAssistantCard,

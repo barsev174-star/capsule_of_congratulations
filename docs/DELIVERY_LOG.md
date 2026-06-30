@@ -551,3 +551,15 @@
 3. Added nightly backup wrapper with checksums and latest symlinks.
 4. Added old-backup cleanup script.
 5. Added production smoke-check script for `/` and `/create`.
+
+## Update 2026-06-29 GigaChat Greeting Provider
+
+1. Added the backend-only `mock | gigachat` provider switch and `/api/ai/generate-greeting` endpoint.
+2. Connected GigaChat OAuth with token caching, timeout handling and verified Ministry of Digital Development TLS certificate.
+3. Moved AI usage accounting to PostgreSQL with atomic per-card reservation.
+4. Added free/paid limits of 5/30 actions, where the paid limit depends on a paid order.
+5. Made generated message length follow the selected card-grid limit.
+6. Added draft validation, provider-response validation and duplicate checks against visible greetings.
+7. Added temporary draft/variant storage that is cleared after the greeting is submitted while usage metadata remains.
+8. Verified OAuth, a real chat request, the application endpoint, paid-limit switching and draft cleanup locally.
+9. Added deployment and verification notes in `docs/AI_GIGACHAT_2026-06-29.md`.

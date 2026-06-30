@@ -31,6 +31,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.ts ./next.config.ts
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/infra/certs ./infra/certs
 
 RUN mkdir -p public/uploads/cards
 

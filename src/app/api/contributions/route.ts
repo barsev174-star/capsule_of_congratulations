@@ -3,6 +3,7 @@ import { getCardDraftByPublicSlug } from "@/lib/cards/repository";
 import { createContribution } from "@/lib/cards/service";
 import { validateContributionFormData } from "@/lib/contributions/validation";
 import { logger } from "@/lib/logger";
+import { consumeAiGenerationDrafts } from "@/lib/ai/repository";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -38,6 +39,21 @@ export async function POST(request: Request) {
 
   try {
     const contribution = await createContribution(validation.data);
+    const aiGenerationIds = typeof formData.get("aiGenerationIds") === "string"
+      ? String(formData.get("aiGenerationIds")).split(",")
+      : [];
+
+    if (aiGenerationIds.length > 0) {
+      try {
+        await consumeAiGenerationDrafts(cardId, aiGenerationIds);
+      } catch (error) {
+        logger.error("ai.draft_cleanup_failed", "Failed to remove a submitted AI draft", {
+          cardId,
+          generationCount: aiGenerationIds.length,
+          error: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
+    }
     return NextResponse.json({ ok: true, contribution }, { status: 201 });
   } catch (error) {
     logger.error("contributions.create_failed", "Contribution creation failed", {

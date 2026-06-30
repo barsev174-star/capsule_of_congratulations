@@ -1,7 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition, type DragEvent as ReactDragEvent } from "react";
+import { useRouter } from "next/navigation";
 import type { CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
+import type { AiUsage } from "@/lib/ai/types";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type {
   FinalCardBlockId,
@@ -11,7 +13,7 @@ import type {
   FinalCardOptionalBlockId
 } from "@/lib/final-card/types";
 import { getManagePath } from "@/lib/routes/card-links";
-import { updateFinalPresentationSettingsAction } from "./actions";
+import { generateBestQuotesAction, generateQualitiesAction, updateFinalPresentationSettingsAction } from "./actions";
 import styles from "./manage-page.module.css";
 
 type BlockOption = {
@@ -39,6 +41,13 @@ type Props = {
   requiredBlockIds: FinalCardBlockId[];
   initialMainGreetingContributionId: string | null;
   mainGreetingStatusText: string;
+  initialBestQuotes: string[];
+  bestQuotesAreStale: boolean;
+  canGenerateBestQuotes: boolean;
+  initialQualities: string[];
+  qualitiesAreStale: boolean;
+  canGenerateQualities: boolean;
+  initialAiUsage: AiUsage;
 };
 
 type RenderedBlock = {
@@ -504,8 +513,16 @@ export const BlockSettingsForm = ({
   initialMemoryDescription,
   requiredBlockIds,
   initialMainGreetingContributionId,
-  mainGreetingStatusText
+  mainGreetingStatusText,
+  initialBestQuotes,
+  bestQuotesAreStale,
+  canGenerateBestQuotes,
+  initialQualities,
+  qualitiesAreStale,
+  canGenerateQualities,
+  initialAiUsage
 }: Props) => {
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState(updateFinalPresentationSettingsAction, initialState);
   const [layoutMode, setLayoutMode] = useState<FinalCardMessageLayoutMode>(initialLayoutMode);
   const [mediaLayout, setMediaLayout] = useState<FinalCardMessageMediaLayout>(initialMediaLayout);
@@ -572,6 +589,41 @@ export const BlockSettingsForm = ({
 
   const formRef = useRef<HTMLFormElement>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [bestQuotes, setBestQuotes] = useState(initialBestQuotes);
+  const [quotesAreStale, setQuotesAreStale] = useState(bestQuotesAreStale);
+  const [quotesMessage, setQuotesMessage] = useState("");
+  const [aiUsage, setAiUsage] = useState(initialAiUsage);
+  const [isQuotesPending, startQuotesTransition] = useTransition();
+  const [qualities, setQualities] = useState(initialQualities);
+  const [qualitiesStale, setQualitiesStale] = useState(qualitiesAreStale);
+  const [qualitiesMessage, setQualitiesMessage] = useState("");
+  const [isQualitiesPending, startQualitiesTransition] = useTransition();
+
+  const handleGenerateBestQuotes = () => {
+    setQuotesMessage("");
+    startQuotesTransition(async () => {
+      const result = await generateBestQuotesAction(manageToken);
+      setQuotesMessage(result.message);
+      if (!result.ok) return;
+      setBestQuotes(result.quotes);
+      setQuotesAreStale(false);
+      setAiUsage(result.usage);
+      router.refresh();
+    });
+  };
+
+  const handleGenerateQualities = () => {
+    setQualitiesMessage("");
+    startQualitiesTransition(async () => {
+      const result = await generateQualitiesAction(manageToken);
+      setQualitiesMessage(result.message);
+      if (!result.ok) return;
+      setQualities(result.qualities);
+      setQualitiesStale(false);
+      setAiUsage(result.usage);
+      router.refresh();
+    });
+  };
 
   useEffect(() => {
     if (!isCompositionDirty || !formRef.current || isPending) return;
@@ -903,6 +955,114 @@ export const BlockSettingsForm = ({
                           <a className={styles.previewSecondaryLink} href={`${getManagePath(manageToken)}?tab=content`}>
                             Выбрать поздравление
                           </a>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {block.id === "qualities" ? (
+                      <div className={styles.aiInsightPanel}>
+                        <div className={styles.aiInsightHeader}>
+                          <div>
+                            <h4 className={styles.messageSettingsTitle}>За что тебя ценят</h4>
+                            <p>AI найдёт в активных поздравлениях пять качеств, которые особенно отмечают участники.</p>
+                          </div>
+                          <span className={styles.aiInsightUsage}>
+                            AI: {aiUsage.remaining} из {aiUsage.limit}
+                          </span>
+                        </div>
+
+                        {qualitiesStale ? (
+                          <p className={styles.aiInsightStale}>Поздравления изменились — качества лучше обновить.</p>
+                        ) : null}
+
+                        {qualities.length > 0 ? (
+                          <ul className={styles.aiQualityList} aria-label="Выбранные качества">
+                            {qualities.map((quality) => (
+                              <li key={quality}>{quality}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className={styles.aiInsightEmpty}>
+                            После анализа здесь появятся пять коротких определений для блока открытки.
+                          </p>
+                        )}
+
+                        <div className={styles.aiInsightActions}>
+                          <button
+                            type="button"
+                            className={styles.contentAiButton}
+                            onClick={handleGenerateQualities}
+                            disabled={isQualitiesPending || !canGenerateQualities || aiUsage.remaining === 0}
+                          >
+                            <span aria-hidden="true">✦</span>
+                            {isQualitiesPending
+                              ? "Определяем качества..."
+                              : qualities.length > 0
+                                ? "Обновить качества"
+                                : "Определить 5 качеств"}
+                          </button>
+                          {!canGenerateQualities ? <span>Нужно хотя бы два активных поздравления.</span> : null}
+                          {qualitiesMessage ? (
+                            <span className={qualitiesMessage.includes("готовы") ? styles.contentEditorSuccess : styles.contentEditorError}>
+                              {qualitiesMessage}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {block.id === "quotes" ? (
+                      <div className={styles.aiInsightPanel}>
+                        <div className={styles.aiInsightHeader}>
+                          <div>
+                            <h4 className={styles.messageSettingsTitle}>Три лучшие фразы</h4>
+                            <p>
+                              AI выберет сильные строки из активных поздравлений, не добавляя новых мыслей.
+                            </p>
+                          </div>
+                          <span className={styles.aiInsightUsage}>
+                            AI: {aiUsage.remaining} из {aiUsage.limit}
+                          </span>
+                        </div>
+
+                        {quotesAreStale ? (
+                          <p className={styles.aiInsightStale}>Поздравления изменились — фразы лучше обновить.</p>
+                        ) : null}
+
+                        {bestQuotes.length > 0 ? (
+                          <ol className={styles.aiInsightList}>
+                            {bestQuotes.map((quote, quoteIndex) => (
+                              <li key={`${quote}-${quoteIndex}`}>{quote}</li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <p className={styles.aiInsightEmpty}>
+                            После генерации здесь появятся три фразы для финальной открытки.
+                          </p>
+                        )}
+
+                        <div className={styles.aiInsightActions}>
+                          <button
+                            type="button"
+                            className={styles.contentAiButton}
+                            onClick={handleGenerateBestQuotes}
+                            disabled={isQuotesPending || !canGenerateBestQuotes || aiUsage.remaining === 0}
+                          >
+                            <span aria-hidden="true">✦</span>
+                            {isQuotesPending
+                              ? "Выбираем фразы..."
+                              : bestQuotes.length > 0
+                                ? "Обновить фразы"
+                                : "Выбрать 3 фразы"}
+                          </button>
+                          {!canGenerateBestQuotes ? (
+                            <span>Нужно хотя бы два активных поздравления.</span>
+                          ) : null}
+                          {quotesMessage ? (
+                            <span className={quotesMessage.includes("готовы") ? styles.contentEditorSuccess : styles.contentEditorError}>
+                              {quotesMessage}
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     ) : null}
