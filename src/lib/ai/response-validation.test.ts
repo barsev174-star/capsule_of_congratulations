@@ -165,7 +165,7 @@ describe("AI provider response validation", () => {
     ]));
   });
 
-  it("keeps shallow wish-list wording as a soft quality warning", () => {
+  it("rejects three shallow wishes in the short variant", () => {
     const result = inspectProviderVariants({
       value: {
         variants: variants.map((variant, index) =>
@@ -179,9 +179,9 @@ describe("AI provider response validation", () => {
       existingMessages: []
     });
 
-    expect(result.variants).toHaveLength(3);
+    expect(result.variants).toHaveLength(2);
     expect(result.issues).toEqual(expect.arrayContaining([
-      expect.objectContaining({ type: "short", code: "FORBIDDEN_PHRASE" })
+      expect.objectContaining({ type: "short", code: "FORBIDDEN_PHRASE", severity: "hard" })
     ]));
   });
 
@@ -347,5 +347,86 @@ describe("AI provider response validation", () => {
     });
 
     expect(result.variants.map((variant) => variant.id)).toContain("short");
+  });
+
+  it("retries the second variant that repeats a noticeable template phrase", () => {
+    const result = inspectProviderVariants({
+      value: {
+        variants: [
+          { type: "short", text: "Анна, пусть впереди будет дело по душе и доход, который радует." },
+          { type: "warm", text: "Спасибо за помощь во время учёбы. Желаю найти доход, который радует." },
+          { type: "style", text: "Пусть рядом будут люди, которые видят и ценят твою надёжность." }
+        ]
+      },
+      maxLength: 280,
+      draftNotes: "Хочу поблагодарить Анну за помощь и пожелать хорошей работы и достойного заработка.",
+      existingMessages: []
+    });
+
+    expect(result.variants.map((variant) => variant.id)).toEqual(["short", "style"]);
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "warm", code: "TOO_SIMILAR", severity: "hard" })
+    ]));
+  });
+
+  it("rejects a short variant longer than 180 characters", () => {
+    const longShort = `Анна, ${"спасибо за помощь в учёбе, ".repeat(8)}пусть впереди будет много хорошего.`;
+    const result = inspectProviderVariants({
+      value: { variants: variants.map((variant, index) => index === 0 ? { ...variant, text: longShort } : variant) },
+      maxLength: 280,
+      draftNotes: "Хочу поблагодарить Анну за помощь во время учёбы и пожелать ей всего хорошего.",
+      existingMessages: []
+    });
+
+    expect(result.variants.map((variant) => variant.id)).not.toContain("short");
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "short", code: "TOO_LONG", severity: "hard" })
+    ]));
+  });
+
+  it("allows a diploma joke only in the selected humor variant", () => {
+    const result = inspectProviderVariants({
+      value: {
+        variants: [
+          { type: "short", text: "Анна, поздравляю с выпускным! Спасибо за помощь во время учёбы." },
+          { type: "warm", text: "Анна, спасибо, что всегда приходила на помощь и поддерживала меня." },
+          { type: "style", text: "Похоже, диплом немного и твоя заслуга — спасибо, что выручала меня всю учёбу!" }
+        ]
+      },
+      maxLength: 280,
+      draftNotes: "Хочу поздравить Анну с выпускным. Она помогала мне всю учёбу, и без неё оценки были бы хуже.",
+      existingMessages: [],
+      style: "humor"
+    });
+
+    expect(result.variants).toHaveLength(3);
+  });
+
+  it("rejects a diploma joke outside the humor style", () => {
+    const result = inspectProviderVariants({
+      value: {
+        variants: variants.map((variant, index) =>
+          index === 2 ? { ...variant, text: "Похоже, диплом немного и твоя заслуга — спасибо за помощь!" } : variant
+        )
+      },
+      maxLength: 280,
+      draftNotes: "Хочу поздравить Анну с выпускным и поблагодарить за помощь во время учёбы.",
+      existingMessages: [],
+      style: "touching"
+    });
+
+    expect(result.variants.map((variant) => variant.id)).not.toContain("style");
+  });
+
+  it("rejects a humor style variant without a recognizable light joke", () => {
+    const result = inspectProviderVariants({
+      value: { variants },
+      maxLength: 280,
+      draftNotes: "Хочу поздравить Анну с выпускным и поблагодарить за помощь во время учёбы.",
+      existingMessages: [],
+      style: "humor"
+    });
+
+    expect(result.variants.map((variant) => variant.id)).not.toContain("style");
   });
 });

@@ -16,7 +16,7 @@ import {
   validateBestQuoteCandidates,
   validateQualityCandidates
 } from "@/lib/ai/card-insights";
-import { inspectProviderVariants, textSimilarity } from "@/lib/ai/response-validation";
+import { findSharedTemplatePhrase, inspectProviderVariants, textSimilarity } from "@/lib/ai/response-validation";
 import type { ProviderVariantValidationIssue } from "@/lib/ai/response-validation";
 import { AiError } from "@/lib/ai/types";
 import type {
@@ -462,6 +462,15 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         );
         if (duplicatesAcceptedType) {
           validationFeedback.push(`${candidate.id}: сделай текст отличающимся от уже принятого варианта`);
+          continue;
+        }
+        const repeatedPhrase = providerName === "mock"
+          ? null
+          : [...acceptedVariants.values()]
+              .map((accepted) => findSharedTemplatePhrase(candidate.text, accepted.text))
+              .find(Boolean);
+        if (repeatedPhrase) {
+          validationFeedback.push(`${candidate.id}: не повторяй формулировку «${repeatedPhrase}» из уже принятого варианта`);
           continue;
         }
         if (!acceptedVariants.has(candidate.id)) acceptedVariants.set(candidate.id, candidate);

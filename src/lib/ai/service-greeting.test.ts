@@ -17,7 +17,7 @@ vi.mock("@/lib/ai/gigachat-provider", () => ({
 
 vi.mock("@/lib/ai/openai-provider", () => ({
   generateWithOpenAi: mocks.generateWithOpenAi,
-  OPENAI_GREETING_PROMPT_VERSION: "greeting-openai-v2"
+  OPENAI_GREETING_PROMPT_VERSION: "greeting-openai-v3"
 }));
 
 vi.mock("@/lib/ai/repository", () => ({
