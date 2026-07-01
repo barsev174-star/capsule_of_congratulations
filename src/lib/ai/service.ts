@@ -491,13 +491,13 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
     }
 
     if (!variants) {
+      if (lastProviderError) throw lastProviderError;
       if (lastValidationIssues.length > 0) {
         throw new AiError(
           "AI_VALIDATION_FAILED",
           `Greeting quality validation failed: ${[...new Set(lastValidationIssues.map((issue) => issue.code))].join(", ")}`
         );
       }
-      if (lastProviderError) throw lastProviderError;
       throw new AiError("AI_VALIDATION_FAILED", "Greeting quality validation failed.");
     }
 

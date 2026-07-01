@@ -429,4 +429,23 @@ describe("AI provider response validation", () => {
 
     expect(result.variants.map((variant) => variant.id)).not.toContain("style");
   });
+
+  it("rejects an invented gender of the author", () => {
+    const result = inspectProviderVariants({
+      value: {
+        variants: variants.map((variant, index) =>
+          index === 2 ? { ...variant, text: "Я очень признательна за твою помощь и поддержку во время учёбы." } : variant
+        )
+      },
+      maxLength: 280,
+      draftNotes: "Хочу поблагодарить Анну за помощь и поддержку во время учёбы.",
+      existingMessages: [],
+      style: "warm-simple"
+    });
+
+    expect(result.variants.map((variant) => variant.id)).not.toContain("style");
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "style", code: "FORBIDDEN_PHRASE", severity: "hard" })
+    ]));
+  });
 });
