@@ -8,7 +8,13 @@ import {
   saveAiCardInsight
 } from "@/lib/ai/repository";
 import { generateBestQuotesWithGigaChat, generateQualitiesWithGigaChat, generateWithGigaChat } from "@/lib/ai/gigachat-provider";
-import { generateWithOpenAi, OPENAI_GREETING_PROMPT_VERSION } from "@/lib/ai/openai-provider";
+import {
+  generateMatrixWithOpenAi,
+  generateWithOpenAi,
+  OPENAI_GREETING_PROMPT_VERSION,
+  OPENAI_MATRIX_PROMPT_VERSION
+} from "@/lib/ai/openai-provider";
+import { selectMatrixVariants } from "@/lib/ai/greeting-matrix";
 import {
   buildContributionFingerprint,
   buildMockBestQuotes,
@@ -352,6 +358,16 @@ const getInsightsProviderName = (): AiProviderName =>
 
 export const generateParticipantMessage = async (input: AiGenerationInput): Promise<AiGenerationResult> => {
   const providerName = getProviderName(process.env.AI_GREETING_PROVIDER ?? process.env.AI_PROVIDER);
+  const matrixRequested = process.env.AI_GREETING_MODE === "matrix";
+  const greetingMode = matrixRequested && providerName === "openai" && (input.mode ?? "compose") === "compose"
+    ? "matrix"
+    : "classic";
+  if (process.env.NODE_ENV !== "production" && matrixRequested && greetingMode === "classic") {
+    logger.warn("ai.matrix_classic_fallback", "Matrix mode requires OpenAI compose generation; using classic", {
+      provider: providerName,
+      mode: input.mode ?? "compose"
+    });
+  }
   const usageSummary = await getAiUsageSummary(input.cardId);
   const generationId = randomUUID();
   const reservation = await reserveAiGeneration({ id: generationId, cardId: input.cardId, limit: usageSummary.limit });
@@ -367,6 +383,8 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
   let validationFeedback: string[] = [];
   let lastProviderError: AiError | null = null;
   let lastValidationIssues: ProviderVariantValidationIssue[] = [];
+  let matrixUsage: { inputTokens?: number; outputTokens?: number; totalTokens?: number } | undefined;
+  let matrixGeneratedCount = 0;
 
   try {
     for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -380,16 +398,26 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
               requestedVariantTypes: (["short", "warm", "style"] as const)
                 .filter((type) => !acceptedVariants.has(type))
             };
-        providerResult = providerName === "gigachat"
-          ? await generateWithGigaChat(providerInput)
-          : providerName === "openai"
-            ? await generateWithOpenAi(providerInput)
-            : {
+        if (greetingMode === "matrix") {
+          const matrixResult = await generateMatrixWithOpenAi(providerInput);
+          matrixGeneratedCount = matrixResult.variants.length;
+          matrixUsage = matrixResult.usage;
+          providerResult = {
+            variants: selectMatrixVariants(matrixResult.variants, input.style),
+            model: matrixResult.model
+          };
+        } else {
+          providerResult = providerName === "gigachat"
+            ? await generateWithGigaChat(providerInput)
+            : providerName === "openai"
+              ? await generateWithOpenAi(providerInput)
+              : {
               variants: input.mode === "shorten"
                 ? buildShortenedVariants(input)
                 : buildVariants(input, reservation.usage.used - 1 + attempt),
               model: "local-template-v5"
             };
+        }
       } catch (error) {
         if (
           error instanceof AiError &&
@@ -434,9 +462,12 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         logger.info("ai.participant_validation_result", "AI greeting validation completed", {
           provider: providerName,
           model: providerResult.model,
+          greetingMode,
           mode: input.mode ?? "compose",
           style: input.style,
-          promptVersion: providerName === "openai" ? OPENAI_GREETING_PROMPT_VERSION : undefined,
+          promptVersion: providerName === "openai"
+            ? greetingMode === "matrix" ? OPENAI_MATRIX_PROMPT_VERSION : OPENAI_GREETING_PROMPT_VERSION
+            : undefined,
           attempt: attempt + 1,
           acceptedTypes: validation.variants.map((variant) => variant.id),
           issueCodes: validation.issues.map((issue) => issue.code)
@@ -517,6 +548,13 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
     logger.info("ai.participant_generated", "Participant AI draft generated", {
       cardId: input.cardId,
       provider: providerName,
+      model: providerResult.model,
+      greetingMode,
+      selectedStyle: input.style,
+      matrixGeneratedCount: greetingMode === "matrix" ? matrixGeneratedCount : undefined,
+      selectedVariants: variants.map((variant) => variant.id),
+      validationPassed: true,
+      tokenUsage: greetingMode === "matrix" ? matrixUsage : undefined,
       remainingCardGenerations: reservation.usage.remaining
     });
 

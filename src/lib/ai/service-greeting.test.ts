@@ -5,6 +5,7 @@ import type { AiGenerationInput, AiProviderResult } from "@/lib/ai/types";
 const mocks = vi.hoisted(() => ({
   generateWithGigaChat: vi.fn(),
   generateWithOpenAi: vi.fn(),
+  generateMatrixWithOpenAi: vi.fn(),
   completeAiGeneration: vi.fn(),
   releaseAiGeneration: vi.fn()
 }));
@@ -17,7 +18,9 @@ vi.mock("@/lib/ai/gigachat-provider", () => ({
 
 vi.mock("@/lib/ai/openai-provider", () => ({
   generateWithOpenAi: mocks.generateWithOpenAi,
-  OPENAI_GREETING_PROMPT_VERSION: "greeting-openai-v3"
+  generateMatrixWithOpenAi: mocks.generateMatrixWithOpenAi,
+  OPENAI_GREETING_PROMPT_VERSION: "greeting-openai-v3",
+  OPENAI_MATRIX_PROMPT_VERSION: "greeting-openai-matrix-v1"
 }));
 
 vi.mock("@/lib/ai/repository", () => ({
@@ -71,8 +74,10 @@ describe("AI greeting service validation flow", () => {
   beforeEach(() => {
     process.env.AI_PROVIDER = "gigachat";
     delete process.env.AI_GREETING_PROVIDER;
+    delete process.env.AI_GREETING_MODE;
     mocks.generateWithGigaChat.mockReset();
     mocks.generateWithOpenAi.mockReset();
+    mocks.generateMatrixWithOpenAi.mockReset();
     mocks.completeAiGeneration.mockClear();
     mocks.releaseAiGeneration.mockClear();
   });
@@ -96,6 +101,31 @@ describe("AI greeting service validation flow", () => {
     expect(mocks.generateWithOpenAi).toHaveBeenCalledOnce();
     expect(mocks.generateWithGigaChat).not.toHaveBeenCalled();
     delete process.env.AI_GREETING_PROVIDER;
+  });
+
+  it("uses matrix internally while preserving the public three-variant contract", async () => {
+    process.env.AI_GREETING_PROVIDER = "openai";
+    process.env.AI_GREETING_MODE = "matrix";
+    mocks.generateMatrixWithOpenAi.mockResolvedValue({
+      model: "gpt-5-mini",
+      usage: { inputTokens: 500, outputTokens: 600, totalTokens: 1100 },
+      variants: [
+        { id: "short", label: "Короткий", text: "Анна, спасибо за помощь во время учёбы! Пусть впереди всё сложится хорошо." },
+        { id: "warm", label: "Душевный", text: "Спасибо, что всегда приходила на помощь. Это действительно многое для меня значило." },
+        { id: "warm-simple", label: "Тепло и просто", text: "С выпускным! Спасибо за поддержку — с тобой учиться было намного легче." },
+        { id: "short-no-pathos", label: "Коротко без пафоса", text: "Спасибо за помощь. Удачи после выпуска!" },
+        { id: "humor", label: "С лёгким юмором", text: "Без тебя мои оценки были бы скромнее — похоже, диплом немного и твоя заслуга." },
+        { id: "touching", label: "Трогательно", text: "Твоя поддержка сделала годы учёбы легче. Спасибо, что была рядом." },
+        { id: "respectful", label: "Уважительно", text: "Анна, спасибо за ответственность и готовность всегда помочь." }
+      ]
+    });
+
+    const result = await generateParticipantMessage(input);
+
+    expect(result.variants.map((variant) => variant.id)).toEqual(["short", "warm", "style"]);
+    expect(result.variants[2].text).toContain("С выпускным");
+    expect(mocks.generateMatrixWithOpenAi).toHaveBeenCalledOnce();
+    expect(mocks.generateWithOpenAi).not.toHaveBeenCalled();
   });
 
   it("accepts naturally rephrased career wishes", async () => {

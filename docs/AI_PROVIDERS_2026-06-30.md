@@ -21,6 +21,18 @@ AI_INSIGHTS_PROVIDER=gigachat
 
 `AI_PROVIDER` remains as a backward-compatible default for greeting generation.
 
+## Experimental matrix generation
+
+The public API and UI still receive `short`, `warm` and `style`. An optional backend experiment can generate seven internal styles in one OpenAI request and then select the same public three:
+
+```env
+AI_GREETING_MODE=classic
+```
+
+Set `AI_GREETING_MODE=matrix` to enable the experiment. If the variable is missing, the service uses `classic`. Matrix is used only for OpenAI `compose` requests; manager improve/shorten operations and other providers stay on classic.
+
+Matrix uses `greeting-openai-matrix-v1`, infers relationship/address mode with local heuristics, validates only the selected public variants and retries the full matrix at most once. The feature flag does not change the UI, database, card limits or API response shape.
+
 ## OpenAI-compatible configuration
 
 ```env

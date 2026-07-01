@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseOpenAiGreetingContent } from "@/lib/ai/openai-provider";
+import { parseOpenAiGreetingContent, parseOpenAiMatrixContent } from "@/lib/ai/openai-provider";
 
 describe("OpenAI greeting response", () => {
   it("parses exactly three structured variants", () => {
@@ -38,5 +38,22 @@ describe("OpenAI greeting response", () => {
     expect(variants).toEqual([
       { id: "style", label: "Ваш стиль", text: "Новый вариант в выбранном стиле" }
     ]);
+  });
+
+  it("parses seven unique matrix variants", () => {
+    const types = ["short", "warm", "warm-simple", "short-no-pathos", "humor", "touching", "respectful"];
+    const variants = parseOpenAiMatrixContent(JSON.stringify({
+      variants: types.map((type) => ({ type, label: type, text: `Текст ${type}` }))
+    }));
+
+    expect(variants).toHaveLength(7);
+    expect(variants.map((variant) => variant.id)).toEqual(types);
+  });
+
+  it("rejects a matrix with duplicate types", () => {
+    const types = ["short", "short", "warm-simple", "short-no-pathos", "humor", "touching", "respectful"];
+    expect(() => parseOpenAiMatrixContent(JSON.stringify({
+      variants: types.map((type) => ({ type, label: type, text: `Текст ${type}` }))
+    }))).toThrowError(expect.objectContaining({ code: "INVALID_PROVIDER_RESPONSE" }));
   });
 });

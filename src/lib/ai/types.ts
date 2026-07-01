@@ -6,6 +6,7 @@ export type AiStyle =
   | "respectful";
 
 export type AiVariantType = "short" | "warm" | "style";
+export type AiMatrixVariantType = "short" | "warm" | AiStyle;
 export type AiProviderName = "mock" | "gigachat" | "openai";
 export type AiGenerationMode = "compose" | "improve" | "shorten";
 export type AiGenerationType = "participant_message" | "best_quotes" | "qualities";
@@ -39,6 +40,18 @@ export type AiVariant = {
   id: AiVariantType;
   label: string;
   text: string;
+};
+
+export type AiMatrixVariant = {
+  id: AiMatrixVariantType;
+  label: string;
+  text: string;
+};
+
+export type AiMatrixProviderResult = {
+  variants: AiMatrixVariant[];
+  model: string;
+  usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number };
 };
 
 export type AiUsage = {
