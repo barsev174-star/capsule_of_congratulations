@@ -1,7 +1,47 @@
 import { describe, expect, it } from "vitest";
-import { parseOpenAiGreetingContent, parseOpenAiMatrixContent } from "@/lib/ai/openai-provider";
+import {
+  buildMatrixPromptV2,
+  buildMatrixPromptV3,
+  buildMatrixPromptV4,
+  parseOpenAiGreetingContent,
+  parseOpenAiMatrixContent
+} from "@/lib/ai/openai-provider";
+import type { AiProviderInput } from "@/lib/ai/types";
 
 describe("OpenAI greeting response", () => {
+  const matrixInput: AiProviderInput = {
+    recipientName: "Анна Ивановна",
+    occasionText: "С выпускным!",
+    relationshipContext: "сокурсница",
+    draftNotes: "Спасибо за помощь. Желаю интересной работы.",
+    style: "humor",
+    messageLimit: 280,
+    fromLabel: "от сокурсников",
+    existingMessages: [],
+    attempt: 0
+  };
+
+  it("keeps v2 and builds universal v3 context separately", () => {
+    const v2 = buildMatrixPromptV2(matrixInput);
+    const v3 = buildMatrixPromptV3(matrixInput);
+
+    expect(v2.user).toContain("Получатель: Анна Ивановна");
+    expect(v3.user).toContain("Исходное имя: Анна Ивановна");
+    expect(v3.user).toContain("Обращение в поздравлении: Анна");
+    expect(v3.user).toContain("Категория повода: graduation");
+    expect(v3.user).toContain("Мягкое обобщение пожеланий: сохранить благодарность главным смыслом текста");
+    expect(v3.user).not.toContain("Явные темы пожеланий:");
+  });
+
+  it("builds v4 without exposing fromLabel to the model", () => {
+    const v4 = buildMatrixPromptV4(matrixInput);
+
+    expect(v4.user).toContain("Безопасная выжимка пожеланий:");
+    expect(v4.user).toContain("Безопасные направления пожеланий:");
+    expect(v4.user).toContain("Темы пожеланий:");
+    expect(v4.user).not.toContain("от сокурсников");
+    expect(v4.user).not.toContain("От кого открытка:");
+  });
   it("parses exactly three structured variants", () => {
     const variants = parseOpenAiGreetingContent(JSON.stringify({
       variants: [

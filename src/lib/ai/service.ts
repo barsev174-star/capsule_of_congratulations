@@ -7,14 +7,29 @@ import {
   reserveAiGeneration,
   saveAiCardInsight
 } from "@/lib/ai/repository";
-import { generateBestQuotesWithGigaChat, generateQualitiesWithGigaChat, generateWithGigaChat } from "@/lib/ai/gigachat-provider";
+import { generateWithGigaChat } from "@/lib/ai/gigachat-provider";
+import { generateBestQuotesWithOpenAi, generateQualitiesWithOpenAi } from "@/lib/ai/openai-insights-provider";
 import {
   generateMatrixWithOpenAi,
   generateWithOpenAi,
+  getOpenAiMatrixPromptVersion,
   OPENAI_GREETING_PROMPT_VERSION,
+  OPENAI_MATRIX_PROMPT_V3,
   OPENAI_MATRIX_PROMPT_VERSION
 } from "@/lib/ai/openai-provider";
-import { selectMatrixVariants } from "@/lib/ai/greeting-matrix";
+import { buildMatrixSelections, inferRelationshipContext } from "@/lib/ai/greeting-matrix";
+import {
+  rankGreetingSelections,
+  scoreGreetingSelection,
+  scoreGreetingVariant,
+  scoreStructureDiversity
+} from "@/lib/ai/greeting-scoring";
+import { inferAddressName, inferOccasionContext, normalizeOccasionForSentence } from "@/lib/ai/greeting-context";
+import { cleanupGreetingText } from "@/lib/ai/greeting-cleanup";
+import { buildLadderPrompt, buildLadderRetryPrompt } from "@/lib/ai/greeting-ladder";
+import { ensureLadderVariantAddress, fitLadderVariantToLimit, validateLadderVariants } from "@/lib/ai/greeting-ladder-validation";
+import { generateLadderWithOpenAi, OPENAI_LADDER_PROMPT_VERSION } from "@/lib/ai/openai-ladder-provider";
+import { extractDraftSpecifics } from "@/lib/ai/greeting-specifics";
 import {
   buildContributionFingerprint,
   buildMockBestQuotes,
@@ -32,6 +47,8 @@ import type {
   AiQualitiesResult,
   AiProviderName,
   AiProviderResult,
+  AiMatrixVariant,
+  AiMatrixVariantType,
   AiStyle,
   AiVariant
 } from "@/lib/ai/types";
@@ -352,19 +369,131 @@ const getProviderName = (value?: string): AiProviderName =>
   value === "gigachat" || value === "openai" ? value : "mock";
 
 const getInsightsProviderName = (): AiProviderName =>
-  (process.env.AI_INSIGHTS_PROVIDER ?? (process.env.GIGACHAT_AUTH_KEY ? "gigachat" : "mock")) === "gigachat"
-    ? "gigachat"
+  (process.env.AI_INSIGHTS_PROVIDER ?? (process.env.OPENAI_API_KEY ? "openai" : "mock")) === "openai"
+    ? "openai"
     : "mock";
+
+const buildTargetedFeedback = (issues: ProviderVariantValidationIssue[]) => {
+  const issue = issues.find((item) => item.severity === "hard")
+    ?? issues.find((item) => item.severity === "soft");
+  return issue ? [issue.message] : [];
+};
+
+const variantsWithoutHardIssues = (source: AiVariant[], issues: ProviderVariantValidationIssue[]) => {
+  const rejected = new Set(
+    issues.filter((issue) => issue.severity === "hard" && issue.type).map((issue) => issue.type)
+  );
+  return source.filter((variant) => !rejected.has(variant.id));
+};
+
+const buildSafeGreetingFallback = (input: AiGenerationInput): AiVariant[] => {
+  const relationship = inferRelationshipContext(input);
+  const { addressName } = inferAddressName(input.recipientName, relationship.relationshipType);
+  const { occasionCategory, safeWishSummary } = inferOccasionContext(input);
+  const eventPhrase = normalizeOccasionForSentence(input.occasionText) || "с этим важным событием";
+  const gratitudePhrase = /помог/iu.test(input.draftNotes)
+    ? "Спасибо за помощь"
+    : /поддерж|выруч/iu.test(input.draftNotes)
+      ? "Спасибо за поддержку"
+      : "";
+  const texts = occasionCategory === "gratitude"
+    ? [
+        `${addressName}, спасибо за добрые слова и поступки.`,
+        `${addressName}, хочется сказать спасибо и пожелать больше приятных событий впереди.`,
+        `${addressName}, примите искреннюю благодарность. Пусть этот день оставит тёплые воспоминания.`
+      ]
+    : gratitudePhrase
+      ? [
+          `${addressName}, ${eventPhrase}! ${gratitudePhrase}.`,
+          `${addressName}, поздравляю! ${gratitudePhrase} — это многое значит.`,
+          `${addressName}, ${gratitudePhrase.toLocaleLowerCase("ru-RU")}. Пусть ${safeWishSummary}.`
+        ]
+      : [
+          `${addressName}, ${eventPhrase}! Пусть этот день принесёт радость.`,
+          `${addressName}, поздравляю! Пусть этот повод оставит тёплые воспоминания.`,
+          `${addressName}, примите тёплые поздравления. Пусть впереди будет больше приятных событий.`
+        ];
+
+  return (["short", "warm", "style"] as const).map((id, index) => ({
+    id,
+    label: id === "short" ? "Короткий" : id === "warm" ? "Душевный" : "Ваш стиль",
+    text: cleanupGreetingText(fitTextToLimit(texts[index], input.messageLimit), input)
+  }));
+};
+
+const collectSafeMatrixCandidates = (
+  source: AiMatrixVariant[],
+  input: AiGenerationInput,
+  existingMessages: string[]
+) => source.filter((candidate) => {
+  if (/помог|поддерж|благодар|спасибо|выруч/iu.test(input.draftNotes) &&
+      !/спасибо|благодар|помощ|поддерж|выруч/iu.test(candidate.text)) return false;
+  const check = inspectProviderVariants({
+    value: [
+      { id: "short", label: "Короткий", text: "Поздравляю с этим событием." },
+      { id: "warm", label: "Душевный", text: "Пусть этот день оставит тёплые воспоминания." },
+      { id: "style", label: "Ваш стиль", text: candidate.text }
+    ],
+    maxLength: input.messageLimit,
+    draftNotes: input.draftNotes,
+    existingMessages,
+    mode: input.mode ?? "compose",
+    style: "warm-simple",
+    recipientName: input.recipientName,
+    relationshipContext: input.relationshipContext,
+    occasionText: input.occasionText,
+    enforcePromptRules: true,
+    universalContextRules: true
+  });
+  return !check.issues.some((issue) => issue.type === "style" && issue.severity === "hard");
+});
+
+const rescueFromMatrixPool = (
+  type: AiVariant["id"],
+  pool: AiMatrixVariant[],
+  selectedStyle: AiStyle,
+  used: AiVariant[]
+) => {
+  const preferences: Record<AiVariant["id"], AiMatrixVariantType[]> = {
+    short: ["short", "short-no-pathos", "warm-simple", "warm", "touching"],
+    warm: ["warm", "touching", "warm-simple", "respectful", "short-no-pathos"],
+    style: [selectedStyle, "warm-simple", "touching", "respectful", "humor"]
+  };
+  const ranked = [...pool].sort(
+    (left, right) => {
+      const leftRank = preferences[type].indexOf(left.id);
+      const rightRank = preferences[type].indexOf(right.id);
+      return (leftRank < 0 ? 999 : leftRank) - (rightRank < 0 ? 999 : rightRank);
+    }
+  );
+  const candidate = ranked.find((item) => {
+    if (type === "short" && (item.text.length > 180 || item.text.split(/[.!?]+/).filter(Boolean).length > 2)) return false;
+    return used.every((variant) => textSimilarity(variant.text, item.text) < 0.82);
+  });
+  return candidate ? {
+    id: type,
+    label: type === "short" ? "Короткий" : type === "warm" ? "Душевный" : "Ваш стиль",
+    text: candidate.text
+  } : null;
+};
 
 export const generateParticipantMessage = async (input: AiGenerationInput): Promise<AiGenerationResult> => {
   const providerName = getProviderName(process.env.AI_GREETING_PROVIDER ?? process.env.AI_PROVIDER);
   const matrixRequested = process.env.AI_GREETING_MODE === "matrix";
-  const greetingMode = matrixRequested && providerName === "openai" && (input.mode ?? "compose") === "compose"
-    ? "matrix"
-    : "classic";
-  if (process.env.NODE_ENV !== "production" && matrixRequested && greetingMode === "classic") {
-    logger.warn("ai.matrix_classic_fallback", "Matrix mode requires OpenAI compose generation; using classic", {
+  const ladderRequested = process.env.AI_GREETING_MODE === "ladder";
+  const supportsSpecialMode = providerName === "openai" && (input.mode ?? "compose") === "compose";
+  const greetingMode = ladderRequested && supportsSpecialMode
+    ? "ladder"
+    : matrixRequested && supportsSpecialMode
+      ? "matrix"
+      : "classic";
+  const matrixPromptVersion = greetingMode === "matrix" ? getOpenAiMatrixPromptVersion() : undefined;
+  const universalMatrix = matrixPromptVersion === OPENAI_MATRIX_PROMPT_VERSION || matrixPromptVersion === OPENAI_MATRIX_PROMPT_V3;
+  const cleanupMatrix = matrixPromptVersion === OPENAI_MATRIX_PROMPT_VERSION;
+  if (process.env.NODE_ENV !== "production" && (matrixRequested || ladderRequested) && greetingMode === "classic") {
+    logger.warn("ai.special_mode_classic_fallback", "Selected greeting mode requires OpenAI compose generation; using classic", {
       provider: providerName,
+      requestedMode: process.env.AI_GREETING_MODE,
       mode: input.mode ?? "compose"
     });
   }
@@ -385,8 +514,98 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
   let lastValidationIssues: ProviderVariantValidationIssue[] = [];
   let matrixUsage: { inputTokens?: number; outputTokens?: number; totalTokens?: number } | undefined;
   let matrixGeneratedCount = 0;
+  const matrixSafePool: AiMatrixVariant[] = [];
+  const matrixSelectionPool: AiVariant[][] = [];
 
   try {
+    if (greetingMode === "ladder") {
+      const ladderInput = {
+        recipientName: input.recipientName,
+        occasionText: input.occasionText,
+        fromLabel: input.fromLabel,
+        relationshipContext: input.relationshipContext,
+        draftNotes: input.draftNotes,
+        messageLimit: input.messageLimit,
+        existingMessages
+      };
+      const prompt = buildLadderPrompt(ladderInput);
+      const requestedTypes = ["safe", "warm", "expressive"] as const;
+      const initial = await generateLadderWithOpenAi({
+        system: prompt.system,
+        user: prompt.user,
+        requestedTypes: [...requestedTypes],
+        attempt: 1
+      });
+      const initialValidation = validateLadderVariants(initial.variants, ladderInput, prompt.context, prompt.limits);
+      let finalVariants = initial.variants;
+      let retryUsage: typeof initial.usage;
+
+      if (initialValidation.rejectedTypes.length > 0) {
+        const retryPrompt = buildLadderRetryPrompt(
+          ladderInput,
+          initialValidation.rejectedTypes.map((type) => ({
+            type,
+            reasons: initialValidation.issues.filter((issue) => issue.type === type).map((issue) => issue.message)
+          })),
+          initialValidation.accepted
+        );
+        const retry = await generateLadderWithOpenAi({
+          system: retryPrompt.system,
+          user: retryPrompt.user,
+          requestedTypes: retryPrompt.requestedTypes,
+          attempt: 2
+        });
+        retryUsage = retry.usage;
+        const replacements = new Map(retry.variants.map((variant) => [variant.type, variant]));
+        finalVariants = finalVariants.map((variant) => replacements.get(variant.type) ?? variant);
+      }
+
+      finalVariants = finalVariants.map((variant) => fitLadderVariantToLimit(
+        ensureLadderVariantAddress(variant, prompt.context.address),
+        prompt.limits[variant.type]
+      ));
+      const finalValidation = validateLadderVariants(finalVariants, ladderInput, prompt.context, prompt.limits);
+      if (finalValidation.issues.length > 0) {
+        logger.warn("ai.ladder_validation_failed", "Ladder variants failed final validation", {
+          cardId: input.cardId,
+          issueCodes: finalValidation.issues.map((issue) => issue.code),
+          rejectedTypes: finalValidation.rejectedTypes
+        });
+        throw new AiError("AI_VALIDATION_FAILED", "Ladder greeting quality validation failed.");
+      }
+
+      variants = finalVariants.map((variant) => ({
+        id: variant.type === "safe" ? "short" : variant.type === "warm" ? "warm" : "style",
+        label: variant.label,
+        text: variant.text
+      }));
+      providerResult = { variants, model: initial.model };
+      await completeAiGeneration({
+        id: generationId,
+        cardId: input.cardId,
+        generationInput: { ...input, existingMessages },
+        variants,
+        provider: providerName,
+        model: providerResult.model
+      });
+      logger.info("ai.participant_generated", "Participant AI draft generated", {
+        cardId: input.cardId,
+        provider: providerName,
+        model: providerResult.model,
+        greetingMode,
+        promptVersion: OPENAI_LADDER_PROMPT_VERSION,
+        selectedVariants: variants.map((variant) => variant.id),
+        validationPassed: true,
+        tokenUsage: {
+          initial: initial.usage,
+          retry: retryUsage,
+          totalTokens: (initial.usage?.totalTokens ?? 0) + (retryUsage?.totalTokens ?? 0)
+        },
+        remainingCardGenerations: reservation.usage.remaining
+      });
+      return { generationId, variants, usage: reservation.usage, messageLimit: input.messageLimit };
+    }
+
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
         const providerInput = {
@@ -402,8 +621,92 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
           const matrixResult = await generateMatrixWithOpenAi(providerInput);
           matrixGeneratedCount = matrixResult.variants.length;
           matrixUsage = matrixResult.usage;
+          if (universalMatrix) {
+            for (const candidate of collectSafeMatrixCandidates(matrixResult.variants, input, existingMessages)) {
+              if (!matrixSafePool.some((saved) => textSimilarity(saved.text, candidate.text) >= 0.9)) {
+                matrixSafePool.push(candidate);
+              }
+            }
+          }
+          const selections = universalMatrix
+            ? rankGreetingSelections(buildMatrixSelections(matrixResult.variants, input.style), input)
+            : buildMatrixSelections(matrixResult.variants, input.style);
+          if (process.env.NODE_ENV !== "production" && cleanupMatrix) {
+            const context = inferOccasionContext(input);
+            const specifics = extractDraftSpecifics(input.draftNotes);
+            logger.info("ai.openai_matrix_scoring", "Scored OpenAI matrix variants", {
+              promptVersion: matrixPromptVersion,
+              model: matrixResult.model,
+              tokenUsage: matrixResult.usage,
+              relationshipType: inferRelationshipContext(input).relationshipType,
+              occasionCategory: context.occasionCategory,
+              wishTopics: context.wishTopics,
+              overloadedWishTopics: context.overloadedWishTopics,
+              safeWishSummary: context.safeWishSummary,
+              specificFacts: specifics.specificFacts,
+              strongDetails: specifics.strongDetails,
+              personalConsequences: specifics.personalConsequences,
+              concreteActions: specifics.concreteActions,
+              concreteQualities: specifics.concreteQualities,
+              weakGenericDetails: specifics.weakGenericDetails,
+              variants: matrixResult.variants.map((variant) => ({
+                type: variant.id,
+                text: variant.text,
+                ...scoreGreetingVariant({ id: "style", label: variant.label, text: variant.text }, input)
+              }))
+            });
+          }
+          const checkedSelections = selections.map((candidate) => {
+            const check = inspectProviderVariants({
+              value: candidate,
+              maxLength: input.messageLimit,
+              draftNotes: input.draftNotes,
+              existingMessages,
+              mode: input.mode ?? "compose",
+              style: input.style,
+              recipientName: input.recipientName,
+              relationshipContext: input.relationshipContext,
+              occasionText: input.occasionText,
+              enforcePromptRules: true,
+              universalContextRules: universalMatrix
+            });
+            return { candidate, check };
+          });
+          if (universalMatrix) {
+            matrixSelectionPool.push(
+              ...checkedSelections
+                .filter(({ check }) => !check.issues.some((issue) => issue.severity === "hard"))
+                .map(({ candidate }) => candidate)
+            );
+          }
+          const selected = universalMatrix
+            ? checkedSelections
+                .filter(({ check }) => !check.issues.some((issue) => issue.severity === "hard"))
+                .sort((left, right) => {
+                  const issueDifference = left.check.issues.length - right.check.issues.length;
+                  return issueDifference || scoreGreetingSelection(right.candidate, input) - scoreGreetingSelection(left.candidate, input);
+                })[0]?.candidate
+                ?? selections[0]
+            : checkedSelections.find(({ check }) => check.variants.length === 3)?.candidate ?? selections[0];
+          if (process.env.NODE_ENV !== "production" && cleanupMatrix) {
+            const diversity = scoreStructureDiversity(selected, input);
+            logger.info("ai.openai_matrix_selection", "Selected OpenAI greeting trio", {
+              structureDiversityScore: diversity.score,
+              repetitiveStructureIssues: diversity.issues,
+              occasionTextCount: diversity.occasionCount,
+              occasionPlacement: diversity.structures.map((structure, index) => ({
+                type: selected[index].id,
+                placement: structure.occasionPlacement
+              })),
+              selected: selected.map((variant) => ({
+                type: variant.id,
+                text: variant.text,
+                styleFitIssues: scoreGreetingVariant(variant, input).softIssues
+              }))
+            });
+          }
           providerResult = {
-            variants: selectMatrixVariants(matrixResult.variants, input.style),
+            variants: selected,
             model: matrixResult.model
           };
         } else {
@@ -443,6 +746,16 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         throw error;
       }
 
+      if (cleanupMatrix && providerResult) {
+        providerResult = {
+          ...providerResult,
+          variants: providerResult.variants.map((variant) => ({
+            ...variant,
+            text: cleanupGreetingText(variant.text, input)
+          }))
+        };
+      }
+
       const validation = inspectProviderVariants({
         value: providerResult.variants,
         maxLength: input.messageLimit,
@@ -452,11 +765,15 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         style: input.style,
         recipientName: input.recipientName,
         relationshipContext: input.relationshipContext,
-        enforcePromptRules: providerName !== "mock"
+        occasionText: input.occasionText,
+        enforcePromptRules: providerName !== "mock",
+        universalContextRules: universalMatrix
       });
 
       lastValidationIssues = validation.issues;
-      validationFeedback = validation.issues.map((issue) => issue.message);
+      validationFeedback = universalMatrix
+        ? buildTargetedFeedback(validation.issues)
+        : validation.issues.map((issue) => issue.message);
 
       if (process.env.NODE_ENV !== "production") {
         logger.info("ai.participant_validation_result", "AI greeting validation completed", {
@@ -466,7 +783,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
           mode: input.mode ?? "compose",
           style: input.style,
           promptVersion: providerName === "openai"
-            ? greetingMode === "matrix" ? OPENAI_MATRIX_PROMPT_VERSION : OPENAI_GREETING_PROMPT_VERSION
+            ? greetingMode === "matrix" ? matrixPromptVersion : OPENAI_GREETING_PROMPT_VERSION
             : undefined,
           attempt: attempt + 1,
           acceptedTypes: validation.variants.map((variant) => variant.id),
@@ -487,7 +804,10 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
           }))
         });
       }
-      for (const candidate of validation.variants) {
+      const safeCandidates = universalMatrix
+        ? variantsWithoutHardIssues(providerResult.variants, validation.issues)
+        : validation.variants;
+      for (const candidate of safeCandidates) {
         const duplicatesAcceptedType = [...acceptedVariants.values()].some(
           (accepted) => accepted.id !== candidate.id && textSimilarity(accepted.text, candidate.text) === 1
         );
@@ -495,7 +815,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
           validationFeedback.push(`${candidate.id}: сделай текст отличающимся от уже принятого варианта`);
           continue;
         }
-        const repeatedPhrase = providerName === "mock"
+        const repeatedPhrase = providerName === "mock" || cleanupMatrix
           ? null
           : [...acceptedVariants.values()]
               .map((accepted) => findSharedTemplatePhrase(candidate.text, accepted.text))
@@ -519,6 +839,43 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         acceptedTypes: [...acceptedVariants.keys()],
         issueCodes: validation.issues.map((issue) => issue.code)
       });
+    }
+
+    if (!variants) {
+      if (universalMatrix && providerResult) {
+        const rescued = new Map(acceptedVariants);
+        for (const type of ["short", "warm", "style"] as const) {
+          if (rescued.has(type)) continue;
+          const candidate = rescueFromMatrixPool(type, matrixSafePool, input.style, [...rescued.values()]);
+          if (candidate) rescued.set(type, candidate);
+        }
+        const fallback = buildSafeGreetingFallback(input);
+        variants = (["short", "warm", "style"] as const).map(
+          (type) => rescued.get(type) ?? fallback.find((variant) => variant.id === type)!
+        );
+        providerResult = { ...providerResult, model: `${providerResult.model}-safe-fallback` };
+        logger.warn("ai.participant_safe_fallback", "Using safe local greeting fallback", {
+          cardId: input.cardId,
+          acceptedTypes: [...acceptedVariants.keys()],
+          rescuedTypes: [...rescued.keys()].filter((type) => !acceptedVariants.has(type)),
+          fallbackTypes: variants.filter((variant) => !rescued.has(variant.id)).map((variant) => variant.id)
+        });
+      }
+    }
+
+    if (variants && universalMatrix && matrixSelectionPool.length > 0) {
+      const bestSelection = rankGreetingSelections(matrixSelectionPool, input)[0];
+      if (scoreGreetingSelection(bestSelection, input) > scoreGreetingSelection(variants, input)) {
+        variants = bestSelection;
+      }
+    }
+
+
+    if (variants && cleanupMatrix) {
+      variants = variants.map((variant) => ({
+        ...variant,
+        text: cleanupGreetingText(variant.text, input)
+      }));
     }
 
     if (!variants) {
@@ -551,6 +908,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
       model: providerResult.model,
       greetingMode,
       selectedStyle: input.style,
+      promptVersion: matrixPromptVersion,
       matrixGeneratedCount: greetingMode === "matrix" ? matrixGeneratedCount : undefined,
       selectedVariants: variants.map((variant) => variant.id),
       validationPassed: true,
@@ -596,8 +954,8 @@ export const generateBestQuotes = async (input: {
     let model = "local-insights-v1";
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const providerResult = providerName === "gigachat"
-        ? await generateBestQuotesWithGigaChat({
+      const providerResult = providerName === "openai"
+        ? await generateBestQuotesWithOpenAi({
             recipientName: input.recipientName,
             occasionText: input.occasionText,
             contributions: input.contributions.map(({ id, message }) => ({ id, message })),
@@ -669,8 +1027,8 @@ export const generateQualities = async (input: {
     let model = "local-insights-v1";
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const providerResult = providerName === "gigachat"
-        ? await generateQualitiesWithGigaChat({
+      const providerResult = providerName === "openai"
+        ? await generateQualitiesWithOpenAi({
             recipientName: input.recipientName,
             occasionText: input.occasionText,
             contributions: input.contributions.map(({ id, message }) => ({ id, message })),

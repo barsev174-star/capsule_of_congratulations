@@ -1,6 +1,6 @@
 # VPS deployment notes
 
-Актуальный handoff перед переносом на VPS: `docs/PROJECT_HANDOFF_2026-06-23.md`.
+Актуальная инструкция ближайшего обновления: `docs/DEPLOY_UPDATE_2026-07-02.md`.
 
 Дата: 2026-06-24
 

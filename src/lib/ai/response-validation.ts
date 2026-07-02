@@ -1,4 +1,5 @@
 import type { AiGenerationMode, AiStyle, AiVariant, AiVariantType } from "@/lib/ai/types";
+import { inferOccasionContext } from "@/lib/ai/greeting-context";
 import { containsTechnicalText, countCharacters } from "@/lib/ai/validation";
 
 const variantTypes: AiVariantType[] = ["short", "warm", "style"];
@@ -73,7 +74,60 @@ const promptLeakagePatterns = [
   /(?<!\p{L})душевн\p{L}*\s+вариант/iu
 ];
 
-const negativeHumorPatterns = [/головн\p{L}*\s+бол/iu];
+const dignityRiskPatterns = [
+  /подставлял\p{L}*\s+голов/iu,
+  /тащил\p{L}*\s+меня/iu,
+  /тащил\p{L}*\s+вс[её]\s+на\s+себ/iu,
+  /без\s+тебя\s+я\s+бы\s+пропал/iu,
+  /спасательн\p{L}*\s+лодк/iu,
+  /спасал\p{L}*\s+(?:меня\s+)?от\s+провал/iu,
+  /головн\p{L}*\s+бол/iu
+];
+
+const hrTonePatterns = [
+  /достой\p{L}*\s+позици/iu,
+  /профессиональн\p{L}*\s+развити/iu,
+  /стабильн\p{L}*\s+доход/iu,
+  /финансов\p{L}*\s+уверенност/iu,
+  /карьерн\p{L}*\s+продвижени/iu,
+  /признани\p{L}*\s+в\s+професси/iu,
+  /достой\p{L}*\s+вознаграждени/iu
+];
+
+const negativeHumorPatterns = [/головн\p{L}*\s+бол/iu, ...dignityRiskPatterns];
+
+const factAmplificationPatterns = [
+  /наставлял\p{L}*/iu,
+  /наставник|наставниц/iu,
+  /учил\p{L}*\s+меня/iu,
+  /вел\p{L}*\s+меня/iu,
+  /ориентир/iu,
+  /разъяснял\p{L}*\s+сложн\p{L}*\s+тем/iu,
+  /подстраховывал\p{L}*/iu,
+  /пар(?:а|ы|е|ах|ами)/iu,
+  /конспект/iu,
+  /шпаргал/iu,
+  /экзамен|зач[её]т/iu,
+  /начальств|работодател|преми|отпуск/iu,
+  /приглашени\p{L}*\s+на/iu,
+  /рабоч\p{L}*\s+расписани/iu,
+  /перв\p{L}*\s+рабоч\p{L}*/iu,
+  /спис(?:ывать|ывал|ывала|ывали)/iu,
+  /будильник|кофе/iu,
+  /держал\p{L}*\s+вс[её]\s+в\s+порядке/iu,
+  /заимствовал\p{L}*|переписывал\p{L}*|брал\p{L}*\s+у\s+тебя|учил(?:ся|ась)\s+у\s+тебя/iu
+];
+
+const topicPatterns = {
+  work: /работ|карьер|професси|должност|ваканси/iu,
+  money: /зарплат|доход|оплат|деньг|заработ/iu,
+  health: /здоров|выздоров/iu,
+  family: /семь|семейн/iu,
+  love: /любов|любим/iu,
+  children: /дет|ребен|сын|доч/iu
+} as const;
+
+const gratitudeSignalPattern = /спасибо|благодар|помощ|поддерж|выруч/iu;
 
 const literalWishPatterns = [
   /работ\p{L}*\s+мечт/iu,
@@ -108,6 +162,7 @@ const pluralAuthorPattern = /(?<!\p{L})(?:мы|нам|нас|наши|поздр
 const stiffPeerPattern = /(?<!\p{L})профессионализм\p{L}*(?!\p{L})/iu;
 const inventedWorkStereotypePattern = /(?<!\p{L})(?:начальств\p{L}*|работодател\p{L}*|преми\p{L}*|отпуск\p{L}*|опаздыва\p{L}*)(?!\p{L})/iu;
 const genderedAuthorPattern = /(?<!\p{L})(?:рад|рада|признателен|признательна|благодарен|благодарна)(?!\p{L})/iu;
+const explicitGenderedFirstPersonPattern = /(?<!\p{L})я\s+(?:был|была|справился|справилась|заимствовал|заимствовала|учился|училась|брал|брала)(?!\p{L})/iu;
 const diplomaJokePattern = /(?:похож\p{L}*|кажется)[\s\S]{0,35}диплом|диплом[\s\S]{0,45}(?:тво\p{L}*|ваш\p{L}*)\s+заслуг/iu;
 const humorSignalPattern = /(?:похож\p{L}*|кажется|не\s+зря|можно\s+считать|экзамен|зач[её]т|пят[её]рк|шутк)|диплом[\s\S]{0,45}заслуг/iu;
 
@@ -181,6 +236,8 @@ type ProviderValidationInput = {
   recipientName?: string;
   relationshipContext?: string;
   enforcePromptRules?: boolean;
+  occasionText?: string;
+  universalContextRules?: boolean;
 };
 
 export type ProviderVariantValidationIssue = {
@@ -350,6 +407,14 @@ export const inspectProviderVariants = (input: ProviderValidationInput): Provide
     }
     if (
       input.enforcePromptRules !== false &&
+      explicitGenderedFirstPersonPattern.test(text) &&
+      !explicitGenderedFirstPersonPattern.test(input.draftNotes)
+    ) {
+      reject("FORBIDDEN_PHRASE", "hard", "не придумывай пол автора; используй нейтральную формулировку");
+      continue;
+    }
+    if (
+      input.enforcePromptRules !== false &&
       inventedCloseAddressPattern.test(text) &&
       !inventedCloseAddressPattern.test(input.draftNotes)
     ) {
@@ -365,7 +430,7 @@ export const inspectProviderVariants = (input: ProviderValidationInput): Provide
       reject("FORBIDDEN_PHRASE", "hard", "сохрани личный голос автора: используй я/поздравляю/желаю, а не мы/поздравляем/желаем");
       continue;
     }
-    if (input.enforcePromptRules !== false && negativeHumorPatterns.some((pattern) => pattern.test(text))) {
+    if (input.enforcePromptRules !== false && !input.universalContextRules && negativeHumorPatterns.some((pattern) => pattern.test(text))) {
       reject(
         "FORBIDDEN_PHRASE",
         "soft",
@@ -374,6 +439,37 @@ export const inspectProviderVariants = (input: ProviderValidationInput): Provide
           : "убери негативный образ"
       );
       continue;
+    }
+    if (input.universalContextRules && dignityRiskPatterns.some((pattern) => pattern.test(text))) {
+      reject("FORBIDDEN_PHRASE", "hard", "убери образ, который делает получателя жертвой, обязанным или использованным");
+      continue;
+    }
+    if (
+      input.universalContextRules &&
+      factAmplificationPatterns.some((pattern) => pattern.test(text) && !pattern.test(input.draftNotes))
+    ) {
+      reject("FORBIDDEN_PHRASE", "hard", "не усиливай факты и не добавляй конкретную помощь, которой нет в черновике");
+      continue;
+    }
+    if (input.universalContextRules) {
+      const context = inferOccasionContext({
+        occasionText: input.occasionText ?? "",
+        relationshipContext: input.relationshipContext,
+        draftNotes: input.draftNotes
+      });
+      const inventedTopic = Object.entries(topicPatterns).find(([topic, pattern]) =>
+        pattern.test(text) && !context.explicitWishTopics.includes(topic as typeof context.explicitWishTopics[number])
+      );
+      if (inventedTopic) {
+        reject("FORBIDDEN_PHRASE", "hard", `не добавляй новую крупную тему пожелания «${inventedTopic[0]}», которой нет во входных данных`);
+        continue;
+      }
+      if (gratitudeSignalPattern.test(input.draftNotes) && !gratitudeSignalPattern.test(text)) {
+        reject("FORBIDDEN_PHRASE", "soft", "сохрани главную личную благодарность из черновика");
+      }
+    }
+    if (input.enforcePromptRules !== false && hrTonePatterns.some((pattern) => pattern.test(text))) {
+      reject("FORBIDDEN_PHRASE", "soft", "замени HR-канцелярит коротким человеческим пожеланием");
     }
     const draftWishCount = literalWishPatterns.filter((pattern) => pattern.test(input.draftNotes)).length;
     const repeatedWishCount = outputWishCategoryPatterns.filter((pattern) => pattern.test(text)).length;
@@ -412,8 +508,7 @@ export const inspectProviderVariants = (input: ProviderValidationInput): Provide
       continue;
     }
     if (input.enforcePromptRules !== false && input.style === "humor" && type === "style" && !humorSignalPattern.test(text)) {
-      reject("FORBIDDEN_PHRASE", "hard", "добавь одну короткую добрую шутку на основе черновика");
-      continue;
+      reject("FORBIDDEN_PHRASE", "soft", "если получается естественно, добавь одну короткую добрую шутку; не жертвуй качеством ради шутки");
     }
     if (
       input.enforcePromptRules !== false &&

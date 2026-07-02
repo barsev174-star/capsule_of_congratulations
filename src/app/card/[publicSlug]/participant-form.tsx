@@ -17,6 +17,7 @@ type Props = {
   occasionText: string;
   messageLimit: number;
   variant?: "default" | "join";
+  greetingMode?: "classic" | "matrix" | "ladder";
 };
 
 export const ParticipantForm = ({
@@ -25,7 +26,8 @@ export const ParticipantForm = ({
   recipientName,
   occasionText,
   messageLimit,
-  variant = "default"
+  variant = "default",
+  greetingMode = "classic"
 }: Props) => {
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
@@ -176,6 +178,7 @@ export const ParticipantForm = ({
           setAiGenerationIds((current) => current.includes(generationId) ? current : [...current, generationId]);
         }}
         variant={variant}
+        greetingMode={greetingMode}
       />
     </>
   );

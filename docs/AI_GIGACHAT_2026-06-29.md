@@ -1,5 +1,7 @@
 # GigaChat greeting helper
 
+> Архивный документ. С 2026-07-02 production-конфигурация использует OpenAI-compatible API для всех AI-блоков. GigaChat не включать в `.env.production`.
+
 ## Current state
 
 The greeting helper supports two server-side providers:

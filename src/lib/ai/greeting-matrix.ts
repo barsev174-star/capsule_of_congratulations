@@ -62,22 +62,38 @@ const asPublicVariant = (variant: AiMatrixVariant, id: AiVariant["id"]): AiVaria
   text: variant.text
 });
 
-export const selectMatrixVariants = (variants: AiMatrixVariant[], selectedStyle: AiStyle): AiVariant[] => {
-  let short = getVariant(variants, "short");
-  let warm = getVariant(variants, "warm");
-  const style = getVariant(variants, selectedStyle);
+export const buildMatrixSelections = (variants: AiMatrixVariant[], selectedStyle: AiStyle): AiVariant[][] => {
+  const styleSources: AiMatrixVariantType[] = selectedStyle === "humor"
+    ? [selectedStyle, "warm-simple"]
+    : [selectedStyle];
+  const shortSources: AiMatrixVariantType[] = ["short", "short-no-pathos", "warm-simple"];
+  const warmSources: AiMatrixVariantType[] = ["warm", "touching", "warm-simple"];
+  const selections: AiVariant[][] = [];
 
-  if (selectedStyle === "short-no-pathos" && textSimilarity(short.text, style.text) >= 0.78) {
-    const fallback = getVariant(variants, "warm-simple");
-    if (Array.from(fallback.text).length <= 180) short = fallback;
-  }
-  if (selectedStyle === "warm-simple" && textSimilarity(warm.text, style.text) >= 0.78) {
-    warm = getVariant(variants, "touching");
+  for (const styleType of styleSources) {
+    const style = getVariant(variants, styleType);
+    for (const shortType of shortSources) {
+      if (shortType === styleType) continue;
+      const short = getVariant(variants, shortType);
+      if (Array.from(short.text).length > 180) continue;
+      for (const warmType of warmSources) {
+        if (warmType === styleType || warmType === shortType) continue;
+        const warm = getVariant(variants, warmType);
+        if (textSimilarity(short.text, warm.text) >= 0.9 || textSimilarity(warm.text, style.text) >= 0.9) continue;
+        selections.push([
+          asPublicVariant(short, "short"),
+          asPublicVariant(warm, "warm"),
+          asPublicVariant(style, "style")
+        ]);
+      }
+    }
   }
 
-  return [
-    asPublicVariant(short, "short"),
-    asPublicVariant(warm, "warm"),
-    asPublicVariant(style, "style")
-  ];
+  if (selections.length === 0) {
+    throw new AiError("INVALID_PROVIDER_RESPONSE", "Matrix response has no usable public selection.");
+  }
+  return selections;
 };
+
+export const selectMatrixVariants = (variants: AiMatrixVariant[], selectedStyle: AiStyle): AiVariant[] =>
+  buildMatrixSelections(variants, selectedStyle)[0];

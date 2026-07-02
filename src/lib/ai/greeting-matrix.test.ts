@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inferRelationshipContext, selectMatrixVariants } from "@/lib/ai/greeting-matrix";
+import { buildMatrixSelections, inferRelationshipContext, selectMatrixVariants } from "@/lib/ai/greeting-matrix";
 import type { AiMatrixVariant } from "@/lib/ai/types";
 
 const matrix: AiMatrixVariant[] = [
@@ -40,6 +40,14 @@ describe("greeting matrix", () => {
       { id: "warm", label: "Душевный", text: matrix[1].text },
       { id: "style", label: "Ваш стиль", text: matrix[4].text }
     ]);
+  });
+
+  it("offers fallback selections from the same matrix", () => {
+    const selections = buildMatrixSelections(matrix, "warm-simple");
+
+    expect(selections.some((selection) => selection[0].text === matrix[3].text)).toBe(true);
+    expect(selections.some((selection) => selection[1].text === matrix[5].text)).toBe(true);
+    expect(selections.every((selection) => selection[2].text === matrix[2].text)).toBe(true);
   });
 
   it("fails when matrix output is incomplete", () => {

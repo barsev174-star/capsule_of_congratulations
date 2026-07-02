@@ -34,7 +34,13 @@ export const validateBestQuoteCandidates = (
     const sourceContributionId = typeof raw.sourceContributionId === "string" ? raw.sourceContributionId : "";
     const source = sourceById.get(sourceContributionId);
 
-    if (!source || countCharacters(text) < 18 || countCharacters(text) > 180 || containsTechnicalText(text)) {
+    if (
+      !source ||
+      countCharacters(text) < 18 ||
+      countCharacters(text) > 120 ||
+      containsTechnicalText(text) ||
+      /поздравл|с\s+дн[её]м\s+рожд/iu.test(text)
+    ) {
       return null;
     }
     if (textSimilarity(text, source) < 0.16) return null;
@@ -51,15 +57,28 @@ export const buildMockBestQuotes = (
 ): AiCardInsightItem[] => {
   const items: AiCardInsightItem[] = [];
 
-  for (const contribution of contributions) {
-    const sentence = contribution.message
-      .split(/(?<=[.!?])\s+/)[0]
-      ?.replace(/\s+/g, " ")
-      .trim();
-    if (!sentence || sentence.length < 18) continue;
-    const text = sentence.length <= 180 ? sentence : `${sentence.slice(0, 179).trimEnd()}…`;
+  const candidates = contributions.flatMap((contribution) => contribution.message
+    .split(/(?<=[.!?])\s+/u)
+    .map((sentence) => sentence.replace(/\s+/g, " ").trim())
+    .filter((sentence) => sentence.length >= 18)
+    .filter((sentence) => !/поздравл|с\s+дн[её]м\s+рожд|^(?:пусть|жела)/iu.test(sentence))
+    .map((sentence) => ({
+      sourceContributionId: contribution.id,
+      text: sentence
+        .replace(/^[А-ЯЁ][А-ЯЁа-яё-]+(?:\s+[А-ЯЁ][А-ЯЁа-яё-]+){0,2},\s*/u, "")
+        .trim(),
+      score: (/спасибо|благодаря|ценим|важн|дет|помог|забот|тянутся|рассказывает/iu.test(sentence) ? 20 : 0)
+        + Math.min(sentence.length, 120)
+    })))
+    .filter((candidate) => candidate.text.length >= 18)
+    .sort((left, right) => right.score - left.score);
+
+  for (const candidate of candidates) {
+    const text = candidate.text.length <= 120
+      ? candidate.text
+      : `${candidate.text.slice(0, 119).replace(/\s+\S*$/, "").replace(/[,:;\s]+$/, "")}…`;
     if (items.some((item) => textSimilarity(item.text, text) >= 0.82)) continue;
-    items.push({ text, sourceContributionId: contribution.id });
+    items.push({ text, sourceContributionId: candidate.sourceContributionId });
     if (items.length === 3) break;
   }
 

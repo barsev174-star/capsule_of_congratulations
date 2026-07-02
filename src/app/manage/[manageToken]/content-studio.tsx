@@ -32,6 +32,7 @@ type Props = {
   previewMessage?: Contribution;
   cardId: string;
   mainGreetingContributionId: string | null;
+  greetingMode?: "classic" | "matrix" | "ladder";
 };
 
 type DropTarget = {
@@ -62,7 +63,8 @@ export const ContentStudio = ({
   templateAccent,
   previewMessage,
   cardId,
-  mainGreetingContributionId
+  mainGreetingContributionId,
+  greetingMode = "classic"
 }: Props) => {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(reorderContributionsAction, initialState);
@@ -454,6 +456,7 @@ export const ContentStudio = ({
                       );
                     }}
                     variant="join"
+                    greetingMode={greetingMode}
                   />
                 ) : null}
               </div>

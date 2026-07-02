@@ -242,6 +242,96 @@ describe("AI provider response validation", () => {
     expect(result).toBeNull();
   });
 
+  it.each([
+    "ты подставляла голову",
+    "ты тащила меня всю учёбу",
+    "ты была моей спасательной лодкой",
+    "ты спасала меня от провала"
+  ])("rejects wording that undermines recipient dignity: %s", (phrase) => {
+    const result = inspectProviderVariants({
+      value: variants.map((variant, index) =>
+        index === 2 ? { ...variant, text: `Анна, спасибо за помощь: ${phrase}.` } : variant
+      ),
+      maxLength: 280,
+      draftNotes: "Анна помогала мне во время учёбы.",
+      existingMessages: [],
+      style: "humor"
+    });
+
+    expect(result.variants.map((variant) => variant.id)).not.toContain("style");
+  });
+
+  it.each([
+    "достойная позиция",
+    "профессиональное развитие",
+    "стабильный доход",
+    "финансовая уверенность"
+  ])("flags HR-style career wording: %s", (phrase) => {
+    const result = inspectProviderVariants({
+      value: variants.map((variant, index) =>
+        index === 1 ? { ...variant, text: `Анна, спасибо за помощь. Желаю тебе: ${phrase}.` } : variant
+      ),
+      maxLength: 280,
+      draftNotes: "Хочу поблагодарить Анну за помощь во время учёбы.",
+      existingMessages: []
+    });
+
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "warm", code: "FORBIDDEN_PHRASE", severity: "soft" })
+    ]));
+  });
+
+  it("rejects a new major wish topic in universal matrix mode", () => {
+    const result = inspectProviderVariants({
+      value: variants.map((variant, index) =>
+        index === 0 ? { ...variant, text: "Анна, с днём рождения! Желаю высокой зарплаты." } : variant
+      ),
+      maxLength: 280,
+      occasionText: "С днём рождения!",
+      draftNotes: "Хочу поздравить Анну и пожелать ей радостного дня.",
+      existingMessages: [],
+      universalContextRules: true
+    });
+
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "short", severity: "hard" })
+    ]));
+  });
+
+  it("rejects a concrete amplified fact in universal matrix mode", () => {
+    const result = inspectProviderVariants({
+      value: variants.map((variant, index) =>
+        index === 1 ? { ...variant, text: "Анна, спасибо, что разъясняла сложные темы." } : variant
+      ),
+      maxLength: 280,
+      occasionText: "Спасибо!",
+      draftNotes: "Анна всегда помогала мне.",
+      existingMessages: [],
+      universalContextRules: true
+    });
+
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "warm", severity: "hard" })
+    ]));
+  });
+
+  it("rejects an invented study detail in universal matrix mode", () => {
+    const result = inspectProviderVariants({
+      value: variants.map((variant, index) =>
+        index === 2 ? { ...variant, text: "Анна, спасибо, что всегда приходила на пары вовремя." } : variant
+      ),
+      maxLength: 280,
+      occasionText: "С выпускным!",
+      draftNotes: "Анна помогала мне во время учёбы и была пунктуальна.",
+      existingMessages: [],
+      universalContextRules: true
+    });
+
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "style", severity: "hard" })
+    ]));
+  });
+
   it("allows a natural use of the relationship word", () => {
     const result = validateProviderVariants({
       value: {
@@ -418,7 +508,7 @@ describe("AI provider response validation", () => {
     expect(result.variants.map((variant) => variant.id)).not.toContain("style");
   });
 
-  it("rejects a humor style variant without a recognizable light joke", () => {
+  it("keeps safe humor text when a joke is not mechanically recognizable", () => {
     const result = inspectProviderVariants({
       value: { variants },
       maxLength: 280,
@@ -427,7 +517,10 @@ describe("AI provider response validation", () => {
       style: "humor"
     });
 
-    expect(result.variants.map((variant) => variant.id)).not.toContain("style");
+    expect(result.variants.map((variant) => variant.id)).toContain("style");
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "style", code: "FORBIDDEN_PHRASE", severity: "soft" })
+    ]));
   });
 
   it("rejects an invented gender of the author", () => {
@@ -446,6 +539,50 @@ describe("AI provider response validation", () => {
     expect(result.variants.map((variant) => variant.id)).not.toContain("style");
     expect(result.issues).toEqual(expect.arrayContaining([
       expect.objectContaining({ type: "style", code: "FORBIDDEN_PHRASE", severity: "hard" })
+    ]));
+  });
+
+  it.each([
+    "списывать",
+    "будильник",
+    "кофе",
+    "держала всё в порядке",
+    "я многое у тебя заимствовала"
+  ])("rejects an invented detail: %s", (detail) => {
+    const result = inspectProviderVariants({
+      value: {
+        variants: variants.map((variant, index) => index === 2
+          ? { ...variant, text: `Анна, спасибо за помощь — теперь можно не вспоминать про ${detail}.` }
+          : variant)
+      },
+      maxLength: 280,
+      draftNotes: "Хочу поздравить Анну с выпускным и поблагодарить за помощь во время учёбы.",
+      existingMessages: [],
+      style: "humor",
+      universalContextRules: true
+    });
+
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "style", code: "FORBIDDEN_PHRASE", severity: "hard" })
+    ]));
+  });
+
+  it("rejects an unknown author gender", () => {
+    const result = inspectProviderVariants({
+      value: {
+        variants: variants.map((variant, index) => index === 2
+          ? { ...variant, text: "Анна, я справилась с учёбой благодаря твоей помощи." }
+          : variant)
+      },
+      maxLength: 280,
+      draftNotes: "Хочу поблагодарить Анну за помощь во время учёбы.",
+      existingMessages: [],
+      style: "touching",
+      universalContextRules: true
+    });
+
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "style", severity: "hard" })
     ]));
   });
 });

@@ -390,6 +390,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
             previewMessage={previewMessage}
             cardId={card.id}
             mainGreetingContributionId={mainGreetingContributionId}
+            greetingMode={process.env.AI_GREETING_MODE === "ladder" ? "ladder" : process.env.AI_GREETING_MODE === "matrix" ? "matrix" : "classic"}
           />
         )}
       </div>

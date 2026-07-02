@@ -1,5 +1,6 @@
 import {
   buildContributionFingerprint,
+  buildMockBestQuotes,
   buildMockQualities,
   validateBestQuoteCandidates,
   validateQualityCandidates
@@ -68,6 +69,34 @@ describe("AI card insights", () => {
     );
 
     expect(result).toBeNull();
+  });
+
+  it("rejects generic greetings and quotes that do not fit the card", () => {
+    expect(validateBestQuoteCandidates([
+      { text: "Ирина Олеговна, поздравляем с днём рождения!", sourceContributionId: "one" },
+      { text: contributions[1].message, sourceContributionId: "two" },
+      { text: contributions[2].message, sourceContributionId: "three" }
+    ], contributions)).toBeNull();
+
+    expect(validateBestQuoteCandidates([
+      { text: "Очень ".repeat(30), sourceContributionId: "one" },
+      { text: contributions[1].message, sourceContributionId: "two" },
+      { text: contributions[2].message, sourceContributionId: "three" }
+    ], contributions)).toBeNull();
+  });
+
+  it("fallback selects meaningful parts instead of greeting formulas", () => {
+    const source = [
+      { ...contributions[0], message: "Ирина Олеговна, поздравляем с днём рождения! Ваше мастерство вызывает уважение, а дети тянутся к вам." },
+      { ...contributions[1], message: "Ирина Олеговна, с днём рождения! Благодаря утренникам и песням дети уходят с восторгом — это лучшая награда." },
+      { ...contributions[2], message: "Ирина Олеговна, поздравляем! Часто дома слышим, как ребёнок рассказывает о похвале — это очень приятно." }
+    ];
+    const quotes = buildMockBestQuotes(source);
+
+    expect(quotes).toHaveLength(3);
+    expect(quotes.every((quote) => !/поздравл|с\s+дн[её]м\s+рожд/iu.test(quote.text))).toBe(true);
+    expect(quotes.every((quote) => quote.text.length <= 120)).toBe(true);
+    expect(quotes.map((quote) => quote.text).join(" ")).toContain("дети тянутся");
   });
 
   it("changes the fingerprint when a greeting changes", () => {

@@ -15,6 +15,7 @@ type Props = {
   onUseText: (text: string, generationId: string) => void;
   onGeneration?: (generationId: string) => void;
   variant?: "default" | "join";
+  greetingMode?: "classic" | "matrix" | "ladder";
 };
 
 export const AiHelper = ({
@@ -26,13 +27,15 @@ export const AiHelper = ({
   messageLimit,
   onUseText,
   onGeneration,
-  variant = "default"
+  variant = "default",
+  greetingMode = "classic"
 }: Props) => {
   const [issues, setIssues] = useState<string[]>([]);
   const [variants, setVariants] = useState<AiVariant[]>([]);
   const [activeVariantIndex, setActiveVariantIndex] = useState(0);
   const [insertFeedback, setInsertFeedback] = useState("");
   const [draftNotes, setDraftNotes] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState("touching");
   const [generationId, setGenerationId] = useState("");
   const [remaining, setRemaining] = useState<number | null>(null);
   const [resultLimit, setResultLimit] = useState(messageLimit);
@@ -76,6 +79,7 @@ export const AiHelper = ({
   };
 
   const isJoinVariant = variant === "join";
+  const isLadderMode = greetingMode === "ladder";
   const activeVariant = variants[activeVariantIndex] ?? variants[0];
   const aiFormId = `ai-helper-${cardId}`;
 
@@ -87,7 +91,9 @@ export const AiHelper = ({
             {isJoinVariant ? "Нужна помощь с текстом?" : "Помочь с текстом через AI"}
           </h2>
           <p className={styles.hint}>
-            Набросайте мысли своими словами — AI соберёт из них три варианта длиной до {resultLimit} символов.
+            {isLadderMode
+              ? `Набросайте мысли своими словами — AI предложит аккуратный, более тёплый и более живой варианты длиной до ${resultLimit} символов.`
+              : `Набросайте мысли своими словами — AI соберёт из них три варианта длиной до ${resultLimit} символов.`}
           </p>
         </div>
         {isJoinVariant ? <span className={styles.wandIcon} aria-hidden="true" /> : null}
@@ -96,9 +102,9 @@ export const AiHelper = ({
       <form
         id={aiFormId}
         className={styles.form}
-        action={(formData) => {
-          const style = String(formData.get("style") ?? "touching");
-          startTransition(async () => handleGenerate(style));
+        onSubmit={(event) => {
+          event.preventDefault();
+          startTransition(async () => handleGenerate(selectedStyle));
         }}
       >
         <div className={styles.field}>
@@ -130,16 +136,21 @@ export const AiHelper = ({
           ) : null}
         </div>
 
-        <div className={styles.field}>
+        {!isLadderMode ? <div className={styles.field}>
           <label htmlFor={`${aiFormId}-style`}>Стиль поздравления</label>
-          <select id={`${aiFormId}-style`} name="style" defaultValue="touching">
+          <select
+            id={`${aiFormId}-style`}
+            name="style"
+            value={selectedStyle}
+            onChange={(event) => setSelectedStyle(event.target.value)}
+          >
             <option value="warm-simple">Тепло и просто</option>
             <option value="short-no-pathos">Коротко без пафоса</option>
             <option value="humor">С лёгким юмором</option>
             <option value="touching">Трогательно</option>
             <option value="respectful">Уважительно</option>
           </select>
-        </div>
+        </div> : null}
 
         <div className={styles.actions}>
           <button

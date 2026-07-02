@@ -119,6 +119,7 @@ export default async function JoinCardPage({ params }: Props) {
               occasionText={occasionText}
               messageLimit={layoutProfile.maxChars}
               variant="join"
+              greetingMode={process.env.AI_GREETING_MODE === "ladder" ? "ladder" : process.env.AI_GREETING_MODE === "matrix" ? "matrix" : "classic"}
             />
           )}
 
