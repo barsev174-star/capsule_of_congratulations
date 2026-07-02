@@ -1,5 +1,11 @@
 # Журнал поставки
 
+## Update 2026-07-02 Canonical WWW Domain
+
+1. DNS и сертификаты для `darislova.ru` и `www.darislova.ru` корректны, но внешний HTTPS к apex нестабилен и фильтруется до Caddy.
+2. Канонический production URL изменён на `https://www.darislova.ru`.
+3. Production env, env-пример и health-check используют `www`; новые ссылки участников, manager, preview и gift должны строиться с `www`.
+
 ## Update 2026-07-02 OpenAI AI Flow Ready For Deploy
 
 1. Генерация поздравлений участника переведена на универсальный режим `ladder`: «Аккуратно», «Теплее», «Живее».

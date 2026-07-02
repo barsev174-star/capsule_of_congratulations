@@ -13,7 +13,7 @@ if [[ -f "$ENV_FILE" ]]; then
   BASE_URL="${BASE_URL:-${NEXT_PUBLIC_SITE_URL:-}}"
 fi
 
-BASE_URL="${BASE_URL:-https://darislova.ru}"
+BASE_URL="${BASE_URL:-https://www.darislova.ru}"
 
 echo "Checking landing page: $BASE_URL"
 curl --fail --silent --show-error --location --head "$BASE_URL" >/dev/null

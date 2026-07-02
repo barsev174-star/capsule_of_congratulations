@@ -11,9 +11,12 @@
 
 ## Production-переменные
 
+Из-за внешней фильтрации TLS для apex основным production-адресом является `https://www.darislova.ru`. Все новые ссылки должны использовать `www`.
+
 В `/home/deploy/capsule/.env.production` должны быть следующие значения:
 
 ```env
+NEXT_PUBLIC_SITE_URL=https://www.darislova.ru
 AI_PROVIDER=openai
 AI_GREETING_PROVIDER=openai
 AI_GREETING_MODE=ladder
@@ -114,7 +117,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.production ps
 
 ```bash
 bash infra/scripts/check-production-health.sh
-curl -I https://darislova.ru
+curl -I https://www.darislova.ru
 ```
 
 Ожидаются `Production health checks passed` и HTTP `200`.
