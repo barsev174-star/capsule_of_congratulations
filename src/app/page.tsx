@@ -8,7 +8,8 @@ import {
   AiSection,
   InsideSection,
   FaqSection,
-  FinalCtaSection
+  FinalCtaSection,
+  HomeFooter
 } from "./_home";
 import styles from "./page.module.css";
 
@@ -27,6 +28,7 @@ export default async function HomePage() {
         <FaqSection />
         <FinalCtaSection />
       </main>
+      <HomeFooter />
     </div>
   );
 }

@@ -192,6 +192,9 @@ export default async function ManagePage({ params, searchParams }: Props) {
             >
               Посмотреть открытку
             </Link>
+            <Link href="/support?from=manage" className={styles.managerSupportLink}>
+              Поддержка
+            </Link>
             <div className={styles.publishNote}>
               <span>Финальная ссылка откроется после публикации.</span>
             </div>
@@ -362,14 +365,28 @@ export default async function ManagePage({ params, searchParams }: Props) {
                     </p>
                   </div>
                 </div>
-                <form action={publishCardAction} className={styles.publishPriceRow}>
-                  <input type="hidden" name="manageToken" value={manageToken} />
-                  <strong>399 ₽</strong>
-                  <button type="submit" className={styles.publishButton}>
-                    Опубликовать открытку
-                  </button>
-                </form>
-                <p className={styles.paymentFineprint}>Оплата безопасна через ЮKassa · Без скрытых платежей</p>
+                {published ? (
+                  <>
+                    <div className={styles.publishPriceRow}>
+                      <strong>Опубликована</strong>
+                      <Link href={getGiftPath(card.finalSlug)} className={styles.publishButton}>
+                        Открыть открытку
+                      </Link>
+                    </div>
+                    <p className={styles.paymentFineprint}>Финальная ссылка готова — её можно отправлять получателю</p>
+                  </>
+                ) : (
+                  <>
+                    <form action={publishCardAction} className={styles.publishPriceRow}>
+                      <input type="hidden" name="manageToken" value={manageToken} />
+                      <strong>Бесплатно</strong>
+                      <button type="submit" className={styles.publishButton}>
+                        Опубликовать открытку
+                      </button>
+                    </form>
+                    <p className={styles.paymentFineprint}>Бесплатно в период открытой беты · Платёжные данные не требуются</p>
+                  </>
+                )}
               </section>
             </aside>
           </div>
@@ -385,7 +402,6 @@ export default async function ManagePage({ params, searchParams }: Props) {
             occasionText={occasionText}
             fromLabel={fromLabel}
             publicSlug={card.publicSlug}
-            finalSlug={card.finalSlug}
             templateAccent={selectedTemplate.accent}
             previewMessage={previewMessage}
             cardId={card.id}

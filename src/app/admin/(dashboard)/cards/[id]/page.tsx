@@ -97,9 +97,11 @@ export default async function AdminCardDetailPage({ params }: Props) {
           <Link href={`/manage/${card.manageToken}`} className={styles.detailLink}>
             Страница организатора
           </Link>
-          <Link href={`/gift/${card.finalSlug}`} className={styles.detailLink}>
-            Финальная открытка
-          </Link>
+          {card.status === "published" ? (
+            <Link href={`/gift/${card.finalSlug}`} className={styles.detailLink}>
+              Финальная открытка
+            </Link>
+          ) : null}
           <Link href={`/preview/${card.manageToken}`} className={styles.detailLink}>
             Предпросмотр
           </Link>

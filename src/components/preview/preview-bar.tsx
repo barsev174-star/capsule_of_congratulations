@@ -31,7 +31,7 @@ export const PreviewBar = ({ manageToken, finalSlug, published = false }: Previe
             <form action={publishCardAction}>
               <input type="hidden" name="manageToken" value={manageToken} />
               <button type="submit" className={styles.primaryButton}>
-                Опубликовать — 399 ₽
+                Опубликовать бесплатно
               </button>
             </form>
           )}

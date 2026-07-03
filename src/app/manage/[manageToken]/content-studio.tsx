@@ -5,7 +5,7 @@ import { useActionState, useEffect, useMemo, useRef, useState, useTransition, ty
 import { useRouter } from "next/navigation";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
-import { getGiftPath, getManagePath } from "@/lib/routes/card-links";
+import { getManagePath, getPreviewPath } from "@/lib/routes/card-links";
 import { AiHelper } from "@/app/card/[publicSlug]/ai-helper";
 import { ContributionEditor } from "./contribution-editor";
 import { MediaManager } from "./media-manager";
@@ -27,7 +27,6 @@ type Props = {
   occasionText: string;
   fromLabel: string;
   publicSlug: string;
-  finalSlug: string;
   templateAccent: string;
   previewMessage?: Contribution;
   cardId: string;
@@ -59,7 +58,6 @@ export const ContentStudio = ({
   occasionText,
   fromLabel,
   publicSlug,
-  finalSlug,
   templateAccent,
   previewMessage,
   cardId,
@@ -699,21 +697,7 @@ export const ContentStudio = ({
               </section>
             </article>
 
-            <div className={styles.contentPreviewPager}>
-              <button type="button" className={styles.contentPagerButton} aria-label="Предыдущее поздравление">
-                ‹
-              </button>
-              <div className={styles.contentPagerDots} aria-hidden="true">
-                <span />
-                <span />
-                <span />
-              </div>
-              <button type="button" className={styles.contentPagerButton} aria-label="Следующее поздравление">
-                ›
-              </button>
-            </div>
-
-            <Link href={getGiftPath(finalSlug)} target="_blank" className={styles.previewLinkButton}>
+            <Link href={getPreviewPath(manageToken)} target="_blank" className={styles.previewLinkButton}>
               Открыть полный просмотр
             </Link>
           </section>

@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     if (error instanceof AiError && error.code === "LIMIT_REACHED") {
       const isPaid = await hasPaidAiEntitlement(card.id);
       const paidMessage = "AI-варианты закончились для этой открытки.";
-      const freeMessage = "Бесплатные AI-варианты закончились. После оплаты лимит увеличится.";
+      const freeMessage = "Лимит AI-вариантов для этой открытки исчерпан.";
       return NextResponse.json(
         { ok: false, code: error.code, message: isPaid ? paidMessage : freeMessage },
         { status: 429 }

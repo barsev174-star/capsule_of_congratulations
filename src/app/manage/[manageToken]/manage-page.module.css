@@ -7439,10 +7439,29 @@ button.contentFilterPill {
 }
 
 .publishButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 210px;
+  padding: 0 18px;
   border: 0;
   cursor: pointer;
+  text-align: center;
+  text-decoration: none;
 }
+
+.managerSupportLink {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  color: #7b6253;
+  font-size: 0.9rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.managerSupportLink:hover { color: var(--m-accent); }
 
 .paymentFineprint {
   margin: 0;

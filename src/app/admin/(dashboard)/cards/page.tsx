@@ -115,8 +115,8 @@ export default async function AdminCardsPage({ searchParams }: Props) {
                         <Link href={`/manage/${card.manageToken}`} className={styles.detailLink}>
                           Управлять
                         </Link>
-                        <Link href={`/gift/${card.finalSlug}`} className={styles.detailLink}>
-                          Открытка
+                        <Link href={`/preview/${card.manageToken}`} className={styles.detailLink}>
+                          Предпросмотр
                         </Link>
                       </div>
                     </td>

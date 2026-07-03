@@ -8,4 +8,5 @@ export { AiSection } from "./ai-section";
 export { InsideSection } from "./inside-section";
 export { FaqSection } from "./faq-section";
 export { FinalCtaSection } from "./final-cta-section";
+export { HomeFooter } from "./footer";
 export { landingAssetPaths, getLandingAsset, getTemplateAsset } from "./landing-assets";
