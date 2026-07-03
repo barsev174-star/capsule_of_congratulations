@@ -155,6 +155,16 @@ export const saveCardDraft = async (card: CardDraft) => {
 
 export const listCardDrafts = async () => (isPostgresConfigured() ? postgresRepository.listCardDrafts() : readCards());
 
+export const listCardDraftsByOrganizerEmail = async (email: string) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.listCardDraftsByOrganizerEmail(email);
+  }
+  const normalizedEmail = email.trim().toLowerCase();
+  return (await readCards())
+    .filter((card) => card.organizerEmail.trim().toLowerCase() === normalizedEmail)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+};
+
 export const getCardDraftByPublicSlug = async (publicSlug: string) => {
   if (isPostgresConfigured()) {
     return postgresRepository.getCardDraftByPublicSlug(publicSlug);

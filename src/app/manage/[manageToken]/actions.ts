@@ -41,6 +41,7 @@ import type {
 } from "@/lib/final-card/types";
 import { logger } from "@/lib/logger";
 import { saveCardMediaFile } from "@/lib/media/local-card-media-storage";
+import { requestOrganizerAccess } from "@/lib/organizer/service";
 import { getGiftPath, getJoinPath, getManagePath } from "@/lib/routes/card-links";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
@@ -269,6 +270,14 @@ export async function updateCardBasicsAction(
     return cardBasicsError("Укажите короткую надпись события: от 2 до 40 символов.", fields);
   }
 
+  if (!validateLength(fields.organizerName, 2, 80)) {
+    return cardBasicsError("Укажите имя организатора длиной от 2 до 80 символов.", fields);
+  }
+
+  if (!isValidEmail(fields.organizerEmail) || fields.organizerEmail.length > 254) {
+    return cardBasicsError("Введите корректный email организатора.", fields);
+  }
+
   if (!validateDate(fields.eventDate)) {
     return cardBasicsError("Дата события выглядит некорректно.", fields);
   }
@@ -301,6 +310,17 @@ export async function updateCardBasicsAction(
     cardId: card.id,
     occasion: occasionValue
   });
+
+  if (fields.organizerEmail.toLowerCase() !== card.organizerEmail.toLowerCase() && isValidEmail(fields.organizerEmail)) {
+    try {
+      await requestOrganizerAccess(fields.organizerEmail);
+    } catch (error) {
+      logger.warn("organizer.access_email_failed", "Organizer access email was not sent after email update", {
+        cardId: card.id,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  }
 
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 

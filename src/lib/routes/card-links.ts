@@ -14,8 +14,10 @@ export const getJoinPath = (slug: string) => `/join/${slug}`;
 export const getGiftPath = (slug: string) => `/gift/${slug}`;
 export const getManagePath = (token: string) => `/manage/${token}`;
 export const getPreviewPath = (token: string) => `/preview/${token}`;
+export const getOrganizerAccountVerifyPath = (token: string) => `/account/verify?token=${encodeURIComponent(token)}`;
 
 export const getJoinUrl = (slug: string) => withSiteUrl(getJoinPath(slug));
 export const getGiftUrl = (slug: string) => withSiteUrl(getGiftPath(slug));
 export const getManageUrl = (token: string) => withSiteUrl(getManagePath(token));
 export const getPreviewUrl = (token: string) => withSiteUrl(getPreviewPath(token));
+export const getOrganizerAccountVerifyUrl = (token: string) => withSiteUrl(getOrganizerAccountVerifyPath(token));

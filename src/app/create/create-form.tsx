@@ -24,7 +24,7 @@ type ValidationIssue = {
 
 const initialIssues: ValidationIssue[] = [];
 
-export const CreateCardForm = () => {
+export const CreateCardForm = ({ initialOrganizerEmail = "" }: { initialOrganizerEmail?: string }) => {
   const [issues, setIssues] = useState<ValidationIssue[]>(initialIssues);
   const [result, setResult] = useState<CreatedCardPayload | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -127,7 +127,7 @@ export const CreateCardForm = () => {
               </div>
               <div className={styles.field}>
                 <label htmlFor="organizerEmail">Email организатора</label>
-                <input id="organizerEmail" name="organizerEmail" type="email" placeholder="name@example.com" required />
+                <input id="organizerEmail" name="organizerEmail" type="email" placeholder="name@example.com" defaultValue={initialOrganizerEmail} required />
               </div>
             </div>
           </section>

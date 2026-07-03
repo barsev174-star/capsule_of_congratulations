@@ -195,6 +195,9 @@ export default async function ManagePage({ params, searchParams }: Props) {
             <Link href="/support?from=manage" className={styles.managerSupportLink}>
               Поддержка
             </Link>
+            <Link href="/account" className={styles.managerSupportLink}>
+              Мои открытки
+            </Link>
             <div className={styles.publishNote}>
               <span>Финальная ссылка откроется после публикации.</span>
             </div>

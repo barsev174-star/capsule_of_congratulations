@@ -187,6 +187,14 @@ export const listCardDrafts = async () => {
   return result.rows.map(mapCard);
 };
 
+export const listCardDraftsByOrganizerEmail = async (email: string) => {
+  const result = await getPostgresPool().query<CardRow>(
+    "SELECT * FROM cards WHERE LOWER(organizer_email) = LOWER($1) ORDER BY created_at DESC",
+    [email]
+  );
+  return result.rows.map(mapCard);
+};
+
 export const getCardDraftByPublicSlug = (publicSlug: string) => selectCardBy("public_slug", publicSlug);
 export const getCardDraftByManageToken = (manageToken: string) => selectCardBy("manage_token", manageToken);
 export const getCardDraftById = (cardId: string) => selectCardBy("id", cardId);

@@ -10,6 +10,7 @@ export function HomeFooter() {
           <p>Тёплые открытки от близких</p>
         </div>
         <nav aria-label="Служебные ссылки">
+          <Link href="/account">Мои открытки</Link>
           <Link href="/support?from=landing">Поддержка и предложения</Link>
         </nav>
       </div>

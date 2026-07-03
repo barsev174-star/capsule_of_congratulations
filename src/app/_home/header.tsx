@@ -6,7 +6,8 @@ const navItems = [
   { href: "#how-it-works", label: "Как это работает" },
   { href: "#cases", label: "Случаи" },
   { href: "#templates", label: "Примеры" },
-  { href: "#faq", label: "FAQ" }
+  { href: "#faq", label: "FAQ" },
+  { href: "/account", label: "Мои открытки" }
 ];
 
 export function HomeHeader() {

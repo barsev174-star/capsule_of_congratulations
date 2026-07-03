@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { CreateCardForm } from "./create-form";
 import styles from "./create-form.module.css";
+import { getOrganizerSession } from "@/lib/organizer/session";
 
-export default function CreatePage() {
+export default async function CreatePage() {
+  const session = await getOrganizerSession();
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
@@ -20,7 +22,7 @@ export default function CreatePage() {
           </div>
         </section>
 
-        <CreateCardForm />
+        <CreateCardForm initialOrganizerEmail={session?.email} />
       </div>
     </main>
   );
