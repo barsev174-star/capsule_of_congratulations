@@ -7450,6 +7450,34 @@ button.contentFilterPill {
   text-decoration: none;
 }
 
+.organizerAccessBlock {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 245, 236, 0.72);
+  box-shadow:
+    0 0 0 1px rgba(233, 101, 47, 0.12),
+    0 10px 26px rgba(73, 49, 35, 0.05);
+}
+
+.organizerAccessIntro {
+  display: grid;
+  gap: 4px;
+}
+
+.organizerAccessIntro strong {
+  color: #3e2b23;
+  font-size: 1rem;
+}
+
+.organizerAccessIntro span {
+  color: #7f6558;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
 .managerSupportLink {
   min-height: 44px;
   display: inline-flex;

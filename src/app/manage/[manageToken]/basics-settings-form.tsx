@@ -24,6 +24,8 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
     recipientName: card.recipientName,
     fromLabel: card.fromLabel,
     occasionText: card.occasionText,
+    organizerName: card.organizerName,
+    organizerEmail: card.organizerEmail,
     eventDate: card.eventDate ?? "",
     description: card.description ?? "",
     signature: card.signature ?? ""
@@ -60,9 +62,6 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
     <form ref={formRef} action={formAction} className={styles.basicsForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
       <input type="hidden" name="occasion" value={card.occasion} />
-      {/* Preserve existing organizer data without showing fields */}
-      <input type="hidden" name="organizerName" value={card.organizerName} />
-      <input type="hidden" name="organizerEmail" value={card.organizerEmail} />
 
       <div className={styles.fieldGrid}>
         <div className={styles.field}>
@@ -138,6 +137,41 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
           placeholder="Например, хотим собрать личную и красивую открытку от всей группы."
         />
       </div>
+
+      <section className={styles.organizerAccessBlock}>
+        <div className={styles.organizerAccessIntro}>
+          <strong>Доступ организатора</strong>
+          <span>На этот email придёт одноразовая ссылка для входа в раздел «Мои открытки».</span>
+        </div>
+        <div className={styles.fieldGrid}>
+          <div className={styles.field}>
+            <label htmlFor="organizerName">Имя организатора</label>
+            <input
+              id="organizerName"
+              name="organizerName"
+              value={fields.organizerName}
+              onChange={handleChange("organizerName")}
+              placeholder="Например, Мария"
+              minLength={2}
+              maxLength={80}
+              autoComplete="name"
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="organizerEmail">Email организатора</label>
+            <input
+              id="organizerEmail"
+              name="organizerEmail"
+              type="email"
+              value={fields.organizerEmail}
+              onChange={handleChange("organizerEmail")}
+              placeholder="name@example.com"
+              maxLength={254}
+              autoComplete="email"
+            />
+          </div>
+        </div>
+      </section>
 
       <div className={styles.autoSaveStatus}>
         {isPending || saveStatus === "saving"

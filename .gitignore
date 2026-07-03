@@ -37,3 +37,4 @@ Thumbs.db
 .env.local
 .env.*.local
 key.txt
+key*.txt
