@@ -60,6 +60,18 @@ export const storeMagicLink = async (email: string, tokenHash: string, expiresAt
   await writeJson(items.slice(-500));
 };
 
+export const deleteUnusedMagicLink = async (tokenHash: string) => {
+  if (isPostgresConfigured()) {
+    await getPostgresPool().query(
+      "DELETE FROM organizer_magic_links WHERE token_hash = $1 AND used_at IS NULL",
+      [tokenHash]
+    );
+    return;
+  }
+  const items = await readJson();
+  await writeJson(items.filter((item) => item.tokenHash !== tokenHash || item.usedAt));
+};
+
 export const consumeMagicLink = async (tokenHash: string): Promise<string | null> => {
   if (isPostgresConfigured()) {
     const result = await getPostgresPool().query<{ email: string }>(

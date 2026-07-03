@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { getOrganizerAccountVerifyUrl } from "@/lib/routes/card-links";
-import { countRecentMagicLinks, consumeMagicLink, storeMagicLink } from "./repository";
+import { countRecentMagicLinks, consumeMagicLink, deleteUnusedMagicLink, storeMagicLink } from "./repository";
 import { sendOrganizerAccessEmail } from "./email";
 
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
@@ -13,11 +13,16 @@ export const requestOrganizerAccess = async (emailInput: string) => {
   const token = randomBytes(32).toString("base64url");
   const tokenHash = hashToken(token);
   await storeMagicLink(email, tokenHash, new Date(Date.now() + 15 * 60 * 1000));
-  await sendOrganizerAccessEmail({
-    email,
-    accessUrl: getOrganizerAccountVerifyUrl(token),
-    idempotencyKey: `organizer-access-${tokenHash.slice(0, 24)}`
-  });
+  try {
+    await sendOrganizerAccessEmail({
+      email,
+      accessUrl: getOrganizerAccountVerifyUrl(token),
+      idempotencyKey: `organizer-access-${tokenHash.slice(0, 24)}`
+    });
+  } catch (error) {
+    await deleteUnusedMagicLink(tokenHash);
+    throw error;
+  }
   return {
     limited: false as const,
     devAccessUrl: process.env.NODE_ENV !== "production" ? getOrganizerAccountVerifyUrl(token) : undefined

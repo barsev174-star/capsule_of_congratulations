@@ -36,9 +36,16 @@ export async function requestAccountAccessAction(
       devAccessUrl: result.devAccessUrl
     };
   } catch (error) {
+    const details = error instanceof Error ? error.message : "Unknown error";
     logger.error("organizer.access_request_failed", "Organizer access request failed", {
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: details
     });
+    if (process.env.NODE_ENV !== "production" && details.includes("verify a domain")) {
+      return {
+        status: "error",
+        message: "Resend пока работает в тестовом режиме. Подтвердите домен отправителя, чтобы писать на любые адреса."
+      };
+    }
     return { status: "error", message: "Не удалось отправить письмо. Попробуйте немного позже." };
   }
 }
