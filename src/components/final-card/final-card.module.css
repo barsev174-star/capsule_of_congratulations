@@ -1580,6 +1580,15 @@
   line-height: 1.78;
 }
 
+.summaryPanel .sectionText + .sectionText {
+  margin-top: 12px;
+}
+
+.quoteCard .message,
+.closingSignature {
+  white-space: pre-line;
+}
+
 .chipList {
   display: flex;
   flex-wrap: wrap;

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { CardTemplateId } from "@/lib/cards/templates";
+import { defaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import styles from "./gift-intro.module.css";
 
 type GiftIntroState =
@@ -18,7 +19,9 @@ type GiftIntroState =
 type GiftIntroProps = {
   slug: string;
   recipientName: string;
+  subtitle?: string;
   templateId?: CardTemplateId;
+  animationId?: GiftAnimationId;
   accent?: string;
   forceIntro?: boolean;
   children: React.ReactNode;
@@ -44,6 +47,15 @@ const TOTAL_DURATION =
   TIMING.cardPull +
   TIMING.cardHero +
   TIMING.revealGift;
+
+const REDUCED_TIMING = {
+  sealBreak: 120,
+  flapOpen: 260,
+  pause: 700,
+  cardPull: 980,
+  revealGift: 1450,
+  done: 1900
+} as const;
 
 const subscribeReducedMotion = (callback: () => void) => {
   const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -73,7 +85,9 @@ const getOpenedServerSnapshot = () => false;
 export const GiftIntro = ({
   slug,
   recipientName,
+  subtitle = "для вас собрали тёплые слова",
   templateId = "warm-classic",
+  animationId = defaultGiftAnimationId,
   accent,
   forceIntro = false,
   children
@@ -138,6 +152,15 @@ export const GiftIntro = ({
     schedule(handleDone, cursor);
   }, [schedule, handleDone]);
 
+  const runReducedOpeningSequence = useCallback(() => {
+    schedule(() => setState("sealBreak"), REDUCED_TIMING.sealBreak);
+    schedule(() => setState("flapOpen"), REDUCED_TIMING.flapOpen);
+    schedule(() => setState("pause"), REDUCED_TIMING.pause);
+    schedule(() => setState("cardPull"), REDUCED_TIMING.cardPull);
+    schedule(() => setState("revealGift"), REDUCED_TIMING.revealGift);
+    schedule(handleDone, REDUCED_TIMING.done);
+  }, [schedule, handleDone]);
+
   const saveOpenedFlag = useCallback(() => {
     try {
       sessionStorage.setItem(`${STORAGE_KEY_PREFIX}${slug}`, "1");
@@ -154,14 +177,14 @@ export const GiftIntro = ({
     saveOpenedFlag();
 
     if (reducedMotion) {
-      setState("revealGift");
-      schedule(handleDone, 350);
+      setState("press");
+      runReducedOpeningSequence();
       return;
     }
 
     setState("press");
     runOpeningSequence();
-  }, [state, reducedMotion, saveOpenedFlag, schedule, handleDone, runOpeningSequence]);
+  }, [state, reducedMotion, saveOpenedFlag, runOpeningSequence, runReducedOpeningSequence]);
 
   const handleSkip = useCallback(() => {
     clearTimers();
@@ -226,6 +249,7 @@ export const GiftIntro = ({
       <div
         className={`${styles.page} ${stateClass} ${reducedMotion ? styles.reducedMotion : ""}`}
         data-intro-state={state}
+        data-animation-id={animationId}
         aria-live="polite"
       >
         <div className={styles.vignette} aria-hidden="true" />
@@ -283,7 +307,7 @@ export const GiftIntro = ({
           <div className={styles.textGroup}>
             <div className={styles.titleBlock}>
               <span className={styles.nameLine}>{name}</span>
-              <h1 className={styles.subtitleLine}>для вас собрали тёплые слова</h1>
+              <h1 className={styles.subtitleLine}>{subtitle}</h1>
             </div>
             <div className={styles.actions}>
               <button

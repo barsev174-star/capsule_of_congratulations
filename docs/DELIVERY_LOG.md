@@ -579,3 +579,14 @@
 7. Added temporary draft/variant storage that is cleared after the greeting is submitted while usage metadata remains.
 8. Verified OAuth, a real chat request, the application endpoint, paid-limit switching and draft cleanup locally.
 9. Added deployment and verification notes in `docs/AI_GIGACHAT_2026-06-29.md`.
+
+## Update 2026-07-03 Participant Value Preview And Event Reminders
+
+1. Added `/example` with a complete static birthday card assembled from six demo photos.
+2. Added the participant value-preview block linking to the example card.
+3. Added the optional "Есть повод скоро?" form with consent, validation, rate limiting and duplicate protection.
+4. Added PostgreSQL migrations `0008_event_reminders.sql` and `0009_event_reminder_sending.sql`.
+5. Added atomic daily reminder processing and Resend delivery with idempotency protection.
+6. Added protected `POST /api/internal/reminders/send`; it requires `Authorization: Bearer $CRON_SECRET`.
+7. Added `infra/scripts/send-event-reminders.sh` for the future VPS cron job.
+8. Deployment is intentionally postponed. Before enabling reminders, set `CRON_SECRET`, run migrations, rebuild the web container and then schedule the script once a day.

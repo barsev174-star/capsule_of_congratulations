@@ -5,6 +5,7 @@ dist/
 coverage/
 .npm-cache/
 screenshots/
+tmp/
 tsconfig.tsbuildinfo
 data/cards.json
 data/contributions.json
@@ -12,6 +13,7 @@ data/ai-generations.json
 data/ai-card-insights.json
 data/ai-card-allowances.json
 data/payment-orders.json
+data/event-reminders.json
 public/uploads/
 docs/*.png
 !docs/Аватары.png

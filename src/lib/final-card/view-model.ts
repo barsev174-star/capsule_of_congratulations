@@ -15,6 +15,7 @@ export type FinalCardViewModel = {
   recipientName: string;
   occasionLabel: string;
   fromLabel: string;
+  heroDescription: string | null;
   participantCount: number;
   finalSlug: string;
   summaryTitle: string;
@@ -215,6 +216,7 @@ export const buildFinalCardViewModel = (
     recipientName: card.recipientName,
     occasionLabel: card.occasionText,
     fromLabel: card.fromLabel,
+    heroDescription: null,
     participantCount: contributions.length,
     finalSlug: card.finalSlug,
     summaryTitle: "Самые важные слова",

@@ -1086,6 +1086,421 @@
   text-wrap: pretty;
 }
 
+.valuePreview {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(480px, 1.28fr);
+  min-height: 360px;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 82% 28%, rgba(255, 218, 191, 0.5), transparent 34%),
+    linear-gradient(135deg, rgba(255, 249, 243, 0.98), rgba(255, 244, 235, 0.92));
+  box-shadow:
+    0 0 0 1px rgba(233, 101, 47, 0.34),
+    0 18px 52px rgba(83, 49, 28, 0.08);
+  grid-column: 1 / -1;
+}
+
+.valuePreviewCopy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 42px;
+}
+
+.valuePreviewEyebrow {
+  margin: 0 0 10px;
+  color: #e9652f;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.valuePreviewCopy h2 {
+  max-width: 430px;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.55rem, 2.8vw, 2.1rem);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.valuePreviewCopy > p:not(.valuePreviewEyebrow) {
+  max-width: 420px;
+  margin: 16px 0 0;
+  color: #795d4f;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.valuePreviewButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 50px;
+  margin-top: 24px;
+  padding: 0 22px;
+  border-radius: 999px;
+  color: #df5728;
+  text-decoration: none;
+  background: rgba(255, 252, 248, 0.9);
+  box-shadow:
+    inset 0 0 0 1.5px rgba(233, 101, 47, 0.54),
+    0 8px 20px rgba(83, 49, 28, 0.06);
+  font-weight: 800;
+  font-size: 1rem;
+  white-space: nowrap;
+  transition-property: transform, color, background-color, box-shadow;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.valuePreviewButton span {
+  font-size: 1.15rem;
+  transform: translateY(-1px);
+}
+
+.valuePreviewButton:hover {
+  color: #c8491e;
+  background: #fff;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(218, 82, 35, 0.7),
+    0 12px 26px rgba(83, 49, 28, 0.1);
+  transform: translateY(-2px);
+}
+
+.valuePreviewButton:active {
+  transform: scale(0.96);
+}
+
+.valuePreviewButton:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.26);
+  outline-offset: 4px;
+}
+
+.valuePreviewVisual {
+  position: relative;
+  min-height: 340px;
+  overflow: hidden;
+}
+
+.valuePreviewPage,
+.valuePreviewPhoto {
+  position: absolute;
+  background: #fffaf4;
+  box-shadow: 0 18px 42px rgba(69, 42, 29, 0.16);
+}
+
+.valuePreviewPage {
+  z-index: 3;
+  top: 34px;
+  left: 3%;
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  min-height: 330px;
+  padding: 32px 26px;
+  border-radius: 20px;
+  border: 1px solid rgba(181, 138, 98, 0.18);
+  background:
+    linear-gradient(145deg, rgba(255, 252, 248, 0.95), rgba(255, 246, 237, 0.92)),
+    #fffaf4;
+  box-shadow:
+    0 22px 50px rgba(69, 42, 29, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transform: rotate(-3deg);
+  overflow: hidden;
+}
+
+.valuePreviewEvent {
+  color: #c45a6e;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.valuePreviewFrom {
+  margin-top: 14px;
+  color: #8a6b5c;
+  font-size: 0.82rem;
+}
+
+.valuePreviewSeal {
+  position: absolute;
+  right: 22px;
+  bottom: 96px;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 12px rgba(92, 64, 48, 0.18));
+  transform: rotate(-10deg);
+}
+
+.valuePreviewFlowers {
+  position: absolute;
+  left: 50%;
+  bottom: -28px;
+  width: 130%;
+  max-width: 420px;
+  height: auto;
+  transform: translateX(-50%) rotate(-2deg);
+  pointer-events: none;
+}
+
+.valuePreviewPhoto {
+  overflow: hidden;
+  border-radius: 17px;
+}
+
+.valuePreviewPhoto img {
+  object-fit: cover;
+}
+
+.valuePreviewPhotoMain {
+  z-index: 2;
+  top: 22px;
+  right: 5%;
+  width: 330px;
+  aspect-ratio: 4 / 3;
+  transform: rotate(4deg);
+}
+
+.valuePreviewPhotoBack {
+  z-index: 1;
+  right: -2%;
+  bottom: -44px;
+  width: 280px;
+  aspect-ratio: 4 / 3;
+  transform: rotate(10deg);
+}
+
+.reminderCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(200px, 0.62fr) minmax(0, 1.88fr);
+  gap: 32px 40px;
+  padding: 44px 46px 30px;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 12% 92%, rgba(250, 190, 134, 0.22), transparent 24%),
+    linear-gradient(135deg, rgba(255, 252, 248, 0.98), rgba(255, 247, 240, 0.96));
+  box-shadow:
+    0 0 0 1px rgba(92, 64, 48, 0.09),
+    0 18px 50px rgba(83, 49, 28, 0.07);
+  grid-column: 1 / -1;
+}
+
+.reminderIntro {
+  position: relative;
+  z-index: 1;
+  align-self: start;
+  padding: 8px 0 0 6px;
+}
+
+.reminderIntro h2 {
+  margin: 10px 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.55rem, 2.8vw, 2.1rem);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.reminderIntro > p:last-child {
+  max-width: 280px;
+  margin: 14px 0 0;
+  color: #795d4f;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.reminderGift {
+  position: absolute;
+  left: 4px;
+  bottom: -58px;
+  width: 110px;
+  height: 84px;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 26px rgba(83, 49, 28, 0.12));
+  transform: rotate(-6deg);
+}
+
+.reminderForm {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+  padding-top: 6px;
+}
+
+.reminderHoneypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.reminderFieldsTop,
+.reminderFieldsBottom {
+  display: grid;
+  gap: 14px;
+  align-items: end;
+}
+
+.reminderFieldsTop {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.reminderFieldsBottom {
+  grid-template-columns: minmax(220px, 1fr) minmax(170px, auto);
+}
+
+.reminderField {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.reminderField > span {
+  color: #4b352c;
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.reminderField input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid rgba(78, 52, 40, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #38261f;
+  font: inherit;
+  padding: 0 16px;
+  transition-property: border-color, box-shadow, background-color;
+  transition-duration: 160ms;
+}
+
+.reminderField input:hover {
+  border-color: rgba(78, 52, 40, 0.3);
+  background: #fff;
+}
+
+.reminderField input:focus {
+  outline: none;
+  border-color: rgba(233, 101, 47, 0.56);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(233, 101, 47, 0.11);
+}
+
+.reminderField input::placeholder {
+  color: #a48d81;
+}
+
+.reminderButton {
+  min-height: 52px;
+  padding: 0 32px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(180deg, #f27543, #ea5d2d);
+  box-shadow: 0 12px 26px rgba(222, 82, 35, 0.22), inset 0 1px rgba(255, 255, 255, 0.32);
+  font: inherit;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  transition-property: transform, box-shadow, opacity;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.reminderButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(222, 82, 35, 0.28), inset 0 1px rgba(255, 255, 255, 0.32);
+}
+
+.reminderButton:active {
+  transform: scale(0.96);
+}
+
+.reminderButton:disabled {
+  cursor: wait;
+  opacity: 0.68;
+  transform: none;
+}
+
+.reminderButton:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.26);
+  outline-offset: 3px;
+}
+
+.reminderConsent {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: #947c6f;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.reminderConsent input {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: #e9652f;
+}
+
+.reminderSuccess,
+.reminderError {
+  padding: 11px 13px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.reminderSuccess {
+  color: #77452f;
+  background: #fff0e4;
+  box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.14);
+}
+
+.reminderError {
+  color: #993d2d;
+  background: #fff0ed;
+  box-shadow: inset 0 0 0 1px rgba(194, 67, 45, 0.16);
+}
+
+.reminderHelper {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding-left: 4px;
+  color: #8c7366;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.reminderHelper::before {
+  content: "✉";
+  color: #c98a52;
+  font-size: 1rem;
+}
+
 .footerNote {
   display: flex;
   align-items: center;
@@ -1224,6 +1639,26 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     max-width: 100%;
   }
+
+  .valuePreview {
+    grid-template-columns: 1fr;
+  }
+
+  .valuePreviewVisual {
+    min-height: 330px;
+  }
+
+  .reminderCard {
+    grid-template-columns: 1fr;
+  }
+
+  .reminderIntro > p:last-child {
+    max-width: 540px;
+  }
+
+  .reminderGift {
+    display: none;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1241,9 +1676,82 @@
   .formCard,
   .listCard,
   .successCard,
-  .aiCard {
+  .aiCard,
+  .valuePreviewCopy {
     padding: 22px;
+  }
+
+  .formCard,
+  .listCard,
+  .successCard,
+  .aiCard {
     border-radius: 24px;
+  }
+
+  .valuePreview {
+    border-radius: 24px;
+  }
+
+  .valuePreviewButton {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .valuePreviewVisual {
+    min-height: 300px;
+  }
+
+  .valuePreviewPage {
+    top: 20px;
+    left: 5%;
+    width: min(210px, 54vw);
+    min-height: 240px;
+    padding: 20px 16px;
+  }
+
+  .valuePreviewSeal {
+    right: 12px;
+    bottom: 70px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .valuePreviewFlowers {
+    bottom: -20px;
+    width: 150%;
+  }
+
+  .valuePreviewPhotoMain {
+    top: 18px;
+    right: 2%;
+    width: min(210px, 56vw);
+  }
+
+  .valuePreviewPhotoBack {
+    right: -6%;
+    bottom: -16px;
+    width: min(170px, 48vw);
+  }
+
+  .reminderCard {
+    gap: 22px;
+    padding: 24px 20px 20px;
+    border-radius: 24px;
+  }
+
+  .reminderFieldsTop,
+  .reminderFieldsBottom {
+    grid-template-columns: 1fr;
+  }
+
+  .reminderButton {
+    width: 100%;
+    min-height: 54px;
+  }
+
+  .reminderHelper {
+    align-items: flex-start;
+    text-align: left;
   }
 
   .cardHeader,

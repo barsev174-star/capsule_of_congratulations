@@ -376,8 +376,14 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                   <span className={styles.heroNameLine}>{heroNameContent}</span>
                 </h1>
                 <p className={styles.subtitle}>
-                  <span>Эту открытку для тебя собрали близкие люди.</span>
-                  <span>Здесь — теплые слова, фотографии и приятные моменты.</span>
+                  {model.heroDescription ? (
+                    <span>{model.heroDescription}</span>
+                  ) : (
+                    <>
+                      <span>Эту открытку для тебя собрали близкие люди.</span>
+                      <span>Здесь — теплые слова, фотографии и приятные моменты.</span>
+                    </>
+                  )}
                 </p>
                 <div className={styles.heroCtaRow}>
                   <span className={styles.heroParticipants}>
@@ -419,7 +425,11 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
             <>
               {renderAnchorLayer("summary")}
               <h2 className={styles.sectionTitle}>{model.summaryTitle}</h2>
-              <p className={styles.sectionText}>{model.summaryText}</p>
+              {model.summaryText.split(/\n{2,}/).map((paragraph, index) => (
+                <p key={`${paragraph.slice(0, 24)}-${index}`} className={styles.sectionText}>
+                  {paragraph}
+                </p>
+              ))}
               {model.mainGreetingAuthorName ? (
                 <p className={styles.summaryAuthor}>- {model.mainGreetingAuthorName}</p>
               ) : null}

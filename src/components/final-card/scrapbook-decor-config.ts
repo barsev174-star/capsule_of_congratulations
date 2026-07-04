@@ -558,6 +558,9 @@ export const scrapbookComponentAssets: ScrapbookComponentAsset[] = [
     minHeight: "360px",
     zIndex: 1,
     mobile: {
+      width: "100%",
+      maxWidth: "100%",
+      paperWidth: "100%",
       backgroundSize: "170% 186%",
       backgroundPositionY: "52%",
       paddingTop: "36px",

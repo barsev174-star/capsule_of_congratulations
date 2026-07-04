@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import { getCardDraftByPublicSlug, listContributionsByCardId } from "@/lib/cards/repository";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import { ParticipantForm } from "@/app/card/[publicSlug]/participant-form";
+import { EventReminderForm } from "./reminder-form";
+import { getMinimumReminderEventDate } from "@/lib/reminders/validation";
 import styles from "@/app/card/[publicSlug]/participant-page.module.css";
 
 type Props = {
@@ -159,6 +163,49 @@ export default async function JoinCardPage({ params }: Props) {
               </div>
             )}
           </section>
+
+          <section className={styles.valuePreview} aria-labelledby="value-preview-title">
+            <div className={styles.valuePreviewCopy}>
+              <p className={styles.valuePreviewEyebrow}>Готовая открытка</p>
+              <h2 id="value-preview-title">Так получатель увидит общий подарок</h2>
+              <p>
+                Ваше поздравление станет частью красивой страницы с тёплыми словами, фото и поздравлениями от всех.
+              </p>
+              <Link href="/example" className={styles.valuePreviewButton}>
+                Посмотреть пример открытки
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+
+            <div className={styles.valuePreviewVisual} aria-hidden="true">
+              <div className={styles.valuePreviewPage}>
+                <span className={styles.valuePreviewEvent}>С днём рождения!</span>
+                <span className={styles.valuePreviewFrom}>от друзей и близких</span>
+                <Image
+                  className={styles.valuePreviewSeal}
+                  src="/templates/scrapbook-clean/heart-sticker-puffy-gold.png"
+                  alt=""
+                  width={70}
+                  height={70}
+                />
+                <Image
+                  className={styles.valuePreviewFlowers}
+                  src="/templates/scrapbook-clean/footer-floral-cluster.png"
+                  alt=""
+                  width={320}
+                  height={120}
+                />
+              </div>
+              <div className={`${styles.valuePreviewPhoto} ${styles.valuePreviewPhotoMain}`}>
+                <Image src="/examples/kristina/4.jpg" alt="" fill sizes="320px" loading="eager" />
+              </div>
+              <div className={`${styles.valuePreviewPhoto} ${styles.valuePreviewPhotoBack}`}>
+                <Image src="/examples/kristina/6.jpg" alt="" fill sizes="260px" loading="eager" />
+              </div>
+            </div>
+          </section>
+
+          <EventReminderForm sourceCardId={card.id} minimumEventDate={getMinimumReminderEventDate()} />
 
           <aside className={styles.footerNote}>
             <span className={styles.footerIcon} aria-hidden="true" />
