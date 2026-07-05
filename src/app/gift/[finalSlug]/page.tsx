@@ -49,6 +49,7 @@ export default async function GiftPage({ params, searchParams }: Props) {
     <GiftIntro
       slug={finalSlug}
       recipientName={card.recipientName}
+      fromLabel={card.fromLabel}
       templateId={card.templateId}
       accent={template?.accent}
       forceIntro={isForceIntroEnabled}

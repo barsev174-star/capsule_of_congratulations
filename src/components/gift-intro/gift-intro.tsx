@@ -1,61 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import Image from "next/image";
 import type { CardTemplateId } from "@/lib/cards/templates";
 import { defaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import styles from "./gift-intro.module.css";
 
-type GiftIntroState =
-  | "idle"
-  | "press"
-  | "sealBreak"
-  | "flapOpen"
-  | "pause"
-  | "cardPull"
-  | "cardHero"
-  | "revealGift"
-  | "done";
+type GiftIntroState = "idle" | "playing" | "done";
 
 type GiftIntroProps = {
   slug: string;
   recipientName: string;
   subtitle?: string;
+  fromLabel?: string;
   templateId?: CardTemplateId;
   animationId?: GiftAnimationId;
   accent?: string;
+  closedEnvelopeImage?: string;
+  openEnvelopeImage?: string;
   forceIntro?: boolean;
   children: React.ReactNode;
 };
 
 const STORAGE_KEY_PREFIX = "gift-opened-";
 
-const TIMING = {
-  press: 160,
-  sealBreak: 240,
-  flapOpen: 720,
-  pause: 480,
-  cardPull: 820,
-  cardHero: 1050,
-  revealGift: 520
-} as const;
-
-const TOTAL_DURATION =
-  TIMING.press +
-  TIMING.sealBreak +
-  TIMING.flapOpen +
-  TIMING.pause +
-  TIMING.cardPull +
-  TIMING.cardHero +
-  TIMING.revealGift;
-
-const REDUCED_TIMING = {
-  sealBreak: 120,
-  flapOpen: 260,
-  pause: 700,
-  cardPull: 980,
-  revealGift: 1450,
-  done: 1900
-} as const;
+const INTRO_DURATION = 4800;
 
 const subscribeReducedMotion = (callback: () => void) => {
   const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -86,9 +55,12 @@ export const GiftIntro = ({
   slug,
   recipientName,
   subtitle = "для вас собрали тёплые слова",
+  fromLabel,
   templateId = "warm-classic",
   animationId = defaultGiftAnimationId,
   accent,
+  closedEnvelopeImage = "/assets/gift/envelope-closed.png",
+  openEnvelopeImage = "/assets/gift/envelope-open.png",
   forceIntro = false,
   children
 }: GiftIntroProps) => {
@@ -119,7 +91,7 @@ export const GiftIntro = ({
   }, []);
 
   useEffect(() => {
-    const shouldLockScroll = state !== "revealGift" && state !== "done";
+    const shouldLockScroll = state !== "done";
     document.body.style.overflow = shouldLockScroll ? "hidden" : "";
   }, [state]);
 
@@ -130,36 +102,6 @@ export const GiftIntro = ({
   const schedule = useCallback((callback: () => void, delay: number) => {
     timersRef.current.push(setTimeout(callback, delay));
   }, []);
-
-  const handleDone = useCallback(() => {
-    setState("done");
-  }, []);
-
-  const runOpeningSequence = useCallback(() => {
-    let cursor = TIMING.press;
-    schedule(() => setState("sealBreak"), cursor);
-    cursor += TIMING.sealBreak;
-    schedule(() => setState("flapOpen"), cursor);
-    cursor += TIMING.flapOpen;
-    schedule(() => setState("pause"), cursor);
-    cursor += TIMING.pause;
-    schedule(() => setState("cardPull"), cursor);
-    cursor += TIMING.cardPull;
-    schedule(() => setState("cardHero"), cursor);
-    cursor += TIMING.cardHero;
-    schedule(() => setState("revealGift"), cursor);
-    cursor += TIMING.revealGift;
-    schedule(handleDone, cursor);
-  }, [schedule, handleDone]);
-
-  const runReducedOpeningSequence = useCallback(() => {
-    schedule(() => setState("sealBreak"), REDUCED_TIMING.sealBreak);
-    schedule(() => setState("flapOpen"), REDUCED_TIMING.flapOpen);
-    schedule(() => setState("pause"), REDUCED_TIMING.pause);
-    schedule(() => setState("cardPull"), REDUCED_TIMING.cardPull);
-    schedule(() => setState("revealGift"), REDUCED_TIMING.revealGift);
-    schedule(handleDone, REDUCED_TIMING.done);
-  }, [schedule, handleDone]);
 
   const saveOpenedFlag = useCallback(() => {
     try {
@@ -177,27 +119,21 @@ export const GiftIntro = ({
     saveOpenedFlag();
 
     if (reducedMotion) {
-      setState("press");
-      runReducedOpeningSequence();
+      setState("done");
       return;
     }
 
-    setState("press");
-    runOpeningSequence();
-  }, [state, reducedMotion, saveOpenedFlag, runOpeningSequence, runReducedOpeningSequence]);
+    clearTimers();
+    setState("playing");
+    schedule(() => setState("done"), INTRO_DURATION);
+  }, [state, reducedMotion, saveOpenedFlag, clearTimers, schedule]);
 
   const handleSkip = useCallback(() => {
     clearTimers();
     saveOpenedFlag();
 
-    if (reducedMotion) {
-      setState("done");
-      return;
-    }
-
-    setState("revealGift");
-    schedule(handleDone, 350);
-  }, [clearTimers, saveOpenedFlag, reducedMotion, schedule, handleDone]);
+    setState("done");
+  }, [clearTimers, saveOpenedFlag]);
 
   const handleReplay = useCallback(() => {
     clearTimers();
@@ -226,7 +162,7 @@ export const GiftIntro = ({
   const name = recipientName.trim() || "Вам";
   const accentColor = accent ?? "#bf6c47";
   const stateClass = styles[state];
-  const showFinalCard = state === "revealGift" || state === "done";
+  const showFinalCard = state === "playing";
   const isBeforeOpen = state === "idle";
 
   if (state === "done") {
@@ -255,8 +191,42 @@ export const GiftIntro = ({
         <div className={styles.vignette} aria-hidden="true" />
 
         <div className={styles.introContent}>
+          <div className={styles.giftKicker}>
+            <span className={styles.giftKickerIcon} aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="8" width="18" height="13" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M12 8v13" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M3 14.5h18" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M12 8c0-2.5 2.5-4 4-4s2 2 0 4h-4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                <path d="M12 8c0-2.5-2.5-4-4-4s-2 2 0 4h4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <span className={styles.giftKickerText}>Вам подарили открытку</span>
+          </div>
+
           <div className={`${styles.envelopeScene} ${isHoveringCta && isBeforeOpen ? styles.ctaHover : ""}`}>
+            <span className={styles.botanicalSprig} aria-hidden="true">
+              <i /><i /><i /><i />
+            </span>
+            <img
+              src="/assets/gift/flower-bottom-left.png"
+              alt=""
+              className={styles.envelopeFlower}
+              aria-hidden="true"
+            />
+            <span className={`${styles.introHeart} ${styles.introHeartOne}`} aria-hidden="true">♡</span>
+            <span className={`${styles.introHeart} ${styles.introHeartTwo}`} aria-hidden="true">♡</span>
+            <span className={`${styles.introHeart} ${styles.introHeartThree}`} aria-hidden="true">♡</span>
             <div className={styles.envelope}>
+              <Image
+                src={openEnvelopeImage}
+                alt=""
+                fill
+                priority
+                sizes="(max-width: 480px) 86vw, 460px"
+                className={`${styles.envelopeImage} ${styles.openEnvelopeBack}`}
+                aria-hidden="true"
+              />
               <div className={styles.envelopeBack} />
               <div className={styles.envelopeGlow} aria-hidden="true" />
 
@@ -276,8 +246,7 @@ export const GiftIntro = ({
                     <span className={styles.cardBackEmblem} aria-hidden="true">
                       <span className={styles.cardHeart}>♡</span>
                     </span>
-                    <span className={styles.cardBackBrand}>Дари слова</span>
-                    <span className={styles.cardBackCaption}>с теплом от близких</span>
+                    <span className={styles.cardBackBrand}>Дари слова♡</span>
                   </div>
                   <div className={styles.envelopeCardInsideTop} aria-hidden="true">
                     <div className={`${styles.cardTemplatePreview} ${styles.cardTemplatePreviewUpper}`}>
@@ -286,6 +255,24 @@ export const GiftIntro = ({
                   </div>
                 </div>
               </div>
+
+              <Image
+                src={openEnvelopeImage}
+                alt=""
+                fill
+                priority
+                sizes="(max-width: 480px) 86vw, 460px"
+                className={`${styles.envelopeImage} ${styles.openEnvelopePocket}`}
+                aria-hidden="true"
+              />
+              <Image
+                src={closedEnvelopeImage}
+                alt="Закрытый бумажный конверт"
+                fill
+                priority
+                sizes="(max-width: 480px) 86vw, 460px"
+                className={`${styles.envelopeImage} ${styles.closedEnvelope}`}
+              />
 
               <div className={styles.envelopeLeft} aria-hidden="true" />
               <div className={styles.envelopeRight} aria-hidden="true" />
@@ -307,7 +294,11 @@ export const GiftIntro = ({
           <div className={styles.textGroup}>
             <div className={styles.titleBlock}>
               <span className={styles.nameLine}>{name}</span>
-              <h1 className={styles.subtitleLine}>{subtitle}</h1>
+              <span className={styles.titleDivider} aria-hidden="true"><i />♡<i /></span>
+              <h1 className={styles.subtitleLine}>
+                {subtitle}
+                {fromLabel?.trim() ? <span className={styles.subtitleAccent}>{fromLabel.trim()}</span> : null}
+              </h1>
             </div>
             <div className={styles.actions}>
               <button
@@ -319,10 +310,13 @@ export const GiftIntro = ({
                 onMouseLeave={() => setIsHoveringCta(false)}
                 onFocus={() => setIsHoveringCta(true)}
                 onBlur={() => setIsHoveringCta(false)}
-                aria-label="Открыть открытку"
+                aria-label="Посмотреть, что внутри"
                 disabled={state !== "idle"}
               >
-                Открыть открытку
+                <span className={styles.ctaContent}>
+                  <span className={styles.ctaSparkle} aria-hidden="true">✨</span>
+                  Посмотреть, что внутри
+                </span>
               </button>
               <button type="button" className={styles.skipLink} onClick={handleSkip}>
                 Пропустить

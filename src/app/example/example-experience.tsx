@@ -48,6 +48,7 @@ export const ExampleExperience = ({ children }: Props) => {
         slug="example-paper-birthday"
         recipientName="Кристина"
         subtitle="для тебя собрали тёплые слова"
+        fromLabel="от друзей и коллег"
         templateId="paper-birthday"
         animationId="envelope"
         accent="#df4f73"
@@ -199,6 +200,13 @@ export const ExampleExperience = ({ children }: Props) => {
             <div className={styles.animationScene}>
               <div className={styles.animationSceneStep}>
                 <div className={styles.paperEnvelopeClosed}>
+                  <Image
+                    src="/assets/gift/envelope-closed.png"
+                    alt=""
+                    fill
+                    sizes="180px"
+                    className={styles.storyEnvelopeAsset}
+                  />
                   <div className={styles.paperEnvelopeClosedFlap} />
                   <div className={styles.paperEnvelopeClosedSeal}>♡</div>
                 </div>
@@ -207,6 +215,13 @@ export const ExampleExperience = ({ children }: Props) => {
               <span className={styles.animationSceneArrow} aria-hidden="true">→</span>
               <div className={styles.animationSceneStep}>
                 <div className={styles.paperCardOpen}>
+                  <Image
+                    src="/assets/gift/envelope-open.png"
+                    alt=""
+                    fill
+                    sizes="180px"
+                    className={styles.storyEnvelopeAsset}
+                  />
                   <div className={styles.paperCardOpenCard} />
                   <div className={styles.paperCardOpenEnvelope}>
                     <div className={styles.paperCardOpenSeal}>♡</div>

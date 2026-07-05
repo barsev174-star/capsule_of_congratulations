@@ -1,5 +1,15 @@
 # Журнал поставки
 
+## Update 2026-07-05 Example, Participant Value And Gift Intro Ready
+
+1. Бесплатная beta уже включает публикацию открытки, поддержку, вход организатора, OpenAI-помощь с текстом, демонстрационную открытку и улучшенный сценарий участника.
+2. Страница `/example` показывает ценность готовой открытки и подготовлена к добавлению новых шаблонов и вариантов анимации.
+3. Нижняя часть `/join` дополнена переходом к примеру открытки и формой напоминания о будущем событии.
+4. Intro-сцена `/gift/[finalSlug]` переведена на цельную анимацию длительностью 4,8 секунды: закрытый конверт плавно сменяется открытым, оборот открытки сразу находится внутри, затем открытка поднимается, раскрывается и переходит в полноценную страницу.
+5. Для intro используются растровые ассеты закрытого и открытого конверта; дальнейшие фазы подъёма и раскрытия сохранены без изменений.
+6. Анимация проверена локально в браузере, production build и TypeScript проходят.
+7. Актуальный список обязательных работ до оплаты и платного запуска: `docs/PRE_PAYMENT_READINESS_2026-07-05.md`.
+
 ## Update 2026-07-02 Canonical WWW Domain
 
 1. DNS и сертификаты для `darislova.ru` и `www.darislova.ru` корректны, но внешний HTTPS к apex нестабилен и фильтруется до Caddy.
@@ -579,6 +589,17 @@
 7. Added temporary draft/variant storage that is cleared after the greeting is submitted while usage metadata remains.
 8. Verified OAuth, a real chat request, the application endpoint, paid-limit switching and draft cleanup locally.
 9. Added deployment and verification notes in `docs/AI_GIGACHAT_2026-06-29.md`.
+
+## Update 2026-07-04 Join Page Final Polish
+
+1. Reduced heading font sizes in the `/join` value-preview and reminder blocks so the lower CTA section no longer shouts.
+2. Removed the recipient name from the example preview card; added a gold puffy-heart seal so the mini-card reads as a polished gift preview rather than a specific person.
+3. Enriched the example preview visual with a floral footer accent and cleaner composition while keeping it lightweight.
+4. Used the envelope asset from `docs/для анимации.png` as a soft decorative object inside the reminder block.
+5. Simplified the reminder form to four fields (`Кого поздравить?`, `Повод`, `Дата`, `Email`) and removed the single-option channel selector.
+6. Added helper text under the reminder form: "Пришлём письмо заранее, чтобы вы успели собрать открытку от всех."
+7. Verified desktop and mobile layouts with `scripts/capture-gift-screenshots.mjs`; no horizontal scroll, no clipped preview.
+8. `npm run build` passes.
 
 ## Update 2026-07-03 Participant Value Preview And Event Reminders
 

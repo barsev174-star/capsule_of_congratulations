@@ -556,6 +556,25 @@
   overflow: hidden;
 }
 
+.storyEnvelopeAsset {
+  object-fit: contain;
+  filter: drop-shadow(0 10px 14px rgba(89, 57, 38, 0.14));
+}
+
+.paperEnvelopeClosed:has(.storyEnvelopeAsset),
+.paperCardOpen:has(.storyEnvelopeAsset) {
+  position: relative;
+  background: transparent;
+  box-shadow: none;
+}
+
+.paperEnvelopeClosed:has(.storyEnvelopeAsset)::before,
+.paperEnvelopeClosed:has(.storyEnvelopeAsset)::after,
+.paperEnvelopeClosed:has(.storyEnvelopeAsset) > div,
+.paperCardOpen:has(.storyEnvelopeAsset) > div {
+  display: none;
+}
+
 .paperEnvelopeClosed::before,
 .paperEnvelopeClosed::after {
   content: "";

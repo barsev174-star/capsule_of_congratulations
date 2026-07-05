@@ -1,6 +1,7 @@
 :root {
-  --gi-bg-top: #faf4ed;
-  --gi-bg-bottom: #f2e6d8;
+  --gi-bg: #faf3eb;
+  --gi-bg-top: #faf3eb;
+  --gi-bg-bottom: #f5ece3;
   --gi-text: #3b2b23;
   --gi-muted: #7b675d;
   --gi-accent: #bf6c47;
@@ -24,10 +25,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.72), transparent 35%),
-    radial-gradient(circle at 70% 80%, rgba(255, 248, 240, 0.6), transparent 35%),
-    linear-gradient(180deg, var(--gi-bg-top) 0%, var(--gi-bg-bottom) 100%);
+  background: var(--gi-bg);
   color: var(--gi-text);
   overflow: hidden;
   animation: pageFadeIn 0.6s ease-out;
@@ -74,7 +72,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 34px;
+  gap: 18px;
   width: 100%;
   max-width: 480px;
   transition:
@@ -92,38 +90,30 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-align: center;
 }
 
 .nameLine {
   font-family: var(--gi-serif);
-  font-size: clamp(32px, 7vw, 46px);
+  font-size: clamp(34px, 6.2vw, 52px);
   font-weight: 500;
-  line-height: 1.15;
+  line-height: 1.1;
   color: var(--gi-text);
   letter-spacing: -0.01em;
-  position: relative;
-}
-
-.nameLine::after {
-  content: "♡";
-  position: absolute;
-  right: -22px;
-  top: -6px;
-  font-size: 16px;
-  color: var(--gi-accent);
-  opacity: 0.55;
-  font-family: serif;
 }
 
 .subtitleLine {
   margin: 0;
-  font-size: clamp(15px, 3.6vw, 18px);
+  font-size: clamp(15px, 3.2vw, 18px);
   font-weight: 400;
-  line-height: 1.4;
+  line-height: 1.45;
   color: var(--gi-muted);
-  max-width: 340px;
+  max-width: 440px;
+}
+
+.subtitleAccent {
+  color: #ce6037;
 }
 
 /* Envelope scene */
@@ -228,6 +218,27 @@
   backface-visibility: hidden;
 }
 
+.envelopeCardWhole {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 210%;
+  z-index: 5;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--gi-card);
+  box-shadow: 0 10px 28px rgba(88, 57, 37, 0.16);
+  opacity: 0;
+  pointer-events: none;
+  clip-path: inset(0 0 50% 0 round 12px);
+  will-change: opacity, clip-path;
+}
+
+.envelopeCardWhole .cardTemplateCanvas {
+  top: 0;
+}
+
 .envelopeCardInside {
   background: linear-gradient(180deg, #fffdfb 0%, #faf5ee 100%);
   box-shadow:
@@ -262,6 +273,10 @@
   top: -100%;
 }
 
+.cardTemplatePreviewCover {
+  z-index: 4;
+}
+
 .envelopeCardFold {
   position: absolute;
   inset: 0;
@@ -275,12 +290,14 @@
 
 .envelopeCardFront {
   background:
-    radial-gradient(circle at 14% 20%, rgba(214, 124, 86, 0.08), transparent 20%),
-    radial-gradient(circle at 88% 82%, rgba(191, 108, 71, 0.07), transparent 24%),
-    linear-gradient(145deg, #fffdf9 0%, var(--gi-card) 50%, #f8eee4 100%);
+    radial-gradient(circle at 14% 20%, rgba(214, 124, 86, 0.1), transparent 21%),
+    radial-gradient(circle at 88% 82%, rgba(122, 82, 53, 0.08), transparent 26%),
+    repeating-linear-gradient(8deg, rgba(102, 70, 46, 0.026) 0 1px, transparent 1px 4px),
+    linear-gradient(145deg, #f5e8d6 0%, #ecd8bd 50%, #e3c7a4 100%);
   box-shadow:
-    0 6px 18px var(--gi-shadow-soft),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    0 12px 28px rgba(88, 57, 37, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    inset 0 0 32px rgba(112, 72, 42, 0.07);
   transform: translateZ(1px);
   z-index: 2;
 }
@@ -307,7 +324,7 @@
 .cardPaperLines {
   position: absolute;
   inset: 14px;
-  border: 1px solid rgba(139, 110, 92, 0.12);
+  border: 1px solid rgba(132, 83, 55, 0.18);
   border-radius: 8px;
   pointer-events: none;
 }
@@ -316,7 +333,7 @@
   content: "";
   position: absolute;
   inset: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.54);
   border-radius: 5px;
 }
 
@@ -345,15 +362,14 @@
   z-index: 2;
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   color: var(--gi-accent);
-  background: rgba(255, 252, 248, 0.86);
+  background: rgba(255, 248, 238, 0.5);
   box-shadow:
-    0 0 0 1px rgba(191, 108, 71, 0.14),
-    0 8px 22px rgba(72, 49, 37, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    0 0 0 1px rgba(145, 82, 54, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.64);
 }
 
 .cardBackBrand {
@@ -361,9 +377,10 @@
   z-index: 2;
   margin-top: 1px;
   font-family: var(--gi-serif);
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1;
-  color: var(--gi-text);
+  color: #9a563e;
+  text-shadow: 0 1px 0 rgba(255, 252, 247, 0.7);
 }
 
 .cardBackCaption {
@@ -371,7 +388,7 @@
   z-index: 2;
   font-size: 10px;
   line-height: 1;
-  color: var(--gi-muted);
+  color: rgba(255, 239, 224, 0.84);
   letter-spacing: 0.04em;
 }
 
@@ -381,7 +398,7 @@
   bottom: 14px;
   width: 30px;
   height: 54px;
-  border-left: 1px solid rgba(191, 108, 71, 0.3);
+  border-left: 1px solid rgba(159, 91, 62, 0.26);
   border-radius: 50%;
   opacity: 0.72;
 }
@@ -392,9 +409,9 @@
   position: absolute;
   width: 8px;
   height: 13px;
-  border: 1px solid rgba(191, 108, 71, 0.24);
+  border: 1px solid rgba(159, 91, 62, 0.22);
   border-radius: 70% 30% 70% 30%;
-  background: rgba(255, 250, 245, 0.54);
+  background: rgba(255, 250, 244, 0.34);
 }
 
 .cardBackSprig::before {
@@ -1064,5 +1081,925 @@
 
   .revealGift .envelopeCard {
     transform: translateY(-32px) translateZ(160px) scale(1.72);
+  }
+}
+
+/* Cinematic two-image envelope. The original CSS construction remains a fallback in markup. */
+.envelopeScene {
+  width: min(460px, 82vw);
+  height: min(460px, 82vw);
+  perspective: none;
+}
+
+.envelope {
+  transform-style: flat;
+}
+
+.envelopeImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 22px 28px rgba(88, 57, 37, 0.15));
+  transition:
+    opacity 540ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 540ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 400ms ease;
+  will-change: opacity, transform;
+}
+
+.closedEnvelope {
+  z-index: 6;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.openEnvelopeBack,
+.openEnvelopePocket {
+  opacity: 0;
+  transform: translateY(6px) scale(0.985);
+}
+
+.openEnvelopeBack {
+  z-index: 1;
+}
+
+.openEnvelopePocket {
+  z-index: 5;
+  clip-path: polygon(0 37%, 15% 40%, 50% 62%, 85% 40%, 100% 37%, 100% 100%, 0 100%);
+}
+
+.envelopeBack,
+.envelopeLeft,
+.envelopeRight,
+.envelopeBottom,
+.envelopeFlap,
+.envelopeSeal,
+.heartFloat1,
+.heartFloat2,
+.heartFloat3 {
+  display: none;
+}
+
+.envelopeGlow {
+  left: 14%;
+  right: 14%;
+  top: 28%;
+  height: 58%;
+  z-index: 0;
+}
+
+.envelopeCard {
+  --gi-card-preview-scale: 0.258;
+  left: 16.5%;
+  bottom: 38%;
+  width: 67%;
+  height: 43%;
+  z-index: 3;
+  opacity: 0;
+  transform: translateY(15%) scale(0.965);
+  transition:
+    transform 430ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease;
+}
+
+.press .closedEnvelope {
+  transform: scale(0.985);
+  filter: drop-shadow(0 26px 34px rgba(88, 57, 37, 0.2));
+}
+
+.sealBreak .closedEnvelope {
+  transform: scale(1.01);
+  filter: drop-shadow(0 26px 36px rgba(191, 108, 71, 0.2));
+}
+
+.flapOpen .closedEnvelope,
+.pause .closedEnvelope,
+.cardPull .closedEnvelope,
+.cardHero .closedEnvelope,
+.revealGift .closedEnvelope {
+  opacity: 0;
+  transform: translateY(-3px) scale(1.01);
+}
+
+.flapOpen .openEnvelopeBack,
+.flapOpen .openEnvelopePocket,
+.pause .openEnvelopeBack,
+.pause .openEnvelopePocket,
+.cardPull .openEnvelopeBack,
+.cardPull .openEnvelopePocket,
+.cardHero .openEnvelopeBack,
+.cardHero .openEnvelopePocket,
+.revealGift .openEnvelopeBack,
+.revealGift .openEnvelopePocket {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.flapOpen .openEnvelopeBack,
+.flapOpen .openEnvelopePocket {
+  transition-delay: 70ms;
+}
+
+.pause .envelopeCard {
+  opacity: 1;
+  transform: translateY(13%) scale(0.97);
+}
+
+.cardPull .envelopeCard {
+  opacity: 1;
+  transform: translateY(-60%) scale(1.04);
+  z-index: 3;
+}
+
+.cardHero .envelopeCard {
+  opacity: 1;
+  transform: translateY(-72%) scale(1.22);
+  z-index: 7;
+}
+
+.cardHero .openEnvelopeBack,
+.cardHero .openEnvelopePocket {
+  opacity: 0.54;
+  transform: translateY(14px) scale(0.94);
+}
+
+.revealGift .envelopeCard {
+  opacity: 0;
+  transform: translateY(-78%) scale(1.56);
+  z-index: 7;
+}
+
+.revealGift .openEnvelopeBack,
+.revealGift .openEnvelopePocket {
+  opacity: 0;
+  transform: translateY(24px) scale(0.9);
+}
+
+.press .introContent,
+.sealBreak .introContent,
+.flapOpen .introContent,
+.pause .introContent,
+.cardPull .introContent,
+.cardHero .introContent {
+  transform: none;
+}
+
+.reducedMotion .envelopeImage,
+.reducedMotion .envelopeCard {
+  transition: none;
+}
+
+@media (max-width: 640px) {
+  .introContent {
+    gap: 18px;
+  }
+
+  .envelopeScene {
+    width: min(86vw, 360px);
+    height: min(86vw, 360px);
+  }
+
+  .envelopeCard {
+    --gi-card-preview-scale: 0.202;
+  }
+}
+
+/* The staged state machine owns the handoff to the real card. */
+.finalReveal {
+  animation: finalFadeIn 650ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/* One continuous gift-opening timeline. */
+.playing.page {
+  animation: introPageTimeline 3200ms linear both;
+  pointer-events: none;
+}
+
+.playing .textGroup {
+  animation: introTextExit 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.playing .envelopeScene,
+.playing .envelope {
+  animation: none;
+}
+
+.playing .closedEnvelope {
+  animation: closedEnvelopeTimeline 3200ms linear both;
+}
+
+.playing .openEnvelopeBack,
+.playing .openEnvelopePocket {
+  animation: openEnvelopeTimeline 3200ms linear both;
+}
+
+.playing .envelopeGlow {
+  animation: envelopeGlowTimeline 3200ms ease both;
+}
+
+.playing .envelopeCard {
+  animation: cardJourneyTimeline 2770ms 430ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.playing .envelopeCardFold {
+  animation: cardUnfoldTimeline 1850ms 1080ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.playing + .page,
+.playing .introContent {
+  pointer-events: none;
+}
+
+.finalReveal {
+  animation: finalGiftTimeline 3200ms linear both;
+}
+
+@keyframes introPageTimeline {
+  0%, 72% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes introTextExit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes closedEnvelopeTimeline {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  5% {
+    opacity: 1;
+    transform: translateY(0) scale(0.985);
+  }
+  11%, 19% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    opacity: 0;
+    transform: translateY(-3px) scale(1.01);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-3px) scale(1.01);
+  }
+}
+
+@keyframes openEnvelopeTimeline {
+  0%, 12% {
+    opacity: 0;
+    transform: translateY(7px) scale(0.985);
+  }
+  29%, 63% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  84% {
+    opacity: 0.42;
+    transform: translateY(17px) scale(0.94);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.88);
+  }
+}
+
+@keyframes envelopeGlowTimeline {
+  0%, 12% { opacity: 0; }
+  34%, 72% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes cardJourneyTimeline {
+  0%, 8% {
+    opacity: 0;
+    transform: translateY(13%) scale(0.97);
+  }
+  18%, 30% {
+    opacity: 1;
+    transform: translateY(13%) scale(0.97);
+  }
+  59% {
+    opacity: 1;
+    transform: translateY(-58%) scale(1.04);
+  }
+  76% {
+    opacity: 0.78;
+    transform: translateY(-70%) scale(1.22);
+  }
+  90% {
+    opacity: 0.18;
+    transform: translateY(-72%) scale(1.48);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-74%) scale(1.68);
+  }
+}
+
+@keyframes cardUnfoldTimeline {
+  0%, 22% { transform: rotateX(0deg); }
+  72%, 100% { transform: rotateX(-178deg); }
+}
+
+@keyframes finalGiftTimeline {
+  0%, 70% {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  94%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.envelopeScene {
+  width: min(460px, 74vw);
+  height: min(460px, 74vw);
+}
+
+.envelopeCard {
+  --gi-card-preview-scale: 0.258;
+}
+
+@media (max-width: 640px) {
+  .envelopeScene {
+    width: min(86vw, 360px);
+    height: min(86vw, 360px);
+  }
+
+  .envelopeCard {
+    --gi-card-preview-scale: 0.202;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playing.page,
+  .playing .textGroup,
+  .playing .closedEnvelope,
+  .playing .openEnvelopeBack,
+  .playing .openEnvelopePocket,
+  .playing .envelopeGlow,
+  .playing .envelopeCard,
+  .playing .envelopeCardFold,
+  .finalReveal {
+    animation: none;
+  }
+}
+
+@media (min-width: 641px) {
+  .introContent {
+    transform: translateY(2vh);
+  }
+}
+
+@media (max-height: 760px) and (min-width: 641px) {
+  .envelopeScene {
+    width: min(460px, 66vh);
+    height: min(460px, 66vh);
+  }
+
+  .envelopeCard {
+    --gi-card-preview-scale: 0.258;
+  }
+
+  .introContent {
+    transform: translateY(1vh);
+  }
+}
+
+/* Gift-like idle composition */
+.introContent {
+  max-width: 640px;
+  gap: 6px;
+}
+
+.giftKicker {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: #df693d;
+  transition-property: opacity, transform;
+  transition-duration: 260ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.giftKickerIcon {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  color: currentColor;
+}
+
+.giftKickerIcon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.giftKickerText {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.giftKickerText::before,
+.giftKickerText::after {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #f2b18f;
+}
+
+.envelopeScene {
+  position: relative;
+  z-index: 1;
+  margin-block: -22px -10px;
+}
+
+.envelopeScene::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 49%;
+  width: 128%;
+  height: 94%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at center, rgba(255, 220, 185, 0.92), rgba(255, 234, 205, 0.5) 46%, rgba(255, 242, 225, 0.14) 64%, transparent 74%);
+  filter: blur(8px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.envelopeFlower {
+  position: absolute;
+  left: -16%;
+  bottom: 14%;
+  width: 315px;
+  height: auto;
+  z-index: 8;
+  pointer-events: none;
+  transform: rotate(-28deg);
+  opacity: 0.96;
+  filter: drop-shadow(0 8px 18px rgba(88, 57, 37, 0.12));
+}
+
+.botanicalSprig {
+  display: none !important;
+}
+
+.botanicalSprig {
+  position: absolute;
+  left: 2%;
+  bottom: 17%;
+  z-index: 8;
+  width: 112px;
+  height: 120px;
+  border-left: 2px solid rgba(198, 133, 87, 0.42);
+  border-radius: 55% 0 0 55%;
+  transform: rotate(-38deg);
+  transform-origin: bottom left;
+  pointer-events: none;
+}
+
+.botanicalSprig::before,
+.botanicalSprig::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  width: 72px;
+  height: 1px;
+  background: rgba(198, 133, 87, 0.38);
+  transform-origin: left center;
+}
+
+.botanicalSprig::before {
+  top: 38px;
+  transform: rotate(-26deg);
+}
+
+.botanicalSprig::after {
+  top: 66px;
+  transform: rotate(18deg);
+}
+
+.botanicalSprig i {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f2ddc5;
+  box-shadow: 0 0 0 3px rgba(255, 248, 238, 0.72);
+}
+
+.botanicalSprig i:nth-child(1) { left: 55px; top: 5px; }
+.botanicalSprig i:nth-child(2) { left: 73px; top: 29px; }
+.botanicalSprig i:nth-child(3) { left: 50px; top: 65px; }
+.botanicalSprig i:nth-child(4) { left: 20px; top: 83px; }
+
+.introHeart {
+  position: absolute;
+  z-index: 8;
+  color: #e58a63;
+  font-family: Georgia, serif;
+  line-height: 1;
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.introHeartOne { left: 11%; top: 27%; font-size: 20px; transform: rotate(-12deg); }
+.introHeartTwo { right: 8%; top: 48%; font-size: 26px; transform: rotate(11deg); }
+.introHeartThree { right: 17%; top: 72%; font-size: 14px; transform: rotate(-8deg); }
+
+.titleBlock {
+  gap: 6px;
+}
+
+.nameLine {
+  max-width: min(92vw, 700px);
+  font-size: clamp(36px, 5.8vw, 54px);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.nameLine::after {
+  content: none;
+}
+
+.titleDivider {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #de754d;
+  font-family: Georgia, serif;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.titleDivider i {
+  display: block;
+  width: 28px;
+  height: 1px;
+  background: #efc2a8;
+}
+
+.subtitleLine {
+  max-width: 460px;
+  font-size: clamp(15px, 2.2vw, 18px);
+  text-wrap: balance;
+}
+
+.subtitleAccent {
+  display: block;
+  color: #ce6037;
+  margin-top: 2px;
+}
+
+.fromLine {
+  margin: 0;
+  color: #ce6037;
+  font-size: 17px;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.actions {
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.ctaButton {
+  min-height: 54px;
+  padding: 15px 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f1773f 0%, #df5726 100%);
+  box-shadow:
+    0 15px 30px rgba(207, 83, 37, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.ctaContent {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ctaSparkle {
+  font-size: 23px;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.skipLink {
+  min-height: 40px;
+  text-decoration: underline;
+  text-decoration-color: rgba(123, 103, 93, 0.22);
+  text-underline-offset: 5px;
+}
+
+.playing .giftKicker {
+  animation: introTextExit 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (max-width: 640px) {
+  .giftKicker {
+    gap: 6px;
+  }
+
+  .giftKickerIcon {
+    transform: scale(0.88);
+  }
+
+  .giftKickerText {
+    font-size: 11px;
+    letter-spacing: 0.13em;
+  }
+
+  .botanicalSprig {
+    left: 3%;
+    bottom: 18%;
+    transform: rotate(-38deg) scale(0.72);
+  }
+
+  .envelopeFlower {
+    left: -12%;
+    bottom: 11%;
+    width: 230px;
+    transform: rotate(-28deg);
+  }
+
+  .introHeartTwo {
+    right: 3%;
+  }
+
+  .nameLine {
+    font-size: clamp(32px, 9vw, 42px);
+  }
+
+  .fromLine {
+    font-size: 15px;
+  }
+
+  .ctaButton {
+    width: min(100%, 340px);
+  }
+}
+
+@media (max-height: 760px) {
+  .giftKickerIcon {
+    transform: scale(0.72);
+    margin-block: -4px;
+  }
+
+  .giftKickerText {
+    font-size: 10px;
+  }
+
+  .fromLine {
+    font-size: 14px;
+  }
+}
+
+/* Continuous 4.8s recipient reveal: aligned envelope, neutral card back, viewport-safe unfold. */
+.openEnvelopeBack,
+.openEnvelopePocket {
+  left: -2.65%;
+  right: auto;
+  width: 105.3%;
+}
+
+.playing.page {
+  animation: introPageTimelineV2 4800ms linear both;
+}
+
+.playing .giftKicker,
+.playing .textGroup,
+.playing .envelopeFlower,
+.playing .introHeart {
+  animation: introChromeExitV2 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.playing .envelopeScene::before {
+  animation: introGlowExitV2 900ms ease both;
+}
+
+.playing .envelopeScene {
+  animation: none;
+}
+
+.playing .envelope {
+  animation: envelopePositionTimelineV2 4800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.playing .closedEnvelope {
+  animation: closedEnvelopeTimelineV2 4800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.playing .openEnvelopeBack,
+.playing .openEnvelopePocket {
+  animation: openEnvelopeTimelineV2 4800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.playing .envelopeGlow {
+  animation: envelopeGlowTimelineV2 4800ms ease both;
+}
+
+.playing .envelopeCard {
+  animation: cardJourneyTimelineV2 4800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.playing .envelopeCardFold {
+  animation: cardUnfoldTimelineV2 4800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.finalReveal {
+  animation: finalGiftTimelineV2 4800ms linear both;
+}
+
+@keyframes introChromeExitV2 {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(8px); }
+}
+
+@keyframes introGlowExitV2 {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes envelopePositionTimelineV2 {
+  0%, 6% {
+    transform: translateY(0) scale(1);
+  }
+  18%, 54% {
+    transform: translateY(clamp(92px, 14vh, 150px)) scale(1);
+  }
+  66% {
+    transform: translateY(clamp(108px, 16vh, 172px)) scale(0.96);
+  }
+  80%, 100% {
+    transform: translateY(clamp(124px, 18vh, 190px)) scale(0.9);
+  }
+}
+
+@keyframes closedEnvelopeTimelineV2 {
+  0%, 7% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  10% {
+    opacity: 1;
+    transform: scale(0.985);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  34%, 100% {
+    opacity: 0;
+    transform: scale(1.008);
+  }
+}
+
+@keyframes openEnvelopeTimelineV2 {
+  0%, 12% {
+    opacity: 0;
+    transform: translateY(-13.8%) scale(0.99);
+  }
+  34%, 57% {
+    opacity: 1;
+    transform: translateY(-13.8%) scale(1);
+  }
+  70% {
+    opacity: 0.34;
+    transform: translateY(-11%) scale(0.95);
+  }
+  80%, 100% {
+    opacity: 0;
+    transform: translateY(-8%) scale(0.9);
+  }
+}
+
+@keyframes envelopeGlowTimelineV2 {
+  0%, 18% { opacity: 0; }
+  32%, 58% { opacity: 0.9; }
+  76%, 100% { opacity: 0; }
+}
+
+@keyframes cardJourneyTimelineV2 {
+  0%, 12% {
+    z-index: 3;
+    opacity: 0;
+    transform: translateY(18%) scale(0.97);
+  }
+  18%, 38% {
+    z-index: 3;
+    opacity: 1;
+    transform: translateY(18%) scale(0.97);
+  }
+  52% {
+    z-index: 3;
+    opacity: 1;
+    transform: translateY(-56%) scale(1.03);
+  }
+  55% {
+    z-index: 7;
+    opacity: 1;
+    transform: translateY(-68%) scale(1.06);
+  }
+  64% {
+    z-index: 7;
+    opacity: 1;
+    transform: translateY(-48%) scale(1.11);
+  }
+  79% {
+    z-index: 7;
+    opacity: 1;
+    transform: translateY(-30%) scale(1.14);
+  }
+  91% {
+    z-index: 7;
+    opacity: 0.22;
+    transform: translateY(-26%) scale(1.32);
+  }
+  100% {
+    z-index: 7;
+    opacity: 0;
+    transform: translateY(-24%) scale(1.38);
+  }
+}
+
+@keyframes cardUnfoldTimelineV2 {
+  0%, 55% { transform: rotateX(0deg); }
+  80%, 100% { transform: rotateX(-178deg); }
+}
+
+@keyframes introPageTimelineV2 {
+  0%, 77% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes finalGiftTimelineV2 {
+  0%, 74% {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+  96%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  @keyframes envelopePositionTimelineV2 {
+    0%, 6% { transform: translateY(0) scale(1); }
+    18%, 54% { transform: translateY(96px) scale(1); }
+    66% { transform: translateY(110px) scale(0.96); }
+    80%, 100% { transform: translateY(122px) scale(0.9); }
+  }
+
+  @keyframes cardJourneyTimelineV2 {
+    0%, 12% { z-index: 3; opacity: 0; transform: translateY(18%) scale(0.97); }
+    18%, 38% { z-index: 3; opacity: 1; transform: translateY(18%) scale(0.97); }
+    52% { z-index: 3; opacity: 1; transform: translateY(-58%) scale(1.02); }
+    55% { z-index: 7; opacity: 1; transform: translateY(-70%) scale(1.04); }
+    64% { z-index: 7; opacity: 1; transform: translateY(-47%) scale(1.06); }
+    79% { z-index: 7; opacity: 1; transform: translateY(-25%) scale(1.08); }
+    91% { z-index: 7; opacity: 0.2; transform: translateY(-22%) scale(1.2); }
+    100% { z-index: 7; opacity: 0; transform: translateY(-20%) scale(1.26); }
   }
 }
