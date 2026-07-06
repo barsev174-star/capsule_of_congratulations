@@ -384,6 +384,24 @@ tail -80 /var/log/capsule-backup.log
 3. Закрепить подключение Caddy к сети `capsule_default` в инфраструктуре, чтобы оно не зависело от ручного `docker network connect`.
 4. После проверки production flow вернуться к продуктовой работе: бренд “Дари слова”, тексты лендинга и UX-polish `/join/[slug]`.
 
+## Update 2026-07-06 Retention deployment
+
+Ближайший accumulated deploy должен применить migration `0015_card_retention.sql` и установить ежедневный retention job после backup:
+
+```cron
+20 4 * * * cd /home/deploy/capsule && PROD_ENV_FILE=/home/deploy/capsule/.env.production bash infra/scripts/run-card-retention.sh >> /var/log/capsule-retention.log 2>&1
+```
+
+Retention:
+
+1. окончательно удаляет открытки через 30 дней после soft-delete;
+2. удаляет неопубликованные открытки через 90 дней без активности;
+3. учитывает свежие изменения открытки, поздравления и фото как активность;
+4. не удаляет опубликованные открытки автоматически;
+5. удаляет связанные записи и файлы uploads.
+
+Перед установкой cron вручную вызвать скрипт один раз, проверить JSON-ответ и затем повторить `npm run preflight` локально и production smoke по `docs/DEPLOY_RUNBOOK_2026-07-06.md`.
+
 ## Local state before first VPS move
 
 Перед деплоем убедиться, что локально зафиксировано:

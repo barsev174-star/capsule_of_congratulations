@@ -1,9 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { clearOrganizerSession } from "@/lib/organizer/session";
+import { getOrganizerSession } from "@/lib/organizer/session";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
 import { reportCriticalError } from "@/lib/telemetry";
+import { getCardDraftById, restoreDeletedCard, softDeleteCard } from "@/lib/cards/repository";
+import { logger } from "@/lib/logger";
 
 export type AccountLoginState = {
   status: "idle" | "success" | "error";
@@ -51,4 +55,29 @@ export async function requestAccountAccessAction(
 export async function logoutOrganizerAction(): Promise<void> {
   await clearOrganizerSession();
   redirect("/");
+}
+
+const getOwnedCard = async (cardId: string) => {
+  const session = await getOrganizerSession();
+  if (!session) return null;
+  const card = await getCardDraftById(cardId);
+  return card?.organizerEmail.trim().toLowerCase() === session.email.trim().toLowerCase() ? card : null;
+};
+
+export async function deleteOrganizerCardAction(formData: FormData) {
+  const cardId = String(formData.get("cardId") ?? "");
+  const card = await getOwnedCard(cardId);
+  if (!card || card.deletedAt) return;
+  const deleted = await softDeleteCard(card.id);
+  if (deleted) logger.info("card.soft_deleted", "Card hidden pending deletion", { cardId: card.id });
+  revalidatePath("/account");
+}
+
+export async function restoreOrganizerCardAction(formData: FormData) {
+  const cardId = String(formData.get("cardId") ?? "");
+  const card = await getOwnedCard(cardId);
+  if (!card?.deletedAt) return;
+  const restored = await restoreDeletedCard(card.id);
+  if (restored) logger.info("card.restored", "Card restored during recovery window", { cardId: card.id });
+  revalidatePath("/account");
 }

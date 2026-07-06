@@ -523,7 +523,6 @@ export const BlockSettingsForm = ({
   initialAiUsage
 }: Props) => {
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState(updateFinalPresentationSettingsAction, initialState);
   const [layoutMode, setLayoutMode] = useState<FinalCardMessageLayoutMode>(initialLayoutMode);
   const [mediaLayout, setMediaLayout] = useState<FinalCardMessageMediaLayout>(initialMediaLayout);
   const [blockState, setBlockState] = useState<Record<string, boolean>>(
@@ -581,17 +580,23 @@ export const BlockSettingsForm = ({
   const activeMessageMediaSlots = mediaSlotsByLayout[mediaLayout];
   const activeMessagePickerSlots = mediaLayout === "portrait" ? activeMessageMediaSlots : horizontalMediaSlots;
 
-  useEffect(() => {
-    if (state.ok) {
-      setSavedCompositionKey(currentCompositionKey);
-    }
-  }, [currentCompositionKey, state.ok]);
-
   const formRef = useRef<HTMLFormElement>(null);
   const submittedCompositionKeyRef = useRef<string | null>(null);
   const autoSaveReadyRef = useRef(false);
   const lastAutoSaveAtRef = useRef(0);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const handleSettingsAction = async (previousState: typeof initialState, formData: FormData) => {
+    const result = await updateFinalPresentationSettingsAction(previousState, formData);
+    if (result.ok) {
+      setSavedCompositionKey(submittedCompositionKeyRef.current ?? currentCompositionKey);
+      setSaveStatus("saved");
+    } else {
+      setSaveStatus("idle");
+    }
+    submittedCompositionKeyRef.current = null;
+    return result;
+  };
+  const [, formAction, isPending] = useActionState(handleSettingsAction, initialState);
   const [bestQuotes, setBestQuotes] = useState(initialBestQuotes);
   const [quotesAreStale, setQuotesAreStale] = useState(bestQuotesAreStale);
   const [quotesMessage, setQuotesMessage] = useState("");
@@ -642,14 +647,6 @@ export const BlockSettingsForm = ({
     setSaveStatus("saving");
     formRef.current.requestSubmit();
   }, [currentCompositionKey, isCompositionDirty, isPending]);
-
-  useEffect(() => {
-    if (state.ok) {
-      setSaveStatus("saved");
-    } else if (state.message && !isPending) {
-      setSaveStatus("idle");
-    }
-  }, [state, isPending]);
 
   const resolveDropPosition = (
     targetBlockId: FinalCardBlockId,

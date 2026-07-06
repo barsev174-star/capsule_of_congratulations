@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties, type DragEvent as ReactDragEvent } from "react";
+import { useActionState, useCallback, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties, type DragEvent as ReactDragEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
@@ -65,7 +65,6 @@ export const ContentStudio = ({
   greetingMode = "classic"
 }: Props) => {
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState(reorderContributionsAction, initialState);
   const [manualState, setManualState] = useState(initialState);
   const [isManualPending, startManualTransition] = useTransition();
   const [contributionOrder, setContributionOrder] = useState(allContributions.map((item) => item.id));
@@ -82,9 +81,15 @@ export const ContentStudio = ({
     allContributions.map((contribution) => contribution.id).join(":")
   );
 
-  const getRecommendedMessageLimit = (contribution: Contribution) =>
-    contribution.id === mainGreetingContributionId ? MAIN_GREETING_MESSAGE_LIMIT : messageLimit;
-  const getRecommendedOverflow = (contribution: Contribution) => contribution.message.length - getRecommendedMessageLimit(contribution);
+  const getRecommendedMessageLimit = useCallback(
+    (contribution: Contribution) =>
+      contribution.id === mainGreetingContributionId ? MAIN_GREETING_MESSAGE_LIMIT : messageLimit,
+    [mainGreetingContributionId, messageLimit]
+  );
+  const getRecommendedOverflow = useCallback(
+    (contribution: Contribution) => contribution.message.length - getRecommendedMessageLimit(contribution),
+    [getRecommendedMessageLimit]
+  );
 
   const tooLongCount = allContributions.filter((contribution) => getRecommendedOverflow(contribution) > 0).length;
   const withinLimitCount = allContributions.length - tooLongCount;
@@ -97,6 +102,19 @@ export const ContentStudio = ({
   const submittedOrderKeyRef = useRef<string | null>(null);
   const orderAutoSaveReadyRef = useRef(false);
   const lastOrderAutoSaveAtRef = useRef(0);
+  const handleOrderAction = async (previousState: typeof initialState, formData: FormData) => {
+    const submittedKey = submittedOrderKeyRef.current ?? currentContributionOrderKey;
+    const result = await reorderContributionsAction(previousState, formData);
+    if (result.ok) {
+      setSavedContributionOrderKey(submittedKey);
+      setOrderSaveStatus("saved");
+    } else {
+      setOrderSaveStatus("idle");
+    }
+    submittedOrderKeyRef.current = null;
+    return result;
+  };
+  const [, formAction, isPending] = useActionState(handleOrderAction, initialState);
 
   // Auto-save contribution order immediately when it changes
   useEffect(() => {
@@ -114,15 +132,6 @@ export const ContentStudio = ({
     setOrderSaveStatus("saving");
     orderFormRef.current.requestSubmit();
   }, [currentContributionOrderKey, savedContributionOrderKey, isPending]);
-
-  useEffect(() => {
-    if (state.ok) {
-      setOrderSaveStatus("saved");
-      setSavedContributionOrderKey(currentContributionOrderKey);
-    } else if (state.message && !isPending) {
-      setOrderSaveStatus("idle");
-    }
-  }, [state, isPending, currentContributionOrderKey]);
 
   const orderedContributions = useMemo(() => {
     const map = new Map(allContributions.map((contribution) => [contribution.id, contribution]));
@@ -151,16 +160,7 @@ export const ContentStudio = ({
 
       return true;
     });
-  }, [activeFilter, mainGreetingContributionId, messageLimit, orderedContributions]);
-
-  useEffect(() => {
-    if (state.ok) {
-      setSavedContributionOrderKey(currentContributionOrderKey);
-    }
-    if (savedContributionOrderKey === currentContributionOrderKey) {
-      submittedOrderKeyRef.current = null;
-    }
-  }, [currentContributionOrderKey, savedContributionOrderKey, state.ok]);
+  }, [activeFilter, getRecommendedOverflow, orderedContributions]);
 
   const moveContribution = (targetContributionId: string, pointerPosition: "before" | "after") => {
     if (!draggedContributionId || draggedContributionId === targetContributionId) {

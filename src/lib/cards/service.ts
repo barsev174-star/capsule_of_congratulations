@@ -55,6 +55,8 @@ export const createCardDraft = async (input: CreateCardInput): Promise<CreateCar
     finalMainGreetingSettings: null,
     status: "draft",
     paymentStatus: "unpaid",
+    deletedAt: null,
+    purgeAfter: null,
     createdAt: now,
     updatedAt: now
   };
@@ -96,6 +98,8 @@ export const createEmptyCardDraft = async (): Promise<CreateCardResult> => {
     finalMainGreetingSettings: null,
     status: "draft",
     paymentStatus: "unpaid",
+    deletedAt: null,
+    purgeAfter: null,
     createdAt: now,
     updatedAt: now
   };

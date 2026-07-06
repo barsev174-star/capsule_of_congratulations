@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { adminRoleSatisfies } from "@/lib/admin/permissions";
 import type { AdminUserRole } from "@/lib/admin/types";
 import styles from "../admin.module.css";
 
@@ -20,15 +21,9 @@ type AdminNavProps = {
   role: AdminUserRole;
 };
 
-const roleHierarchy: Record<AdminUserRole, number> = {
-  admin: 3,
-  moderator: 2,
-  support: 1
-};
-
 export function AdminNav({ role }: AdminNavProps) {
   const pathname = usePathname();
-  const visibleItems = navItems.filter((item) => roleHierarchy[role] >= roleHierarchy[item.minRole]);
+  const visibleItems = navItems.filter((item) => adminRoleSatisfies(role, item.minRole));
 
   return (
     <nav className={styles.nav} aria-label="Админ-меню">

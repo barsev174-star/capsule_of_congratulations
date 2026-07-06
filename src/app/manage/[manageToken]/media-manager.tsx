@@ -149,7 +149,6 @@ const MediaAssetRow = ({
   availableSlots: CardMediaSlot[];
   assets: CardMediaAsset[];
 }) => {
-  const [saveState, saveAction, savePending] = useActionState(saveCardMediaAction, initialState);
   const [deleteState, deleteAction, deletePending] = useActionState(deleteCardMediaAction, initialState);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [caption, setCaption] = useState(asset.captionTitle);
@@ -162,6 +161,18 @@ const MediaAssetRow = ({
   const lastMediaAutoSaveAtRef = useRef(0);
   const saveFormId = `media-save-${asset.id}`;
   const currentMediaKey = `${caption}:${slot}`;
+  const handleSaveAction = async (previousState: typeof initialState, formData: FormData) => {
+    const result = await saveCardMediaAction(previousState, formData);
+    if (result.ok) {
+      setSaveStatus("saved");
+      setIsDirty(false);
+    } else {
+      setSaveStatus("idle");
+    }
+    submittedMediaKeyRef.current = null;
+    return result;
+  };
+  const [saveState, saveAction, savePending] = useActionState(handleSaveAction, initialState);
 
   useEffect(() => {
     if (!mediaAutoSaveReadyRef.current) {
@@ -177,17 +188,6 @@ const MediaAssetRow = ({
     setSaveStatus("saving");
     formRef.current.requestSubmit();
   }, [currentMediaKey, isDirty, savePending]);
-
-  useEffect(() => {
-    if (saveState.ok) {
-      setSaveStatus("saved");
-      setIsDirty(false);
-      submittedMediaKeyRef.current = null;
-    } else if (saveState.message && !savePending) {
-      setSaveStatus("idle");
-      submittedMediaKeyRef.current = null;
-    }
-  }, [savePending, saveState]);
 
   const handleCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCaption(e.target.value);

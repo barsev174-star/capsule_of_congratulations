@@ -159,6 +159,8 @@ const renderMessageCard = (item: Contribution, index: number, maxChars: number, 
       <div className={styles.cardHeader}>
         <div className={styles.authorAvatar}>
           {item.authorAvatarUrl ? (
+            // User-provided local uploads keep their original URL and CSS crop behavior.
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={item.authorAvatarUrl} alt="" className={styles.authorAvatarImage} />
           ) : (
             <span className={styles.authorAvatarInitials}>{getInitials(item.authorName)}</span>

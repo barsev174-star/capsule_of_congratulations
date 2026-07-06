@@ -21,7 +21,7 @@ type Props = {
 export default async function GiftPage({ params, searchParams }: Props) {
   const [{ finalSlug }, { debugAssets, forceIntro }] = await Promise.all([params, searchParams]);
   const cards = await listCardDrafts();
-  const card = cards.find((item) => item.finalSlug === finalSlug);
+  const card = cards.find((item) => item.finalSlug === finalSlug && !item.deletedAt);
 
   if (!card) {
     notFound();

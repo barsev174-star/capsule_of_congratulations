@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { listCardDraftsByOrganizerEmail } from "@/lib/cards/repository";
 import { isGiftPublished } from "@/lib/cards/status";
 import { getOrganizerSession } from "@/lib/organizer/session";
-import { logoutOrganizerAction } from "./actions";
+import { deleteOrganizerCardAction, logoutOrganizerAction, restoreOrganizerCardAction } from "./actions";
 import styles from "./account.module.css";
 
 const statusLabels: Record<string, string> = {
@@ -36,15 +36,29 @@ export default async function AccountPage() {
           <section className={styles.cardGrid}>
             {cards.map((card) => {
               const published = isGiftPublished(card);
+              const isDeleted = Boolean(card.deletedAt);
               return (
-                <article key={card.id} className={styles.card}>
-                  <div className={styles.cardTop}><span>{statusLabels[card.status] ?? card.status}</span><time>{new Date(card.updatedAt).toLocaleDateString("ru-RU")}</time></div>
+                <article key={card.id} className={`${styles.card} ${isDeleted ? styles.deletedCard : ""}`}>
+                  <div className={styles.cardTop}><span>{isDeleted ? "Удалена" : statusLabels[card.status] ?? card.status}</span><time>{new Date(card.updatedAt).toLocaleDateString("ru-RU")}</time></div>
                   <h2>{card.recipientName || "Новая открытка"}</h2>
-                  <p>{card.occasionText || "Событие пока не указано"}</p>
-                  <div className={styles.cardActions}>
-                    <Link href={`/manage/${card.manageToken}`} className={styles.primaryLink}>Управлять</Link>
-                    <Link href={published ? `/gift/${card.finalSlug}` : `/preview/${card.manageToken}`} className={styles.secondaryLink}>{published ? "Открыть" : "Предпросмотр"}</Link>
-                  </div>
+                  <p>{isDeleted && card.purgeAfter
+                    ? `Скрыта. Можно восстановить до ${new Date(card.purgeAfter).toLocaleDateString("ru-RU")}.`
+                    : card.occasionText || "Событие пока не указано"}</p>
+                  {isDeleted ? (
+                    <form action={restoreOrganizerCardAction} className={styles.cardActions}>
+                      <input type="hidden" name="cardId" value={card.id} />
+                      <button type="submit" className={styles.secondaryButton}>Восстановить</button>
+                    </form>
+                  ) : (
+                    <div className={styles.cardActions}>
+                      <Link href={`/manage/${card.manageToken}`} className={styles.primaryLink}>Управлять</Link>
+                      <Link href={published ? `/gift/${card.finalSlug}` : `/preview/${card.manageToken}`} className={styles.secondaryLink}>{published ? "Открыть" : "Предпросмотр"}</Link>
+                      <form action={deleteOrganizerCardAction}>
+                        <input type="hidden" name="cardId" value={card.id} />
+                        <button type="submit" className={styles.secondaryButton}>Удалить</button>
+                      </form>
+                    </div>
+                  )}
                 </article>
               );
             })}

@@ -2,6 +2,7 @@ import { getPostgresPool } from "@/lib/db/postgres";
 import type { CardTemplateId } from "@/lib/cards/templates";
 import type { CardDraft, CardMediaAsset, CardStatus, Contribution } from "@/lib/cards/types";
 import { deleteStoredCardMediaFile } from "@/lib/media/local-card-media-storage";
+import { CARD_CONTRIBUTION_LIMIT, ContributionLimitReachedError } from "@/lib/contributions/limits";
 import type {
   FinalCardBlockOrder,
   FinalCardBlockSettings,
@@ -32,6 +33,8 @@ type CardRow = {
   final_memory_settings: FinalCardMemorySettings | null;
   status: CardStatus;
   payment_status: CardDraft["paymentStatus"];
+  deleted_at: Date | string | null;
+  purge_after: Date | string | null;
   created_at: Date | string;
   updated_at: Date | string;
 };
@@ -98,6 +101,8 @@ const mapCard = (row: CardRow): CardDraft => ({
   finalMemorySettings: row.final_memory_settings,
   status: row.status,
   paymentStatus: row.payment_status,
+  deletedAt: row.deleted_at ? toIso(row.deleted_at) : null,
+  purgeAfter: row.purge_after ? toIso(row.purge_after) : null,
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at)
 });
@@ -131,8 +136,9 @@ const mapMedia = (row: MediaRow): CardMediaAsset => ({
   updatedAt: toIso(row.updated_at)
 });
 
-const selectCardBy = async (column: "id" | "public_slug" | "manage_token", value: string) => {
-  const result = await getPostgresPool().query<CardRow>(`SELECT * FROM cards WHERE ${column} = $1 LIMIT 1`, [value]);
+const selectCardBy = async (column: "id" | "public_slug" | "manage_token", value: string, includeDeleted = false) => {
+  const deletedFilter = includeDeleted ? "" : "AND deleted_at IS NULL";
+  const result = await getPostgresPool().query<CardRow>(`SELECT * FROM cards WHERE ${column} = $1 ${deletedFilter} LIMIT 1`, [value]);
   return result.rows[0] ? mapCard(result.rows[0]) : null;
 };
 
@@ -144,14 +150,14 @@ export const saveCardDraft = async (card: CardDraft) => {
         from_label, organizer_name, organizer_email, event_date, description, signature,
         template_id, final_block_settings, final_block_order, final_message_settings,
         final_main_greeting_settings, final_memory_settings, status, payment_status,
-        created_at, updated_at
+        deleted_at, purge_after, created_at, updated_at
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7,
         $8, $9, $10, $11, $12, $13,
         $14, $15::jsonb, $16::jsonb, $17::jsonb,
         $18::jsonb, $19::jsonb, $20, $21,
-        $22, $23
+        $22, $23, $24, $25
       )
     `,
     [
@@ -176,6 +182,8 @@ export const saveCardDraft = async (card: CardDraft) => {
       jsonParam(card.finalMemorySettings),
       card.status,
       card.paymentStatus,
+      card.deletedAt,
+      card.purgeAfter,
       card.createdAt,
       card.updatedAt
     ]
@@ -197,7 +205,72 @@ export const listCardDraftsByOrganizerEmail = async (email: string) => {
 
 export const getCardDraftByPublicSlug = (publicSlug: string) => selectCardBy("public_slug", publicSlug);
 export const getCardDraftByManageToken = (manageToken: string) => selectCardBy("manage_token", manageToken);
-export const getCardDraftById = (cardId: string) => selectCardBy("id", cardId);
+export const getCardDraftById = (cardId: string) => selectCardBy("id", cardId, true);
+
+export const softDeleteCard = async (cardId: string) => {
+  const result = await getPostgresPool().query<CardRow>(
+    `UPDATE cards
+     SET deleted_at = now(), purge_after = now() + interval '30 days', updated_at = now()
+     WHERE id = $1 AND deleted_at IS NULL
+     RETURNING *`,
+    [cardId]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+
+export const restoreDeletedCard = async (cardId: string) => {
+  const result = await getPostgresPool().query<CardRow>(
+    `UPDATE cards
+     SET deleted_at = NULL, purge_after = NULL, updated_at = now()
+     WHERE id = $1 AND deleted_at IS NOT NULL AND purge_after > now()
+     RETURNING *`,
+    [cardId]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+
+export type CardRetentionCandidate = { id: string; reason: "deleted" | "inactive_draft" };
+
+export const listCardRetentionCandidates = async (draftCutoff: Date, now: Date): Promise<CardRetentionCandidate[]> => {
+  const result = await getPostgresPool().query<CardRetentionCandidate>(
+    `SELECT id,
+            CASE WHEN deleted_at IS NOT NULL THEN 'deleted' ELSE 'inactive_draft' END AS reason
+     FROM cards
+     WHERE (deleted_at IS NOT NULL AND purge_after <= $2)
+        OR (deleted_at IS NULL
+            AND status <> 'published'
+            AND updated_at < $1
+            AND NOT EXISTS (
+              SELECT 1 FROM contributions
+              WHERE contributions.card_id = cards.id AND contributions.updated_at >= $1
+            )
+            AND NOT EXISTS (
+              SELECT 1 FROM card_media_assets
+              WHERE card_media_assets.card_id = cards.id AND card_media_assets.updated_at >= $1
+            ))`,
+    [draftCutoff, now]
+  );
+  return result.rows;
+};
+
+export const permanentlyDeleteCard = async (cardId: string): Promise<string[]> => {
+  const client = await getPostgresPool().connect();
+  try {
+    await client.query("BEGIN");
+    const media = await client.query<{ storage_path: string }>(
+      "SELECT storage_path FROM card_media_assets WHERE card_id = $1",
+      [cardId]
+    );
+    await client.query("DELETE FROM cards WHERE id = $1", [cardId]);
+    await client.query("COMMIT");
+    return media.rows.map((row) => row.storage_path).filter(Boolean);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+};
 
 export const updateCardFinalBlockSettings = async (
   cardId: string,
@@ -489,6 +562,13 @@ export const saveContribution = async (contribution: Contribution) => {
   try {
     await client.query("BEGIN");
     await client.query("SELECT id FROM cards WHERE id = $1 FOR UPDATE", [contribution.cardId]);
+    const countResult = await client.query<{ count: string }>(
+      "SELECT count(*)::text AS count FROM contributions WHERE card_id = $1 AND status <> 'deleted'",
+      [contribution.cardId]
+    );
+    if (Number(countResult.rows[0]?.count ?? 0) >= CARD_CONTRIBUTION_LIMIT) {
+      throw new ContributionLimitReachedError();
+    }
     const orderResult = await client.query<{ next_order: number }>(
       "SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM contributions WHERE card_id = $1",
       [contribution.cardId]

@@ -13,7 +13,7 @@ type Props = {
 export default async function GiftMessagesPage({ params }: Props) {
   const { finalSlug } = await params;
   const cards = await listCardDrafts();
-  const card = cards.find((item) => item.finalSlug === finalSlug);
+  const card = cards.find((item) => item.finalSlug === finalSlug && !item.deletedAt);
 
   if (!card) {
     notFound();

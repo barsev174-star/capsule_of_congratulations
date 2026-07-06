@@ -665,3 +665,39 @@
 6. Completed organizer access copy, conditional email delivery, explicit resend and success/error states.
 7. Verified 260 tests, targeted ESLint and the production build.
 8. Updated `docs/plan.md` and the pre-payment readiness checklist. Production deploy was not performed.
+
+## Update 2026-07-06 Local Pre-Deploy Stage A
+
+1. Removed all manager `set-state-in-effect` lint errors and documented intentional raw-image exceptions; full ESLint now passes without warnings.
+2. Added regression tests for whitespace normalization, nested AI forms, admin roles and strict role-token validation.
+3. Added `npm run preflight`: lint, 268 tests, production build, full local card smoke and admin auth smoke.
+4. Automated card creation, contribution, photo upload, free publication, gift verification and desktop/mobile overflow checks with cleanup of generated data and files.
+5. Automated invalid/valid admin login, protected route and logout with a temporary PostgreSQL admin user that is removed after the check.
+6. Verified migrations `0001`–`0014` from an empty database and on a repeated run.
+7. Restored a real local PostgreSQL dump into an isolated database and verified all 14 migrations and core tables.
+8. Added a production backup-restore verification script and a deployment/rollback runbook.
+9. Added product recommendations and a checklist of legal inputs still required from the owner.
+10. Production deploy and real payment integration were not performed.
+
+## Product Decisions 2026-07-06
+
+1. First paid tariff: 399 ₽ as a one-time purchase.
+2. Initial paid product uses only `Бумажный классический`.
+3. After payment integration and overall polish, expand to 4–5 universal templates, then event-specific templates.
+4. Drafts expire 90 days after last activity.
+5. Published cards are retained for at least 12 months.
+6. Deletion hides public access immediately, allows recovery for 30 days and then permanently removes data and files.
+7. A card accepts up to 100 greetings.
+8. Creation, setup, participant collection, moderation, preview and limited AI remain free.
+9. The 399 ₽ payment unlocks final publication, recipient link, opening animation, watermark-free gift, at least 12 months of access, increased AI allowance and the full `/gift/{slug}`.
+
+## Update 2026-07-06 Contribution Limit And Card Retention
+
+1. Enforced a 100-greeting limit under a PostgreSQL card lock and in JSON fallback mode; deleted greetings no longer consume a slot.
+2. Added a clear full-card state on `/join` and matching errors for participant and organizer submissions.
+3. Added migration `0015_card_retention.sql` with `deleted_at`, `purge_after` and retention indexes.
+4. Added organizer soft-delete and 30-day restore actions in `/account`.
+5. Deleted cards immediately disappear from join, manage, gift, messages and direct media routes.
+6. Added permanent cleanup for expired deletions and unpublished cards inactive for more than 90 days, including related database rows and files.
+7. Added protected retention endpoint, VPS cron helper and structured audit logs without personal content.
+8. Extended local smoke to verify delete, public 404, restore and retention purge of both expired deletions and inactive drafts.

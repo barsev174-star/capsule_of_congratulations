@@ -32,6 +32,8 @@ export type CardDraft = {
   finalMemorySettings: FinalCardMemorySettings | null;
   status: CardStatus;
   paymentStatus: PaymentStatus;
+  deletedAt: string | null;
+  purgeAfter: string | null;
   createdAt: string;
   updatedAt: string;
 };

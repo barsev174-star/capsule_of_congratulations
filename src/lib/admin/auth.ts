@@ -98,7 +98,9 @@ export const verifyAdminSessionToken = (
     }
 
     const validRoles: AdminUserRole[] = ["admin", "moderator", "support"];
-    payload.role = validRoles.includes(payload.role) ? payload.role : "admin";
+    if (!validRoles.includes(payload.role)) {
+      return null;
+    }
 
     return payload;
   } catch {

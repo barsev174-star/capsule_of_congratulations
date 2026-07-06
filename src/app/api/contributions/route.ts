@@ -5,6 +5,7 @@ import { validateContributionFormData } from "@/lib/contributions/validation";
 import { logger } from "@/lib/logger";
 import { consumeAiGenerationDrafts } from "@/lib/ai/repository";
 import { reportCriticalError } from "@/lib/telemetry";
+import { ContributionLimitReachedError } from "@/lib/contributions/limits";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -57,6 +58,9 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ ok: true, contribution }, { status: 201 });
   } catch (error) {
+    if (error instanceof ContributionLimitReachedError) {
+      return NextResponse.json({ ok: false, message: error.message }, { status: 409 });
+    }
     const errorId = await reportCriticalError("database", error, { operation: "create_contribution", cardId });
 
     return NextResponse.json(

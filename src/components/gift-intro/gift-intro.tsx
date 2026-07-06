@@ -208,6 +208,8 @@ export const GiftIntro = ({
             <span className={styles.botanicalSprig} aria-hidden="true">
               <i /><i /><i /><i />
             </span>
+            {/* Intentional decorative layer in the envelope composition. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/gift/flower-bottom-left.png"
               alt=""

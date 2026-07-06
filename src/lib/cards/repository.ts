@@ -5,6 +5,7 @@ import * as postgresRepository from "@/lib/cards/repository-postgres";
 import type { CardDraft, CardMediaAsset, CardStatus, Contribution } from "@/lib/cards/types";
 import type { CardTemplateId } from "@/lib/cards/templates";
 import { deleteStoredCardMediaFile } from "@/lib/media/local-card-media-storage";
+import { CARD_CONTRIBUTION_LIMIT, ContributionLimitReachedError } from "@/lib/contributions/limits";
 import type {
   FinalCardBlockOrder,
   FinalCardBlockSettings,
@@ -61,7 +62,9 @@ const normalizeCard = (card: CardDraft): CardDraft => ({
         ...card.finalMessageSettings
       }
     : defaultFinalMessageSettings,
-  status: card.status ?? "draft"
+  status: card.status ?? "draft",
+  deletedAt: card.deletedAt ?? null,
+  purgeAfter: card.purgeAfter ?? null
 });
 
 const compareContributions = (left: Contribution, right: Contribution) => {
@@ -171,7 +174,7 @@ export const getCardDraftByPublicSlug = async (publicSlug: string) => {
   }
 
   const cards = await readCards();
-  return cards.find((card) => card.publicSlug === publicSlug) ?? null;
+  return cards.find((card) => card.publicSlug === publicSlug && !card.deletedAt) ?? null;
 };
 
 export const getCardDraftByManageToken = async (manageToken: string) => {
@@ -180,7 +183,7 @@ export const getCardDraftByManageToken = async (manageToken: string) => {
   }
 
   const cards = await readCards();
-  return cards.find((card) => card.manageToken === manageToken) ?? null;
+  return cards.find((card) => card.manageToken === manageToken && !card.deletedAt) ?? null;
 };
 
 export const getCardDraftById = async (cardId: string) => {
@@ -190,6 +193,70 @@ export const getCardDraftById = async (cardId: string) => {
 
   const cards = await readCards();
   return cards.find((card) => card.id === cardId) ?? null;
+};
+
+export const softDeleteCard = async (cardId: string) => {
+  if (isPostgresConfigured()) return postgresRepository.softDeleteCard(cardId);
+  const cards = await readCards();
+  const index = cards.findIndex((card) => card.id === cardId && !card.deletedAt);
+  if (index === -1) return null;
+  const now = new Date();
+  const updated = {
+    ...cards[index],
+    deletedAt: now.toISOString(),
+    purgeAfter: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: now.toISOString()
+  };
+  cards[index] = updated;
+  await writeFile(cardsFilePath, JSON.stringify(cards, null, 2), "utf8");
+  return updated;
+};
+
+export const restoreDeletedCard = async (cardId: string) => {
+  if (isPostgresConfigured()) return postgresRepository.restoreDeletedCard(cardId);
+  const cards = await readCards();
+  const index = cards.findIndex((card) => card.id === cardId && card.deletedAt);
+  if (index === -1 || !cards[index].purgeAfter || Date.parse(cards[index].purgeAfter) <= Date.now()) return null;
+  const updated = { ...cards[index], deletedAt: null, purgeAfter: null, updatedAt: new Date().toISOString() };
+  cards[index] = updated;
+  await writeFile(cardsFilePath, JSON.stringify(cards, null, 2), "utf8");
+  return updated;
+};
+
+export const purgeExpiredCards = async (now = new Date()) => {
+  const draftCutoff = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+  if (isPostgresConfigured()) {
+    const candidates = await postgresRepository.listCardRetentionCandidates(draftCutoff, now);
+    for (const candidate of candidates) {
+      const paths = await postgresRepository.permanentlyDeleteCard(candidate.id);
+      await Promise.all(paths.map((path) => deleteStoredCardMediaFile(path)));
+    }
+    return candidates;
+  }
+
+  const cards = await readCards();
+  const contributions = await readContributions();
+  const assets = await readMediaAssets();
+  const candidates = cards
+    .filter((card) =>
+      (card.deletedAt && card.purgeAfter && Date.parse(card.purgeAfter) <= now.getTime()) ||
+      (!card.deletedAt &&
+        card.status !== "published" &&
+        Date.parse(card.updatedAt) < draftCutoff.getTime() &&
+        !contributions.some((item) => item.cardId === card.id && Date.parse(item.updatedAt) >= draftCutoff.getTime()) &&
+        !assets.some((item) => item.cardId === card.id && Date.parse(item.updatedAt) >= draftCutoff.getTime()))
+    )
+    .map((card) => ({
+      id: card.id,
+      reason: card.deletedAt ? "deleted" as const : "inactive_draft" as const
+    }));
+  if (candidates.length === 0) return candidates;
+  const ids = new Set(candidates.map((item) => item.id));
+  await Promise.all(assets.filter((asset) => ids.has(asset.cardId)).map((asset) => deleteStoredCardMediaFile(asset.storagePath)));
+  await writeFile(cardsFilePath, JSON.stringify(cards.filter((card) => !ids.has(card.id)), null, 2), "utf8");
+  await writeFile(contributionsFilePath, JSON.stringify(contributions.filter((item) => !ids.has(item.cardId)), null, 2), "utf8");
+  await writeFile(mediaAssetsFilePath, JSON.stringify(assets.filter((asset) => !ids.has(asset.cardId)), null, 2), "utf8");
+  return candidates;
 };
 
 export const updateCardFinalBlockSettings = async (
@@ -492,6 +559,12 @@ export const saveContribution = async (contribution: Contribution) => {
   }
 
   const contributions = await readContributions();
+  const activeCount = contributions.filter(
+    (item) => item.cardId === contribution.cardId && item.status !== "deleted"
+  ).length;
+  if (activeCount >= CARD_CONTRIBUTION_LIMIT) {
+    throw new ContributionLimitReachedError();
+  }
   const maxSortOrder = contributions
     .filter((item) => item.cardId === contribution.cardId)
     .reduce((max, item) => Math.max(max, item.sortOrder), -1);

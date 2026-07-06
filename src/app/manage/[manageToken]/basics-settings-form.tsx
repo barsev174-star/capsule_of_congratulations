@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import type { CardDraft } from "@/lib/cards/types";
 import type { CardBasicsFormState } from "./actions";
 import { resendOrganizerAccessAction, updateCardBasicsAction } from "./actions";
+import { serializeBasicsFields } from "./basics-fields";
 import styles from "./manage-page.module.css";
 
 type Props = {
@@ -27,11 +28,6 @@ const buildFields = (card: CardDraft) => ({
   signature: card.signature ?? ""
 });
 
-const normalizeFields = (fields: ReturnType<typeof buildFields>) =>
-  Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, value.trim()]));
-
-const serializeFields = (fields: ReturnType<typeof buildFields>) => JSON.stringify(normalizeFields(fields));
-
 export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
   const [isPending, startTransition] = useTransition();
   const [state, setState] = useState<CardBasicsFormState>(initialState);
@@ -39,11 +35,11 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
 
   const [fields, setFields] = useState(() => buildFields(card));
 
-  const currentKey = serializeFields(fields);
+  const currentKey = serializeBasicsFields(fields);
   const savedFields = state.ok && state.fields ? state.fields : buildFields(card);
-  const savedKey = serializeFields(savedFields);
+  const savedKey = serializeBasicsFields(savedFields);
   const submittedFields = !state.ok && state.fields ? state.fields : null;
-  const submittedKey = submittedFields ? serializeFields(submittedFields) : null;
+  const submittedKey = submittedFields ? serializeBasicsFields(submittedFields) : null;
   const isDirty = currentKey !== savedKey;
   const justFailed = submittedKey !== null && submittedKey === currentKey;
 

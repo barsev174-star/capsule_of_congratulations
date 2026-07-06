@@ -28,6 +28,8 @@ import { inferAddressName, inferOccasionContext, normalizeOccasionForSentence } 
 import { cleanupGreetingText } from "@/lib/ai/greeting-cleanup";
 import { buildLadderPrompt, buildLadderRetryPrompt } from "@/lib/ai/greeting-ladder";
 import { ensureLadderVariantAddress, fitLadderVariantToLimit, validateLadderVariants } from "@/lib/ai/greeting-ladder-validation";
+
+let localTemplateGenerationSequence = 0;
 import { generateLadderWithOpenAi, OPENAI_LADDER_PROMPT_VERSION } from "@/lib/ai/openai-ladder-provider";
 import { extractDraftSpecifics } from "@/lib/ai/greeting-specifics";
 import {
@@ -717,7 +719,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
               : {
               variants: input.mode === "shorten"
                 ? buildShortenedVariants(input)
-                : buildVariants(input, reservation.usage.used - 1 + attempt),
+                : buildVariants(input, reservation.usage.used - 1 + attempt + localTemplateGenerationSequence++),
               model: "local-template-v5"
             };
         }

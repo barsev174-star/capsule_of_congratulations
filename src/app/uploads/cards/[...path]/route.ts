@@ -2,6 +2,7 @@ import { readFile, stat } from "node:fs/promises";
 import { basename, join, resolve, sep } from "node:path";
 import { NextResponse } from "next/server";
 import { CARD_UPLOADS_STORAGE_ROOT } from "@/lib/media/local-card-media-storage";
+import { getCardDraftById } from "@/lib/cards/repository";
 
 const contentTypes: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -37,6 +38,10 @@ export async function GET(
   }
 
   const [cardId, fileName] = path;
+  const card = await getCardDraftById(cardId);
+  if (!card || card.deletedAt) {
+    return NextResponse.json({ ok: false, message: "Media not found." }, { status: 404 });
+  }
   const filePath = join(CARD_UPLOADS_STORAGE_ROOT, cardId, basename(fileName));
 
   if (!isInsideUploadsRoot(filePath)) {
@@ -54,7 +59,7 @@ export async function GET(
 
     return new NextResponse(file, {
       headers: {
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cache-Control": "private, no-store",
         "Content-Length": String(file.length),
         "Content-Type": getContentType(fileName)
       }

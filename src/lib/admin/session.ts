@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { getAdminAuthEnv, verifyAdminSessionToken, type AdminSession } from "./auth";
+import { adminRoleSatisfies } from "./permissions";
 import type { AdminUserRole } from "./types";
 
 const ADMIN_SESSION_COOKIE = "admin_session";
@@ -28,13 +29,7 @@ export const requireAdminRole = async (role: AdminUserRole): Promise<AdminSessio
     throw new Error("Unauthorized");
   }
 
-  const roleHierarchy: Record<AdminUserRole, number> = {
-    admin: 3,
-    moderator: 2,
-    support: 1
-  };
-
-  if (roleHierarchy[session.role] < roleHierarchy[role]) {
+  if (!adminRoleSatisfies(session.role, role)) {
     throw new Error("Forbidden");
   }
 

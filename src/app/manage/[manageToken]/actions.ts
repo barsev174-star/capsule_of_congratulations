@@ -44,6 +44,7 @@ import { saveCardMediaFile } from "@/lib/media/local-card-media-storage";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
 import { getGiftPath, getJoinPath, getManagePath } from "@/lib/routes/card-links";
 import { reportCriticalError } from "@/lib/telemetry";
+import { ContributionLimitReachedError } from "@/lib/contributions/limits";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
@@ -187,7 +188,15 @@ export async function addManualContributionAction(
     };
   }
 
-  const contribution = await createContribution(validation.data);
+  let contribution;
+  try {
+    contribution = await createContribution(validation.data);
+  } catch (error) {
+    if (error instanceof ContributionLimitReachedError) {
+      return { ok: false, message: error.message };
+    }
+    throw error;
+  }
   const siblings = await listAllContributionsByCardId(card.id);
   const nextOrder = siblings
     .map((item) => item.id)

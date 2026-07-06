@@ -37,21 +37,25 @@ export const TemplateSettingsForm = ({
   blockState,
   variant = "grid"
 }: Props) => {
-  const [state, formAction, isPending] = useActionState(updateFinalPresentationSettingsAction, initialState);
   const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId);
   const [showApplied, setShowApplied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (state.ok) {
+  const handleTemplateAction = async (previousState: typeof initialState, formData: FormData) => {
+    const result = await updateFinalPresentationSettingsAction(previousState, formData);
+    if (result.ok) {
       setShowApplied(true);
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setShowApplied(false), 2000);
     }
+    return result;
+  };
+  const [, formAction, isPending] = useActionState(handleTemplateAction, initialState);
+
+  useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [state]);
+  }, []);
 
   return (
     <form action={formAction} className={variant === "hero" ? styles.templateHeroForm : styles.templateForm}>

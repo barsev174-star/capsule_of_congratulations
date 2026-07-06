@@ -60,6 +60,13 @@ describe("admin auth", () => {
 
       expect(verifyAdminSessionToken(tampered, secret)).toBeNull();
     });
+
+    it.each(["admin", "moderator", "support"] as const)("preserves the %s role", (role) => {
+      const secret = "b".repeat(64);
+      const token = createAdminSessionToken(`${role}@example.com`, role, secret);
+
+      expect(verifyAdminSessionToken(token, secret)?.role).toBe(role);
+    });
   });
 
   describe("getAdminAuthEnv", () => {

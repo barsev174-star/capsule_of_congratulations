@@ -1,13 +1,14 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { getCardDraftByPublicSlug, listContributionsByCardId } from "@/lib/cards/repository";
+import { getCardDraftByPublicSlug, listAllContributionsByCardId, listContributionsByCardId } from "@/lib/cards/repository";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import { ParticipantForm } from "@/app/card/[publicSlug]/participant-form";
 import { EventReminderForm } from "./reminder-form";
 import { getMinimumReminderEventDate } from "@/lib/reminders/validation";
 import styles from "@/app/card/[publicSlug]/participant-page.module.css";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
+import { CARD_CONTRIBUTION_LIMIT } from "@/lib/contributions/limits";
 
 type Props = {
   params: Promise<{
@@ -45,7 +46,11 @@ export default async function JoinCardPage({ params }: Props) {
     notFound();
   }
 
-  const contributions = await listContributionsByCardId(card.id);
+  const [contributions, allContributions] = await Promise.all([
+    listContributionsByCardId(card.id),
+    listAllContributionsByCardId(card.id)
+  ]);
+  const contributionCount = allContributions.filter((item) => item.status !== "deleted").length;
   const layoutProfile = getFinalCardMessageLayoutProfile(card.finalMessageSettings?.layoutMode ?? "grid-2");
   const recipientName = card.recipientName || "дорогого человека";
   const fromLabel = card.fromLabel?.trim();
@@ -53,6 +58,7 @@ export default async function JoinCardPage({ params }: Props) {
   const previewContributions = contributions.slice(0, previewContributionsLimit);
   const hasMoreContributions = contributions.length > previewContributionsLimit;
   const isClosed = card.status === "closed";
+  const isLimitReached = contributionCount >= CARD_CONTRIBUTION_LIMIT;
 
   return (
     <main className={styles.page}>
@@ -104,17 +110,21 @@ export default async function JoinCardPage({ params }: Props) {
 
           <div className={styles.heroVisual} aria-hidden="true">
             <div className={styles.heroAssetFrame}>
+              {/* Intentional decorative asset: CSS controls its intrinsic paper composition. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img className={styles.heroAsset} src="/join-envelope.png" alt="" />
             </div>
           </div>
         </section>
 
         <div className={styles.layout}>
-          {isClosed ? (
+          {isClosed || isLimitReached ? (
             <section className={styles.formCard}>
-              <h2 className={styles.sectionTitle}>Сбор поздравлений закрыт</h2>
+              <h2 className={styles.sectionTitle}>{isLimitReached ? "Открытка собрана" : "Сбор поздравлений закрыт"}</h2>
               <p className={styles.hint}>
-                Организатор уже завершил сбор материалов для этой открытки. Спасибо, что заглянули по ссылке.
+                {isLimitReached
+                  ? `В открытке уже ${CARD_CONTRIBUTION_LIMIT} поздравлений — максимальное количество. Спасибо, что хотели присоединиться.`
+                  : "Организатор уже завершил сбор материалов для этой открытки. Спасибо, что заглянули по ссылке."}
               </p>
             </section>
           ) : (

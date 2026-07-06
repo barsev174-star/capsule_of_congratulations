@@ -280,6 +280,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 <div className={styles.templateSummary}>
                   {selectedTemplate.id === "paper-birthday" ? (
                     <div className={styles.templatePreviewWrap}>
+                      {/* Intentional fixed preview asset inside a CSS-sized template frame. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src="/templates/warm-classic-preview.png"
                         alt={selectedTemplate.name}
