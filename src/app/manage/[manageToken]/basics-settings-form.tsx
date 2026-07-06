@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import type { CardDraft } from "@/lib/cards/types";
 import type { CardBasicsFormState } from "./actions";
-import { updateCardBasicsAction } from "./actions";
+import { resendOrganizerAccessAction, updateCardBasicsAction } from "./actions";
 import styles from "./manage-page.module.css";
 
 type Props = {
@@ -27,11 +27,15 @@ const buildFields = (card: CardDraft) => ({
   signature: card.signature ?? ""
 });
 
-const serializeFields = (fields: ReturnType<typeof buildFields>) => JSON.stringify(fields);
+const normalizeFields = (fields: ReturnType<typeof buildFields>) =>
+  Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, value.trim()]));
+
+const serializeFields = (fields: ReturnType<typeof buildFields>) => JSON.stringify(normalizeFields(fields));
 
 export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
   const [isPending, startTransition] = useTransition();
   const [state, setState] = useState<CardBasicsFormState>(initialState);
+  const [accessMessage, setAccessMessage] = useState("");
 
   const [fields, setFields] = useState(() => buildFields(card));
 
@@ -53,6 +57,7 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
     startTransition(async () => {
       const result = await updateCardBasicsAction(state, formData);
       setState(result);
+      if (result.ok && result.fields) setFields(result.fields);
     });
   };
 
@@ -138,8 +143,8 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
 
       <section className={styles.organizerAccessBlock}>
         <div className={styles.organizerAccessIntro}>
-          <strong>Доступ организатора</strong>
-          <span>На этот email придёт одноразовая ссылка для входа в раздел «Мои открытки».</span>
+          <strong>Ваш доступ к открытке</strong>
+          <span>На этот email отправим одно служебное письмо со ссылкой для входа в ваши открытки. Пароль и регистрация не нужны.</span>
         </div>
         <div className={styles.fieldGrid}>
           <div className={styles.field}>
@@ -169,6 +174,24 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
             />
           </div>
         </div>
+        <div className={styles.organizerAccessActions}>
+          <span>Ссылка одноразовая и действует 15 минут. Без рассылок.</span>
+          <button
+            type="button"
+            className={styles.organizerAccessResend}
+            disabled={isPending || !fields.organizerEmail.trim()}
+            onClick={() => {
+              setAccessMessage("");
+              startTransition(async () => {
+                const result = await resendOrganizerAccessAction(manageToken);
+                setAccessMessage(result.message);
+              });
+            }}
+          >
+            Отправить ссылку ещё раз
+          </button>
+        </div>
+        {accessMessage ? <p className={styles.organizerAccessFeedback} aria-live="polite">{accessMessage}</p> : null}
       </section>
 
       <div className={styles.basicsSaveRow}>
@@ -180,7 +203,7 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
               : isDirty
                 ? "Есть несохранённые изменения"
                 : state.ok
-                  ? "Изменения сохранены"
+                  ? state.message
                   : null}
         </div>
         <button

@@ -312,9 +312,13 @@ export async function updateCardBasicsAction(
     occasion: occasionValue
   });
 
-  if (fields.organizerEmail.toLowerCase() !== card.organizerEmail.toLowerCase() && isValidEmail(fields.organizerEmail)) {
+  const organizerEmailChanged = fields.organizerEmail.toLowerCase() !== card.organizerEmail.toLowerCase();
+  let accessEmailSent = false;
+
+  if (organizerEmailChanged && isValidEmail(fields.organizerEmail)) {
     try {
-      await requestOrganizerAccess(fields.organizerEmail);
+      const access = await requestOrganizerAccess(fields.organizerEmail);
+      accessEmailSent = !access.limited;
     } catch (error) {
       logger.warn("organizer.access_email_failed", "Organizer access email was not sent after email update", {
         cardId: card.id,
@@ -325,7 +329,34 @@ export async function updateCardBasicsAction(
 
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 
-  return { ok: true, message: "Основа открытки обновлена.", fields };
+  const message = organizerEmailChanged && accessEmailSent
+    ? `Изменения сохранены. Мы отправили письмо со ссылкой для входа на ${fields.organizerEmail}.`
+    : organizerEmailChanged
+      ? "Изменения сохранены, но письмо со ссылкой отправить не удалось. Попробуйте отправить его ещё раз."
+      : "Изменения сохранены.";
+
+  return { ok: true, message, fields };
+}
+
+export async function resendOrganizerAccessAction(
+  manageToken: string
+): Promise<{ ok: boolean; message: string }> {
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+
+  try {
+    const access = await requestOrganizerAccess(card.organizerEmail);
+    if (access.limited) {
+      return { ok: false, message: "Ссылку уже отправляли недавно. Попробуйте немного позже." };
+    }
+    return { ok: true, message: `Письмо со ссылкой для входа отправлено на ${card.organizerEmail}.` };
+  } catch (error) {
+    logger.warn("organizer.access_email_failed", "Organizer access email resend failed", {
+      cardId: card.id,
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+    return { ok: false, message: "Не удалось отправить письмо. Попробуйте ещё раз немного позже." };
+  }
 }
 
 export async function updateCardStatusAction(formData: FormData) {

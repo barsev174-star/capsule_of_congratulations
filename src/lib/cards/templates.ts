@@ -75,13 +75,6 @@ export const isOccasionId = (value: string): value is OccasionId =>
   legacyOccasions.some((occasion) => occasion === value);
 
 export const getDefaultTemplateForOccasion = (occasion: OccasionId): CardTemplateId => {
-  if (occasion === "team" || occasion === "colleague") {
-    return "team-modern";
-  }
-
-  if (occasion === "celebration") {
-    return "bright-celebration";
-  }
-
-  return "warm-classic";
+  void occasion;
+  return "paper-birthday";
 };

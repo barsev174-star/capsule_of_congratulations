@@ -654,3 +654,14 @@
 7. Applied migrations `0011`–`0014` locally and verified 260 tests plus the production build.
 8. Sent two live emails through Resend and fixed UTF-8 loading for the sender name `Дари слова`.
 9. Committed the implementation as `61c8ecf`. Production deploy, production migrations and cron installation were not performed.
+
+## Update 2026-07-06 Manage Polish Before Payment Preparation
+
+1. Normalized dirty-state comparison so trailing spaces no longer leave the basics form falsely unsaved.
+2. Kept the basics save button aligned right on desktop in every state.
+3. Removed the mobile block drag handle and stacked the accessible move buttons vertically.
+4. Made `Бумажный классический` the default template for new cards.
+5. Removed the nested AI form that caused manual greeting generation to reload `/manage` and reset the active tab.
+6. Completed organizer access copy, conditional email delivery, explicit resend and success/error states.
+7. Verified 260 tests, targeted ESLint and the production build.
+8. Updated `docs/plan.md` and the pre-payment readiness checklist. Production deploy was not performed.

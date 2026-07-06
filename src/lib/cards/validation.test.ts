@@ -73,7 +73,7 @@ describe("validateCreateCardFormData", () => {
     expect(result.success).toBe(true);
 
     if (result.success) {
-      expect(result.data.templateId).toBe("team-modern");
+      expect(result.data.templateId).toBe("paper-birthday");
     }
   });
 });

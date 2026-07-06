@@ -83,6 +83,10 @@ export const AiHelper = ({
   const activeVariant = variants[activeVariantIndex] ?? variants[0];
   const aiFormId = `ai-helper-${cardId}`;
 
+  const generateSelectedVariant = () => {
+    startTransition(async () => handleGenerate(selectedStyle));
+  };
+
   return (
     <section className={`${styles.aiCard} ${isJoinVariant ? styles.joinAiCard : ""}`}>
       <div className={styles.aiHeader}>
@@ -99,13 +103,9 @@ export const AiHelper = ({
         {isJoinVariant ? <span className={styles.wandIcon} aria-hidden="true" /> : null}
       </div>
 
-      <form
+      <div
         id={aiFormId}
         className={styles.form}
-        onSubmit={(event) => {
-          event.preventDefault();
-          startTransition(async () => handleGenerate(selectedStyle));
-        }}
       >
         <div className={styles.field}>
           <div className={styles.fieldLabelRow}>
@@ -154,9 +154,10 @@ export const AiHelper = ({
 
         <div className={styles.actions}>
           <button
-            type="submit"
+            type="button"
             className={isJoinVariant ? styles.aiButton : styles.submitButton}
             disabled={isPending || limitReached}
+            onClick={generateSelectedVariant}
           >
             {isJoinVariant ? <span className={styles.aiButtonIcon} aria-hidden="true" /> : null}
             {isPending ? "Готовим варианты..." : "Получить 3 варианта"}
@@ -167,7 +168,7 @@ export const AiHelper = ({
             </span>
           ) : null}
         </div>
-      </form>
+      </div>
 
       {isJoinVariant ? (
         <p className={styles.privacyNote}>
@@ -206,10 +207,10 @@ export const AiHelper = ({
                 Вставить в поздравление
               </button>
               <button
-                type="submit"
-                form={aiFormId}
+                type="button"
                 className={styles.retryButton}
                 disabled={isPending || limitReached}
+                onClick={generateSelectedVariant}
               >
                 Попробовать ещё
               </button>

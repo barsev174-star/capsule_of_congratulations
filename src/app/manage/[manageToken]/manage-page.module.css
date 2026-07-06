@@ -3488,6 +3488,7 @@ button.contentFilterPill {
 
 .basicsSaveRow .contentPrimaryButton {
   flex: 0 0 auto;
+  margin-left: auto;
   min-height: 46px;
   padding-inline: 22px;
 }
@@ -6642,6 +6643,11 @@ button.contentFilterPill {
 
   .compositionMoveButtons {
     display: inline-flex;
+    flex-direction: column;
+  }
+
+  .compositionGrip {
+    display: none;
   }
 
   .compositionAccordionInner,
@@ -7650,6 +7656,56 @@ button.contentFilterPill {
   font-size: 0.9rem;
   line-height: 1.45;
   text-wrap: pretty;
+}
+
+.organizerAccessActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #7f6558;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.organizerAccessResend {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #a54f2d;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  transition-property: background-color, color, transform;
+  transition-duration: 160ms;
+}
+
+.organizerAccessResend:hover:not(:disabled) {
+  background: rgba(233, 101, 47, 0.08);
+}
+
+.organizerAccessResend:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.organizerAccessResend:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.organizerAccessFeedback {
+  margin: -4px 0 0;
+  color: #7a5e50;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 640px) {
+  .organizerAccessActions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 .managerSupportLink {
