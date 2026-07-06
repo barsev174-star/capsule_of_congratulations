@@ -31,6 +31,8 @@
   position: relative;
   max-width: 1180px;
   margin: 0 auto;
+  container-type: inline-size;
+  container-name: final-card-shell;
 }
 
 .assetDebugActive .shell {
@@ -460,16 +462,56 @@
   top: 14px;
   right: 14px;
   z-index: 999;
+  display: flex;
+  flex-direction: column;
   width: min(400px, calc(100vw - 28px));
   max-height: calc(100vh - 28px);
-  overflow: auto;
-  padding: 14px;
+  overflow: hidden;
+  padding: 0;
   border-radius: 18px;
   border: 1px solid rgba(104, 68, 45, 0.18);
   background: rgba(255, 250, 242, 0.96);
   box-shadow: 0 18px 42px rgba(61, 43, 32, 0.18);
   backdrop-filter: blur(10px);
   pointer-events: auto;
+}
+
+.assetDebugPanelBody {
+  overflow: auto;
+  min-height: 0;
+  padding: 14px;
+}
+
+@media (max-width: 640px) {
+  .assetDebugPanel {
+    width: min(340px, calc(100vw - 28px));
+  }
+}
+
+@media (min-width: 1320px) {
+  body[data-scrapbook-debug-active] .assetDebugPanel,
+  body[data-scrapbook-debug-active] .assetDebugFloatingButton {
+    right: calc((100vw - min(1580px, 100vw)) / 2 + 14px);
+  }
+}
+
+@media (min-width: 1300px) {
+  body[data-scrapbook-mobile-preview] .assetDebugPanel {
+    left: calc(50% + 215px + 14px);
+    right: auto;
+  }
+
+  body[data-scrapbook-mobile-preview] .assetDebugFloatingButton {
+    left: calc(50% + 215px + 14px);
+    right: auto;
+  }
+}
+
+body[data-scrapbook-mobile-preview] .shell,
+body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
+  width: 100%;
+  max-width: 430px;
+  padding-right: 0;
 }
 
 @media (max-width: 1320px) {
@@ -613,6 +655,49 @@
   margin-top: 12px;
   color: #6b5647;
   font-size: 0.86rem;
+}
+
+.assetDebugHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.assetDebugCloseButton {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(104, 68, 45, 0.18);
+  background: rgba(255, 255, 255, 0.86);
+  color: #4b372c;
+  font: inherit;
+  font-size: 1.4rem;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.assetDebugFloatingButton {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 999;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(104, 68, 45, 0.18);
+  background: rgba(255, 250, 242, 0.96);
+  color: #4b372c;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 8px 22px rgba(61, 43, 32, 0.14);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  pointer-events: auto;
 }
 
 .paper-birthday .confettiTop {
@@ -1850,6 +1935,22 @@
   scroll-snap-align: start;
 }
 
+.cardHidden {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .cardHidden {
+    display: block;
+  }
+
+  .messageTrackGrid2 .cardHidden,
+  .messageTrackRow1 .cardHidden,
+  .messageTrackRows2 .cardHidden {
+    display: block;
+  }
+}
+
 .cardAccent {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.94)),
@@ -2272,7 +2373,7 @@
   color: var(--fc-text);
 }
 
-@media (max-width: 899px) {
+@container final-card-shell (max-width: 899px) {
   .paperDecorAsset {
     top: var(--asset-mobile-top, var(--asset-top, auto));
     left: var(--asset-mobile-left, var(--asset-left, auto));
@@ -3140,7 +3241,7 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   color: var(--fc-text);
 }
 
-@media (max-width: 899px) {
+@container final-card-shell (max-width: 899px) {
   .paper-birthday .canvas {
     gap: 18px;
     padding: 18px;
@@ -3356,7 +3457,7 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   background: rgba(255, 249, 239, 0.88);
 }
 
-@media (max-width: 899px) {
+@container final-card-shell (max-width: 899px) {
   .paper-birthday .hero {
     min-height: auto;
   }
@@ -3533,7 +3634,7 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   font-size: 2.6rem;
 }
 
-@media (max-width: 899px) {
+@container final-card-shell (max-width: 899px) {
   .paper-birthday .hero {
     height: auto;
     min-height: auto;
@@ -3824,7 +3925,7 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   line-height: 1.18;
 }
 
-@media (max-width: 899px) {
+@container final-card-shell (max-width: 899px) {
   .paper-birthday .qualitiesPanel .chipList {
     flex-wrap: wrap;
   }
@@ -3842,5 +3943,643 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   .paper-birthday .heroPretitle,
   .paper-birthday .hero.paperBirthdayHeroExpanded .heroPretitle {
     transform: none;
+  }
+}
+
+
+/* ===== Mobile gift layout overrides (plankimi.md) ===== */
+@container final-card-shell (max-width: 899px) {
+  /* 1. General width and padding — make it feel wider */
+  .page {
+    padding: 10px 0 40px;
+    overflow-x: hidden;
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 430px;
+  }
+
+  .canvas {
+    gap: 14px;
+    padding: 10px 8px;
+    border-radius: 16px;
+    overflow-x: hidden;
+  }
+
+  .canvas::before {
+    inset: 6px;
+    border-radius: 12px;
+  }
+
+  .hero,
+  .summary,
+  .messages,
+  .quotes,
+  .closing,
+  .qualities,
+  .memories,
+  .paper-birthday .hero,
+  .paper-birthday .summary,
+  .paper-birthday .messages,
+  .paper-birthday .quotes,
+  .paper-birthday .closing,
+  .paper-birthday .qualities,
+  .paper-birthday .memories {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px;
+    border-radius: 16px;
+    border-width: 0;
+  }
+
+  .paper-birthday .componentAssetFrame.hero > .componentAssetContent,
+  .paper-birthday .componentAssetFrame.section > .componentAssetContent,
+  .paper-birthday .componentAssetFrame.closing > .componentAssetContent {
+    padding: 14px !important;
+  }
+
+  .paper-birthday .componentAssetFrame.qualityChipFrame > .componentAssetContent {
+    padding: 4px 8px !important;
+  }
+
+  .paper-birthday .componentAssetFrame.mediaCardLandscape > .componentAssetContent,
+  .paper-birthday .componentAssetFrame.mediaCardPortrait > .componentAssetContent {
+    padding: 6px 6px 10px !important;
+  }
+
+  .paper-birthday .componentAssetFrame.card > .componentAssetContent {
+    padding: 16px !important;
+  }
+
+  /* 2. Typography */
+  .message,
+  .sectionText,
+  .mediaCaptionSubtitle,
+  .memoryPhotoCaption,
+  .memoryPhotoCaptionTitle,
+  .summaryPanel .sectionText,
+  .paper-birthday .summaryPanel .sectionText {
+    font-size: 15.5px;
+    line-height: 1.65;
+  }
+
+  .sectionTitle {
+    font-size: clamp(1.55rem, 7vw, 1.9rem);
+  }
+
+  .author {
+    font-size: 1rem;
+  }
+
+  .card,
+  .quoteCard,
+  .memoryPhotoCard,
+  .mediaCardLandscape,
+  .mediaCardPortrait,
+  .mediaImage,
+  .memoryPhotoImage,
+  .authorAvatarImage {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 3. Summary / main greeting */
+  .summaryPanel,
+  .paper-birthday .summaryPanel,
+  .paper-birthday .aiSummaryPanel {
+    width: 100%;
+    max-width: 100%;
+    padding: 18px;
+  }
+
+  /* 4. Qualities grid 2x2 + centered 5th */
+  .chipList,
+  .paper-birthday .chipList,
+  .paper-birthday .qualitiesPanel .chipList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    justify-items: stretch;
+    width: 100%;
+  }
+
+  .chipList > *,
+  .paper-birthday .chipList > *,
+  .paper-birthday .qualitiesPanel .chipList > * {
+    min-width: 0;
+    width: 100%;
+    max-width: none;
+  }
+
+  .chipList > *:nth-child(5),
+  .paper-birthday .chipList > *:nth-child(5),
+  .paper-birthday .qualitiesPanel .chipList > *:nth-child(5) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: min(100%, calc(50% - 5px));
+  }
+
+  .qualityChipFrame,
+  .paper-birthday .qualityChipFrame,
+  .paper-birthday .qualitiesPanel .qualityChipFrame {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .chip,
+  .paper-birthday .chip,
+  .paper-birthday .qualityChipFrame .chip,
+  .paper-birthday .qualitiesPanel .qualityChipFrame .chip {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 1.05rem;
+    text-align: center;
+    justify-content: center;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  /* 5. Messages + photos block */
+  .messageSplitFixed,
+  .paper-birthday .messageSplitFixed {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .messageSplitFixed > .mediaRail,
+  .paper-birthday .messageSplitFixed > .mediaRail {
+    order: -1;
+    width: 100%;
+  }
+
+  .mediaRail,
+  .paper-birthday .mediaRail,
+  .paper-birthday .mediaRailTrio,
+  .paper-birthday .mediaRailPair,
+  .mediaRailPair,
+  .mediaRailTrio {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto;
+    grid-auto-flow: row;
+    gap: 10px;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    min-width: 0;
+    flex-direction: row;
+  }
+
+  .mediaRail > *,
+  .paper-birthday .mediaRail > *,
+  .paper-birthday .mediaRailTrio > *,
+  .paper-birthday .mediaRailPair > * {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .mediaRail > *:first-child,
+  .paper-birthday .mediaRail > *:first-child,
+  .paper-birthday .mediaRailTrio > *:first-child,
+  .mediaRailTrio > *:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .mediaRailPair,
+  .paper-birthday .mediaRailPair {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto;
+  }
+
+  .mediaRailPair > *,
+  .paper-birthday .mediaRailPair > * {
+    grid-column: 1 / -1 !important;
+  }
+
+  .mediaCardLandscape,
+  .mediaCardPortrait,
+  .paper-birthday .mediaCardLandscape,
+  .paper-birthday .mediaCardPortrait,
+  .paper-birthday .componentAssetFrame.mediaCardLandscape,
+  .paper-birthday .componentAssetFrame.mediaCardPortrait {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: auto;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+
+  .mediaRail > *:first-child .mediaImage,
+  .paper-birthday .mediaRail > *:first-child .mediaImage,
+  .paper-birthday .mediaRailTrio > *:first-child .mediaImage,
+  .mediaRailTrio > *:first-child .mediaImage {
+    height: 190px;
+    min-height: 190px;
+    border-radius: 16px;
+  }
+
+  .mediaRail > *:not(:first-child) .mediaImage,
+  .paper-birthday .mediaRail > *:not(:first-child) .mediaImage,
+  .paper-birthday .mediaRailTrio > *:not(:first-child) .mediaImage {
+    height: 125px;
+    min-height: 125px;
+    border-radius: 16px;
+  }
+
+  .mediaRailPair .mediaImage,
+  .mediaRailPair > *:not(:first-child) .mediaImage,
+  .paper-birthday .mediaRailPair .mediaImage,
+  .paper-birthday .mediaRailPair > *:not(:first-child) .mediaImage {
+    height: 160px;
+    min-height: 160px;
+  }
+
+  .mediaImage,
+  .paper-birthday .mediaImage,
+  .paper-birthday .mediaCardLandscape .mediaImage,
+  .paper-birthday .mediaCardPortrait .mediaImage {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px;
+    object-fit: cover;
+  }
+
+  .mediaCaption,
+  .paper-birthday .mediaCaption {
+    padding: 6px 4px 0;
+    text-align: center;
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+
+  .mediaFrameTiltLeft,
+  .mediaFrameTiltRight,
+  .paper-birthday .mediaFrameTiltLeft,
+  .paper-birthday .mediaFrameTiltRight,
+  .paper-birthday .mediaCardLandscape:nth-child(2),
+  .paper-birthday .mediaCardLandscape:nth-child(3) {
+    transform: none;
+  }
+
+  .cardHidden,
+  .card.cardHidden,
+  .paper-birthday .card.cardHidden,
+  .messageColumnPage .card.cardHidden,
+  .messageTrackGrid2 .card.cardHidden,
+  .messageTrackRow1 .card.cardHidden,
+  .messageTrackRows2 .card.cardHidden {
+    display: none !important;
+  }
+
+  /* 6. Messages vertical stack */
+  .messagesStage,
+  .paper-birthday .messagesStage {
+    padding: 0;
+    width: 100%;
+  }
+
+  .messageTrackGrid2,
+  .messageTrackRow1,
+  .messageTrackRows2,
+  .paper-birthday .messageTrackGrid2,
+  .paper-birthday .messageTrackRow1,
+  .paper-birthday .messageTrackRows2 {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-x: visible;
+    min-height: auto;
+    grid-auto-columns: unset;
+    grid-auto-flow: unset;
+    grid-template-rows: unset;
+    scroll-snap-type: none;
+    width: 100%;
+  }
+
+  .messageColumnScroller,
+  .paper-birthday .messageColumnScroller {
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
+    scrollbar-width: none;
+    width: 100%;
+  }
+
+  .messageColumnPage,
+  .paper-birthday .messageColumnPage {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .card,
+  .paper-birthday .card {
+    width: 100%;
+    padding: 16px;
+    box-sizing: border-box;
+    border-radius: 18px;
+  }
+
+  .cardHeader,
+  .paper-birthday .cardHeader {
+    margin-bottom: 10px;
+  }
+
+  .authorAvatar,
+  .paper-birthday .authorAvatar {
+    width: 40px;
+    height: 40px;
+  }
+
+.sectionTitle,
+  .paper-birthday .sectionTitle,
+  .paper-birthday .memories > .sectionTitle,
+  .paper-birthday .memories > .componentAssetContent > .sectionTitle {
+    display: block;
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    transform: none;
+    position: relative;
+    left: auto;
+    background: transparent;
+    clip-path: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  /* 7. Moments block */
+  .memoriesStrip,
+  .paper-birthday .memoriesStrip {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto;
+    gap: 10px;
+    align-items: start;
+    width: 100%;
+  }
+
+  .memoryIntroCard,
+  .paper-birthday .memoryIntroCard {
+    display: none;
+  }
+
+  .memoryPhotoCard:first-of-type,
+  .paper-birthday .memoryPhotoCard:first-of-type {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .memoryPhotoCard,
+  .paper-birthday .memoryPhotoCard,
+  .paper-birthday .memoryPhotoCard:nth-child(3n),
+  .paper-birthday .memoryPhotoCard:nth-child(4n) {
+    transform: none;
+    padding: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .memoryPhotoImage,
+  .paper-birthday .memoryPhotoImage,
+  .paper-birthday .memoryPhotoCard:first-of-type .memoryPhotoImage {
+    aspect-ratio: auto;
+    width: 100%;
+    height: 190px;
+    min-height: 190px;
+    border-radius: 16px;
+  }
+
+  .memoryPhotoCard:not(:first-of-type) .memoryPhotoImage,
+  .paper-birthday .memoryPhotoCard:not(:first-of-type) .memoryPhotoImage {
+    height: 125px;
+    min-height: 125px;
+  }
+
+  .memoryPhotoCaptionWrap,
+  .paper-birthday .memoryPhotoCaptionWrap {
+    margin-top: 6px;
+    text-align: center;
+  }
+
+  .memoryPhotoCaption,
+  .paper-birthday .memoryPhotoCaption,
+  .memoryPhotoCaptionTitle,
+  .paper-birthday .memoryPhotoCaptionTitle {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+
+  /* 8. Quotes block */
+  .quotesGrid,
+  .paper-birthday .quotesGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .quoteCard,
+  .paper-birthday .quoteCard,
+  .paper-birthday .paperBirthdayQuoteFrame {
+    width: 100%;
+    max-width: none;
+    padding: 18px;
+    box-sizing: border-box;
+    border-radius: 18px;
+  }
+
+  .quoteCard .message,
+  .paper-birthday .quoteCard .message {
+    font-size: 15.5px;
+    line-height: 1.55;
+  }
+
+  .quoteMark,
+  .paper-birthday .quoteMark {
+    font-size: 2.2rem;
+  }
+
+  /* 9. Reduce scrapbook decor */
+  .paper-birthday .paperDecor {
+    opacity: 0.25;
+  }
+
+  .paper-birthday .paperDecorLayer {
+    display: none;
+  }
+
+  .paper-birthday .canvas::after {
+    opacity: 0.35;
+  }
+
+  .paper-birthday .heartStickerTopLeft,
+  .paper-birthday .polaroidCakeLeft,
+  .paper-birthday .polaroidFlowersTopRight,
+  .paper-birthday .stickyNoteToday,
+  .paper-birthday .driedFlowersRight,
+  .paper-birthday .driedFlowersBottomLeft,
+  .paper-birthday .footerFloralCluster,
+  .paper-birthday .goldHeartLeft,
+  .paper-birthday .goldHeartBottomRight,
+  .paper-birthday .pinkHeartMidRight,
+  .paper-birthday .rightConfettiScatter,
+  .paper-birthday .watercolorStainPink,
+  .paper-birthday .watercolorStainBeige {
+    display: none;
+  }
+
+  .paper-birthday .mediaCardPortrait::before,
+  .paper-birthday .mediaCardLandscape::before,
+  .paper-birthday .memoryPhotoCard::before {
+    display: none;
+  }
+
+  /* 10. Hero CTA */
+  .heroCtaRow,
+  .paper-birthday .heroCtaRow {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .heroOpenButton,
+  .paper-birthday .heroOpenButton {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+  }
+
+  /* 11. Closing actions */
+  .closing,
+  .paper-birthday .closing {
+    padding: 20px 16px;
+  }
+
+  .actions,
+  .paper-birthday .actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .paper-birthday .primaryButton,
+  .paper-birthday .secondaryButton {
+    width: 100%;
+    min-height: 48px;
+    box-sizing: border-box;
+  }
+
+  /* ===== Mobile scrapbook fixes (screenshots 11-44) ===== */
+
+  /* 11. Qualities: center text inside paper tags */
+  .paper-birthday .componentAssetFrame.qualityChipFrame > .componentAssetContent {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: inherit;
+    padding: 6px 10px !important;
+  }
+
+  /* 12. Message photos: shrink top polaroid, keep it inside viewport, enlarge small ones */
+  .paper-birthday .mediaRail > *:first-child,
+  .paper-birthday .mediaRailTrio > *:first-child {
+    width: 96%;
+    margin-inline: auto;
+  }
+
+  .paper-birthday .mediaRail > *:first-child .componentAssetOverlayLayer,
+  .paper-birthday .mediaRailTrio > *:first-child .componentAssetOverlayLayer {
+    background-size: 100% 100% !important;
+    background-position: center !important;
+    top: -4px !important;
+    left: -4px !important;
+    right: -4px !important;
+    bottom: -10px !important;
+  }
+
+  .paper-birthday .mediaRail > *:first-child .mediaImage,
+  .paper-birthday .mediaRailTrio > *:first-child .mediaImage {
+    height: 170px;
+    min-height: 170px;
+  }
+
+  .paper-birthday .mediaRail > *:not(:first-child) .mediaImage,
+  .paper-birthday .mediaRailTrio > *:not(:first-child) .mediaImage {
+    height: 150px;
+    min-height: 150px;
+  }
+
+  /* 13. Memories: one big photo on top, two small in a row below */
+  .paper-birthday .memoriesStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto;
+  }
+
+  .paper-birthday .memoryPhotoCard:nth-child(2),
+  .paper-birthday .memoryPhotoCard:nth-child(3),
+  .paper-birthday .memoryPhotoCard:nth-child(4) {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .paper-birthday .memoryPhotoCard:first-of-type {
+    grid-column: 1 / -1;
+  }
+
+  .paper-birthday .memoryPhotoImage,
+  .paper-birthday .memoryPhotoCard:first-of-type .memoryPhotoImage {
+    height: 210px;
+    min-height: 210px;
+  }
+
+  .paper-birthday .memoryPhotoCard:not(:first-of-type) .memoryPhotoImage {
+    height: 150px;
+    min-height: 150px;
+  }
+
+  /* 14. Quotes: stretch white paper to the right, shift cards left */
+  .paper-birthday .componentAssetFrame[data-component-asset-id="quotesPaper"] > .componentAssetContent {
+    padding-left: 10px !important;
+    padding-right: 26px !important;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-asset-id="quotesPaper"] .componentAssetPaperLayer {
+    right: -28px !important;
+  }
+
+  .paper-birthday .quotesGrid {
+    align-items: start;
+  }
+
+  .paper-birthday .paperBirthdayQuoteFrame {
+    justify-self: start;
+    width: 94%;
+  }
+
+  .paper-birthday .paperBirthdayQuoteFrame .componentAssetPaperLayer {
+    left: 0 !important;
   }
 }

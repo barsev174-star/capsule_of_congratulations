@@ -1,10 +1,9 @@
 import Link from "next/link";
-import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import { publishCardAction } from "@/lib/cards/actions";
-import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type { FinalCardViewModel } from "@/lib/final-card/view-model";
 import { getGiftPath } from "@/lib/routes/card-links";
 import { FinalCardActions } from "@/components/final-card/final-card-actions";
+import { MessagesSection } from "@/components/final-card/messages-section";
 import type { ScrapbookDecorAnchor } from "./scrapbook-decor-config";
 import {
   ScrapbookComponentFrame,
@@ -28,9 +27,6 @@ const styleClassMap = {
   "gentle-personal": styles["gentle-personal"],
   "paper-birthday": styles["paper-birthday"]
 };
-
-const trimMessage = (message: string, maxChars: number) =>
-  message.length > maxChars ? `${message.slice(0, maxChars - 1).trimEnd()}...` : message;
 
 const getParticipantSummary = (count: number) => {
   const lastTwo = count % 100;
@@ -68,14 +64,6 @@ const getPaperBirthdayHeroScaleClass = (recipientName: string) => {
 
   return "";
 };
-
-const getInitials = (name: string) =>
-  name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
 
 const PeopleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -145,190 +133,6 @@ const getQualityAssetId = (index: number) => {
 const getQuoteAssetId = (index: number) => {
   const cycle = ["quoteCardPink", "quoteCardBeige", "quoteCardBlue"] as const;
   return cycle[index % cycle.length];
-};
-
-const getGreetingAssetId = (index: number) => {
-  const cycle = ["greetingCardPink", "greetingCardCream", "greetingCardBlue", "greetingCardLavender"] as const;
-  return cycle[index % cycle.length];
-};
-
-const renderMessageCard = (item: Contribution, index: number, maxChars: number, isPaperBirthday = false) => {
-  const className = `${styles.card} ${index === 0 ? styles.cardSpotlight : index % 3 === 0 ? styles.cardAccent : ""}`;
-  const content = (
-    <>
-      <div className={styles.cardHeader}>
-        <div className={styles.authorAvatar}>
-          {item.authorAvatarUrl ? (
-            // User-provided local uploads keep their original URL and CSS crop behavior.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.authorAvatarUrl} alt="" className={styles.authorAvatarImage} />
-          ) : (
-            <span className={styles.authorAvatarInitials}>{getInitials(item.authorName)}</span>
-          )}
-        </div>
-        <div className={styles.authorMeta}>
-          <span className={styles.author}>{item.authorName}</span>
-          {item.authorRole ? <span className={styles.role}>{item.authorRole}</span> : null}
-        </div>
-      </div>
-      <p className={styles.message}>{trimMessage(item.message, maxChars)}</p>
-    </>
-  );
-
-  return isPaperBirthday ? (
-    <ScrapbookComponentFrame key={item.id} as="article" assetId={getGreetingAssetId(index)} className={className}>
-      {content}
-    </ScrapbookComponentFrame>
-  ) : (
-    <article key={item.id} className={className}>
-      {content}
-    </article>
-  );
-};
-
-const renderMediaFigure = (
-  asset: CardMediaAsset | undefined,
-  slot: CardMediaAsset["slot"],
-  title: string,
-  fallbackText: string,
-  className: string,
-  isPaperBirthday = false
-) => {
-  const frameClassName =
-    slot === "portrait"
-      ? `${className} ${styles.mediaFrameTiltLeft}`
-      : slot === "landscape-b"
-        ? `${className} ${styles.mediaFrameTiltRight}`
-        : `${className} ${styles.mediaFrameTiltLeft}`;
-
-  const content = (
-    <>
-      {asset ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={asset.publicUrl}
-            alt={asset.captionTitle || asset.captionSubtitle || title}
-            className={styles.mediaImage}
-          />
-          <figcaption className={styles.mediaCaption}>
-            <span className={styles.mediaCaptionSubtitle}>
-              {asset.captionTitle || asset.captionSubtitle || title}
-            </span>
-          </figcaption>
-        </>
-      ) : (
-        <>
-          <span className={styles.mediaLabel}>{title}</span>
-          <p className={styles.mediaHint}>{fallbackText}</p>
-        </>
-      )}
-    </>
-  );
-
-  if (!isPaperBirthday) {
-    return <figure className={frameClassName}>{content}</figure>;
-  }
-
-  return (
-    <ScrapbookComponentFrame
-      as="figure"
-      assetId={slot === "portrait" ? "messagePolaroidPortrait" : "messagePolaroidLandscape"}
-      className={frameClassName}
-    >
-      {content}
-    </ScrapbookComponentFrame>
-  );
-};
-
-const renderMediaRail = (model: FinalCardViewModel) => {
-  const messageMediaAssets = model.messageMediaAssets;
-
-  if (model.messageMediaLayout === "landscape-pair" || model.messageMediaLayout === "landscape-trio") {
-    return (
-      <div
-        className={`${styles.mediaRail} ${
-          model.messageMediaLayout === "landscape-trio" ? styles.mediaRailTrio : styles.mediaRailPair
-        }`}
-      >
-        {renderMediaFigure(
-          messageMediaAssets[0],
-          "landscape-a",
-          "Горизонтальное фото A",
-          "Здесь может появиться первое горизонтальное фото.",
-          styles.mediaCardLandscape,
-          model.style === "paper-birthday"
-        )}
-        {renderMediaFigure(
-          messageMediaAssets[1],
-          "landscape-b",
-          "Горизонтальное фото B",
-          "Здесь может появиться второе горизонтальное фото.",
-          styles.mediaCardLandscape,
-          model.style === "paper-birthday"
-        )}
-        {model.messageMediaLayout === "landscape-trio"
-          ? renderMediaFigure(
-              messageMediaAssets[2],
-              "landscape-c",
-              "Горизонтальное фото C",
-              "Здесь может появиться третье горизонтальное фото.",
-              styles.mediaCardLandscape,
-              model.style === "paper-birthday"
-            )
-          : null}
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.mediaRail}>
-      {renderMediaFigure(
-        messageMediaAssets[0],
-        "portrait",
-        "Вертикальное фото",
-        "Здесь предусмотрено место под одно заметное вертикальное фото.",
-        styles.mediaCardPortrait,
-        model.style === "paper-birthday"
-      )}
-    </div>
-  );
-};
-
-const renderMessagesLayout = (model: FinalCardViewModel) => {
-  const profile = getFinalCardMessageLayoutProfile(model.messageLayoutMode);
-
-  if (profile.pageVariant === "column-media") {
-    return (
-      <div className={styles.messageSplitFixed}>
-        <div className={styles.messageColumnScroller}>
-          <div className={styles.messageColumnPage}>
-            {model.contributions.map((item, itemIndex) =>
-              renderMessageCard(item, itemIndex, profile.maxChars, model.style === "paper-birthday")
-            )}
-          </div>
-        </div>
-        {renderMediaRail(model)}
-      </div>
-    );
-  }
-
-  const scrollerClassName =
-    model.messageLayoutMode === "grid-2"
-      ? styles.messageTrackGrid2
-      : model.messageLayoutMode === "carousel-2"
-        ? styles.messageTrackRows2
-        : styles.messageTrackRow1;
-
-  return (
-    <div className={styles.messagesStage}>
-      <div className={scrollerClassName}>
-        {model.contributions.map((item, itemIndex) =>
-          renderMessageCard(item, itemIndex, profile.maxChars, model.style === "paper-birthday")
-        )}
-      </div>
-    </div>
-  );
 };
 
 export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageToken }: Props) => {
@@ -540,7 +344,13 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
               {model.contributions.length === 0 ? (
                 <p className={styles.sectionText}>Пока нет поздравлений. Скоро здесь появятся теплые слова от группы.</p>
               ) : (
-                renderMessagesLayout(model)
+                <MessagesSection
+                  contributions={model.contributions}
+                  messageLayoutMode={model.messageLayoutMode}
+                  messageMediaAssets={model.messageMediaAssets}
+                  messageMediaLayout={model.messageMediaLayout}
+                  isPaperBirthday={isPaperBirthday}
+                />
               )}
 
               {!isPreview && model.showAllMessagesLink ? (

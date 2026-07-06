@@ -2003,3 +2003,15 @@
     100% { z-index: 7; opacity: 0; transform: translateY(-20%) scale(1.26); }
   }
 }
+
+
+/* Mobile gift wrapper width adjustments */
+@media (max-width: 899px) {
+  .giftWrapper {
+    padding: 0;
+  }
+
+  .replayBar {
+    padding: 20px 12px 36px;
+  }
+}

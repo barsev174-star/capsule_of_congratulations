@@ -349,7 +349,7 @@ export const ScrapbookDecorProvider = ({ children, debugEnabled }: ProviderProps
   const [importConfigText, setImportConfigText] = useState(() => readLocalVisualConfig(debugEnabled).raw);
   const [importState, setImportState] = useState<"idle" | "applied" | "failed">("idle");
   const [highlightEnabled, setHighlightEnabled] = useState(true);
-  const [mobilePreview, setMobilePreview] = useState(false);
+  const [mobilePreview, setMobilePreview] = useState(debugEnabled);
 
   const allAssets = useMemo(() => [...floatingAssets, ...componentAssets], [floatingAssets, componentAssets]);
 
@@ -725,6 +725,8 @@ export const ScrapbookDecorDebugPanel = () => {
     copyState
   } = useDecorContext();
 
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   const computedStyle = useMemo(() => {
     if (selectedAsset?.type === "floating") {
       return toFloatingAssetStyle(selectedAsset);
@@ -736,6 +738,18 @@ export const ScrapbookDecorDebugPanel = () => {
 
     return {} as CSSProperties;
   }, [selectedAsset]);
+
+  useEffect(() => {
+    if (!debugEnabled) {
+      return;
+    }
+
+    document.body.setAttribute("data-scrapbook-debug-active", "");
+
+    return () => {
+      document.body.removeAttribute("data-scrapbook-debug-active");
+    };
+  }, [debugEnabled]);
 
   useEffect(() => {
     if (!debugEnabled) {
@@ -759,11 +773,22 @@ export const ScrapbookDecorDebugPanel = () => {
 
   const panel = (
     <aside className={styles.assetDebugPanel}>
-      <div className={styles.assetDebugHeader}>
-        <strong>Asset Debug</strong>
-        <button type="button" className={styles.assetDebugCopyButton} onClick={copyConfig}>
-          Copy config
-        </button>
+      <div className={styles.assetDebugPanelBody}>
+        <div className={styles.assetDebugHeader}>
+          <strong>Asset Debug</strong>
+        <div className={styles.assetDebugHeaderActions}>
+          <button type="button" className={styles.assetDebugCopyButton} onClick={copyConfig}>
+            Copy config
+          </button>
+          <button
+            type="button"
+            className={styles.assetDebugCloseButton}
+            onClick={() => setIsCollapsed(true)}
+            aria-label="Close debug panel"
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       <div className={styles.assetDebugActions}>
@@ -1323,12 +1348,26 @@ export const ScrapbookDecorDebugPanel = () => {
       <div className={styles.assetDebugStatus}>
         {copyState === "copied" ? "Config copied" : copyState === "failed" ? "Copy failed" : "Live preview enabled"}
       </div>
+      </div>
     </aside>
   );
 
+  const floatingButton = (
+    <button
+      type="button"
+      className={styles.assetDebugFloatingButton}
+      onClick={() => setIsCollapsed(false)}
+      aria-label="Open debug panel"
+    >
+      Debug
+    </button>
+  );
+
+  const content = isCollapsed ? floatingButton : panel;
+
   if (typeof document === "undefined") {
-    return panel;
+    return content;
   }
 
-  return createPortal(panel, document.body);
+  return createPortal(content, document.body);
 };

@@ -91,9 +91,13 @@ export const GiftIntro = ({
   }, []);
 
   useEffect(() => {
-    const shouldLockScroll = state !== "done";
+    const shouldLockScroll = !alreadyOpened && state !== "done";
     document.body.style.overflow = shouldLockScroll ? "hidden" : "";
-  }, [state]);
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [state, alreadyOpened]);
 
   useEffect(() => {
     return () => clearTimers();
