@@ -630,3 +630,27 @@
 6. Added protected `POST /api/internal/reminders/send`; it requires `Authorization: Bearer $CRON_SECRET`.
 7. Added `infra/scripts/send-event-reminders.sh` for the future VPS cron job.
 8. Deployment is intentionally postponed. Before enabling reminders, set `CRON_SECRET`, run migrations, rebuild the web container and then schedule the script once a day.
+
+## Update 2026-07-06 Privacy-Safe Analytics And Error Monitoring
+
+1. Added seven allowlisted `funnel.*` events covering creation, invitation, participant submission, publication and gift opening.
+2. Added critical error categories for database, publication, media, email, AI and browser failures with searchable `errorId` values.
+3. Added server/client telemetry collection without names, email addresses, greeting text, tokens or secret links.
+4. Removed raw GigaChat response content and organizer one-time links from structured logs.
+5. Added PostgreSQL migration `0010_telemetry_events.sql` and a local ignored JSON fallback.
+6. Added the admin-only `/admin/analytics` screen with 7/30-day funnel metrics and recent critical errors.
+7. Verified 245 tests and the production build; targeted analytics files pass ESLint.
+8. Applied the migration locally and committed the implementation as `2b9a5b4`.
+9. Production deploy, production migration and payment integration were not performed.
+
+## Update 2026-07-06 Production-Ready Event Reminder Flow
+
+1. Added three schedules: seven days before for distant events, next morning for events in 3–7 days, and confirmation-only for events in 1–2 days.
+2. Added immediate confirmation email, scenario-specific success states and an urgent create-card CTA for close events.
+3. Added cancellation via a stable HMAC token while storing only its SHA-256 hash.
+4. Added a public cancellation page with cancelled, already cancelled, already sent and invalid-link states.
+5. Added delivery leases, stale `sending` recovery, stable Resend idempotency keys and a five-attempt limit.
+6. Hardened the VPS script with a process lock, timeouts, retries, canonical URL and timestamped logs; documented the `04:00 UTC` daily cron.
+7. Applied migrations `0011`–`0014` locally and verified 260 tests plus the production build.
+8. Sent two live emails through Resend and fixed UTF-8 loading for the sender name `Дари слова`.
+9. Committed the implementation as `61c8ecf`. Production deploy, production migrations and cron installation were not performed.
