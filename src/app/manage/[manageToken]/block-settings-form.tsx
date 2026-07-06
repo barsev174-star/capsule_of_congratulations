@@ -588,6 +588,9 @@ export const BlockSettingsForm = ({
   }, [currentCompositionKey, state.ok]);
 
   const formRef = useRef<HTMLFormElement>(null);
+  const submittedCompositionKeyRef = useRef<string | null>(null);
+  const autoSaveReadyRef = useRef(false);
+  const lastAutoSaveAtRef = useRef(0);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [bestQuotes, setBestQuotes] = useState(initialBestQuotes);
   const [quotesAreStale, setQuotesAreStale] = useState(bestQuotesAreStale);
@@ -626,16 +629,27 @@ export const BlockSettingsForm = ({
   };
 
   useEffect(() => {
+    if (!autoSaveReadyRef.current) {
+      autoSaveReadyRef.current = true;
+      return;
+    }
     if (!isCompositionDirty || !formRef.current || isPending) return;
+    if (submittedCompositionKeyRef.current === currentCompositionKey) return;
+    const now = Date.now();
+    if (now - lastAutoSaveAtRef.current < 800) return;
+    lastAutoSaveAtRef.current = now;
+    submittedCompositionKeyRef.current = currentCompositionKey;
     setSaveStatus("saving");
     formRef.current.requestSubmit();
-  }, [isCompositionDirty, isPending]);
+  }, [currentCompositionKey, isCompositionDirty, isPending]);
 
   useEffect(() => {
     if (state.ok) {
       setSaveStatus("saved");
+    } else if (state.message && !isPending) {
+      setSaveStatus("idle");
     }
-  }, [state]);
+  }, [state, isPending]);
 
   const resolveDropPosition = (
     targetBlockId: FinalCardBlockId,

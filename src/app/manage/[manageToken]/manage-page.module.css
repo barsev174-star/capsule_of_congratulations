@@ -4708,6 +4708,11 @@ button.contentFilterPill {
   align-items: center;
 }
 
+.templateHeroActions .secondaryButton,
+.editorFooter .secondaryButton {
+  border-radius: 14px;
+}
+
 .designStudio {
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.72fr);
   gap: 18px;
@@ -6854,6 +6859,7 @@ button.contentFilterPill {
     width: auto;
     min-width: 108px;
     padding-inline: 14px;
+    border-radius: 14px;
   }
 
   .tabBar {
@@ -7437,6 +7443,147 @@ button.contentFilterPill {
 
 .accessItemActions .copyLinkButton {
   justify-self: end;
+}
+
+.inviteBlock {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.inviteMain {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.inviteStatusLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;}
+
+.inviteStatusLine strong {
+  color: #3a2922;
+  font-weight: 800;
+}
+
+.inviteBadge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(46, 204, 113, 0.12);
+  color: #1e8449;
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.inviteHint {
+  color: #7b6253;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.inviteActions {
+  display: grid;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.inviteCopyButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 200px;
+  min-height: 40px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--m-accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(233, 101, 47, 0.22);
+  transition: transform 160ms cubic-bezier(0.2, 0, 0, 1), box-shadow 160ms cubic-bezier(0.2, 0, 0, 1), background-color 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.inviteCopyButton::before {
+  content: "📋";
+  font-size: 0.95rem;
+}
+
+.inviteCopyButton:hover {
+  background: #ec6b37;
+  box-shadow: 0 10px 22px rgba(233, 101, 47, 0.28);
+  transform: translateY(-1px);
+}
+
+.inviteCopyButton:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.inviteOpenButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  min-height: 40px;
+  padding: 10px 18px;
+  border: 1px solid rgba(233, 101, 47, 0.38);
+  border-radius: 14px;
+  background: rgba(255, 252, 248, 0.92);
+  color: var(--m-accent);
+  font: inherit;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(92, 62, 46, 0.04), 0 8px 18px rgba(73, 49, 35, 0.05);
+  transition: transform 160ms cubic-bezier(0.2, 0, 0, 1), box-shadow 160ms cubic-bezier(0.2, 0, 0, 1), border-color 160ms cubic-bezier(0.2, 0, 0, 1), background-color 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.inviteOpenButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(233, 101, 47, 0.55);
+  background: rgba(255, 250, 245, 0.98);
+  box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.08), 0 10px 22px rgba(233, 101, 47, 0.1);
+}
+
+.inviteOpenButton:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.inviteCounter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #7b6253;
+  font-size: 0.9rem;}
+
+.inviteCounterIcon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .inviteBlock {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .inviteActions {
+    width: 100%;
+  }
+
+  .inviteCopyButton,
+  .inviteOpenButton {
+    width: 100%;
+  }
 }
 
 .publishCard {

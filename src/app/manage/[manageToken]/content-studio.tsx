@@ -94,11 +94,23 @@ export const ContentStudio = ({
   const currentContributionOrderKey = contributionOrder.join(":");
   const [orderSaveStatus, setOrderSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const orderFormRef = useRef<HTMLFormElement>(null);
+  const submittedOrderKeyRef = useRef<string | null>(null);
+  const orderAutoSaveReadyRef = useRef(false);
+  const lastOrderAutoSaveAtRef = useRef(0);
 
   // Auto-save contribution order immediately when it changes
   useEffect(() => {
+    if (!orderAutoSaveReadyRef.current) {
+      orderAutoSaveReadyRef.current = true;
+      return;
+    }
     const dirty = savedContributionOrderKey !== currentContributionOrderKey;
     if (!dirty || !orderFormRef.current || isPending) return;
+    if (submittedOrderKeyRef.current === currentContributionOrderKey) return;
+    const now = Date.now();
+    if (now - lastOrderAutoSaveAtRef.current < 800) return;
+    lastOrderAutoSaveAtRef.current = now;
+    submittedOrderKeyRef.current = currentContributionOrderKey;
     setOrderSaveStatus("saving");
     orderFormRef.current.requestSubmit();
   }, [currentContributionOrderKey, savedContributionOrderKey, isPending]);
@@ -145,7 +157,10 @@ export const ContentStudio = ({
     if (state.ok) {
       setSavedContributionOrderKey(currentContributionOrderKey);
     }
-  }, [currentContributionOrderKey, state.ok]);
+    if (savedContributionOrderKey === currentContributionOrderKey) {
+      submittedOrderKeyRef.current = null;
+    }
+  }, [currentContributionOrderKey, savedContributionOrderKey, state.ok]);
 
   const moveContribution = (targetContributionId: string, pointerPosition: "before" | "after") => {
     if (!draggedContributionId || draggedContributionId === targetContributionId) {

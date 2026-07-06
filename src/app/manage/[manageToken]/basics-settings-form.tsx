@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useState } from "react";
+import { useState, useTransition } from "react";
 import type { CardDraft } from "@/lib/cards/types";
 import type { CardBasicsFormState } from "./actions";
 import { updateCardBasicsAction } from "./actions";
@@ -16,37 +16,48 @@ const initialState: CardBasicsFormState = {
   message: ""
 };
 
+const buildFields = (card: CardDraft) => ({
+  recipientName: card.recipientName,
+  fromLabel: card.fromLabel,
+  occasionText: card.occasionText,
+  organizerName: card.organizerName,
+  organizerEmail: card.organizerEmail,
+  eventDate: card.eventDate ?? "",
+  description: card.description ?? "",
+  signature: card.signature ?? ""
+});
+
+const serializeFields = (fields: ReturnType<typeof buildFields>) => JSON.stringify(fields);
+
 export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
-  const [state, formAction, isPending] = useActionState(updateCardBasicsAction, initialState);
+  const [isPending, startTransition] = useTransition();
+  const [state, setState] = useState<CardBasicsFormState>(initialState);
 
-  const [fields, setFields] = useState({
-    recipientName: card.recipientName,
-    fromLabel: card.fromLabel,
-    occasionText: card.occasionText,
-    organizerName: card.organizerName,
-    organizerEmail: card.organizerEmail,
-    eventDate: card.eventDate ?? "",
-    description: card.description ?? "",
-    signature: card.signature ?? ""
-  });
+  const [fields, setFields] = useState(() => buildFields(card));
 
-  const [isDirty, setIsDirty] = useState(false);
+  const currentKey = serializeFields(fields);
+  const savedFields = state.ok && state.fields ? state.fields : buildFields(card);
+  const savedKey = serializeFields(savedFields);
+  const submittedFields = !state.ok && state.fields ? state.fields : null;
+  const submittedKey = submittedFields ? serializeFields(submittedFields) : null;
+  const isDirty = currentKey !== savedKey;
+  const justFailed = submittedKey !== null && submittedKey === currentKey;
 
   const handleChange = (key: keyof typeof fields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setIsDirty(true);
     setFields((prev) => ({ ...prev, [key]: e.target.value }));
   };
 
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startTransition(async () => {
+      const result = await updateCardBasicsAction(state, formData);
+      setState(result);
+    });
+  };
+
   return (
-    <form
-      action={(formData) => {
-        setIsDirty(false);
-        startTransition(() => {
-          formAction(formData);
-        });
-      }}
-      className={styles.basicsForm}
-    >
+    <form onSubmit={handleSubmit} className={styles.basicsForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
       <input type="hidden" name="occasion" value={card.occasion} />
 
@@ -164,11 +175,13 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
         <div className={styles.autoSaveStatus} aria-live="polite">
           {isPending
             ? "Сохраняем…"
-            : isDirty
-              ? "Есть несохранённые изменения"
-              : state.ok
-                ? "Изменения сохранены"
-                : state.message || null}
+            : justFailed
+              ? state.message
+              : isDirty
+                ? "Есть несохранённые изменения"
+                : state.ok
+                  ? "Изменения сохранены"
+                  : null}
         </div>
         <button
           type="submit"

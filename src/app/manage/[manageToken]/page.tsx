@@ -11,6 +11,7 @@ import { getCardTemplates } from "@/lib/cards/templates-server";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import { getGiftPath, getJoinUrl, getManagePath, getPreviewPath } from "@/lib/routes/card-links";
+import { pluralize } from "@/lib/i18n/pluralize";
 import type { FinalCardBlockId, FinalCardOptionalBlockId } from "@/lib/final-card/types";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { BasicsSettingsForm } from "./basics-settings-form";
@@ -341,21 +342,46 @@ export default async function ManagePage({ params, searchParams }: Props) {
               <section className={styles.sidebarCard}>
                 <div className={styles.sidebarCardHeader}>
                   <div>
-                    <h2>Ссылки и доступ</h2>
-                    <p>Управляйте доступом к открытке</p>
+                    <h2>Пригласить участников</h2>
+                    <p>Отправьте ссылку в чат, чтобы гости добавили поздравления и фото.</p>
                   </div>
                 </div>
-                <div className={styles.accessList}>
-                  <div className={styles.accessItem}>
-                    <div className={styles.accessItemInfo}>
-                      <strong>Ссылка для участников</strong>
-                      <span>Пригласите близких добавить поздравления</span>
+                <div className={styles.inviteBlock}>
+                  <div className={styles.inviteMain}>
+                    <div className={styles.inviteStatusLine}>
+                      <strong>Форма участника</strong>
+                      <span className={styles.inviteBadge}>Ссылка активна</span>
                     </div>
-                    <div className={styles.accessItemActions}>
-                      <Link href={participantLink}>{participantLink.replace(/^https?:\/\//, "")}</Link>
-                      <CopyLinkButton value={participantLink} cardId={card.id} telemetrySource="participant" />
-                    </div>
+                    <span className={styles.inviteHint}>По этой ссылке можно добавить поздравление</span>
                   </div>
+                  <div className={styles.inviteActions}>
+                    <CopyLinkButton
+                      value={participantLink}
+                      cardId={card.id}
+                      telemetrySource="participant"
+                      copiedLabel="Ссылка скопирована"
+                      className={styles.inviteCopyButton}
+                    />
+                    <Link
+                      href={participantLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.inviteOpenButton}
+                    >
+                      Открыть форму
+                    </Link>
+                  </div>
+                </div>
+                <div className={styles.inviteCounter}>
+                  <span className={styles.inviteCounterIcon}>👥</span>
+                  <span>
+                    Уже добавили: {visibleContributions.length}{" "}
+                    {pluralize(visibleContributions.length, {
+                      one: "поздравление",
+                      few: "поздравления",
+                      many: "поздравлений"
+                    })}
+                  </span>
                 </div>
               </section>
 

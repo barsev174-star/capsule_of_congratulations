@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import type { CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
 import { CARD_MEDIA_MAX_COUNT } from "@/lib/cards/media";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
+import { compressImageFile } from "@/lib/media/image-compression";
 import { deleteCardMediaAction, saveCardMediaAction } from "./actions";
 import styles from "./manage-page.module.css";
 
@@ -156,20 +157,37 @@ const MediaAssetRow = ({
   const [isDirty, setIsDirty] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const formRef = useRef<HTMLFormElement>(null);
+  const submittedMediaKeyRef = useRef<string | null>(null);
+  const mediaAutoSaveReadyRef = useRef(false);
+  const lastMediaAutoSaveAtRef = useRef(0);
   const saveFormId = `media-save-${asset.id}`;
+  const currentMediaKey = `${caption}:${slot}`;
 
   useEffect(() => {
+    if (!mediaAutoSaveReadyRef.current) {
+      mediaAutoSaveReadyRef.current = true;
+      return;
+    }
     if (!isDirty || !formRef.current || savePending) return;
+    if (submittedMediaKeyRef.current === currentMediaKey) return;
+    const now = Date.now();
+    if (now - lastMediaAutoSaveAtRef.current < 800) return;
+    lastMediaAutoSaveAtRef.current = now;
+    submittedMediaKeyRef.current = currentMediaKey;
     setSaveStatus("saving");
     formRef.current.requestSubmit();
-  }, [isDirty, savePending, caption, slot]);
+  }, [currentMediaKey, isDirty, savePending]);
 
   useEffect(() => {
     if (saveState.ok) {
       setSaveStatus("saved");
       setIsDirty(false);
+      submittedMediaKeyRef.current = null;
+    } else if (saveState.message && !savePending) {
+      setSaveStatus("idle");
+      submittedMediaKeyRef.current = null;
     }
-  }, [saveState]);
+  }, [savePending, saveState]);
 
   const handleCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCaption(e.target.value);
@@ -268,6 +286,7 @@ const MediaUploadForm = ({
   defaultSlot?: CardMediaSlot;
 }) => {
   const [saveState, saveAction, savePending] = useActionState(saveCardMediaAction, initialState);
+  const [, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFileName, setSelectedFileName] = useState("");
 
@@ -280,8 +299,27 @@ const MediaUploadForm = ({
     setSelectedFileName(file ? file.name : "");
   };
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const file = formData.get("file");
+
+    if (file instanceof File && file.size > 0) {
+      try {
+        const compressed = await compressImageFile(file);
+        formData.set("file", compressed);
+      } catch {
+        // Leave original file if compression fails.
+      }
+    }
+
+    startTransition(() => {
+      saveAction(formData);
+    });
+  };
+
   return (
-    <form action={saveAction} className={styles.mediaLibraryUploadForm}>
+    <form onSubmit={handleSubmit} className={styles.mediaLibraryUploadForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
       <input type="hidden" name="assetId" value="" />
       <input type="hidden" name="captionSubtitle" value="" />
@@ -343,6 +381,7 @@ const MediaLibraryGroup = ({
   requiredCount: number;
 }) => {
   const [saveState, saveAction, savePending] = useActionState(saveCardMediaAction, initialState);
+  const [, startTransition] = useTransition();
   const addedAssets = groupAssets(assets, slots);
   const defaultUploadSlot = getFirstAvailableSlot(assets, slots);
   const missingCount = Math.max(requiredCount - addedAssets.length, 0);
@@ -374,7 +413,27 @@ const MediaLibraryGroup = ({
       </div>
 
       {defaultUploadSlot ? (
-        <form action={saveAction} className={styles.mediaLibraryUploadForm}>
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            const file = formData.get("file");
+
+            if (file instanceof File && file.size > 0) {
+              try {
+                const compressed = await compressImageFile(file);
+                formData.set("file", compressed);
+              } catch {
+                // Leave original file if compression fails.
+              }
+            }
+
+            startTransition(() => {
+              saveAction(formData);
+            });
+          }}
+          className={styles.mediaLibraryUploadForm}
+        >
           <input type="hidden" name="manageToken" value={manageToken} />
           <input type="hidden" name="assetId" value="" />
           <SlotDropdown
