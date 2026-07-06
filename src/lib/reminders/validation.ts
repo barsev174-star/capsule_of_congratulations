@@ -4,16 +4,28 @@ import type { CreateEventReminderInput } from "./types";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const dayMs = 24 * 60 * 60 * 1000;
+const reminderTimeZone = process.env.REMINDER_TIME_ZONE?.trim() || "Asia/Yekaterinburg";
 
 const text = (value: FormDataEntryValue | null) => String(value ?? "").trim();
 const normalizeDate = (date: Date) => date.toISOString().slice(0, 10);
+export const getReminderCalendarDate = (date = new Date()) => {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: reminderTimeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+};
+const calendarDateTime = (date: Date) => Date.parse(`${getReminderCalendarDate(date)}T00:00:00.000Z`);
 
 export type ReminderValidationResult =
   | { ok: true; data: CreateEventReminderInput }
   | { ok: false; message: string };
 
 export const getMinimumReminderEventDate = (now = new Date()) =>
-  normalizeDate(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) + 7 * dayMs));
+  normalizeDate(new Date(calendarDateTime(now) + dayMs));
 
 export const validateReminderRequest = (formData: FormData, now = new Date()): ReminderValidationResult => {
   const recipientName = text(formData.get("recipientName"));
@@ -37,7 +49,7 @@ export const validateReminderRequest = (formData: FormData, now = new Date()): R
 
   const minimumDate = getMinimumReminderEventDate(now);
   if (eventDate < minimumDate) {
-    return { ok: false, message: "Выберите дату не раньше чем через 7 дней, чтобы мы успели напомнить заранее." };
+    return { ok: false, message: "Выберите будущую дату — начиная с завтрашнего дня." };
   }
 
   if (!emailPattern.test(email) || email.length > 254) {
@@ -45,16 +57,27 @@ export const validateReminderRequest = (formData: FormData, now = new Date()): R
   }
 
   if (consent !== "on") {
-    return { ok: false, message: "Подтвердите согласие получить одно письмо-напоминание." };
+    return { ok: false, message: "Разрешите отправить подтверждение и, если позволяет дата, одно напоминание." };
   }
 
-  const remindOn = normalizeDate(new Date(Date.parse(`${eventDate}T00:00:00.000Z`) - 7 * dayMs));
+  const eventTime = Date.parse(`${eventDate}T00:00:00.000Z`);
+  const daysUntilEvent = Math.round((eventTime - calendarDateTime(now)) / dayMs);
+  const schedule = daysUntilEvent >= 8
+    ? "seven_days_before" as const
+    : daysUntilEvent >= 3
+      ? "next_day" as const
+      : "confirmation_only" as const;
+  const remindOn = schedule === "seven_days_before"
+    ? normalizeDate(new Date(eventTime - 7 * dayMs))
+    : schedule === "next_day"
+      ? normalizeDate(new Date(calendarDateTime(now) + dayMs))
+      : null;
   const dedupeKey = createHash("sha256")
     .update([email, eventDate, recipientName.toLowerCase(), occasionText.toLowerCase()].join("|"))
     .digest("hex");
 
   return {
     ok: true,
-    data: { recipientName, occasionText, eventDate, remindOn, email, sourceCardId, dedupeKey }
+    data: { recipientName, occasionText, eventDate, remindOn, schedule, email, sourceCardId, dedupeKey }
   };
 };

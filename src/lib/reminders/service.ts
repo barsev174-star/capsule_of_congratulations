@@ -2,6 +2,7 @@ import { logger } from "@/lib/logger";
 import { sendEventReminderEmail } from "./email";
 import { claimDueEventReminders, completeEventReminder, releaseEventReminder } from "./repository";
 import { reportCriticalError } from "@/lib/telemetry";
+import { getReminderCalendarDate } from "./validation";
 
 type ReminderBatchDependencies = {
   claim: typeof claimDueEventReminders;
@@ -16,7 +17,7 @@ const defaultDependencies: ReminderBatchDependencies = {
 };
 
 export const runEventReminderBatch = async (
-  today = new Date().toISOString().slice(0, 10),
+  today = getReminderCalendarDate(),
   dependencies: ReminderBatchDependencies = defaultDependencies
 ) => {
   const reminders = await dependencies.claim(today, 50);

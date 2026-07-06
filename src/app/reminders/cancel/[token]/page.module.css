@@ -1,0 +1,126 @@
+.page {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  color: #432d24;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(255, 226, 197, 0.72), transparent 34%),
+    linear-gradient(160deg, #fffaf4 0%, #fdf2e8 100%);
+}
+
+.card {
+  width: min(100%, 560px);
+  padding: 44px;
+  border-radius: 32px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 28px 70px rgba(102, 63, 42, 0.12),
+    0 2px 8px rgba(102, 63, 42, 0.06);
+}
+
+.icon {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 22px;
+  border-radius: 20px;
+  font-size: 28px;
+  background: #fff0e3;
+  box-shadow: inset 0 0 0 1px rgba(224, 103, 55, 0.1);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: #d65d2d;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.card h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 7vw, 3rem);
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+.body {
+  max-width: 440px;
+  margin: 18px auto 28px;
+  color: #80685c;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.cancelButton,
+.primaryLink {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(180deg, #f17543, #e95c2b);
+  box-shadow: 0 12px 26px rgba(222, 82, 35, 0.22);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition-property: transform, box-shadow;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.cancelButton:hover,
+.primaryLink:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(222, 82, 35, 0.28);
+}
+
+.cancelButton:active,
+.primaryLink:active {
+  transform: scale(0.96);
+}
+
+.cancelButton:focus-visible,
+.primaryLink:focus-visible,
+.homeLink:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.25);
+  outline-offset: 4px;
+}
+
+.homeLink {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin: 18px auto 0;
+  color: #8b6f61;
+  font-weight: 700;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 16px;
+  }
+
+  .card {
+    padding: 34px 22px;
+    border-radius: 26px;
+  }
+
+  .cancelButton,
+  .primaryLink {
+    width: 100%;
+  }
+}

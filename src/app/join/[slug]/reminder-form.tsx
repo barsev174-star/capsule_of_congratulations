@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { createReminderAction, type ReminderFormState } from "./reminder-actions";
@@ -10,14 +11,14 @@ type Props = {
   minimumEventDate: string;
 };
 
-const initialState: ReminderFormState = { status: "idle", message: "" };
+const initialState: ReminderFormState = { status: "idle", title: "", lines: [], schedule: null };
 
 export function EventReminderForm({ sourceCardId, minimumEventDate }: Props) {
   const [state, formAction, isPending] = useActionState(createReminderAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (state.status === "success") formRef.current?.reset();
+    if (state.status === "success" || state.status === "warning") formRef.current?.reset();
   }, [state.status]);
 
   return (
@@ -70,12 +71,20 @@ export function EventReminderForm({ sourceCardId, minimumEventDate }: Props) {
 
         <label className={styles.reminderConsent}>
           <input type="checkbox" name="consent" required />
-          <span>Согласен получить одно письмо за 7 дней до события.</span>
+          <span>Разрешаю отправить подтверждение сейчас и одно напоминание ближе к событию.</span>
         </label>
+        <p className={styles.reminderCancelHint}>✉ Напоминание можно отменить по ссылке из письма.</p>
 
         {state.status !== "idle" ? (
-          <div className={state.status === "success" ? styles.reminderSuccess : styles.reminderError} role="status">
-            {state.message}
+          <div
+            className={state.status === "error" ? styles.reminderError : state.status === "warning" ? styles.reminderWarning : styles.reminderSuccess}
+            role={state.status === "error" ? "alert" : "status"}
+          >
+            <strong className={styles.reminderResultTitle}>{state.title}</strong>
+            {state.lines.map((line) => <p key={line}>{line}</p>)}
+            {(state.schedule === "next_day" || state.schedule === "confirmation_only") ? (
+              <Link className={styles.reminderCreateLink} href="/create">Создать открытку сейчас</Link>
+            ) : null}
           </div>
         ) : null}
 
