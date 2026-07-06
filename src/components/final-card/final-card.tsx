@@ -32,6 +32,25 @@ const styleClassMap = {
 const trimMessage = (message: string, maxChars: number) =>
   message.length > maxChars ? `${message.slice(0, maxChars - 1).trimEnd()}...` : message;
 
+const getParticipantSummary = (count: number) => {
+  const lastTwo = count % 100;
+  const last = count % 10;
+
+  if (lastTwo >= 11 && lastTwo <= 14) {
+    return { people: `${count} человек`, action: "оставили поздравления" };
+  }
+
+  if (last === 1) {
+    return { people: `${count} человек`, action: "оставил поздравление" };
+  }
+
+  if (last >= 2 && last <= 4) {
+    return { people: `${count} человека`, action: "оставили поздравления" };
+  }
+
+  return { people: `${count} человек`, action: "оставили поздравления" };
+};
+
 const getPaperBirthdayHeroScaleClass = (recipientName: string) => {
   const words = recipientName
     .trim()
@@ -313,6 +332,7 @@ const renderMessagesLayout = (model: FinalCardViewModel) => {
 export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageToken }: Props) => {
   const isPreview = mode === "preview";
   const isPaperBirthday = model.style === "paper-birthday";
+  const participantSummary = getParticipantSummary(model.participantCount);
   const heroScaleClass = isPaperBirthday ? getPaperBirthdayHeroScaleClass(model.recipientName) : "";
   const heroNameWords = model.recipientName
     .trim()
@@ -381,6 +401,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                   ) : (
                     <>
                       <span>Эту открытку для тебя собрали близкие люди.</span>
+                      {" "}
                       <span>Здесь — теплые слова, фотографии и приятные моменты.</span>
                     </>
                   )}
@@ -390,8 +411,8 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                     <span className={styles.heroParticipantsIcon}>
                       <PeopleIcon />
                     </span>
-                    <strong>{model.participantCount} человек</strong>
-                    <span>оставили поздравления</span>
+                    <strong>{participantSummary.people}</strong>
+                    <span>{participantSummary.action}</span>
                   </span>
                   <a href="#messages" className={`${styles.button} ${styles.primaryButton} ${styles.heroOpenButton}`}>
                     <span aria-hidden="true">

@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       .filter((item) => item.status === "visible" && item.id !== sourceContribution?.id)
       .map((item) => item.message)
   );
-  const messageLimit = sourceContribution?.id === card.finalMainGreetingSettings?.contributionId
+  const messageLimit = sourceContribution?.id && sourceContribution.id === card.finalMainGreetingSettings?.contributionId
     ? 500
     : layoutProfile.maxChars;
 

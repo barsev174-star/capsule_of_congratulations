@@ -165,21 +165,23 @@ export const ParticipantForm = ({
         </form>
       </section>
 
-      <AiHelper
-        cardId={cardId}
-        publicSlug={publicSlug}
-        occasionText={occasionText}
-        relationshipContext={authorRole}
-        messageLimit={messageLimit}
-        onUseText={(text) => {
-          setMessage(text);
-        }}
-        onGeneration={(generationId) => {
-          setAiGenerationIds((current) => current.includes(generationId) ? current : [...current, generationId]);
-        }}
-        variant={variant}
-        greetingMode={greetingMode}
-      />
+      {!successMessage ? (
+        <AiHelper
+          cardId={cardId}
+          publicSlug={publicSlug}
+          occasionText={occasionText}
+          relationshipContext={authorRole}
+          messageLimit={messageLimit}
+          onUseText={(text) => {
+            setMessage(text);
+          }}
+          onGeneration={(generationId) => {
+            setAiGenerationIds((current) => current.includes(generationId) ? current : [...current, generationId]);
+          }}
+          variant={variant}
+          greetingMode={greetingMode}
+        />
+      ) : null}
     </>
   );
 };

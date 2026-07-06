@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import type { CardDraft } from "@/lib/cards/types";
 import type { CardBasicsFormState } from "./actions";
 import { updateCardBasicsAction } from "./actions";
@@ -18,7 +18,6 @@ const initialState: CardBasicsFormState = {
 
 export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
   const [state, formAction, isPending] = useActionState(updateCardBasicsAction, initialState);
-  const formRef = useRef<HTMLFormElement>(null);
 
   const [fields, setFields] = useState({
     recipientName: card.recipientName,
@@ -31,35 +30,23 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
     signature: card.signature ?? ""
   });
 
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
-
-  // Auto-save with debounce
-  useEffect(() => {
-    if (saveStatus === "idle") return;
-    const timer = setTimeout(() => {
-      if (!formRef.current) return;
-      const fd = new FormData(formRef.current);
-      formAction(fd);
-      setSaveStatus("saving");
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [fields, saveStatus, formAction]);
-
-  useEffect(() => {
-    if (state.ok) {
-      setSaveStatus("saved");
-    } else if (state.message && !isPending) {
-      setSaveStatus("error");
-    }
-  }, [state, isPending]);
+  const [isDirty, setIsDirty] = useState(false);
 
   const handleChange = (key: keyof typeof fields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setIsDirty(true);
     setFields((prev) => ({ ...prev, [key]: e.target.value }));
-    setSaveStatus("saving");
   };
 
   return (
-    <form ref={formRef} action={formAction} className={styles.basicsForm}>
+    <form
+      action={(formData) => {
+        setIsDirty(false);
+        startTransition(() => {
+          formAction(formData);
+        });
+      }}
+      className={styles.basicsForm}
+    >
       <input type="hidden" name="manageToken" value={manageToken} />
       <input type="hidden" name="occasion" value={card.occasion} />
 
@@ -173,14 +160,23 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
         </div>
       </section>
 
-      <div className={styles.autoSaveStatus}>
-        {isPending || saveStatus === "saving"
-          ? "Сохраняем…"
-          : saveStatus === "saved"
-            ? "Изменения сохранены"
-            : saveStatus === "error"
-              ? state.message
-              : null}
+      <div className={styles.basicsSaveRow}>
+        <div className={styles.autoSaveStatus} aria-live="polite">
+          {isPending
+            ? "Сохраняем…"
+            : isDirty
+              ? "Есть несохранённые изменения"
+              : state.ok
+                ? "Изменения сохранены"
+                : state.message || null}
+        </div>
+        <button
+          type="submit"
+          className={styles.contentPrimaryButton}
+          disabled={isPending || !isDirty}
+        >
+          {isPending ? "Сохраняем…" : "Сохранить изменения"}
+        </button>
       </div>
     </form>
   );
