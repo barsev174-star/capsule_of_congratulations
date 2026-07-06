@@ -8,7 +8,7 @@ export const sendOrganizerAccessEmail = async ({ email, accessUrl, idempotencyKe
 
   if (!apiKey || !from) {
     if (process.env.NODE_ENV !== "production") {
-      logger.info("organizer.magic_link_dev", "Organizer access link generated", { email, accessUrl });
+      logger.info("organizer.magic_link_dev", "Organizer access link generated in development");
       return;
     }
     throw new Error("Email provider is not configured");

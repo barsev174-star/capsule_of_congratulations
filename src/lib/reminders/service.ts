@@ -1,6 +1,7 @@
 import { logger } from "@/lib/logger";
 import { sendEventReminderEmail } from "./email";
 import { claimDueEventReminders, completeEventReminder, releaseEventReminder } from "./repository";
+import { reportCriticalError } from "@/lib/telemetry";
 
 type ReminderBatchDependencies = {
   claim: typeof claimDueEventReminders;
@@ -29,10 +30,7 @@ export const runEventReminderBatch = async (
     } catch (error) {
       await dependencies.release(reminder.id);
       failed += 1;
-      logger.error("reminder.send_failed", "Event reminder delivery failed", {
-        reminderId: reminder.id,
-        error: error instanceof Error ? error.message : String(error)
-      });
+      await reportCriticalError("email", error, { reminderId: reminder.id, operation: "event_reminder" });
     }
   }
   logger.info("reminder.batch_complete", "Event reminder batch completed", {

@@ -4,6 +4,7 @@ import { createContribution } from "@/lib/cards/service";
 import { validateContributionFormData } from "@/lib/contributions/validation";
 import { logger } from "@/lib/logger";
 import { consumeAiGenerationDrafts } from "@/lib/ai/repository";
+import { reportCriticalError } from "@/lib/telemetry";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -56,12 +57,10 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ ok: true, contribution }, { status: 201 });
   } catch (error) {
-    logger.error("contributions.create_failed", "Contribution creation failed", {
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
+    const errorId = await reportCriticalError("database", error, { operation: "create_contribution", cardId });
 
     return NextResponse.json(
-      { ok: false, message: "Не удалось сохранить поздравление. Попробуйте еще раз." },
+      { ok: false, message: "Не удалось сохранить поздравление. Попробуйте еще раз.", errorId },
       { status: 500 }
     );
   }

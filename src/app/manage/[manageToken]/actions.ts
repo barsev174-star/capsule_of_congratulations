@@ -43,6 +43,7 @@ import { logger } from "@/lib/logger";
 import { saveCardMediaFile } from "@/lib/media/local-card-media-storage";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
 import { getGiftPath, getJoinPath, getManagePath } from "@/lib/routes/card-links";
+import { reportCriticalError } from "@/lib/telemetry";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
@@ -628,7 +629,13 @@ export async function saveCardMediaAction(
       };
     }
 
-    const savedFile = await saveCardMediaFile({ cardId: card.id, slot, file });
+    let savedFile;
+    try {
+      savedFile = await saveCardMediaFile({ cardId: card.id, slot, file });
+    } catch (error) {
+      const errorId = await reportCriticalError("media", error, { cardId: card.id, operation: "save_file", slot });
+      return { ok: false, message: `Не удалось сохранить фото. Код ошибки: ${errorId}` };
+    }
     const now = new Date().toISOString();
 
     const asset: CardMediaAsset = {
@@ -651,7 +658,12 @@ export async function saveCardMediaAction(
       asset.createdAt = existingSlotAsset.createdAt;
     }
 
-    await upsertCardMediaAsset(asset);
+    try {
+      await upsertCardMediaAsset(asset);
+    } catch (error) {
+      const errorId = await reportCriticalError("database", error, { cardId: card.id, operation: "save_media_record", slot });
+      return { ok: false, message: `Фото загружено, но не добавлено в открытку. Код ошибки: ${errorId}` };
+    }
 
     logger.info("manage.card_media_saved", "Card media saved by organizer", {
       cardId: card.id,

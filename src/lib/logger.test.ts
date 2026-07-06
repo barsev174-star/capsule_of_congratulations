@@ -1,4 +1,4 @@
-import { createLogEntry, logger } from "@/lib/logger";
+import { createLogEntry, logger, sanitizeLogContext } from "@/lib/logger";
 
 describe("logger", () => {
   it("creates a structured log entry", () => {
@@ -31,5 +31,15 @@ describe("logger", () => {
     expect(spy).toHaveBeenCalledTimes(1);
     expect(spy.mock.calls[0][0]).toContain("\"level\":\"error\"");
     spy.mockRestore();
+  });
+
+  it("removes personal text and credentials from context", () => {
+    expect(sanitizeLogContext({
+      cardId: "card_1",
+      organizerEmail: "person@example.com",
+      manageToken: "secret",
+      message: "personal greeting",
+      nested: { accessUrl: "https://example.test/private", status: 502 }
+    })).toEqual({ cardId: "card_1", nested: { status: 502 } });
   });
 });

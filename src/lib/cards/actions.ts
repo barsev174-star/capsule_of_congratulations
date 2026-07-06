@@ -3,8 +3,8 @@
 import { redirect } from "next/navigation";
 import { getCardDraftByManageToken, updateCardStatus } from "@/lib/cards/repository";
 import { getPublicationMode, isGiftPublished } from "@/lib/cards/status";
-import { logger } from "@/lib/logger";
 import { getGiftPath } from "@/lib/routes/card-links";
+import { reportCriticalError, trackFunnel } from "@/lib/telemetry";
 
 export async function publishCardAction(formData: FormData): Promise<void> {
   const manageToken = String(formData.get("manageToken") ?? "");
@@ -26,9 +26,14 @@ export async function publishCardAction(formData: FormData): Promise<void> {
   }
 
   if (!isGiftPublished(card)) {
-    await updateCardStatus(card.id, "published");
+    try {
+      await updateCardStatus(card.id, "published");
+    } catch (error) {
+      const errorId = await reportCriticalError("publication", error, { cardId: card.id });
+      throw new Error(`Не удалось опубликовать открытку. Код ошибки: ${errorId}`);
+    }
 
-    logger.info("card.published", "Card published during free beta", {
+    await trackFunnel("funnel.card_published", {
       cardId: card.id,
       publicationMode
     });

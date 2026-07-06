@@ -7,6 +7,7 @@ import { ParticipantForm } from "@/app/card/[publicSlug]/participant-form";
 import { EventReminderForm } from "./reminder-form";
 import { getMinimumReminderEventDate } from "@/lib/reminders/validation";
 import styles from "@/app/card/[publicSlug]/participant-page.module.css";
+import { JourneyEvent } from "@/components/telemetry/journey-event";
 
 type Props = {
   params: Promise<{
@@ -55,6 +56,7 @@ export default async function JoinCardPage({ params }: Props) {
 
   return (
     <main className={styles.page}>
+      <JourneyEvent event="funnel.participant_form_opened" cardId={card.id} route="join" />
       <div className={styles.shell}>
         <header className={styles.topbar}>
           <div className={styles.brand}>

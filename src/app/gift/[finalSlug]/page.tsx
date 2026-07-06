@@ -6,6 +6,7 @@ import { FinalCard } from "@/components/final-card/final-card";
 import { GiftIntro, GiftPlaceholder } from "@/components/gift-intro/gift-intro";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { getAiCardInsight } from "@/lib/ai/repository";
+import { JourneyEvent } from "@/components/telemetry/journey-event";
 
 type Props = {
   params: Promise<{
@@ -46,7 +47,7 @@ export default async function GiftPage({ params, searchParams }: Props) {
   }
 
   return (
-    <GiftIntro
+    <><JourneyEvent event="funnel.gift_opened" cardId={card.id} route="gift" /><GiftIntro
       slug={finalSlug}
       recipientName={card.recipientName}
       fromLabel={card.fromLabel}
@@ -55,6 +56,6 @@ export default async function GiftPage({ params, searchParams }: Props) {
       forceIntro={isForceIntroEnabled}
     >
       <FinalCard model={model} debugAssets={isAssetDebugEnabled} />
-    </GiftIntro>
+    </GiftIntro></>
   );
 }

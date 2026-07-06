@@ -184,7 +184,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
           </div>
 
           <div className={styles.managerActions}>
-            <CopyLinkButton value={participantLink} label="Копировать ссылку" />
+            <CopyLinkButton value={participantLink} label="Копировать ссылку" cardId={card.id} telemetrySource="participant" />
             <Link
               href={published ? getGiftPath(card.finalSlug) : getPreviewPath(card.manageToken)}
               target="_blank"
@@ -353,7 +353,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                     </div>
                     <div className={styles.accessItemActions}>
                       <Link href={participantLink}>{participantLink.replace(/^https?:\/\//, "")}</Link>
-                      <CopyLinkButton value={participantLink} />
+                      <CopyLinkButton value={participantLink} cardId={card.id} telemetrySource="participant" />
                     </div>
                   </div>
                 </div>

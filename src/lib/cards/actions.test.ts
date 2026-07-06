@@ -14,7 +14,10 @@ vi.mock("@/lib/cards/repository", () => ({
   getCardDraftByManageToken: mocks.getCardDraftByManageToken,
   updateCardStatus: mocks.updateCardStatus
 }));
-vi.mock("@/lib/logger", () => ({ logger: { info: mocks.loggerInfo } }));
+vi.mock("@/lib/logger", () => ({
+  logger: { info: mocks.loggerInfo, warn: vi.fn(), error: vi.fn() },
+  sanitizeLogContext: (context: unknown) => context
+}));
 
 import { publishCardAction } from "@/lib/cards/actions";
 
@@ -53,8 +56,8 @@ describe("publishCardAction", () => {
     expect(mocks.updateCardStatus).toHaveBeenCalledWith(card.id, "published");
     expect(mocks.redirect).toHaveBeenCalledWith(`/gift/${card.finalSlug}`);
     expect(mocks.loggerInfo).toHaveBeenCalledWith(
-      "card.published",
-      "Card published during free beta",
+      "funnel.card_published",
+      "User journey event",
       { cardId: card.id, publicationMode: "free" }
     );
   });

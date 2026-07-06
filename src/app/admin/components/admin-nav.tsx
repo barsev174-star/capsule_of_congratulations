@@ -7,6 +7,7 @@ import styles from "../admin.module.css";
 
 const navItems: { href: string; label: string; minRole: AdminUserRole }[] = [
   { href: "/admin", label: "Dashboard", minRole: "support" },
+  { href: "/admin/analytics", label: "Аналитика", minRole: "admin" },
   { href: "/admin/cards", label: "Открытки", minRole: "moderator" },
   { href: "/admin/contributions", label: "Поздравления", minRole: "support" },
   { href: "/admin/support", label: "Обращения", minRole: "support" },

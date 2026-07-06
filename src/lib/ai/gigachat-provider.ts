@@ -371,7 +371,7 @@ export const generateWithGigaChat = async (input: AiProviderInput): Promise<AiPr
   if (process.env.NODE_ENV !== "production") {
     logger.info("ai.gigachat_raw_response", "Raw GigaChat greeting response", {
       attempt: input.attempt + 1,
-      content
+      responseLength: content.length
     });
   }
 
@@ -380,7 +380,7 @@ export const generateWithGigaChat = async (input: AiProviderInput): Promise<AiPr
   if (process.env.NODE_ENV !== "production") {
     logger.info("ai.gigachat_parsed_variants", "Parsed GigaChat greeting variants", {
       attempt: input.attempt + 1,
-      variants
+      variantCount: variants.length
     });
   }
 

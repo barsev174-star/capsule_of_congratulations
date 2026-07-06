@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { getDefaultTemplateForOccasion } from "@/lib/cards/templates";
-import { logger } from "@/lib/logger";
+import { trackFunnel } from "@/lib/telemetry";
 import { saveCardDraft, saveContribution } from "@/lib/cards/repository";
 import { getGiftUrl, getJoinUrl, getManageUrl } from "@/lib/routes/card-links";
 import type {
@@ -61,12 +61,10 @@ export const createCardDraft = async (input: CreateCardInput): Promise<CreateCar
 
   await saveCardDraft(card);
 
-  logger.info("funnel.card_created", "Card draft created", {
+  await trackFunnel("funnel.card_created", {
     cardId: card.id,
     occasion: card.occasion,
-    occasionText: card.occasionText,
-    templateId: card.templateId,
-    organizerEmail: card.organizerEmail
+    templateId: card.templateId
   });
 
   return buildDraftLinks(card);
@@ -104,7 +102,7 @@ export const createEmptyCardDraft = async (): Promise<CreateCardResult> => {
 
   await saveCardDraft(card);
 
-  logger.info("funnel.card_created_blank", "Blank card draft created", {
+  await trackFunnel("funnel.card_created", {
     cardId: card.id,
     occasion: card.occasion,
     templateId: card.templateId
@@ -132,7 +130,7 @@ export const createContribution = async (input: CreateContributionInput) => {
 
   await saveContribution(contribution);
 
-  logger.info("funnel.contribution_created", "Contribution created", {
+  await trackFunnel("funnel.contribution_submitted", {
     cardId: contribution.cardId,
     contributionId: contribution.id,
     source: contribution.source

@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { clearOrganizerSession } from "@/lib/organizer/session";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
-import { logger } from "@/lib/logger";
+import { reportCriticalError } from "@/lib/telemetry";
 
 export type AccountLoginState = {
   status: "idle" | "success" | "error";
@@ -37,16 +37,14 @@ export async function requestAccountAccessAction(
     };
   } catch (error) {
     const details = error instanceof Error ? error.message : "Unknown error";
-    logger.error("organizer.access_request_failed", "Organizer access request failed", {
-      error: details
-    });
+    const errorId = await reportCriticalError("email", error, { operation: "organizer_access" });
     if (process.env.NODE_ENV !== "production" && details.includes("verify a domain")) {
       return {
         status: "error",
         message: "Resend пока работает в тестовом режиме. Подтвердите домен отправителя, чтобы писать на любые адреса."
       };
     }
-    return { status: "error", message: "Не удалось отправить письмо. Попробуйте немного позже." };
+    return { status: "error", message: `Не удалось отправить письмо. Код ошибки: ${errorId}` };
   }
 }
 

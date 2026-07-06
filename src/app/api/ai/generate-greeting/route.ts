@@ -10,6 +10,7 @@ import {
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import { logger } from "@/lib/logger";
 import { hasPaidAiEntitlement } from "@/lib/ai/repository";
+import { reportCriticalError } from "@/lib/telemetry";
 
 const buildExistingMessageContext = (messages: string[]) => {
   const selected: string[] = [];
@@ -146,12 +147,9 @@ export async function POST(request: Request) {
       );
     }
 
-    logger.error("ai.participant_failed", "AI participant generation failed", {
-      cardId: card.id,
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
+    const errorId = await reportCriticalError("ai", error, { cardId: card.id, operation: "participant_generation" });
     return NextResponse.json(
-      { ok: false, message: "Не удалось подготовить варианты текста. Попробуйте ещё раз." },
+      { ok: false, message: "Не удалось подготовить варианты текста. Попробуйте ещё раз.", errorId },
       { status: 503 }
     );
   }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Caveat } from "next/font/google";
 import "./globals.css";
+import { ClientErrorMonitor } from "@/components/telemetry/client-error-monitor";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -24,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body className={`${inter.variable} ${caveat.variable}`}>{children}</body>
+      <body className={`${inter.variable} ${caveat.variable}`}><ClientErrorMonitor />{children}</body>
     </html>
   );
 }
