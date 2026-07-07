@@ -488,25 +488,6 @@
   }
 }
 
-@media (min-width: 1320px) {
-  body[data-scrapbook-debug-active] .assetDebugPanel,
-  body[data-scrapbook-debug-active] .assetDebugFloatingButton {
-    right: calc((100vw - min(1580px, 100vw)) / 2 + 14px);
-  }
-}
-
-@media (min-width: 1300px) {
-  body[data-scrapbook-mobile-preview] .assetDebugPanel {
-    left: calc(50% + 215px + 14px);
-    right: auto;
-  }
-
-  body[data-scrapbook-mobile-preview] .assetDebugFloatingButton {
-    left: calc(50% + 215px + 14px);
-    right: auto;
-  }
-}
-
 body[data-scrapbook-mobile-preview] .shell,
 body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
   width: 100%;
@@ -514,9 +495,26 @@ body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
   padding-right: 0;
 }
 
-@media (max-width: 1320px) {
+@media (min-width: 920px) {
+  body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
+    margin-left: calc(50% - 427px);
+    margin-right: 0;
+  }
+
+  body[data-scrapbook-debug-active] .assetDebugPanel,
+  body[data-scrapbook-debug-active] .assetDebugFloatingButton {
+    left: calc(50% + 27px);
+    right: auto;
+  }
+}
+
+@media (max-width: 919px) {
   .assetDebugActive .shell {
     padding-right: 0;
+  }
+
+  .assetDebugFloatingButton {
+    display: none;
   }
 }
 
@@ -2508,6 +2506,16 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   transform: rotate(var(--component-asset-mobile-rotate, var(--component-asset-rotate, 0deg)));
 }
 
+body[data-scrapbook-mobile-preview] .paper-birthday .hero {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
 @media (min-width: 900px) {
   .page {
     padding: 38px 24px 72px;
@@ -4492,6 +4500,99 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
 
   /* ===== Mobile scrapbook fixes (screenshots 11-44) ===== */
 
+  /* Keep every large torn-paper sheet inside the same compact gutter. */
+  .paper-birthday .canvas {
+    padding-inline: 4px;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-asset-id="heroPaper"],
+  .paper-birthday .componentAssetFrame[data-component-asset-id="summaryPaper"],
+  .paper-birthday .componentAssetFrame[data-component-asset-id="qualitiesPaper"],
+  .paper-birthday .componentAssetFrame[data-component-asset-id="memoriesPaper"],
+  .paper-birthday .componentAssetFrame[data-component-asset-id="messagesPaper"],
+  .paper-birthday .componentAssetFrame[data-component-asset-id="quotesPaper"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline: auto;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-asset-id="heroPaper"] > .componentAssetPaperLayer,
+  .paper-birthday .componentAssetFrame[data-component-asset-id="summaryPaper"] > .componentAssetPaperLayer,
+  .paper-birthday .componentAssetFrame[data-component-asset-id="qualitiesPaper"] > .componentAssetPaperLayer,
+  .paper-birthday .componentAssetFrame[data-component-asset-id="memoriesPaper"] > .componentAssetPaperLayer,
+  .paper-birthday .componentAssetFrame[data-component-asset-id="messagesPaper"] > .componentAssetPaperLayer,
+  .paper-birthday .componentAssetFrame[data-component-asset-id="quotesPaper"] > .componentAssetPaperLayer {
+    inset: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    background-size: 100% 100% !important;
+    background-position: center !important;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-asset-id="heroPaper"] > .componentAssetPaperLayer {
+    inset: -18px -4px -24px !important;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-asset-id="summaryPaper"] > .componentAssetPaperLayer {
+    inset: -20px -4px -24px !important;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-asset-id="qualitiesPaper"] > .componentAssetPaperLayer {
+    inset: -20px -4px -26px !important;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-asset-id="memoriesPaper"] > .componentAssetPaperLayer {
+    inset: -52px -4px -30px !important;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-asset-id="memoriesPaper"] > .componentAssetContent,
+  .paper-birthday .componentAssetFrame[data-component-asset-id="messagesPaper"] > .componentAssetContent {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-asset-id="messagesPaper"] > .componentAssetPaperLayer {
+    inset: -44px -4px -24px !important;
+    border-style: solid;
+    border-width: 42px 22px 46px;
+    border-image-source: var(--component-asset-mobile-image, var(--component-asset-image));
+    border-image-slice: 82 72 92 fill;
+    border-image-width: 42px 22px 46px;
+    border-image-repeat: stretch;
+    background-image: none !important;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-asset-id="quotesPaper"] > .componentAssetPaperLayer {
+    inset: -28px -4px -34px !important;
+  }
+
+  /* Hero grows with a two-line name, so the CTA never leaves the paper. */
+  .paper-birthday .componentAssetFrame[data-component-asset-id="heroPaper"] {
+    height: auto !important;
+    min-height: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-asset-id="heroPaper"] > .componentAssetContent {
+    padding: 34px 18px 38px !important;
+  }
+
+  .paper-birthday .heroMain {
+    min-height: 0;
+    padding-block: 8px 4px;
+    transform: none;
+  }
+
+  .paper-birthday .hero.paperBirthdayHeroExpanded .title {
+    font-size: clamp(2.65rem, 13vw, 3.65rem);
+    line-height: 0.98;
+    text-wrap: balance;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-asset-id="summaryPaper"] > .componentAssetContent {
+    padding: 28px 36px 32px !important;
+  }
+
   /* 11. Qualities: center text inside paper tags */
   .paper-birthday .componentAssetFrame.qualityChipFrame > .componentAssetContent {
     display: flex !important;
@@ -4501,10 +4602,10 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
     padding: 6px 10px !important;
   }
 
-  /* 12. Message photos: shrink top polaroid, keep it inside viewport, enlarge small ones */
+  /* 12. Message photos: one large image, two larger tilted images below. */
   .paper-birthday .mediaRail > *:first-child,
   .paper-birthday .mediaRailTrio > *:first-child {
-    width: 96%;
+    width: 100%;
     margin-inline: auto;
   }
 
@@ -4512,62 +4613,161 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   .paper-birthday .mediaRailTrio > *:first-child .componentAssetOverlayLayer {
     background-size: 100% 100% !important;
     background-position: center !important;
-    top: -4px !important;
-    left: -4px !important;
-    right: -4px !important;
-    bottom: -10px !important;
+    inset: -10px -24px -18px !important;
+    z-index: 10;
   }
 
   .paper-birthday .mediaRail > *:first-child .mediaImage,
   .paper-birthday .mediaRailTrio > *:first-child .mediaImage {
-    height: 170px;
-    min-height: 170px;
+    height: 190px;
+    min-height: 190px;
   }
 
   .paper-birthday .mediaRail > *:not(:first-child) .mediaImage,
   .paper-birthday .mediaRailTrio > *:not(:first-child) .mediaImage {
-    height: 150px;
-    min-height: 150px;
+    height: 130px;
+    min-height: 130px;
+    border-radius: 0;
+  }
+
+  .paper-birthday .mediaRail > *:not(:first-child),
+  .paper-birthday .mediaRailTrio > *:not(:first-child) {
+    width: 100%;
+  }
+
+  .paper-birthday .mediaRail > *:nth-child(2),
+  .paper-birthday .mediaRailTrio > *:nth-child(2) {
+    justify-self: start;
+    margin-left: 0;
+    transform: rotate(-1.5deg);
+  }
+
+  .paper-birthday .mediaRail > *:nth-child(3),
+  .paper-birthday .mediaRailTrio > *:nth-child(3) {
+    justify-self: end;
+    margin-left: 0;
+    transform: translateX(40px) rotate(1.5deg);
+  }
+
+  .paper-birthday .mediaRail,
+  .paper-birthday .mediaRailTrio {
+    gap: 6px;
+  }
+
+  .paper-birthday .mediaRail > *:not(:first-child) .componentAssetOverlayLayer,
+  .paper-birthday .mediaRailTrio > *:not(:first-child) .componentAssetOverlayLayer {
+    inset: -1px -12px 20px !important;
+    background-size: 100% 100% !important;
+    background-position: center !important;
+    z-index: 10;
   }
 
   /* 13. Memories: one big photo on top, two small in a row below */
   .paper-birthday .memoriesStrip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: auto;
+    gap: 6px;
   }
 
-  .paper-birthday .memoryPhotoCard:nth-child(2),
-  .paper-birthday .memoryPhotoCard:nth-child(3),
-  .paper-birthday .memoryPhotoCard:nth-child(4) {
+  .paper-birthday .componentAssetFrame[data-component-asset-id="memoriesPaper"] > .componentAssetContent > .sectionTitle {
+    margin-left: 12px !important;
+    width: calc(100% - 12px);
+  }
+
+  .paper-birthday .memoryPhotoCard:nth-child(n + 2) {
     grid-column: auto !important;
     grid-row: auto !important;
     justify-self: stretch;
     width: 100%;
   }
 
-  .paper-birthday .memoryPhotoCard:first-of-type {
-    grid-column: 1 / -1;
+  .paper-birthday .memoryPhotoCard:nth-child(2) {
+    grid-column: 1 / -1 !important;
   }
 
-  .paper-birthday .memoryPhotoImage,
-  .paper-birthday .memoryPhotoCard:first-of-type .memoryPhotoImage {
-    height: 210px;
-    min-height: 210px;
+  .paper-birthday .memoryPhotoCard:nth-child(2) .memoryPhotoImage {
+    height: 230px;
+    min-height: 230px;
   }
 
-  .paper-birthday .memoryPhotoCard:not(:first-of-type) .memoryPhotoImage {
-    height: 150px;
-    min-height: 150px;
+  .paper-birthday .memoryPhotoCard:nth-child(n + 3) .memoryPhotoImage {
+    height: 118px;
+    min-height: 118px;
+    border-radius: 0;
   }
 
-  /* 14. Quotes: stretch white paper to the right, shift cards left */
+  .paper-birthday .memoryPhotoCard:nth-child(3) {
+    justify-self: start;
+    width: 100%;
+    transform: rotate(-1.5deg);
+  }
+
+  .paper-birthday .memoryPhotoCard:nth-child(4) {
+    justify-self: end;
+    width: 100%;
+    transform: rotate(1.5deg);
+  }
+
+  .paper-birthday .memoryPhotoCard .componentAssetOverlayLayer {
+    inset: -2px -12px -5px !important;
+    background-size: 100% 100% !important;
+    background-position: center !important;
+    z-index: 10;
+  }
+
+  .paper-birthday .memoryPhotoCard:nth-child(2) .componentAssetOverlayLayer {
+    inset: -14px -24px -22px !important;
+  }
+
+  .paper-birthday .memoryPhotoCard:nth-child(n + 3) .componentAssetOverlayLayer {
+    inset: -2px -12px 7px !important;
+  }
+
+  .paper-birthday .mediaRail > *:not(:first-child) > .componentAssetContent,
+  .paper-birthday .mediaRailTrio > *:not(:first-child) > .componentAssetContent,
+  .paper-birthday .memoryPhotoCard:nth-child(n + 3) > .componentAssetContent {
+    padding: 4px 2px 8px !important;
+  }
+
+  .paper-birthday .memoryPhotoCard,
+  .paper-birthday .mediaCardLandscape,
+  .paper-birthday .mediaCardPortrait {
+    position: relative;
+    z-index: 3;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-group="Photo frames"] > .componentAssetContent {
+    z-index: auto;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-group="Photo frames"] .mediaImage,
+  .paper-birthday .componentAssetFrame[data-component-group="Photo frames"] .memoryPhotoImage {
+    position: relative;
+    z-index: 1;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-group="Photo frames"] .mediaCaption,
+  .paper-birthday .componentAssetFrame[data-component-group="Photo frames"] .memoryPhotoCaptionWrap {
+    position: relative;
+    z-index: 11;
+  }
+
+  /* Pink greeting paper: reveal its left torn edge and align its right edge. */
+  .paper-birthday .componentAssetFrame[data-component-asset-id="greetingCardPink"] .componentAssetPaperLayer {
+    inset: -6px -16px !important;
+    background-size: 100% 100% !important;
+    background-position: center !important;
+  }
+
+  /* 14. Quotes: symmetric outer sheet with both torn edges visible. */
   .paper-birthday .componentAssetFrame[data-component-asset-id="quotesPaper"] > .componentAssetContent {
-    padding-left: 10px !important;
-    padding-right: 26px !important;
+    padding-left: 18px !important;
+    padding-right: 18px !important;
   }
 
   .paper-birthday .componentAssetFrame[data-component-asset-id="quotesPaper"] .componentAssetPaperLayer {
-    right: -28px !important;
+    left: -4px !important;
+    right: -4px !important;
   }
 
   .paper-birthday .quotesGrid {
@@ -4575,11 +4775,137 @@ body[data-scrapbook-mobile-preview] .componentAssetOverlayLayer {
   }
 
   .paper-birthday .paperBirthdayQuoteFrame {
-    justify-self: start;
-    width: 94%;
+    justify-self: center;
+    width: 100%;
   }
 
   .paper-birthday .paperBirthdayQuoteFrame .componentAssetPaperLayer {
     left: 0 !important;
+  }
+
+  .paper-birthday .sectionFooter {
+    display: none;
+  }
+
+  .paper-birthday .heroOpenButton {
+    width: min(100%, 320px);
+    max-width: 320px;
+    margin-inline: auto;
+  }
+
+  .paper-birthday .memoryPhotoCaptionWrap {
+    display: flex;
+    min-height: 36px;
+    margin-top: 0;
+    padding-inline: 4px;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-7px);
+    text-align: center;
+  }
+
+  .paper-birthday .memoryPhotoCaption {
+    margin: 0;
+    text-align: center;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+
+  .paper-birthday .memoryPhotoCard:nth-child(n + 3) .memoryPhotoCaptionWrap {
+    min-height: 32px;
+    transform: translateY(-6px);
+  }
+
+  .paper-birthday .memoryPhotoCard:nth-child(n + 3) .memoryPhotoCaption {
+    font-size: 12px;
+    line-height: 1.12;
+  }
+
+  .paper-birthday .mediaCaption {
+    display: flex;
+    min-height: 34px;
+    margin: 0;
+    padding: 0 4px;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-6px);
+  }
+
+  .paper-birthday .mediaCaptionSubtitle {
+    display: block;
+    font-size: 12px;
+    line-height: 1.12;
+    text-align: center;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+
+  .paper-birthday .messages .sectionHeader {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .paper-birthday .messages .sectionTitle {
+    min-width: 0;
+  }
+
+  .paper-birthday .messages .sectionBadge {
+    min-height: 30px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+}
+
+@container final-card-shell (min-width: 900px) {
+  .paper-birthday .memoriesStrip > *,
+  .paper-birthday .memoryPhotoCard,
+  .paper-birthday .memoryPhotoCard > .componentAssetContent {
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .paper-birthday .memoryPhotoCaptionWrap {
+    display: flex;
+    width: 100%;
+    min-height: 38px;
+    margin-top: 0;
+    padding-inline: 8px;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-3px);
+    text-align: center;
+  }
+
+  .paper-birthday .memoryPhotoCaption {
+    max-width: 100%;
+    margin: 0;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+    text-align: center;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-group="Photo frames"] > .componentAssetContent {
+    z-index: auto;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-group="Photo frames"] .mediaImage,
+  .paper-birthday .componentAssetFrame[data-component-group="Photo frames"] .memoryPhotoImage {
+    position: relative;
+    z-index: 1;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-group="Photo frames"] > .componentAssetOverlayLayer {
+    z-index: 2;
+  }
+
+  .paper-birthday .componentAssetFrame[data-component-group="Photo frames"] .mediaCaption,
+  .paper-birthday .componentAssetFrame[data-component-group="Photo frames"] .memoryPhotoCaptionWrap {
+    position: relative;
+    z-index: 3;
   }
 }

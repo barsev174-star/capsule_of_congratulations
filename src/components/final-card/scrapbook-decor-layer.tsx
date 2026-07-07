@@ -725,7 +725,9 @@ export const ScrapbookDecorDebugPanel = () => {
     copyState
   } = useDecorContext();
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 919px)").matches
+  );
 
   const computedStyle = useMemo(() => {
     if (selectedAsset?.type === "floating") {

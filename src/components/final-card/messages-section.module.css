@@ -32,7 +32,7 @@
 }
 
 .loadMoreButton:active {
-  transform: translateY(0);
+  transform: scale(0.96);
 }
 
 .loadMoreCounter {
@@ -41,8 +41,37 @@
   line-height: 1.4;
 }
 
-@media (min-width: 900px) {
+@container final-card-shell (min-width: 900px) {
   .loadMoreWrap {
     display: none;
+  }
+}
+
+@container final-card-shell (max-width: 899px) {
+  .loadMoreButton {
+    min-height: 52px;
+    padding: 0 26px;
+    border: 1px solid rgba(108, 78, 58, 0.16);
+    background:
+      linear-gradient(135deg, rgba(255, 252, 245, 0.97), rgba(242, 230, 211, 0.97));
+    color: #5f4a3d;
+    font-family: "Segoe Print", "Comic Sans MS", cursive;
+    font-weight: 700;
+    box-shadow:
+      0 10px 22px rgba(126, 70, 53, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  }
+
+  .loadMoreButton::before {
+    content: "+";
+    margin-right: 8px;
+    color: #9a806d;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .loadMoreButton:hover {
+    background:
+      linear-gradient(135deg, rgba(255, 253, 248, 1), rgba(238, 224, 203, 1));
   }
 }

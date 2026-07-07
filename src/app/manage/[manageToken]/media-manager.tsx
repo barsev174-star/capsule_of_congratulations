@@ -158,7 +158,6 @@ const MediaAssetRow = ({
   const formRef = useRef<HTMLFormElement>(null);
   const submittedMediaKeyRef = useRef<string | null>(null);
   const mediaAutoSaveReadyRef = useRef(false);
-  const lastMediaAutoSaveAtRef = useRef(0);
   const saveFormId = `media-save-${asset.id}`;
   const currentMediaKey = `${caption}:${slot}`;
   const handleSaveAction = async (previousState: typeof initialState, formData: FormData) => {
@@ -181,12 +180,15 @@ const MediaAssetRow = ({
     }
     if (!isDirty || !formRef.current || savePending) return;
     if (submittedMediaKeyRef.current === currentMediaKey) return;
-    const now = Date.now();
-    if (now - lastMediaAutoSaveAtRef.current < 800) return;
-    lastMediaAutoSaveAtRef.current = now;
-    submittedMediaKeyRef.current = currentMediaKey;
-    setSaveStatus("saving");
-    formRef.current.requestSubmit();
+
+    const timeoutId = window.setTimeout(() => {
+      if (!formRef.current || submittedMediaKeyRef.current === currentMediaKey) return;
+      submittedMediaKeyRef.current = currentMediaKey;
+      setSaveStatus("saving");
+      formRef.current.requestSubmit();
+    }, 600);
+
+    return () => window.clearTimeout(timeoutId);
   }, [currentMediaKey, isDirty, savePending]);
 
   const handleCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
