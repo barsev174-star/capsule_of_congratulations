@@ -3,7 +3,7 @@ import { extname } from "node:path";
 import type { CardMediaSlot } from "@/lib/cards/types";
 
 export const CARD_MEDIA_MAX_BYTES = 6 * 1024 * 1024;
-export const CARD_MEDIA_MAX_COUNT = 6;
+export const CARD_MEDIA_MAX_COUNT = 7;
 
 const mimeToExtension: Record<string, string> = {
   "image/jpeg": ".jpg",

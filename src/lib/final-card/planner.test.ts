@@ -10,7 +10,7 @@ describe("buildFinalCardLayout", () => {
       hasAiSummary: false
     });
 
-    expect(layout.blocks.map((block) => block.id)).toEqual(["hero", "messages", "closing"]);
+    expect(layout.blocks.map((block) => block.id)).toEqual(["hero", "messages", "quotes", "closing"]);
   });
 
   it("includes optional blocks when matching content exists", () => {

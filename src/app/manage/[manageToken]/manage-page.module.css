@@ -1782,8 +1782,11 @@ button.contentFilterPill {
   flex: 0 0 auto;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.7), transparent 34%),
-    linear-gradient(135deg, #ffd8c2 0%, #ffb899 50%, #ff9e7d 100%);
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.82), transparent 36%),
+    linear-gradient(135deg, #f6eee4 0%, #ead8c8 58%, #dcc2ad 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(109, 77, 58, 0.08),
+    0 8px 18px rgba(91, 61, 44, 0.08);
 }
 
 .contentAvatar {
@@ -1791,9 +1794,9 @@ button.contentFilterPill {
   place-items: center;
   width: 52px;
   height: 52px;
-  color: #fff9f5;
+  color: #8a5f49;
   font-weight: 800;
-  text-shadow: 0 1px 2px rgba(166, 80, 50, 0.2);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .contentPreviewAvatar {
@@ -2264,6 +2267,37 @@ button.contentFilterPill {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+
+@media (max-width: 560px) {
+  .contentAiVariantTabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .contentAiVariantTab {
+    min-height: 34px;
+    padding: 0 6px;
+    border-radius: 9px;
+    font-size: 0.82rem;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  .contentAiEditActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .contentAiButton {
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 10px;
+    font-size: 0.86rem;
+    white-space: nowrap;
+  }
 }
 
 .aiInsightPanel {
@@ -2738,6 +2772,9 @@ button.contentFilterPill {
     margin-inline: -10px;
     padding-inline: 10px;
     overflow-x: auto;
+    overflow-y: hidden;
+    scroll-padding-inline: 10px;
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
   }
 
@@ -2807,6 +2844,9 @@ button.contentFilterPill {
     margin-inline: -18px;
     padding-inline: 18px;
     overflow-x: auto;
+    overflow-y: hidden;
+    scroll-padding-inline: 18px;
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
   }
 

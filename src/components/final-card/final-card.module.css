@@ -1259,6 +1259,16 @@ body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
   max-width: var(--component-asset-max-width, 220px);
 }
 
+.paper-birthday .qualityChipFrame.qualityChipMedium {
+  --component-asset-width: 236px;
+  --component-asset-max-width: 236px;
+}
+
+.paper-birthday .qualityChipFrame.qualityChipLong {
+  --component-asset-width: 268px;
+  --component-asset-max-width: 268px;
+}
+
 .paper-birthday .qualityChipContent {
   display: flex;
   justify-content: center;
@@ -1280,6 +1290,9 @@ body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
   font-family: "Segoe Print", "Comic Sans MS", cursive;
   font-weight: 800;
   font-size: 1.32rem;
+  overflow-wrap: normal;
+  hyphens: auto;
+  word-break: normal;
   line-height: 1.05;
   text-align: center;
   background: transparent;
@@ -2876,7 +2889,12 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
   height: 44px;
   border-radius: 50%;
   overflow: hidden;
-  background: var(--fc-accent-soft);
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.75), transparent 34%),
+    linear-gradient(145deg, rgba(232, 218, 201, 0.92), rgba(250, 242, 230, 0.92));
+  box-shadow:
+    inset 0 0 0 1px rgba(107, 82, 64, 0.08),
+    0 6px 14px rgba(91, 62, 43, 0.06);
 }
 
 .paper-birthday .authorAvatarImage {
@@ -2890,7 +2908,7 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
   place-items: center;
   width: 100%;
   height: 100%;
-  color: var(--fc-accent);
+  color: #8d7465;
   font-family: var(--fc-font-body);
   font-size: 0.95rem;
   font-weight: 800;
@@ -3160,6 +3178,19 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
   gap: 18px;
 }
 
+.emptyQuotesText {
+  max-width: 620px;
+  margin: 8px auto 0;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: rgba(255, 250, 243, 0.72);
+  color: var(--fc-muted);
+  text-align: center;
+  box-shadow:
+    inset 0 0 0 1px rgba(106, 72, 49, 0.08),
+    0 10px 24px rgba(90, 70, 55, 0.04);
+}
+
 .paper-birthday .quoteCard {
   position: relative;
   padding: 24px;
@@ -3408,6 +3439,9 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
 .paper-birthday .qualityChipFrame .chip {
   font-size: 1.18rem;
   text-transform: lowercase;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .paper-birthday .memoriesStrip {
@@ -3576,6 +3610,16 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
   max-width: var(--component-asset-max-width, 196px);
 }
 
+.paper-birthday .qualitiesPanel .qualityChipFrame.qualityChipMedium {
+  --component-asset-width: 220px;
+  --component-asset-max-width: 220px;
+}
+
+.paper-birthday .qualitiesPanel .qualityChipFrame.qualityChipLong {
+  --component-asset-width: 248px;
+  --component-asset-max-width: 248px;
+}
+
 .paper-birthday .qualitiesPanel .qualityChipFrame .chip {
   color: #513126;
   background: transparent;
@@ -3710,6 +3754,11 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
   width: calc((100% - 40px) / 5);
   min-width: 0;
   max-width: 196px;
+}
+
+.paper-birthday .qualitiesPanel .qualityChipFrame.qualityChipMedium,
+.paper-birthday .qualitiesPanel .qualityChipFrame.qualityChipLong {
+  max-width: 248px;
 }
 
 .paper-birthday .messageSplitFixed {
@@ -4088,6 +4137,13 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
     width: min(100%, calc(50% - 5px));
   }
 
+  .paper-birthday .chipList > .qualityChipLong,
+  .paper-birthday .qualitiesPanel .chipList > .qualityChipLong {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: min(100%, 260px) !important;
+  }
+
   .qualityChipFrame,
   .paper-birthday .qualityChipFrame,
   .paper-birthday .qualitiesPanel .qualityChipFrame {
@@ -4103,13 +4159,14 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
     width: 100%;
     min-height: 44px;
     padding: 10px 12px;
-    font-size: 1.05rem;
+    font-size: clamp(0.9rem, 4.6vw, 1.05rem);
     text-align: center;
     justify-content: center;
     white-space: normal;
     word-break: normal;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
     hyphens: auto;
+    letter-spacing: -0.02em;
   }
 
   /* 5. Messages + photos block */

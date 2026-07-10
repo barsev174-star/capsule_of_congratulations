@@ -71,7 +71,7 @@ Production MVP запущен на реальном домене:
 3. PostgreSQL-режим при заданном `DATABASE_URL`.
 4. Миграции PostgreSQL через `npm.cmd run db:migrate`.
 5. Локальное хранилище фото в `public/uploads/cards`.
-6. Лимит медиа на MVP: до 6 фото на открытку.
+6. Лимит медиа на MVP: до 7 фото на открытку.
 7. Helper для URL: `src/lib/routes/card-links.ts`.
 8. Production env: `NEXT_PUBLIC_SITE_URL=https://darislova.ru`.
 9. Production Docker Compose заготовка:

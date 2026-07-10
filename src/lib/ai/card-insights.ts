@@ -88,6 +88,11 @@ export const buildMockBestQuotes = (
 const qualityKeywords: Array<{ text: string; stems: string[] }> = [
   { text: "доброта", stems: ["добр", "доброт"] },
   { text: "забота", stems: ["забот"] },
+  { text: "отзывчивость", stems: ["помог", "выручил", "выруч", "подсоб", "машин"] },
+  { text: "неравнодушие", stems: ["лифт", "площадк", "подъезд", "мусор", "сосед"] },
+  { text: "ответственность", stems: ["ответствен", "убира", "порядок", "дело"] },
+  { text: "аккуратность", stems: ["аккурат", "не мусор", "чист"] },
+  { text: "вежливость", stems: ["здорова", "уваж"] },
   { text: "надёжность", stems: ["надеж", "надёж"] },
   { text: "вдохновение", stems: ["вдохнов"] },
   { text: "поддержка", stems: ["поддерж"] },
@@ -96,10 +101,18 @@ const qualityKeywords: Array<{ text: string; stems: string[] }> = [
   { text: "искренность", stems: ["искрен"] },
   { text: "энергия", stems: ["энерг"] },
   { text: "мудрость", stems: ["мудр"] },
-  { text: "внимание", stems: ["вниматель", "внимание"] },
-  { text: "спокойствие", stems: ["спокой"] },
-  { text: "радость", stems: ["радост"] }
+  { text: "внимательность", stems: ["вниматель", "внимание"] }
 ];
+
+const forbiddenQualityPatterns = [
+  /(?:^|[^а-яё])(?:здоровья|здоровье|долголетия|долголетие|денег|деньги|спокойствия|сил|самочувствия|удачи|счастья)(?:$|[^а-яё])/iu,
+  /(?:^|[^а-яё])(?:радостных\s+дней|хороших\s+людей|побольше\s+сил)(?:$|[^а-яё])/iu,
+  /(?:^|[^а-яё])(?:помог|помогает|помогла|помогал|починил|починила|починит|убирает|убираешь|убрал|мусорит|здоровается|здороваешься|подводит)(?:$|[^а-яё])/iu,
+  /(?:^|[^а-яё])(?:машиной|машина|лифт|площадку|площадка|подъезд|доставка)(?:$|[^а-яё])/iu
+];
+
+const looksLikeStableQuality = (text: string) =>
+  !forbiddenQualityPatterns.some((pattern) => pattern.test(text));
 
 export const validateQualityCandidates = (
   value: unknown,
@@ -130,6 +143,7 @@ export const validateQualityCandidates = (
       wordCount > 3 ||
       !/^[а-яё -]+$/iu.test(text) ||
       containsTechnicalText(text) ||
+      !looksLikeStableQuality(text) ||
       seen.has(text)
     ) {
       return null;

@@ -35,8 +35,14 @@ export const ParticipantForm = ({
   const [authorRole, setAuthorRole] = useState("");
   const [message, setMessage] = useState("");
   const [aiGenerationIds, setAiGenerationIds] = useState<string[]>([]);
+  const [aiResetSignal, setAiResetSignal] = useState(0);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const clearSuccessOnEdit = () => {
+    if (successMessage) {
+      setSuccessMessage("");
+    }
+  };
 
   const handleSubmit = async (formData: FormData) => {
     setIssues([]);
@@ -57,9 +63,12 @@ export const ParticipantForm = ({
       return;
     }
 
-    setSuccessMessage("Поздравление добавлено в открытку.");
+    setSuccessMessage("Поздравление отправлено. Спасибо, ваши слова уже в открытке.");
+    setAuthorName("");
+    setAuthorRole("");
     setMessage("");
     setAiGenerationIds([]);
+    setAiResetSignal((current) => current + 1);
     router.refresh();
   };
 
@@ -118,7 +127,10 @@ export const ParticipantForm = ({
                 placeholder="Например, Ольга"
                 required
                 value={authorName}
-                onChange={(event) => setAuthorName(event.target.value)}
+                onChange={(event) => {
+                  clearSuccessOnEdit();
+                  setAuthorName(event.target.value);
+                }}
               />
             </div>
 
@@ -129,7 +141,10 @@ export const ParticipantForm = ({
                 name="authorRole"
                 placeholder="коллега, друг, семья..."
                 value={authorRole}
-                onChange={(event) => setAuthorRole(event.target.value)}
+                onChange={(event) => {
+                  clearSuccessOnEdit();
+                  setAuthorRole(event.target.value);
+                }}
               />
             </div>
           </div>
@@ -148,7 +163,10 @@ export const ParticipantForm = ({
               required
               maxLength={1500}
               value={message}
-              onChange={(event) => setMessage(event.target.value)}
+              onChange={(event) => {
+                clearSuccessOnEdit();
+                setMessage(event.target.value);
+              }}
             />
             <span className={styles.fieldHint}>
               Пишите просто и по-настоящему. Даже несколько теплых фраз уже много значат.
@@ -165,23 +183,23 @@ export const ParticipantForm = ({
         </form>
       </section>
 
-      {!successMessage ? (
-        <AiHelper
-          cardId={cardId}
-          publicSlug={publicSlug}
-          occasionText={occasionText}
-          relationshipContext={authorRole}
-          messageLimit={messageLimit}
-          onUseText={(text) => {
-            setMessage(text);
-          }}
-          onGeneration={(generationId) => {
-            setAiGenerationIds((current) => current.includes(generationId) ? current : [...current, generationId]);
-          }}
-          variant={variant}
-          greetingMode={greetingMode}
-        />
-      ) : null}
+      <AiHelper
+        key={aiResetSignal}
+        cardId={cardId}
+        publicSlug={publicSlug}
+        occasionText={occasionText}
+        relationshipContext={authorRole}
+        messageLimit={messageLimit}
+        onUseText={(text) => {
+          setMessage(text);
+          setSuccessMessage("");
+        }}
+        onGeneration={(generationId) => {
+          setAiGenerationIds((current) => current.includes(generationId) ? current : [...current, generationId]);
+        }}
+        variant={variant}
+        greetingMode={greetingMode}
+      />
     </>
   );
 };

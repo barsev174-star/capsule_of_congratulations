@@ -23,7 +23,7 @@ const isBlockAvailable = (blockId: string, availability: FinalCardContentAvailab
   }
 
   if (blockId === "quotes") {
-    return availability.hasQuotes;
+    return true;
   }
 
   if (blockId === "ai-summary") {

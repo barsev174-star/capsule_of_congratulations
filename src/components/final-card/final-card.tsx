@@ -290,6 +290,11 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
               <div className={styles.chipList}>
                 {visibleQualities.map((quality, index) => {
                   const color = chipColors[index % chipColors.length];
+                  const qualityLengthClass = quality.length >= 14
+                    ? styles.qualityChipLong
+                    : quality.length >= 11
+                      ? styles.qualityChipMedium
+                      : "";
                   const chip = (
                     <span
                       key={quality}
@@ -303,7 +308,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                     <ScrapbookComponentFrame
                       key={quality}
                       assetId={getQualityAssetId(index)}
-                      className={styles.qualityChipFrame}
+                      className={[styles.qualityChipFrame, qualityLengthClass].filter(Boolean).join(" ")}
                     >
                       {chip}
                     </ScrapbookComponentFrame>
@@ -463,25 +468,31 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
             <>
               {renderAnchorLayer("bestPhrases")}
               <h2 className={styles.sectionTitle}>Лучшие фразы</h2>
-              <div className={`${styles.grid} ${styles.quotesGrid}`}>
-                {model.quotes.map((quote, index) =>
-                  isPaperBirthday ? (
-                    <ScrapbookComponentFrame
-                      key={`${quote}-${index}`}
-                      assetId={getQuoteAssetId(index)}
-                      className={`${styles.quoteCard} ${styles.paperBirthdayQuoteFrame}`}
-                    >
-                      <span className={styles.quoteMark}>,,</span>
-                      <p className={styles.message}>{quote}</p>
-                    </ScrapbookComponentFrame>
-                  ) : (
-                    <article key={`${quote}-${index}`} className={styles.quoteCard}>
-                      <span className={styles.quoteMark}>&quot;</span>
-                      <p className={styles.message}>{quote}</p>
-                    </article>
-                  )
-                )}
-              </div>
+              {model.quotes.length > 0 ? (
+                <div className={`${styles.grid} ${styles.quotesGrid}`}>
+                  {model.quotes.map((quote, index) =>
+                    isPaperBirthday ? (
+                      <ScrapbookComponentFrame
+                        key={`${quote}-${index}`}
+                        assetId={getQuoteAssetId(index)}
+                        className={`${styles.quoteCard} ${styles.paperBirthdayQuoteFrame}`}
+                      >
+                        <span className={styles.quoteMark}>,,</span>
+                        <p className={styles.message}>{quote}</p>
+                      </ScrapbookComponentFrame>
+                    ) : (
+                      <article key={`${quote}-${index}`} className={styles.quoteCard}>
+                        <span className={styles.quoteMark}>&quot;</span>
+                        <p className={styles.message}>{quote}</p>
+                      </article>
+                    )
+                  )}
+                </div>
+              ) : (
+                <p className={`${styles.sectionText} ${styles.emptyQuotesText}`}>
+                  Здесь появятся самые тёплые фразы из поздравлений. Пока их мало, открытка бережно сохранит это место.
+                </p>
+              )}
             </>
           );
 

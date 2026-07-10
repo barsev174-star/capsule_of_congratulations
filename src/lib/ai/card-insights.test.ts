@@ -124,6 +124,42 @@ describe("AI card insights", () => {
     expect(result).toHaveLength(5);
   });
 
+  it("rejects wishes, objects and one-off actions as qualities", () => {
+    const source = [
+      {
+        ...contributions[0],
+        id: "car",
+        message: "С днём рождения! Спасибо, что помог с машиной и всегда выручаешь."
+      },
+      {
+        ...contributions[1],
+        id: "health",
+        message: "Желаю здоровья, долголетия, денег и спокойствия."
+      },
+      {
+        ...contributions[2],
+        id: "lift",
+        message: "Спасибо, что починил лифт, убираешь площадку и здороваешься с соседями."
+      }
+    ];
+
+    expect(validateQualityCandidates([
+      { text: "помог с машиной", sourceContributionId: "car" },
+      { text: "здоровья", sourceContributionId: "health" },
+      { text: "долголетия", sourceContributionId: "health" },
+      { text: "починил лифт", sourceContributionId: "lift" },
+      { text: "спокойствия", sourceContributionId: "health" }
+    ], source)).toBeNull();
+
+    expect(validateQualityCandidates([
+      { text: "отзывчивость", sourceContributionId: "car" },
+      { text: "неравнодушие", sourceContributionId: "lift" },
+      { text: "ответственность", sourceContributionId: "lift" },
+      { text: "вежливость", sourceContributionId: "lift" },
+      { text: "забота", sourceContributionId: "car" }
+    ], source)).toHaveLength(5);
+  });
+
   it("extracts grounded qualities for the local fallback", () => {
     const result = buildMockQualities(contributions);
 

@@ -8,7 +8,7 @@ import {
 
 describe("card media helpers", () => {
   it("keeps the MVP photo count limit explicit", () => {
-    expect(CARD_MEDIA_MAX_COUNT).toBe(6);
+    expect(CARD_MEDIA_MAX_COUNT).toBe(7);
   });
 
   it("accepts supported image mime types", () => {

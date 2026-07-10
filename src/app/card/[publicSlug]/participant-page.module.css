@@ -1045,9 +1045,12 @@
   width: 36px;
   height: 36px;
   border-radius: 999px;
-  background: #fff0e5;
-  color: #e9652f;
+  background: linear-gradient(145deg, #f4ece3, #fff8f0);
+  color: #8f7464;
   font-weight: 800;
+  box-shadow:
+    inset 0 0 0 1px rgba(104, 78, 62, 0.08),
+    0 4px 10px rgba(83, 49, 28, 0.04);
 }
 
 .author {
@@ -1832,5 +1835,23 @@
   .footerIcon {
     width: 44px;
     height: 44px;
+  }
+
+  .variantTabs {
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .variantTab {
+    min-height: 34px;
+    padding: 0 5px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    letter-spacing: -0.01em;
+  }
+
+  .variantActions {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 }
