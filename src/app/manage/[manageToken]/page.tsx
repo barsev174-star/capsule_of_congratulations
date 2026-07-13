@@ -24,6 +24,8 @@ import { getAiCardInsight, getAiUsageSummary } from "@/lib/ai/repository";
 import { buildContributionFingerprint } from "@/lib/ai/card-insights";
 import { isGiftPublished } from "@/lib/cards/status";
 import { publishCardAction } from "@/lib/cards/actions";
+import { getGiftPollForManage } from "@/lib/gift-polls/repository";
+import { GiftPollSettingsForm } from "./gift-poll-settings-form";
 
 type Props = {
   params: Promise<{
@@ -36,7 +38,8 @@ type Props = {
 
 const tabItems = [
   { id: "design", label: "Оформление" },
-  { id: "content", label: "Поздравления и фото" }
+  { id: "content", label: "Поздравления и фото" },
+  { id: "gift", label: "Выбор подарка" }
 ] as const;
 
 type ManageTab = (typeof tabItems)[number]["id"];
@@ -61,18 +64,25 @@ export default async function ManagePage({ params, searchParams }: Props) {
     notFound();
   }
 
-  const [allContributions, cardTemplates, visibleContributions, mediaAssets, aiUsage, quotesInsight, qualitiesInsight] = await Promise.all([
+  const [allContributions, cardTemplates, visibleContributions, mediaAssets, aiUsage, quotesInsight, qualitiesInsight, giftPoll] = await Promise.all([
     listAllContributionsByCardId(card.id),
     getCardTemplates(),
     listContributionsByCardId(card.id),
     listCardMediaAssetsByCardId(card.id),
     getAiUsageSummary(card.id),
     getAiCardInsight(card.id, "quotes"),
-    getAiCardInsight(card.id, "qualities")
+    getAiCardInsight(card.id, "qualities"),
+    getGiftPollForManage(card.id)
   ]);
   const generatedQuotes = quotesInsight?.items.map((item) => item.text) ?? [];
   const generatedQualities = qualitiesInsight?.items.map((item) => item.text) ?? [];
   const contributionFingerprint = buildContributionFingerprint(visibleContributions);
+  const eligibleGiftPollVoterCount = new Set(
+    visibleContributions
+      .filter((contribution) => contribution.source === "participant")
+      .map((contribution) => contribution.participantTokenHash)
+      .filter((token): token is string => Boolean(token))
+  ).size;
   const quotesAreStale = Boolean(quotesInsight && quotesInsight.sourceFingerprint !== contributionFingerprint);
   const qualitiesAreStale = Boolean(qualitiesInsight && qualitiesInsight.sourceFingerprint !== contributionFingerprint);
   const aiContent = { quotes: generatedQuotes, qualities: generatedQualities };
@@ -420,6 +430,10 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 )}
               </section>
             </aside>
+          </div>
+        ) : activeTab === "gift" ? (
+          <div className={styles.giftPollTabShell}>
+            <GiftPollSettingsForm manageToken={manageToken} recipientName={card.recipientName} publicSlug={card.publicSlug} poll={giftPoll} eligibleVoterCount={eligibleGiftPollVoterCount} />
           </div>
         ) : (
           <ContentStudio

@@ -127,7 +127,8 @@ export const createContribution = async (input: CreateContributionInput) => {
     message: input.message,
     sortOrder: Number.NaN,
     status: "visible",
-    source: "manual",
+    source: input.source ?? "manual",
+    participantTokenHash: input.participantTokenHash?.trim() || null,
     createdAt: now,
     updatedAt: now
   };

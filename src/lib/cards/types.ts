@@ -60,7 +60,7 @@ export type CreateCardResult = {
 };
 
 export type ContributionStatus = "visible" | "hidden" | "deleted";
-export type ContributionSource = "manual";
+export type ContributionSource = "manual" | "participant";
 export type CardMediaSlot =
   | "portrait"
   | "landscape-a"
@@ -80,6 +80,7 @@ export type Contribution = {
   sortOrder: number;
   status: ContributionStatus;
   source: ContributionSource;
+  participantTokenHash?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -90,6 +91,8 @@ export type CreateContributionInput = {
   authorRole?: string;
   authorAvatarUrl?: string;
   message: string;
+  source?: ContributionSource;
+  participantTokenHash?: string;
 };
 
 export type ContributionStatusUpdate = {

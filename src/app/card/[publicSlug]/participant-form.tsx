@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AiHelper } from "./ai-helper";
+import { GiftPollVote } from "./gift-poll-vote";
 import styles from "./participant-page.module.css";
 
 type ValidationIssue = {
@@ -36,6 +37,7 @@ export const ParticipantForm = ({
   const [message, setMessage] = useState("");
   const [aiGenerationIds, setAiGenerationIds] = useState<string[]>([]);
   const [aiResetSignal, setAiResetSignal] = useState(0);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const clearSuccessOnEdit = () => {
@@ -44,10 +46,20 @@ export const ParticipantForm = ({
     }
   };
 
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setHasSubmitted(Boolean(window.localStorage.getItem(`participant-submission-${publicSlug}`)));
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [publicSlug]);
+
   const handleSubmit = async (formData: FormData) => {
     setIssues([]);
     setSuccessMessage("");
 
+    const storageKey = `participant-submission-${publicSlug}`;
+    const participantToken = window.localStorage.getItem(storageKey) || window.crypto.randomUUID();
+    formData.set("participantToken", participantToken);
     const response = await fetch("/api/contributions", {
       method: "POST",
       body: formData,
@@ -63,6 +75,9 @@ export const ParticipantForm = ({
       return;
     }
 
+    window.localStorage.setItem(storageKey, participantToken);
+    setHasSubmitted(true);
+
     setSuccessMessage("Поздравление отправлено. Спасибо, ваши слова уже в открытке.");
     setAuthorName("");
     setAuthorRole("");
@@ -74,6 +89,12 @@ export const ParticipantForm = ({
 
   return (
     <>
+      {hasSubmitted ? (
+        <section className={styles.participantSubmitted} aria-live="polite">
+          <strong>Поздравление добавлено</strong>
+          <p>Спасибо — ваши слова стали частью общей открытки.</p>
+        </section>
+      ) : (
       <section className={styles.formCard}>
         <div className={styles.cardHeader}>
           {variant === "join" ? <span className={`${styles.cardIcon} ${styles.pencilIcon}`} aria-hidden="true" /> : null}
@@ -182,8 +203,9 @@ export const ParticipantForm = ({
           </div>
         </form>
       </section>
+      )}
 
-      <AiHelper
+      {!hasSubmitted ? <AiHelper
         key={aiResetSignal}
         cardId={cardId}
         publicSlug={publicSlug}
@@ -199,7 +221,8 @@ export const ParticipantForm = ({
         }}
         variant={variant}
         greetingMode={greetingMode}
-      />
+      /> : null}
+      <GiftPollVote key={hasSubmitted ? "participant-submitted" : "participant-new"} publicSlug={publicSlug} active={hasSubmitted} focusOnReveal={Boolean(successMessage)} />
     </>
   );
 };

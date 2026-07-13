@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS contributions_card_participant_token_unique;

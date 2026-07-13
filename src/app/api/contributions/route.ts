@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger";
 import { consumeAiGenerationDrafts } from "@/lib/ai/repository";
 import { reportCriticalError } from "@/lib/telemetry";
 import { ContributionLimitReachedError } from "@/lib/contributions/limits";
+import { hashParticipantToken, isParticipantToken } from "@/lib/participants/token";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -40,7 +41,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const contribution = await createContribution(validation.data);
+    const participantToken = formData.get("participantToken");
+    const participantTokenHash = isParticipantToken(participantToken) ? hashParticipantToken(participantToken) : undefined;
+    const contribution = await createContribution({
+      ...validation.data,
+      source: participantTokenHash ? "participant" : "manual",
+      participantTokenHash
+    });
     const aiGenerationIds = typeof formData.get("aiGenerationIds") === "string"
       ? String(formData.get("aiGenerationIds")).split(",")
       : [];

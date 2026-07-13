@@ -45,6 +45,16 @@ import { requestOrganizerAccess } from "@/lib/organizer/service";
 import { getGiftPath, getJoinPath, getManagePath } from "@/lib/routes/card-links";
 import { reportCriticalError } from "@/lib/telemetry";
 import { ContributionLimitReachedError } from "@/lib/contributions/limits";
+import {
+  closeGiftPoll,
+  createGiftPoll,
+  deleteGiftPollOptionsExcept,
+  getGiftPollForManage,
+  openGiftPoll,
+  saveGiftPollOption,
+  selectGiftPollOption
+} from "@/lib/gift-polls/repository";
+import { GIFT_POLL_MAX_OPTIONS, GIFT_POLL_MIN_OPTIONS, isSafeProductUrl, normalizeBudgetAmount, normalizeGiftPollMode } from "@/lib/gift-polls/validation";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
@@ -74,6 +84,113 @@ export type CardBasicsFormState = {
   message: string;
   fields?: CardBasicsFields;
 };
+
+export type GiftPollFormState = { ok: boolean; message: string };
+
+const giftPollState = (ok: boolean, message: string): GiftPollFormState => ({ ok, message });
+
+export async function saveGiftPollAction(_previous: GiftPollFormState, formData: FormData): Promise<GiftPollFormState> {
+  const manageToken = String(formData.get("manageToken") ?? "");
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) return giftPollState(false, "Секретная ссылка управления больше не актуальна.");
+
+  const mode = normalizeGiftPollMode(formData.get("mode"));
+  const existingPoll = await getGiftPollForManage(card.id);
+  if (existingPoll && existingPoll.totalVotes > 0 && existingPoll.mode !== mode) {
+    return giftPollState(false, "Нельзя сменить режим после первого голоса: так результаты останутся корректными.");
+  }
+  const title = String(formData.get("title") ?? "").trim().slice(0, 80);
+  const question = String(formData.get("question") ?? "").trim().slice(0, 180);
+  const closesAtValue = String(formData.get("closesAt") ?? "").trim();
+  const closesAt = closesAtValue ? new Date(closesAtValue) : null;
+  const optionTitles = formData.getAll("optionTitle").map((item) => String(item).trim());
+  const optionDescriptions = formData.getAll("optionDescription").map((item) => String(item).trim());
+  const optionPrices = formData.getAll("optionPrice").map((item) => String(item).trim());
+  const optionUrls = formData.getAll("optionUrl").map((item) => String(item).trim());
+  const optionImageUrls = formData.getAll("optionImageUrl").map((item) => String(item).trim());
+  const optionIds = formData.getAll("optionId").map((item) => String(item));
+  const options = optionTitles.map((optionTitle, index) => ({
+    id: optionIds[index] || randomUUID(),
+    title: mode === "budget" ? normalizeBudgetAmount(optionTitle) : optionTitle,
+    description: optionDescriptions[index] || null,
+    priceLabel: mode === "budget" ? null : optionPrices[index] || null,
+    productUrl: mode === "budget" ? null : optionUrls[index] || null,
+    imageUrl: mode === "budget" ? null : optionImageUrls[index] || null,
+    index
+  })).filter((option): option is { id: string; title: string; description: string | null; priceLabel: string | null; productUrl: string | null; imageUrl: string | null; index: number } => Boolean(option.title));
+
+  if (!title || !question) return giftPollState(false, "Заполните заголовок и вопрос для участников.");
+  if (options.length < GIFT_POLL_MIN_OPTIONS || options.length > GIFT_POLL_MAX_OPTIONS) {
+    return giftPollState(false, `Добавьте от ${GIFT_POLL_MIN_OPTIONS} до ${GIFT_POLL_MAX_OPTIONS} вариантов.`);
+  }
+  if (options.some((option) => option.title.length > 60 || (option.description?.length ?? 0) > 140 || (option.priceLabel?.length ?? 0) > 30)) {
+    return giftPollState(false, "Проверьте лимиты: название до 60, описание до 140, сумма до 30 символов.");
+  }
+  if (options.some((option) => (option.productUrl && !isSafeProductUrl(option.productUrl)) || (option.imageUrl && !isSafeProductUrl(option.imageUrl)))) {
+    return giftPollState(false, "Ссылка на товар и изображение должны начинаться с https://.");
+  }
+  if (existingPoll && existingPoll.totalVotes > 0) {
+    if (existingPoll.title !== title || existingPoll.question !== question) {
+      return giftPollState(false, "После первого голоса нельзя менять заголовок и вопрос: участники должны голосовать при одинаковых условиях.");
+    }
+    if (options.some((option) => !existingPoll.options.some((savedOption) => savedOption.id === option.id))) {
+      return giftPollState(false, "После начала голосования список вариантов зафиксирован: нельзя добавлять, менять или удалять варианты.");
+    }
+    const changedSavedOption = existingPoll.options.some((savedOption) => {
+      const submittedOption = options.find((option) => option.id === savedOption.id);
+      return !submittedOption
+        || submittedOption.title !== savedOption.title
+        || submittedOption.description !== savedOption.description
+        || submittedOption.priceLabel !== savedOption.priceLabel
+        || submittedOption.productUrl !== savedOption.productUrl
+        || submittedOption.imageUrl !== savedOption.imageUrl;
+    });
+    if (changedSavedOption) return giftPollState(false, "После начала голосования список вариантов зафиксирован: нельзя добавлять, менять или удалять варианты.");
+  }
+
+  if (closesAtValue && (!closesAt || Number.isNaN(closesAt.getTime()))) return giftPollState(false, "Укажите корректную дату завершения или оставьте поле пустым.");
+
+  const poll = await createGiftPoll({ cardId: card.id, mode, title, question, closesAt: closesAt?.toISOString() ?? null });
+  await Promise.all(options.map((option) => saveGiftPollOption({
+    id: option.id, pollId: poll.id, title: option.title, description: option.description,
+    imageUrl: option.imageUrl, priceLabel: option.priceLabel, productUrl: option.productUrl, sortOrder: option.index
+  })));
+  await deleteGiftPollOptionsExcept(poll.id, options.map((option) => option.id));
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+  return giftPollState(true, "Варианты сохранены. Откройте голосование, когда будете готовы.");
+}
+
+export async function openGiftPollAction(formData: FormData) {
+  const manageToken = String(formData.get("manageToken") ?? "");
+  const pollId = String(formData.get("pollId") ?? "");
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card || !pollId) return;
+  await openGiftPoll(pollId);
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+}
+
+export async function reopenGiftPollAction(formData: FormData) {
+  await openGiftPollAction(formData);
+}
+
+export async function closeGiftPollAction(formData: FormData) {
+  const manageToken = String(formData.get("manageToken") ?? "");
+  const pollId = String(formData.get("pollId") ?? "");
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card || !pollId) return;
+  await closeGiftPoll(pollId);
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+}
+
+export async function selectGiftPollOptionAction(formData: FormData) {
+  const manageToken = String(formData.get("manageToken") ?? "");
+  const pollId = String(formData.get("pollId") ?? "");
+  const optionId = String(formData.get("optionId") ?? "");
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card || !pollId || !optionId) return;
+  await selectGiftPollOption(pollId, optionId);
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+}
 
 const getCardBasicsFields = (formData: FormData): CardBasicsFields => ({
   recipientName: String(formData.get("recipientName") ?? "").trim(),

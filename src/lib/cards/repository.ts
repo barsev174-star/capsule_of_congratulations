@@ -88,6 +88,7 @@ const normalizeContribution = (
   return {
     ...contribution,
     authorAvatarUrl: contribution.authorAvatarUrl ?? null,
+    participantTokenHash: contribution.participantTokenHash ?? null,
     sortOrder:
       typeof contribution.sortOrder === "number" && Number.isFinite(contribution.sortOrder)
         ? contribution.sortOrder

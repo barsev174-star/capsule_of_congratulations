@@ -49,6 +49,7 @@ type ContributionRow = {
   sort_order: number;
   status: Contribution["status"];
   source: Contribution["source"];
+  participant_token_hash: string | null;
   created_at: Date | string;
   updated_at: Date | string;
 };
@@ -117,6 +118,7 @@ const mapContribution = (row: ContributionRow): Contribution => ({
   sortOrder: row.sort_order,
   status: row.status,
   source: row.source,
+  participantTokenHash: row.participant_token_hash,
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at)
 });
@@ -582,9 +584,9 @@ export const saveContribution = async (contribution: Contribution) => {
       `
         INSERT INTO contributions (
           id, card_id, author_name, author_role, author_avatar_url, message,
-          sort_order, status, source, created_at, updated_at
+          sort_order, status, source, participant_token_hash, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       `,
       [
         contribution.id,
@@ -596,6 +598,7 @@ export const saveContribution = async (contribution: Contribution) => {
         sortOrder,
         contribution.status,
         contribution.source,
+        contribution.participantTokenHash,
         contribution.createdAt,
         contribution.updatedAt
       ]

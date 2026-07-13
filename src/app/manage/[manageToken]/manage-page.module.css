@@ -1485,6 +1485,151 @@
   transform: scale(0.96);
 }
 
+.giftPollManager {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid rgba(98, 72, 58, 0.14);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(255, 250, 245, 0.95), rgba(255, 245, 235, 0.9));
+  box-shadow: 0 18px 48px rgba(73, 49, 35, 0.07);
+}
+
+.giftPollTabShell { width: 100%; max-width: none; }
+
+.giftPollManagerIntro { display: flex; gap: 16px; justify-content: space-between; align-items: start; }
+.giftPollManagerIntro p { max-width: 680px; margin: 6px 0 0; color: #806452; }
+.giftPollStatus { flex: 0 0 auto; padding: 8px 10px; border-radius: 999px; background: rgba(233, 101, 47, 0.12); color: #a84f29; font-size: 0.86rem; font-weight: 700; }
+.giftPollManagerForm, .giftPollOptionList { display: grid; gap: 14px; }
+.giftPollModeChoices { display: flex; flex-wrap: wrap; gap: 10px; }
+.giftPollModeChoices label { display: inline-flex; min-height: 42px; align-items: center; gap: 8px; padding: 0 14px; border: 1px solid rgba(98, 72, 58, 0.18); border-radius: 999px; color: #604635; cursor: pointer; }
+.giftPollModeChoices .giftPollModeActive { border-color: rgba(233, 101, 47, 0.7); background: rgba(233, 101, 47, 0.1); color: #a84f29; }
+.giftPollModeHint { margin: -2px 0 0; color: #806452; font-size: .92rem; }
+.giftPollField, .giftPollOptionEditor label { display: grid; gap: 6px; color: #624a3b; font-size: 0.9rem; font-weight: 700; }
+.giftPollField input, .giftPollOptionEditor input { min-height: 44px; padding: 0 12px; border: 1px solid rgba(98, 72, 58, 0.18); border-radius: 13px; background: rgba(255,255,255,.78); color: #34251f; font: inherit; }
+.giftPollOptionEditor { display: grid; gap: 10px; margin: 0; padding: 16px; border: 1px solid rgba(98, 72, 58, 0.12); border-radius: 18px; background: rgba(255,255,255,.5); }
+.giftPollOptionEditor legend { padding: 0 6px; color: #7d5f4d; font-size: .9rem; font-weight: 700; }
+.giftPollOptionFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.giftPollAddOption, .giftPollRemoveOption, .giftPollOpenButton, .giftPollCloseButton, .giftPollSelectedButton { min-height: 42px; width: fit-content; padding: 0 14px; border-radius: 12px; font: inherit; font-weight: 700; cursor: pointer; }
+.giftPollAddOption, .giftPollOpenButton { border: 1px solid rgba(233, 101, 47, .48); background: rgba(255,255,255,.76); color: #b6572c; }
+.giftPollRemoveOption, .giftPollCloseButton { border: 1px solid rgba(133, 69, 55, .3); background: rgba(255,245,241,.85); color: #954b35; }
+.giftPollSelectedButton { border: 1px solid rgba(97, 132, 91, .35); background: rgba(222, 239, 217, .72); color: #456d42; }
+.giftPollFormSuccess, .giftPollFormError { margin: 0; font-size: .92rem; }
+.giftPollFormSuccess { color: #487243; }.giftPollFormError { color: #a64e35; }
+.giftPollResults { display: grid; gap: 6px; padding: 16px; border-radius: 18px; background: rgba(255,255,255,.58); color: #604635; font-variant-numeric: tabular-nums; }
+.giftPollResults p { margin: 0; }
+
+.giftPollEmptyState { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px 18px; max-width: 880px; padding: 34px; border: 1px solid rgba(98, 72, 58, .15); border-radius: 24px; background: rgba(255, 253, 250, .78); box-shadow: 0 16px 38px rgba(91, 58, 38, .06); }
+.giftPollEmptyState p { max-width: 680px; margin: 6px 0 0; color: #806452; line-height: 1.55; }
+.giftPollEmptyIcon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 16px; background: #fff0e8; color: #e9652f; font-size: 1.35rem; }
+.giftPollEnableButton { grid-column: 2; width: fit-content; min-height: 46px; padding: 0 18px; border: 0; border-radius: 999px; background: #ec662f; color: #fff; font: inherit; font-weight: 800; cursor: pointer; box-shadow: 0 10px 20px rgba(233, 101, 47, .2); }
+.giftPollEnableButton span, .giftPollToggleOn { position: relative; display: inline-block; width: 34px; height: 20px; margin-right: 8px; vertical-align: -5px; border-radius: 999px; background: #ef6630; }
+.giftPollEnableButton span::after, .giftPollToggleOn::after { position: absolute; top: 3px; right: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; content: ""; }
+.giftPollToggleOn { margin: 0; }
+.giftPollHero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(270px, 340px); gap: 22px; align-items: start; }
+.giftPollHeroCopy { padding: 6px 2px; }.giftPollHeroCopy p { max-width: 620px; margin: 8px 0 0; color: #806452; line-height: 1.55; }
+.giftPollHeroHeading { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }.giftPollHeroHeading .sectionTitle { margin: 0; }
+.giftPollStatusCard { display: grid; gap: 9px; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, rgba(255,255,255,.8), rgba(255,243,235,.88)); color: #6a5041; font-size: .9rem; }
+.giftPollStatusCard > div { display: flex; justify-content: space-between; gap: 12px; align-items: center; }.giftPollStatusCard p { margin: 0; }.giftPollStatusOpen { padding: 5px 9px; border-radius: 999px; background: #e3f1df; color: #427242; font-size: .78rem; font-weight: 800; }
+.giftPollModeFieldset { display: grid; gap: 12px; margin: 0; padding: 18px; border: 1px solid rgba(98,72,58,.13); border-radius: 20px; }.giftPollModeFieldset legend { padding: 0 6px; color: #624a3b; font-size: .9rem; font-weight: 800; }
+.giftPollModeChoices label { flex: 1 1 220px; min-height: 76px; align-items: start; padding: 14px; border-radius: 14px; }.giftPollModeChoices label span { display: grid; gap: 3px; }.giftPollModeChoices label small { color: #806452; font-size: .8rem; font-weight: 500; }
+.giftPollModeChoices input { accent-color: #ec662f; }
+.giftPollQuestionGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }.giftPollField { position: relative; }.giftPollField small { position: absolute; right: 11px; bottom: 12px; color: #9a8171; font-size: .75rem; font-weight: 500; }.giftPollField input { padding-right: 58px; }
+.giftPollDateField { display: grid; gap: 7px; max-width: 360px; color: #624a3b; font-size: .9rem; font-weight: 800; }.giftPollDateField span, .giftPollOptionBody label span { color: #9a8171; font-weight: 500; }.giftPollDateField input { min-height: 44px; padding: 0 12px; border: 1px solid rgba(98,72,58,.18); border-radius: 13px; background: rgba(255,255,255,.78); color: #34251f; font: inherit; }
+.giftPollOptionsSection { display: grid; gap: 12px; }.giftPollOptionsHeader { display: flex; justify-content: space-between; gap: 16px; align-items: end; }.giftPollOptionsHeader h3 { margin: 0; color: #4d3327; font-family: Georgia, serif; font-size: 1.25rem; }.giftPollOptionsHeader p { margin: 4px 0 0; color: #806452; font-size: .9rem; }
+.giftPollOptionList { gap: 10px; }.giftPollOptionEditor { gap: 0; padding: 0; overflow: hidden; }.giftPollOptionCardHeader { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 12px; align-items: center; min-height: 70px; padding: 12px 14px; }.giftPollOptionCardHeader > div:nth-child(2) { display: grid; gap: 4px; min-width: 0; }.giftPollOptionCardHeader > div:nth-child(2) span { overflow: hidden; color: #806452; font-size: .85rem; text-overflow: ellipsis; white-space: nowrap; }
+.giftPollDragHint, .giftPollOptionCardActions button { border: 0; background: transparent; color: #856958; font: inherit; cursor: pointer; }.giftPollDragHint { font-size: 1.15rem; letter-spacing: -3px; }.giftPollOptionCardActions { display: flex; flex-wrap: wrap; justify-content: end; gap: 5px; }.giftPollOptionCardActions button { min-height: 32px; padding: 0 7px; border-radius: 8px; }.giftPollOptionCardActions button:hover:not(:disabled) { background: rgba(233,101,47,.1); color: #b6572c; }.giftPollOptionCardActions button:disabled { opacity: .32; cursor: default; }
+.giftPollOptionBody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px; border-top: 1px solid rgba(98,72,58,.11); background: rgba(255,255,255,.36); }.giftPollOptionBody > label:last-child, .giftPollOptionBody > label:nth-child(2) { grid-column: 1 / -1; }.giftPollOptionBody label { display: grid; gap: 6px; color: #624a3b; font-size: .88rem; font-weight: 800; }.giftPollOptionBody input { min-height: 42px; padding: 0 11px; border: 1px solid rgba(98,72,58,.17); border-radius: 11px; background: #fffdfb; color: #34251f; font: inherit; }.giftPollOptionBody .giftPollOptionFields { grid-column: 1 / -1; }
+.giftPollDangerZone { display: flex; justify-content: space-between; gap: 18px; align-items: center; padding: 18px; border: 1px solid rgba(149,75,53,.26); border-radius: 18px; background: rgba(255,245,241,.76); }.giftPollDangerZone h3 { margin: 0; color: #7f4534; }.giftPollDangerZone p { max-width: 560px; margin: 5px 0 0; color: #806452; }.giftPollCloseButton { flex: 0 0 auto; }
+@media (max-width: 760px) { .giftPollEmptyState { grid-template-columns: 1fr; padding: 24px; }.giftPollEnableButton { grid-column: auto; width: 100%; }.giftPollHero, .giftPollQuestionGrid { grid-template-columns: 1fr; }.giftPollOptionsHeader, .giftPollDangerZone { align-items: stretch; flex-direction: column; }.giftPollOptionsHeader .giftPollAddOption, .giftPollCloseButton { width: 100%; }.giftPollOptionCardHeader { grid-template-columns: auto minmax(0,1fr); }.giftPollOptionCardActions { grid-column: 1 / -1; justify-content: start; }.giftPollOptionBody { grid-template-columns: 1fr; }.giftPollOptionBody > label:last-child, .giftPollOptionBody > label:nth-child(2) { grid-column: auto; } }
+
+/* Product-like gift poll dashboard */
+.giftPollManager { gap: 24px; max-width: 1240px; margin-inline: auto; padding: 28px; border-radius: 26px; background: rgba(255,253,250,.9); box-shadow: 0 16px 42px rgba(85,54,35,.08); }
+.giftPollAdminTitle { margin: 0; color: #33221b; font-family: var(--font-sans, Arial, sans-serif); font-size: clamp(1.22rem, 1.8vw, 1.5rem); line-height: 1.12; text-wrap: balance; }
+.giftPollHero { grid-template-columns: minmax(0, 1fr) 340px; padding-bottom: 22px; border-bottom: 1px solid rgba(98,72,58,.1); }.giftPollHeroCopy { padding: 2px 0; }.giftPollHeroCopy p { max-width: 570px; font-size: .84rem; line-height: 1.48; text-wrap: pretty; }
+.giftPollHeroHeading { flex-wrap: nowrap; gap: 9px; }.giftPollHeroHeading > strong { color: #624a3b; font-size: .8rem; white-space: nowrap; }.giftPollToggleOn { width: 34px; height: 20px; }.giftPollStatusCard { gap: 10px; padding: 17px 18px; border: 1px solid rgba(98,72,58,.06); box-shadow: 0 8px 18px rgba(85,54,35,.035); }.giftPollStatusCard p { display: flex; align-items: center; gap: 7px; font-size: .82rem; }.giftPollStatusLabel { display: inline-flex; min-width: 54px; justify-content: center; padding: 3px 6px; border-radius: 999px; background: #fff0e8; color: #c15c31; font-size: .65rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.giftPollModeFieldset { padding: 15px 16px 14px; border-radius: 16px; }.giftPollModeFieldset legend span { margin-left: 7px; color: #b35d35; font-size: .7rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }.giftPollModeChoices { flex-wrap: nowrap; gap: 12px; }.giftPollModeChoices label { position: relative; flex: 0 1 270px; min-height: 70px; padding: 10px 12px; }.giftPollModeChoices label input { position: absolute; opacity: 0; }.giftPollModeChoices label input:disabled + .giftPollModeIcon { opacity: .55; }.giftPollModeChoices label > span:last-child { gap: 2px; }.giftPollModeChoices label > span:last-child b { width: fit-content; padding: 2px 6px; border-radius: 999px; background: #f8ece4; color: #a95a36; font-size: .62rem; letter-spacing: .05em; text-transform: uppercase; }.giftPollModeChoices label > span:last-child strong { font-size: .9rem; }.giftPollModeChoices label > span:last-child small { font-size: .76rem; line-height: 1.35; }.giftPollModeIcon { display: grid; width: 30px; height: 30px; flex: 0 0 auto; place-items: center; border-radius: 9px; color: #806452; font-size: 1.06rem; }.giftPollModeActive .giftPollModeIcon { background: #fff0e8; color: #ec662f; }.giftPollModeHint { margin: 0; font-size: .84rem; }
+.giftPollQuestionGrid { gap: 18px; }.giftPollField { font-size: .84rem; }.giftPollField input { min-height: 42px; border-radius: 11px; font-weight: 400; }.giftPollDateField { max-width: 300px; margin-top: -4px; font-size: .82rem; }.giftPollDateField input { min-height: 40px; border-radius: 10px; font-weight: 400; }
+.giftPollSettingsLocked { display: flex; align-items: center; min-height: 36px; margin: -4px 0 0; padding: 0 12px; border: 1px solid rgba(98, 72, 58, .1); border-radius: 10px; background: #f3efe9; color: #7b6b5e; font-size: .82rem; }
+.giftPollField input[readonly] { border-color: rgba(98, 72, 58, .12); background: #f3efe9; color: #6f6157; cursor: default; }
+.giftPollField input[readonly]::selection { background: transparent; }
+.giftPollOptionsSection { gap: 12px; }.giftPollOptionsHeader { align-items: center; }.giftPollOptionsHeader h3 { font-family: var(--font-sans, Arial, sans-serif); font-size: 1rem; font-weight: 800; }.giftPollOptionsHeader p { font-size: .82rem; }.giftPollAddOption { min-height: 38px; padding: 0 14px; border-radius: 9px; font-size: .83rem; }.giftPollOptionList { gap: 8px; }
+.giftPollOptionEditor { border-color: rgba(98,72,58,.12); border-radius: 13px; background: #fffdfb; transition: border-color .18s ease, box-shadow .18s ease, opacity .18s ease; }.giftPollOptionEditor:hover { border-color: rgba(233,101,47,.34); box-shadow: 0 7px 16px rgba(85,54,35,.04); }.giftPollOptionDragging { opacity: .5; }.giftPollOptionCardHeader { grid-template-columns: 18px 76px minmax(170px,1fr) 56px 132px auto; gap: 13px; min-height: 104px; padding: 11px 13px; }.giftPollBudgetEditor .giftPollOptionCardHeader { grid-template-columns: 18px minmax(180px,1fr) 56px 132px auto; }.giftPollDragHint { padding: 0; color: #b8a496; font-size: 1.2rem; cursor: grab; }.giftPollOptionThumbnail, .giftPollOptionPlaceholder { width: 76px; height: 76px; border-radius: 10px; object-fit: cover; background: linear-gradient(145deg,#fff0e8,#f5d9ca); outline: 1px solid rgba(0,0,0,.1); }.giftPollOptionPlaceholder { display: grid; place-items: center; color: #bd6c42; font-size: 1.5rem; }.giftPollOptionPreview, .giftPollBudgetPreview { display: grid; gap: 4px; min-width: 0; }.giftPollOptionPreview strong, .giftPollBudgetPreview strong { overflow: hidden; color: #4d3327; font-size: .94rem; text-overflow: ellipsis; white-space: nowrap; }.giftPollOptionPreview span, .giftPollBudgetPreview span { overflow: hidden; color: #806452; font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }.giftPollOptionPreview em { width: fit-content; max-width: 100%; overflow: hidden; padding: 2px 6px; border-radius: 999px; background: #fff0e8; color: #ec662f; font-size: .74rem; font-style: normal; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }.giftPollOptionPreview a { overflow: hidden; color: #9b6649; font-size: .74rem; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }.giftPollBudgetPreview strong { color: #b6532c; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.giftPollOptionResult { display: grid; gap: 0; text-align: center; font-variant-numeric: tabular-nums; }.giftPollOptionResult strong { color: #3e2b22; font-size: 1.28rem; line-height: 1; }.giftPollOptionResult span { color: #806452; font-size: .72rem; }.giftPollProgress { display: grid; gap: 7px; }.giftPollProgress strong { color: #604635; font-size: .8rem; }.giftPollProgress > span { display: block; height: 4px; overflow: hidden; border-radius: 999px; background: #f0e9e3; }.giftPollProgress i { display: block; height: 100%; border-radius: inherit; background: #ef6630; transition: width .22s ease; }.giftPollOptionCardActions { flex-wrap: nowrap; gap: 3px; }.giftPollOptionCardActions button { min-width: 27px; padding: 0 5px; color: #9a7159; }.giftPollOptionCardActions .giftPollRemoveOption { color: #d75837; }
+.giftPollOptionBody { padding: 15px 17px; background: #fffaf6; }.giftPollRemoveOption { width: fit-content; min-height: 38px; margin-top: 4px; padding: 0 12px; border: 1px solid rgba(210,88,55,.32); border-radius: 9px; background: #fff7f3; color: #c54e31; font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; }.giftPollAddOptionWide { min-height: 42px; border: 1px dashed rgba(236,102,47,.64); border-radius: 9px; background: #fff6f0; color: #ec662f; font: inherit; font-size: .86rem; font-weight: 800; cursor: pointer; }.giftPollAddOptionWide:active, .giftPollRemoveOption:active, .giftPollSaveButton:active { scale: .96; }.giftPollSaveButton { min-height: 45px; padding: 0 20px; border: 0; border-radius: 10px; background: #ec662f; color: #fff; font: inherit; font-weight: 800; cursor: pointer; box-shadow: 0 9px 18px rgba(233,101,47,.18); }.giftPollSaveButton:disabled { opacity: .55; cursor: default; }.giftPollDecisionPanel { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 17px; border-radius: 16px; background: rgba(255,248,243,.9); }.giftPollDecisionPanel h3, .giftPollDecisionPanel p { width: 100%; margin: 0; }.giftPollDecisionPanel p { color: #806452; font-size: .86rem; }
+.giftPollDangerZone { border-color: rgba(236,102,47,.4); background: #fff3eb; }.giftPollDangerZone h3 { color: #b6532c; }.giftPollCloseButton { border-color: rgba(236,102,47,.58); background: #ec662f; color: #fff; box-shadow: 0 8px 16px rgba(236,102,47,.16); }
+.giftPollHero { align-items: start; }.giftPollHeroCopy { padding-top: 4px; }.giftPollStatusCard { margin-top: -8px; }.giftPollStatusCard > div { min-height: 26px; }.giftPollStatusCard p { gap: 9px; }.giftPollStatusCard p svg { width: 17px; height: 17px; flex: 0 0 auto; color: #a66b4b; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }.giftPollStatusLabel { display: none; }
+.giftPollModeFieldset legend { color: #4d3327; font-family: var(--font-sans, Arial, sans-serif); font-size: 1rem; font-weight: 800; }.giftPollModeFieldset legend span { color: #ec662f; font-size: .72rem; }.giftPollModeChoices label { align-items: center; }.giftPollModeChoices label > span:last-child b { display: none; }.giftPollModeIcon { border: 1px solid rgba(128,100,82,.22); background: #fffdfb; }.giftPollModeIcon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }.giftPollModeActive { border-color: #ec662f !important; background: #fff3eb !important; color: #ec662f !important; }.giftPollModeActive .giftPollModeIcon { border-color: rgba(236,102,47,.48); background: #fff; color: #ec662f; }.giftPollModeActive > span:last-child strong { color: #d55727; }.giftPollModeActive > span:last-child small { color: #a85e3c; }
+.giftPollField input, .giftPollDateField input, .giftPollOptionBody input { font-weight: 400; }.giftPollOptionBody input::placeholder { font-weight: 400; color: #9d8577; }
+.giftPollOptionBody input[readonly] { cursor: not-allowed; background: #f5f0ec; color: #8c786c; }.giftPollAutosaveStatus { margin: 0; color: #9a735f; font-size: .8rem; font-weight: 700; }
+.giftPollOptionCardActions { position: relative; align-items: center; }.giftPollIconAction { display: inline-grid; width: 40px; min-width: 40px !important; height: 40px; place-items: center; padding: 0 !important; border: 1px solid transparent !important; border-radius: 10px !important; color: #a36a4f !important; }.giftPollIconAction svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }.giftPollIconAction:hover { border-color: rgba(236,102,47,.32) !important; background: #fff3eb !important; color: #ec662f !important; }.giftPollIconAction:active { scale: .96; }.giftPollIconActionMuted { color: #cfc3bb !important; }.giftPollIconActionMuted:hover { border-color: transparent !important; background: transparent !important; color: #cfc3bb !important; }.giftPollActionHint { position: absolute; z-index: 2; top: calc(100% + 6px); right: 0; width: max-content; max-width: 260px; padding: 7px 9px; border-radius: 8px; background: #5a4033; color: #fff; font-size: .72rem; line-height: 1.25; box-shadow: 0 8px 16px rgba(85,54,35,.14); }.giftPollActionHint::before { position: absolute; top: -4px; right: 14px; width: 8px; height: 8px; background: #5a4033; content: ""; rotate: 45deg; }
+.giftPollDangerZone { border-color: rgba(236,102,47,.55); background: linear-gradient(135deg, #fff5ef, #fff0e5); }.giftPollDangerZone h3 { color: #ec662f; }.giftPollDangerZone p { color: #9c674c; }.giftPollCloseButton { background: #ec662f; color: #fff; }
+@media (min-width: 761px) { .giftPollMoveButton { display: none; } }
+@media (max-width: 900px) { .giftPollManager { padding: 22px; }.giftPollHero { grid-template-columns: 1fr; }.giftPollStatusCard { max-width: none; margin-top: 0; }.giftPollOptionCardHeader, .giftPollBudgetEditor .giftPollOptionCardHeader { grid-template-columns: 18px 64px minmax(130px,1fr) 48px 92px; }.giftPollBudgetEditor .giftPollOptionCardHeader { grid-template-columns: 18px minmax(130px,1fr) 48px 92px; }.giftPollOptionThumbnail, .giftPollOptionPlaceholder { width: 64px; height: 64px; }.giftPollOptionCardActions { grid-column: 2 / -1; justify-content: flex-start; }.giftPollModeChoices { flex-wrap: wrap; } }
+@media (max-width: 760px) { .giftPollDragHint { cursor: default; }.giftPollMoveButton { display: inline-flex; } }
+@media (max-width: 620px) { .giftPollManager { padding: 18px; }.giftPollHeroHeading { flex-wrap: wrap; }.giftPollHeroHeading > strong { width: 100%; }.giftPollQuestionGrid { grid-template-columns: 1fr; }.giftPollModeChoices { display: grid; }.giftPollModeChoices label { max-width: none; }.giftPollOptionCardHeader, .giftPollBudgetEditor .giftPollOptionCardHeader { grid-template-columns: 18px minmax(0,1fr) 45px; }.giftPollOptionThumbnail, .giftPollOptionPlaceholder { display: none; }.giftPollOptionPreview, .giftPollBudgetPreview { grid-column: 2; }.giftPollOptionResult { grid-column: 3; }.giftPollProgress { grid-column: 2 / -1; }.giftPollOptionCardActions { grid-column: 2 / -1; }.giftPollDateField { max-width: none; }.giftPollOptionsHeader { align-items: stretch; }.giftPollSaveButton { width: 100%; } }
+
+/* Contextual action hints must not be clipped by a collapsed option card. */
+.giftPollOptionEditor { overflow: visible; }
+.giftPollActionHint { z-index: 4; top: calc(100% + 8px); box-sizing: border-box; width: 250px; max-width: min(250px, calc(100vw - 32px)); padding: 8px 10px; line-height: 1.35; overflow-wrap: anywhere; white-space: normal; }
+.giftPollActionHintEdit { right: 38px; }
+.giftPollActionHintEdit::before { right: 16px; }
+.giftPollHeroState { display: inline-flex; min-height: 24px; align-items: center; padding: 0 9px; border-radius: 999px; background: #e3f1df; color: #427242; font-size: .78rem; font-weight: 800; }
+.giftPollModeDisabled { border-color: rgba(98,72,58,.12) !important; background: #f6f2ef !important; color: #a4978e !important; cursor: not-allowed; opacity: .66; }.giftPollModeDisabled .giftPollModeIcon { border-color: rgba(98,72,58,.12); background: #f8f6f4; color: #a4978e; }.giftPollModeDisabled > span:last-child strong, .giftPollModeDisabled > span:last-child small { color: #9c8f86; }
+.giftPollOptionsLockHint { color: #9a735f !important; }
+.giftPollDangerZone { border-color: rgba(98,72,58,.14); background: rgba(255,253,250,.78); box-shadow: none; }.giftPollDangerZone h3 { color: #4d3327; }.giftPollDangerZone p { color: #806452; }.giftPollCloseButton { border: 1px solid rgba(236,102,47,.66); background: transparent; color: #ec662f; box-shadow: none; }.giftPollCloseButton:hover { background: #fff3ed; color: #d95728; }
+
+@media (min-width: 1100px) {
+  .giftPollManager { display: grid; grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
+  .giftPollHero { display: contents; }
+  .giftPollHeroCopy, .giftPollManagerForm, .giftPollDecisionPanel, .giftPollManager > form:not(.giftPollManagerForm) { grid-column: 1; }
+  .giftPollRightRail { grid-column: 2; grid-row: 1 / span 6; position: sticky; top: 24px; display: flex; flex-direction: column; gap: 16px; }
+}
+
+.giftPollRightRail { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.giftPollParticipantView, .giftPollFinishCard { display: grid; gap: 10px; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, rgba(255,255,255,.8), rgba(255,243,235,.88)); box-shadow: 0 8px 18px rgba(85,54,35,.035), inset 0 0 0 1px rgba(98,72,58,.06); }
+.giftPollParticipantView strong, .giftPollFinishCard > strong { color: #3e2b23; font-size: 1rem; }
+.giftPollParticipantView p, .giftPollFinishCard p { margin: 0; color: #806452; font-size: .88rem; line-height: 1.5; text-wrap: pretty; }
+.giftPollParticipantLink { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 0 14px; border: 1px solid rgba(236,102,47,.58); border-radius: 12px; color: #ec662f; font-size: .88rem; font-weight: 800; text-align: center; text-decoration: none; transition-property: background-color, color, transform; transition-duration: 160ms; }
+.giftPollParticipantLink:hover { background: #fff3ed; color: #d95728; }
+.giftPollParticipantLink:active { transform: scale(.96); }
+.giftPollFinishCard .giftPollDateField { max-width: none; margin: 2px 0 0; }
+.giftPollFinishCard .giftPollCloseButton { width: 100%; min-height: 42px; padding-inline: 12px; font: inherit; font-weight: 800; cursor: pointer; }
+
+/* Gift-poll page intentionally uses independent cards: the main editor must not inherit a tall shared surface. */
+.giftPollPage { width: 100%; max-width: none; padding-inline: 24px; box-sizing: border-box; }
+.giftPollLayout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+.giftPollMain { display: grid; gap: 24px; min-width: 0; padding: 28px; border-radius: 26px; background: rgba(255,253,250,.9); box-shadow: 0 16px 42px rgba(85,54,35,.08); }
+.giftPollMain .giftPollHero { display: block; padding: 0 0 22px; border-bottom: 1px solid rgba(98,72,58,.1); }
+.giftPollMain .giftPollHeroCopy { padding: 2px 0; }
+.giftPollMain .giftPollManagerForm { min-width: 0; }
+.giftPollSidebar { position: sticky; top: 20px; align-self: start; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.giftPollSidebar .giftPollStatusCard { margin-top: 0; }
+
+@media (max-width: 1099px) {
+  .giftPollPage { padding-inline: 24px; }
+  .giftPollLayout { grid-template-columns: 1fr; }
+  .giftPollSidebar { position: static; }
+}
+
+@media (max-width: 719px) {
+  .giftPollPage { padding-inline: 14px; }
+  .giftPollMain { padding: 18px; border-radius: 22px; }
+  .giftPollMain .giftPollQuestionGrid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1099px) {
+  .giftPollRightRail { position: static; }
+  .giftPollManager { display: grid; grid-template-columns: 1fr; }
+  .giftPollHero { display: contents; }
+  .giftPollHeroCopy { order: 0; }
+  .giftPollManagerForm { order: 1; }
+  .giftPollRightRail { order: 2; }
+  .giftPollDecisionPanel, .giftPollManager > form:not(.giftPollManagerForm) { order: 3; }
+}
+.giftPollOpenButton { border-color: rgba(236,102,47,.66); background: transparent; color: #ec662f; }.giftPollOpenButton:hover { border-color: #ec662f; background: #fff3ed; color: #d95728; }
+.giftPollDecisionPanel { gap: 14px; }.giftPollDecisionOptions { display: grid; width: 100%; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }.giftPollDecisionOption { display: flex; min-height: 86px; align-items: center; justify-content: space-between; gap: 12px; padding: 13px; border: 1px solid rgba(98,72,58,.14); border-radius: 13px; background: #fffdfb; }.giftPollDecisionOption > div { display: grid; gap: 3px; min-width: 0; }.giftPollDecisionOption strong { color: #4d3327; }.giftPollDecisionOption span { color: #806452; font-size: .8rem; }.giftPollDecisionOption em { width: fit-content; color: #ec662f; font-size: .78rem; font-style: normal; font-weight: 800; }.giftPollDecisionOptionSelected { border-color: rgba(236,102,47,.68); background: #fff4ec; box-shadow: inset 0 0 0 1px rgba(236,102,47,.14); }.giftPollDecisionSelectedLabel { display: inline-flex; flex: 0 0 auto; align-items: center; min-height: 32px; padding: 0 10px; border-radius: 999px; background: #ec662f; color: #fff !important; font-size: .76rem !important; font-weight: 800; }
+
 .contentAiButtonSecondary {
   border-color: rgba(98, 72, 58, 0.14);
   background: rgba(255, 255, 255, 0.72);
@@ -7772,6 +7917,7 @@ button.contentFilterPill {
   .shell {
     max-width: 1520px;
   }
+
 
   .designStudio {
     grid-template-columns: minmax(0, 1.45fr) minmax(420px, 0.85fr);
