@@ -4,10 +4,11 @@ import { createOrganizerSessionToken, getOrganizerSessionSecret } from "@/lib/or
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL?.trim() || url.origin).replace(/\/+$/, "");
   const token = url.searchParams.get("token") ?? "";
   const email = token ? await verifyOrganizerAccess(token) : null;
-  if (!email) return NextResponse.redirect(new URL("/account/login?error=expired", url));
-  const response = NextResponse.redirect(new URL("/account", url));
+  if (!email) return NextResponse.redirect(new URL("/account/login?error=expired", siteUrl));
+  const response = NextResponse.redirect(new URL("/account", siteUrl));
   response.cookies.set("organizer_session", createOrganizerSessionToken(email, getOrganizerSessionSecret()), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
