@@ -3,7 +3,6 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import type { GiftPollWithOptions } from "@/lib/gift-polls/types";
 import { defaultGiftPollCopy } from "@/lib/gift-polls/validation";
 import { closeGiftPollAction, openGiftPollAction, reopenGiftPollAction, saveGiftPollAction, selectGiftPollOptionAction, type GiftPollFormState } from "./actions";
@@ -47,7 +46,6 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
     id: option.id, title: option.title, description: option.description ?? "", imageUrl: option.imageUrl ?? "", priceLabel: option.priceLabel ?? "", productUrl: option.productUrl ?? ""
   })) ?? [emptyOption(), emptyOption()]);
   const [state, formAction, pending] = useActionState(saveGiftPollAction, initialState);
-  const router = useRouter();
   const markForAutoSave = () => setAutoSaveVersion((version) => version + 1);
   const patchOption = (index: number, key: keyof EditableOption, value: string) => { setOptions((current) => current.map((option, itemIndex) => itemIndex === index ? { ...option, [key]: value } : option)); markForAutoSave(); };
   const toggleOption = (id: string) => setExpandedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
@@ -79,10 +77,6 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
     setMode(nextMode);
     markForAutoSave();
   };
-
-  useEffect(() => {
-    if (state.ok) router.refresh();
-  }, [router, state.ok]);
 
   useEffect(() => {
     if (!autoSaveVersion || pending || lastSubmittedAutoSaveVersion.current === autoSaveVersion) return;
