@@ -10,6 +10,7 @@ UPLOADS_BACKUP="${2:-$BACKUP_DIR/uploads-latest.tar.gz}"
 RESTORE_DB="capsule_restore_check_$(date +%s)"
 EXTRACT_DIR="$(mktemp -d)"
 EXPECTED_MIGRATIONS="$(find "$ROOT_DIR/migrations" -maxdepth 1 -type f -name '*.sql' | wc -l | tr -d '[:space:]')"
+MIN_MIGRATIONS="${MIN_MIGRATIONS:-$EXPECTED_MIGRATIONS}"
 
 if [[ -f "$ENV_FILE" ]]; then
   set -a
@@ -46,8 +47,13 @@ gzip -dc "$POSTGRES_BACKUP" | docker compose -f "$COMPOSE_FILE" --env-file "$ENV
 MIGRATION_COUNT="$(docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T postgres \
   psql -U "$POSTGRES_USER" -d "$RESTORE_DB" -tAc "SELECT count(*) FROM schema_migrations;")"
 
-if [[ "${MIGRATION_COUNT//[[:space:]]/}" -lt "$EXPECTED_MIGRATIONS" ]]; then
-  echo "Restored database has fewer than $EXPECTED_MIGRATIONS migrations: $MIGRATION_COUNT"
+if [[ ! "$MIN_MIGRATIONS" =~ ^[0-9]+$ ]]; then
+  echo "MIN_MIGRATIONS must be a non-negative integer: $MIN_MIGRATIONS" >&2
+  exit 1
+fi
+
+if [[ "${MIGRATION_COUNT//[[:space:]]/}" -lt "$MIN_MIGRATIONS" ]]; then
+  echo "Restored database has fewer than $MIN_MIGRATIONS migrations: $MIGRATION_COUNT"
   exit 1
 fi
 

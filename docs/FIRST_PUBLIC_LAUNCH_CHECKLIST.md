@@ -28,7 +28,7 @@
 
 - [ ] Зафиксировать текущий commit, образы и состояние контейнеров на VPS.
 - [ ] Создать backup PostgreSQL и `public/uploads`; сохранить путь, время и checksum.
-- [ ] Проверить восстановление backup по `infra/scripts/verify-backup-restore.sh`.
+- [ ] Проверить восстановление backup по `infra/scripts/verify-backup-restore.sh`. Если backup снят до ещё не применённых миграций релиза, передайте текущее количество миграций сервера через `MIN_MIGRATIONS`.
 - [ ] Запустить только отчёт об очистке: `bash infra/scripts/clear-test-data-for-public-launch.sh`.
 - [ ] Сверить количества тестовых сущностей и файлов с ожидаемыми.
 
