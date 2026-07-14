@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="title">
+  <title id="title">Slovesto</title>
+  <g fill="none" stroke="#4A332A" stroke-linecap="round" stroke-linejoin="round" stroke-width="9">
+    <path d="m27 105 93-70 93 70"/>
+    <path d="M22 106 120 177l98-71v96a9 9 0 0 1-9 9H31a9 9 0 0 1-9-9z"/>
+    <path d="m23 107 97 70 97-70M23 205l72-53m122 53-72-53"/>
+    <path d="M64 78h112v82H64z"/>
+    <path d="M84 101h68m-68 24h51m-51 24h30"/>
+  </g>
+</svg>

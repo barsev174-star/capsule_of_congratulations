@@ -26,7 +26,7 @@ const reminder: EventReminder = {
 describe("event reminder emails", () => {
   beforeEach(() => {
     vi.stubEnv("RESEND_API_KEY", "test-key");
-    vi.stubEnv("EMAIL_FROM", "Дари слова <hello@example.com>");
+    vi.stubEnv("EMAIL_FROM", "Slovesto <hello@example.com>");
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://example.com");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
   });
@@ -55,5 +55,12 @@ describe("event reminder emails", () => {
     expect(body.subject).toBe("Пора собрать открытку: Мама");
     expect(body.text).toContain("Через 7 дней — День рождения.");
     expect(body.text).toContain("Собрать открытку: https://example.com/create");
+  });
+
+  it("adds Reply-To only when a receiving mailbox is configured", async () => {
+    vi.stubEnv("EMAIL_REPLY_TO", "hello@slovesto.ru");
+    await sendEventReminderEmail(reminder);
+    const body = JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body));
+    expect(body.reply_to).toBe("hello@slovesto.ru");
   });
 });

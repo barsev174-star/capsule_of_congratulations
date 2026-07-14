@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { getCardDraftByPublicSlug, listAllContributionsByCardId, listContributionsByCardId } from "@/lib/cards/repository";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import { ParticipantForm } from "@/app/card/[publicSlug]/participant-form";
@@ -66,11 +67,7 @@ export default async function JoinCardPage({ params }: Props) {
       <div className={styles.shell}>
         <header className={styles.topbar}>
           <div className={styles.brand}>
-            <div className={styles.brandLockup}>
-              <span className={styles.brandText}>Дари слова</span>
-              <span className={styles.brandTagline}>дарите слова красиво</span>
-            </div>
-            <span className={styles.brandMark}>♡</span>
+            <BrandLogo />
           </div>
           <div className={styles.trustBadge}>
             <span className={styles.shieldIcon} aria-hidden="true" />

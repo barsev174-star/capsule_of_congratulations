@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getAdminSession } from "@/lib/admin/session";
 import { logoutAdminAction } from "../login/actions";
 import { AdminNav } from "./admin-nav";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import styles from "../admin.module.css";
 
 type AdminShellProps = {
@@ -19,7 +20,7 @@ export async function AdminShell({ children }: AdminShellProps) {
     <div className={styles.shell}>
       <header className={styles.header}>
         <div className={styles.headerBrand}>
-          <span className={styles.headerLogo}>Дари слова</span>
+          <BrandLogo />
           <span className={styles.headerTag}>Админка</span>
         </div>
         <div className={styles.headerMeta}>

@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import type { Metadata } from "next";
 import { SupportForm } from "./support-form";
 import styles from "./support.module.css";
 
 export const metadata: Metadata = {
-  title: "Поддержка — Дари слова",
-  description: "Сообщить о проблеме, задать вопрос или предложить улучшение сервиса Дари слова."
+  title: "Поддержка",
+  description: "Сообщить о проблеме, задать вопрос или предложить улучшение сервиса Slovesto."
 };
 
 const allowedSources = ["landing", "create", "join", "manage", "gift", "other"];
@@ -20,7 +21,7 @@ export default async function SupportPage({ searchParams }: Props) {
     <main className={styles.page}>
       <div className={styles.shell}>
         <header className={styles.header}>
-          <Link href="/" className={styles.brand}>Дари слова<span aria-hidden="true">♡</span></Link>
+          <Link href="/" className={styles.brand}><BrandLogo /></Link>
           <Link href="/" className={styles.backLink}>На главную</Link>
         </header>
 
@@ -29,7 +30,7 @@ export default async function SupportPage({ searchParams }: Props) {
           <h1>Расскажите, чем помочь</h1>
           <p>
             Если что-то не работает, непонятно или у вас появилась хорошая идея — напишите нам.
-            Такие сообщения помогают делать «Дари слова» удобнее.
+            Такие сообщения помогают делать Slovesto удобнее.
           </p>
         </section>
 

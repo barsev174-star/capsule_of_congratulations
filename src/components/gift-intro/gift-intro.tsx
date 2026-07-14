@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import type { CardTemplateId } from "@/lib/cards/templates";
 import { defaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import styles from "./gift-intro.module.css";
@@ -252,7 +253,7 @@ export const GiftIntro = ({
                     <span className={styles.cardBackEmblem} aria-hidden="true">
                       <span className={styles.cardHeart}>♡</span>
                     </span>
-                    <span className={styles.cardBackBrand}>Дари слова♡</span>
+                    <BrandLogo variant="mark" className={styles.cardBackBrand} />
                   </div>
                   <div className={styles.envelopeCardInsideTop} aria-hidden="true">
                     <div className={`${styles.cardTemplatePreview} ${styles.cardTemplatePreviewUpper}`}>

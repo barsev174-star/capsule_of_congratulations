@@ -12,7 +12,7 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 : "${CRON_SECRET:?CRON_SECRET is required}"
-BASE_URL="${NEXT_PUBLIC_SITE_URL:-https://www.darislova.ru}"
+BASE_URL="${NEXT_PUBLIC_SITE_URL:-https://slovesto.ru}"
 
 curl --fail --silent --show-error \
   --connect-timeout 10 \

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 270" role="img" aria-labelledby="title">
+  <title id="title">Slovesto — Место, где слова становятся подарком</title>
+  <g transform="translate(10 15)">
+    <path fill="#D96A3D" d="M27 105 120 35l93 70z"/>
+    <rect x="64" y="72" width="112" height="112" rx="9" fill="#FFF7EC"/>
+    <path fill="#4A332A" d="M83 96h70a5 5 0 1 1 0 10H83a5 5 0 1 1 0-10m0 23h52a5 5 0 1 1 0 10H83a5 5 0 1 1 0-10m0 23h31a5 5 0 1 1 0 10H83a5 5 0 1 1 0-10"/>
+    <path fill="#D96A3D" d="M22 106 120 177l98-71v96a9 9 0 0 1-9 9H31a9 9 0 0 1-9-9z"/>
+    <path fill="none" stroke="#FBEFDF" stroke-linecap="round" stroke-linejoin="round" stroke-width="5" d="m23 107 97 70 97-70M23 205l72-53m122 53-72-53"/>
+  </g>
+  <text x="285" y="150" fill="#4A332A" font-family="Georgia, 'Times New Roman', serif" font-size="116" font-weight="700" letter-spacing="-5">Slovesto</text>
+  <text x="289" y="193" fill="#4A332A" fill-opacity=".82" font-family="Arial, sans-serif" font-size="24" letter-spacing=".2">Место, где слова становятся подарком</text>
+</svg>

@@ -382,6 +382,7 @@
   color: #9a563e;
   text-shadow: 0 1px 0 rgba(255, 252, 247, 0.7);
 }
+.cardBackBrand { display: block; width: 34px; height: 34px; }
 
 .cardBackCaption {
   position: relative;

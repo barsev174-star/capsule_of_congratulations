@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { startCardFromShowcaseAction } from "../home-actions";
 import styles from "./header.module.css";
 
@@ -15,13 +16,7 @@ export function HomeHeader() {
     <header className={styles.header}>
       <div className={styles.shell}>
         <Link href="/" className={styles.logo}>
-          <span className={styles.logoMark} aria-hidden="true">
-            ♡
-          </span>
-          <span className={styles.logoLockup}>
-            <span className={styles.logoText}>Дари слова</span>
-            <span className={styles.logoTagline}>тёплые открытки от близких</span>
-          </span>
+          <BrandLogo variant="marketing" />
         </Link>
 
         <nav className={styles.nav} aria-label="Главная навигация">

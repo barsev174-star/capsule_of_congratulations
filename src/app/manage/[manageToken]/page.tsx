@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { notFound } from "next/navigation";
 import type { CSSProperties } from "react";
 import {
@@ -177,9 +178,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
         <header className={styles.managerHeader}>
           <div className={styles.managerBrand}>
             <Link href="/" className={styles.brandName}>
-              Дари слова<span aria-hidden="true">♡</span>
+              <BrandLogo />
             </Link>
-            <span className={styles.brandTagline}>теплые открытки от близких</span>
           </div>
 
           <div className={styles.managerTitleGroup}>

@@ -14,8 +14,26 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Дари слова",
-  description: "Теплые цифровые открытки от одного человека или всей компании."
+  metadataBase: new URL("https://slovesto.ru"),
+  title: {
+    default: "Slovesto",
+    template: "%s | Slovesto"
+  },
+  description: "Онлайн-открытки, поздравления и подарки.",
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    siteName: "Slovesto",
+    images: [{ url: "/brand/og-default-1200x630.png", width: 1200, height: 630, alt: "Slovesto" }]
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" }
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
+  },
+  manifest: "/manifest.webmanifest"
 };
 
 export default function RootLayout({

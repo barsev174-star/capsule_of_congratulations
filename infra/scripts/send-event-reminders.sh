@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ENV_FILE="${ENV_FILE:-$ROOT_DIR/.env.production}"
-PRODUCTION_URL="${PRODUCTION_URL:-https://www.darislova.ru}"
-LOCK_FILE="${LOCK_FILE:-/tmp/darislova-event-reminders.lock}"
+PRODUCTION_URL="${PRODUCTION_URL:-https://slovesto.ru}"
+LOCK_FILE="${LOCK_FILE:-/tmp/slovesto-event-reminders.lock}"
 
 exec 9>"$LOCK_FILE"
 if ! flock --nonblock 9; then

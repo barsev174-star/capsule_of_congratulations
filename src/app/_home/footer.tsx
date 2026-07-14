@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import styles from "./footer.module.css";
 
 export function HomeFooter() {
@@ -6,8 +7,8 @@ export function HomeFooter() {
     <footer className={styles.footer}>
       <div className={styles.inner}>
         <div>
-          <strong>Дари слова<span aria-hidden="true">♡</span></strong>
-          <p>Тёплые открытки от близких</p>
+          <BrandLogo />
+          <p>Групповые онлайн-открытки, поздравления и подарки</p>
         </div>
         <nav aria-label="Служебные ссылки">
           <Link href="/account">Мои открытки</Link>

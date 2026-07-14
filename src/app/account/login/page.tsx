@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import type { Metadata } from "next";
 import { AccountLoginForm } from "./login-form";
 import styles from "../account.module.css";
 
-export const metadata: Metadata = { title: "Мои открытки — Дари слова" };
+export const metadata: Metadata = { title: "Мои открытки" };
 
 type Props = { searchParams: Promise<{ error?: string }> };
 
@@ -12,7 +13,7 @@ export default async function AccountLoginPage({ searchParams }: Props) {
   return (
     <main className={styles.page}>
       <div className={styles.loginShell}>
-        <Link href="/" className={styles.brand}>Дари слова<span>♡</span></Link>
+        <Link href="/" className={styles.brand}><BrandLogo /></Link>
         <section className={styles.loginCard}>
           <p className={styles.eyebrow}>Для организатора</p>
           <h1>Ваши открытки всегда под рукой</h1>

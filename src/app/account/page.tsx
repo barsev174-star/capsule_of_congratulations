@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { redirect } from "next/navigation";
 import { listCardDraftsByOrganizerEmail } from "@/lib/cards/repository";
 import { isGiftPublished } from "@/lib/cards/status";
@@ -23,7 +24,7 @@ export default async function AccountPage() {
     <main className={styles.page}>
       <div className={styles.dashboardShell}>
         <header className={styles.dashboardHeader}>
-          <div><Link href="/" className={styles.brand}>Дари слова<span>♡</span></Link><p>{session.email}</p></div>
+          <div><Link href="/" className={styles.brand}><BrandLogo /></Link><p>{session.email}</p></div>
           <form action={logoutOrganizerAction}><button type="submit" className={styles.secondaryButton}>Выйти</button></form>
         </header>
         <section className={styles.dashboardIntro}>

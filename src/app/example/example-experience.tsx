@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { GiftIntro } from "@/components/gift-intro/gift-intro";
 import { exampleCardModel } from "@/lib/example-card";
 import { startCardFromShowcaseAction } from "../home-actions";
@@ -63,9 +64,8 @@ export const ExampleExperience = ({ children }: Props) => {
     <main className={styles.page}>
       <div className={styles.shell}>
         <header className={styles.header}>
-          <Link href="/" className={styles.brand} aria-label="Дари слова — на главную">
-            <span className={styles.brandName}>Дари слова</span>
-            <span className={styles.brandTagline}>дарите слова красиво</span>
+          <Link href="/" className={styles.brand} aria-label="Slovesto — на главную">
+            <BrandLogo variant="marketing" />
           </Link>
           <span className={styles.demoBadge}>Демонстрационная открытка</span>
         </header>

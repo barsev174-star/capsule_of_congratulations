@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "brand:assets": "node scripts/build-brand-assets.mjs",
+    "brand:check": "node scripts/check-brand-layouts.mjs",
     "start": "next start",
     "lint": "eslint .",
     "preflight": "npm run lint && npm test && npm run build && npm run smoke:local && npm run smoke:admin && npm run smoke:retention",
