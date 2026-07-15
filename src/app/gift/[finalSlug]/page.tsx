@@ -55,7 +55,7 @@ export default async function GiftPage({ params, searchParams }: Props) {
       accent={template?.accent}
       forceIntro={isForceIntroEnabled}
     >
-      <FinalCard model={model} debugAssets={isAssetDebugEnabled} />
+      <FinalCard model={model} debugAssets={isAssetDebugEnabled} manageToken={card.manageToken} />
     </GiftIntro></>
   );
 }

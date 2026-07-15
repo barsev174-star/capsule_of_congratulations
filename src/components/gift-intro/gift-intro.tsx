@@ -27,19 +27,6 @@ const STORAGE_KEY_PREFIX = "gift-opened-";
 
 const INTRO_DURATION = 4800;
 
-const subscribeReducedMotion = (callback: () => void) => {
-  const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-  media.addEventListener("change", callback);
-  return () => media.removeEventListener("change", callback);
-};
-
-const getReducedMotionSnapshot = () => {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-};
-
-const getReducedMotionServerSnapshot = () => false;
-
 const subscribeSessionStorage = (callback: () => void) => {
   const handleStorage = (event: StorageEvent) => {
     if (event.storageArea === sessionStorage) {
@@ -65,12 +52,6 @@ export const GiftIntro = ({
   forceIntro = false,
   children
 }: GiftIntroProps) => {
-  const reducedMotion = useSyncExternalStore(
-    subscribeReducedMotion,
-    getReducedMotionSnapshot,
-    getReducedMotionServerSnapshot
-  );
-
   const getOpenedSnapshot = useCallback(() => {
     if (typeof window === "undefined") return false;
     try {
@@ -83,8 +64,10 @@ export const GiftIntro = ({
   const alreadyOpened = useSyncExternalStore(subscribeSessionStorage, getOpenedSnapshot, getOpenedServerSnapshot);
 
   const [state, setState] = useState<GiftIntroState>("idle");
+  const [isFinalCardRevealed, setIsFinalCardRevealed] = useState(false);
   const [isHoveringCta, setIsHoveringCta] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const shouldSkipIntro = alreadyOpened && state === "idle" && !forceIntro;
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach(clearTimeout);
@@ -92,13 +75,13 @@ export const GiftIntro = ({
   }, []);
 
   useEffect(() => {
-    const shouldLockScroll = !alreadyOpened && state !== "done";
+    const shouldLockScroll = !shouldSkipIntro && state !== "done";
     document.body.style.overflow = shouldLockScroll ? "hidden" : "";
 
     return () => {
       document.body.style.overflow = "";
     };
-  }, [state, alreadyOpened]);
+  }, [state, shouldSkipIntro]);
 
   useEffect(() => {
     return () => clearTimers();
@@ -121,17 +104,15 @@ export const GiftIntro = ({
       return;
     }
 
-    saveOpenedFlag();
-
-    if (reducedMotion) {
-      setState("done");
-      return;
-    }
-
     clearTimers();
+    setIsFinalCardRevealed(false);
     setState("playing");
-    schedule(() => setState("done"), INTRO_DURATION);
-  }, [state, reducedMotion, saveOpenedFlag, clearTimers, schedule]);
+    schedule(() => setIsFinalCardRevealed(true), 3550);
+    schedule(() => {
+      saveOpenedFlag();
+      setState("done");
+    }, INTRO_DURATION);
+  }, [state, saveOpenedFlag, clearTimers, schedule]);
 
   const handleSkip = useCallback(() => {
     clearTimers();
@@ -147,6 +128,7 @@ export const GiftIntro = ({
     } catch {
       // ignore
     }
+    setIsFinalCardRevealed(false);
     setState("idle");
   }, [clearTimers, slug]);
 
@@ -160,14 +142,14 @@ export const GiftIntro = ({
     [handleOpen]
   );
 
-  if (alreadyOpened && !forceIntro) {
+  if (shouldSkipIntro) {
     return <>{children}</>;
   }
 
   const name = recipientName.trim() || "Вам";
   const accentColor = accent ?? "#bf6c47";
   const stateClass = styles[state];
-  const showFinalCard = state === "playing";
+  const showFinalCard = state === "playing" && isFinalCardRevealed;
   const isBeforeOpen = state === "idle";
 
   if (state === "done") {
@@ -186,9 +168,9 @@ export const GiftIntro = ({
 
   return (
     <>
-      {showFinalCard ? <div className={styles.finalReveal}>{children}</div> : null}
+      {showFinalCard ? <div className={`${styles.finalReveal} ${styles.finalRevealReady}`}>{children}</div> : null}
       <div
-        className={`${styles.page} ${stateClass} ${reducedMotion ? styles.reducedMotion : ""}`}
+        className={`${styles.page} ${stateClass}`}
         data-intro-state={state}
         data-animation-id={animationId}
         aria-live="polite"
@@ -250,9 +232,6 @@ export const GiftIntro = ({
                     <span className={styles.cardPaperLines} aria-hidden="true" />
                     <span className={`${styles.cardBackSprig} ${styles.cardBackSprigLeft}`} aria-hidden="true" />
                     <span className={`${styles.cardBackSprig} ${styles.cardBackSprigRight}`} aria-hidden="true" />
-                    <span className={styles.cardBackEmblem} aria-hidden="true">
-                      <span className={styles.cardHeart}>♡</span>
-                    </span>
                     <BrandLogo variant="mark" className={styles.cardBackBrand} />
                   </div>
                   <div className={styles.envelopeCardInsideTop} aria-hidden="true">

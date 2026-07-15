@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import type { GiftPollWithOptions } from "@/lib/gift-polls/types";
 import { defaultGiftPollCopy } from "@/lib/gift-polls/validation";
 import { closeGiftPollAction, openGiftPollAction, reopenGiftPollAction, saveGiftPollAction, selectGiftPollOptionAction, type GiftPollFormState } from "./actions";
@@ -42,13 +42,24 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
   const [autoSaveVersion, setAutoSaveVersion] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
   const lastSubmittedAutoSaveVersion = useRef(0);
+  const canDragOption = useRef(false);
   const [options, setOptions] = useState<EditableOption[]>(poll?.options.map((option) => ({
     id: option.id, title: option.title, description: option.description ?? "", imageUrl: option.imageUrl ?? "", priceLabel: option.priceLabel ?? "", productUrl: option.productUrl ?? ""
   })) ?? [emptyOption(), emptyOption()]);
   const [state, formAction, pending] = useActionState(saveGiftPollAction, initialState);
   const markForAutoSave = () => setAutoSaveVersion((version) => version + 1);
   const patchOption = (index: number, key: keyof EditableOption, value: string) => { setOptions((current) => current.map((option, itemIndex) => itemIndex === index ? { ...option, [key]: value } : option)); markForAutoSave(); };
-  const toggleOption = (id: string) => setExpandedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  const submitAutoSave = useCallback(() => {
+    const form = formRef.current;
+    if (pending || !form?.checkValidity()) return;
+    lastSubmittedAutoSaveVersion.current = autoSaveVersion;
+    form.requestSubmit();
+  }, [autoSaveVersion, pending]);
+  const toggleOption = (id: string) => {
+    const isClosing = expandedIds.includes(id);
+    setExpandedIds((current) => isClosing ? current.filter((item) => item !== id) : [...current, id]);
+    if (isClosing) window.setTimeout(submitAutoSave, 0);
+  };
   const moveOption = (index: number, direction: -1 | 1) => setOptions((current) => {
     const nextIndex = index + direction;
     if (nextIndex < 0 || nextIndex >= current.length) return current;
@@ -68,6 +79,8 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
   const changeMode = (nextMode: Mode) => {
     if (nextMode === mode) return;
     if (poll && poll.totalVotes > 0) return;
+    const hasFilledOption = options.some((option) => Object.values(option).some((value) => value.trim().length > 0));
+    if (hasFilledOption && !window.confirm("Сменить режим и начать заново? Текущие варианты будут заменены.")) return;
     const previousDefaults = defaultGiftPollCopy(mode, recipientName);
     const nextDefaults = defaultGiftPollCopy(nextMode, recipientName);
     if (title === previousDefaults.title) setTitle(nextDefaults.title);
@@ -81,14 +94,10 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
   useEffect(() => {
     if (!autoSaveVersion || pending || lastSubmittedAutoSaveVersion.current === autoSaveVersion) return;
     const timeout = window.setTimeout(() => {
-      const form = formRef.current;
-      if (form?.checkValidity()) {
-        lastSubmittedAutoSaveVersion.current = autoSaveVersion;
-        form.requestSubmit();
-      }
+      submitAutoSave();
     }, 700);
     return () => window.clearTimeout(timeout);
-  }, [autoSaveVersion, pending]);
+  }, [autoSaveVersion, pending, submitAutoSave]);
 
   if (!enabled) {
     return <section className={styles.giftPollEmptyState}>
@@ -104,9 +113,17 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
   const settingsLocked = totalVotes > 0;
   const statusLabel = poll?.status === "open" ? "Открыто" : poll?.status === "closed" ? "Завершено" : "Черновик";
   const remainingOptionCount = 6 - options.length;
+  const validOptions = options.filter((option) => option.title.trim().length > 0);
+  const hasInvalidLinks = options.some((option) => [option.productUrl, option.imageUrl].some((url) => Boolean(url) && !url.startsWith("https://")));
+  const saveState = pending ? "saving" : state.message && !state.ok ? "error" : state.ok || Boolean(poll) ? "saved" : "idle";
+  const isPollReady = Boolean(poll) && title.trim().length > 0 && question.trim().length > 0 && validOptions.length >= 2 && !hasInvalidLinks && saveState === "saved";
 
   return (
-    <section className={styles.giftPollPage} onPointerDown={() => setOptionHint(null)}>
+    <section className={styles.giftPollPage} data-poll-status={poll?.status ?? "draft"} onPointerDown={() => setOptionHint(null)} onPointerDownCapture={(event) => {
+      canDragOption.current = event.target instanceof Element && Boolean(event.target.closest(`.${styles.giftPollDragHint}`));
+    }} onDragStartCapture={(event) => {
+      if (!canDragOption.current) event.preventDefault();
+    }} onDragEndCapture={() => { canDragOption.current = false; }}>
       <div className={styles.giftPollLayout}>
       <div className={styles.giftPollMain}>
       <header className={styles.giftPollHero}>
@@ -118,6 +135,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
 
       <form id="gift-poll-settings" ref={formRef} action={formAction} className={styles.giftPollManagerForm}>
         <input type="hidden" name="manageToken" value={manageToken} />
+        <input type="hidden" name="optionsPayload" value={JSON.stringify(options)} />
         <fieldset className={styles.giftPollModeFieldset}>
           <legend>Режим голосования <span>{modeLocked ? "выбран и зафиксирован" : "выберите один сценарий"}</span></legend>
           <div className={styles.giftPollModeChoices}>
@@ -159,8 +177,18 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
           {totalVotes === 0 && options.length < 6 ? <button type="button" className={styles.giftPollAddOptionWide} onClick={() => { const option = emptyOption(); setOptions((current) => [...current, option]); setExpandedIds((current) => [...current, option.id]); }}>＋ Добавить {isBudget ? "сумму" : "вариант"}</button> : null}
         </section>
         {state.message ? <p className={state.ok ? styles.giftPollFormSuccess : styles.giftPollFormError} aria-live="polite">{state.message}</p> : null}
-        <p className={styles.giftPollAutosaveStatus} aria-live="polite">{pending ? "Сохраняем изменения…" : "Изменения сохраняются автоматически"}</p>
+        <p className={styles.giftPollAutosaveStatus} aria-live="polite">{pending ? "Сохраняем изменения…" : state.ok ? "Сохранено" : "Изменения сохраняются автоматически"}</p>
       </form>
+      {(!poll || poll.status === "draft") ? <>
+        <form id="gift-poll-launch" action={openGiftPollAction} onSubmit={(event) => { if (!window.confirm("Открыть голосование? Участники смогут голосовать после отправки поздравления. После первого голоса настройки нельзя будет изменить.")) event.preventDefault(); }}>
+          <input type="hidden" name="manageToken" value={manageToken} />
+          <input type="hidden" name="pollId" value={poll?.id ?? ""} />
+        </form>
+        <footer className={styles.giftPollLaunchFooter}>
+          <div><strong>{isPollReady ? "Всё готово к запуску голосования" : "Завершите настройку голосования"}</strong><p>{isPollReady ? "После открытия участники смогут выбрать подарок." : saveState === "saving" ? "Сохраняем изменения…" : saveState === "error" ? "Не удалось сохранить изменения. Попробуйте ещё раз." : validOptions.length < 2 ? "Нужно добавить минимум два варианта." : hasInvalidLinks ? "Проверьте формат ссылок: используйте адреса, начинающиеся с https://." : "Заполните заголовок и вопрос для участников."}</p></div>
+          <button type="submit" form="gift-poll-launch" className={styles.giftPollSaveButton} disabled={!isPollReady}>Открыть голосование</button>
+        </footer>
+      </> : null}
 
       {poll?.status === "closed" ? <><section className={styles.giftPollDecisionPanel}><h3>Выбор организатора</h3><p>Зафиксируйте вариант после завершения голосования.</p><div className={styles.giftPollDecisionOptions}>{poll.options.map((option) => {
         const selected = poll.selectedOptionId === option.id;
@@ -168,6 +196,29 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
       })}</div></section><form action={reopenGiftPollAction} onSubmit={(event) => { if (!window.confirm("Возобновить голосование? Участники снова смогут голосовать и менять свой выбор.")) event.preventDefault(); }}><input type="hidden" name="manageToken" value={manageToken} /><input type="hidden" name="pollId" value={poll.id} /><button type="submit" className={styles.giftPollOpenButton}>Возобновить голосование</button></form></> : null}
       </div>
       <aside className={styles.giftPollSidebar}>
+        {(!poll || poll.status === "draft") ? <>
+          <section className={`${styles.giftPollStatusCard} ${styles.giftPollDraftStatusCard}`} aria-label="Статус голосования">
+            <div><strong>Статус голосования</strong><span className={styles.giftPollStatus}>Черновик</span></div>
+            <p>Голосование ещё не открыто</p>
+            <p><CalendarIcon />Завершение: вручную</p>
+            <p><EyeIcon />Результаты видите только вы</p>
+          </section>
+          <section className={`${styles.giftPollParticipantView} ${styles.giftPollDraftParticipantView}`}>
+            <strong>Как это видит участник</strong>
+            <p>Голосование появится после того, как участник отправит поздравление.</p>
+            <a href={`/join/${publicSlug}`} target="_blank" rel="noopener noreferrer" className={styles.giftPollParticipantLink}>Посмотреть как участник</a>
+          </section>
+          <section className={styles.giftPollDraftChecklist}>
+            <strong>Перед открытием</strong>
+            <ul>
+              <li>{mode ? "✓" : "○"} Выбран сценарий голосования</li>
+              <li>{title.trim() && question.trim() ? "✓" : "○"} Заполнены заголовок и вопрос</li>
+              <li>{validOptions.length >= 2 ? "✓" : "○"} Добавлено минимум два варианта</li>
+              <li>○ Проверьте ссылки и фотографии</li>
+            </ul>
+            <p>После первого голоса режим, формулировки и варианты будут зафиксированы.</p>
+          </section>
+        </> : null}
         <section className={styles.giftPollStatusCard} aria-label="Статус голосования">
           <div><strong>Статус голосования</strong><span className={poll?.status === "open" ? styles.giftPollStatusOpen : styles.giftPollStatus}>{statusLabel}</span></div>
           <p><PeopleIcon />Проголосовали: {eligibleVoterCount > 0 ? `${totalVotes} из ${eligibleVoterCount} ${pluralParticipants(eligibleVoterCount)}, добавивших поздравление` : `${totalVotes} ${totalVotes === 1 ? "участник" : "участников"}`}</p>
@@ -179,13 +230,12 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
           <p>Голосование появится после того, как участник отправит поздравление.</p>
           <a href={`/join/${publicSlug}`} target="_blank" rel="noopener noreferrer" className={styles.giftPollParticipantLink}>Открыть форму участника</a>
         </section>
-        <section className={styles.giftPollFinishCard}>
+        {poll?.status !== "draft" ? <section className={styles.giftPollFinishCard}>
           <strong>Завершение голосования</strong>
           <p>После закрытия участники больше не смогут голосовать или менять выбор.</p>
           <label className={styles.giftPollDateField}>Планируемая дата завершения <span>Для вашего удобства. Голосование закроется только после нажатия кнопки.</span><input form="gift-poll-settings" type="datetime-local" name="closesAt" value={closesAt} onChange={(event) => { setClosesAt(event.target.value); markForAutoSave(); }} /></label>
-          {poll?.status === "draft" ? <form action={openGiftPollAction}><input type="hidden" name="manageToken" value={manageToken} /><input type="hidden" name="pollId" value={poll.id} /><button type="submit" className={styles.giftPollCloseButton}>Открыть голосование</button></form> : null}
           {poll?.status === "open" ? <form action={closeGiftPollAction}><input type="hidden" name="manageToken" value={manageToken} /><input type="hidden" name="pollId" value={poll.id} /><button type="submit" className={styles.giftPollCloseButton}>Закрыть голосование</button></form> : null}
-        </section>
+        </section> : null}
       </aside>
       </div>
     </section>

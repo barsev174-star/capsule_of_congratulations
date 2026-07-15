@@ -4966,3 +4966,70 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
     z-index: 3;
   }
 }
+
+/* The portrait photo is clipped to the transparent window of its PNG frame. */
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] > .componentAssetContent {
+  position: absolute;
+  inset: 0;
+  display: block;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaPortraitViewport {
+  position: absolute;
+  inset: 8.8% 10.5% 13% 10.5%;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgb(74 52 39 / 12%);
+}
+
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaPortraitViewport .mediaImage {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  object-fit: cover;
+}
+
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] > .componentAssetOverlayLayer {
+  display: block;
+  z-index: 2;
+  -webkit-mask:
+    linear-gradient(#000 0 0) top / 100% 11% no-repeat,
+    linear-gradient(#000 0 0) left / 16% 100% no-repeat,
+    linear-gradient(#000 0 0) right / 17% 100% no-repeat,
+    linear-gradient(#000 0 0) bottom / 100% 15% no-repeat;
+  mask:
+    linear-gradient(#000 0 0) top / 100% 11% no-repeat,
+    linear-gradient(#000 0 0) left / 16% 100% no-repeat,
+    linear-gradient(#000 0 0) right / 17% 100% no-repeat,
+    linear-gradient(#000 0 0) bottom / 100% 15% no-repeat;
+}
+
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaCaption {
+  position: absolute;
+  right: 16%;
+  bottom: 9%;
+  left: 15%;
+  z-index: 3;
+  display: -webkit-box;
+  height: 2.5em;
+  padding: 0;
+  overflow: hidden;
+  line-height: 1.18;
+  text-align: center;
+  text-wrap: pretty;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+@media (min-width: 901px) {
+  .paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+  }
+}

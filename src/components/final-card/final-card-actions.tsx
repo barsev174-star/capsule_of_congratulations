@@ -28,7 +28,7 @@ const SparkleIcon = () => (
   </svg>
 );
 
-export const FinalCardActions = () => {
+export const FinalCardActions = ({ manageHref = "/create" }: { manageHref?: string }) => {
   const [message, setMessage] = useState("");
 
   const handleThanks = () => {
@@ -50,7 +50,7 @@ export const FinalCardActions = () => {
           <DownloadIcon />
           Сохранить открытку
         </button>
-        <a href="/create" className={`${styles.button} ${styles.secondaryButton}`}>
+        <a href={manageHref} className={`${styles.button} ${styles.secondaryButton}`}>
           <SparkleIcon />
           Создать такую же открытку
         </a>

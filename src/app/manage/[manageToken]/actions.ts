@@ -109,13 +109,38 @@ export async function saveGiftPollAction(_previous: GiftPollFormState, formData:
   const optionUrls = formData.getAll("optionUrl").map((item) => String(item).trim());
   const optionImageUrls = formData.getAll("optionImageUrl").map((item) => String(item).trim());
   const optionIds = formData.getAll("optionId").map((item) => String(item));
-  const options = optionTitles.map((optionTitle, index) => ({
-    id: optionIds[index] || randomUUID(),
-    title: mode === "budget" ? normalizeBudgetAmount(optionTitle) : optionTitle,
-    description: optionDescriptions[index] || null,
-    priceLabel: mode === "budget" ? null : optionPrices[index] || null,
-    productUrl: mode === "budget" ? null : optionUrls[index] || null,
-    imageUrl: mode === "budget" ? null : optionImageUrls[index] || null,
+  const fallbackOptions = optionTitles.map((optionTitle, index) => ({
+    id: optionIds[index] || randomUUID(), title: optionTitle, description: optionDescriptions[index] || "",
+    priceLabel: optionPrices[index] || "", productUrl: optionUrls[index] || "", imageUrl: optionImageUrls[index] || ""
+  }));
+  let submittedOptions = fallbackOptions;
+  const optionsPayload = formData.get("optionsPayload");
+  if (typeof optionsPayload === "string") {
+    try {
+      const parsed = JSON.parse(optionsPayload);
+      if (Array.isArray(parsed)) {
+        submittedOptions = parsed
+          .filter((option): option is Record<string, unknown> => Boolean(option) && typeof option === "object")
+          .map((option) => ({
+            id: typeof option.id === "string" ? option.id : randomUUID(),
+            title: typeof option.title === "string" ? option.title.trim() : "",
+            description: typeof option.description === "string" ? option.description.trim() : "",
+            priceLabel: typeof option.priceLabel === "string" ? option.priceLabel.trim() : "",
+            productUrl: typeof option.productUrl === "string" ? option.productUrl.trim() : "",
+            imageUrl: typeof option.imageUrl === "string" ? option.imageUrl.trim() : ""
+          }));
+      }
+    } catch {
+      // Fall back to regular form fields for clients that do not send the state snapshot.
+    }
+  }
+  const options = submittedOptions.map((option, index) => ({
+    id: option.id || randomUUID(),
+    title: mode === "budget" ? normalizeBudgetAmount(option.title) : option.title,
+    description: option.description || null,
+    priceLabel: mode === "budget" ? null : option.priceLabel || null,
+    productUrl: mode === "budget" ? null : option.productUrl || null,
+    imageUrl: mode === "budget" ? null : option.imageUrl || null,
     index
   })).filter((option): option is { id: string; title: string; description: string | null; priceLabel: string | null; productUrl: string | null; imageUrl: string | null; index: number } => Boolean(option.title));
 

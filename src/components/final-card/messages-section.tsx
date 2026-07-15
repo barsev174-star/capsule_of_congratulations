@@ -103,12 +103,23 @@ const renderMediaFigure = (
     <>
       {asset ? (
         <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={asset.publicUrl}
-            alt={asset.captionTitle || asset.captionSubtitle || title}
-            className={finalCardStyles.mediaImage}
-          />
+          {slot === "portrait" && isPaperBirthday ? (
+            <span className={finalCardStyles.mediaPortraitViewport}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={asset.publicUrl}
+                alt={asset.captionTitle || asset.captionSubtitle || title}
+                className={finalCardStyles.mediaImage}
+              />
+            </span>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={asset.publicUrl}
+              alt={asset.captionTitle || asset.captionSubtitle || title}
+              className={finalCardStyles.mediaImage}
+            />
+          )}
           <figcaption className={finalCardStyles.mediaCaption}>
             <span className={finalCardStyles.mediaCaptionSubtitle}>
               {asset.captionTitle || asset.captionSubtitle || title}

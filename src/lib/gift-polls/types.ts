@@ -23,6 +23,7 @@ export type GiftPoll = {
   question: string;
   status: GiftPollStatus;
   closesAt: string | null;
+  closedAt: string | null;
   selectedOptionId: string | null;
   createdAt: string;
   updatedAt: string;

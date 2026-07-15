@@ -4,7 +4,7 @@ import type { GiftPoll, GiftPollOption, GiftPollWithOptions, ParticipantGiftPoll
 
 type PollRow = {
   id: string; card_id: string; mode: GiftPoll["mode"]; title: string; question: string;
-  status: GiftPoll["status"]; closes_at: Date | string | null; selected_option_id: string | null;
+  status: GiftPoll["status"]; closes_at: Date | string | null; closed_at: Date | string | null; selected_option_id: string | null;
   created_at: Date | string; updated_at: Date | string;
 };
 type OptionRow = {
@@ -15,7 +15,7 @@ type OptionRow = {
 const iso = (value: Date | string) => value instanceof Date ? value.toISOString() : value;
 const mapPoll = (row: PollRow): GiftPoll => ({
   id: row.id, cardId: row.card_id, mode: row.mode, title: row.title, question: row.question, status: row.status,
-  closesAt: row.closes_at ? iso(row.closes_at) : null, selectedOptionId: row.selected_option_id,
+  closesAt: row.closes_at ? iso(row.closes_at) : null, closedAt: row.closed_at ? iso(row.closed_at) : null, selectedOptionId: row.selected_option_id,
   createdAt: iso(row.created_at), updatedAt: iso(row.updated_at)
 });
 const mapOption = (row: OptionRow): GiftPollOption => ({
@@ -89,7 +89,7 @@ export const openGiftPoll = async (pollId: string) => {
 export const closeGiftPoll = async (pollId: string) => {
   if (!isPostgresConfigured()) return unavailable();
   const result = await getPostgresPool().query<PollRow>(
-    "UPDATE gift_polls SET status = 'closed', updated_at = now() WHERE id = $1 AND status IN ('draft', 'open') RETURNING *", [pollId]
+    "UPDATE gift_polls SET status = 'closed', closed_at = COALESCE(closed_at, now()), updated_at = now() WHERE id = $1 AND status IN ('draft', 'open') RETURNING *", [pollId]
   );
   return result.rows[0] ? mapPoll(result.rows[0]) : null;
 };

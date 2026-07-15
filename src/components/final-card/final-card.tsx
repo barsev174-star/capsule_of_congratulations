@@ -563,7 +563,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
               <div className={styles.closingContent}>
                 <p className={styles.closingSignature}>{model.footerSignature}</p>
               </div>
-              <FinalCardActions />
+              <FinalCardActions manageHref={manageToken ? `/manage/${manageToken}` : undefined} />
             </>
           );
 
