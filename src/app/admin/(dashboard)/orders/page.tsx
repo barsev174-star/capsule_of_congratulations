@@ -1,34 +1,39 @@
 import Link from "next/link";
 import { listPaymentOrders } from "@/lib/admin/repository-phase2";
 import type { PaymentOrderStatus } from "@/lib/admin/types";
-import { updatePaymentOrderStatusAction } from "../../actions-phase2";
 import { requireAdminRole } from "@/lib/admin/session";
 import styles from "../../admin.module.css";
 
 const orderStatusOptions = [
   { value: "", label: "Все статусы" },
-  { value: "pending", label: "Ожидает оплаты" },
-  { value: "paid", label: "Оплачен" },
-  { value: "failed", label: "Ошибка" },
-  { value: "refunded", label: "Возврат" }
+  { value: "CREATED", label: "Ожидает оплаты" },
+  { value: "PAID", label: "Оплачен" },
+  { value: "PARTIALLY_REFUNDED", label: "Частичный возврат" },
+  { value: "REFUNDED", label: "Возврат" },
+  { value: "CANCELED", label: "Отменён" },
+  { value: "REVOKED", label: "Отозван" }
 ] as const;
 
-const orderStatuses: PaymentOrderStatus[] = ["pending", "paid", "failed", "refunded"];
+const orderStatuses: PaymentOrderStatus[] = ["CREATED", "PAID", "PARTIALLY_REFUNDED", "REFUNDED", "CANCELED", "REVOKED"];
 const isPaymentOrderStatus = (value: string): value is PaymentOrderStatus =>
   orderStatuses.includes(value as PaymentOrderStatus);
 
 const statusLabels: Record<string, string> = {
-  pending: "Ожидает оплаты",
-  paid: "Оплачен",
-  failed: "Ошибка",
-  refunded: "Возврат"
+  CREATED: "Ожидает оплаты",
+  PAID: "Оплачен",
+  PARTIALLY_REFUNDED: "Частичный возврат",
+  REFUNDED: "Возврат",
+  CANCELED: "Отменён",
+  REVOKED: "Отозван"
 };
 
 const statusBadgeClass: Record<string, string> = {
-  pending: styles.badgeDraft,
-  paid: styles.badgeReady,
-  failed: styles.badgeDeleted,
-  refunded: styles.badgeHidden
+  CREATED: styles.badgeDraft,
+  PAID: styles.badgeReady,
+  PARTIALLY_REFUNDED: styles.badgeHidden,
+  REFUNDED: styles.badgeHidden,
+  CANCELED: styles.badgeDeleted,
+  REVOKED: styles.badgeDeleted
 };
 
 type Props = {
@@ -105,35 +110,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                       </span>
                     </td>
                     <td>{new Date(order.createdAt).toLocaleDateString("ru-RU")}</td>
-                    <td>
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        {order.status !== "paid" && (
-                          <form action={updatePaymentOrderStatusAction} className={styles.actionForm}>
-                            <input type="hidden" name="orderId" value={order.id} />
-                            <input type="hidden" name="status" value="paid" />
-                            <button type="submit" className={`${styles.actionButton} ${styles.actionButtonPrimary}`}>
-                              Оплачен
-                            </button>
-                          </form>
-                        )}
-                        {order.status !== "failed" && (
-                          <form action={updatePaymentOrderStatusAction} className={styles.actionForm}>
-                            <input type="hidden" name="orderId" value={order.id} />
-                            <input type="hidden" name="status" value="failed" />
-                            <button type="submit" className={styles.actionButton}>Ошибка</button>
-                          </form>
-                        )}
-                        {order.status !== "refunded" && (
-                          <form action={updatePaymentOrderStatusAction} className={styles.actionForm}>
-                            <input type="hidden" name="orderId" value={order.id} />
-                            <input type="hidden" name="status" value="refunded" />
-                            <button type="submit" className={`${styles.actionButton} ${styles.actionButtonDanger}`}>
-                              Возврат
-                            </button>
-                          </form>
-                        )}
-                      </div>
-                    </td>
+                    <td>—</td>
                   </tr>
                 ))}
               </tbody>

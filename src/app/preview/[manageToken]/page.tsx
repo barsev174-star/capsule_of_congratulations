@@ -7,7 +7,8 @@ import {
   listCardMediaAssetsByCardId,
   listContributionsByCardId
 } from "@/lib/cards/repository";
-import { isGiftPublished } from "@/lib/cards/status";
+import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository";
+import { isGiftAccessible } from "@/lib/cards/lifecycle";
 import { getAiCardInsight } from "@/lib/ai/repository";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 
@@ -26,9 +27,9 @@ type Props = {
 
 export default async function PreviewPage({ params }: Props) {
   const { manageToken } = await params;
-  const card = await getCardDraftByManageToken(manageToken);
+  const [card, lifecycle] = await Promise.all([getCardDraftByManageToken(manageToken), getCardLifecycleByManageToken(manageToken)]);
 
-  if (!card) {
+  if (!card || !lifecycle || lifecycle.purgedAt !== null) {
     notFound();
   }
 
@@ -44,7 +45,7 @@ export default async function PreviewPage({ params }: Props) {
     qualities: qualitiesInsight?.items.map((item) => item.text)
   });
 
-  const published = isGiftPublished(card);
+  const published = isGiftAccessible(lifecycle);
 
   return (
     <>

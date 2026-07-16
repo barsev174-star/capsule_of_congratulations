@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { listCardDrafts, listCardMediaAssetsByCardId, listContributionsByCardId } from "@/lib/cards/repository";
 import { cardTemplates } from "@/lib/cards/templates";
-import { isGiftPublished } from "@/lib/cards/status";
+import { getGiftLifecycleByFinalSlug, markRecipientFirstOpened } from "@/lib/cards/lifecycle-repository";
 import { FinalCard } from "@/components/final-card/final-card";
-import { GiftIntro, GiftPlaceholder } from "@/components/gift-intro/gift-intro";
+import { GiftIntro } from "@/components/gift-intro/gift-intro";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { getAiCardInsight } from "@/lib/ai/repository";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
@@ -20,8 +20,14 @@ type Props = {
 
 export default async function GiftPage({ params, searchParams }: Props) {
   const [{ finalSlug }, { debugAssets, forceIntro }] = await Promise.all([params, searchParams]);
+  const lifecycle = await getGiftLifecycleByFinalSlug(finalSlug);
+
+  if (!lifecycle) {
+    notFound();
+  }
+
   const cards = await listCardDrafts();
-  const card = cards.find((item) => item.finalSlug === finalSlug && !item.deletedAt);
+  const card = cards.find((item) => item.id === lifecycle.id && !item.deletedAt);
 
   if (!card) {
     notFound();
@@ -40,14 +46,10 @@ export default async function GiftPage({ params, searchParams }: Props) {
   });
   const isAssetDebugEnabled = process.env.NODE_ENV === "development" && debugAssets === "1";
   const isForceIntroEnabled = process.env.NODE_ENV === "development" && forceIntro === "1";
-  const published = isGiftPublished(card) || isForceIntroEnabled;
-
-  if (!published) {
-    return <GiftPlaceholder recipientName={card.recipientName} />;
-  }
+  await markRecipientFirstOpened(finalSlug);
 
   return (
-    <><JourneyEvent event="funnel.gift_opened" cardId={card.id} route="gift" /><GiftIntro
+    <><JourneyEvent event="gift_first_opened" cardId={card.id} route="gift" /><GiftIntro
       slug={finalSlug}
       recipientName={card.recipientName}
       fromLabel={card.fromLabel}

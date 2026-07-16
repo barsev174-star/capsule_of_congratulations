@@ -360,6 +360,7 @@ const MediaUploadForm = ({
           {savePending ? "Загружаем..." : "Добавить фото"}
         </button>
       </div>
+      <label className={styles.mediaRightsConsent}><input name="rightsConfirmed" type="checkbox" required /> <span>Подтверждаю, что имею право использовать загружаемые материалы и при необходимости получил согласие изображённых лиц.</span></label>
       {saveState.message ? (
         <span className={saveState.ok ? styles.contentEditorSuccess : styles.contentEditorError}>{saveState.message}</span>
       ) : null}
@@ -461,6 +462,7 @@ const MediaLibraryGroup = ({
               {savePending ? "Загружаем..." : "Добавить фото"}
             </button>
           </div>
+          <label className={styles.mediaRightsConsent}><input name="rightsConfirmed" type="checkbox" required /> <span>Подтверждаю право использовать загружаемые материалы и наличие необходимых согласий.</span></label>
           {saveState.message ? (
             <span className={saveState.ok ? styles.contentEditorSuccess : styles.contentEditorError}>{saveState.message}</span>
           ) : null}

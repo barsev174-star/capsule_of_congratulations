@@ -8,14 +8,13 @@ export const funnelEvents = [
   "funnel.participant_link_copied",
   "funnel.participant_form_opened",
   "funnel.contribution_submitted",
-  "funnel.card_published",
-  "funnel.gift_opened"
+  "gift_first_opened"
 ] as const;
 
 export const clientEvents = [
   "funnel.participant_link_copied",
   "funnel.participant_form_opened",
-  "funnel.gift_opened",
+  "gift_first_opened",
   "client.unhandled_error"
 ] as const;
 

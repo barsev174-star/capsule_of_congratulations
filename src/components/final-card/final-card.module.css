@@ -2324,6 +2324,10 @@ body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
   gap: 12px;
 }
 
+.actions > form {
+  display: inline-flex;
+}
+
 .actionFeedback {
   margin: 12px auto 0;
   max-width: 560px;
@@ -4553,6 +4557,10 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
     width: 100%;
     min-height: 48px;
     box-sizing: border-box;
+  }
+
+  .actions > form {
+    width: 100%;
   }
 
   /* ===== Mobile scrapbook fixes (screenshots 11-44) ===== */

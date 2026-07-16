@@ -3,9 +3,9 @@ import { parseClientTelemetry, reportCriticalError } from "@/lib/telemetry";
 describe("telemetry", () => {
   it("accepts allowlisted events and fields only", () => {
     expect(parseClientTelemetry({
-      event: "funnel.gift_opened",
+      event: "gift_first_opened",
       context: { cardId: "card_1", route: "gift", message: "private", arbitrary: "no" }
-    })).toEqual({ event: "funnel.gift_opened", context: { cardId: "card_1", route: "gift" } });
+    })).toEqual({ event: "gift_first_opened", context: { cardId: "card_1", route: "gift" } });
   });
 
   it("rejects unknown events", () => {

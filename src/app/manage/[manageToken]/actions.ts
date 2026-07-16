@@ -1,6 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
+import { LEGAL_VERSIONS } from "@/lib/legal/versions";
 import { revalidatePath } from "next/cache";
 import {
   deleteCardMediaAsset,
@@ -13,7 +14,6 @@ import {
   reorderContributions,
   swapCardMediaAssetSlots,
   updateCardDraftBasics,
-  updateCardStatus,
   updateCardFinalPresentationSettings,
   updateCardMainGreetingSettings,
   updateCardMediaAssetCaption,
@@ -25,6 +25,9 @@ import { CARD_MEDIA_MAX_COUNT, validateCardMediaFile } from "@/lib/cards/media";
 import { createContribution } from "@/lib/cards/service";
 import { isTemplateId } from "@/lib/cards/templates";
 import type { CardDraft, CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
+import { closeCollection, deliverCard, openCollection } from "@/lib/cards/lifecycle-repository";
+import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository";
+import { assertCardContentEditable } from "@/lib/cards/lifecycle";
 import { validateContributionFormData, validateContributionMessage } from "@/lib/contributions/validation";
 import { generateBestQuotes, generateQualities } from "@/lib/ai/service";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
@@ -62,11 +65,18 @@ const messageLayoutModes: FinalCardMessageLayoutMode[] = ["grid-2", "carousel-1"
 const mediaLayouts: FinalCardMessageMediaLayout[] = ["portrait", "landscape-pair", "landscape-trio"];
 const mediaSlots: CardMediaSlot[] = ["portrait", "landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c"];
 const finalMediaSlots: FinalCardMediaSlot[] = ["portrait", "landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c"];
-const cardStatuses: CardDraft["status"][] = ["draft", "collecting", "ready", "closed"];
 
 const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 const validateLength = (value: string, min: number, max: number) => value.length >= min && value.length <= max;
 const validateDate = (value: string) => value.length === 0 || !Number.isNaN(Date.parse(value));
+
+const assertManageContentEditable = async (manageToken: string) => {
+  const lifecycle = await getCardLifecycleByManageToken(manageToken);
+  if (!lifecycle) {
+    throw new Error("Секретная ссылка управления больше не актуальна.");
+  }
+  assertCardContentEditable(lifecycle);
+};
 
 type CardBasicsFields = {
   recipientName: string;
@@ -93,6 +103,11 @@ export async function saveGiftPollAction(_previous: GiftPollFormState, formData:
   const manageToken = String(formData.get("manageToken") ?? "");
   const card = await getCardDraftByManageToken(manageToken);
   if (!card) return giftPollState(false, "Секретная ссылка управления больше не актуальна.");
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return giftPollState(false, error instanceof Error ? error.message : "Открытка недоступна для редактирования.");
+  }
 
   const mode = normalizeGiftPollMode(formData.get("mode"));
   const existingPoll = await getGiftPollForManage(card.id);
@@ -190,6 +205,7 @@ export async function openGiftPollAction(formData: FormData) {
   const pollId = String(formData.get("pollId") ?? "");
   const card = await getCardDraftByManageToken(manageToken);
   if (!card || !pollId) return;
+  await assertManageContentEditable(manageToken);
   await openGiftPoll(pollId);
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 }
@@ -203,6 +219,7 @@ export async function closeGiftPollAction(formData: FormData) {
   const pollId = String(formData.get("pollId") ?? "");
   const card = await getCardDraftByManageToken(manageToken);
   if (!card || !pollId) return;
+  await assertManageContentEditable(manageToken);
   await closeGiftPoll(pollId);
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 }
@@ -213,6 +230,7 @@ export async function selectGiftPollOptionAction(formData: FormData) {
   const optionId = String(formData.get("optionId") ?? "");
   const card = await getCardDraftByManageToken(manageToken);
   if (!card || !pollId || !optionId) return;
+  await assertManageContentEditable(manageToken);
   await selectGiftPollOption(pollId, optionId);
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 }
@@ -250,8 +268,12 @@ export async function setContributionStatusAction(formData: FormData) {
     return;
   }
 
+  const managedCard = await getCardDraftByManageToken(manageToken);
+  if (!managedCard) return;
+  await assertManageContentEditable(manageToken);
+
   const updated = await updateContributionStatus(contributionId, status);
-  if (!updated) {
+  if (!updated || updated.cardId !== managedCard.id) {
     return;
   }
 
@@ -312,6 +334,7 @@ export async function addManualContributionAction(
   if (!card) {
     return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
   }
+  await assertManageContentEditable(manageToken);
 
   const contributionFormData = new FormData();
   contributionFormData.set("cardId", card.id);
@@ -374,8 +397,12 @@ export async function deleteContributionAction(formData: FormData) {
     return;
   }
 
+  const managedCard = await getCardDraftByManageToken(manageToken);
+  if (!managedCard) return;
+  await assertManageContentEditable(manageToken);
+
   const updated = await updateContributionStatus(contributionId, "deleted");
-  if (!updated) {
+  if (!updated || updated.cardId !== managedCard.id) {
     return;
   }
 
@@ -406,6 +433,11 @@ export async function updateCardBasicsAction(
   const card = await getCardDraftByManageToken(manageToken);
   if (!card) {
     return cardBasicsError("Секретная ссылка управления больше не актуальна.", fields);
+  }
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return cardBasicsError(error instanceof Error ? error.message : "Открытка недоступна для редактирования.", fields);
   }
 
   const occasionValue = (String(formData.get("occasion") ?? "").trim() || card.occasion) as CardDraft["occasion"];
@@ -510,26 +542,25 @@ export async function resendOrganizerAccessAction(
   }
 }
 
-export async function updateCardStatusAction(formData: FormData) {
+const runLifecycleAction = async (formData: FormData, command: (manageToken: string) => Promise<unknown>) => {
   const manageToken = String(formData.get("manageToken") ?? "");
-  const statusValue = String(formData.get("status") ?? "") as CardDraft["status"];
-
-  if (!manageToken || !cardStatuses.includes(statusValue)) {
-    return;
-  }
-
+  if (!manageToken) return;
   const card = await getCardDraftByManageToken(manageToken);
-
-  if (!card) {
-    return;
-  }
-
-  await updateCardStatus(card.id, statusValue);
-  logger.info("manage.card_status_updated", "Card lifecycle status updated by organizer", {
-    cardId: card.id,
-    status: statusValue
-  });
+  if (!card) return;
+  await command(manageToken);
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+};
+
+export async function openCollectionAction(formData: FormData) {
+  await runLifecycleAction(formData, openCollection);
+}
+
+export async function closeCollectionAction(formData: FormData) {
+  await runLifecycleAction(formData, closeCollection);
+}
+
+export async function deliverCardAction(formData: FormData) {
+  await runLifecycleAction(formData, deliverCard);
 }
 
 export async function updateContributionMessageAction(
@@ -547,6 +578,11 @@ export async function updateContributionMessageAction(
   const card = await getCardDraftByManageToken(manageToken);
   if (!card) {
     return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+  }
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования." };
   }
 
   const issues = validateContributionMessage(message, {
@@ -618,6 +654,11 @@ export async function reorderContributionsAction(
   if (!card) {
     return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
   }
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования." };
+  }
 
   const updated = await reorderContributions(card.id, orderedContributionIds);
 
@@ -647,6 +688,11 @@ export async function updateFinalPresentationSettingsAction(
   const card = await getCardDraftByManageToken(manageToken);
   if (!card) {
     return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+  }
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования." };
   }
 
   const layoutModeValue = String(formData.get("layoutMode") ?? "");
@@ -757,6 +803,7 @@ export async function setMainGreetingAction(formData: FormData) {
   if (!card) {
     return;
   }
+  await assertManageContentEditable(manageToken);
 
   const visibleContributions = await listContributionsByCardId(card.id);
   const selectedContribution = visibleContributions.find((contribution) => contribution.id === contributionId);
@@ -783,6 +830,7 @@ export async function saveCardMediaAction(
   const captionSubtitle = String(formData.get("captionSubtitle") ?? "").trim().slice(0, 120);
   const existingAssetId = String(formData.get("assetId") ?? "");
   const file = formData.get("file");
+  const rightsConfirmed = formData.get("rightsConfirmed") === "on";
 
   if (!manageToken || !mediaSlots.includes(slot)) {
     return { ok: false, message: "Не удалось определить слот для фото." };
@@ -791,6 +839,14 @@ export async function saveCardMediaAction(
   const card = await getCardDraftByManageToken(manageToken);
   if (!card) {
     return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+  }
+  if (file instanceof File && file.size > 0 && !rightsConfirmed) {
+    return { ok: false, message: "Подтвердите право использовать загружаемые материалы." };
+  }
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования." };
   }
 
   if (file instanceof File && file.size > 0) {
@@ -831,6 +887,8 @@ export async function saveCardMediaAction(
       sizeBytes: file.size,
       captionTitle,
       captionSubtitle,
+      rightsConsentVersion: LEGAL_VERSIONS.materialRights,
+      rightsConfirmedAt: now,
       createdAt: now,
       updatedAt: now
     };
@@ -917,6 +975,11 @@ export async function deleteCardMediaAction(
   if (!card) {
     return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
   }
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования." };
+  }
 
   const deleted = await deleteCardMediaAsset(assetId);
   if (!deleted || deleted.cardId !== card.id) {
@@ -940,6 +1003,11 @@ export async function generateBestQuotesAction(
 
   if (!card) {
     return { ok: false, message: "Секретная ссылка управления больше не актуальна.", quotes: [], usage: { used: 0, limit: 0, remaining: 0 } };
+  }
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования.", quotes: [], usage: { used: 0, limit: 0, remaining: 0 } };
   }
 
   const contributions = await listContributionsByCardId(card.id);
@@ -967,6 +1035,11 @@ export async function generateQualitiesAction(
 
   if (!card) {
     return { ok: false, message: "Секретная ссылка управления больше не актуальна.", qualities: [], usage: { used: 0, limit: 0, remaining: 0 } };
+  }
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования.", qualities: [], usage: { used: 0, limit: 0, remaining: 0 } };
   }
 
   const contributions = await listContributionsByCardId(card.id);

@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { createReminderAction, type ReminderFormState } from "./reminder-actions";
+import { startCardFromShowcaseAction } from "@/app/home-actions";
 import styles from "@/app/card/[publicSlug]/participant-page.module.css";
 
 type Props = {
@@ -83,7 +83,9 @@ export function EventReminderForm({ sourceCardId, minimumEventDate }: Props) {
             <strong className={styles.reminderResultTitle}>{state.title}</strong>
             {state.lines.map((line) => <p key={line}>{line}</p>)}
             {(state.schedule === "next_day" || state.schedule === "confirmation_only") ? (
-              <Link className={styles.reminderCreateLink} href="/create">Создать открытку сейчас</Link>
+              <form action={startCardFromShowcaseAction}>
+                <button type="submit" className={styles.reminderCreateLink}>Создать открытку сейчас</button>
+              </form>
             ) : null}
           </div>
         ) : null}

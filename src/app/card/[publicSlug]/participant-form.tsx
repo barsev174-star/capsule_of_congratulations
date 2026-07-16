@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AiHelper } from "./ai-helper";
 import { GiftPollVote } from "./gift-poll-vote";
+import { LegalDocumentModal } from "@/components/legal/legal-document-modal";
 import styles from "./participant-page.module.css";
 
 type ValidationIssue = {
@@ -38,6 +39,7 @@ export const ParticipantForm = ({
   const [aiGenerationIds, setAiGenerationIds] = useState<string[]>([]);
   const [aiResetSignal, setAiResetSignal] = useState(0);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [participantConsent, setParticipantConsent] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const clearSuccessOnEdit = () => {
@@ -193,9 +195,13 @@ export const ParticipantForm = ({
               Пишите просто и по-настоящему. Даже несколько теплых фраз уже много значат.
             </span>
           </div>
+          <label className={styles.consent}>
+            <input name="participantConsent" type="checkbox" checked={participantConsent} onChange={(event) => setParticipantConsent(event.target.checked)} required />
+            <span>Я согласен на обработку моего имени и поздравления, а также на их показ организатору, получателю открытки и пользователям, имеющим ссылку на открытку. Подробнее — в <LegalDocumentModal document="privacy">политике обработки персональных данных</LegalDocumentModal>.</span>
+          </label>
 
           <div className={styles.actions}>
-            <button type="submit" className={styles.submitButton} disabled={isPending || Boolean(successMessage)}>
+            <button type="submit" className={styles.submitButton} disabled={isPending || Boolean(successMessage) || !participantConsent}>
               {!successMessage ? <span className={styles.buttonIcon} aria-hidden="true" /> : null}
               {successMessage ? "✓ Слова подарены" : isPending ? "Добавляем..." : "Подарить слова"}
             </button>

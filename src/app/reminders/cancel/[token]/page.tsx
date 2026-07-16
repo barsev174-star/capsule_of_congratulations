@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getEventReminderCancellationState } from "@/lib/reminders/repository";
 import { cancelReminderAction } from "./actions";
+import { startCardFromShowcaseAction } from "@/app/home-actions";
 import styles from "./page.module.css";
 
 type Props = {
@@ -56,7 +57,9 @@ export default async function CancelReminderPage({ params, searchParams }: Props
             <button className={styles.cancelButton} type="submit">Отменить напоминание</button>
           </form>
         ) : (
-          <Link className={styles.primaryLink} href="/create">Создать открытку</Link>
+          <form action={startCardFromShowcaseAction}>
+            <button className={styles.primaryLink} type="submit">Создать открытку</button>
+          </form>
         )}
 
         <Link className={styles.homeLink} href="/">Вернуться на главную</Link>

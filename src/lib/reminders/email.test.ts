@@ -54,7 +54,7 @@ describe("event reminder emails", () => {
     const body = JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body));
     expect(body.subject).toBe("Пора собрать открытку: Мама");
     expect(body.text).toContain("Через 7 дней — День рождения.");
-    expect(body.text).toContain("Собрать открытку: https://example.com/create");
+    expect(body.text).toContain("Собрать открытку: https://example.com/manage/new");
   });
 
   it("adds Reply-To only when a receiving mailbox is configured", async () => {

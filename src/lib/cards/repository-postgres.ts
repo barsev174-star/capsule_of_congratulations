@@ -13,28 +13,44 @@ import type {
 
 type CardRow = {
   id: string;
-  public_slug: string;
-  manage_token: string;
-  final_slug: string;
-  recipient_name: string;
-  occasion: CardDraft["occasion"];
-  occasion_text: string;
-  from_label: string;
-  organizer_name: string;
-  organizer_email: string;
+  public_slug: string | null;
+  manage_token: string | null;
+  final_slug: string | null;
+  recipient_name: string | null;
+  occasion: CardDraft["occasion"] | null;
+  occasion_text: string | null;
+  from_label: string | null;
+  organizer_name: string | null;
+  organizer_email: string | null;
   event_date: Date | string | null;
   description: string | null;
   signature: string | null;
-  template_id: CardTemplateId;
+  template_id: CardTemplateId | null;
   final_block_settings: FinalCardBlockSettings | null;
   final_block_order: FinalCardBlockOrder | null;
   final_message_settings: FinalCardMessageSettings | null;
   final_main_greeting_settings: FinalCardMainGreetingSettings | null;
   final_memory_settings: FinalCardMemorySettings | null;
-  status: CardStatus;
   payment_status: CardDraft["paymentStatus"];
+  collection_status: NonNullable<CardDraft["collectionStatus"]>;
+  delivery_status: NonNullable<CardDraft["deliveryStatus"]>;
+  paid_at: Date | string | null;
+  collection_opened_at: Date | string | null;
+  collection_closed_at: Date | string | null;
+  delivered_at: Date | string | null;
+  recipient_first_opened_at: Date | string | null;
+  refunded_at: Date | string | null;
+  revoked_at: Date | string | null;
+  is_hidden: boolean;
+  hidden_at: Date | string | null;
+  purged_at: Date | string | null;
+  active_paid_order_id: string | null;
+  repurchase_allowed_at: Date | string | null;
+  repurchase_expires_at: Date | string | null;
+  repurchase_used_at: Date | string | null;
+  repurchase_allowed_by_admin_id: string | null;
   deleted_at: Date | string | null;
-  purge_after: Date | string | null;
+  purge_at: Date | string | null;
   created_at: Date | string;
   updated_at: Date | string;
 };
@@ -50,6 +66,8 @@ type ContributionRow = {
   status: Contribution["status"];
   source: Contribution["source"];
   participant_token_hash: string | null;
+  consent_version: string | null;
+  consent_accepted_at: Date | string | null;
   created_at: Date | string;
   updated_at: Date | string;
 };
@@ -65,6 +83,8 @@ type MediaRow = {
   size_bytes: number;
   caption_title: string;
   caption_subtitle: string;
+  rights_consent_version: string | null;
+  rights_confirmed_at: Date | string | null;
   created_at: Date | string;
   updated_at: Date | string;
 };
@@ -80,30 +100,56 @@ const toDateOnly = (value: Date | string | null) => {
 
 const jsonParam = (value: unknown) => (value === null || value === undefined ? null : JSON.stringify(value));
 
+const legacyStatus = (row: Pick<CardRow, "collection_status" | "delivery_status">): CardDraft["status"] => {
+  if (row.delivery_status === "DELIVERED") return "published";
+  if (row.collection_status === "CLOSED") return "closed";
+  if (row.collection_status === "OPEN") return "collecting";
+  return "draft";
+};
+
 const mapCard = (row: CardRow): CardDraft => ({
   id: row.id,
-  publicSlug: row.public_slug,
-  manageToken: row.manage_token,
-  finalSlug: row.final_slug,
-  recipientName: row.recipient_name,
-  occasion: row.occasion,
-  occasionText: row.occasion_text,
-  fromLabel: row.from_label,
-  organizerName: row.organizer_name,
-  organizerEmail: row.organizer_email,
+  // Tombstones are excluded by all public repository reads. The casts keep the
+  // compatibility CardDraft shape for the internal id-only retention record.
+  publicSlug: row.public_slug as string,
+  manageToken: row.manage_token as string,
+  finalSlug: row.final_slug as string,
+  recipientName: row.recipient_name as string,
+  occasion: row.occasion as CardDraft["occasion"],
+  occasionText: row.occasion_text as string,
+  fromLabel: row.from_label as string,
+  organizerName: row.organizer_name as string,
+  organizerEmail: row.organizer_email as string,
   eventDate: toDateOnly(row.event_date),
   description: row.description,
   signature: row.signature,
-  templateId: row.template_id,
+  templateId: row.template_id as CardTemplateId,
   finalBlockSettings: row.final_block_settings,
   finalBlockOrder: row.final_block_order,
   finalMessageSettings: row.final_message_settings,
   finalMainGreetingSettings: row.final_main_greeting_settings,
   finalMemorySettings: row.final_memory_settings,
-  status: row.status,
+  status: legacyStatus(row),
   paymentStatus: row.payment_status,
+  collectionStatus: row.collection_status,
+  deliveryStatus: row.delivery_status,
+  paidAt: row.paid_at ? toIso(row.paid_at) : null,
+  collectionOpenedAt: row.collection_opened_at ? toIso(row.collection_opened_at) : null,
+  collectionClosedAt: row.collection_closed_at ? toIso(row.collection_closed_at) : null,
+  deliveredAt: row.delivered_at ? toIso(row.delivered_at) : null,
+  recipientFirstOpenedAt: row.recipient_first_opened_at ? toIso(row.recipient_first_opened_at) : null,
+  refundedAt: row.refunded_at ? toIso(row.refunded_at) : null,
+  revokedAt: row.revoked_at ? toIso(row.revoked_at) : null,
+  isHidden: row.is_hidden,
+  hiddenAt: row.hidden_at ? toIso(row.hidden_at) : null,
+  purgedAt: row.purged_at ? toIso(row.purged_at) : null,
+  activePaidOrderId: row.active_paid_order_id,
+  repurchaseAllowedAt: row.repurchase_allowed_at ? toIso(row.repurchase_allowed_at) : null,
+  repurchaseExpiresAt: row.repurchase_expires_at ? toIso(row.repurchase_expires_at) : null,
+  repurchaseUsedAt: row.repurchase_used_at ? toIso(row.repurchase_used_at) : null,
+  repurchaseAllowedByAdminId: row.repurchase_allowed_by_admin_id,
   deletedAt: row.deleted_at ? toIso(row.deleted_at) : null,
-  purgeAfter: row.purge_after ? toIso(row.purge_after) : null,
+  purgeAt: row.purge_at ? toIso(row.purge_at) : null,
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at)
 });
@@ -119,6 +165,8 @@ const mapContribution = (row: ContributionRow): Contribution => ({
   status: row.status,
   source: row.source,
   participantTokenHash: row.participant_token_hash,
+  consentVersion: row.consent_version,
+  consentAcceptedAt: row.consent_accepted_at ? toIso(row.consent_accepted_at) : null,
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at)
 });
@@ -134,13 +182,18 @@ const mapMedia = (row: MediaRow): CardMediaAsset => ({
   sizeBytes: row.size_bytes,
   captionTitle: row.caption_title,
   captionSubtitle: row.caption_subtitle,
+  rightsConsentVersion: row.rights_consent_version,
+  rightsConfirmedAt: row.rights_confirmed_at ? toIso(row.rights_confirmed_at) : null,
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at)
 });
 
 const selectCardBy = async (column: "id" | "public_slug" | "manage_token", value: string, includeDeleted = false) => {
   const deletedFilter = includeDeleted ? "" : "AND deleted_at IS NULL";
-  const result = await getPostgresPool().query<CardRow>(`SELECT * FROM cards WHERE ${column} = $1 ${deletedFilter} LIMIT 1`, [value]);
+  const result = await getPostgresPool().query<CardRow>(
+    `SELECT * FROM cards WHERE ${column} = $1 ${deletedFilter} AND purged_at IS NULL LIMIT 1`,
+    [value]
+  );
   return result.rows[0] ? mapCard(result.rows[0]) : null;
 };
 
@@ -151,15 +204,21 @@ export const saveCardDraft = async (card: CardDraft) => {
         id, public_slug, manage_token, final_slug, recipient_name, occasion, occasion_text,
         from_label, organizer_name, organizer_email, event_date, description, signature,
         template_id, final_block_settings, final_block_order, final_message_settings,
-        final_main_greeting_settings, final_memory_settings, status, payment_status,
-        deleted_at, purge_after, created_at, updated_at
+        final_main_greeting_settings, final_memory_settings, payment_status, collection_status, delivery_status,
+        paid_at, collection_opened_at, collection_closed_at, delivered_at, recipient_first_opened_at,
+        refunded_at, revoked_at, is_hidden, hidden_at, purged_at, active_paid_order_id,
+        repurchase_allowed_at, repurchase_expires_at, repurchase_used_at, repurchase_allowed_by_admin_id,
+        deleted_at, purge_at, created_at, updated_at
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7,
         $8, $9, $10, $11, $12, $13,
         $14, $15::jsonb, $16::jsonb, $17::jsonb,
-        $18::jsonb, $19::jsonb, $20, $21,
-        $22, $23, $24, $25
+        $18::jsonb, $19::jsonb, $20, $21, $22,
+        $23, $24, $25, $26, $27,
+        $28, $29, $30, $31, $32, $33,
+        $34, $35, $36, $37,
+        $38, $39, $40, $41
       )
     `,
     [
@@ -182,10 +241,26 @@ export const saveCardDraft = async (card: CardDraft) => {
       jsonParam(card.finalMessageSettings),
       jsonParam(card.finalMainGreetingSettings),
       jsonParam(card.finalMemorySettings),
-      card.status,
       card.paymentStatus,
+      card.collectionStatus ?? "DRAFT",
+      card.deliveryStatus ?? "PREPARING",
+      card.paidAt ?? null,
+      card.collectionOpenedAt ?? null,
+      card.collectionClosedAt ?? null,
+      card.deliveredAt ?? null,
+      card.recipientFirstOpenedAt ?? null,
+      card.refundedAt ?? null,
+      card.revokedAt ?? null,
+      card.isHidden ?? false,
+      card.hiddenAt ?? null,
+      card.purgedAt ?? null,
+      card.activePaidOrderId ?? null,
+      card.repurchaseAllowedAt ?? null,
+      card.repurchaseExpiresAt ?? null,
+      card.repurchaseUsedAt ?? null,
+      card.repurchaseAllowedByAdminId ?? null,
       card.deletedAt,
-      card.purgeAfter,
+      card.purgeAt,
       card.createdAt,
       card.updatedAt
     ]
@@ -193,13 +268,13 @@ export const saveCardDraft = async (card: CardDraft) => {
 };
 
 export const listCardDrafts = async () => {
-  const result = await getPostgresPool().query<CardRow>("SELECT * FROM cards ORDER BY created_at DESC");
+  const result = await getPostgresPool().query<CardRow>("SELECT * FROM cards WHERE purged_at IS NULL ORDER BY created_at DESC");
   return result.rows.map(mapCard);
 };
 
 export const listCardDraftsByOrganizerEmail = async (email: string) => {
   const result = await getPostgresPool().query<CardRow>(
-    "SELECT * FROM cards WHERE LOWER(organizer_email) = LOWER($1) ORDER BY created_at DESC",
+    "SELECT * FROM cards WHERE LOWER(organizer_email) = LOWER($1) AND purged_at IS NULL ORDER BY created_at DESC",
     [email]
   );
   return result.rows.map(mapCard);
@@ -212,7 +287,8 @@ export const getCardDraftById = (cardId: string) => selectCardBy("id", cardId, t
 export const softDeleteCard = async (cardId: string) => {
   const result = await getPostgresPool().query<CardRow>(
     `UPDATE cards
-     SET deleted_at = now(), purge_after = now() + interval '30 days', updated_at = now()
+     SET deleted_at = now(), purge_at = now() + interval '30 days', is_hidden = true,
+         hidden_at = COALESCE(hidden_at, now()), updated_at = now()
      WHERE id = $1 AND deleted_at IS NULL
      RETURNING *`,
     [cardId]
@@ -223,8 +299,8 @@ export const softDeleteCard = async (cardId: string) => {
 export const restoreDeletedCard = async (cardId: string) => {
   const result = await getPostgresPool().query<CardRow>(
     `UPDATE cards
-     SET deleted_at = NULL, purge_after = NULL, updated_at = now()
-     WHERE id = $1 AND deleted_at IS NOT NULL AND purge_after > now()
+     SET deleted_at = NULL, purge_at = NULL, updated_at = now()
+     WHERE id = $1 AND deleted_at IS NOT NULL AND purge_at > now() AND purged_at IS NULL
      RETURNING *`,
     [cardId]
   );
@@ -238,9 +314,11 @@ export const listCardRetentionCandidates = async (draftCutoff: Date, now: Date):
     `SELECT id,
             CASE WHEN deleted_at IS NOT NULL THEN 'deleted' ELSE 'inactive_draft' END AS reason
      FROM cards
-     WHERE (deleted_at IS NOT NULL AND purge_after <= $2)
+     WHERE (deleted_at IS NOT NULL AND purge_at <= $2 AND purged_at IS NULL)
         OR (deleted_at IS NULL
-            AND status <> 'published'
+            AND collection_status = 'DRAFT'
+            AND delivery_status = 'PREPARING'
+            AND payment_status = 'UNPAID'
             AND updated_at < $1
             AND NOT EXISTS (
               SELECT 1 FROM contributions
@@ -255,15 +333,62 @@ export const listCardRetentionCandidates = async (draftCutoff: Date, now: Date):
   return result.rows;
 };
 
-export const permanentlyDeleteCard = async (cardId: string): Promise<string[]> => {
+export const purgeCardToTombstone = async (cardId: string): Promise<string[]> => {
   const client = await getPostgresPool().connect();
   try {
     await client.query("BEGIN");
+    const card = await client.query<{ id: string }>(
+      "SELECT id FROM cards WHERE id = $1 AND purged_at IS NULL FOR UPDATE",
+      [cardId]
+    );
+    if (!card.rows[0]) {
+      await client.query("ROLLBACK");
+      return [];
+    }
     const media = await client.query<{ storage_path: string }>(
       "SELECT storage_path FROM card_media_assets WHERE card_id = $1",
       [cardId]
     );
-    await client.query("DELETE FROM cards WHERE id = $1", [cardId]);
+    // Delete personal/card content, but retain the card row and financial/audit
+    // records that reference it. The latter use ON DELETE RESTRICT by design.
+    await client.query("DELETE FROM gift_polls WHERE card_id = $1", [cardId]);
+    await client.query("DELETE FROM contributions WHERE card_id = $1", [cardId]);
+    await client.query("DELETE FROM card_media_assets WHERE card_id = $1", [cardId]);
+    await client.query("DELETE FROM ai_generation_drafts WHERE card_id = $1", [cardId]);
+    await client.query("DELETE FROM ai_usage_events WHERE card_id = $1", [cardId]);
+    await client.query("DELETE FROM ai_card_insights WHERE card_id = $1", [cardId]);
+    await client.query("DELETE FROM ai_card_allowances WHERE card_id = $1", [cardId]);
+    await client.query("DELETE FROM event_reminders WHERE source_card_id = $1", [cardId]);
+    await client.query("DELETE FROM telemetry_events WHERE card_id = $1::text", [cardId]);
+    await client.query(
+      `UPDATE cards
+       SET public_slug = NULL,
+           manage_token = NULL,
+           final_slug = NULL,
+           recipient_name = NULL,
+           occasion = NULL,
+           occasion_text = NULL,
+           from_label = NULL,
+           organizer_name = NULL,
+           organizer_email = NULL,
+           event_date = NULL,
+           description = NULL,
+           signature = NULL,
+           template_id = NULL,
+           final_block_settings = NULL,
+           final_block_order = NULL,
+           final_message_settings = NULL,
+           final_main_greeting_settings = NULL,
+           final_memory_settings = NULL,
+           is_hidden = true,
+           hidden_at = COALESCE(hidden_at, now()),
+           deleted_at = COALESCE(deleted_at, now()),
+           purge_at = NULL,
+           purged_at = now(),
+           updated_at = now()
+       WHERE id = $1`,
+      [cardId]
+    );
     await client.query("COMMIT");
     return media.rows.map((row) => row.storage_path).filter(Boolean);
   } catch (error) {
@@ -393,9 +518,14 @@ export const updateCardDraftBasics = async (
 };
 
 export const updateCardStatus = async (cardId: string, status: CardStatus) => {
+  if (status === "published") {
+    throw new Error("The published status was replaced by an explicit delivery command.");
+  }
+
+  const collectionStatus = status === "collecting" ? "OPEN" : status === "closed" || status === "ready" ? "CLOSED" : "DRAFT";
   const result = await getPostgresPool().query<CardRow>(
-    "UPDATE cards SET status = $2, updated_at = now() WHERE id = $1 RETURNING *",
-    [cardId, status]
+    "UPDATE cards SET collection_status = $2, updated_at = now() WHERE id = $1 RETURNING *",
+    [cardId, collectionStatus]
   );
   return result.rows[0] ? mapCard(result.rows[0]) : null;
 };
@@ -435,9 +565,9 @@ export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
     `
       INSERT INTO card_media_assets (
         id, card_id, slot, public_url, storage_path, file_name, mime_type,
-        size_bytes, caption_title, caption_subtitle, created_at, updated_at
+        size_bytes, caption_title, caption_subtitle, rights_consent_version, rights_confirmed_at, created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       ON CONFLICT (card_id, slot) DO UPDATE
       SET public_url = EXCLUDED.public_url,
           storage_path = EXCLUDED.storage_path,
@@ -446,6 +576,8 @@ export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
           size_bytes = EXCLUDED.size_bytes,
           caption_title = EXCLUDED.caption_title,
           caption_subtitle = EXCLUDED.caption_subtitle,
+          rights_consent_version = EXCLUDED.rights_consent_version,
+          rights_confirmed_at = EXCLUDED.rights_confirmed_at,
           updated_at = EXCLUDED.updated_at
     `,
     [
@@ -459,6 +591,8 @@ export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
       nextAsset.sizeBytes,
       nextAsset.captionTitle,
       nextAsset.captionSubtitle,
+      nextAsset.rightsConsentVersion ?? null,
+      nextAsset.rightsConfirmedAt ?? null,
       nextAsset.createdAt,
       nextAsset.updatedAt
     ]
@@ -514,9 +648,9 @@ export const swapCardMediaAssetSlots = async (cardId: string, leftAssetId: strin
       `
         INSERT INTO card_media_assets (
           id, card_id, slot, public_url, storage_path, file_name, mime_type,
-          size_bytes, caption_title, caption_subtitle, created_at, updated_at
+          size_bytes, caption_title, caption_subtitle, rights_consent_version, rights_confirmed_at, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now())
         RETURNING *
       `,
       [
@@ -530,6 +664,8 @@ export const swapCardMediaAssetSlots = async (cardId: string, leftAssetId: strin
         right.size_bytes,
         right.caption_title,
         right.caption_subtitle,
+        right.rights_consent_version,
+        right.rights_confirmed_at,
         right.created_at
       ]
     );
@@ -584,9 +720,9 @@ export const saveContribution = async (contribution: Contribution) => {
       `
         INSERT INTO contributions (
           id, card_id, author_name, author_role, author_avatar_url, message,
-          sort_order, status, source, participant_token_hash, created_at, updated_at
+          sort_order, status, source, participant_token_hash, consent_version, consent_accepted_at, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       `,
       [
         contribution.id,
@@ -599,6 +735,8 @@ export const saveContribution = async (contribution: Contribution) => {
         contribution.status,
         contribution.source,
         contribution.participantTokenHash,
+        contribution.consentVersion ?? null,
+        contribution.consentAcceptedAt ?? null,
         contribution.createdAt,
         contribution.updatedAt
       ]

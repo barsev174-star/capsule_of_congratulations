@@ -5,11 +5,18 @@ import {
   listAllContributionsByCardId,
   listCardDrafts,
   listCardMediaAssetsByCardId,
-  updateCardStatus,
   updateContributionStatus
 } from "@/lib/cards/repository";
 import { getPostgresPool, isPostgresConfigured } from "@/lib/db/postgres";
-import type { CardDraft, CardMediaAsset, CardStatus, Contribution, ContributionStatus } from "@/lib/cards/types";
+import type {
+  CardDraft,
+  CardMediaAsset,
+  CollectionStatus,
+  Contribution,
+  ContributionStatus,
+  DeliveryStatus,
+  PaymentStatus
+} from "@/lib/cards/types";
 
 const cardsFilePath = join(process.cwd(), "data", "cards.json");
 const contributionsFilePath = join(process.cwd(), "data", "contributions.json");
@@ -29,21 +36,54 @@ const toIso = (value: Date | string) => (value instanceof Date ? value.toISOStri
 
 export type AdminDashboardStats = {
   totalCards: number;
-  cardsByStatus: Record<CardStatus, number>;
+  cardsByPaymentStatus: Record<PaymentStatus, number>;
+  cardsByCollectionStatus: Record<CollectionStatus, number>;
+  cardsByDeliveryStatus: Record<DeliveryStatus, number>;
   totalContributions: number;
   visibleContributions: number;
   hiddenContributions: number;
   deletedContributions: number;
   totalMediaAssets: number;
-  recentCards: Array<Pick<CardDraft, "id" | "recipientName" | "organizerEmail" | "status" | "createdAt">>;
+  recentCards: Array<
+    Pick<
+      CardDraft,
+      "id" | "recipientName" | "organizerEmail" | "paymentStatus" | "collectionStatus" | "deliveryStatus" | "createdAt"
+    >
+  >;
 };
+
+const emptyPaymentCounts = (): Record<PaymentStatus, number> => ({
+  UNPAID: 0,
+  PAID: 0,
+  REFUNDED: 0,
+  REVOKED: 0
+});
+
+const emptyCollectionCounts = (): Record<CollectionStatus, number> => ({
+  DRAFT: 0,
+  OPEN: 0,
+  CLOSED: 0
+});
+
+const emptyDeliveryCounts = (): Record<DeliveryStatus, number> => ({
+  PREPARING: 0,
+  DELIVERED: 0
+});
 
 export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => {
   if (isPostgresConfigured()) {
     const pool = getPostgresPool();
 
-    const [cardsResult, contributionsResult, mediaResult, recentResult] = await Promise.all([
-      pool.query<{ status: CardStatus; count: string }>("SELECT status, COUNT(*)::text AS count FROM cards GROUP BY status"),
+    const [cardsResult, collectionResult, deliveryResult, contributionsResult, mediaResult, recentResult] = await Promise.all([
+      pool.query<{ payment_status: PaymentStatus; count: string }>(
+        "SELECT payment_status, COUNT(*)::text AS count FROM cards GROUP BY payment_status"
+      ),
+      pool.query<{ collection_status: CollectionStatus; count: string }>(
+        "SELECT collection_status, COUNT(*)::text AS count FROM cards GROUP BY collection_status"
+      ),
+      pool.query<{ delivery_status: DeliveryStatus; count: string }>(
+        "SELECT delivery_status, COUNT(*)::text AS count FROM cards GROUP BY delivery_status"
+      ),
       pool.query<{
         status: ContributionStatus;
         count: string;
@@ -53,36 +93,48 @@ export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => 
         id: string;
         recipient_name: string;
         organizer_email: string;
-        status: CardStatus;
+        payment_status: PaymentStatus;
+        collection_status: CollectionStatus;
+        delivery_status: DeliveryStatus;
         created_at: Date | string;
-      }>("SELECT id, recipient_name, organizer_email, status, created_at FROM cards ORDER BY created_at DESC LIMIT 10")
+      }>(`
+        SELECT id, recipient_name, organizer_email, payment_status, collection_status, delivery_status, created_at
+        FROM cards
+        ORDER BY created_at DESC
+        LIMIT 10
+      `)
     ]);
 
-    const cardsByStatus: Record<CardStatus, number> = {
-      draft: 0,
-      collecting: 0,
-      ready: 0,
-      closed: 0,
-      published: 0
-    };
-
-    for (const row of cardsResult.rows) {
-      cardsByStatus[row.status] = Number(row.count);
-    }
-
-    const contributionCounts = {
+    const cardsByPaymentStatus = emptyPaymentCounts();
+    const cardsByCollectionStatus = emptyCollectionCounts();
+    const cardsByDeliveryStatus = emptyDeliveryCounts();
+    const contributionCounts: Record<ContributionStatus, number> = {
       visible: 0,
       hidden: 0,
       deleted: 0
     };
 
+    for (const row of cardsResult.rows) {
+      cardsByPaymentStatus[row.payment_status] = Number(row.count);
+    }
+
     for (const row of contributionsResult.rows) {
       contributionCounts[row.status] = Number(row.count);
     }
 
+    for (const row of collectionResult.rows) {
+      cardsByCollectionStatus[row.collection_status] = Number(row.count);
+    }
+
+    for (const row of deliveryResult.rows) {
+      cardsByDeliveryStatus[row.delivery_status] = Number(row.count);
+    }
+
     return {
-      totalCards: Object.values(cardsByStatus).reduce((sum, count) => sum + count, 0),
-      cardsByStatus,
+      totalCards: Object.values(cardsByPaymentStatus).reduce((sum, count) => sum + count, 0),
+      cardsByPaymentStatus,
+      cardsByCollectionStatus,
+      cardsByDeliveryStatus,
       totalContributions: Object.values(contributionCounts).reduce((sum, count) => sum + count, 0),
       visibleContributions: contributionCounts.visible,
       hiddenContributions: contributionCounts.hidden,
@@ -92,7 +144,9 @@ export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => 
         id: row.id,
         recipientName: row.recipient_name,
         organizerEmail: row.organizer_email,
-        status: row.status,
+        paymentStatus: row.payment_status,
+        collectionStatus: row.collection_status,
+        deliveryStatus: row.delivery_status,
         createdAt: toIso(row.created_at)
       }))
     };
@@ -104,16 +158,14 @@ export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => 
     readJsonFile<CardMediaAsset>(mediaAssetsFilePath)
   ]);
 
-  const cardsByStatus: Record<CardStatus, number> = {
-    draft: 0,
-    collecting: 0,
-    ready: 0,
-    closed: 0,
-    published: 0
-  };
+  const cardsByPaymentStatus = emptyPaymentCounts();
+  const cardsByCollectionStatus = emptyCollectionCounts();
+  const cardsByDeliveryStatus = emptyDeliveryCounts();
 
   for (const card of cards) {
-    cardsByStatus[card.status] = (cardsByStatus[card.status] ?? 0) + 1;
+    cardsByPaymentStatus[card.paymentStatus] += 1;
+    cardsByCollectionStatus[card.collectionStatus ?? "DRAFT"] += 1;
+    cardsByDeliveryStatus[card.deliveryStatus ?? "PREPARING"] += 1;
   }
 
   const contributionCounts = contributions.reduce(
@@ -132,13 +184,17 @@ export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => 
       id: card.id,
       recipientName: card.recipientName,
       organizerEmail: card.organizerEmail,
-      status: card.status,
+      paymentStatus: card.paymentStatus,
+      collectionStatus: card.collectionStatus ?? "DRAFT",
+      deliveryStatus: card.deliveryStatus ?? "PREPARING",
       createdAt: card.createdAt
     }));
 
   return {
     totalCards: cards.length,
-    cardsByStatus,
+    cardsByPaymentStatus,
+    cardsByCollectionStatus,
+    cardsByDeliveryStatus,
     totalContributions: contributions.length,
     visibleContributions: contributionCounts.visible ?? 0,
     hiddenContributions: contributionCounts.hidden ?? 0,
@@ -149,7 +205,9 @@ export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => 
 };
 
 export type ListAdminCardsOptions = {
-  status?: CardStatus | null;
+  paymentStatus?: PaymentStatus | null;
+  collectionStatus?: CollectionStatus | null;
+  deliveryStatus?: DeliveryStatus | null;
   search?: string | null;
   limit?: number;
   offset?: number;
@@ -165,15 +223,25 @@ const buildSearchMatch = (search: string) => {
 };
 
 export const listAdminCards = async (options: ListAdminCardsOptions = {}): Promise<CardDraft[]> => {
-  const { status, search, limit = 50, offset = 0 } = options;
+  const { paymentStatus, collectionStatus, deliveryStatus, search, limit = 50, offset = 0 } = options;
 
   if (isPostgresConfigured()) {
     const conditions: string[] = [];
-    const params: (string | CardStatus)[] = [];
+    const params: (string | PaymentStatus | CollectionStatus | DeliveryStatus)[] = [];
 
-    if (status) {
-      conditions.push(`status = $${params.length + 1}`);
-      params.push(status);
+    if (paymentStatus) {
+      conditions.push(`payment_status = $${params.length + 1}`);
+      params.push(paymentStatus);
+    }
+
+    if (collectionStatus) {
+      conditions.push(`collection_status = $${params.length + 1}`);
+      params.push(collectionStatus);
+    }
+
+    if (deliveryStatus) {
+      conditions.push(`delivery_status = $${params.length + 1}`);
+      params.push(deliveryStatus);
     }
 
     if (search?.trim()) {
@@ -207,9 +275,9 @@ export const listAdminCards = async (options: ListAdminCardsOptions = {}): Promi
 
   let cards = await listCardDrafts();
 
-  if (status) {
-    cards = cards.filter((card) => card.status === status);
-  }
+  if (paymentStatus) cards = cards.filter((card) => card.paymentStatus === paymentStatus);
+  if (collectionStatus) cards = cards.filter((card) => (card.collectionStatus ?? "DRAFT") === collectionStatus);
+  if (deliveryStatus) cards = cards.filter((card) => (card.deliveryStatus ?? "PREPARING") === deliveryStatus);
 
   if (search?.trim()) {
     const matches = buildSearchMatch(search);
@@ -352,9 +420,6 @@ export const listAdminContributions = async (
 
   return items.slice(offset, offset + limit);
 };
-
-export const updateAdminCardStatus = async (cardId: string, status: CardStatus): Promise<CardDraft | null> =>
-  updateCardStatus(cardId, status);
 
 export const updateAdminContributionStatus = async (
   contributionId: string,

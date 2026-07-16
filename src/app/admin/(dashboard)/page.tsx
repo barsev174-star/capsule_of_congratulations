@@ -1,20 +1,25 @@
 import Link from "next/link";
 import { getAdminDashboardStats } from "@/lib/admin/repository";
 import { requireAdminRole } from "@/lib/admin/session";
+import { getCardLifecycleLabel } from "@/lib/cards/lifecycle";
 import styles from "../admin.module.css";
 
-const statusLabels: Record<string, string> = {
-  draft: "Черновик",
-  collecting: "Сбор поздравлений",
-  ready: "Готова к отправке",
-  closed: "Сбор закрыт"
+const paymentStatusLabels: Record<string, string> = {
+  UNPAID: "Не оплачены",
+  PAID: "Оплачены",
+  REFUNDED: "Возвращены",
+  REVOKED: "Отозваны"
 };
 
-const statusBadgeClass: Record<string, string> = {
-  draft: styles.badgeDraft,
-  collecting: styles.badgeCollecting,
-  ready: styles.badgeReady,
-  closed: styles.badgeClosed
+const collectionStatusLabels: Record<string, string> = {
+  DRAFT: "Черновики",
+  OPEN: "Сбор открыт",
+  CLOSED: "Сбор закрыт"
+};
+
+const deliveryStatusLabels: Record<string, string> = {
+  PREPARING: "Готовятся",
+  DELIVERED: "Переданы"
 };
 
 export default async function AdminDashboardPage() {
@@ -31,9 +36,19 @@ export default async function AdminDashboardPage() {
           <p className={styles.statValue}>{stats.totalCards}</p>
           <p className={styles.statLabel}>Всего открыток</p>
           <div className={styles.statusBreakdown}>
-            {Object.entries(stats.cardsByStatus).map(([status, count]) => (
+            {Object.entries(stats.cardsByPaymentStatus).map(([status, count]) => (
               <span key={status} className={styles.statusChip}>
-                {statusLabels[status] ?? status}: {count}
+                {paymentStatusLabels[status] ?? status}: {count}
+              </span>
+            ))}
+            {Object.entries(stats.cardsByCollectionStatus).map(([status, count]) => (
+              <span key={status} className={styles.statusChip}>
+                {collectionStatusLabels[status] ?? status}: {count}
+              </span>
+            ))}
+            {Object.entries(stats.cardsByDeliveryStatus).map(([status, count]) => (
+              <span key={status} className={styles.statusChip}>
+                {deliveryStatusLabels[status] ?? status}: {count}
               </span>
             ))}
           </div>
@@ -77,8 +92,12 @@ export default async function AdminDashboardPage() {
                     <td>{card.recipientName}</td>
                     <td>{card.organizerEmail}</td>
                     <td>
-                      <span className={`${styles.badge} ${statusBadgeClass[card.status] ?? ""}`}>
-                        {statusLabels[card.status] ?? card.status}
+                      <span className={styles.badge}>
+                        {getCardLifecycleLabel({
+                          paymentStatus: card.paymentStatus,
+                          collectionStatus: card.collectionStatus ?? "DRAFT",
+                          deliveryStatus: card.deliveryStatus ?? "PREPARING"
+                        })}
                       </span>
                     </td>
                     <td>{new Date(card.createdAt).toLocaleDateString("ru-RU")}</td>

@@ -1,6 +1,6 @@
 import type { OccasionId } from "@/lib/cards/templates";
 
-export type PaymentOrderStatus = "pending" | "paid" | "failed" | "refunded";
+export type PaymentOrderStatus = "CREATED" | "PAID" | "PARTIALLY_REFUNDED" | "REFUNDED" | "CANCELED" | "REVOKED";
 
 export type PaymentOrder = {
   id: string;

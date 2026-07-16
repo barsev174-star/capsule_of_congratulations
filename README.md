@@ -13,6 +13,7 @@
 - `docs/DELIVERY_LOG.md` — журнал того, что сделано, что отложено и какие новые идеи появились.
 - `docs/ADMIN_PLAN.md` — план развития админ-панели.
 - `docs/GIFT_EXPERIENCE_AND_POLL.md` — правила финального просмотра открытки и выбора подарка.
+- `docs/CURRENT_STATUS_AND_PAYMENT_GATE.md` — актуальный production-статус и критерии перехода к оплате.
 
 ## Админка
 

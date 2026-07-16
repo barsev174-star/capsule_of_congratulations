@@ -56,7 +56,13 @@ export const hasPaidAiEntitlement = async (cardId: string) => {
   if (isPostgresConfigured()) {
     const result = await getPostgresPool().query<{ paid: boolean }>(
       `SELECT EXISTS(
-         SELECT 1 FROM payment_orders WHERE card_id = $1 AND status = 'paid'
+         SELECT 1 FROM cards c
+         JOIN payment_orders po ON po.id = c.active_paid_order_id
+         WHERE c.id = $1
+           AND c.payment_status = 'PAID'
+           AND po.status = 'PAID'
+           AND po.total_refunded_amount < po.payable_amount
+           AND po.revoked_at IS NULL
        ) AS paid`,
       [cardId]
     );

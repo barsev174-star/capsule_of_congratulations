@@ -5,7 +5,7 @@ import styles from "../../admin.module.css";
 
 const funnelOrder = [
   "funnel.card_creation_started", "funnel.card_created", "funnel.participant_link_copied",
-  "funnel.participant_form_opened", "funnel.contribution_submitted", "funnel.card_published", "funnel.gift_opened"
+  "funnel.participant_form_opened", "funnel.contribution_submitted", "gift_first_opened"
 ];
 
 const labels: Record<string, string> = {
@@ -14,8 +14,7 @@ const labels: Record<string, string> = {
   "funnel.participant_link_copied": "Скопировали приглашение",
   "funnel.participant_form_opened": "Открыли форму участника",
   "funnel.contribution_submitted": "Отправили поздравление",
-  "funnel.card_published": "Опубликовали открытку",
-  "funnel.gift_opened": "Открыли подарок",
+  "gift_first_opened": "Получатель впервые открыл открытку",
   "critical.ai": "AI", "critical.database": "База данных", "critical.email": "Email",
   "critical.media": "Фото", "critical.publication": "Публикация", "client.unhandled_error": "Браузер"
 };

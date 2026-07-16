@@ -7,25 +7,31 @@ import { consumeAiGenerationDrafts } from "@/lib/ai/repository";
 import { reportCriticalError } from "@/lib/telemetry";
 import { ContributionLimitReachedError } from "@/lib/contributions/limits";
 import { hashParticipantToken, isParticipantToken } from "@/lib/participants/token";
+import { getCardLifecycleByPublicSlug } from "@/lib/cards/lifecycle-repository";
+import { LEGAL_VERSIONS } from "@/lib/legal/versions";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
   const publicSlug = typeof request.headers.get("x-card-slug") === "string" ? request.headers.get("x-card-slug") : null;
   const cardId = typeof formData.get("cardId") === "string" ? String(formData.get("cardId")) : "";
   const card = publicSlug ? await getCardDraftByPublicSlug(publicSlug) : null;
+  const lifecycle = publicSlug ? await getCardLifecycleByPublicSlug(publicSlug) : null;
 
-  if (publicSlug && (!card || card.id !== cardId)) {
+  if (publicSlug && (!card || !lifecycle || card.id !== cardId || lifecycle.purgedAt !== null)) {
     return NextResponse.json(
       { ok: false, message: "Открытка не найдена или ссылка больше не актуальна." },
       { status: 404 }
     );
   }
 
-  if (card?.status === "closed") {
+  if (lifecycle && (lifecycle.collectionStatus !== "OPEN" || lifecycle.deliveryStatus !== "PREPARING")) {
     return NextResponse.json(
       { ok: false, message: "Сбор поздравлений для этой открытки уже закрыт организатором." },
       { status: 403 }
     );
+  }
+  if (formData.get("participantConsent") !== "on") {
+    return NextResponse.json({ ok: false, issues: [{ field: "participantConsent", message: "Подтвердите согласие на обработку и показ поздравления." }] }, { status: 400 });
   }
 
   const validation = validateContributionFormData(formData, {
@@ -46,7 +52,9 @@ export async function POST(request: Request) {
     const contribution = await createContribution({
       ...validation.data,
       source: participantTokenHash ? "participant" : "manual",
-      participantTokenHash
+      participantTokenHash,
+      consentVersion: LEGAL_VERSIONS.participantConsent,
+      consentAcceptedAt: new Date().toISOString()
     });
     const aiGenerationIds = typeof formData.get("aiGenerationIds") === "string"
       ? String(formData.get("aiGenerationIds")).split(",")

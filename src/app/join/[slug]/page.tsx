@@ -10,6 +10,7 @@ import { getMinimumReminderEventDate } from "@/lib/reminders/validation";
 import styles from "@/app/card/[publicSlug]/participant-page.module.css";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
 import { CARD_CONTRIBUTION_LIMIT } from "@/lib/contributions/limits";
+import { getCardLifecycleByPublicSlug } from "@/lib/cards/lifecycle-repository";
 
 type Props = {
   params: Promise<{
@@ -41,9 +42,9 @@ const previewContributionsLimit = 6;
 
 export default async function JoinCardPage({ params }: Props) {
   const { slug } = await params;
-  const card = await getCardDraftByPublicSlug(slug);
+  const [card, lifecycle] = await Promise.all([getCardDraftByPublicSlug(slug), getCardLifecycleByPublicSlug(slug)]);
 
-  if (!card) {
+  if (!card || !lifecycle || lifecycle.collectionStatus === "DRAFT" || lifecycle.purgedAt !== null) {
     notFound();
   }
 
@@ -58,7 +59,7 @@ export default async function JoinCardPage({ params }: Props) {
   const occasionText = card.occasionText || "повод пока уточняется";
   const previewContributions = contributions.slice(0, previewContributionsLimit);
   const hasMoreContributions = contributions.length > previewContributionsLimit;
-  const isClosed = card.status === "closed";
+  const isClosed = lifecycle.collectionStatus !== "OPEN" || lifecycle.deliveryStatus === "DELIVERED";
   const isLimitReached = contributionCount >= CARD_CONTRIBUTION_LIMIT;
 
   return (

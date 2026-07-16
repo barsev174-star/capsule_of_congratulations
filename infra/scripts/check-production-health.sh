@@ -18,7 +18,7 @@ BASE_URL="${BASE_URL:-https://slovesto.ru}"
 echo "Checking landing page: $BASE_URL"
 curl --fail --silent --show-error --location --head "$BASE_URL" >/dev/null
 
-echo "Checking create page: $BASE_URL/create"
-curl --fail --silent --show-error --location --head "$BASE_URL/create" >/dev/null
+echo "Checking managed-card start page: $BASE_URL/manage/new"
+curl --fail --silent --show-error --location --head "$BASE_URL/manage/new" >/dev/null
 
 echo "Production health checks passed"

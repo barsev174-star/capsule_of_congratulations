@@ -13,6 +13,7 @@ const navItems: { href: string; label: string; minRole: AdminUserRole }[] = [
   { href: "/admin/contributions", label: "Поздравления", minRole: "support" },
   { href: "/admin/support", label: "Обращения", minRole: "support" },
   { href: "/admin/orders", label: "Заказы", minRole: "admin" },
+  { href: "/admin/merchant-accounts", label: "Платежи", minRole: "admin" },
   { href: "/admin/templates", label: "Шаблоны", minRole: "admin" },
   { href: "/admin/users", label: "Администраторы", minRole: "admin" }
 ];

@@ -23,10 +23,12 @@ import { TemplateSettingsForm } from "./template-settings-form";
 import styles from "./manage-page.module.css";
 import { getAiCardInsight, getAiUsageSummary } from "@/lib/ai/repository";
 import { buildContributionFingerprint } from "@/lib/ai/card-insights";
-import { isGiftPublished } from "@/lib/cards/status";
-import { publishCardAction } from "@/lib/cards/actions";
+import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository";
+import { getCardLifecycleLabel, isGiftAccessible } from "@/lib/cards/lifecycle";
+import { closeCollectionAction, deliverCardAction, openCollectionAction } from "./actions";
 import { getGiftPollForManage } from "@/lib/gift-polls/repository";
 import { GiftPollSettingsForm } from "./gift-poll-settings-form";
+import { PaymentCheckoutButton } from "./payment-checkout-button";
 
 type Props = {
   params: Promise<{
@@ -47,21 +49,13 @@ type ManageTab = (typeof tabItems)[number]["id"];
 
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
 
-const statusLabels: Record<string, string> = {
-  draft: "Черновик",
-  collecting: "Сбор поздравлений",
-  ready: "Готова к отправке",
-  closed: "Сбор закрыт",
-  published: "Опубликована"
-};
-
 export default async function ManagePage({ params, searchParams }: Props) {
   const { manageToken } = await params;
   const { tab } = await searchParams;
   const activeTab: ManageTab = tabItems.some((item) => item.id === tab) ? (tab as ManageTab) : "design";
-  const card = await getCardDraftByManageToken(manageToken);
+  const [card, lifecycle] = await Promise.all([getCardDraftByManageToken(manageToken), getCardLifecycleByManageToken(manageToken)]);
 
-  if (!card) {
+  if (!card || !lifecycle) {
     notFound();
   }
 
@@ -166,8 +160,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const previewMessages = visibleContributions.slice(0, 1);
   const previewMessage = previewMessages[0];
   const participantLink = getJoinUrl(card.publicSlug);
-  const currentStatus = card.status ?? "draft";
-  const published = isGiftPublished(card);
+  const lifecycleLabel = getCardLifecycleLabel(lifecycle);
+  const giftAccessible = isGiftAccessible(lifecycle);
   const aiLimitTotal = aiUsage.limit;
   const aiLimitRemaining = aiUsage.remaining;
   const templatePalette = ["#eaded2", "#f4c59e", selectedTemplate.accent, "#5a3927", "#a8b792"];
@@ -186,7 +180,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
             <span className={styles.managerKicker}>Редактор открытки</span>
             <h1 className={styles.managerTitle}>{recipientName}</h1>
             <div className={styles.managerChips} aria-label="Сводка открытки">
-              <span>{statusLabels[currentStatus] ?? currentStatus}</span>
+              <span>{lifecycleLabel}</span>
               <span>{fromLabel}</span>
               <span>{allContributions.length} поздравлений</span>
               <span>{mediaAssets.length} фото</span>
@@ -195,9 +189,11 @@ export default async function ManagePage({ params, searchParams }: Props) {
           </div>
 
           <div className={styles.managerActions}>
-            <CopyLinkButton value={participantLink} label="Копировать ссылку" cardId={card.id} telemetrySource="participant" />
+            {lifecycle.collectionStatus === "OPEN" && lifecycle.deliveryStatus === "PREPARING" ? (
+              <CopyLinkButton value={participantLink} label="Копировать ссылку" cardId={card.id} telemetrySource="participant" />
+            ) : null}
             <Link
-              href={published ? getGiftPath(card.finalSlug) : getPreviewPath(card.manageToken)}
+              href={giftAccessible ? getGiftPath(card.finalSlug) : getPreviewPath(card.manageToken)}
               target="_blank"
               className={styles.previewPrimaryLink}
             >
@@ -210,7 +206,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
               Мои открытки
             </Link>
             <div className={styles.publishNote}>
-              <span>Финальная ссылка откроется после публикации.</span>
+              <span>Финальная ссылка откроется после передачи получателю.</span>
             </div>
           </div>
         </header>
@@ -400,32 +396,58 @@ export default async function ManagePage({ params, searchParams }: Props) {
               <section className={`${styles.sidebarCard} ${styles.publishCard}`}>
                 <div className={styles.sidebarCardHeader}>
                   <div>
-                    <h2>Публикация открытки</h2>
+                    <h2>Статус открытки</h2>
                     <p>
-                      Финальная ссылка для получателя, анимация открытия и больше AI-помощи станут доступны после публикации.
+                      Сбор, оплата и передача управляются отдельно. После передачи содержимое фиксируется.
                     </p>
                   </div>
                 </div>
-                {published ? (
+                {giftAccessible ? (
                   <>
                     <div className={styles.publishPriceRow}>
-                      <strong>Опубликована</strong>
+                      <strong>Передана получателю</strong>
                       <Link href={getGiftPath(card.finalSlug)} className={styles.publishButton}>
                         Открыть открытку
                       </Link>
                     </div>
                     <p className={styles.paymentFineprint}>Финальная ссылка готова — её можно отправлять получателю</p>
                   </>
-                ) : (
+                ) : lifecycle.collectionStatus === "DRAFT" ? (
                   <>
-                    <form action={publishCardAction} className={styles.publishPriceRow}>
+                    <form action={openCollectionAction} className={styles.publishPriceRow}>
                       <input type="hidden" name="manageToken" value={manageToken} />
-                      <strong>Бесплатно</strong>
+                      <strong>Черновик</strong>
                       <button type="submit" className={styles.publishButton}>
-                        Опубликовать открытку
+                        Открыть сбор
                       </button>
                     </form>
-                    <p className={styles.paymentFineprint}>Бесплатно в период открытой беты · Платёжные данные не требуются</p>
+                    <p className={styles.paymentFineprint}>Ссылка участника станет доступна после открытия сбора.</p>
+                  </>
+                ) : lifecycle.collectionStatus === "OPEN" ? (
+                  <>
+                    <form action={closeCollectionAction} className={styles.publishPriceRow}>
+                      <input type="hidden" name="manageToken" value={manageToken} />
+                      <strong>Сбор открыт</strong>
+                      <button type="submit" className={styles.publishButton}>Закрыть сбор</button>
+                    </form>
+                    <p className={styles.paymentFineprint}>После закрытия можно проверить открытку и перейти к оплате.</p>
+                  </>
+                ) : lifecycle.paymentStatus === "PAID" ? (
+                  <>
+                    <form action={deliverCardAction} className={styles.publishPriceRow}>
+                      <input type="hidden" name="manageToken" value={manageToken} />
+                      <strong>Готова к передаче</strong>
+                      <button type="submit" className={styles.publishButton}>Передать получателю</button>
+                    </form>
+                    <p className={styles.paymentFineprint}>После передачи редактирование станет недоступно.</p>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.publishPriceRow}>
+                      <strong>Финальная подготовка</strong>
+                      <PaymentCheckoutButton manageToken={manageToken} className={styles.publishButton} />
+                    </div>
+                    <p className={styles.paymentFineprint}>Передача станет доступна после подтверждённой оплаты. Сбор можно открыть снова при необходимости.</p>
                   </>
                 )}
               </section>

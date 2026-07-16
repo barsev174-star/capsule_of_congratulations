@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { startCardFromShowcaseAction } from "@/app/home-actions";
 import styles from "./final-card.module.css";
 
 const HeartIcon = () => (
@@ -28,7 +29,7 @@ const SparkleIcon = () => (
   </svg>
 );
 
-export const FinalCardActions = ({ manageHref = "/create" }: { manageHref?: string }) => {
+export const FinalCardActions = ({ manageHref }: { manageHref?: string }) => {
   const [message, setMessage] = useState("");
 
   const handleThanks = () => {
@@ -50,10 +51,19 @@ export const FinalCardActions = ({ manageHref = "/create" }: { manageHref?: stri
           <DownloadIcon />
           Сохранить открытку
         </button>
-        <a href={manageHref} className={`${styles.button} ${styles.secondaryButton}`}>
-          <SparkleIcon />
-          Создать такую же открытку
-        </a>
+        {manageHref ? (
+          <a href={manageHref} className={`${styles.button} ${styles.secondaryButton}`}>
+            <SparkleIcon />
+            Создать такую же открытку
+          </a>
+        ) : (
+          <form action={startCardFromShowcaseAction}>
+            <button type="submit" className={`${styles.button} ${styles.secondaryButton}`}>
+              <SparkleIcon />
+              Создать такую же открытку
+            </button>
+          </form>
+        )}
       </div>
       {message ? (
         <p className={styles.actionFeedback} role="status">

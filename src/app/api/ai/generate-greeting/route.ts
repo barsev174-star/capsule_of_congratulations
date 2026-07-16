@@ -11,6 +11,8 @@ import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layou
 import { logger } from "@/lib/logger";
 import { hasPaidAiEntitlement } from "@/lib/ai/repository";
 import { reportCriticalError } from "@/lib/telemetry";
+import { assertCardContentEditable } from "@/lib/cards/lifecycle";
+import { getCardLifecycleByManageToken, getCardLifecycleByPublicSlug } from "@/lib/cards/lifecycle-repository";
 
 const buildExistingMessageContext = (messages: string[]) => {
   const selected: string[] = [];
@@ -57,8 +59,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Открытка не найдена или ссылка больше не актуальна." }, { status: 404 });
   }
 
-  if (!isManagerEdit && input.publicSlug && card.status === "closed") {
+  const lifecycle = isManagerEdit && input.manageToken
+    ? await getCardLifecycleByManageToken(input.manageToken)
+    : input.publicSlug
+      ? await getCardLifecycleByPublicSlug(input.publicSlug)
+      : null;
+
+  if (!lifecycle || lifecycle.purgedAt !== null) {
+    return NextResponse.json({ ok: false, message: "Открытка не найдена или ссылка больше не актуальна." }, { status: 404 });
+  }
+
+  if (!isManagerEdit && input.publicSlug && (lifecycle.collectionStatus !== "OPEN" || lifecycle.deliveryStatus !== "PREPARING")) {
     return NextResponse.json({ ok: false, message: "Сбор поздравлений для этой открытки уже закрыт." }, { status: 403 });
+  }
+
+  if (isManagerEdit) {
+    try {
+      assertCardContentEditable(lifecycle);
+    } catch (error) {
+      return NextResponse.json({ ok: false, message: error instanceof Error ? error.message : "Открытка недоступна." }, { status: 409 });
+    }
   }
 
   const layoutProfile = getFinalCardMessageLayoutProfile(card.finalMessageSettings?.layoutMode ?? "grid-2");

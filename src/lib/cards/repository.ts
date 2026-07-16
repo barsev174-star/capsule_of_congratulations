@@ -157,7 +157,10 @@ export const saveCardDraft = async (card: CardDraft) => {
   await writeFile(cardsFilePath, JSON.stringify(existingCards, null, 2), "utf8");
 };
 
-export const listCardDrafts = async () => (isPostgresConfigured() ? postgresRepository.listCardDrafts() : readCards());
+export const listCardDrafts = async () => {
+  const cards = isPostgresConfigured() ? await postgresRepository.listCardDrafts() : await readCards();
+  return cards.filter((card) => card.purgedAt === null || card.purgedAt === undefined);
+};
 
 export const listCardDraftsByOrganizerEmail = async (email: string) => {
   if (isPostgresConfigured()) {
@@ -165,7 +168,11 @@ export const listCardDraftsByOrganizerEmail = async (email: string) => {
   }
   const normalizedEmail = email.trim().toLowerCase();
   return (await readCards())
-    .filter((card) => card.organizerEmail.trim().toLowerCase() === normalizedEmail)
+    .filter(
+      (card) =>
+        (card.purgedAt === null || card.purgedAt === undefined) &&
+        card.organizerEmail.trim().toLowerCase() === normalizedEmail
+    )
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 };
 
@@ -175,7 +182,7 @@ export const getCardDraftByPublicSlug = async (publicSlug: string) => {
   }
 
   const cards = await readCards();
-  return cards.find((card) => card.publicSlug === publicSlug && !card.deletedAt) ?? null;
+  return cards.find((card) => card.publicSlug === publicSlug && !card.deletedAt && !card.purgedAt) ?? null;
 };
 
 export const getCardDraftByManageToken = async (manageToken: string) => {
@@ -184,7 +191,7 @@ export const getCardDraftByManageToken = async (manageToken: string) => {
   }
 
   const cards = await readCards();
-  return cards.find((card) => card.manageToken === manageToken && !card.deletedAt) ?? null;
+  return cards.find((card) => card.manageToken === manageToken && !card.deletedAt && !card.purgedAt) ?? null;
 };
 
 export const getCardDraftById = async (cardId: string) => {
@@ -193,7 +200,7 @@ export const getCardDraftById = async (cardId: string) => {
   }
 
   const cards = await readCards();
-  return cards.find((card) => card.id === cardId) ?? null;
+  return cards.find((card) => card.id === cardId && !card.purgedAt) ?? null;
 };
 
 export const softDeleteCard = async (cardId: string) => {
@@ -229,7 +236,7 @@ export const purgeExpiredCards = async (now = new Date()) => {
   if (isPostgresConfigured()) {
     const candidates = await postgresRepository.listCardRetentionCandidates(draftCutoff, now);
     for (const candidate of candidates) {
-      const paths = await postgresRepository.permanentlyDeleteCard(candidate.id);
+      const paths = await postgresRepository.purgeCardToTombstone(candidate.id);
       await Promise.all(paths.map((path) => deleteStoredCardMediaFile(path)));
     }
     return candidates;
@@ -254,7 +261,43 @@ export const purgeExpiredCards = async (now = new Date()) => {
   if (candidates.length === 0) return candidates;
   const ids = new Set(candidates.map((item) => item.id));
   await Promise.all(assets.filter((asset) => ids.has(asset.cardId)).map((asset) => deleteStoredCardMediaFile(asset.storagePath)));
-  await writeFile(cardsFilePath, JSON.stringify(cards.filter((card) => !ids.has(card.id)), null, 2), "utf8");
+  const purgedAt = now.toISOString();
+  const tombstones = cards.map((card) => {
+    if (!ids.has(card.id)) return card;
+
+    // Keep only the internal identifier and lifecycle/accounting state. This mirrors the
+    // PostgreSQL tombstone and prevents a JSON-backed development environment from
+    // retaining content or usable public/manage identifiers after purge.
+    return {
+      ...card,
+      publicSlug: null,
+      manageToken: null,
+      finalSlug: null,
+      recipientName: null,
+      occasion: null,
+      occasionText: null,
+      fromLabel: null,
+      organizerName: null,
+      organizerEmail: null,
+      eventDate: null,
+      description: null,
+      signature: null,
+      templateId: null,
+      finalBlockSettings: null,
+      finalBlockOrder: null,
+      finalMessageSettings: null,
+      finalMainGreetingSettings: null,
+      finalMemorySettings: null,
+      isHidden: true,
+      hiddenAt: card.hiddenAt ?? purgedAt,
+      deletedAt: card.deletedAt ?? purgedAt,
+      purgeAt: null,
+      purgeAfter: null,
+      purgedAt,
+      updatedAt: purgedAt
+    } as unknown as CardDraft;
+  });
+  await writeFile(cardsFilePath, JSON.stringify(tombstones, null, 2), "utf8");
   await writeFile(contributionsFilePath, JSON.stringify(contributions.filter((item) => !ids.has(item.cardId)), null, 2), "utf8");
   await writeFile(mediaAssetsFilePath, JSON.stringify(assets.filter((asset) => !ids.has(asset.cardId)), null, 2), "utf8");
   return candidates;

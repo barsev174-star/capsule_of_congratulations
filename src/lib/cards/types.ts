@@ -7,8 +7,11 @@ import type {
   FinalCardMessageSettings
 } from "@/lib/final-card/types";
 
+/** @deprecated Compatibility label derived from the independent lifecycle statuses. */
 export type CardStatus = "draft" | "collecting" | "ready" | "closed" | "published";
-export type PaymentStatus = "unpaid" | "paid";
+export type PaymentStatus = "UNPAID" | "PAID" | "REFUNDED" | "REVOKED";
+export type CollectionStatus = "DRAFT" | "OPEN" | "CLOSED";
+export type DeliveryStatus = "PREPARING" | "DELIVERED";
 
 export type CardDraft = {
   id: string;
@@ -32,8 +35,27 @@ export type CardDraft = {
   finalMemorySettings: FinalCardMemorySettings | null;
   status: CardStatus;
   paymentStatus: PaymentStatus;
+  collectionStatus?: CollectionStatus;
+  deliveryStatus?: DeliveryStatus;
+  paidAt?: string | null;
+  collectionOpenedAt?: string | null;
+  collectionClosedAt?: string | null;
+  deliveredAt?: string | null;
+  recipientFirstOpenedAt?: string | null;
+  refundedAt?: string | null;
+  revokedAt?: string | null;
+  isHidden?: boolean;
+  hiddenAt?: string | null;
+  purgedAt?: string | null;
+  activePaidOrderId?: string | null;
+  repurchaseAllowedAt?: string | null;
+  repurchaseExpiresAt?: string | null;
+  repurchaseUsedAt?: string | null;
+  repurchaseAllowedByAdminId?: string | null;
   deletedAt: string | null;
-  purgeAfter: string | null;
+  purgeAt: string | null;
+  /** @deprecated Replaced by purgeAt during the production migration. */
+  purgeAfter?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -81,6 +103,8 @@ export type Contribution = {
   status: ContributionStatus;
   source: ContributionSource;
   participantTokenHash?: string | null;
+  consentVersion?: string | null;
+  consentAcceptedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -93,6 +117,8 @@ export type CreateContributionInput = {
   message: string;
   source?: ContributionSource;
   participantTokenHash?: string;
+  consentVersion?: string;
+  consentAcceptedAt?: string;
 };
 
 export type ContributionStatusUpdate = {
@@ -118,4 +144,6 @@ export type CardMediaAsset = {
   captionSubtitle: string;
   createdAt: string;
   updatedAt: string;
+  rightsConsentVersion?: string | null;
+  rightsConfirmedAt?: string | null;
 };

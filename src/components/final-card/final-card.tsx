@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { publishCardAction } from "@/lib/cards/actions";
 import type { FinalCardViewModel } from "@/lib/final-card/view-model";
 import { getGiftPath } from "@/lib/routes/card-links";
 import { FinalCardActions } from "@/components/final-card/final-card-actions";
@@ -547,14 +546,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                   После публикации здесь будет финальная открытка без водяного знака, с анимацией
                   открытия и ссылкой для получателя.
                 </p>
-                {manageToken ? (
-                  <form action={publishCardAction}>
-                    <input type="hidden" name="manageToken" value={manageToken} />
-                    <button type="submit" className={`${styles.button} ${styles.primaryButton}`}>
-                      Опубликовать открытку
-                    </button>
-                  </form>
-                ) : null}
+                {manageToken ? <p className={styles.previewClosingText}>Финальную ссылку можно открыть после оплаты и передачи получателю.</p> : null}
               </div>
             </>
           ) : (

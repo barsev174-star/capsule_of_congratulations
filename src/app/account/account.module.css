@@ -36,5 +36,6 @@
 .cardActions a { flex:1 1 130px; }
 .deletedCard { opacity:.78; background:#f6f1eb; }
 .emptyCard { text-align:center; padding-block:46px; }
-.emptyCard a { display:inline-block; margin-top:16px; color:#d85d2e; font-weight:800; }
+.emptyCard a,.emptyCard form { display:inline-block; margin-top:16px; }
+.emptyCard form button { color:#d85d2e; border:0; background:transparent; padding:0; font:inherit; font-weight:800; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
 @media(max-width:640px){.page{padding:20px 14px 44px}.loginCard{margin-top:48px;padding:22px;border-radius:24px}.dashboardIntro{align-items:stretch;flex-direction:column;margin-top:48px}.dashboardHeader{align-items:flex-start}.dashboardHeader p{max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.primaryLink{width:100%;box-sizing:border-box}}

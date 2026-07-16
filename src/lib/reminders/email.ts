@@ -63,7 +63,7 @@ export const sendEventReminderConfirmationEmail = async (reminder: EventReminder
   const emailLogoUrl = getEmailLogoUrl(siteUrl);
   const recipient = escapeHtml(reminder.recipientName);
   const occasion = escapeHtml(reminder.occasionText);
-  const createUrl = `${siteUrl}/create`;
+  const manageStartUrl = `${siteUrl}/manage/new`;
   const hasScheduledReminder = reminder.schedule !== "confirmation_only";
   const cancelUrl = `${siteUrl}/reminders/cancel/${encodeURIComponent(cancellationToken)}`;
   const scheduleText = reminder.schedule === "seven_days_before"
@@ -80,15 +80,15 @@ export const sendEventReminderConfirmationEmail = async (reminder: EventReminder
     reminder,
     idempotencyKey: `event-reminder-confirmation-${reminder.id}`,
     subject: `Напоминание сохранено — ${reminder.occasionText}`,
-    html: `<div style="font-family:Arial,sans-serif;color:#38261f;line-height:1.65;max-width:560px;margin:auto"><img src="${emailLogoUrl}" width="180" alt="Slovesto" style="display:block;width:180px;height:auto;margin:0 0 20px"><h1 style="font-family:Georgia,serif">Напоминание сохранено</h1><p>Мы сохранили напоминание о событии: <strong>${occasion}</strong> для ${recipient}.</p><p>${scheduleText}</p>${cancellationHtml}<p><a href="${createUrl}" style="display:inline-block;padding:13px 20px;background:#ed6431;color:white;text-decoration:none;border-radius:12px;font-weight:700">Создать открытку сейчас</a></p></div>`,
-    text: `Мы сохранили напоминание о событии: ${reminder.occasionText} для ${reminder.recipientName}.\n\n${scheduleText}${cancellationText}\n\nСоздать открытку сейчас: ${createUrl}`
+    html: `<div style="font-family:Arial,sans-serif;color:#38261f;line-height:1.65;max-width:560px;margin:auto"><img src="${emailLogoUrl}" width="180" alt="Slovesto" style="display:block;width:180px;height:auto;margin:0 0 20px"><h1 style="font-family:Georgia,serif">Напоминание сохранено</h1><p>Мы сохранили напоминание о событии: <strong>${occasion}</strong> для ${recipient}.</p><p>${scheduleText}</p>${cancellationHtml}<p><a href="${manageStartUrl}" style="display:inline-block;padding:13px 20px;background:#ed6431;color:white;text-decoration:none;border-radius:12px;font-weight:700">Создать открытку сейчас</a></p></div>`,
+    text: `Мы сохранили напоминание о событии: ${reminder.occasionText} для ${reminder.recipientName}.\n\n${scheduleText}${cancellationText}\n\nСоздать открытку сейчас: ${manageStartUrl}`
   });
 };
 
 export const sendEventReminderEmail = async (reminder: EventReminder) => {
   const { siteUrl } = getEmailConfig();
   const emailLogoUrl = getEmailLogoUrl(siteUrl);
-  const createUrl = `${siteUrl}/create`;
+  const manageStartUrl = `${siteUrl}/manage/new`;
 
   const recipient = escapeHtml(reminder.recipientName);
   const occasion = escapeHtml(reminder.occasionText);
@@ -102,7 +102,7 @@ export const sendEventReminderEmail = async (reminder: EventReminder) => {
     reminder,
     idempotencyKey: `event-reminder-${reminder.id}`,
     subject: `Пора собрать открытку: ${reminder.recipientName}`,
-    html: `<div style="font-family:Arial,sans-serif;color:#38261f;line-height:1.65;max-width:560px;margin:auto"><img src="${emailLogoUrl}" width="180" alt="Slovesto" style="display:block;width:180px;height:auto;margin:0 0 20px"><h1 style="font-family:Georgia,serif">Пора собрать открытку: ${recipient}</h1><p>${timingText}</p><p>Самое время собрать открытку от всех: добавить тёплые слова, фото и отправить красивую ссылку получателю.</p><p><a href="${createUrl}" style="display:inline-block;padding:13px 20px;background:#ed6431;color:white;text-decoration:none;border-radius:12px;font-weight:700">Собрать открытку</a></p></div>`,
-    text: `${timingPlainText}\n\nСамое время собрать открытку от всех: добавить тёплые слова, фото и отправить красивую ссылку получателю.\n\nСобрать открытку: ${createUrl}`
+    html: `<div style="font-family:Arial,sans-serif;color:#38261f;line-height:1.65;max-width:560px;margin:auto"><img src="${emailLogoUrl}" width="180" alt="Slovesto" style="display:block;width:180px;height:auto;margin:0 0 20px"><h1 style="font-family:Georgia,serif">Пора собрать открытку: ${recipient}</h1><p>${timingText}</p><p>Самое время собрать открытку от всех: добавить тёплые слова, фото и отправить красивую ссылку получателю.</p><p><a href="${manageStartUrl}" style="display:inline-block;padding:13px 20px;background:#ed6431;color:white;text-decoration:none;border-radius:12px;font-weight:700">Собрать открытку</a></p></div>`,
+    text: `${timingPlainText}\n\nСамое время собрать открытку от всех: добавить тёплые слова, фото и отправить красивую ссылку получателю.\n\nСобрать открытку: ${manageStartUrl}`
   });
 };

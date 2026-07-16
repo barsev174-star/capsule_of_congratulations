@@ -310,7 +310,7 @@ extra_hosts:
 2. `infra/scripts/backup-uploads.sh` — архивирует `public/uploads/cards`.
 3. `infra/scripts/run-nightly-backup.sh` — делает оба backup, checksum и latest symlink.
 4. `infra/scripts/cleanup-old-backups.sh` — удаляет старые backup-файлы.
-5. `infra/scripts/check-production-health.sh` — проверяет `/` и `/create` на production URL.
+5. `infra/scripts/check-production-health.sh` — проверяет `/` и `/manage/new` на production URL.
 
 Ручной backup:
 

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { publishCardAction } from "@/lib/cards/actions";
 import { getGiftPath, getManagePath } from "@/lib/routes/card-links";
 import styles from "./preview-bar.module.css";
 
@@ -28,12 +27,9 @@ export const PreviewBar = ({ manageToken, finalSlug, published = false }: Previe
               Открыть финальную открытку
             </Link>
           ) : (
-            <form action={publishCardAction}>
-              <input type="hidden" name="manageToken" value={manageToken} />
-              <button type="submit" className={styles.primaryButton}>
-                Опубликовать бесплатно
-              </button>
-            </form>
+            <Link href={getManagePath(manageToken)} className={styles.primaryButton}>
+              Вернуться к сбору и оплате
+            </Link>
           )}
         </div>
       </div>

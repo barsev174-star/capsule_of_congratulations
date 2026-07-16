@@ -1,0 +1,13 @@
+.dialog { width: min(760px, calc(100vw - 24px)); height: min(820px, calc(100dvh - 24px)); margin: auto; padding: 0; overflow: hidden; color: #3e2b23; border: 0; border-radius: 24px; box-shadow: 0 22px 68px rgba(46, 29, 22, .28), 0 2px 8px rgba(46, 29, 22, .14); }
+.dialog::backdrop { background: rgba(35, 24, 20, .56); backdrop-filter: blur(3px); }
+.header { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px 10px 22px; background: #fffaf6; box-shadow: 0 1px 0 rgba(89, 58, 44, .11); }
+.actions { display: flex; align-items: center; gap: 8px; }
+.actions a, .actions button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; color: #72554a; background: transparent; border: 0; border-radius: 12px; font: inherit; text-decoration: none; cursor: pointer; }
+.actions a { padding: 0 10px; font-size: .87rem; }
+.actions button { width: 40px; font-size: 30px; line-height: 1; transition-property: background-color, color, transform; transition-duration: 150ms; }
+.actions a:hover, .actions button:hover { color: #b54c29; background: rgba(223, 95, 46, .09); }
+.actions button:active { transform: scale(.96); }
+.actions a:focus-visible, .actions button:focus-visible { outline: 3px solid rgba(191, 108, 71, .28); outline-offset: 2px; }
+.frame { display: block; width: 100%; height: calc(100% - 64px); border: 0; background: #fffaf6; }
+@media (max-width: 560px) { .dialog { width: 100vw; height: 100dvh; max-width: none; max-height: none; border-radius: 0; } .header { padding-left: 16px; } .actions a { display: none; } }
+

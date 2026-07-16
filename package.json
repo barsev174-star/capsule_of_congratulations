@@ -15,6 +15,7 @@
     "smoke:admin": "node --env-file=.env.local scripts/smoke-admin-local.mjs",
     "smoke:retention": "node --env-file=.env.local scripts/smoke-retention-local.mjs",
     "db:migrate": "node scripts/migrate-postgres.mjs",
+    "cleanup:prelaunch": "node --experimental-strip-types scripts/cleanup-prelaunch-user-data.ts",
     "ai:check": "node --env-file=.env.local scripts/check-gigachat.mjs",
     "test": "vitest run",
     "test:greetings:matrix": "vitest run src/lib/ai/openai-provider.live.test.ts --reporter=verbose",

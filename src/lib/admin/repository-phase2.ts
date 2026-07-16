@@ -52,7 +52,7 @@ const toIso = (value: Date | string) => (value instanceof Date ? value.toISOStri
 type PaymentOrderRow = {
   id: string;
   card_id: string;
-  amount: number;
+  payable_amount: number;
   currency: string;
   status: PaymentOrderStatus;
   provider: string | null;
@@ -65,7 +65,7 @@ type PaymentOrderRow = {
 const mapPaymentOrder = (row: PaymentOrderRow): PaymentOrder => ({
   id: row.id,
   cardId: row.card_id,
-  amount: row.amount,
+  amount: row.payable_amount,
   currency: row.currency,
   status: row.status,
   provider: row.provider,
@@ -110,7 +110,7 @@ export const listPaymentOrders = async (
       SELECT
         po.id,
         po.card_id,
-        po.amount,
+        po.payable_amount,
         po.currency,
         po.status,
         po.provider,
@@ -202,90 +202,6 @@ export const getPaymentOrderById = async (orderId: string): Promise<(PaymentOrde
   const card = cards.find((item) => item.id === order.cardId);
 
   return { ...order, recipientName: card?.recipientName ?? "—" };
-};
-
-export const createPaymentOrder = async (input: { cardId: string; amount: number }): Promise<PaymentOrder> => {
-  const now = new Date().toISOString();
-  const order: PaymentOrder = {
-    id: randomUUID(),
-    cardId: input.cardId,
-    amount: input.amount,
-    currency: "RUB",
-    status: "pending",
-    provider: null,
-    providerOrderId: null,
-    paidAt: null,
-    createdAt: now,
-    updatedAt: now
-  };
-
-  if (isPostgresConfigured()) {
-    await getPostgresPool().query(
-      `
-        INSERT INTO payment_orders (
-          id, card_id, amount, currency, status, provider, provider_order_id, paid_at, created_at, updated_at
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      `,
-      [
-        order.id,
-        order.cardId,
-        order.amount,
-        order.currency,
-        order.status,
-        order.provider,
-        order.providerOrderId,
-        order.paidAt,
-        order.createdAt,
-        order.updatedAt
-      ]
-    );
-
-    return order;
-  }
-
-  const orders = await readJsonFile<PaymentOrder>(paymentOrdersFilePath);
-  orders.push(order);
-  await writeJsonFile(paymentOrdersFilePath, orders);
-
-  return order;
-};
-
-export const updatePaymentOrderStatus = async (
-  orderId: string,
-  status: PaymentOrderStatus
-): Promise<PaymentOrder | null> => {
-  const now = new Date().toISOString();
-
-  if (isPostgresConfigured()) {
-    const result = await getPostgresPool().query<PaymentOrderRow>(
-      `
-        UPDATE payment_orders
-        SET status = $2,
-            paid_at = CASE WHEN $2 = 'paid' AND paid_at IS NULL THEN now() ELSE paid_at END,
-            updated_at = now()
-        WHERE id = $1
-        RETURNING *
-      `,
-      [orderId, status]
-    );
-
-    return result.rows[0] ? mapPaymentOrder(result.rows[0]) : null;
-  }
-
-  const orders = await readJsonFile<PaymentOrder>(paymentOrdersFilePath);
-  const index = orders.findIndex((item) => item.id === orderId);
-
-  if (index === -1) {
-    return null;
-  }
-
-  const paidAt = status === "paid" && !orders[index].paidAt ? now : orders[index].paidAt;
-  const updated = { ...orders[index], status, paidAt, updatedAt: now };
-  orders[index] = updated;
-  await writeJsonFile(paymentOrdersFilePath, orders);
-
-  return updated;
 };
 
 // Template overrides

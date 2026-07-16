@@ -2,18 +2,11 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { redirect } from "next/navigation";
 import { listCardDraftsByOrganizerEmail } from "@/lib/cards/repository";
-import { isGiftPublished } from "@/lib/cards/status";
+import { getCardLifecycleLabel } from "@/lib/cards/lifecycle";
 import { getOrganizerSession } from "@/lib/organizer/session";
 import { deleteOrganizerCardAction, logoutOrganizerAction, restoreOrganizerCardAction } from "./actions";
+import { startCardFromShowcaseAction } from "@/app/home-actions";
 import styles from "./account.module.css";
-
-const statusLabels: Record<string, string> = {
-  draft: "Черновик",
-  collecting: "Сбор поздравлений",
-  ready: "Готова к публикации",
-  closed: "Сбор завершён",
-  published: "Опубликована"
-};
 
 export default async function AccountPage() {
   const session = await getOrganizerSession();
@@ -29,21 +22,26 @@ export default async function AccountPage() {
         </header>
         <section className={styles.dashboardIntro}>
           <div><p className={styles.eyebrow}>Кабинет организатора</p><h1>Мои открытки</h1><p>Здесь собраны открытки, созданные с этим email.</p></div>
-          <Link href="/create" className={styles.primaryLink}>Создать открытку</Link>
+          <form action={startCardFromShowcaseAction}><button type="submit" className={styles.primaryLink}>Создать открытку</button></form>
         </section>
         {cards.length === 0 ? (
-          <section className={styles.emptyCard}><h2>Пока здесь пусто</h2><p>Создайте первую открытку — она появится в этом списке автоматически.</p><Link href="/create">Создать открытку</Link></section>
+          <section className={styles.emptyCard}><h2>Пока здесь пусто</h2><p>Создайте первую открытку — она появится в этом списке автоматически.</p><form action={startCardFromShowcaseAction}><button type="submit">Создать открытку</button></form></section>
         ) : (
           <section className={styles.cardGrid}>
             {cards.map((card) => {
-              const published = isGiftPublished(card);
+              const lifecycle = {
+                paymentStatus: card.paymentStatus,
+                collectionStatus: card.collectionStatus ?? "DRAFT",
+                deliveryStatus: card.deliveryStatus ?? "PREPARING"
+              };
+              const delivered = lifecycle.paymentStatus === "PAID" && lifecycle.deliveryStatus === "DELIVERED";
               const isDeleted = Boolean(card.deletedAt);
               return (
                 <article key={card.id} className={`${styles.card} ${isDeleted ? styles.deletedCard : ""}`}>
-                  <div className={styles.cardTop}><span>{isDeleted ? "Удалена" : statusLabels[card.status] ?? card.status}</span><time>{new Date(card.updatedAt).toLocaleDateString("ru-RU")}</time></div>
+                  <div className={styles.cardTop}><span>{isDeleted ? "Удалена" : getCardLifecycleLabel(lifecycle)}</span><time>{new Date(card.updatedAt).toLocaleDateString("ru-RU")}</time></div>
                   <h2>{card.recipientName || "Новая открытка"}</h2>
-                  <p>{isDeleted && card.purgeAfter
-                    ? `Скрыта. Можно восстановить до ${new Date(card.purgeAfter).toLocaleDateString("ru-RU")}.`
+                  <p>{isDeleted && (card.purgeAt ?? card.purgeAfter)
+                    ? `Скрыта. Можно восстановить до ${new Date(card.purgeAt ?? card.purgeAfter ?? "").toLocaleDateString("ru-RU")}.`
                     : card.occasionText || "Событие пока не указано"}</p>
                   {isDeleted ? (
                     <form action={restoreOrganizerCardAction} className={styles.cardActions}>
@@ -53,7 +51,7 @@ export default async function AccountPage() {
                   ) : (
                     <div className={styles.cardActions}>
                       <Link href={`/manage/${card.manageToken}`} className={styles.primaryLink}>Управлять</Link>
-                      <Link href={published ? `/gift/${card.finalSlug}` : `/preview/${card.manageToken}`} className={styles.secondaryLink}>{published ? "Открыть" : "Предпросмотр"}</Link>
+                      <Link href={delivered ? `/gift/${card.finalSlug}` : `/preview/${card.manageToken}`} className={styles.secondaryLink}>{delivered ? "Открыть" : "Предпросмотр"}</Link>
                       <form action={deleteOrganizerCardAction}>
                         <input type="hidden" name="cardId" value={card.id} />
                         <button type="submit" className={styles.secondaryButton}>Удалить</button>

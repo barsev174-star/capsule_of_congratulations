@@ -9,10 +9,12 @@ describe("admin repository", () => {
       expect(stats.totalCards).toBeGreaterThanOrEqual(0);
       expect(stats.totalContributions).toBeGreaterThanOrEqual(0);
       expect(stats.totalMediaAssets).toBeGreaterThanOrEqual(0);
-      expect(stats.cardsByStatus.draft).toBeGreaterThanOrEqual(0);
-      expect(stats.cardsByStatus.collecting).toBeGreaterThanOrEqual(0);
-      expect(stats.cardsByStatus.ready).toBeGreaterThanOrEqual(0);
-      expect(stats.cardsByStatus.closed).toBeGreaterThanOrEqual(0);
+      expect(stats.cardsByPaymentStatus.UNPAID).toBeGreaterThanOrEqual(0);
+      expect(stats.cardsByPaymentStatus.PAID).toBeGreaterThanOrEqual(0);
+      expect(stats.cardsByCollectionStatus.DRAFT).toBeGreaterThanOrEqual(0);
+      expect(stats.cardsByCollectionStatus.OPEN).toBeGreaterThanOrEqual(0);
+      expect(stats.cardsByDeliveryStatus.PREPARING).toBeGreaterThanOrEqual(0);
+      expect(stats.cardsByDeliveryStatus.DELIVERED).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -22,8 +24,8 @@ describe("admin repository", () => {
       expect(Array.isArray(cards)).toBe(true);
     });
 
-    it("filters by status", async () => {
-      const cards = await listAdminCards({ status: "draft", limit: 10 });
+    it("filters by collection status", async () => {
+      const cards = await listAdminCards({ collectionStatus: "DRAFT", limit: 10 });
       expect(Array.isArray(cards)).toBe(true);
     });
   });

@@ -1,0 +1,81 @@
+.page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #fff9f2;
+  color: #38261f;
+}
+
+.card {
+  width: min(100%, 560px);
+  padding: clamp(28px, 6vw, 48px);
+  border-radius: 28px;
+  background: #fffdf9;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 12px 28px -14px rgba(56, 38, 31, 0.24), 0 3px 8px -4px rgba(56, 38, 31, 0.12);
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: #d95828;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.card h1 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.copy {
+  margin: 18px auto 28px;
+  max-width: 42ch;
+  color: #6f5548;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.primaryButton {
+  min-height: 48px;
+  padding: 13px 20px;
+  border: 0;
+  border-radius: 14px;
+  background: #ed6431;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  box-shadow: 0 6px 14px -8px rgba(185, 74, 32, 0.72);
+  transition-property: transform, box-shadow, background-color;
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
+}
+
+.primaryButton:hover {
+  background: #d95828;
+  box-shadow: 0 9px 18px -8px rgba(185, 74, 32, 0.78);
+}
+
+.primaryButton:active {
+  transform: scale(0.96);
+}
+
+.primaryButton:focus-visible,
+.backLink:focus-visible {
+  outline: 3px solid rgba(237, 100, 49, 0.35);
+  outline-offset: 3px;
+}
+
+.backLink {
+  display: inline-block;
+  margin-top: 22px;
+  color: #7b5b4d;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

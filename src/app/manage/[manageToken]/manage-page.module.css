@@ -7817,6 +7817,9 @@ button.contentFilterPill {
   text-decoration: none;
 }
 
+.mediaRightsConsent { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 9px; color: #755b4e; font-size: .82rem; line-height: 1.4; }
+.mediaRightsConsent input { width: 17px; height: 17px; margin-top: 2px; flex: 0 0 auto; accent-color: #c65431; }
+
 .organizerAccessBlock {
   display: grid;
   gap: 16px;
