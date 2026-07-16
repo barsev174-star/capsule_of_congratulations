@@ -11,6 +11,7 @@ import type { Contribution } from "@/lib/cards/types";
 import { logger } from "@/lib/logger";
 import { setAiBonusLimit } from "@/lib/ai/repository";
 import { getCardDraftById } from "@/lib/cards/repository";
+import { accessGrantReasons, grantCardAccess, revokeCardAccess } from "@/lib/cards/access-grants";
 
 const contributionStatuses: Contribution["status"][] = ["visible", "hidden", "deleted"];
 
@@ -60,3 +61,31 @@ export async function updateAiBonusLimitAdminAction(formData: FormData): Promise
 
 export type AdminCardsSearchOptions = ListAdminCardsOptions;
 export type AdminContributionsSearchOptions = ListAdminContributionsOptions;
+
+export async function grantCardAccessAdminAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole("admin");
+  const cardId = String(formData.get("cardId") ?? "");
+  const reasonCode = String(formData.get("reasonCode") ?? "");
+  const comment = String(formData.get("comment") ?? "").trim();
+  const duration = String(formData.get("duration") ?? "QA_30_DAYS");
+  const expiresAtValue = String(formData.get("expiresAt") ?? "").trim();
+  if (!cardId || !accessGrantReasons.includes(reasonCode as typeof accessGrantReasons[number]) || comment.length < 3 || comment.length > 1000) return;
+  if (duration === "UNTIL_DATE" && (!expiresAtValue || Number.isNaN(Date.parse(expiresAtValue)))) return;
+  const expiresAt = duration === "PERMANENT" ? null : duration === "UNTIL_DATE" ? new Date(expiresAtValue).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  await grantCardAccess({ cardId, adminEmail: session.email, reasonCode: reasonCode as typeof accessGrantReasons[number], comment, expiresAt });
+  revalidatePath(`/admin/cards/${cardId}`);
+  const card = await getCardDraftById(cardId);
+  if (card) revalidatePath(`/manage/${card.manageToken}`);
+}
+
+export async function revokeCardAccessAdminAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole("admin");
+  const cardId = String(formData.get("cardId") ?? "");
+  const grantId = String(formData.get("grantId") ?? "");
+  const comment = String(formData.get("comment") ?? "").trim();
+  if (!cardId || !grantId || comment.length < 3 || comment.length > 1000) return;
+  await revokeCardAccess({ cardId, grantId, adminEmail: session.email, comment });
+  revalidatePath(`/admin/cards/${cardId}`);
+  const card = await getCardDraftById(cardId);
+  if (card) revalidatePath(`/manage/${card.manageToken}`);
+}

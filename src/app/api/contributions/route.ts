@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   if (lifecycle && (lifecycle.collectionStatus !== "OPEN" || lifecycle.deliveryStatus !== "PREPARING")) {
     return NextResponse.json(
       { ok: false, message: "Сбор поздравлений для этой открытки уже закрыт организатором." },
-      { status: 403 }
+      { status: 409 }
     );
   }
   if (formData.get("participantConsent") !== "on") {

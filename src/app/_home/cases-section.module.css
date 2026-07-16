@@ -46,6 +46,10 @@
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
 
+.section[data-motion-ready] .card:nth-child(-n+3) { transform: translateX(-20px); }
+.section[data-motion-ready] .card:nth-child(n+4) { transform: translateX(20px); }
+.section[data-motion-visible="true"] .card:nth-child(n) { transform: translateX(0); }
+
 .card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-card);

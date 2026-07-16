@@ -69,7 +69,7 @@ export function CasesSection() {
 
         <div className={styles.grid}>
           {cases.map((item) => (
-            <article key={item.title} className={styles.card}>
+            <article key={item.title} className={`${styles.card} js-motion-card`}>
               <span className={styles.icon}>{item.icon}</span>
               <h3 className={styles.cardTitle}>{item.title}</h3>
             </article>

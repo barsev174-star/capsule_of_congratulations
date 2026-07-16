@@ -29,9 +29,18 @@
 }
 
 .track {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .track::before { content: ""; position: absolute; top: 22px; left: 11%; right: 11%; height: 2px; transform: scaleX(0); transform-origin: left; background: repeating-linear-gradient(90deg, rgba(217,106,61,.6) 0 5px, transparent 5px 10px); transition: transform 900ms cubic-bezier(.22,1,.36,1); }
+  .section[data-motion-visible="true"] .track::before { transform: scaleX(1); }
+  .card { position: relative; z-index: 1; }
+  .number { transition: transform 300ms cubic-bezier(.22,1,.36,1); }
+  .section[data-motion-visible="true"] .number { transform: scale(1.04); }
 }
 
 .stepWrap {

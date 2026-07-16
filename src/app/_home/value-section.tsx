@@ -12,7 +12,7 @@ const values = [
     ),
     badge: "var(--accent-light)",
     title: "Собрать без хаоса",
-    text: "Одна ссылка — и все поздравления собираются в одном месте, без бесконечных сообщений в чате."
+    text: "Все поздравления находятся в одном месте, а не теряются среди сообщений."
   },
   {
     icon: (
@@ -22,7 +22,7 @@ const values = [
     ),
     badge: "var(--accent-light)",
     title: "Сделать красиво",
-    text: "Открытка выглядит как подарок, а не как набор сообщений. Каждый шаблон продуман до мелочей."
+    text: "Открытка выглядит как цельный подарок, а не как набор отдельных сообщений."
   },
   {
     icon: (
@@ -34,7 +34,7 @@ const values = [
     ),
     badge: "var(--accent-light)",
     title: "Добавить фото и слова",
-    text: "Не только текст, но и общие фото, важные моменты и самые тёплые воспоминания."
+    text: "Организатор добавляет фотографии, а участники — личные поздравления."
   },
   {
     icon: (
@@ -57,13 +57,13 @@ export function ValueSection() {
     <section className={styles.section}>
       <div className={styles.shell}>
         <div className={styles.heading}>
-          <h2 className={`${styles.title} text-balance`}>Зачем собирать открытку вместе</h2>
-          <p className={styles.subtitle}>Один человек собирает, остальные просто добавляют тёплые слова.</p>
+          <h2 className={`${styles.title} text-balance`}>Почему это лучше, чем поздравления в чате</h2>
+          <p className={styles.subtitle}>Один человек собирает открытку, остальные просто добавляют тёплые слова.</p>
         </div>
 
         <div className={styles.grid}>
           {values.map((item, index) => (
-            <article key={item.title} className={styles.card} style={{ "--card-accent": item.badge } as React.CSSProperties}>
+            <article key={item.title} className={`${styles.card} js-motion-card`} style={{ "--card-accent": item.badge } as React.CSSProperties}>
               <div className={styles.iconWrap}>
                 <div className={styles.icon}>{item.icon}</div>
                 <span className={styles.index}>0{index + 1}</span>

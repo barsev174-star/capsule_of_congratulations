@@ -5,8 +5,8 @@ import styles from "./header.module.css";
 
 const navItems = [
   { href: "#how-it-works", label: "Как это работает" },
-  { href: "#cases", label: "Случаи" },
-  { href: "#templates", label: "Примеры" },
+  { href: "/example", label: "Примеры" },
+  { href: "#ai", label: "AI-помощник" },
   { href: "#faq", label: "FAQ" },
   { href: "/account", label: "Мои открытки" }
 ];
@@ -26,6 +26,13 @@ export function HomeHeader() {
             </a>
           ))}
         </nav>
+
+        <details className={styles.mobileMenu}>
+          <summary aria-label="Открыть меню"><span /><span /><span /></summary>
+          <nav aria-label="Мобильная навигация" className={styles.mobileNav}>
+            {navItems.map((item) => <a key={item.href} href={item.href}>{item.label}</a>)}
+          </nav>
+        </details>
 
         <form action={startCardFromShowcaseAction} className={styles.ctaForm}>
           <button type="submit" className={styles.ctaButton}>

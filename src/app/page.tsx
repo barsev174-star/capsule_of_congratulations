@@ -6,10 +6,11 @@ import {
   CasesSection,
   TemplatesSection,
   AiSection,
-  InsideSection,
+  PricingSection,
   FaqSection,
   FinalCtaSection,
-  HomeFooter
+  HomeFooter,
+  HomeMotion
 } from "./_home";
 import type { Metadata } from "next";
 import styles from "./page.module.css";
@@ -53,14 +54,15 @@ export default async function HomePage() {
         }}
       />
       <HomeHeader />
+      <HomeMotion />
       <main>
         <HeroSection />
         <ValueSection />
         <HowItWorksSection />
+        <AiSection />
         <CasesSection />
         <TemplatesSection />
-        <AiSection />
-        <InsideSection />
+        <PricingSection />
         <FaqSection />
         <FinalCtaSection />
       </main>

@@ -30,12 +30,13 @@ export const createRobokassaCheckout = async (input: {
   try {
     await client.query("BEGIN");
     const cardResult = await client.query<{
-      id: string; payment_status: string; deleted_at: Date | null; purged_at: Date | null; is_hidden: boolean;
+      id: string; payment_status: string; deleted_at: Date | null; purged_at: Date | null; is_hidden: boolean; active_access_grant_id: string | null;
       repurchase_allowed_at: Date | null; repurchase_expires_at: Date | null; repurchase_used_at: Date | null;
-    }>(`SELECT id, payment_status, deleted_at, purged_at, is_hidden, repurchase_allowed_at, repurchase_expires_at, repurchase_used_at
+    }>(`SELECT id, payment_status, deleted_at, purged_at, is_hidden, active_access_grant_id, repurchase_allowed_at, repurchase_expires_at, repurchase_used_at
         FROM cards WHERE manage_token = $1 FOR UPDATE`, [input.manageToken]);
     const card = cardResult.rows[0];
     if (!card || card.deleted_at || card.purged_at) throw new CardLifecycleConflictError("Открытка недоступна для оплаты.");
+    if (card.active_access_grant_id) throw new CardLifecycleConflictError("Для открытки уже предоставлен доступ без оплаты.");
 
     const canRepurchase = (card.payment_status === "REFUNDED" || card.payment_status === "REVOKED")
       && card.repurchase_allowed_at !== null
@@ -103,7 +104,11 @@ export const confirmRobokassaPayment = async (input: { invoiceId: string; mercha
 
     await client.query("UPDATE payment_attempts SET status = 'SUCCEEDED', provider_payload = provider_payload || $2::jsonb, updated_at = now() WHERE id = $1", [payment.attempt_id, JSON.stringify({ result: input.payload })]);
     await client.query("UPDATE payment_orders SET status = 'PAID', paid_at = now(), updated_at = now() WHERE id = $1", [payment.order_id]);
-    await client.query("UPDATE cards SET payment_status = 'PAID', paid_at = now(), refunded_at = NULL, revoked_at = NULL, active_paid_order_id = $2, is_hidden = false, hidden_at = NULL, updated_at = now() WHERE id = $1", [payment.card_id, payment.order_id]);
+    const previousGrant = await client.query<{ active_access_grant_id: string | null }>("SELECT active_access_grant_id FROM cards WHERE id = $1 FOR UPDATE", [payment.card_id]);
+    if (previousGrant.rows[0]?.active_access_grant_id) {
+      await client.query("UPDATE card_access_grants SET status = 'SUPERSEDED', superseded_at = now(), superseded_by_order_id = $2, updated_at = now() WHERE id = $1 AND status = 'ACTIVE'", [previousGrant.rows[0].active_access_grant_id, payment.order_id]);
+    }
+    await client.query("UPDATE cards SET payment_status = 'PAID', paid_at = now(), refunded_at = NULL, revoked_at = NULL, active_paid_order_id = $2, active_access_grant_id = NULL, is_hidden = false, hidden_at = NULL, updated_at = now() WHERE id = $1", [payment.card_id, payment.order_id]);
     await client.query("INSERT INTO payment_events (id, order_id, attempt_id, provider, provider_event_id, event_type, payload, processed_at) VALUES ($1, $2, $3, 'robokassa', $4, 'payment_succeeded', $5::jsonb, now())", [randomUUID(), payment.order_id, payment.attempt_id, `result:${input.invoiceId}`, JSON.stringify(input.payload)]);
     await client.query("INSERT INTO card_audit_events (id, card_id, actor_type, event_type, metadata) VALUES ($1, $2, 'provider', 'payment_paid', $3::jsonb)", [randomUUID(), payment.card_id, JSON.stringify({ provider: "robokassa", orderId: payment.order_id })]);
     await client.query("INSERT INTO outbox_events (id, event_type, aggregate_type, aggregate_id, payload) VALUES ($1, 'payment.paid', 'card', $2, $3::jsonb)", [randomUUID(), payment.card_id, JSON.stringify({ orderId: payment.order_id })]);

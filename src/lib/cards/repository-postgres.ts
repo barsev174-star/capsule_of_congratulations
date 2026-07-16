@@ -45,6 +45,7 @@ type CardRow = {
   hidden_at: Date | string | null;
   purged_at: Date | string | null;
   active_paid_order_id: string | null;
+  active_access_grant_id: string | null;
   repurchase_allowed_at: Date | string | null;
   repurchase_expires_at: Date | string | null;
   repurchase_used_at: Date | string | null;
@@ -144,6 +145,7 @@ const mapCard = (row: CardRow): CardDraft => ({
   hiddenAt: row.hidden_at ? toIso(row.hidden_at) : null,
   purgedAt: row.purged_at ? toIso(row.purged_at) : null,
   activePaidOrderId: row.active_paid_order_id,
+  activeAccessGrantId: row.active_access_grant_id,
   repurchaseAllowedAt: row.repurchase_allowed_at ? toIso(row.repurchase_allowed_at) : null,
   repurchaseExpiresAt: row.repurchase_expires_at ? toIso(row.repurchase_expires_at) : null,
   repurchaseUsedAt: row.repurchase_used_at ? toIso(row.repurchase_used_at) : null,
@@ -206,7 +208,7 @@ export const saveCardDraft = async (card: CardDraft) => {
         template_id, final_block_settings, final_block_order, final_message_settings,
         final_main_greeting_settings, final_memory_settings, payment_status, collection_status, delivery_status,
         paid_at, collection_opened_at, collection_closed_at, delivered_at, recipient_first_opened_at,
-        refunded_at, revoked_at, is_hidden, hidden_at, purged_at, active_paid_order_id,
+        refunded_at, revoked_at, is_hidden, hidden_at, purged_at, active_paid_order_id, active_access_grant_id,
         repurchase_allowed_at, repurchase_expires_at, repurchase_used_at, repurchase_allowed_by_admin_id,
         deleted_at, purge_at, created_at, updated_at
       )
@@ -216,9 +218,9 @@ export const saveCardDraft = async (card: CardDraft) => {
         $14, $15::jsonb, $16::jsonb, $17::jsonb,
         $18::jsonb, $19::jsonb, $20, $21, $22,
         $23, $24, $25, $26, $27,
-        $28, $29, $30, $31, $32, $33,
-        $34, $35, $36, $37,
-        $38, $39, $40, $41
+        $28, $29, $30, $31, $32, $33, $34,
+        $35, $36, $37, $38,
+        $39, $40, $41, $42
       )
     `,
     [
@@ -255,6 +257,7 @@ export const saveCardDraft = async (card: CardDraft) => {
       card.hiddenAt ?? null,
       card.purgedAt ?? null,
       card.activePaidOrderId ?? null,
+      card.activeAccessGrantId ?? null,
       card.repurchaseAllowedAt ?? null,
       card.repurchaseExpiresAt ?? null,
       card.repurchaseUsedAt ?? null,

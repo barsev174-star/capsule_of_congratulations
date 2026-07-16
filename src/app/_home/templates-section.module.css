@@ -212,12 +212,33 @@
   font-size: 1.1rem;
 }
 
+.section[data-motion-visible="true"] .card:nth-child(1) { transform: translateY(-6px) rotate(-1deg); }
+.section[data-motion-visible="true"] .card:nth-child(2) { transform: rotate(-.5deg); }
+.section[data-motion-visible="true"] .card:nth-child(4) { transform: rotate(.5deg); }
+.section[data-motion-visible="true"] .card:nth-child(5) { transform: rotate(1deg); }
+
 .cardText {
   margin: 0 10px;
   color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.5;
 }
+
+.availableBadge,
+.comingSoonBadge {
+  display: inline-flex;
+  width: fit-content;
+  margin: 12px 10px 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.availableBadge { background: rgba(64, 128, 77, .12); color: #397647; }
+.comingSoon { opacity: .58; }
+.comingSoon:hover { transform: none; box-shadow: var(--shadow-soft); border-color: var(--line); }
+.comingSoonBadge { background: rgba(112, 92, 80, .1); color: #765f53; }
 
 @media (min-width: 640px) {
   .grid {

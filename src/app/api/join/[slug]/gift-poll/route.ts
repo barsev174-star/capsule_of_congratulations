@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCardDraftByPublicSlug } from "@/lib/cards/repository";
+import { getCardLifecycleByPublicSlug } from "@/lib/cards/lifecycle-repository";
 import { getClosedGiftPollParticipantState, getGiftPollTeaser, getParticipantGiftPoll, upsertGiftVote } from "@/lib/gift-polls/repository";
 import { hashParticipantToken, isParticipantToken } from "@/lib/participants/token";
 
@@ -20,9 +21,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const card = await getCardDraftByPublicSlug(slug);
+  const lifecycle = await getCardLifecycleByPublicSlug(slug);
   const body = await request.json().catch(() => null) as { optionId?: unknown; participantToken?: unknown } | null;
   if (!card || !body || typeof body.optionId !== "string" || !isParticipantToken(body.participantToken)) {
     return NextResponse.json({ ok: false, message: "Не удалось учесть голос." }, { status: 400 });
+  }
+  if (!lifecycle || lifecycle.collectionStatus !== "OPEN" || lifecycle.deliveryStatus !== "PREPARING") {
+    return NextResponse.json({ ok: false, message: "Голосование уже закрыто организатором." }, { status: 409 });
   }
   const vote = await upsertGiftVote(card.id, body.optionId, hashParticipantToken(body.participantToken));
   if (!vote) return NextResponse.json({ ok: false, message: "Голосование уже закрыто или вариант недоступен." }, { status: 409 });

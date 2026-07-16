@@ -4,17 +4,17 @@ const steps = [
   {
     number: "01",
     title: "Создайте открытку",
-    text: "Укажите имя, повод и получателя. Выберите структуру и настройте открытку."
+    text: "Укажите получателя, повод, поле «От кого» и оформление."
   },
   {
     number: "02",
     title: "Отправьте ссылку участникам",
-    text: "Каждый добавит поздравление, фото или воспользуется AI-помощником."
+    text: "Каждый добавит личное поздравление. Организатор продолжит оформление и добавит фотографии."
   },
   {
     number: "03",
-    title: "Подарите финальную ссылку",
-    text: "Получатель откроет открытку с анимацией, словами, фото и тёплыми моментами."
+    title: "Передайте открытку получателю",
+    text: "После финальной проверки получатель откроет красивую страницу с поздравлениями, фотографиями и анимацией."
   }
 ];
 
@@ -30,7 +30,7 @@ export function HowItWorksSection() {
         <div className={styles.track}>
           {steps.map((step, index) => (
             <div key={step.number} className={styles.stepWrap}>
-              <article className={styles.card}>
+              <article className={`${styles.card} js-motion-card`}>
                 <span className={styles.number}>{step.number}</span>
                 <h3 className={styles.cardTitle}>{step.title}</h3>
                 <p className={styles.cardText}>{step.text}</p>

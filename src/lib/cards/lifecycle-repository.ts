@@ -4,10 +4,10 @@ import {
   assertCanDeliverCard,
   assertCanOpenCollection,
   CardLifecycleConflictError,
-  isPaidPublicationRequired,
   type CardLifecycle,
   isGiftAccessible
 } from "@/lib/cards/lifecycle";
+import { getActiveCardAccessGrant } from "@/lib/cards/access-grants";
 
 export type CardLifecycleRecord = CardLifecycle & {
   id: string;
@@ -35,6 +35,7 @@ type CardLifecycleRow = {
   collection_status: CardLifecycle["collectionStatus"];
   delivery_status: CardLifecycle["deliveryStatus"];
   active_paid_order_id: string | null;
+  active_access_grant_id: string | null;
   is_hidden: boolean;
   deleted_at: Date | string | null;
   purged_at: Date | string | null;
@@ -68,11 +69,13 @@ const mapCard = (row: CardLifecycleRow): CardLifecycleRecord => ({
 });
 
 const lifecycleColumns = `id, manage_token, final_slug, recipient_name, occasion_text, from_label, template_id,
-  payment_status, collection_status, delivery_status, active_paid_order_id, is_hidden,
+  payment_status, collection_status, delivery_status, active_paid_order_id, active_access_grant_id, is_hidden,
   deleted_at, purged_at, collection_opened_at, collection_closed_at, delivered_at,
   recipient_first_opened_at`;
 
 const selectLifecycle = `SELECT ${lifecycleColumns} FROM cards`;
+
+const withAccess = async (card: CardLifecycleRecord) => ({ ...card, hasAdminAccess: Boolean(await getActiveCardAccessGrant(card.id)) });
 
 const assertCollectionReady = (card: CardLifecycleRecord) => {
   if (!card.recipientName?.trim() || !card.occasionText?.trim() || !card.fromLabel?.trim() || !card.templateId) {
@@ -88,12 +91,12 @@ const assertOperational = (card: CardLifecycleRecord) => {
 
 export const getCardLifecycleByManageToken = async (manageToken: string): Promise<CardLifecycleRecord | null> => {
   const result = await getPostgresPool().query<CardLifecycleRow>(`${selectLifecycle} WHERE manage_token = $1 LIMIT 1`, [manageToken]);
-  return result.rows[0] ? mapCard(result.rows[0]) : null;
+  return result.rows[0] ? withAccess(mapCard(result.rows[0])) : null;
 };
 
 export const getCardLifecycleByPublicSlug = async (publicSlug: string): Promise<CardLifecycleRecord | null> => {
   const result = await getPostgresPool().query<CardLifecycleRow>(`${selectLifecycle} WHERE public_slug = $1 LIMIT 1`, [publicSlug]);
-  return result.rows[0] ? mapCard(result.rows[0]) : null;
+  return result.rows[0] ? withAccess(mapCard(result.rows[0])) : null;
 };
 
 export const openCollection = async (manageToken: string): Promise<CardLifecycleRecord> => {
@@ -101,7 +104,7 @@ export const openCollection = async (manageToken: string): Promise<CardLifecycle
   try {
     await client.query("BEGIN");
     const current = await client.query<CardLifecycleRow>(`${selectLifecycle} WHERE manage_token = $1 FOR UPDATE`, [manageToken]);
-    const card = current.rows[0] ? mapCard(current.rows[0]) : null;
+    const card = current.rows[0] ? await withAccess(mapCard(current.rows[0])) : null;
     if (!card) throw new CardLifecycleConflictError("Открытка не найдена.");
     assertOperational(card);
     assertCanOpenCollection(card);
@@ -129,7 +132,7 @@ export const closeCollection = async (manageToken: string): Promise<CardLifecycl
   try {
     await client.query("BEGIN");
     const current = await client.query<CardLifecycleRow>(`${selectLifecycle} WHERE manage_token = $1 FOR UPDATE`, [manageToken]);
-    const card = current.rows[0] ? mapCard(current.rows[0]) : null;
+    const card = current.rows[0] ? await withAccess(mapCard(current.rows[0])) : null;
     if (!card) throw new CardLifecycleConflictError("Открытка не найдена.");
     assertOperational(card);
     assertCanCloseCollection(card);
@@ -156,7 +159,7 @@ export const deliverCard = async (manageToken: string): Promise<CardLifecycleRec
   try {
     await client.query("BEGIN");
     const current = await client.query<CardLifecycleRow>(`${selectLifecycle} WHERE manage_token = $1 FOR UPDATE`, [manageToken]);
-    const card = current.rows[0] ? mapCard(current.rows[0]) : null;
+    const card = current.rows[0] ? await withAccess(mapCard(current.rows[0])) : null;
     if (!card) throw new CardLifecycleConflictError("Открытка не найдена.");
     assertOperational(card);
 
@@ -165,7 +168,7 @@ export const deliverCard = async (manageToken: string): Promise<CardLifecycleRec
       return card;
     }
 
-    assertCanDeliverCard(card, isPaidPublicationRequired());
+    assertCanDeliverCard(card);
     assertCollectionReady(card);
     const updated = await client.query<CardLifecycleRow>(
       `UPDATE cards
@@ -185,7 +188,6 @@ export const deliverCard = async (manageToken: string): Promise<CardLifecycleRec
 };
 
 export const markRecipientFirstOpened = async (finalSlug: string): Promise<CardLifecycleRecord | null> => {
-  const paymentRequired = isPaidPublicationRequired();
   const result = await getPostgresPool().query<CardLifecycleRow>(
     `UPDATE cards
      SET recipient_first_opened_at = COALESCE(recipient_first_opened_at, now())
@@ -194,20 +196,22 @@ export const markRecipientFirstOpened = async (finalSlug: string): Promise<CardL
        AND is_hidden = false
        AND deleted_at IS NULL
        AND purged_at IS NULL
-       AND ($2::boolean = false OR (
-         payment_status = 'PAID'
-         AND active_paid_order_id IS NOT NULL
-         AND EXISTS (
+       AND ((payment_status = 'PAID'
+       AND active_paid_order_id IS NOT NULL
+       AND EXISTS (
          SELECT 1 FROM payment_orders active_order
          WHERE active_order.id = cards.active_paid_order_id
            AND active_order.card_id = cards.id
            AND active_order.status = 'PAID'
            AND active_order.total_refunded_amount < active_order.payable_amount
            AND active_order.revoked_at IS NULL
-         )
+       )) OR EXISTS (
+         SELECT 1 FROM card_access_grants access_grant
+         WHERE access_grant.id = cards.active_access_grant_id AND access_grant.status = 'ACTIVE'
+           AND (access_grant.expires_at IS NULL OR access_grant.expires_at > now())
        ))
      RETURNING ${lifecycleColumns}`,
-    [finalSlug, paymentRequired]
+    [finalSlug]
   );
   return result.rows[0] ? mapCard(result.rows[0]) : null;
 };
@@ -217,6 +221,6 @@ export const getGiftLifecycleByFinalSlug = async (finalSlug: string): Promise<Ca
     `${selectLifecycle} WHERE final_slug = $1 LIMIT 1`,
     [finalSlug]
   );
-  const card = result.rows[0] ? mapCard(result.rows[0]) : null;
-  return card && isGiftAccessible(card, isPaidPublicationRequired()) ? card : null;
+  const card = result.rows[0] ? await withAccess(mapCard(result.rows[0])) : null;
+  return card && isGiftAccessible(card) ? card : null;
 };

@@ -7817,6 +7817,15 @@ button.contentFilterPill {
   text-decoration: none;
 }
 
+.inviteClosedButton {
+  width: fit-content;
+  min-width: 250px;
+  max-width: 100%;
+}
+
+.designRail > .publishCard { order: 2; }
+.designRail > .inviteCard { order: 3; }
+
 .mediaRightsConsent { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 9px; color: #755b4e; font-size: .82rem; line-height: 1.4; }
 .mediaRightsConsent input { width: 17px; height: 17px; margin-top: 2px; flex: 0 0 auto; accent-color: #c65431; }
 
@@ -7918,6 +7927,226 @@ button.contentFilterPill {
   line-height: 1.45;
 }
 
+.statusHeadingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.statusBadge {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(235, 120, 66, 0.12);
+  color: #a74425;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.statusContent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+}
+
+.statusContentStacked {
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.statusCopy,
+.statusActions,
+.paymentCheckout {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.statusCopy h3 {
+  max-width: 420px;
+  margin: 0;
+  color: #3d271e;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.75rem, 2.8vw, 2.35rem);
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.statusCopy p,
+.statusActionHint,
+.paymentMessage {
+  margin: 0;
+  color: #705c50;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.statusActions {
+  align-self: stretch;
+  align-content: center;
+}
+
+.openPaymentPanel,
+.paymentStatePanel,
+.paymentPanel {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(214, 83, 39, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 246, 238, 0.66);
+}
+
+.openPaymentPanel strong,
+.paymentStatePanel strong { color: #4a3025; font-size: 0.9rem; }
+.openPaymentPanel span,
+.paymentStatePanel span { color: #705c50; font-size: 0.82rem; line-height: 1.42; }
+.paymentStatePanel { border-color: rgba(65, 112, 77, 0.18); background: rgba(239, 249, 240, 0.72); }
+.paymentStatePanel strong { color: #41704d; }
+.paymentPanel { max-width: 580px; }
+
+.statusActions form,
+.statusActions > a,
+.paymentCheckout > button {
+  width: 100%;
+}
+
+.statusPrimaryAction,
+.statusSecondaryAction,
+.localTestPayment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font: inherit;
+  font-weight: 850;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition-property: transform, box-shadow, background-color, border-color;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.statusPrimaryAction {
+  border: 1px solid #d85a2f;
+  background: linear-gradient(180deg, #ef7240 0%, #df5f2e 100%);
+  color: #fff8f3;
+  box-shadow: 0 12px 24px rgba(214, 83, 39, 0.22);
+}
+
+.statusSecondaryAction {
+  border: 1px solid rgba(214, 83, 39, 0.46);
+  background: rgba(255, 248, 242, 0.76);
+  color: #b44a29;
+  box-shadow: 0 0 0 1px rgba(92, 62, 46, 0.04), 0 6px 14px rgba(73, 49, 35, 0.04);
+}
+
+.statusPrimaryAction:hover:not(:disabled) {
+  box-shadow: 0 16px 28px rgba(214, 83, 39, 0.28);
+}
+
+.statusSecondaryAction:hover,
+.localTestPayment:hover {
+  border-color: rgba(180, 74, 41, 0.72);
+  background: rgba(255, 240, 230, 0.9);
+}
+
+.statusPrimaryAction:active:not(:disabled),
+.statusSecondaryAction:active,
+.localTestPayment:active {
+  transform: scale(0.96);
+}
+
+.statusPrimaryAction:disabled {
+  cursor: not-allowed;
+  border-color: rgba(127, 98, 83, 0.16);
+  background: rgba(127, 98, 83, 0.16);
+  color: rgba(81, 58, 47, 0.54);
+  box-shadow: none;
+}
+
+.statusPrice {
+  display: grid;
+  gap: 2px;
+  padding-bottom: 2px;
+}
+
+.statusPrice strong {
+  color: #3d271e;
+  font-size: 1rem;
+}
+
+.statusPrice span {
+  color: #a74425;
+  font-size: 0.9rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.paymentConfirmed {
+  color: #41704d !important;
+  font-weight: 800;
+}
+
+.paymentEmailField {
+  display: grid;
+  gap: 6px;
+  color: #4a3429;
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.paymentEmailField input {
+  min-height: 42px;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid rgba(98, 72, 58, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #3d271e;
+  font: inherit;
+}
+
+.paymentConsent {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: #705c50;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.paymentConsent input {
+  width: 17px;
+  height: 17px;
+  margin: 1px 0 0;
+  accent-color: #c65431;
+}
+
+.paymentConsent a {
+  color: #a74425;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.localTestPayment {
+  min-height: 40px;
+  border: 1px dashed rgba(127, 98, 83, 0.54);
+  background: rgba(255, 252, 248, 0.62);
+  color: #705c50;
+  font-size: 0.78rem;
+}
+
 @media (min-width: 1060px) {
   .shell {
     max-width: 1520px;
@@ -7979,6 +8208,15 @@ button.contentFilterPill {
   .publishButton {
     width: 100%;
     min-width: 0;
+  }
+
+  .statusContent {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .statusHeadingRow {
+    align-items: flex-start;
   }
 }
 

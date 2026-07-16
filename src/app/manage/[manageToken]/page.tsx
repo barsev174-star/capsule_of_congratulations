@@ -162,7 +162,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const participantLink = getJoinUrl(card.publicSlug);
   const lifecycleLabel = getCardLifecycleLabel(lifecycle);
   const giftAccessible = isGiftAccessible(lifecycle);
-  const paymentRequired = process.env.PUBLICATION_MODE === "paid";
+  const collectionReady = Boolean(card.recipientName.trim() && card.occasionText.trim() && card.fromLabel.trim() && card.templateId);
   const aiLimitTotal = aiUsage.limit;
   const aiLimitRemaining = aiUsage.remaining;
   const templatePalette = ["#eaded2", "#f4c59e", selectedTemplate.accent, "#5a3927", "#a8b792"];
@@ -348,14 +348,14 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 <p className={styles.lockedHint}>Анимация будет доступна получателю после публикации.</p>
               </section>
 
-              <section className={styles.sidebarCard}>
+              {lifecycle.deliveryStatus !== "DELIVERED" ? <section className={`${styles.sidebarCard} ${styles.inviteCard}`}>
                 <div className={styles.sidebarCardHeader}>
                   <div>
                     <h2>Пригласить участников</h2>
-                    <p>Отправьте ссылку в чат, чтобы гости добавили поздравления и фото.</p>
+                    <p>{lifecycle.collectionStatus === "OPEN" ? "Отправьте ссылку в чат, чтобы гости добавили поздравления." : lifecycle.collectionStatus === "CLOSED" ? "Сбор завершён: по ссылке участники увидят закрытую форму." : "Ссылка станет доступна после открытия сбора."}</p>
                   </div>
                 </div>
-                <div className={styles.inviteBlock}>
+                {lifecycle.collectionStatus === "OPEN" ? <><div className={styles.inviteBlock}>
                   <div className={styles.inviteMain}>
                     <div className={styles.inviteStatusLine}>
                       <strong>Форма участника</strong>
@@ -392,74 +392,97 @@ export default async function ManagePage({ params, searchParams }: Props) {
                     })}
                   </span>
                 </div>
-              </section>
+                </> : lifecycle.collectionStatus === "CLOSED" ? <div className={styles.inviteBlock}>
+                  <div className={styles.inviteMain}>
+                    <div className={styles.inviteStatusLine}><strong>Сбор поздравлений завершён</strong></div>
+                    <span className={styles.inviteHint}>Новые поздравления и голоса больше не принимаются.</span>
+                  </div>
+                  <div className={styles.inviteActions}>
+                    <Link href={participantLink} target="_blank" rel="noopener noreferrer" className={`${styles.inviteOpenButton} ${styles.inviteClosedButton}`}>Посмотреть закрытую форму</Link>
+                  </div>
+                </div> : <p className={styles.statusActionHint}>Сначала заполните получателя, повод, поле «От кого» и выберите оформление.</p>}
+              </section> : null}
 
               <section className={`${styles.sidebarCard} ${styles.publishCard}`}>
                 <div className={styles.sidebarCardHeader}>
                   <div>
-                    <h2>Статус открытки</h2>
-                    <p>
-                      Сбор, оплата и передача управляются отдельно. После передачи содержимое фиксируется.
-                    </p>
+                    <div className={styles.statusHeadingRow}>
+                      <h2>Статус открытки</h2>
+                      <span className={styles.statusBadge}>{lifecycle.hasAdminAccess ? "Доступ предоставлен" : lifecycleLabel}</span>
+                    </div>
+                    <p>Сбор, оплата и передача управляются отдельно. После передачи содержимое фиксируется.</p>
                   </div>
                 </div>
-                {giftAccessible ? (
-                  <>
-                    <div className={styles.publishPriceRow}>
-                      <strong>Передана получателю</strong>
-                      <Link href={getGiftPath(card.finalSlug)} className={styles.publishButton}>
-                        Открыть открытку
-                      </Link>
+                {lifecycle.deliveryStatus === "DELIVERED" ? (
+                  <div className={styles.statusContent}>
+                    <div className={styles.statusCopy}>
+                      <h3>{lifecycle.paymentStatus === "PAID" ? "Открытка передана" : "Доступ получателя приостановлен"}</h3>
+                      <p>{lifecycle.paymentStatus === "PAID" ? "Финальная версия уже неизменяема. Её можно открыть или отправить ссылку получателю." : "Передача уже была выполнена, но доступ по финальной ссылке сейчас отключён."}</p>
                     </div>
-                    <p className={styles.paymentFineprint}>Финальная ссылка готова — её можно отправлять получателю</p>
-                  </>
+                    {giftAccessible ? <div className={styles.statusActions}>
+                      <Link href={getGiftPath(card.finalSlug)} className={styles.statusPrimaryAction}>Открыть открытку</Link>
+                      <CopyLinkButton value={getGiftPath(card.finalSlug)} label="Скопировать ссылку" cardId={card.id} telemetrySource="gift" className={styles.statusSecondaryAction} />
+                    </div> : null}
+                  </div>
                 ) : lifecycle.collectionStatus === "DRAFT" ? (
-                  <>
-                    <form action={openCollectionAction} className={styles.publishPriceRow}>
-                      <input type="hidden" name="manageToken" value={manageToken} />
-                      <strong>Черновик</strong>
-                      <button type="submit" className={styles.publishButton}>
-                        Открыть сбор
-                      </button>
-                    </form>
-                    <p className={styles.paymentFineprint}>Ссылка участника станет доступна после открытия сбора.</p>
-                  </>
-                ) : lifecycle.collectionStatus === "OPEN" ? (
-                  <>
-                    <form action={closeCollectionAction} className={styles.publishPriceRow}>
-                      <input type="hidden" name="manageToken" value={manageToken} />
-                      <strong>Сбор открыт</strong>
-                      <button type="submit" className={styles.publishButton}>Закрыть сбор</button>
-                    </form>
-                    <p className={styles.paymentFineprint}>После закрытия можно проверить открытку и перейти к оплате.</p>
-                  </>
-                ) : lifecycle.paymentStatus === "PAID" || !paymentRequired ? (
-                  <>
-                    <form action={deliverCardAction} className={styles.publishPriceRow}>
-                      <input type="hidden" name="manageToken" value={manageToken} />
-                      <strong>{paymentRequired ? "Готова к передаче" : "Готова к передаче бесплатно"}</strong>
-                      <button type="submit" className={styles.publishButton}>Передать получателю</button>
-                    </form>
-                    <form action={openCollectionAction} className={styles.publishPriceRow}>
-                      <input type="hidden" name="manageToken" value={manageToken} />
-                      <strong>Нужно ещё поздравление?</strong>
-                      <button type="submit" className={styles.publishButton}>Открыть сбор снова</button>
-                    </form>
-                    <p className={styles.paymentFineprint}>После передачи редактирование станет недоступно.</p>
-                  </>
-                ) : (
-                  <>
-                    <div className={styles.publishPriceRow}>
-                      <strong>Финальная подготовка</strong>
-                      <PaymentCheckoutButton manageToken={manageToken} className={styles.publishButton} />
+                  <div className={styles.statusContent}>
+                    <div className={styles.statusCopy}>
+                      <h3>{collectionReady ? "Можно открывать сбор" : "Заполните данные открытки"}</h3>
+                      <p>{collectionReady ? "Открытка готова: откройте сбор и пригласите участников по ссылке." : "Укажите получателя, повод и поле «От кого», затем выберите оформление."}</p>
                     </div>
-                    <form action={openCollectionAction} className={styles.publishPriceRow}>
+                    <form action={openCollectionAction} className={styles.statusActions}>
                       <input type="hidden" name="manageToken" value={manageToken} />
-                      <strong>Нужно ещё поздравление?</strong>
-                      <button type="submit" className={styles.publishButton}>Открыть сбор снова</button>
+                      <button type="submit" className={styles.statusPrimaryAction} disabled={!collectionReady}>Открыть сбор поздравлений</button>
+                      {!collectionReady ? <p className={styles.statusActionHint}>Сначала заполните обязательные поля открытки.</p> : null}
                     </form>
-                    <p className={styles.paymentFineprint}>Передача станет доступна после подтверждённой оплаты.</p>
-                  </>
+                  </div>
+                ) : lifecycle.collectionStatus === "OPEN" ? (
+                  <div className={styles.statusContent}>
+                    <div className={styles.statusCopy}>
+                      <h3>Сбор поздравлений открыт</h3>
+                      <p>Участники могут добавлять поздравления, а вы — продолжать редактировать открытку.</p>
+                    </div>
+                    <div className={styles.statusActions}>
+                    <form action={closeCollectionAction}>
+                      <input type="hidden" name="manageToken" value={manageToken} />
+                      <button type="submit" className={styles.statusPrimaryAction}>Закрыть сбор</button>
+                      <p className={styles.statusActionHint}>До передачи сбор можно будет открыть снова.</p>
+                    </form>
+                    {lifecycle.paymentStatus === "PAID" || lifecycle.hasAdminAccess ? <div className={styles.paymentStatePanel}>
+                      <strong>{lifecycle.hasAdminAccess ? "✓ Доступ предоставлен" : "✓ Оплата подтверждена"}</strong>
+                      <span>{lifecycle.hasAdminAccess ? "Платные возможности открыты. Сбор поздравлений продолжается." : "Платные возможности открыты. Лимит ИИ: 30 обращений на открытку. Сбор поздравлений продолжается."}</span>
+                    </div> : <div className={styles.openPaymentPanel}>
+                      <strong>Подготовить открытку заранее</strong>
+                      <span>Оплата не закроет сбор и не передаст открытку получателю.</span>
+                      <PaymentCheckoutButton manageToken={manageToken} className={styles.statusSecondaryAction} containerClassName={styles.paymentCheckout} fieldClassName={styles.paymentEmailField} consentClassName={styles.paymentConsent} messageClassName={styles.paymentMessage} collapsible />
+                    </div>}
+                    </div>
+                  </div>
+                ) : lifecycle.paymentStatus === "PAID" || lifecycle.hasAdminAccess ? (
+                  <div className={styles.statusContent}>
+                    <div className={styles.statusCopy}>
+                      <h3>Открытка готова</h3>
+                      <p>Проверьте финальную версию. После передачи содержимое и настройки открытки станут неизменяемыми.</p>
+                      <p className={styles.paymentConfirmed}>{lifecycle.hasAdminAccess ? "✓ Оплата не требуется: доступ предоставлен администратором" : "✓ Оплата подтверждена"}</p>
+                    </div>
+                    <div className={styles.statusActions}>
+                      <form action={deliverCardAction}><input type="hidden" name="manageToken" value={manageToken} /><button type="submit" className={styles.statusPrimaryAction}>Передать получателю</button></form>
+                      <form action={openCollectionAction}><input type="hidden" name="manageToken" value={manageToken} /><button type="submit" className={styles.statusSecondaryAction}>Открыть сбор снова</button></form>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`${styles.statusContent} ${styles.statusContentStacked}`}>
+                    <div className={styles.statusCopy}>
+                      <h3>Финальная подготовка</h3>
+                      <p>Проверьте поздравления, фотографии и оформление. Для передачи открытки получателю нужна подтверждённая оплата.</p>
+                    </div>
+                    <div className={`${styles.statusActions} ${styles.paymentPanel}`}>
+                      <div className={styles.statusPrice}><strong>Финальная открытка</strong><span>399 ₽ единоразово</span></div>
+                      <p className={styles.statusActionHint}>Оплата откроет расширенный лимит AI и возможность передать открытку.</p>
+                      <PaymentCheckoutButton manageToken={manageToken} className={styles.statusPrimaryAction} containerClassName={styles.paymentCheckout} fieldClassName={styles.paymentEmailField} consentClassName={styles.paymentConsent} messageClassName={styles.paymentMessage} />
+                      <form action={openCollectionAction}><input type="hidden" name="manageToken" value={manageToken} /><button type="submit" className={styles.statusSecondaryAction}>Открыть сбор снова</button></form>
+                    </div>
+                  </div>
                 )}
               </section>
             </aside>

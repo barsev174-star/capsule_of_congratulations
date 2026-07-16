@@ -6,7 +6,9 @@
   background: rgba(246, 239, 231, 0.82);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
+  transition: padding 220ms cubic-bezier(.22,1,.36,1), background-color 220ms cubic-bezier(.22,1,.36,1), box-shadow 220ms cubic-bezier(.22,1,.36,1);
 }
+.header[data-scrolled] { padding-block: 9px; background: rgba(255,248,241,.94); box-shadow: 0 6px 18px rgba(92,62,46,.08); }
 
 .shell {
   display: flex;
@@ -33,6 +35,13 @@
   gap: 6px;
 }
 
+.mobileMenu { position: relative; display: inline-flex; order: 2; }
+.mobileMenu summary { display: grid; gap: 4px; place-content: center; width: 40px; height: 40px; border-radius: 12px; color: var(--accent-strong); cursor: pointer; list-style: none; }
+.mobileMenu summary::-webkit-details-marker { display: none; }
+.mobileMenu summary span { display: block; width: 18px; height: 2px; border-radius: 2px; background: currentColor; }
+.mobileNav { position: absolute; top: calc(100% + 8px); right: 0; display: grid; min-width: 210px; padding: 8px; border-radius: 16px; background: rgba(255, 250, 244, .98); box-shadow: 0 16px 32px rgba(92, 62, 46, .15), inset 0 0 0 1px var(--line); }
+.mobileNav a { min-height: 42px; padding: 11px 12px; border-radius: 10px; color: var(--text); font-size: .9rem; font-weight: 700; text-decoration: none; }.mobileNav a:hover,.mobileNav a:focus-visible { background: var(--accent-light); color: var(--accent-strong); outline: none; }
+
 .navLink {
   padding: 8px 14px;
   border-radius: 999px;
@@ -49,6 +58,7 @@
 
 .ctaForm {
   flex-shrink: 0;
+  order: 3;
 }
 
 .ctaButton {
@@ -86,6 +96,8 @@
   .nav {
     display: flex;
   }
+
+  .mobileMenu { display: none; }
 
   .ctaButton {
     min-height: 46px;

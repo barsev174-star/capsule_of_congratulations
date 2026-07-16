@@ -3,12 +3,33 @@
 import { useState } from "react";
 import { LegalDocumentModal } from "@/components/legal/legal-document-modal";
 
-export function PaymentCheckoutButton({ manageToken, className }: { manageToken: string; className: string }) {
+type PaymentCheckoutButtonProps = {
+  manageToken: string;
+  className: string;
+  containerClassName?: string;
+  fieldClassName?: string;
+  consentClassName?: string;
+  messageClassName?: string;
+  collapsible?: boolean;
+  revealLabel?: string;
+};
+
+export function PaymentCheckoutButton({
+  manageToken,
+  className,
+  containerClassName,
+  fieldClassName,
+  consentClassName,
+  messageClassName,
+  collapsible = false,
+  revealLabel = "Перейти к оплате"
+}: PaymentCheckoutButtonProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [receiptEmail, setReceiptEmail] = useState("");
   const [offerAccepted, setOfferAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(!collapsible);
 
   const startPayment = async () => {
     setIsLoading(true);
@@ -34,23 +55,31 @@ export function PaymentCheckoutButton({ manageToken, className }: { manageToken:
   };
 
   return (
-    <div>
-      <label>
+    <div className={containerClassName}>
+      {!isExpanded ? (
+        <button type="button" className={className} onClick={() => setIsExpanded(true)}>
+          {revealLabel}
+        </button>
+      ) : (
+        <>
+      <label className={fieldClassName}>
         Email для чека
         <input type="email" value={receiptEmail} onChange={(event) => setReceiptEmail(event.target.value)} required />
       </label>
-      <label style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 12 }}>
+      <label className={consentClassName}>
         <input type="checkbox" checked={offerAccepted} onChange={(event) => setOfferAccepted(event.target.checked)} />
         <span>Я принимаю <LegalDocumentModal document="offer">публичную оферту</LegalDocumentModal> и <LegalDocumentModal document="refunds">правила возврата</LegalDocumentModal>.</span>
       </label>
-      <label style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 10 }}>
+      <label className={consentClassName}>
         <input type="checkbox" checked={privacyAccepted} onChange={(event) => setPrivacyAccepted(event.target.checked)} />
         <span>Я ознакомился с <LegalDocumentModal document="privacy">политикой обработки персональных данных</LegalDocumentModal> и даю согласие на обработку данных, необходимых для оплаты и оказания услуги.</span>
       </label>
       <button type="button" className={className} onClick={startPayment} disabled={isLoading || !offerAccepted || !privacyAccepted}>
         {isLoading ? "Переходим к оплате…" : "Оплатить 399 ₽"}
       </button>
-      {message ? <p role="alert">{message}</p> : null}
+      {message ? <p className={messageClassName} role="alert">{message}</p> : null}
+        </>
+      )}
     </div>
   );
 }

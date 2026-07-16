@@ -118,11 +118,11 @@ export default async function JoinCardPage({ params }: Props) {
         <div className={styles.layout}>
           {isClosed || isLimitReached ? (
             <section className={styles.formCard}>
-              <h2 className={styles.sectionTitle}>{isLimitReached ? "Открытка собрана" : "Сбор поздравлений закрыт"}</h2>
+              <h2 className={styles.sectionTitle}>{isLimitReached ? "Открытка собрана" : "Сбор поздравлений завершён"}</h2>
               <p className={styles.hint}>
                 {isLimitReached
                   ? `В открытке уже ${CARD_CONTRIBUTION_LIMIT} поздравлений — максимальное количество. Спасибо, что хотели присоединиться.`
-                  : "Организатор уже завершил сбор материалов для этой открытки. Спасибо, что заглянули по ссылке."}
+                  : "Организатор уже готовит открытку к передаче. Добавить новое поздравление больше нельзя."}
               </p>
             </section>
           ) : (

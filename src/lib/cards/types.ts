@@ -48,6 +48,7 @@ export type CardDraft = {
   hiddenAt?: string | null;
   purgedAt?: string | null;
   activePaidOrderId?: string | null;
+  activeAccessGrantId?: string | null;
   repurchaseAllowedAt?: string | null;
   repurchaseExpiresAt?: string | null;
   repurchaseUsedAt?: string | null;

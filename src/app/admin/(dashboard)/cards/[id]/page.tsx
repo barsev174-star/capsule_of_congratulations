@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAdminCardById } from "@/lib/admin/repository";
 import { getAiUsageSummary } from "@/lib/ai/repository";
-import { updateAiBonusLimitAdminAction } from "../../../actions";
+import { grantCardAccessAdminAction, revokeCardAccessAdminAction, updateAiBonusLimitAdminAction } from "../../../actions";
 import { getCardLifecycleLabel } from "@/lib/cards/lifecycle";
+import { getActiveCardAccessGrant } from "@/lib/cards/access-grants";
 import styles from "../../../admin.module.css";
 
 const contributionStatusLabels: Record<string, string> = {
@@ -27,7 +28,7 @@ export default async function AdminCardDetailPage({ params }: Props) {
   }
 
   const { card, contributions, mediaAssets } = detail;
-  const aiUsage = await getAiUsageSummary(card.id);
+  const [aiUsage, activeGrant] = await Promise.all([getAiUsageSummary(card.id), getActiveCardAccessGrant(card.id)]);
 
   return (
     <>
@@ -79,6 +80,30 @@ export default async function AdminCardDetailPage({ params }: Props) {
             Предпросмотр
           </Link>
         </div>
+      </section>
+
+      <section className={styles.panel} style={{ marginBottom: 24 }}>
+        <h2 className={styles.panelTitle}>Доступ к финальной открытке</h2>
+        {card.paymentStatus === "PAID" ? <p>Подтверждённая оплата. Административный доступ не требуется.</p> : activeGrant ? (
+          <>
+            <p>Предоставлен администратором: {activeGrant.reasonCode}. {activeGrant.expiresAt ? `До ${new Date(activeGrant.expiresAt).toLocaleString("ru-RU")}.` : "Без ограничения срока."}</p>
+            <form action={revokeCardAccessAdminAction} className={styles.aiLimitForm}>
+              <input type="hidden" name="cardId" value={card.id} /><input type="hidden" name="grantId" value={activeGrant.id} />
+              <label className={styles.aiLimitField}><span>Комментарий к отзыву</span><input name="comment" minLength={3} maxLength={1000} required /></label>
+              <button type="submit" className={styles.filterButton}>Отозвать доступ</button>
+            </form>
+          </>
+        ) : (
+          <form action={grantCardAccessAdminAction} className={styles.aiLimitForm}>
+            <input type="hidden" name="cardId" value={card.id} />
+            <p>Действие не является оплатой и не создаёт финансовую операцию или чек.</p>
+            <label className={styles.aiLimitField}><span>Причина</span><select name="reasonCode" defaultValue="QA_TEST"><option value="QA_TEST">Тестирование</option><option value="COMPLIMENTARY">Подарок</option><option value="SUPPORT_COMPENSATION">Компенсация</option><option value="PARTNER">Партнёр</option><option value="PROMOTION">Промо</option><option value="OTHER">Другое</option></select></label>
+            <label className={styles.aiLimitField}><span>Комментарий</span><input name="comment" minLength={3} maxLength={1000} required /></label>
+            <label className={styles.aiLimitField}><span>Срок</span><select name="duration" defaultValue="QA_30_DAYS"><option value="QA_30_DAYS">30 дней</option><option value="UNTIL_DATE">До выбранной даты</option><option value="PERMANENT">Без ограничения</option></select></label>
+            <label className={styles.aiLimitField}><span>Дата окончания (если выбрана)</span><input name="expiresAt" type="datetime-local" /></label>
+            <button type="submit" className={styles.filterButton}>Предоставить доступ без оплаты</button>
+          </form>
+        )}
       </section>
 
       <section className={styles.panel} style={{ marginBottom: 24 }}>

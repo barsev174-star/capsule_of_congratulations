@@ -4,14 +4,14 @@ import { startCardFromShowcaseAction } from "../home-actions";
 import { getLandingAsset, landingAssetPaths } from "./landing-assets";
 import styles from "./hero-section.module.css";
 
-const chips = ["Без регистрации", "За 5 минут", "Красиво на любом устройстве"];
+const chips = ["Без регистрации", "Сбор бесплатно", "Оплата только перед вручением"];
 
 export function HeroSection() {
   const heroMainSrc = getLandingAsset(landingAssetPaths.heroMain);
   const heroDecorSrc = getLandingAsset(landingAssetPaths.heroDecor);
 
   return (
-    <section className={styles.section}>
+    <section id="hero" className={styles.section}>
       <div className={styles.shell}>
         <div className={styles.content}>
           <p className={styles.eyebrow}>Тёплые онлайн-открытки от близких</p>
@@ -19,7 +19,7 @@ export function HeroSection() {
             Соберите открытку от всех — тёплый подарок, который хочется сохранить
           </h1>
           <p className={`${styles.subtitle} text-pretty`}>
-            Создайте открытку, отправьте ссылку друзьям, коллегам или родителям — каждый добавит свои слова, а получатель откроет красивый общий подарок.
+            Создайте открытку, отправьте ссылку участникам, соберите тёплые слова и передайте получателю красивый общий подарок.
           </p>
 
           <div className={styles.actions}>

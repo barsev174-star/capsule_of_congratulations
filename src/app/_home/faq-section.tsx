@@ -1,46 +1,18 @@
+"use client";
+
+import { useState } from "react";
 import styles from "./faq-section.module.css";
 
 const faqs = [
-  {
-    question: "Нужна ли регистрация участникам?",
-    answer: "Нет. Участники переходят по ссылке и сразу пишут поздравление. Регистрироваться нужно только организатору."
-  },
-  {
-    question: "Можно ли собрать открытку от коллектива?",
-    answer: "Да, это один из главных сценариев. Отправьте ссылку коллегам, и каждый добавит своё поздравление."
-  },
-  {
-    question: "Можно ли добавить фото?",
-    answer: "Конечно. Организатор и участники могут загружать фото, которые красиво встроятся в финальную открытку."
-  },
-  {
-    question: "Что увидит получатель?",
-    answer: "Получатель откроет красивую анимированную открытку со всеми поздравлениями, фото и тёплыми моментами."
-  },
-  {
-    question: "Когда доступна финальная ссылка?",
-    answer: "Собрать открытку можно бесплатно. Оплата нужна только для финальной подготовки и передачи открытки получателю."
-  }
-];
+  ["Нужна ли регистрация участникам?", "Нет. Участник переходит по ссылке, пишет поздравление и отправляет его без регистрации."],
+  ["Можно ли собрать открытку от коллектива?", "Да. Организатор отправляет одну ссылку коллегам, и каждый добавляет своё поздравление."],
+  ["Можно ли добавить фотографии?", "Да. Фотографии добавляет организатор открытки. Участники добавляют только поздравления."],
+  ["Что увидит получатель?", "Получатель откроет оформленную открытку с поздравлениями, фотографиями, выбранными блоками и анимацией открытия."],
+  ["Когда нужна оплата?", "Создание, оформление и сбор поздравлений доступны бесплатно. Оплата нужна перед финальной передачей открытки получателю."],
+  ["Можно ли оплатить раньше и продолжить сбор?", "Да. После оплаты сбор останется открытым. Передать открытку можно будет после того, как организатор отдельно закроет сбор."]
+] as const;
 
 export function FaqSection() {
-  return (
-    <section id="faq" className={styles.section}>
-      <div className={styles.shell}>
-        <div className={styles.heading}>
-          <h2 className={`${styles.title} text-balance`}>Частые вопросы</h2>
-          <p className={styles.subtitle}>Всё, что поможет быстро начать.</p>
-        </div>
-
-        <div className={styles.grid}>
-          {faqs.map((item) => (
-            <article key={item.question} className={styles.card}>
-              <h3 className={styles.question}>{item.question}</h3>
-              <p className={styles.answer}>{item.answer}</p>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  const [openIndex, setOpenIndex] = useState(0);
+  return <section id="faq" className={styles.section} aria-labelledby="faq-title"><div className={styles.shell}><div className={styles.heading}><h2 id="faq-title" className={`${styles.title} text-balance`}>Частые вопросы</h2></div><div className={styles.grid}>{faqs.map(([question, answer], index) => { const open = index === openIndex; return <article key={question} className={`${styles.card} js-motion-card ${open ? styles.open : ""}`}><h3><button type="button" className={styles.trigger} aria-expanded={open} onClick={() => setOpenIndex(open ? -1 : index)}><span>{question}</span><span aria-hidden="true">⌄</span></button></h3>{open ? <p className={styles.answer}>{answer}</p> : null}</article>; })}</div></div></section>;
 }

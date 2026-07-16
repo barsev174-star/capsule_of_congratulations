@@ -47,17 +47,16 @@ export async function TemplatesSection() {
       <div className={styles.shell}>
         <div className={styles.heading}>
           <h2 className={`${styles.title} text-balance`}>Выберите настроение открытки</h2>
-          <p className={styles.subtitle}>
-            Шаблон можно поменять в любой момент внутри редактора — выбирайте тот, который подходит под ваш случай.
-          </p>
+          <p className={styles.subtitle}>На старте доступен один тщательно проработанный шаблон. Новые стили появятся позже.</p>
         </div>
 
         <div className={styles.grid}>
-          {cardTemplates.map((template) => (
-            <article key={template.id} className={styles.card}>
+          {cardTemplates.map((template, index) => (
+            <article key={template.id} className={`${styles.card} js-motion-card ${index === 0 ? "" : styles.comingSoon}`}>
               <TemplateMiniature templateId={template.id} accent={template.accent} />
               <h3 className={styles.cardTitle}>{template.name}</h3>
-              <p className={styles.cardText}>{template.description}</p>
+              <p className={styles.cardText}>{index === 0 ? "Тёплая бумажная открытка с мягкими деталями и атмосферой личного подарка." : "Новый стиль появится позже."}</p>
+              <span className={index === 0 ? styles.availableBadge : styles.comingSoonBadge}>{index === 0 ? "Доступен" : "Скоро"}</span>
             </article>
           ))}
         </div>

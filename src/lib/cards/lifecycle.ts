@@ -7,6 +7,7 @@ export type CardLifecycle = {
   collectionStatus: CollectionStatus;
   deliveryStatus: DeliveryStatus;
   activePaidOrderId: string | null;
+  hasAdminAccess?: boolean;
   isHidden: boolean;
   deletedAt: string | null;
   purgedAt: string | null;
@@ -19,8 +20,6 @@ export class CardLifecycleConflictError extends Error {
   }
 }
 
-export const isPaidPublicationRequired = () => process.env.PUBLICATION_MODE !== "free";
-
 export const isPurged = (card: Pick<CardLifecycle, "purgedAt">) => card.purgedAt !== null;
 
 export const isContentLocked = (card: Pick<CardLifecycle, "deliveryStatus">) =>
@@ -32,18 +31,15 @@ export const canEditContent = (card: Pick<CardLifecycle, "deliveryStatus" | "pur
 export const canJoinCollection = (card: Pick<CardLifecycle, "collectionStatus" | "deliveryStatus" | "purgedAt">) =>
   card.collectionStatus === "OPEN" && card.deliveryStatus === "PREPARING" && card.purgedAt === null;
 
-export const canDeliverCard = (
-  card: Pick<CardLifecycle, "paymentStatus" | "collectionStatus" | "deliveryStatus" | "purgedAt">,
-  paymentRequired = isPaidPublicationRequired()
-) =>
-  (!paymentRequired || card.paymentStatus === "PAID") &&
+export const canDeliverCard = (card: Pick<CardLifecycle, "paymentStatus" | "collectionStatus" | "deliveryStatus" | "purgedAt" | "hasAdminAccess">) =>
+  (card.paymentStatus === "PAID" || card.hasAdminAccess === true) &&
   card.collectionStatus === "CLOSED" &&
   card.deliveryStatus === "PREPARING" &&
   card.purgedAt === null;
 
-export const isGiftAccessible = (card: CardLifecycle, paymentRequired = isPaidPublicationRequired()) =>
+export const isGiftAccessible = (card: CardLifecycle) =>
   card.deliveryStatus === "DELIVERED" &&
-  (!paymentRequired || (card.paymentStatus === "PAID" && card.activePaidOrderId !== null)) &&
+  ((card.paymentStatus === "PAID" && card.activePaidOrderId !== null) || card.hasAdminAccess === true) &&
   !card.isHidden &&
   card.deletedAt === null &&
   card.purgedAt === null;
@@ -74,15 +70,12 @@ export const assertCanCloseCollection = (
   }
 };
 
-export const assertCanDeliverCard = (
-  card: Pick<CardLifecycle, "paymentStatus" | "collectionStatus" | "deliveryStatus" | "purgedAt">,
-  paymentRequired = isPaidPublicationRequired()
-) => {
+export const assertCanDeliverCard = (card: Pick<CardLifecycle, "paymentStatus" | "collectionStatus" | "deliveryStatus" | "purgedAt" | "hasAdminAccess">) => {
   if (card.deliveryStatus === "DELIVERED") {
     return;
   }
 
-  if (!canDeliverCard(card, paymentRequired)) {
+  if (!canDeliverCard(card)) {
     throw new CardLifecycleConflictError("Передача доступна только после подтверждённой оплаты и закрытия сбора.");
   }
 };
