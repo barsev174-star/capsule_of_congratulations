@@ -162,6 +162,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const participantLink = getJoinUrl(card.publicSlug);
   const lifecycleLabel = getCardLifecycleLabel(lifecycle);
   const giftAccessible = isGiftAccessible(lifecycle);
+  const paymentRequired = process.env.PUBLICATION_MODE === "paid";
   const aiLimitTotal = aiUsage.limit;
   const aiLimitRemaining = aiUsage.remaining;
   const templatePalette = ["#eaded2", "#f4c59e", selectedTemplate.accent, "#5a3927", "#a8b792"];
@@ -432,12 +433,17 @@ export default async function ManagePage({ params, searchParams }: Props) {
                     </form>
                     <p className={styles.paymentFineprint}>После закрытия можно проверить открытку и перейти к оплате.</p>
                   </>
-                ) : lifecycle.paymentStatus === "PAID" ? (
+                ) : lifecycle.paymentStatus === "PAID" || !paymentRequired ? (
                   <>
                     <form action={deliverCardAction} className={styles.publishPriceRow}>
                       <input type="hidden" name="manageToken" value={manageToken} />
-                      <strong>Готова к передаче</strong>
+                      <strong>{paymentRequired ? "Готова к передаче" : "Готова к передаче бесплатно"}</strong>
                       <button type="submit" className={styles.publishButton}>Передать получателю</button>
+                    </form>
+                    <form action={openCollectionAction} className={styles.publishPriceRow}>
+                      <input type="hidden" name="manageToken" value={manageToken} />
+                      <strong>Нужно ещё поздравление?</strong>
+                      <button type="submit" className={styles.publishButton}>Открыть сбор снова</button>
                     </form>
                     <p className={styles.paymentFineprint}>После передачи редактирование станет недоступно.</p>
                   </>
@@ -447,7 +453,12 @@ export default async function ManagePage({ params, searchParams }: Props) {
                       <strong>Финальная подготовка</strong>
                       <PaymentCheckoutButton manageToken={manageToken} className={styles.publishButton} />
                     </div>
-                    <p className={styles.paymentFineprint}>Передача станет доступна после подтверждённой оплаты. Сбор можно открыть снова при необходимости.</p>
+                    <form action={openCollectionAction} className={styles.publishPriceRow}>
+                      <input type="hidden" name="manageToken" value={manageToken} />
+                      <strong>Нужно ещё поздравление?</strong>
+                      <button type="submit" className={styles.publishButton}>Открыть сбор снова</button>
+                    </form>
+                    <p className={styles.paymentFineprint}>Передача станет доступна после подтверждённой оплаты.</p>
                   </>
                 )}
               </section>

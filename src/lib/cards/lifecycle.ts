@@ -19,6 +19,8 @@ export class CardLifecycleConflictError extends Error {
   }
 }
 
+export const isPaidPublicationRequired = () => process.env.PUBLICATION_MODE !== "free";
+
 export const isPurged = (card: Pick<CardLifecycle, "purgedAt">) => card.purgedAt !== null;
 
 export const isContentLocked = (card: Pick<CardLifecycle, "deliveryStatus">) =>
@@ -31,17 +33,17 @@ export const canJoinCollection = (card: Pick<CardLifecycle, "collectionStatus" |
   card.collectionStatus === "OPEN" && card.deliveryStatus === "PREPARING" && card.purgedAt === null;
 
 export const canDeliverCard = (
-  card: Pick<CardLifecycle, "paymentStatus" | "collectionStatus" | "deliveryStatus" | "purgedAt">
+  card: Pick<CardLifecycle, "paymentStatus" | "collectionStatus" | "deliveryStatus" | "purgedAt">,
+  paymentRequired = isPaidPublicationRequired()
 ) =>
-  card.paymentStatus === "PAID" &&
+  (!paymentRequired || card.paymentStatus === "PAID") &&
   card.collectionStatus === "CLOSED" &&
   card.deliveryStatus === "PREPARING" &&
   card.purgedAt === null;
 
-export const isGiftAccessible = (card: CardLifecycle) =>
+export const isGiftAccessible = (card: CardLifecycle, paymentRequired = isPaidPublicationRequired()) =>
   card.deliveryStatus === "DELIVERED" &&
-  card.paymentStatus === "PAID" &&
-  card.activePaidOrderId !== null &&
+  (!paymentRequired || (card.paymentStatus === "PAID" && card.activePaidOrderId !== null)) &&
   !card.isHidden &&
   card.deletedAt === null &&
   card.purgedAt === null;
@@ -73,13 +75,14 @@ export const assertCanCloseCollection = (
 };
 
 export const assertCanDeliverCard = (
-  card: Pick<CardLifecycle, "paymentStatus" | "collectionStatus" | "deliveryStatus" | "purgedAt">
+  card: Pick<CardLifecycle, "paymentStatus" | "collectionStatus" | "deliveryStatus" | "purgedAt">,
+  paymentRequired = isPaidPublicationRequired()
 ) => {
   if (card.deliveryStatus === "DELIVERED") {
     return;
   }
 
-  if (!canDeliverCard(card)) {
+  if (!canDeliverCard(card, paymentRequired)) {
     throw new CardLifecycleConflictError("Передача доступна только после подтверждённой оплаты и закрытия сбора.");
   }
 };

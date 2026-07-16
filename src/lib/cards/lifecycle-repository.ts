@@ -4,6 +4,7 @@ import {
   assertCanDeliverCard,
   assertCanOpenCollection,
   CardLifecycleConflictError,
+  isPaidPublicationRequired,
   type CardLifecycle,
   isGiftAccessible
 } from "@/lib/cards/lifecycle";
@@ -164,7 +165,7 @@ export const deliverCard = async (manageToken: string): Promise<CardLifecycleRec
       return card;
     }
 
-    assertCanDeliverCard(card);
+    assertCanDeliverCard(card, isPaidPublicationRequired());
     assertCollectionReady(card);
     const updated = await client.query<CardLifecycleRow>(
       `UPDATE cards
@@ -184,45 +185,38 @@ export const deliverCard = async (manageToken: string): Promise<CardLifecycleRec
 };
 
 export const markRecipientFirstOpened = async (finalSlug: string): Promise<CardLifecycleRecord | null> => {
+  const paymentRequired = isPaidPublicationRequired();
   const result = await getPostgresPool().query<CardLifecycleRow>(
     `UPDATE cards
      SET recipient_first_opened_at = COALESCE(recipient_first_opened_at, now())
      WHERE final_slug = $1
        AND delivery_status = 'DELIVERED'
-       AND payment_status = 'PAID'
-       AND active_paid_order_id IS NOT NULL
        AND is_hidden = false
        AND deleted_at IS NULL
        AND purged_at IS NULL
-       AND EXISTS (
+       AND ($2::boolean = false OR (
+         payment_status = 'PAID'
+         AND active_paid_order_id IS NOT NULL
+         AND EXISTS (
          SELECT 1 FROM payment_orders active_order
          WHERE active_order.id = cards.active_paid_order_id
            AND active_order.card_id = cards.id
            AND active_order.status = 'PAID'
            AND active_order.total_refunded_amount < active_order.payable_amount
            AND active_order.revoked_at IS NULL
-       )
+         )
+       ))
      RETURNING ${lifecycleColumns}`,
-    [finalSlug]
+    [finalSlug, paymentRequired]
   );
   return result.rows[0] ? mapCard(result.rows[0]) : null;
 };
 
 export const getGiftLifecycleByFinalSlug = async (finalSlug: string): Promise<CardLifecycleRecord | null> => {
   const result = await getPostgresPool().query<CardLifecycleRow>(
-    `${selectLifecycle}
-     WHERE final_slug = $1
-       AND EXISTS (
-         SELECT 1 FROM payment_orders active_order
-         WHERE active_order.id = cards.active_paid_order_id
-           AND active_order.card_id = cards.id
-           AND active_order.status = 'PAID'
-           AND active_order.total_refunded_amount < active_order.payable_amount
-           AND active_order.revoked_at IS NULL
-       )
-     LIMIT 1`,
+    `${selectLifecycle} WHERE final_slug = $1 LIMIT 1`,
     [finalSlug]
   );
   const card = result.rows[0] ? mapCard(result.rows[0]) : null;
-  return card && isGiftAccessible(card) ? card : null;
+  return card && isGiftAccessible(card, isPaidPublicationRequired()) ? card : null;
 };

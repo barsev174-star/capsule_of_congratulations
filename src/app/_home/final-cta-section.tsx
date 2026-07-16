@@ -36,7 +36,7 @@ export function FinalCtaSection() {
             Соберите первую открытку уже сейчас
           </h2>
           <p className={styles.subtitle}>
-            Собрать открытку можно бесплатно. Оплата нужна только для публикации финальной ссылки.
+            Собрать открытку можно бесплатно.<br />Оплата нужна только для финальной подготовки<br />и передачи открытки получателю.
           </p>
           <form action={startCardFromShowcaseAction}>
             <button type="submit" className={styles.ctaButton}>
