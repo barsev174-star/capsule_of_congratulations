@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type {
   FinalCardMessageLayoutMode,
   FinalCardMessageMediaLayout
 } from "@/lib/final-card/types";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
+import { pluralize } from "@/lib/i18n/pluralize";
 import { ScrapbookComponentFrame } from "./scrapbook-decor-layer";
 import finalCardStyles from "./final-card.module.css";
 import styles from "./messages-section.module.css";
@@ -38,6 +39,12 @@ const getGreetingAssetId = (index: number) => {
   const cycle = ["greetingCardPink", "greetingCardCream", "greetingCardBlue", "greetingCardLavender"] as const;
   return cycle[index % cycle.length];
 };
+
+const getRouteGreetingCountLabel = (count: number) =>
+  `${count} ${pluralize(count, { one: "\u043f\u043e\u0437\u0434\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435", few: "\u043f\u043e\u0437\u0434\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u044f", many: "\u043f\u043e\u0437\u0434\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0439" })}`;
+
+const getGreetingCountLabel = (count: number) =>
+  `${count} ${pluralize(count, { one: "поздравление", few: "поздравления", many: "поздравлений" })}`;
 
 const renderMessageCard = (
   item: Contribution,
@@ -217,6 +224,10 @@ export const MessagesSection = ({
   isRouteAdventure = false
 }: Props) => {
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
+  const [isAllGreetingsOpen, setIsAllGreetingsOpen] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const showAllButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogHistoryEntryRef = useRef(false);
   const profile = getFinalCardMessageLayoutProfile(messageLayoutMode);
   const isColumnMedia = profile.pageVariant === "column-media";
   const remaining = contributions.length - visibleCount;
@@ -226,7 +237,84 @@ export const MessagesSection = ({
     setVisibleCount((previous) => Math.min(previous + LOAD_MORE_STEP, contributions.length));
   };
 
-  const loadMoreButton = hasMore ? (
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isAllGreetingsOpen) {
+      if (!dialogHistoryEntryRef.current) {
+        window.history.pushState({ routeAllGreetings: true }, "");
+        dialogHistoryEntryRef.current = true;
+      }
+      dialog.showModal();
+    } else if (dialog.open) {
+      dialog.close();
+    }
+  }, [isAllGreetingsOpen]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (!dialogHistoryEntryRef.current) return;
+      dialogHistoryEntryRef.current = false;
+      setIsAllGreetingsOpen(false);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    const openFromHeader = () => {
+      if (isRouteAdventure && contributions.length > 0) setIsAllGreetingsOpen(true);
+    };
+    window.addEventListener("route-greetings:open", openFromHeader);
+    return () => window.removeEventListener("route-greetings:open", openFromHeader);
+  }, [contributions.length, isRouteAdventure]);
+
+  const closeAllGreetings = () => {
+    if (dialogHistoryEntryRef.current) {
+      window.history.back();
+    } else {
+      setIsAllGreetingsOpen(false);
+    }
+    window.dispatchEvent(new CustomEvent("route-greetings:closed"));
+  };
+
+  const allGreetingsDialog = isRouteAdventure && contributions.length > 0 ? (
+    <>
+      <button ref={showAllButtonRef} type="button" className={styles.showAllRouteButton} hidden onClick={() => setIsAllGreetingsOpen(true)}>
+        Показать все {getGreetingCountLabel(contributions.length)}
+      </button>
+      <dialog
+        ref={dialogRef}
+        className={styles.allGreetingsDialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="all-greetings-title"
+        onClose={() => {
+          setIsAllGreetingsOpen(false);
+          window.dispatchEvent(new CustomEvent("route-greetings:closed"));
+        }}
+        onCancel={(event) => {
+          event.preventDefault();
+          closeAllGreetings();
+        }}
+      >
+        <div className={styles.allGreetingsDialogHeader}>
+          <div>
+            <h2 id="all-greetings-title">Все поздравления</h2>
+            <p>{getRouteGreetingCountLabel(contributions.length)}</p>
+          </div>
+          <button type="button" className={styles.dialogCloseButton} onClick={closeAllGreetings} aria-label="Закрыть все поздравления">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div className={styles.allGreetingsList}>
+          {contributions.map((item, index) => renderMessageCard(item, index, Number.POSITIVE_INFINITY, false, true, false))}
+        </div>
+      </dialog>
+    </>
+  ) : null;
+
+  const loadMoreButton = !isRouteAdventure && hasMore ? (
     <div className={styles.loadMoreWrap}>
       <button type="button" className={styles.loadMoreButton} onClick={handleLoadMore}>
         {remaining >= LOAD_MORE_STEP
@@ -249,6 +337,7 @@ export const MessagesSection = ({
             )}
           </div>
           {loadMoreButton}
+          {allGreetingsDialog}
         </div>
         {renderMediaRail(messageMediaAssets, messageMediaLayout, isPaperBirthday)}
       </div>
@@ -270,6 +359,7 @@ export const MessagesSection = ({
         )}
       </div>
       {loadMoreButton}
+      {allGreetingsDialog}
     </div>
   );
 };

@@ -3,6 +3,7 @@ import type { FinalCardViewModel } from "@/lib/final-card/view-model";
 import { getGiftPath } from "@/lib/routes/card-links";
 import { FinalCardActions } from "@/components/final-card/final-card-actions";
 import { MessagesSection } from "@/components/final-card/messages-section";
+import { RouteGreetingsCountButton } from "@/components/final-card/route-greetings-count-button";
 import type { ScrapbookDecorAnchor } from "./scrapbook-decor-config";
 import {
   ScrapbookComponentFrame,
@@ -367,7 +368,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
               {renderAnchorLayer("greetings")}
               <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Поздравления</h2>
-                <span className={styles.sectionBadge}>{model.contributions.length} поздравлений</span>
+                {isRouteAdventure ? <RouteGreetingsCountButton count={model.contributions.length} /> : <span className={styles.sectionBadge}>{model.contributions.length} поздравлений</span>}
               </div>
 
               {model.contributions.length === 0 ? (
@@ -590,10 +591,13 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
               </div>
               <FinalCardActions manageHref={manageToken ? `/manage/${manageToken}` : undefined} routeAdventure={isRouteAdventure} />
               {isRouteAdventure ? (
-                <p className={styles.routeBranding}>
-                  <Link href="/">Создано в Slovesto</Link>
-                  <span>Место, где слова становятся подарком</span>
-                </p>
+                <>
+                  <span className={styles.routeFooterTagLabel}>На память</span>
+                  <p className={styles.routeBranding}>
+                    <Link href="/">Создано в Slovesto</Link>
+                    <span>Место, где слова становятся подарком</span>
+                  </p>
+                </>
               ) : null}
             </>
           );

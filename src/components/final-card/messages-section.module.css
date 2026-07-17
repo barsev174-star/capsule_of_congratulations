@@ -41,6 +41,90 @@
   line-height: 1.4;
 }
 
+.showAllRouteButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 16px;
+  padding: 10px 18px;
+  border: 1px solid rgba(209, 166, 94, 0.62);
+  border-radius: 12px;
+  background: rgba(20, 35, 29, 0.76);
+  color: #f3e8d0;
+  font-family: var(--route-font-body, inherit);
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition-property: background-color, border-color, transform;
+  transition-duration: 160ms;
+  transition-timing-function: ease;
+}
+
+.showAllRouteButton:hover { border-color: #d1a65e; background: rgba(55, 43, 29, 0.94); }
+.showAllRouteButton:active { transform: scale(0.96); }
+
+.allGreetingsDialog {
+  width: min(860px, calc(100vw - 40px));
+  max-width: none;
+  max-height: min(860px, calc(100dvh - 48px));
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(209, 166, 94, 0.7);
+  border-radius: 24px;
+  color: #f3e8d0;
+  background: #13231d;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.56);
+}
+
+.allGreetingsDialog::backdrop { background: rgba(5, 15, 11, 0.76); backdrop-filter: blur(3px); }
+
+.allGreetingsDialogHeader {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px 30px 22px;
+  border-bottom: 1px solid rgba(209, 166, 94, 0.34);
+  background: linear-gradient(135deg, rgba(78, 48, 32, 0.72), rgba(20, 35, 29, 0.95));
+}
+
+.allGreetingsDialogHeader h2 { margin: 0; font-family: var(--route-font-display, inherit); font-size: clamp(2rem, 4vw, 2.8rem); line-height: .95; text-wrap: balance; }
+.allGreetingsDialogHeader p { margin: 9px 0 0; color: rgba(243, 232, 208, 0.78); font-family: var(--route-font-body, inherit); font-variant-numeric: tabular-nums; }
+
+.dialogCloseButton {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid rgba(209, 166, 94, 0.58);
+  border-radius: 50%;
+  background: rgba(13, 23, 20, 0.58);
+  color: #f3e8d0;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition-property: background-color, transform;
+  transition-duration: 160ms;
+}
+
+.dialogCloseButton:hover { background: rgba(78, 48, 32, 0.92); }
+.dialogCloseButton:active { transform: scale(0.96); }
+
+.allGreetingsList { display: grid; gap: 16px; max-height: calc(100dvh - 180px); padding: 24px 30px 30px; overflow-y: auto; }
+
+@media (max-width: 640px) {
+  .allGreetingsDialog { width: 100%; height: 100dvh; max-height: none; border: 0; border-radius: 0; }
+  .allGreetingsDialogHeader { padding: 24px 20px 18px; }
+  .allGreetingsList { max-height: calc(100dvh - 128px); padding: 18px 16px 24px; }
+}
+
 @container final-card-shell (min-width: 900px) {
   .loadMoreWrap {
     display: none;
