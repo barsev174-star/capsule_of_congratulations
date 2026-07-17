@@ -94,4 +94,19 @@ describe("MessagesSection", () => {
     expect(getCardByAuthor("Автор 3")).not.toHaveClass(styles.cardHidden);
     expect(screen.queryByRole("button", { name: /Показать ещё/ })).not.toBeInTheDocument();
   });
+
+  it("adds a mobile-only route trigger after the first four greetings", () => {
+    render(
+      <MessagesSection
+        contributions={createContributions(12)}
+        messageLayoutMode="grid-2"
+        messageMediaAssets={[]}
+        messageMediaLayout="portrait"
+        isPaperBirthday={false}
+        isRouteAdventure
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Показать все 12 сообщений" })).toBeInTheDocument();
+  });
 });

@@ -52,13 +52,13 @@ export const FinalCardActions = ({ manageHref, routeAdventure = false }: { manag
           Сохранить открытку
         </button>
         {manageHref ? (
-          <a href={manageHref} className={`${styles.button} ${styles.secondaryButton}`}>
+          <a href={manageHref} className={`${styles.button} ${styles.secondaryButton} ${routeAdventure ? styles.routeFooterCreateButton : ""}`}>
             <SparkleIcon />
             {routeAdventure ? "Создать свою открытку" : "Создать такую же открытку"}
           </a>
         ) : (
           <form action={startCardFromShowcaseAction}>
-            <button type="submit" className={`${styles.button} ${styles.secondaryButton}`}>
+            <button type="submit" className={`${styles.button} ${styles.secondaryButton} ${routeAdventure ? styles.routeFooterCreateButton : ""}`}>
               <SparkleIcon />
               {routeAdventure ? "Создать свою открытку" : "Создать такую же открытку"}
             </button>

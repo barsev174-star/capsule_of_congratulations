@@ -6942,6 +6942,79 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
     url("/templates/route-adventure/quotes-gunmetal.png") center / 100% 100% no-repeat;
 }
 
+/* Final Route polish: a single, clear path from the count control to the dialog. */
+.route-adventure .heroParticipants {
+  border-color: rgba(209, 166, 94, 0.36);
+  background: rgba(20, 35, 29, 0.44);
+  box-shadow: inset 0 1px 0 rgba(255, 231, 176, 0.08);
+}
+
+.routeGreetingsCountButton {
+  min-height: 40px;
+  padding: 8px 14px 8px 16px;
+}
+
+.routeGreetingsCountIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+}
+
+.route-adventure .messageColumnScroller {
+  padding-right: 8px;
+  scrollbar-color: rgba(184, 137, 71, 0.55) transparent;
+}
+
+.route-adventure .messageColumnScroller::-webkit-scrollbar { width: 6px; }
+.route-adventure .messageColumnScroller::-webkit-scrollbar-track { background: transparent; }
+.route-adventure .messageColumnScroller::-webkit-scrollbar-thumb {
+  border: 0;
+  border-radius: 999px;
+  background: rgba(184, 137, 71, 0.55);
+}
+
+.route-adventure .quotes .quoteCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 150px;
+  padding: 24px 22px;
+}
+
+.route-adventure .quotes .quoteCard .quoteMark { display: none; }
+.route-adventure .quotes .quoteCard .message {
+  margin: 0;
+  color: #f3e8d0;
+  font-family: var(--route-font-body);
+  font-size: clamp(16px, 1.7vw, 18px);
+  font-weight: 700;
+  line-height: 1.36;
+  text-wrap: pretty;
+}
+
+.route-adventure .routeFooterCreateButton {
+  border-color: rgba(61, 45, 30, 0.72) !important;
+  background: rgba(255, 248, 228, 0.72) !important;
+  color: #3d2d1e !important;
+}
+
+.route-adventure .routeFooterCreateButton:hover,
+.route-adventure .routeFooterCreateButton:focus-visible {
+  border-color: #3d2d1e !important;
+  background: #fff8e4 !important;
+}
+
+.route-adventure .routeBranding {
+  display: grid;
+  gap: 4px;
+  margin: 22px auto 0;
+  color: #3d2d1e;
+}
+
+.route-adventure .routeBranding a { color: #3d2d1e; }
+.route-adventure .routeBranding span { color: rgba(61, 45, 30, 0.9); }
+
 @container final-card-shell (max-width: 900px) {
   .route-adventure .routeQualitiesBackdrop .chipList { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
@@ -6953,3 +7026,186 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
 @container final-card-shell (max-width: 359px) {
   .route-adventure .routeQualitiesBackdrop .chipList { grid-template-columns: 1fr; }
 }
+
+/* Route mobile: keep the introductory moment and the closing paper inside one column. */
+@media (max-width: 640px) {
+  .route-adventure .memoriesStrip > .memoryIntroCard {
+    display: block !important;
+    grid-column: 1;
+    grid-row: auto;
+    order: -1;
+    padding: 10px 12px 14px;
+  }
+
+  .route-adventure .memoryIntroCard .sectionTitle {
+    display: block;
+    margin: 0;
+    font-size: clamp(2rem, 10vw, 2.55rem);
+  }
+
+  .route-adventure .memoryIntroCard .sectionText {
+    margin: 8px auto 0;
+    font-size: 1rem;
+  }
+
+  .route-adventure .closing {
+    min-height: 690px;
+    padding: 92px 38px 152px;
+    background-size: 100% 100%;
+  }
+
+  .route-adventure .routeFooterSignature { gap: 12px; }
+  .route-adventure .routeFooterLead { max-width: 290px; margin-inline: auto; }
+
+  .route-adventure .routeFooterTagLabel {
+    right: 3px;
+    bottom: 58px;
+    font-size: 19px;
+    z-index: 4;
+  }
+
+  .route-adventure .closing::after {
+    right: -6px;
+    bottom: -4px;
+    width: 126px;
+    height: 184px;
+  }
+
+  .route-adventure .messageSplitFixed .mediaCardLandscape,
+  .route-adventure .messageSplitFixed .mediaCardPortrait {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) 64px;
+  }
+
+  .route-adventure .messageSplitFixed .mediaCardLandscape .mediaCaption,
+  .route-adventure .messageSplitFixed .mediaCardPortrait .mediaCaption {
+    position: static !important;
+    inset: auto;
+    min-height: 64px;
+    margin: 0;
+  }
+}
+
+@container final-card-shell (max-width: 900px) {
+  .route-adventure .memoriesStrip > .memoryIntroCard {
+    display: block !important;
+    grid-column: 1;
+    grid-row: auto;
+    order: -1;
+  }
+}
+
+/* Route compact layout: qualities are data-driven, so keep decorative icons desktop-only. */
+.route-adventure .memories::after { content: none; }
+
+@container final-card-shell (max-width: 900px) {
+  .route-adventure .routeQualityIcon { display: none; }
+
+  .route-adventure .routeQualitiesBackdrop .chip {
+    justify-content: center;
+    padding-inline: 12px;
+  }
+
+  .route-adventure .memoriesStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .route-adventure .memoriesStrip > .memoryIntroCard {
+    display: block !important;
+    grid-column: 1;
+    grid-row: auto;
+    order: -1;
+    padding: 20px 14px 16px;
+  }
+
+  .route-adventure .memoryIntroCard .sectionTitle {
+    display: block;
+    margin: 0;
+    font-size: clamp(2rem, 8vw, 2.55rem);
+  }
+
+  .route-adventure .memoryIntroCard .sectionText {
+    max-width: 28rem;
+    margin: 8px auto 0;
+  }
+
+  .route-adventure .closing {
+    min-height: 700px;
+    padding: 120px 38px 156px;
+    background-size: 100% 100%;
+  }
+
+  .route-adventure .routeFooterLead {
+    max-width: 300px;
+    margin-inline: auto;
+    color: #4d301d;
+  }
+
+  .route-adventure .closing::after {
+    right: -6px;
+    bottom: -4px;
+    width: 132px;
+    height: 194px;
+  }
+
+  .route-adventure .routeFooterTagLabel {
+    right: 4px;
+    bottom: 62px;
+    font-size: 19px;
+  }
+
+  .route-adventure .messageSplitFixed .mediaCardLandscape,
+  .route-adventure .messageSplitFixed .mediaCardPortrait {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) 72px;
+    overflow: hidden;
+  }
+
+  .route-adventure .messageSplitFixed .mediaCardLandscape .mediaImage,
+  .route-adventure .messageSplitFixed .mediaCardPortrait .mediaImage {
+    grid-row: 1;
+  }
+
+  .route-adventure .messageSplitFixed .mediaCardLandscape .mediaCaption,
+  .route-adventure .messageSplitFixed .mediaCardPortrait .mediaCaption {
+    position: relative !important;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    grid-row: 2;
+    min-height: 72px;
+    margin: 0;
+    align-items: flex-end;
+    padding: 12px 12px 12px;
+    color: #3b2b1e;
+    background: transparent;
+  }
+
+  .route-adventure .messageSplitFixed .mediaCardLandscape .mediaCaptionSubtitle,
+  .route-adventure .messageSplitFixed .mediaCardPortrait .mediaCaptionSubtitle {
+    color: #3b2b1e;
+    line-height: 1;
+  }
+}
+
+@container final-card-shell (max-width: 900px) {
+  .route-adventure .closing {
+    min-height: 740px;
+    padding-bottom: 178px;
+    background-position: center -74px;
+    background-size: 100% calc(100% + 74px);
+  }
+
+  .route-adventure .closing::after {
+    width: 138px;
+    height: 204px;
+  }
+
+  .route-adventure .routeFooterTagLabel {
+    right: 28px;
+    bottom: 74px;
+  }
+}
+
+.route-adventure .summary::after { bottom: 26px; }
+.route-adventure .qualities::after { top: 4px; }

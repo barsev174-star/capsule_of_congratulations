@@ -43,8 +43,8 @@ const getGreetingAssetId = (index: number) => {
 const getRouteGreetingCountLabel = (count: number) =>
   `${count} ${pluralize(count, { one: "\u043f\u043e\u0437\u0434\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435", few: "\u043f\u043e\u0437\u0434\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u044f", many: "\u043f\u043e\u0437\u0434\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0439" })}`;
 
-const getGreetingCountLabel = (count: number) =>
-  `${count} ${pluralize(count, { one: "поздравление", few: "поздравления", many: "поздравлений" })}`;
+const getRouteMessageCountLabel = (count: number) =>
+  `${count} ${pluralize(count, { one: "\u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435", few: "\u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f", many: "\u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439" })}`;
 
 const renderMessageCard = (
   item: Contribution,
@@ -52,9 +52,12 @@ const renderMessageCard = (
   maxChars: number,
   isPaperBirthday: boolean,
   isRouteAdventure: boolean,
-  isHidden: boolean
+  isHidden: boolean,
+  isRouteMobileOverflow = false
 ) => {
   const className = `${finalCardStyles.card} ${isHidden ? finalCardStyles.cardHidden : ""} ${
+    isRouteMobileOverflow ? styles.routeMobileOverflowCard : ""
+  } ${
     index === 0
       ? finalCardStyles.cardSpotlight
       : index % 3 === 0
@@ -226,8 +229,9 @@ export const MessagesSection = ({
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
   const [isAllGreetingsOpen, setIsAllGreetingsOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const showAllButtonRef = useRef<HTMLButtonElement>(null);
+  const routeMobileShowAllButtonRef = useRef<HTMLButtonElement>(null);
   const dialogHistoryEntryRef = useRef(false);
+  const dialogTriggerRef = useRef<"header" | "mobile">("header");
   const profile = getFinalCardMessageLayoutProfile(messageLayoutMode);
   const isColumnMedia = profile.pageVariant === "column-media";
   const remaining = contributions.length - visibleCount;
@@ -262,8 +266,11 @@ export const MessagesSection = ({
   }, []);
 
   useEffect(() => {
-    const openFromHeader = () => {
-      if (isRouteAdventure && contributions.length > 0) setIsAllGreetingsOpen(true);
+    const openFromHeader = (event: Event) => {
+      if (isRouteAdventure && contributions.length > 0) {
+        dialogTriggerRef.current = (event as CustomEvent<{ source?: "header" | "mobile" }>).detail?.source ?? "header";
+        setIsAllGreetingsOpen(true);
+      }
     };
     window.addEventListener("route-greetings:open", openFromHeader);
     return () => window.removeEventListener("route-greetings:open", openFromHeader);
@@ -275,14 +282,9 @@ export const MessagesSection = ({
     } else {
       setIsAllGreetingsOpen(false);
     }
-    window.dispatchEvent(new CustomEvent("route-greetings:closed"));
   };
 
   const allGreetingsDialog = isRouteAdventure && contributions.length > 0 ? (
-    <>
-      <button ref={showAllButtonRef} type="button" className={styles.showAllRouteButton} hidden onClick={() => setIsAllGreetingsOpen(true)}>
-        Показать все {getGreetingCountLabel(contributions.length)}
-      </button>
       <dialog
         ref={dialogRef}
         className={styles.allGreetingsDialog}
@@ -291,7 +293,12 @@ export const MessagesSection = ({
         aria-labelledby="all-greetings-title"
         onClose={() => {
           setIsAllGreetingsOpen(false);
-          window.dispatchEvent(new CustomEvent("route-greetings:closed"));
+          const source = dialogTriggerRef.current;
+          if (source === "mobile") {
+            window.setTimeout(() => routeMobileShowAllButtonRef.current?.focus(), 0);
+          } else {
+            window.dispatchEvent(new CustomEvent("route-greetings:closed", { detail: { source } }));
+          }
         }}
         onCancel={(event) => {
           event.preventDefault();
@@ -311,7 +318,20 @@ export const MessagesSection = ({
           {contributions.map((item, index) => renderMessageCard(item, index, Number.POSITIVE_INFINITY, false, true, false))}
         </div>
       </dialog>
-    </>
+  ) : null;
+
+  const routeMobileShowAllButton = isRouteAdventure && contributions.length > INITIAL_VISIBLE_COUNT ? (
+    <button
+      type="button"
+      ref={routeMobileShowAllButtonRef}
+      className={styles.showAllRouteButton}
+      onClick={() => {
+        dialogTriggerRef.current = "mobile";
+        setIsAllGreetingsOpen(true);
+      }}
+    >
+      {`\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u0432\u0441\u0435 ${getRouteMessageCountLabel(contributions.length)}`}
+    </button>
   ) : null;
 
   const loadMoreButton = !isRouteAdventure && hasMore ? (
@@ -333,10 +353,19 @@ export const MessagesSection = ({
         <div className={finalCardStyles.messageColumnScroller}>
           <div className={finalCardStyles.messageColumnPage}>
             {contributions.map((item, index) =>
-              renderMessageCard(item, index, profile.maxChars, isPaperBirthday, isRouteAdventure, !isRouteAdventure && index >= visibleCount)
+              renderMessageCard(
+                item,
+                index,
+                profile.maxChars,
+                isPaperBirthday,
+                isRouteAdventure,
+                !isRouteAdventure && index >= visibleCount,
+                isRouteAdventure && index >= INITIAL_VISIBLE_COUNT
+              )
             )}
           </div>
           {loadMoreButton}
+          {routeMobileShowAllButton}
           {allGreetingsDialog}
         </div>
         {renderMediaRail(messageMediaAssets, messageMediaLayout, isPaperBirthday)}
@@ -355,10 +384,19 @@ export const MessagesSection = ({
     <div className={finalCardStyles.messagesStage}>
       <div className={scrollerClassName}>
         {contributions.map((item, index) =>
-          renderMessageCard(item, index, profile.maxChars, isPaperBirthday, isRouteAdventure, !isRouteAdventure && index >= visibleCount)
+          renderMessageCard(
+            item,
+            index,
+            profile.maxChars,
+            isPaperBirthday,
+            isRouteAdventure,
+            !isRouteAdventure && index >= visibleCount,
+            isRouteAdventure && index >= INITIAL_VISIBLE_COUNT
+          )
         )}
       </div>
       {loadMoreButton}
+      {routeMobileShowAllButton}
       {allGreetingsDialog}
     </div>
   );
