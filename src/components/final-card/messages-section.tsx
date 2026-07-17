@@ -17,6 +17,7 @@ type Props = {
   messageMediaAssets: CardMediaAsset[];
   messageMediaLayout: FinalCardMessageMediaLayout;
   isPaperBirthday: boolean;
+  isRouteAdventure?: boolean;
 };
 
 const INITIAL_VISIBLE_COUNT = 4;
@@ -43,6 +44,7 @@ const renderMessageCard = (
   index: number,
   maxChars: number,
   isPaperBirthday: boolean,
+  isRouteAdventure: boolean,
   isHidden: boolean
 ) => {
   const className = `${finalCardStyles.card} ${isHidden ? finalCardStyles.cardHidden : ""} ${
@@ -55,7 +57,7 @@ const renderMessageCard = (
   const content = (
     <>
       <div className={finalCardStyles.cardHeader}>
-        <div className={finalCardStyles.authorAvatar}>
+        {!isRouteAdventure ? <div className={finalCardStyles.authorAvatar}>
           {item.authorAvatarUrl ? (
             // User-provided local uploads keep their original URL and CSS crop behavior.
             // eslint-disable-next-line @next/next/no-img-element
@@ -63,7 +65,7 @@ const renderMessageCard = (
           ) : (
             <span className={finalCardStyles.authorAvatarInitials}>{getInitials(item.authorName)}</span>
           )}
-        </div>
+        </div> : null}
         <div className={finalCardStyles.authorMeta}>
           <span className={finalCardStyles.author}>{item.authorName}</span>
           {item.authorRole ? <span className={finalCardStyles.role}>{item.authorRole}</span> : null}
@@ -211,7 +213,8 @@ export const MessagesSection = ({
   messageLayoutMode,
   messageMediaAssets,
   messageMediaLayout,
-  isPaperBirthday
+  isPaperBirthday,
+  isRouteAdventure = false
 }: Props) => {
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
   const profile = getFinalCardMessageLayoutProfile(messageLayoutMode);
@@ -242,7 +245,7 @@ export const MessagesSection = ({
         <div className={finalCardStyles.messageColumnScroller}>
           <div className={finalCardStyles.messageColumnPage}>
             {contributions.map((item, index) =>
-              renderMessageCard(item, index, profile.maxChars, isPaperBirthday, index >= visibleCount)
+              renderMessageCard(item, index, profile.maxChars, isPaperBirthday, isRouteAdventure, !isRouteAdventure && index >= visibleCount)
             )}
           </div>
           {loadMoreButton}
@@ -263,7 +266,7 @@ export const MessagesSection = ({
     <div className={finalCardStyles.messagesStage}>
       <div className={scrollerClassName}>
         {contributions.map((item, index) =>
-          renderMessageCard(item, index, profile.maxChars, isPaperBirthday, index >= visibleCount)
+          renderMessageCard(item, index, profile.maxChars, isPaperBirthday, isRouteAdventure, !isRouteAdventure && index >= visibleCount)
         )}
       </div>
       {loadMoreButton}

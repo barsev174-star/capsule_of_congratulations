@@ -149,3 +149,120 @@ export const exampleCardModel: FinalCardViewModel = {
     { id: "closing", required: true }
   ]
 };
+
+const routeContributions: Contribution[] = [
+  contribution(
+    "route-ivan",
+    "Иван",
+    "друг",
+    "Лёша, с днём рождения! Спасибо за надёжность, за смех и за то, что ты всегда за движ. Пусть впереди будет ещё больше крутых маршрутов и побед!",
+    1
+  ),
+  contribution(
+    "route-mikhail",
+    "Михаил",
+    "друг",
+    "Брат, ты пример настоящего мужика. Умеешь мечтать, вдохновлять и делать этот мир лучше. Удачи во всех делах и новых высот!",
+    2
+  ),
+  contribution(
+    "route-artem",
+    "Артём",
+    "друг",
+    "С днём рождения, Лёха! Пусть будет больше поводов для гордости, меньше преград и максимум приключений. Горжусь нашей дружбой.",
+    3
+  ),
+  contribution(
+    "route-denis",
+    "Денис",
+    "друг",
+    "Спасибо, что ты рядом. За твою надёжность, чувство юмора и умение найти выход даже из безвыходной ситуации. Так держать!",
+    4
+  ),
+  contribution(
+    "route-sergey",
+    "Сергей",
+    "друг",
+    "Лёша, ты умеешь вдохновлять примером — спокойно, без лишних слов. Желаю не терять этот характер, веру в себя и вкус к жизни.",
+    5
+  ),
+  contribution(
+    "route-egor",
+    "Егор",
+    "друг",
+    "С днём рождения! Пусть в твоей жизни будет больше свободы, сильных идей, удачных дорог и людей, с которыми хочется делить победы.",
+    6
+  )
+];
+
+const routeCaptions = [
+  "На вершине — вместе",
+  "Лучшие вечера у костра",
+  "Футбол, который объединяет",
+  "Новые точки на карте",
+  "Идём дальше",
+  "Твой маршрут — твоя история"
+];
+
+const routeMediaAssets: CardMediaAsset[] = routeCaptions.map((caption, index) => {
+  const photoNumber = (index + 1) as keyof typeof slotByPhoto;
+
+  return {
+    id: `route-photo-${photoNumber}`,
+    cardId: "example-route",
+    slot: slotByPhoto[photoNumber],
+    publicUrl: `/examples/route/${photoNumber}.png`,
+    storagePath: `public/examples/route/${photoNumber}.png`,
+    fileName: `${photoNumber}.png`,
+    mimeType: "image/png",
+    sizeBytes: 0,
+    captionTitle: caption,
+    captionSubtitle: caption,
+    createdAt,
+    updatedAt: createdAt
+  };
+});
+
+export const routeAdventureDemoCardModel: FinalCardViewModel = {
+  style: "route-adventure",
+  recipientName: "Алексей",
+  occasionLabel: "С днём рождения!",
+  fromLabel: "от друзей",
+  heroDescription: "Эту открытку для тебя собрали друзья —\nс тёплыми словами, важными моментами и личными пожеланиями.",
+  participantCount: routeContributions.length,
+  finalSlug: "example-route",
+  summaryTitle: "Главное о тебе",
+  summaryText:
+    "Лёша — человек, на которого можно положиться. Он умеет поддержать, спокойно разобраться в сложной ситуации и вернуть уверенность, когда она особенно нужна.\n\nДрузья ценят его за честность, энергию и умение превращать обычные планы в настоящие истории.",
+  mainGreetingContributionId: null,
+  mainGreetingAuthorName: null,
+  aiSummaryTitle: "",
+  aiSummaryText: "",
+  qualities: ["надёжный", "искренний", "сильный", "свой человек", "вдохновляющий"],
+  quotes: [
+    "Важно не то, насколько лёгкий путь, а с кем ты его проходишь.",
+    "Рядом с тобой даже сложные подъёмы становятся по силам.",
+    "Настоящая опора — это человек, рядом с которым спокойно идти дальше."
+  ],
+  contributions: routeContributions,
+  memories: [],
+  mediaAssets: routeMediaAssets,
+  messageMediaAssets: routeMediaAssets.filter((asset) => asset.slot.startsWith("landscape")),
+  memoryMediaAssets: routeMediaAssets.filter((asset) => asset.slot.startsWith("memory")),
+  memoryTitle: "Моменты",
+  memoryDescription: "Фото, которые хочется сохранить",
+  memoryPhotoCount: 3,
+  messageLayoutMode: "column-media",
+  messageMediaLayout: "landscape-trio",
+  showAllMessagesLink: false,
+  footerSignature: "Спасибо всем, кто был рядом на этом маршруте.\n\nС теплом,\nдрузья",
+  blocks: [
+    { id: "hero", required: true },
+    { id: "summary", required: true },
+    { id: "qualities", required: false },
+    { id: "messages", required: true },
+    { id: "memories", required: false },
+    { id: "quotes", required: false },
+    { id: "closing", required: true }
+  ]
+};

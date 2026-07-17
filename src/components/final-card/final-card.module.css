@@ -177,6 +177,230 @@
     0 10px 24px rgba(90, 70, 55, 0.07);
 }
 
+.route-adventure {
+  --route-topographic-bg: url("/templates/route-adventure/bg-topographic.png");
+  --route-leather-panel: url("/templates/route-adventure/leather-panel.png");
+  --route-kraft-paper: url("/templates/route-adventure/kraft-grid-paper.png");
+  --route-hero-expedition: url("/templates/route-adventure/hero-expedition.png");
+  --fc-font-body: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --fc-font-hand: var(--font-caveat), "Caveat", "Segoe Print", cursive;
+  --fc-bg:
+    radial-gradient(circle at 86% 8%, rgba(176, 138, 74, 0.18), transparent 17%),
+    radial-gradient(circle at 10% 68%, rgba(107, 67, 36, 0.22), transparent 23%),
+    linear-gradient(150deg, #10231e 0%, #172b25 46%, #11201b 100%);
+  --fc-surface: rgba(24, 42, 34, 0.94);
+  --fc-card: rgba(235, 222, 194, 0.96);
+  --fc-text: #f1e5cb;
+  --fc-muted: #d3c4a9;
+  --fc-line: rgba(215, 183, 119, 0.28);
+  --fc-accent: #b9924f;
+  --fc-accent-soft: rgba(185, 146, 79, 0.2);
+  --fc-hero: linear-gradient(135deg, rgba(18, 40, 33, 0.98), rgba(35, 48, 37, 0.94));
+  --fc-gap: 18px;
+  --fc-column-card-height: 190px;
+  --fc-column-stack-height: calc(var(--fc-column-card-height) * 4 + var(--fc-gap) * 3);
+  --fc-section-bg: linear-gradient(135deg, rgba(27, 47, 38, 0.96), rgba(18, 35, 29, 0.94));
+  --fc-chip-bg: linear-gradient(135deg, #754822, #513018);
+  --fc-card-shadow: 0 18px 32px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 234, 190, 0.08);
+}
+
+.route-adventure.page::before {
+  background:
+    radial-gradient(circle at 8% 12%, rgba(219, 182, 106, 0.16) 0 3px, transparent 4px),
+    radial-gradient(circle at 91% 14%, rgba(219, 182, 106, 0.18) 0 4px, transparent 5px),
+    linear-gradient(180deg, rgba(6, 14, 11, 0.5), rgba(6, 14, 11, 0.12));
+}
+
+.route-adventure.page::after {
+  background-image:
+    repeating-linear-gradient(32deg, rgba(222, 200, 155, 0.045) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(-31deg, rgba(0, 0, 0, 0.08) 0 1px, transparent 1px 13px);
+  opacity: 0.48;
+}
+
+.route-adventure .canvas {
+  border: 1px solid rgba(224, 196, 132, 0.24);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(112, 72, 36, 0.25), transparent 19%),
+    repeating-linear-gradient(26deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 8px),
+    var(--route-topographic-bg) center / 760px auto repeat,
+    var(--fc-bg);
+  box-shadow: 0 28px 88px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(238, 217, 169, 0.11);
+}
+
+.route-adventure .hero,
+.route-adventure .summary,
+.route-adventure .messages,
+.route-adventure .quotes,
+.route-adventure .closing,
+.route-adventure .qualities,
+.route-adventure .memories {
+  border-color: rgba(221, 187, 115, 0.28);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 231, 178, 0.07);
+}
+
+.route-adventure .hero {
+  min-height: 390px;
+  align-items: center;
+  background:
+    linear-gradient(90deg, rgba(9, 25, 19, 0.38), rgba(9, 25, 19, 0.06) 58%, rgba(9, 25, 19, 0.22)),
+    var(--route-hero-expedition) center / cover no-repeat;
+}
+
+.route-adventure .heroMain {
+  position: relative;
+  z-index: 2;
+  max-width: 680px;
+  margin-inline: auto;
+  justify-items: center;
+  text-align: center;
+}
+
+.route-adventure .subtitle {
+  max-width: 560px;
+  color: rgba(245, 233, 205, 0.9);
+  text-wrap: pretty;
+}
+
+.route-adventure .hero::before,
+.route-adventure .closing::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.route-adventure .hero::before {
+  top: 16px;
+  right: 20px;
+  z-index: 1;
+  width: 76px;
+  height: 76px;
+  border: 2px solid rgba(216, 183, 114, 0.56);
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 22deg, transparent 0deg 24deg, rgba(216, 183, 114, 0.38) 25deg 27deg, transparent 28deg 45deg);
+  mask: radial-gradient(circle, transparent 0 16px, #000 17px);
+}
+
+.route-adventure .hero::after {
+  content: "";
+  position: absolute;
+  top: -34px;
+  left: clamp(-56px, -3vw, -18px);
+  width: clamp(120px, 16vw, 196px);
+  aspect-ratio: 1;
+  z-index: 1;
+  background: url("/templates/route-adventure/rope-coil.png") center / contain no-repeat;
+  filter: drop-shadow(0 12px 10px rgba(5, 15, 10, 0.34));
+  pointer-events: none;
+  transform: rotate(-14deg);
+}
+
+.route-adventure .heroPretitle,
+.route-adventure .sectionTitle,
+.route-adventure .heroNameLine {
+  font-family: "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.route-adventure .summary,
+.route-adventure .messages,
+.route-adventure .quotes {
+  background:
+    linear-gradient(108deg, rgba(31, 51, 42, 0.97), rgba(18, 35, 29, 0.96)),
+    var(--fc-section-bg);
+}
+
+.route-adventure .messages .card,
+.route-adventure .quoteCard,
+.route-adventure .memoryCard,
+.route-adventure .memoryPhotoCard {
+  color: #2d271e;
+  background:
+    linear-gradient(rgba(242, 232, 208, 0.84), rgba(220, 201, 164, 0.86)),
+    var(--route-kraft-paper) center / cover no-repeat;
+  border-color: rgba(101, 68, 36, 0.38);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.18);
+}
+
+.route-adventure .messages .card {
+  background:
+    linear-gradient(rgba(246, 235, 208, 0.22), rgba(235, 216, 174, 0.3)),
+    url("/templates/route-adventure/message-ticket.png") center 86% / cover no-repeat;
+}
+
+.route-adventure .messages .card:nth-child(even) {
+  background:
+    linear-gradient(rgba(230, 235, 220, 0.18), rgba(204, 216, 198, 0.27)),
+    url("/templates/route-adventure/message-ticket-slate.png") center 86% / 114% auto no-repeat;
+}
+
+.route-adventure .messages .card:nth-child(3n) {
+  background:
+    linear-gradient(rgba(224, 220, 201, 0.18), rgba(183, 179, 155, 0.26)),
+    url("/templates/route-adventure/message-ticket-smoky.png") center 88% / 114% auto no-repeat;
+}
+
+.route-adventure .sectionHeader {
+  min-height: 58px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background:
+    linear-gradient(90deg, rgba(13, 35, 27, 0.14), rgba(13, 35, 27, 0.02)),
+    url("/templates/route-adventure/section-divider-field.png") center / cover no-repeat;
+}
+
+.route-adventure .messages .card,
+.route-adventure .messages .card .role,
+.route-adventure .messages .card .message {
+  color: #382a1e;
+}
+
+.route-adventure .messages .card .authorMeta {
+  display: flex;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+.route-adventure .messages .card .role {
+  font-size: 0.9rem;
+  opacity: 0.76;
+}
+
+.route-adventure .quotes .quoteCard {
+  color: #f4e7ca;
+  border-color: rgba(219, 183, 111, 0.34);
+  background:
+    linear-gradient(rgba(11, 29, 23, 0.18), rgba(11, 29, 23, 0.32)),
+    url("/templates/route-adventure/quote-field-notebook.png") center / cover no-repeat;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 238, 198, 0.08);
+}
+
+.route-adventure .quotes .quoteCard .quoteMark {
+  color: #dcb770;
+}
+
+.route-adventure .chip {
+  color: #f4e7ca;
+  border-color: rgba(220, 183, 112, 0.46);
+  background: var(--route-leather-panel) center / cover no-repeat, var(--fc-chip-bg);
+  box-shadow: inset 0 1px 0 rgba(255, 222, 155, 0.15), 0 6px 12px rgba(0, 0, 0, 0.16);
+}
+
+.route-adventure .memoryPhotoImage {
+  outline-color: rgba(0, 0, 0, 0.1);
+}
+
+.route-adventure .button,
+.route-adventure .inlineLinkButton {
+  border-color: rgba(224, 187, 112, 0.6);
+  background: var(--route-leather-panel) center / cover no-repeat, linear-gradient(135deg, #71441f, #4e2d18);
+  color: #f8ecd2;
+}
+
 .canvas {
   position: relative;
   display: grid;
@@ -5040,4 +5264,1430 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
     max-width: none;
     margin-inline: 0;
   }
+}
+
+/* Route adventure: a shared landscape frame makes user photos feel like expedition keepsakes. */
+.route-adventure .memoryPhotoCard {
+  gap: 4px;
+  padding: 8% 9% 10%;
+  border: 0;
+  border-radius: 0;
+  background: url("/templates/route-adventure/polaroid-landscape-tape.png") center / 100% 100% no-repeat;
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.22);
+  isolation: isolate;
+}
+
+.route-adventure .memoryPhotoCard::before {
+  display: none;
+}
+
+.route-adventure .memoryPhotoCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: url("/templates/route-adventure/polaroid-landscape-tape.png") center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.route-adventure .memoryPhotoImage {
+  position: relative;
+  z-index: 1;
+  aspect-ratio: 4 / 3;
+  border-radius: 3px;
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.route-adventure .memoryPhotoCaptionWrap {
+  position: relative;
+  z-index: 3;
+  min-height: 1.4em;
+}
+
+.route-adventure .memoryPhotoCaption {
+  color: #3b2b1e;
+  font-family: var(--fc-font-hand);
+  font-size: 0.94rem;
+  line-height: 1.2;
+}
+
+.route-adventure .memoryIntroCard {
+  color: #382a1e;
+  background:
+    linear-gradient(rgba(245, 235, 211, 0.92), rgba(225, 208, 172, 0.92)),
+    var(--route-kraft-paper) center / cover no-repeat;
+}
+
+.route-adventure .memoryIntroCard .sectionTitle {
+  color: #382a1e;
+}
+
+.route-adventure .memoryIntroCard .sectionText {
+  color: #69533d;
+}
+
+.route-adventure .memoryIntroCard .memoryIntroIcon {
+  color: #b08a4a;
+}
+
+.route-adventure .mediaCardLandscape,
+.route-adventure .mediaCardPortrait {
+  display: block;
+  aspect-ratio: 3 / 2;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  isolation: isolate;
+  background: url("/templates/route-adventure/polaroid-narrow-cream.png") center / 100% 100% no-repeat;
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.22);
+}
+
+.route-adventure .mediaRail .mediaCardLandscape,
+.route-adventure .mediaRail .mediaCardPortrait {
+  width: 91%;
+  justify-self: center;
+}
+
+.route-adventure .mediaRail .mediaCardLandscape:nth-child(1),
+.route-adventure .mediaRail .mediaCardPortrait:nth-child(1) {
+  z-index: 3;
+}
+
+.route-adventure .mediaRail .mediaCardLandscape:nth-child(2),
+.route-adventure .mediaRail .mediaCardPortrait:nth-child(2) {
+  z-index: 2;
+}
+
+.route-adventure .mediaRail .mediaCardLandscape:nth-child(3),
+.route-adventure .mediaRail .mediaCardPortrait:nth-child(3) {
+  z-index: 1;
+}
+
+.route-adventure .mediaCardLandscape::after,
+.route-adventure .mediaCardPortrait::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: url("/templates/route-adventure/polaroid-narrow-cream-overlay.png") center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.route-adventure .messageSplitFixed .mediaRail {
+  transform: translateY(-18px);
+}
+
+.route-adventure .mediaCardLandscape .mediaImage,
+.route-adventure .mediaCardPortrait .mediaImage {
+  position: absolute;
+  top: 5.1%;
+  left: 6%;
+  width: 88%;
+  height: 75.9%;
+  aspect-ratio: auto;
+  object-fit: cover;
+  z-index: 1;
+  border-radius: 3px;
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.route-adventure .mediaCaption,
+.route-adventure .mediaCaptionTitle,
+.route-adventure .mediaCaptionSubtitle {
+  color: #3b2b1e;
+  font-family: var(--fc-font-hand);
+}
+
+.route-adventure .mediaCardLandscape .mediaCaption,
+.route-adventure .mediaCardPortrait .mediaCaption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: 11%;
+  bottom: 4.5%;
+  left: 11%;
+  z-index: 3;
+  min-height: 10%;
+  font-size: clamp(0.9rem, 1.45vw, 1.08rem);
+  line-height: 1.05;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.route-adventure .summary::after {
+  content: "";
+  position: absolute;
+  right: 18px;
+  bottom: 14px;
+  width: clamp(70px, 12vw, 124px);
+  aspect-ratio: 1;
+  background: url("/templates/route-adventure/expedition-stamp.png") center / contain no-repeat;
+  opacity: 0.26;
+  pointer-events: none;
+}
+
+.route-adventure .summary > * {
+  position: relative;
+  z-index: 1;
+}
+
+.route-adventure .qualities::after {
+  content: "";
+  position: absolute;
+  right: clamp(12px, 3vw, 34px);
+  bottom: clamp(-42px, -2vw, -18px);
+  width: clamp(78px, 11vw, 132px);
+  aspect-ratio: 1 / 1.28;
+  background: url("/templates/route-adventure/compass-medallion.png") center bottom / contain no-repeat;
+  filter: drop-shadow(0 10px 9px rgba(0, 0, 0, 0.32));
+  pointer-events: none;
+  z-index: 2;
+}
+
+.route-adventure .qualities > * {
+  position: relative;
+  z-index: 3;
+}
+
+.route-adventure .closing {
+  justify-items: center;
+  min-height: 230px;
+  padding: clamp(54px, 8vw, 94px) clamp(38px, 8vw, 112px);
+  border: 0;
+  border-radius: 0;
+  background: url("/templates/route-adventure/closing-kraft-note.png") center / 100% 100% no-repeat;
+  box-shadow: none;
+  color: #35291d;
+  text-align: center;
+}
+
+.route-adventure .closingSignature {
+  color: #3d2d1e;
+  font-family: var(--fc-font-hand);
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  line-height: 1.34;
+}
+
+.route-adventure .closing .actions {
+  justify-content: center;
+}
+
+.route-adventure .closing::before {
+  content: "";
+  position: absolute;
+  left: clamp(-38px, -2.4vw, -12px);
+  bottom: clamp(14px, 3.4vw, 42px);
+  width: clamp(108px, 13.5vw, 168px);
+  aspect-ratio: 2 / 3;
+  z-index: 2;
+  background: url("/templates/route-adventure/carabiner-rope.png") center / contain no-repeat;
+  filter: drop-shadow(0 10px 9px rgba(10, 18, 13, 0.34));
+  pointer-events: none;
+  transform: rotate(-17deg);
+}
+
+.route-adventure .closing::after {
+  right: -24px;
+  bottom: -14px;
+  width: clamp(118px, 18vw, 210px);
+  height: clamp(178px, 27vw, 314px);
+  z-index: 0;
+  background: url("/templates/route-adventure/footer-tag.png") center / contain no-repeat;
+  opacity: 1;
+  transform: rotate(8deg);
+}
+
+.route-adventure .closing > * {
+  position: relative;
+  z-index: 3;
+}
+
+@container final-card-shell (max-width: 720px) {
+  .route-adventure .hero::after {
+    top: -18px;
+    left: -28px;
+    width: 116px;
+    opacity: 0.82;
+  }
+
+  .route-adventure .closing::before {
+    left: -22px;
+    bottom: 14px;
+    width: 94px;
+    opacity: 0.88;
+  }
+
+  .route-adventure .closing::after {
+    right: -10px;
+    bottom: -2px;
+    width: 104px;
+    height: 156px;
+  }
+}
+
+.route-adventure .memories::after {
+  content: "";
+  position: absolute;
+  right: -86px;
+  bottom: -94px;
+  width: min(48%, 430px);
+  aspect-ratio: 3 / 2;
+  background: url("/templates/route-adventure/map-scrap.png") center / contain no-repeat;
+  opacity: 0.42;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.route-adventure .memories > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Route adventure: editorial content panels and an asymmetric "Moments" photo story. */
+.route-adventure .routeSummaryBackdrop,
+.route-adventure .routeQualitiesBackdrop {
+  position: relative;
+  padding: clamp(28px, 4vw, 46px) clamp(22px, 5vw, 64px);
+  border: 1px solid rgba(223, 191, 128, 0.38);
+  border-radius: 20px;
+  background:
+    linear-gradient(rgba(242, 230, 199, 0.94), rgba(217, 195, 149, 0.91)),
+    var(--route-kraft-paper) center / cover no-repeat;
+  box-shadow: 0 18px 30px rgba(5, 17, 11, 0.22), inset 0 1px 0 rgba(255, 248, 226, 0.46);
+  color: #382a1e;
+}
+
+.route-adventure .routeSummaryBackdrop {
+  text-align: center;
+}
+
+.route-adventure .routeSummaryBackdrop .sectionTitle,
+.route-adventure .routeQualitiesBackdrop .sectionTitle,
+.route-adventure .routeQualitiesBackdrop .sectionSubtitle {
+  color: #382a1e;
+  text-align: center;
+}
+
+.route-adventure .routeSummaryBackdrop .sectionText {
+  max-width: 940px;
+  margin-inline: auto;
+  color: #5d4934;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.route-adventure .routeSummaryBackdrop .summaryAuthor {
+  color: #5d4934;
+  text-align: center;
+}
+
+.route-adventure .routeQualitiesBackdrop .chipList {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: min(100%, 1080px);
+  margin: 20px auto 0;
+  gap: 10px;
+}
+
+.route-adventure .routeQualitiesBackdrop .chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding-inline: 10px;
+  color: #f8e8c8;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.route-adventure .memories > .sectionTitle {
+  display: none;
+}
+
+.route-adventure .memoriesStrip {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 0.9fr));
+  grid-template-rows: auto minmax(180px, 1fr);
+  gap: clamp(14px, 2.2vw, 28px);
+  align-items: stretch;
+}
+
+.route-adventure .memoryIntroCard {
+  grid-column: 2 / 4;
+  grid-row: 1;
+  min-height: 0;
+  padding: 8px 16px 4px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+}
+
+.route-adventure .memoryIntroCard .memoryIntroIcon {
+  display: none;
+}
+
+.route-adventure .memoryIntroCard .sectionTitle {
+  color: #f2e4c6;
+  font-size: clamp(2rem, 3.1vw, 3rem);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.route-adventure .memoryIntroCard .sectionText {
+  color: rgba(237, 221, 186, 0.86);
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.route-adventure .memoriesStrip > .memoryPhotoCard {
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+}
+
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(2) {
+  grid-column: 1;
+  grid-row: 1 / 3;
+}
+
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(2) .memoryPhotoImage {
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
+}
+
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(3) {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(4) {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.route-adventure .quotes {
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.route-adventure .quotes > .sectionTitle {
+  color: #f2e4c6;
+  text-align: center;
+  text-wrap: balance;
+}
+
+@container final-card-shell (max-width: 820px) {
+  .route-adventure .routeQualitiesBackdrop .chipList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .route-adventure .memoriesStrip {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .route-adventure .memoryIntroCard {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-height: 330px;
+  }
+
+  .route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(3) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(4) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+}
+
+@container final-card-shell (max-width: 520px) {
+  .route-adventure .routeQualitiesBackdrop .chipList,
+  .route-adventure .memoriesStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(2),
+  .route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(3),
+  .route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(4) {
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 0;
+  }
+
+  .route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(2) .memoryPhotoImage {
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* Route adventure: final visual alignment with the expedition reference. */
+.route-adventure .hero {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  text-align: center;
+}
+
+.route-adventure .heroMain {
+  width: min(100%, 760px);
+  justify-self: center;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.route-adventure .heroMain .title,
+.route-adventure .heroMain .subtitle,
+.route-adventure .heroMain .heroCtaRow {
+  margin-inline: auto;
+}
+
+.route-adventure .heroMain .title {
+  max-width: 12ch;
+  text-align: center;
+}
+
+.route-adventure .heroMain .subtitle {
+  max-width: 620px;
+  text-align: center;
+}
+
+.route-adventure .routeSummaryBackdrop {
+  border-color: rgba(218, 172, 92, 0.42);
+  border-radius: 10px;
+  background: url("/templates/route-adventure/leather-stitch-panel.png") center / 100% 100% no-repeat;
+  box-shadow: 0 18px 30px rgba(5, 17, 11, 0.28), inset 0 1px 0 rgba(255, 222, 162, 0.13);
+  color: #f3e5c8;
+}
+
+.route-adventure .routeSummaryBackdrop .sectionTitle,
+.route-adventure .routeQualitiesBackdrop .sectionTitle,
+.route-adventure .routeQualitiesBackdrop .sectionSubtitle {
+  color: #f3e5c8;
+}
+
+.route-adventure .routeSummaryBackdrop .sectionText,
+.route-adventure .routeSummaryBackdrop .summaryAuthor {
+  color: rgba(246, 230, 199, 0.9);
+}
+
+.route-adventure .routeQualitiesBackdrop {
+  border-color: rgba(211, 181, 111, 0.38);
+  border-radius: 10px;
+  background:
+    linear-gradient(rgba(6, 22, 15, 0.12), rgba(6, 22, 15, 0.2)),
+    url("/templates/route-adventure/quote-field-notebook.png") center / cover no-repeat;
+  box-shadow: 0 18px 30px rgba(5, 17, 11, 0.28), inset 0 1px 0 rgba(255, 232, 174, 0.11);
+  color: #f3e5c8;
+}
+
+.route-adventure .routeQualitiesBackdrop .sectionSubtitle {
+  color: rgba(242, 225, 188, 0.82);
+}
+
+.route-adventure .memoriesStrip {
+  grid-template-rows: auto auto;
+  align-items: end;
+}
+
+.route-adventure .memoriesStrip > .memoryPhotoCard {
+  align-self: end;
+}
+
+.route-adventure .memoriesStrip > .memoryPhotoCard .memoryPhotoImage {
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(2) {
+  align-self: end;
+  aspect-ratio: 4 / 3;
+}
+
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(2) .memoryPhotoImage {
+  height: auto;
+  aspect-ratio: 16 / 10;
+}
+
+@container final-card-shell (max-width: 820px) {
+  .route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(2) {
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+  }
+}
+
+/* Route adventure: compact media board and distinct hero action surfaces. */
+.route-adventure .heroCtaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px 18px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.route-adventure .heroParticipants {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 52px;
+  padding: 8px 16px 8px 11px;
+  border: 1px solid rgba(221, 181, 106, 0.48);
+  border-radius: 9px;
+  background:
+    linear-gradient(rgba(49, 28, 14, 0.18), rgba(49, 28, 14, 0.22)),
+    url("/templates/route-adventure/leather-stitch-panel.png") center / 100% 100% no-repeat;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 223, 160, 0.14);
+  color: #f5e4c0;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.route-adventure .heroParticipantsIcon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: #e4bd72;
+}
+
+.route-adventure .heroParticipants strong {
+  font-size: 1rem;
+}
+
+.route-adventure .heroParticipants span:last-child {
+  color: rgba(247, 229, 195, 0.92);
+  font-size: 0.92rem;
+}
+
+.route-adventure .heroOpenButton {
+  min-width: 264px;
+  min-height: 54px;
+  border: 1px solid rgba(231, 191, 112, 0.58);
+  border-radius: 10px;
+  background:
+    linear-gradient(rgba(155, 95, 43, 0.3), rgba(105, 54, 24, 0.26)),
+    url("/templates/route-adventure/leather-stitch-panel.png") center / 100% 100% no-repeat;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 232, 183, 0.24);
+  color: #fff1d3;
+  font-weight: 800;
+}
+
+.route-adventure .heroOpenButton:hover {
+  background:
+    linear-gradient(rgba(185, 118, 57, 0.38), rgba(121, 59, 26, 0.3)),
+    url("/templates/route-adventure/leather-stitch-panel.png") center / 100% 100% no-repeat;
+}
+
+.route-adventure .memories {
+  padding: 18px 20px;
+  background:
+    linear-gradient(rgba(8, 25, 18, 0.08), rgba(8, 25, 18, 0.16)),
+    url("/templates/route-adventure/moments-field-panel.png") center / 100% 100% no-repeat;
+}
+
+.route-adventure .memories::after {
+  top: 14px;
+  right: 18px;
+  bottom: auto;
+  width: min(18%, 170px);
+  opacity: 0.78;
+}
+
+.route-adventure .memoriesStrip {
+  gap: clamp(10px, 1.5vw, 18px);
+}
+
+.route-adventure .memoryIntroCard {
+  padding-block: 2px;
+}
+
+.route-adventure .memoryIntroCard .sectionTitle {
+  margin-top: 0;
+  font-size: clamp(1.75rem, 2.6vw, 2.55rem);
+}
+
+.route-adventure .memoryCardTilt {
+  transform: rotate(-0.7deg) scale(1.05);
+}
+
+.route-adventure .memoryCardTiltAlt {
+  transform: rotate(1.8deg) scale(1.05);
+}
+
+@container final-card-shell (max-width: 680px) {
+  .route-adventure .heroCtaRow {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .route-adventure .heroOpenButton {
+    width: min(100%, 320px);
+  }
+
+  .route-adventure .memoryCardTilt,
+  .route-adventure .memoryCardTiltAlt {
+    transform: none;
+  }
+}
+
+/* Route template final specification: type scale, contrast and responsive layout. */
+.route-adventure {
+  --route-bg: #14231d;
+  --route-bg-deep: #0d1714;
+  --route-surface: #203028;
+  --route-leather: #4e3020;
+  --route-leather-dark: #2d1c14;
+  --route-brass: #b88947;
+  --route-brass-light: #d1a65e;
+  --route-paper: #e9d5ac;
+  --route-paper-light: #f4e7cb;
+  --route-paper-muted: #d8d2bd;
+  --route-text-light: #f3e8d0;
+  --route-text-muted: #cbbb9d;
+  --route-text-dark: #30251d;
+  --route-font-display: var(--font-alumni-sans), "Alumni Sans", sans-serif;
+  --route-font-body: var(--font-pt-sans), "PT Sans", sans-serif;
+  --route-font-handwritten: var(--font-caveat), "Caveat", cursive;
+  --fc-font-body: var(--route-font-body);
+  --fc-font-hand: var(--route-font-handwritten);
+  color: var(--route-text-light);
+}
+
+.route-adventure .heroPretitle,
+.route-adventure .sectionTitle,
+.route-adventure .heroNameLine,
+.route-adventure .sectionBadge,
+.route-adventure .button,
+.route-adventure .inlineLinkButton {
+  font-family: var(--route-font-display);
+}
+
+.route-adventure .heroPretitle {
+  font-size: clamp(18px, 2vw, 24px);
+  font-weight: 600;
+}
+
+.route-adventure .heroNameLine {
+  font-size: clamp(64px, 9vw, 112px);
+  font-weight: 700;
+  line-height: 0.88;
+  letter-spacing: 0.025em;
+}
+
+.route-adventure .hero .subtitle {
+  max-width: 720px;
+  font-family: var(--route-font-body);
+  font-size: clamp(17px, 2vw, 21px);
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.route-adventure .hero::after {
+  content: none;
+}
+
+.route-adventure .hero::before {
+  width: 52px;
+  height: 52px;
+  opacity: 0.5;
+}
+
+.route-adventure .heroParticipants {
+  min-height: 44px;
+  padding: 6px 12px 6px 9px;
+  background: rgba(13, 23, 20, 0.78);
+  border-color: rgba(184, 137, 71, 0.52);
+  box-shadow: inset 0 1px 0 rgba(255, 244, 210, 0.1);
+}
+
+.route-adventure .heroOpenButton {
+  min-height: 48px;
+  background: linear-gradient(135deg, #694325, var(--route-leather-dark));
+}
+
+.route-adventure .routeSummaryBackdrop {
+  padding: clamp(28px, 4vw, 46px) clamp(24px, 6vw, 80px);
+}
+
+.route-adventure .routeSummaryBackdrop .sectionText {
+  max-width: 820px;
+  font-family: var(--route-font-body);
+  font-size: clamp(17px, 2vw, 20px);
+  line-height: 1.65;
+  text-align: left;
+}
+
+.route-adventure .routeSummaryBackdrop .sectionText + .sectionText {
+  margin-top: 1rem;
+}
+
+.route-adventure .messages {
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.017) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 7px),
+    var(--route-bg-deep);
+  border-color: rgba(184, 137, 71, 0.3);
+}
+
+.route-adventure .messageColumnScroller {
+  max-height: none;
+  overflow: visible;
+  scrollbar-width: auto;
+}
+
+.route-adventure .messages .card {
+  min-height: 170px;
+  padding: 22px 24px;
+  border-radius: 16px;
+}
+
+.route-adventure .messages .card .author {
+  color: var(--route-text-dark);
+  font-family: var(--route-font-body);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.route-adventure .messages .card .role {
+  margin-left: 6px;
+  font-family: var(--route-font-body);
+  font-size: 14px;
+  font-weight: 400;
+  opacity: 0.65;
+}
+
+.route-adventure .messages .card .message {
+  color: var(--route-text-dark);
+  font-family: var(--route-font-body);
+  font-size: clamp(16px, 1.6vw, 18px);
+  line-height: 1.6;
+}
+
+.route-adventure .routeQualitiesBackdrop {
+  background:
+    linear-gradient(rgba(12, 32, 25, 0.22), rgba(7, 20, 16, 0.34)),
+    var(--route-topographic-bg) center / cover no-repeat;
+}
+
+.route-adventure .routeQualitiesBackdrop .chip {
+  cursor: default;
+  gap: 9px;
+  min-height: 46px;
+  padding: 8px 18px;
+  color: var(--route-text-light);
+  font-family: var(--route-font-body);
+  font-size: 16px;
+  font-weight: 700;
+  text-shadow: none;
+  background: linear-gradient(135deg, #674225, #3f281a);
+  border-color: rgba(209, 166, 94, 0.52);
+}
+
+.route-adventure .routeQualityIcon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: var(--route-brass-light);
+}
+
+.route-adventure .routeQualityIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.route-adventure .qualities::after {
+  opacity: 0.62;
+}
+
+.route-adventure .memories {
+  isolation: isolate;
+}
+
+.route-adventure .memoryIntroCard,
+.route-adventure .memoryIntroCard .sectionTitle,
+.route-adventure .memoryIntroCard .sectionText {
+  position: relative;
+  z-index: 4;
+}
+
+.route-adventure .memoryIntroCard .sectionText {
+  color: var(--route-text-light);
+  text-shadow: 0 1px 8px rgba(13, 23, 20, 0.75);
+}
+
+.route-adventure .memories::after {
+  z-index: 1;
+}
+
+.route-adventure .memoryPhotoCard {
+  grid-template-rows: minmax(0, 1fr) minmax(52px, auto);
+  padding: 12px 12px 10px;
+}
+
+.route-adventure .memoryPhotoImage {
+  aspect-ratio: 4 / 3;
+}
+
+.route-adventure .memoryPhotoCaptionWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 7px 8px 2px;
+}
+
+.route-adventure .memoryPhotoCaption {
+  color: #3a2b22;
+  font-family: var(--route-font-handwritten);
+  font-size: clamp(20px, 2.2vw, 25px);
+  font-weight: 600;
+  line-height: 1.05;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.route-adventure .mediaCardLandscape .mediaCaption,
+.route-adventure .mediaCardPortrait .mediaCaption {
+  font-size: clamp(20px, 2vw, 24px);
+  min-height: 52px;
+}
+
+.route-adventure .quotes .quoteCard {
+  display: grid;
+  align-content: center;
+  min-height: 164px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.08)),
+    #252a28;
+  border-color: var(--route-brass);
+  color: var(--route-text-light);
+}
+
+.route-adventure .quotes .quoteCard .quoteMark {
+  color: var(--route-brass-light);
+  opacity: 0.95;
+  text-shadow: none;
+}
+
+.route-adventure .quotes .quoteCard p {
+  color: var(--route-text-light);
+  font-family: var(--route-font-body);
+  font-size: clamp(16px, 1.7vw, 19px);
+  font-weight: 700;
+  line-height: 1.4;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.route-adventure .closingSignature {
+  font-family: var(--route-font-body);
+  white-space: pre-line;
+}
+
+.route-adventure .closingSignature::first-line {
+  font-family: var(--route-font-body);
+}
+
+.route-adventure .routeBranding {
+  display: grid;
+  gap: 2px;
+  margin: 18px 0 0;
+  color: rgba(61, 45, 30, 0.82);
+  font-family: var(--route-font-body);
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.route-adventure .routeBranding a {
+  color: #3b291c;
+  font-family: var(--route-font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.route-adventure .closing .actions > :first-child .button,
+.route-adventure .closing .actions > :first-child {
+  background: linear-gradient(135deg, #6b4324, #382014);
+  color: var(--route-text-light);
+}
+
+.route-adventure .closing .actions > :last-child .button,
+.route-adventure .closing .actions > :last-child {
+  opacity: 0.76;
+}
+
+.route-adventure .button:focus-visible,
+.route-adventure .inlineLinkButton:focus-visible,
+.route-adventure .routeBranding a:focus-visible {
+  outline: 3px solid var(--route-brass-light);
+  outline-offset: 3px;
+}
+
+@media (max-width: 900px) {
+  .route-adventure .messageSplitFixed {
+    grid-template-columns: 1fr;
+  }
+
+  .route-adventure .messageSplitFixed .mediaRail {
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .route-adventure .canvas {
+    padding: 16px;
+  }
+
+  .route-adventure .heroMain,
+  .route-adventure .routeSummaryBackdrop {
+    text-align: left;
+  }
+
+  .route-adventure .heroMain .title,
+  .route-adventure .heroMain .subtitle {
+    margin-inline: 0;
+    text-align: left;
+  }
+
+  .route-adventure .heroCtaRow,
+  .route-adventure .closing .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .route-adventure .heroParticipants,
+  .route-adventure .heroOpenButton,
+  .route-adventure .closing .actions > *,
+  .route-adventure .closing .actions .button {
+    width: 100%;
+  }
+
+  .route-adventure .messageSplitFixed .mediaRail,
+  .route-adventure .memoriesStrip,
+  .route-adventure .quotesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(n) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .route-adventure .memories::after {
+    width: 48%;
+    right: 8px;
+    top: 36px;
+    opacity: 0.34;
+  }
+}
+
+/* Route adventure: material hierarchy, foreground ornaments and readable captions. */
+.route-adventure .messages {
+  background:
+    linear-gradient(rgba(5, 17, 30, 0.1), rgba(5, 17, 30, 0.18)),
+    url("/templates/route-adventure/messages-blue-leather.png") center / 100% 100% no-repeat;
+  border-color: rgba(127, 164, 189, 0.5);
+  box-shadow: 0 20px 34px rgba(4, 14, 22, 0.35), inset 0 1px 0 rgba(192, 220, 236, 0.16);
+}
+
+.route-adventure .qualities {
+  background:
+    linear-gradient(rgba(5, 19, 14, 0.14), rgba(5, 19, 14, 0.3)),
+    url("/templates/route-adventure/bg-topographic.png") center / cover no-repeat;
+  border-color: rgba(188, 155, 84, 0.42);
+}
+
+.route-adventure .routeQualitiesBackdrop {
+  background:
+    linear-gradient(rgba(5, 22, 15, 0.12), rgba(5, 22, 15, 0.28)),
+    url("/templates/route-adventure/leather-stitch-panel.png") center / 100% 100% no-repeat;
+  border-color: rgba(201, 158, 88, 0.5);
+  box-shadow: 0 20px 34px rgba(4, 13, 10, 0.34), inset 0 1px 0 rgba(241, 206, 140, 0.14);
+}
+
+.route-adventure .routeQualitiesBackdrop .chip {
+  min-height: 54px;
+  border: 1px solid rgba(26, 10, 5, 0.72);
+  border-radius: 8px;
+  background:
+    linear-gradient(rgba(255, 237, 190, 0.07), rgba(91, 42, 15, 0.08)),
+    url("/templates/route-adventure/quality-badge-light-oak.png") center / cover no-repeat;
+  box-shadow: inset 0 2px 3px rgba(69, 29, 8, 0.34), inset 0 -1px 0 rgba(255, 223, 150, 0.36), 0 7px 12px rgba(0, 0, 0, 0.26);
+  color: #2a1006;
+  font-weight: 800;
+  letter-spacing: 0.015em;
+  text-shadow: 0 1px 0 rgba(255, 225, 150, 0.55), 0 -1px 0 rgba(72, 24, 5, 0.58);
+}
+
+.route-adventure .qualities::after {
+  top: clamp(-28px, -1.6vw, -12px);
+  right: clamp(12px, 3vw, 34px);
+  bottom: auto;
+  z-index: 5;
+  opacity: 0.96;
+}
+
+.route-adventure .summary::after {
+  right: clamp(22px, 4vw, 58px);
+  bottom: clamp(12px, 2vw, 28px);
+  z-index: 4;
+  width: clamp(82px, 13vw, 138px);
+  opacity: 0.82;
+  filter: drop-shadow(0 8px 9px rgba(0, 0, 0, 0.36));
+}
+
+.route-adventure .quotes .quoteCard {
+  color: #f5f4ee;
+  border-color: rgba(206, 214, 217, 0.55);
+  background:
+    linear-gradient(rgba(11, 14, 15, 0.12), rgba(11, 14, 15, 0.24)),
+    url("/templates/route-adventure/quotes-gunmetal.png") center / 100% 100% no-repeat;
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.route-adventure .quotes .quoteCard .quoteMark {
+  color: #333b3d;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.34), 0 -1px 0 rgba(0, 0, 0, 0.72);
+}
+
+.route-adventure .quotes .quoteCard p {
+  color: #242b2c;
+  font-weight: 700;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.38), 0 -1px 0 rgba(0, 0, 0, 0.74);
+}
+
+.route-adventure .memories::after {
+  top: 48px;
+  right: 24px;
+  width: min(27%, 252px);
+  opacity: 0.94;
+  filter: contrast(1.16) saturate(0.94) drop-shadow(0 9px 11px rgba(0, 0, 0, 0.32));
+  z-index: 2;
+}
+
+.route-adventure .memoriesStrip {
+  position: relative;
+  z-index: 3;
+}
+
+.route-adventure .memoryPhotoCaption {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 2.24em;
+  font-size: clamp(0.98rem, 1.35vw, 1.14rem);
+  line-height: 1.12;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Final Route overrides: kept last so legacy route experiments cannot win the cascade. */
+.route-adventure {
+  --route-font-display: var(--font-alumni-sans), "Alumni Sans", sans-serif;
+  --route-font-body: var(--font-pt-sans), "PT Sans", sans-serif;
+  --route-font-handwritten: var(--font-caveat), "Caveat", cursive;
+  --fc-font-body: var(--route-font-body);
+  --fc-font-hand: var(--route-font-handwritten);
+}
+
+.route-adventure .heroPretitle,
+.route-adventure .sectionTitle,
+.route-adventure .heroNameLine,
+.route-adventure .sectionBadge,
+.route-adventure .button,
+.route-adventure .inlineLinkButton { font-family: var(--route-font-display); }
+.route-adventure .heroNameLine { font-size: clamp(64px, 9vw, 112px); font-weight: 700; line-height: .88; letter-spacing: .025em; }
+.route-adventure .hero .subtitle { max-width: 720px; font-family: var(--route-font-body); font-size: clamp(17px,2vw,21px); line-height: 1.5; white-space: pre-line; }
+.route-adventure .hero::after { content: none; }
+.route-adventure .messages { background: repeating-linear-gradient(45deg,rgba(255,255,255,.017) 0 1px,transparent 1px 5px), repeating-linear-gradient(-45deg,rgba(0,0,0,.12) 0 1px,transparent 1px 7px), #0d1714; border-color: rgba(184,137,71,.3); }
+.route-adventure .messageColumnScroller { max-height: none; overflow: visible; }
+.route-adventure .routeSummaryBackdrop .sectionText { max-width: 820px; font-family: var(--route-font-body); font-size: clamp(17px,2vw,20px); line-height: 1.65; text-align: left; }
+.route-adventure .routeQualitiesBackdrop { background: linear-gradient(rgba(12,32,25,.22),rgba(7,20,16,.34)), var(--route-topographic-bg) center / cover no-repeat; }
+.route-adventure .routeQualitiesBackdrop .chip { cursor: default; gap: 9px; min-height: 46px; padding: 8px 18px; color: #f3e8d0; font-family: var(--route-font-body); font-size: 16px; font-weight: 700; text-shadow: none; background: linear-gradient(135deg,#674225,#3f281a); border-color: rgba(209,166,94,.52); }
+.route-adventure .routeQualityIcon { display:inline-grid; flex:0 0 auto; width:18px; height:18px; color:#d1a65e; }
+.route-adventure .routeQualityIcon svg { width:100%; height:100%; }
+.route-adventure .memoryIntroCard, .route-adventure .memoryIntroCard .sectionTitle, .route-adventure .memoryIntroCard .sectionText { position:relative; z-index:4; }
+.route-adventure .memoryIntroCard .sectionText { color:#f3e8d0; text-shadow:0 1px 8px rgba(13,23,20,.75); }
+.route-adventure .memories::after { z-index:1; }
+.route-adventure .memoryPhotoCard { grid-template-rows:minmax(0,1fr) minmax(52px,auto); padding:12px 12px 10px; }
+.route-adventure .memoryPhotoImage { aspect-ratio:4/3; }
+.route-adventure .memoryPhotoCaptionWrap { display:flex; align-items:center; justify-content:center; min-height:52px; padding:7px 8px 2px; }
+.route-adventure .memoryPhotoCaption { color:#3a2b22; font-family:var(--route-font-handwritten); font-size:clamp(20px,2.2vw,25px); font-weight:600; line-height:1.05; text-align:center; text-wrap:balance; }
+.route-adventure .mediaCardLandscape .mediaCaption, .route-adventure .mediaCardPortrait .mediaCaption { font-size:clamp(20px,2vw,24px); min-height:52px; }
+.route-adventure .quotes .quoteCard { display:grid; align-content:center; min-height:164px; background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.08)),#252a28; border-color:#b88947; color:#f3e8d0; }
+.route-adventure .quotes .quoteCard .quoteMark { color:#d1a65e; opacity:.95; text-shadow:none; }
+.route-adventure .quotes .quoteCard p { color:#f3e8d0; font-family:var(--route-font-body); font-size:clamp(16px,1.7vw,19px); font-weight:700; line-height:1.4; text-shadow:0 1px 2px rgba(0,0,0,.7); }
+.route-adventure .closingSignature { font-family:var(--route-font-body); white-space:pre-line; }
+.route-adventure .routeBranding { display:grid; gap:2px; margin:18px 0 0; color:rgba(61,45,30,.82); font-family:var(--route-font-body); font-size:.92rem; text-align:center; }
+.route-adventure .routeBranding a { color:#3b291c; font-family:var(--route-font-display); font-size:1.15rem; font-weight:700; text-decoration:none; }
+.route-adventure .button:focus-visible,.route-adventure .inlineLinkButton:focus-visible,.route-adventure .routeBranding a:focus-visible { outline:3px solid #d1a65e; outline-offset:3px; }
+
+@media (max-width:900px){ .route-adventure .messageSplitFixed{grid-template-columns:1fr}.route-adventure .messageSplitFixed .mediaRail{transform:none} }
+@media (max-width:640px){ .route-adventure .canvas{padding:16px}.route-adventure .heroMain,.route-adventure .routeSummaryBackdrop{text-align:left}.route-adventure .heroMain .title,.route-adventure .heroMain .subtitle{margin-inline:0;text-align:left}.route-adventure .heroCtaRow,.route-adventure .closing .actions{align-items:stretch;flex-direction:column}.route-adventure .heroParticipants,.route-adventure .heroOpenButton,.route-adventure .closing .actions>*,.route-adventure .closing .actions .button{width:100%}.route-adventure .messageSplitFixed .mediaRail,.route-adventure .memoriesStrip,.route-adventure .quotesGrid{grid-template-columns:1fr}.route-adventure .memoriesStrip>.memoryPhotoCard:nth-child(n){grid-column:1;grid-row:auto}.route-adventure .memories::after{width:48%;right:8px;top:36px;opacity:.34} }
+
+/* Route follow-up: real graphite canvas, complete scroll window and contained photos. */
+.route-adventure .messages {
+  background: url("/templates/route-adventure/graphite-canvas-panel.png") center / 100% 100% no-repeat;
+  border-color: rgba(184, 137, 71, 0.42);
+}
+
+.route-adventure .messageColumnScroller {
+  height: var(--fc-column-stack-height);
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scroll-snap-type: y proximity;
+}
+
+.route-adventure .messageColumnPage {
+  padding-bottom: 0;
+}
+
+.route-adventure .messages .cardHidden {
+  display: block;
+}
+
+.route-adventure .messages .cardHeader {
+  grid-template-columns: 1fr;
+}
+
+.route-adventure .summaryAuthor {
+  margin: 18px 0 0 auto;
+  max-width: 820px;
+  color: rgba(246, 230, 199, 0.92);
+  font-family: var(--route-font-handwritten);
+  font-size: clamp(20px, 2vw, 25px);
+  text-align: right;
+}
+
+.route-adventure .memoryPhotoCard {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.route-adventure .memoryPhotoCard .memoryPhotoImage {
+  width: calc(100% - 18px);
+  max-width: calc(100% - 18px);
+  margin: 9px auto 0;
+  object-fit: cover;
+}
+
+.route-adventure .quotes .quoteCard {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.14)),
+    url("/templates/route-adventure/quotes-gunmetal.png") center / 100% 100% no-repeat;
+}
+
+.route-adventure .routeFooterSignature {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  color: #3d2d1e;
+  text-align: center;
+}
+
+.route-adventure .routeFooterLead {
+  margin: 0;
+  font-family: var(--route-font-body);
+  font-size: clamp(17px, 2vw, 21px);
+  line-height: 1.45;
+}
+
+.route-adventure .routeFooterSign {
+  margin: 0;
+  font-family: var(--route-font-handwritten);
+  font-size: clamp(25px, 3vw, 32px);
+  font-weight: 600;
+  line-height: 0.95;
+  white-space: pre-line;
+}
+
+@media (max-width: 640px) {
+  .route-adventure .messageColumnScroller {
+    height: auto;
+    overflow: visible;
+  }
+}
+
+/* Route optical alignment: the smaller moments sit on one visual baseline. */
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(3),
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(4) {
+  transform: translateY(16px) rotate(var(--route-moment-tilt, 0deg));
+}
+
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(3) {
+  --route-moment-tilt: 1.8deg;
+}
+
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(4) {
+  --route-moment-tilt: -0.7deg;
+}
+
+.route-adventure .memoryIntroCard .sectionText {
+  margin-top: 10px;
+}
+
+.route-adventure .mediaCardLandscape .mediaCaption,
+.route-adventure .mediaCardPortrait .mediaCaption {
+  font-size: clamp(22px, 2.25vw, 27px);
+}
+
+@media (max-width: 640px) {
+  .route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(3),
+  .route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(4) {
+    transform: none;
+  }
+}
+
+/* Route polaroids: reserve the caption strip before sizing the photograph. */
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(2) {
+  aspect-ratio: 4 / 3;
+}
+
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(3),
+.route-adventure .memoriesStrip > .memoryPhotoCard:nth-child(4) {
+  aspect-ratio: 1.22 / 1;
+  transform: none;
+}
+
+.route-adventure .memoryPhotoCard {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 58px;
+  overflow: hidden;
+}
+
+.route-adventure .memoryPhotoCard .memoryPhotoImage {
+  width: 100%;
+  height: 100% !important;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+  aspect-ratio: auto !important;
+  object-fit: cover;
+}
+
+.route-adventure .memoryPhotoCard .memoryPhotoCaptionWrap {
+  min-height: 58px;
+  height: 58px;
+  margin: 0;
+  padding: 7px 8px 3px;
+  transform: none;
+}
+
+.route-adventure .mediaCardLandscape .mediaCaption,
+.route-adventure .mediaCardPortrait .mediaCaption {
+  font-size: clamp(24px, 2.45vw, 30px) !important;
+  line-height: 1.05;
+}
+
+.route-adventure .mediaCardLandscape .mediaCaption,
+.route-adventure .mediaCardPortrait .mediaCaption {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 2.1em;
+  font-size: clamp(1rem, 1.65vw, 1.22rem);
+  line-height: 1.05;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Route final polaroid sizing: the image is contained in its own window;
+   captions never share the image area.  Keep these overrides last: earlier
+   template rules intentionally define more general photo proportions. */
+.route-adventure .memoryPhotoCard {
+  grid-template-rows: minmax(0, 1fr) 64px !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  background-color: var(--route-paper-light);
+}
+
+.route-adventure .memoryPhotoCard .memoryPhotoImage {
+  display: block;
+  align-self: stretch;
+  justify-self: stretch;
+  inline-size: calc(100% - 24px) !important;
+  block-size: 100% !important;
+  min-block-size: 0 !important;
+  max-block-size: 100% !important;
+  margin: 12px 12px 0 !important;
+  aspect-ratio: auto !important;
+  object-fit: cover;
+  overflow: hidden;
+}
+
+.route-adventure .memoryPhotoCard .memoryPhotoCaptionWrap {
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  block-size: 64px;
+  min-block-size: 64px;
+  margin: 0 !important;
+  padding: 10px 10px 4px !important;
+  overflow: hidden;
+  background: var(--route-paper-light);
+}
+
+.route-adventure .memoryPhotoCard .memoryPhotoCaption {
+  display: -webkit-box;
+  max-block-size: 50px;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.route-adventure .mediaCardLandscape .mediaCaption,
+.route-adventure .mediaCardPortrait .mediaCaption {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 74px;
+  font-size: inherit !important;
+  line-height: 1.05;
+}
+
+.route-adventure .mediaCardLandscape .mediaCaptionSubtitle,
+.route-adventure .mediaCardPortrait .mediaCaptionSubtitle {
+  display: -webkit-box;
+  overflow: hidden;
+  font-family: var(--route-font-handwritten);
+  font-size: clamp(23px, 2.35vw, 29px) !important;
+  font-weight: 600;
+  line-height: 1.05;
+  text-align: center;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* A single physical polaroid frame per memory.  The artwork lives on the card
+   itself; a second overlay used to leave a visible inner duplicate frame. */
+.route-adventure .memoryPhotoCard {
+  background: url("/templates/route-adventure/polaroid-landscape-tape.png") center / 100% 100% no-repeat var(--route-paper-light);
+}
+
+.route-adventure .memoryPhotoCard::after {
+  display: none;
+}
+
+/* The handwritten captions in the greeting rail sit lower in the frame. */
+.route-adventure .mediaCardLandscape .mediaCaption,
+.route-adventure .mediaCardPortrait .mediaCaption {
+  bottom: 2.2%;
 }

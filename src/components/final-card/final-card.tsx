@@ -24,7 +24,8 @@ const styleClassMap = {
   "team-modern": styles["team-modern"],
   "bright-celebration": styles["bright-celebration"],
   "gentle-personal": styles["gentle-personal"],
-  "paper-birthday": styles["paper-birthday"]
+  "paper-birthday": styles["paper-birthday"],
+  "route-adventure": styles["route-adventure"]
 };
 
 const getParticipantSummary = (count: number) => {
@@ -111,6 +112,16 @@ const HeartIcon = () => (
   </svg>
 );
 
+const QualityIcon = ({ index }: { index: number }) => {
+  const common = { fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+
+  if (index === 0) return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...common} d="M12 3l7 3v5c0 4.2-2.8 7.9-7 9.8C7.8 18.9 5 15.2 5 11V6l7-3z" /><path {...common} d="M9 12l2 2 4-4" /></svg>;
+  if (index === 1) return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...common} d="M20.8 8.1c0 5.5-8.8 10.2-8.8 10.2S3.2 13.6 3.2 8.1A4.3 4.3 0 0112 5.6a4.3 4.3 0 018.8 2.5z" /></svg>;
+  if (index === 2) return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...common} d="M3 19l6.2-9 3 4.4L15.6 9 21 19" /><path {...common} d="M7.8 19l3.5-5.2L14 19" /></svg>;
+  if (index === 3) return <svg viewBox="0 0 24 24" aria-hidden="true"><circle {...common} cx="8" cy="9" r="3" /><circle {...common} cx="17" cy="10" r="2.4" /><path {...common} d="M3 20c0-3.3 2.2-5.4 5-5.4s5 2.1 5 5.4M14 19.8c0-2.6 1.6-4.3 4-4.3 1.5 0 2.5.6 3 1.4" /></svg>;
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...common} d="M12 3l1.7 5.3H19l-4.3 3.1 1.6 5.3-4.3-3.1-4.3 3.1 1.6-5.3L5 8.3h5.3L12 3z" /></svg>;
+};
+
 const SparkleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z" />
@@ -137,6 +148,7 @@ const getQuoteAssetId = (index: number) => {
 export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageToken }: Props) => {
   const isPreview = mode === "preview";
   const isPaperBirthday = model.style === "paper-birthday";
+  const isRouteAdventure = model.style === "route-adventure";
   const participantSummary = getParticipantSummary(model.participantCount);
   const heroScaleClass = isPaperBirthday ? getPaperBirthdayHeroScaleClass(model.recipientName) : "";
   const heroNameWords = model.recipientName
@@ -203,6 +215,8 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                 <p className={styles.subtitle}>
                   {model.heroDescription ? (
                     <span>{model.heroDescription}</span>
+                  ) : isRouteAdventure ? (
+                    <span>В этой открытке — тёплые слова, важные моменты и личные пожелания.</span>
                   ) : (
                     <>
                       <span>Эту открытку для тебя собрали близкие люди.</span>
@@ -247,18 +261,23 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
         }
 
         if (block.id === "summary") {
-          const summaryContent = (
+          const summaryBody = (
             <>
-              {renderAnchorLayer("summary")}
               <h2 className={styles.sectionTitle}>{model.summaryTitle}</h2>
               {model.summaryText.split(/\n{2,}/).map((paragraph, index) => (
                 <p key={`${paragraph.slice(0, 24)}-${index}`} className={styles.sectionText}>
                   {paragraph}
                 </p>
               ))}
-              {model.mainGreetingAuthorName ? (
-                <p className={styles.summaryAuthor}>- {model.mainGreetingAuthorName}</p>
+              {isRouteAdventure || model.mainGreetingAuthorName ? (
+                <p className={styles.summaryAuthor}>- {model.mainGreetingAuthorName ?? model.contributions[0]?.authorName ?? "друзья"}</p>
               ) : null}
+            </>
+          );
+          const summaryContent = (
+            <>
+              {renderAnchorLayer("summary")}
+              {isRouteAdventure ? <div className={styles.routeSummaryBackdrop}>{summaryBody}</div> : summaryBody}
             </>
           );
 
@@ -282,7 +301,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
           const chipColors = ["rose", "blue", "amber", "green", "violet", "teal"];
           const visibleQualities = model.qualities.slice(0, 5);
 
-          const content = (
+          const qualitiesBody = (
             <>
               <h2 className={styles.sectionTitle}>За что тебя ценят</h2>
               <p className={styles.sectionSubtitle}>Собрано из поздравлений</p>
@@ -299,6 +318,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                       key={quality}
                       className={`${styles.chip} ${styles[`chip${color.charAt(0).toUpperCase() + color.slice(1)}`]}`}
                     >
+                      {isRouteAdventure ? <span className={styles.routeQualityIcon}><QualityIcon index={index} /></span> : null}
                       {quality}
                     </span>
                   );
@@ -317,6 +337,11 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                 })}
               </div>
             </>
+          );
+          const content = isRouteAdventure ? (
+            <div className={styles.routeQualitiesBackdrop}>{qualitiesBody}</div>
+          ) : (
+            qualitiesBody
           );
 
           return isPaperBirthday ? (
@@ -354,6 +379,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                   messageMediaAssets={model.messageMediaAssets}
                   messageMediaLayout={model.messageMediaLayout}
                   isPaperBirthday={isPaperBirthday}
+                  isRouteAdventure={isRouteAdventure}
                 />
               )}
 
@@ -553,9 +579,22 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
             <>
               {renderAnchorLayer("footer")}
               <div className={styles.closingContent}>
-                <p className={styles.closingSignature}>{model.footerSignature}</p>
+                {isRouteAdventure ? (
+                  <div className={styles.routeFooterSignature}>
+                    <p className={styles.routeFooterLead}>{model.footerSignature.split(/\n{2,}/)[0]}</p>
+                    <p className={styles.routeFooterSign}>{model.footerSignature.split(/\n{2,}/)[1] ?? "С теплом,\nдрузья"}</p>
+                  </div>
+                ) : (
+                  <p className={styles.closingSignature}>{model.footerSignature}</p>
+                )}
               </div>
-              <FinalCardActions manageHref={manageToken ? `/manage/${manageToken}` : undefined} />
+              <FinalCardActions manageHref={manageToken ? `/manage/${manageToken}` : undefined} routeAdventure={isRouteAdventure} />
+              {isRouteAdventure ? (
+                <p className={styles.routeBranding}>
+                  <Link href="/">Создано в Slovesto</Link>
+                  <span>Место, где слова становятся подарком</span>
+                </p>
+              ) : null}
             </>
           );
 

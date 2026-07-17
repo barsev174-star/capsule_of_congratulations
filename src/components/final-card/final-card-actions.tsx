@@ -29,7 +29,7 @@ const SparkleIcon = () => (
   </svg>
 );
 
-export const FinalCardActions = ({ manageHref }: { manageHref?: string }) => {
+export const FinalCardActions = ({ manageHref, routeAdventure = false }: { manageHref?: string; routeAdventure?: boolean }) => {
   const [message, setMessage] = useState("");
 
   const handleThanks = () => {
@@ -45,7 +45,7 @@ export const FinalCardActions = ({ manageHref }: { manageHref?: string }) => {
       <div className={styles.actions}>
         <button type="button" className={`${styles.button} ${styles.primaryButton}`} onClick={handleThanks}>
           <HeartIcon />
-          Спасибо, очень приятно!
+          {routeAdventure ? "Сказать спасибо" : "Спасибо, очень приятно!"}
         </button>
         <button type="button" className={`${styles.button} ${styles.secondaryButton}`} onClick={handleSave}>
           <DownloadIcon />
@@ -54,13 +54,13 @@ export const FinalCardActions = ({ manageHref }: { manageHref?: string }) => {
         {manageHref ? (
           <a href={manageHref} className={`${styles.button} ${styles.secondaryButton}`}>
             <SparkleIcon />
-            Создать такую же открытку
+            {routeAdventure ? "Создать свою открытку" : "Создать такую же открытку"}
           </a>
         ) : (
           <form action={startCardFromShowcaseAction}>
             <button type="submit" className={`${styles.button} ${styles.secondaryButton}`}>
               <SparkleIcon />
-              Создать такую же открытку
+              {routeAdventure ? "Создать свою открытку" : "Создать такую же открытку"}
             </button>
           </form>
         )}

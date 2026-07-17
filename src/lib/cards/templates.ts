@@ -3,7 +3,8 @@ export type CardTemplateId =
   | "team-modern"
   | "bright-celebration"
   | "gentle-personal"
-  | "paper-birthday";
+  | "paper-birthday"
+  | "route-adventure";
 
 export type OccasionId =
   | "personal"
@@ -30,34 +31,15 @@ export const cardTemplates: CardTemplate[] = [
     accent: "#df4f73"
   },
   {
-    id: "warm-classic",
-    name: "Тёплый классический",
-    description: "Кремовая бумага, мягкая типографика, конверт, сухоцветы и тёплые акценты.",
-    recommendedFor: ["personal", "teacher", "caregiver"],
-    accent: "#bf6c47"
-  },
-  {
-    id: "team-modern",
-    name: "Командный современный",
-    description: "Темный аккуратный стиль для сильной командной открытки без лишнего шума.",
-    recommendedFor: ["team", "colleague"],
-    accent: "#27566b"
-  },
-  {
-    id: "bright-celebration",
-    name: "Праздничный яркий",
-    description: "Смелый праздничный стиль с энергией, наклейками и яркими акцентами.",
-    recommendedFor: ["celebration", "teacher", "colleague"],
-    accent: "#fb8500"
-  },
-  {
-    id: "gentle-personal",
-    name: "Нежный личный",
-    description: "Воздушная открытка с природными деталями и мягкой атмосферой близости.",
-    recommendedFor: ["personal", "caregiver", "teacher"],
-    accent: "#b97c73"
+    id: "route-adventure",
+    name: "Маршрут",
+    description: "Приключенческая открытка с тёмным лесным фоном, крафтом, картами и воспоминаниями о пути.",
+    recommendedFor: ["personal", "team", "celebration", "colleague"],
+    accent: "#b08a4a"
   }
 ];
+
+const legacyTemplateIds = ["warm-classic", "team-modern", "bright-celebration", "gentle-personal"] as const;
 
 export const occasions = [
   { id: "personal", label: "Личная и теплая" },
@@ -68,7 +50,8 @@ export const occasions = [
 const legacyOccasions = ["teacher", "caregiver", "colleague"] as const satisfies ReadonlyArray<OccasionId>;
 
 export const isTemplateId = (value: string): value is CardTemplateId =>
-  cardTemplates.some((template) => template.id === value);
+  cardTemplates.some((template) => template.id === value) ||
+  legacyTemplateIds.some((templateId) => templateId === value);
 
 export const isOccasionId = (value: string): value is OccasionId =>
   occasions.some((occasion) => occasion.id === value) ||

@@ -66,5 +66,18 @@ export const finalCardLayouts: Record<FinalCardStyleId, FinalCardLayout> = {
       optional("ai-summary"),
       required("closing")
     ]
+  },
+  "route-adventure": {
+    style: "route-adventure",
+    blocks: [
+      required("hero"),
+      required("summary"),
+      optional("qualities"),
+      required("messages"),
+      optional("memories"),
+      optional("quotes"),
+      optional("ai-summary"),
+      required("closing")
+    ]
   }
 };

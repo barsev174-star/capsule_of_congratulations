@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Caveat } from "next/font/google";
+import { Alumni_Sans, Caveat, Inter, PT_Sans } from "next/font/google";
 import "./globals.css";
 import { ClientErrorMonitor } from "@/components/telemetry/client-error-monitor";
 
@@ -10,7 +10,20 @@ const inter = Inter({
 
 const caveat = Caveat({
   subsets: ["latin", "cyrillic"],
+  weight: ["600"],
   variable: "--font-caveat"
+});
+
+const alumniSans = Alumni_Sans({
+  subsets: ["latin", "cyrillic"],
+  weight: ["600", "700"],
+  variable: "--font-alumni-sans"
+});
+
+const ptSans = PT_Sans({
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "700"],
+  variable: "--font-pt-sans"
 });
 
 export const metadata: Metadata = {
@@ -43,7 +56,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body className={`${inter.variable} ${caveat.variable}`}><ClientErrorMonitor />{children}</body>
+      <body className={`${inter.variable} ${caveat.variable} ${alumniSans.variable} ${ptSans.variable}`}><ClientErrorMonitor />{children}</body>
     </html>
   );
 }

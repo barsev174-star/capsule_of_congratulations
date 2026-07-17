@@ -5,19 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { GiftIntro } from "@/components/gift-intro/gift-intro";
-import { exampleCardModel } from "@/lib/example-card";
+import { exampleCardModel, routeAdventureDemoCardModel } from "@/lib/example-card";
 import { startCardFromShowcaseAction } from "../home-actions";
 import styles from "./example.module.css";
 
 type Props = {
   children: ReactNode;
+  routeChildren: ReactNode;
 };
-
-const futureTemplates = [
-  { title: "Сдержанный", icon: "minimal" as const },
-  { title: "Детский", icon: "child" as const },
-  { title: "Для воспитателя", icon: "teacher" as const }
-];
 
 const heroChips = [
   { text: "от друзей и коллег", icon: "people" as const },
@@ -35,8 +30,10 @@ const previewFeatures = [
 
 const previewContributions = exampleCardModel.contributions.slice(0, 2);
 
-export const ExampleExperience = ({ children }: Props) => {
+export const ExampleExperience = ({ children, routeChildren }: Props) => {
   const [started, setStarted] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<"paper-birthday" | "route-adventure">("paper-birthday");
+  const selectedDemoModel = selectedTemplateId === "route-adventure" ? routeAdventureDemoCardModel : exampleCardModel;
 
   const openDemo = () => {
     setStarted(true);
@@ -46,16 +43,16 @@ export const ExampleExperience = ({ children }: Props) => {
   if (started) {
     return (
       <GiftIntro
-        slug="example-paper-birthday"
-        recipientName="Кристина"
-        subtitle="для тебя собрали тёплые слова"
-        fromLabel="от друзей и коллег"
-        templateId="paper-birthday"
+        slug={selectedDemoModel.finalSlug}
+        recipientName={selectedDemoModel.recipientName}
+        subtitle={selectedTemplateId === "route-adventure" ? "для тебя собрали друзья" : "для тебя собрали тёплые слова"}
+        fromLabel={selectedDemoModel.fromLabel}
+        templateId={selectedTemplateId}
         animationId="envelope"
-        accent="#df4f73"
+        accent={selectedTemplateId === "route-adventure" ? "#b08a4a" : "#df4f73"}
         forceIntro
       >
-        {children}
+        {selectedTemplateId === "route-adventure" ? routeChildren : children}
       </GiftIntro>
     );
   }
@@ -121,12 +118,17 @@ export const ExampleExperience = ({ children }: Props) => {
             <span className={styles.blockNumber}>1</span>
             <div>
               <h2 id="template-heading">Выберите пример открытки</h2>
-              <p>Сейчас показываем бумажный пример. Он лучше всего передаёт идею общей открытки.</p>
+              <p>Оба примера уже доступны: выберите настроение, которое подходит вашему подарку.</p>
             </div>
           </div>
 
           <div className={styles.templateGrid}>
-            <div className={`${styles.templateCard} ${styles.templateCardActive}`} aria-current="true">
+            <button
+              type="button"
+              className={`${styles.templateCard} ${styles.templateCardSelectable} ${selectedTemplateId === "paper-birthday" ? styles.templateCardActive : ""}`}
+              onClick={() => setSelectedTemplateId("paper-birthday")}
+              aria-pressed={selectedTemplateId === "paper-birthday"}
+            >
               <div className={styles.templateCardThumb}>
                 <Image
                   src="/assets/example/template-paper-thumb.png"
@@ -137,32 +139,41 @@ export const ExampleExperience = ({ children }: Props) => {
                 />
               </div>
               <div className={styles.templateCardMeta}>
-                <span className={styles.badgeSelected}>Выбрано</span>
+                <span className={selectedTemplateId === "paper-birthday" ? styles.badgeTemplateSelected : styles.badgeTemplateAvailable}>
+                  {selectedTemplateId === "paper-birthday" ? "✓ Выбрано" : "Выбрать"}
+                </span>
                 <strong>Бумажный классический</strong>
                 <span>День рождения от друзей и коллег</span>
               </div>
-            </div>
+            </button>
 
-            {futureTemplates.map((template) => (
-              <div
-                key={template.title}
-                className={`${styles.templateCard} ${styles.templateCardSoon}`}
-                aria-disabled="true"
-              >
-                <div className={styles.soonCover}>
-                  <SoonIcon variant={template.icon} />
-                </div>
-                <div className={styles.templateCardMeta}>
-                  <span className={styles.badgeSoon}>Скоро</span>
-                  <strong>{template.title}</strong>
-                  <span>Готовим новый характер открытки</span>
-                </div>
+            <button
+              type="button"
+              className={`${styles.templateCard} ${styles.templateCardSelectable} ${styles.templateCardRoute} ${selectedTemplateId === "route-adventure" ? styles.templateCardActive : ""}`}
+              onClick={() => setSelectedTemplateId("route-adventure")}
+              aria-pressed={selectedTemplateId === "route-adventure"}
+            >
+              <div className={styles.templateCardThumb}>
+                <Image
+                  src="/assets/landing/template-route-adventure.png"
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 45vw, 220px"
+                  className={styles.templateThumbImage}
+                />
               </div>
-            ))}
+              <div className={styles.templateCardMeta}>
+                <span className={selectedTemplateId === "route-adventure" ? styles.badgeTemplateSelected : styles.badgeTemplateAvailable}>
+                  {selectedTemplateId === "route-adventure" ? "✓ Выбрано" : "Выбрать"}
+                </span>
+                <strong>Маршрут</strong>
+                <span>Приключения, горы и тёплые воспоминания от друзей</span>
+              </div>
+            </button>
           </div>
 
           <p className={styles.blockFooter}>
-            Скоро появятся ещё примеры: сдержанный, детский, для воспитателя и другие.
+            Выберите шаблон и нажмите «Открыть демонстрационную открытку».
           </p>
         </section>
 
@@ -335,38 +346,6 @@ function ChipIcon({ name }: { name: "people" | "cake" | "heart" | "pencil" }) {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M4 21h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SoonIcon({ variant }: { variant: "minimal" | "child" | "teacher" }) {
-  if (variant === "minimal") {
-    return (
-      <svg width="56" height="56" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-        <rect x="12" y="14" width="24" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M16 20h16M16 26h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    );
-  }
-
-  if (variant === "child") {
-    return (
-      <svg width="56" height="56" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-        <circle cx="24" cy="20" r="6" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M14 38c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="21" cy="19" r="1" fill="currentColor" />
-        <circle cx="27" cy="19" r="1" fill="currentColor" />
-        <path d="M22 23c1 1 3 1 4 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg width="56" height="56" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <circle cx="24" cy="18" r="6" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M16 38c0-4.5 3.5-8 8-8s8 3.5 8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M14 12l4 4M34 12l-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M22 23c1 .8 3 .8 4 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }

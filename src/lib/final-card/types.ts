@@ -15,7 +15,8 @@ export type FinalCardStyleId =
   | "team-modern"
   | "bright-celebration"
   | "gentle-personal"
-  | "paper-birthday";
+  | "paper-birthday"
+  | "route-adventure";
 
 export type FinalCardBlockDefinition = {
   id: FinalCardBlockId;

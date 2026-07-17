@@ -1,6 +1,6 @@
 import { FinalCard } from "@/components/final-card/final-card";
 import type { Metadata } from "next";
-import { exampleCardModel } from "@/lib/example-card";
+import { exampleCardModel, routeAdventureDemoCardModel } from "@/lib/example-card";
 import { ExampleExperience } from "./example-experience";
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function ExamplePage() {
   return (
-    <ExampleExperience>
+    <ExampleExperience routeChildren={<FinalCard model={routeAdventureDemoCardModel} />}>
       <FinalCard model={exampleCardModel} />
     </ExampleExperience>
   );
