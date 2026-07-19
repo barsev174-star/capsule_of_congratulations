@@ -19,7 +19,7 @@ import { BasicsSettingsForm } from "./basics-settings-form";
 import { BlockSettingsForm } from "./block-settings-form";
 import { ContentStudio } from "./content-studio";
 import { CopyLinkButton } from "./copy-link-button";
-import { TemplateSettingsForm } from "./template-settings-form";
+import { TemplateSummary } from "./template-summary";
 import styles from "./manage-page.module.css";
 import { getAiCardInsight, getAiUsageSummary } from "@/lib/ai/repository";
 import { buildContributionFingerprint } from "@/lib/ai/card-insights";
@@ -104,7 +104,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
     !savedMemoryDescription || savedMemoryDescription === "Столько ярких моментов, с которыми мы идём рядом с тобой."
       ? "Фото, которые хочется сохранить"
       : savedMemoryDescription;
-  const layoutProfile = getFinalCardMessageLayoutProfile(layoutMode);
+  const layoutProfile = getFinalCardMessageLayoutProfile(layoutMode, mediaLayout);
   const requiredLayoutBlockIds = finalCardLayouts[style].blocks
     .filter((block) => block.required)
     .map((block) => block.id);
@@ -165,7 +165,6 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const collectionReady = Boolean(card.recipientName.trim() && card.occasionText.trim() && card.fromLabel.trim() && card.templateId);
   const aiLimitTotal = aiUsage.limit;
   const aiLimitRemaining = aiUsage.remaining;
-  const templatePalette = ["#eaded2", "#f4c59e", selectedTemplate.accent, "#5a3927", "#a8b792"];
 
   return (
     <main className={styles.page}>
@@ -284,46 +283,15 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   </div>
                 </div>
 
-                <div className={styles.templateSummary}>
-                  {selectedTemplate.id === "paper-birthday" || selectedTemplate.id === "route-adventure" ? (
-                    <div className={styles.templatePreviewWrap}>
-                      {/* Intentional fixed preview asset inside a CSS-sized template frame. */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={selectedTemplate.id === "route-adventure" ? "/assets/landing/template-route-adventure.png" : "/templates/warm-classic-preview.png"}
-                        alt={selectedTemplate.name}
-                        className={styles.templatePreviewImage}
-                      />
-                    </div>
-                  ) : (
-                    <div className={styles.templatePreviewPlaceholder}>
-                      <span className={styles.templatePreviewPlaceholderIcon}>🎨</span>
-                      <span className={styles.templatePreviewPlaceholderText}>Другие шаблоны появятся позже</span>
-                    </div>
-                  )}
-                  <div className={styles.templateSummaryText}>
-                    <div className={styles.templateNameRow}>
-                      <strong>{selectedTemplate.name}</strong>
-                      <span>Рекомендуем</span>
-                    </div>
-                    <p>{selectedTemplate.description}</p>
-                    <div className={styles.paletteRow} aria-label="Цветовая палитра">
-                      {templatePalette.map((color) => (
-                        <span key={color} style={{ backgroundColor: color }} />
-                      ))}
-                    </div>
-                    <TemplateSettingsForm
-                      manageToken={manageToken}
-                      templates={cardTemplates}
-                      initialTemplateId={selectedTemplate.id}
-                      initialLayoutMode={layoutMode}
-                      initialMediaLayout={mediaLayout}
-                      initialBlockOrder={initialBlockOrder}
-                      blockState={blockState}
-                      variant="hero"
-                    />
-                  </div>
-                </div>
+                <TemplateSummary
+                  manageToken={manageToken}
+                  templates={cardTemplates}
+                  initialTemplateId={selectedTemplate.id}
+                  initialLayoutMode={layoutMode}
+                  initialMediaLayout={mediaLayout}
+                  initialBlockOrder={initialBlockOrder}
+                  blockState={blockState}
+                />
               </section>
 
               <section className={styles.sidebarCard}>

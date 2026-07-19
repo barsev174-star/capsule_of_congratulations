@@ -150,12 +150,14 @@ const MediaAssetRow = ({
   assets: CardMediaAsset[];
 }) => {
   const [deleteState, deleteAction, deletePending] = useActionState(deleteCardMediaAction, initialState);
+  const [, startDeleteTransition] = useTransition();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [caption, setCaption] = useState(asset.captionTitle);
   const [slot, setSlot] = useState(asset.slot);
   const [isDirty, setIsDirty] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const formRef = useRef<HTMLFormElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const submittedMediaKeyRef = useRef<string | null>(null);
   const mediaAutoSaveReadyRef = useRef(false);
   const saveFormId = `media-save-${asset.id}`;
@@ -191,6 +193,26 @@ const MediaAssetRow = ({
     return () => window.clearTimeout(timeoutId);
   }, [currentMediaKey, isDirty, savePending]);
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const closeMenuOnOutsidePress = (event: PointerEvent) => {
+      if (event.target instanceof Node && !menuRef.current?.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+    const closeMenuOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsMenuOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeMenuOnOutsidePress);
+    document.addEventListener("keydown", closeMenuOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeMenuOnOutsidePress);
+      document.removeEventListener("keydown", closeMenuOnEscape);
+    };
+  }, [isMenuOpen]);
+
   const handleCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCaption(e.target.value);
     setIsDirty(true);
@@ -199,6 +221,14 @@ const MediaAssetRow = ({
   const handleSlotChange = (nextSlot: CardMediaSlot) => {
     setSlot(nextSlot);
     setIsDirty(true);
+  };
+
+  const handleDelete = () => {
+    const formData = new FormData();
+    formData.set("manageToken", manageToken);
+    formData.set("assetId", asset.id);
+    setIsMenuOpen(false);
+    startDeleteTransition(() => deleteAction(formData));
   };
 
   return (
@@ -222,10 +252,13 @@ const MediaAssetRow = ({
                 onChange={handleCaptionChange}
                 className={styles.contentPhotoInput}
                 placeholder="Например, Закат на море"
-                maxLength={60}
+                maxLength={45}
               />
-              <span className={styles.mediaLibraryTypeBadge}>{getSlotTypeLabel(asset.slot)}</span>
+              <span className={styles.mediaLibraryCaptionHint}>
+                {caption.length}/45 · для полароида лучше до двух строк
+              </span>
             </label>
+            <div className={styles.mediaLibrarySlotField}>
             <SlotDropdown
               options={availableSlots.map((slotItem) => {
                 const usedAsset = assets.find((item) => item.slot === slotItem);
@@ -236,7 +269,9 @@ const MediaAssetRow = ({
               onChange={handleSlotChange}
               name="slot"
             />
-            <div className={styles.mediaLibraryMenuWrap}>
+              <span className={styles.mediaLibraryTypeBadge}>{getSlotTypeLabel(slot)}</span>
+            </div>
+            <div ref={menuRef} className={styles.mediaLibraryMenuWrap}>
               <button
                 type="button"
                 className={styles.contentIconButton}
@@ -248,13 +283,9 @@ const MediaAssetRow = ({
               </button>
               {isMenuOpen ? (
                 <div className={styles.mediaLibraryMenu}>
-                  <form action={deleteAction} className={styles.mediaLibraryDeleteForm}>
-                    <input type="hidden" name="manageToken" value={manageToken} />
-                    <input type="hidden" name="assetId" value={asset.id} />
-                    <button type="submit" className={styles.mediaLibraryMenuItem} disabled={deletePending}>
-                      {deletePending ? "Удаляем..." : "Удалить"}
-                    </button>
-                  </form>
+                  <button type="button" className={styles.mediaLibraryMenuItem} onClick={handleDelete} disabled={deletePending}>
+                    {deletePending ? "Удаляем..." : "Удалить"}
+                  </button>
                 </div>
               ) : null}
             </div>
@@ -327,7 +358,7 @@ const MediaUploadForm = ({
       <input type="hidden" name="captionSubtitle" value="" />
       <label className={styles.mediaLibraryUploadCaptionLabel}>
         <span>Подпись</span>
-        <input name="captionTitle" className={styles.contentPhotoInput} placeholder="Например, Закат на море" maxLength={60} />
+        <input name="captionTitle" className={styles.contentPhotoInput} placeholder="Например, Закат на море" maxLength={45} />
       </label>
       <SlotDropdown
         options={allSlots.map((slotItem) => {
@@ -449,8 +480,8 @@ const MediaLibraryGroup = ({
             hideOccupied
             name="slot"
           />
-          <input name="captionTitle" className={styles.contentPhotoInput} placeholder="Название фото" maxLength={60} />
-          <input name="captionSubtitle" className={styles.contentPhotoInput} placeholder="Короткое описание" maxLength={120} />
+          <input name="captionTitle" className={styles.contentPhotoInput} placeholder="Название фото" maxLength={45} />
+          <input name="captionSubtitle" className={styles.contentPhotoInput} placeholder="Короткое описание" maxLength={45} />
           <div className={styles.mediaLibraryActions}>
             <input
               name="file"

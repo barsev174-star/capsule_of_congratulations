@@ -367,14 +367,14 @@ const LayoutDiagram = ({ mode }: { mode: FinalCardMessageLayoutMode }) => {
 
 const MediaLayoutDiagram = ({ mode }: { mode: FinalCardMessageMediaLayout }) => {
   const photoCount = mode === "portrait" ? 1 : mode === "landscape-pair" ? 2 : 3;
+  const messageCount = mode === "portrait" ? 3 : 4;
 
   return (
     <div className={styles.mediaLayoutDiagram} data-media-layout={mode}>
       <div className={styles.mediaLayoutMessages}>
-        <span />
-        <span />
-        <span />
-        <span />
+        {Array.from({ length: messageCount }).map((_, index) => (
+          <span key={index} />
+        ))}
       </div>
       <div className={styles.mediaLayoutPhotos}>
         {Array.from({ length: photoCount }).map((_, index) => (

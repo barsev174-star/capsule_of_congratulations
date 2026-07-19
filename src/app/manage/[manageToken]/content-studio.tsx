@@ -631,6 +631,11 @@ export const ContentStudio = ({
                               {isMainGreeting ? "Убрать из главного" : "В главное"}
                             </button>
                           </form>
+                          {isMainGreeting ? (
+                            <p className={styles.contentMainGreetingHint}>
+                              Это поздравление показывается отдельно в блоке «Главное о тебе» и не повторяется в общем списке.
+                            </p>
+                          ) : null}
                           <div className={styles.contentExpandedToggle}>
                             <span className={styles.contentBodyLabelCompact}>Показывать в открытке</span>
                             <form action={setContributionStatusAction}>

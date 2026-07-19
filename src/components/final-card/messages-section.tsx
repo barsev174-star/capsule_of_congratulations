@@ -232,8 +232,9 @@ export const MessagesSection = ({
   const routeMobileShowAllButtonRef = useRef<HTMLButtonElement>(null);
   const dialogHistoryEntryRef = useRef(false);
   const dialogTriggerRef = useRef<"header" | "mobile">("header");
-  const profile = getFinalCardMessageLayoutProfile(messageLayoutMode);
+  const profile = getFinalCardMessageLayoutProfile(messageLayoutMode, messageMediaLayout);
   const isColumnMedia = profile.pageVariant === "column-media";
+  const routeVisibleCount = profile.cardsPerPage;
   const remaining = contributions.length - visibleCount;
   const hasMore = remaining > 0;
 
@@ -320,7 +321,7 @@ export const MessagesSection = ({
       </dialog>
   ) : null;
 
-  const routeMobileShowAllButton = isRouteAdventure && contributions.length > INITIAL_VISIBLE_COUNT ? (
+  const routeMobileShowAllButton = isRouteAdventure && contributions.length > routeVisibleCount ? (
     <button
       type="button"
       ref={routeMobileShowAllButtonRef}
@@ -349,7 +350,11 @@ export const MessagesSection = ({
 
   if (isColumnMedia) {
     return (
-      <div className={finalCardStyles.messageSplitFixed}>
+      <div
+        className={`${finalCardStyles.messageSplitFixed} ${
+          isRouteAdventure && messageMediaLayout === "portrait" ? finalCardStyles.messageSplitPortrait : ""
+        }`.trim()}
+      >
         <div className={finalCardStyles.messageColumnScroller}>
           <div className={finalCardStyles.messageColumnPage}>
             {contributions.map((item, index) =>
@@ -360,7 +365,7 @@ export const MessagesSection = ({
                 isPaperBirthday,
                 isRouteAdventure,
                 !isRouteAdventure && index >= visibleCount,
-                isRouteAdventure && index >= INITIAL_VISIBLE_COUNT
+                isRouteAdventure && index >= routeVisibleCount
               )
             )}
           </div>
@@ -391,7 +396,7 @@ export const MessagesSection = ({
             isPaperBirthday,
             isRouteAdventure,
             !isRouteAdventure && index >= visibleCount,
-            isRouteAdventure && index >= INITIAL_VISIBLE_COUNT
+            isRouteAdventure && index >= routeVisibleCount
           )
         )}
       </div>

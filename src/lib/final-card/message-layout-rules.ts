@@ -1,4 +1,4 @@
-import type { FinalCardMessageLayoutMode } from "@/lib/final-card/types";
+import type { FinalCardMessageLayoutMode, FinalCardMessageMediaLayout } from "@/lib/final-card/types";
 
 export type FinalCardMessageLayoutProfile = {
   cardsPerPage: number;
@@ -10,7 +10,8 @@ export type FinalCardMessageLayoutProfile = {
 };
 
 export const getFinalCardMessageLayoutProfile = (
-  layoutMode: FinalCardMessageLayoutMode
+  layoutMode: FinalCardMessageLayoutMode,
+  mediaLayout?: FinalCardMessageMediaLayout
 ): FinalCardMessageLayoutProfile => {
   if (layoutMode === "carousel-1") {
     return {
@@ -35,12 +36,13 @@ export const getFinalCardMessageLayoutProfile = (
   }
 
   if (layoutMode === "column-media") {
+    const cardsPerPage = mediaLayout === "portrait" ? 3 : 4;
     return {
-      cardsPerPage: 4,
+      cardsPerPage,
       advanceBy: 1,
       maxChars: 280,
       pageColumns: 1,
-      pageRows: 4,
+      pageRows: cardsPerPage,
       pageVariant: "column-media"
     };
   }

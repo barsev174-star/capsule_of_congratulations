@@ -335,13 +335,13 @@
 .route-adventure .messages .card:nth-child(even) {
   background:
     linear-gradient(rgba(230, 235, 220, 0.18), rgba(204, 216, 198, 0.27)),
-    url("/templates/route-adventure/message-ticket-slate.png") center 86% / 114% auto no-repeat;
+    url("/templates/route-adventure/message-ticket-slate.png") center / 100% 100% no-repeat;
 }
 
 .route-adventure .messages .card:nth-child(3n) {
   background:
     linear-gradient(rgba(224, 220, 201, 0.18), rgba(183, 179, 155, 0.26)),
-    url("/templates/route-adventure/message-ticket-smoky.png") center 88% / 114% auto no-repeat;
+    url("/templates/route-adventure/message-ticket-smoky.png") center / 100% 100% no-repeat;
 }
 
 .route-adventure .sectionHeader {
@@ -6919,6 +6919,29 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
   text-wrap: balance;
 }
 
+/* The portrait frame fills the greeting rail just like the paper template. */
+.route-adventure .messageSplitFixed .mediaCardPortrait {
+  height: var(--fc-column-stack-height);
+  aspect-ratio: auto;
+}
+
+.route-adventure .messageSplitFixed .mediaCardPortrait .mediaImage {
+  top: 5.3%;
+  left: 5%;
+  width: 90%;
+  height: 84.5%;
+}
+
+.route-adventure .messageSplitFixed .mediaCardPortrait .mediaCaption {
+  right: 8%;
+  bottom: 0;
+  left: 8%;
+  min-height: 9.5%;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+
 .route-adventure .mediaCardLandscape .mediaCaption,
 .route-adventure .mediaCardPortrait .mediaCaption {
   display: flex !important;
@@ -7209,3 +7232,145 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
 
 .route-adventure .summary::after { bottom: 26px; }
 .route-adventure .qualities::after { top: 4px; }
+
+/* Route: the single portrait must stay inside its column like the paper layout. */
+.route-adventure .messageSplitFixed {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.72fr);
+}
+
+.route-adventure .mediaRail { min-width: 0; }
+
+.route-adventure .mediaCardPortrait {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  transform: none;
+  display: block;
+  aspect-ratio: 2 / 3;
+  min-height: 0;
+  height: auto;
+  background-image: url("/templates/route-adventure/polaroid-tape.png");
+}
+
+.route-adventure .mediaCardPortrait .mediaImage {
+  top: 5.3%;
+  left: 8.7%;
+  width: 82.6%;
+  height: 74.5%;
+}
+
+.route-adventure .mediaCardPortrait .mediaCaption {
+  position: absolute;
+  right: 11%;
+  bottom: 1.2%;
+  left: 11%;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 10%;
+  padding: 0;
+  color: #3b2b1e;
+  visibility: visible;
+  opacity: 1;
+}
+
+.route-adventure .mediaCardPortrait .mediaCaptionSubtitle {
+  display: block !important;
+  max-width: 100%;
+  overflow: visible;
+  color: #3b2b1e;
+  font-size: clamp(20px, 2vw, 26px) !important;
+  line-height: 1;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* Two Route polaroids need to read as one deliberately spaced vertical stack. */
+.route-adventure .messageSplitFixed .mediaRailPair {
+  gap: 56px;
+  padding-top: 32px;
+  transform: translateY(12px);
+}
+
+/* Keep the handwritten description optically centred in the lower polaroid field. */
+.route-adventure .mediaCardLandscape .mediaCaption {
+  bottom: 1.2%;
+}
+
+/* Horizontal Route polaroids reserve a compact, centred two-line caption field. */
+.route-adventure .mediaRailPair .mediaCardLandscape .mediaCaption,
+.route-adventure .mediaRailTrio .mediaCardLandscape .mediaCaption {
+  right: 9%;
+  bottom: 1.5%;
+  left: 9%;
+  height: 17%;
+  min-height: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+/* A portrait Route polaroid reserves only a compact two-line caption field. */
+.route-adventure .messageSplitFixed .mediaCardPortrait {
+  height: calc(var(--fc-column-stack-height) - 88px);
+  min-height: 0;
+}
+
+.route-adventure .messageSplitFixed .mediaCardPortrait .mediaImage {
+  top: 5.3%;
+  left: 8.7%;
+  width: 82.6%;
+  height: calc(100% - 138px);
+}
+
+.route-adventure .messageSplitFixed .mediaCardPortrait .mediaCaption {
+  right: 11%;
+  bottom: 0;
+  left: 11%;
+  min-height: 90px;
+  height: 90px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Route portrait: a real 3:4 photo window and a compact two-line caption field. */
+.route-adventure .messageSplitFixed .mediaCardPortrait {
+  width: 91%;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 2 / 3;
+  justify-self: center;
+}
+
+.route-adventure .messageSplitFixed .mediaCardPortrait .mediaImage {
+  top: 4.4%;
+  left: 5%;
+  width: 90%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: center;
+}
+
+.route-adventure .messageSplitFixed .mediaCardPortrait .mediaCaption {
+  right: 7%;
+  bottom: 1.4%;
+  left: 7%;
+  height: 72px;
+  min-height: 72px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+/* A single vertical image leaves room for exactly three greetings; further messages remain scrollable. */
+.route-adventure .messageSplitPortrait {
+  --fc-column-stack-height: calc(var(--fc-column-card-height) * 3 + var(--fc-gap) * 2);
+}
+
+.route-adventure .messageSplitPortrait .mediaRail {
+  height: var(--fc-column-stack-height);
+  align-content: start;
+}

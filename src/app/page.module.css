@@ -8,25 +8,25 @@
 
 .page main > section[data-motion-ready] {
   opacity: 0;
-  transform: translateY(32px);
-  transition: opacity 650ms var(--motion-ease-out, cubic-bezier(.22, 1, .36, 1)), transform 650ms var(--motion-ease-out, cubic-bezier(.22, 1, .36, 1));
+  transform: translateY(36px);
+  transition: opacity 700ms var(--motion-ease-out), transform 700ms var(--motion-ease-out);
 }
 
 .page main > section[data-motion-ready][data-motion-visible="true"] { opacity: 1; transform: translateY(0); }
 .page main > section[data-motion-index="3"][data-motion-ready] { transform: translateX(-48px); }
 .page main > section[data-motion-index="3"][data-motion-ready][data-motion-visible="true"] { transform: translateX(0); }
-.page main > section[data-motion-ready] .js-motion-card { opacity: 0; transform: translateY(28px); transition: opacity 550ms var(--motion-ease-out, cubic-bezier(.22, 1, .36, 1)), transform 550ms var(--motion-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+.page main > section[data-motion-ready] .js-motion-card { opacity: 0; transform: translateY(28px); transition: opacity 600ms var(--motion-ease-out), transform 600ms var(--motion-ease-out); }
 .page main > section[data-motion-ready][data-motion-visible="true"] .js-motion-card { opacity: 1; transform: translateY(0); }
-.page main > section[data-motion-ready][data-motion-visible="true"] .js-motion-card:nth-child(2) { transition-delay: 80ms; }
-.page main > section[data-motion-ready][data-motion-visible="true"] .js-motion-card:nth-child(3) { transition-delay: 160ms; }
-.page main > section[data-motion-ready][data-motion-visible="true"] .js-motion-card:nth-child(4) { transition-delay: 240ms; }
-.page main > section[data-motion-ready][data-motion-visible="true"] .js-motion-card:nth-child(5) { transition-delay: 320ms; }
-.page main > section[data-motion-ready][data-motion-visible="true"] .js-motion-card:nth-child(6) { transition-delay: 400ms; }
+.page main > section[data-motion-ready][data-motion-visible="true"] .js-motion-card:nth-child(2) { transition-delay: 90ms; }
+.page main > section[data-motion-ready][data-motion-visible="true"] .js-motion-card:nth-child(3) { transition-delay: 180ms; }
+.page main > section[data-motion-ready][data-motion-visible="true"] .js-motion-card:nth-child(4) { transition-delay: 270ms; }
+.page main > section[data-motion-ready][data-motion-visible="true"] .js-motion-card:nth-child(5) { transition-delay: 360ms; }
+.page main > section[data-motion-ready][data-motion-visible="true"] .js-motion-card:nth-child(6) { transition-delay: 450ms; }
 
 @media (prefers-reduced-motion: reduce) {
   .page main {
     scroll-behavior: auto;
   }
-  .page main > section[data-motion-ready] { opacity: 1; transform: none; transition: none; }
-  .page main > section[data-motion-ready] .js-motion-card { opacity: 1; transform: none; transition: none; }
+  .page main > section[data-motion-ready] { opacity: 1; transform: none !important; transition: none !important; }
+  .page main > section[data-motion-ready] .js-motion-card { opacity: 1; transform: none !important; transition: none !important; }
 }

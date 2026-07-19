@@ -19,6 +19,7 @@ type Props = {
   initialMediaLayout: FinalCardMessageMediaLayout;
   initialBlockOrder: FinalCardBlockId[];
   blockState: Record<FinalCardOptionalBlockId, boolean>;
+  onTemplateSelectionChange?: (templateId: CardTemplate["id"]) => void;
   variant?: "grid" | "hero";
 };
 
@@ -35,6 +36,7 @@ export const TemplateSettingsForm = ({
   initialMediaLayout,
   initialBlockOrder,
   blockState,
+  onTemplateSelectionChange,
   variant = "grid"
 }: Props) => {
   const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId);
@@ -57,6 +59,11 @@ export const TemplateSettingsForm = ({
     };
   }, []);
 
+  const selectTemplate = (templateId: CardTemplate["id"]) => {
+    setSelectedTemplateId(templateId);
+    onTemplateSelectionChange?.(templateId);
+  };
+
   return (
     <form action={formAction} className={variant === "hero" ? styles.templateHeroForm : styles.templateForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
@@ -78,7 +85,7 @@ export const TemplateSettingsForm = ({
             <select
               name="templateId"
               value={selectedTemplateId}
-              onChange={(event) => setSelectedTemplateId(event.target.value as CardTemplate["id"])}
+              onChange={(event) => selectTemplate(event.target.value as CardTemplate["id"])}
               className={styles.templateHeroSelect}
             >
               {templates.map((template) => (
@@ -108,7 +115,7 @@ export const TemplateSettingsForm = ({
                   name="templateId"
                   value={template.id}
                   defaultChecked={template.id === initialTemplateId}
-                  onChange={() => setSelectedTemplateId(template.id)}
+                  onChange={() => selectTemplate(template.id)}
                 />
                 <span className={styles.templateSwatch} style={{ background: template.accent }} />
                 <span className={styles.templateName}>{template.name}</span>

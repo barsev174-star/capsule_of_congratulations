@@ -155,7 +155,7 @@ export const ExampleExperience = ({ children, routeChildren }: Props) => {
             >
               <div className={styles.templateCardThumb}>
                 <Image
-                  src="/assets/landing/template-route-adventure.png"
+                  src="/assets/landing/template-route-adventure-preview.png"
                   alt=""
                   fill
                   sizes="(max-width: 640px) 45vw, 220px"

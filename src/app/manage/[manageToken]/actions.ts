@@ -707,7 +707,7 @@ export async function updateFinalPresentationSettingsAction(
   const rawTemplateId = String(formData.get("templateId") ?? "");
   const templateId = isTemplateId(rawTemplateId) ? rawTemplateId : card.templateId;
   const visibleContributions = await listContributionsByCardId(card.id);
-  const layoutProfile = getFinalCardMessageLayoutProfile(layoutMode);
+  const layoutProfile = getFinalCardMessageLayoutProfile(layoutMode, mediaLayout);
   const messageMediaSlots = formData
     .getAll("messageMediaSlots")
     .map((value) => String(value))
@@ -826,14 +826,18 @@ export async function saveCardMediaAction(
 ) {
   const manageToken = String(formData.get("manageToken") ?? "");
   const slot = String(formData.get("slot") ?? "") as CardMediaSlot;
-  const captionTitle = String(formData.get("captionTitle") ?? "").trim().slice(0, 60);
-  const captionSubtitle = String(formData.get("captionSubtitle") ?? "").trim().slice(0, 120);
+  const captionTitle = String(formData.get("captionTitle") ?? "").trim();
+  const captionSubtitle = String(formData.get("captionSubtitle") ?? "").trim();
   const existingAssetId = String(formData.get("assetId") ?? "");
   const file = formData.get("file");
   const rightsConfirmed = formData.get("rightsConfirmed") === "on";
 
   if (!manageToken || !mediaSlots.includes(slot)) {
     return { ok: false, message: "Не удалось определить слот для фото." };
+  }
+
+  if (captionTitle.length > 45 || captionSubtitle.length > 45) {
+    return { ok: false, message: "Подпись длиннее 45 символов. Сократите её, чтобы она поместилась на полароиде." };
   }
 
   const card = await getCardDraftByManageToken(manageToken);
