@@ -368,7 +368,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
               {renderAnchorLayer("greetings")}
               <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Поздравления</h2>
-                {isRouteAdventure ? <RouteGreetingsCountButton count={model.contributions.length} /> : <span className={styles.sectionBadge}>{model.contributions.length} поздравлений</span>}
+                {isRouteAdventure || isPaperBirthday ? <RouteGreetingsCountButton count={model.contributions.length} /> : <span className={styles.sectionBadge}>{model.contributions.length} поздравлений</span>}
               </div>
 
               {model.contributions.length === 0 ? (
@@ -384,7 +384,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                 />
               )}
 
-              {!isPreview && model.showAllMessagesLink ? (
+              {!isPreview && !isPaperBirthday && !isRouteAdventure && model.showAllMessagesLink ? (
                 <div className={styles.sectionFooter}>
                   <Link href={`${getGiftPath(model.finalSlug)}/messages`} className={styles.inlineLinkButton}>
                     Смотреть все поздравления
@@ -590,7 +590,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                 )}
               </div>
               <FinalCardActions manageHref={manageToken ? `/manage/${manageToken}` : undefined} routeAdventure={isRouteAdventure} />
-              {isRouteAdventure ? (
+              {isRouteAdventure || isPaperBirthday ? (
                 <>
                   <span className={styles.routeFooterTagLabel}>На память</span>
                   <p className={styles.routeBranding}>

@@ -9,16 +9,16 @@ export function FinalCtaSection() {
   return (
     <section className={styles.section}>
       <div className={styles.shell}>
-        <div className={styles.card}>
+        <div className={`${styles.card} js-motion-card`}>
           <div className={styles.decorLeft} aria-hidden="true">
             {ctaEnvelopeSrc ? (
               <Image
                 src={ctaEnvelopeSrc}
                 alt=""
-                width={260}
-                height={195}
+                width={320}
+                height={240}
                 className={styles.decorImage}
-                sizes="260px"
+                sizes="320px"
               />
             ) : (
               <div className={styles.decorEnvelope}>
@@ -29,11 +29,14 @@ export function FinalCtaSection() {
 
           <div className={styles.decorRight} aria-hidden="true">
             <span className={styles.decorHeart}>♡</span>
-            <span className={styles.decorSparkle}>✦</span>
+            <span className={styles.decorSparkle}>✶</span>
+            <span className={styles.decorNote}>
+              <span>♥</span>
+            </span>
           </div>
 
           <h2 className={`${styles.title} text-balance`}>
-            Соберите первую открытку уже сейчас
+            Создайте первую открытку уже сейчас
           </h2>
           <p className={styles.subtitle}>
             Собрать открытку можно бесплатно.<br />Оплата нужна только для финальной подготовки<br />и передачи открытки получателю.

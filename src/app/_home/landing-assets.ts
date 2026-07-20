@@ -15,11 +15,12 @@ export const landingAssetPaths: LandingAssetConfig = {
   heroDecor: "/assets/landing/hero-decor.png",
   ctaEnvelope: "/assets/landing/cta-envelope.png",
   templates: {
-    "paper-classic": "/assets/landing/template-paper-classic.png",
+    "paper-birthday": "/assets/example/template-paper-thumb.png",
     "warm-classic": "/assets/landing/template-warm-classic.png",
     "team-modern": "/assets/landing/template-team-modern.png",
     "bright-party": "/assets/landing/template-bright-party.png",
-    "soft-personal": "/assets/landing/template-soft-personal.png"
+    "soft-personal": "/assets/landing/template-soft-personal.png",
+    "route-adventure": "/assets/landing/template-route-adventure-preview.png"
   }
 };
 

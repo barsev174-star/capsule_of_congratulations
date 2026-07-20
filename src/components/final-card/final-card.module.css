@@ -2699,6 +2699,152 @@ body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
   }
 }
 
+/* The preview container is not always a named CSS container, so keep the pair geometry explicit as a final rule. */
+.paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaImage {
+  top: 6.5% !important;
+  right: 4.5% !important;
+  bottom: auto !important;
+  left: 4.5% !important;
+  width: 91% !important;
+  height: 67.5% !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  aspect-ratio: auto !important;
+  object-fit: cover;
+  object-position: center;
+}
+
+.paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaCaption {
+  right: 8% !important;
+  bottom: 5.5% !important;
+  left: 8% !important;
+  z-index: 3 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+
+/* Paper greeting photos: the PNG is the front layer; photos live only inside its transparent window. */
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"],
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] {
+  overflow: visible !important;
+}
+
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] > .componentAssetContent,
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] > .componentAssetContent {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  z-index: auto !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] > .componentAssetOverlayLayer,
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] > .componentAssetOverlayLayer {
+  z-index: 2 !important;
+  -webkit-mask: none !important;
+  mask: none !important;
+}
+
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaPortraitViewport {
+  position: absolute !important;
+  inset: 9.5% 13% 25% 15.5% !important;
+  z-index: 1 !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: hidden !important;
+}
+
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaPortraitViewport .mediaImage {
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover;
+  object-position: center;
+}
+
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaCaption {
+  position: absolute !important;
+  right: 15% !important;
+  bottom: 8% !important;
+  left: 15% !important;
+  z-index: 3 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  height: 2.5em !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  text-align: center;
+}
+
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaImage {
+  position: absolute !important;
+  top: 6.5% !important;
+  right: 4.5% !important;
+  bottom: 26% !important;
+  left: 4.5% !important;
+  z-index: 1 !important;
+  width: 91% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  aspect-ratio: auto !important;
+  object-fit: cover;
+  object-position: center;
+}
+
+.paper-birthday .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaCaption {
+  position: absolute !important;
+  right: 9% !important;
+  bottom: 7% !important;
+  left: 9% !important;
+  z-index: 3 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 0 !important;
+  padding: 0 !important;
+  text-align: center;
+}
+
+@container final-card-shell (max-width: 899px) {
+  /* The two-photo mobile layout uses two identical 4:3 polaroids. */
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 4 / 3 !important;
+    margin: 0 !important;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaImage {
+    top: 6.5% !important;
+    right: 4.5% !important;
+    bottom: auto !important;
+    left: 4.5% !important;
+    width: 91% !important;
+    height: 67.5% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    aspect-ratio: auto !important;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaCaption {
+    right: 8% !important;
+    bottom: 5.5% !important;
+    left: 8% !important;
+    z-index: 3 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+}
+
 body[data-scrapbook-mobile-preview] .paperDecorAsset {
   top: var(--asset-mobile-top, var(--asset-top, auto));
   left: var(--asset-mobile-left, var(--asset-left, auto));
@@ -7374,6 +7520,527 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
   height: var(--fc-column-stack-height);
   align-content: start;
 }
+
+/* Paper desktop keeps its original single-row scrapbook tags. */
+.paper-birthday .qualitiesPanel .chipList {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 10px;
+  width: auto;
+  margin-top: 2px;
+  padding: 2px 8px 0;
+}
+
+.paper-birthday .qualitiesPanel .qualityChipFrame {
+  width: var(--component-asset-width, 196px) !important;
+  min-width: var(--component-asset-width, 196px) !important;
+  max-width: var(--component-asset-max-width, 196px) !important;
+}
+
+.paper-birthday .qualitiesPanel .qualityChipFrame:nth-child(5) {
+  width: var(--component-asset-width, 196px) !important;
+}
+
+/* Paper template: keep a vertical photo and its caption inside one complete polaroid. */
+.paper-birthday .messageSplitFixed .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+}
+
+.paper-birthday .messageSplitFixed .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] > .componentAssetContent {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 64px;
+  padding: 10% 10.5% 5%;
+}
+
+.paper-birthday .messageSplitFixed .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaPortraitViewport {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+}
+
+.paper-birthday .messageSplitFixed .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaCaption {
+  position: relative;
+  inset: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0 0;
+  text-align: center;
+}
+
+/* Two paper landscape polaroids use identical, contained image windows. */
+.paper-birthday .messageSplitFixed .mediaRailPair {
+  padding-top: 0;
+  gap: 18px;
+}
+
+.paper-birthday .messageSplitFixed .mediaRailPair .mediaCardLandscape {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  margin: 0;
+}
+
+.paper-birthday .messageSplitFixed .mediaRailPair .componentAssetContent {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 48px;
+  padding: 8px 8px 6px;
+}
+
+.paper-birthday .messageSplitFixed .mediaRailPair .mediaImage {
+  width: 100%;
+  height: 100% !important;
+  min-height: 0 !important;
+  object-fit: cover;
+}
+
+.paper-birthday .routeBranding {
+  display: grid;
+  gap: 4px;
+  margin: 18px 0 0;
+  color: rgba(95, 55, 47, 0.9);
+  font-family: var(--fc-font-body);
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.paper-birthday .routeBranding a {
+  color: #5f372f;
+  font-family: var(--fc-font-body);
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.paper-birthday .routeFooterTagLabel {
+  display: none;
+}
+
+.paper-birthday .routeGreetingsCountButton {
+  border-color: rgba(207, 122, 137, 0.28);
+  background: rgba(250, 221, 218, 0.86);
+  color: #be6679;
+  font-family: var(--fc-font-body);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.paper-birthday .routeGreetingsCountButton:hover {
+  border-color: rgba(190, 102, 121, 0.48);
+  background: #f8d9d8;
+}
+
+/* Paper portrait uses the same 3:4 image logic as Route, while retaining its paper frame. */
+.paper-birthday .messageSplitPortrait {
+  --fc-column-stack-height: calc(var(--fc-column-card-height) * 3 + var(--fc-gap) * 2);
+}
+
+.paper-birthday .messageSplitPortrait .mediaRail {
+  height: var(--fc-column-stack-height);
+  align-content: start;
+}
+
+.paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] {
+  width: 100%;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 3 / 4;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+@container final-card-shell (max-width: 899px) {
+  /* Mobile follows Route's compact two-column qualities layout; desktop remains untouched. */
+  .paper-birthday .qualitiesPanel .chipList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+    margin-top: 0;
+    padding: 0;
+  }
+
+  .paper-birthday .qualitiesPanel .qualityChipFrame {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .paper-birthday .qualitiesPanel .qualityChipFrame:nth-child(5) {
+    grid-column: 1 / -1;
+    width: min(100%, calc(50% - 5px)) !important;
+    justify-self: center;
+  }
+
+  .paper-birthday .qualitiesPanel .qualityChipFrame.qualityChipLong,
+  .paper-birthday .qualitiesPanel .qualityChipFrame.qualityChipMedium {
+    grid-column: auto;
+    width: 100% !important;
+    justify-self: stretch;
+  }
+
+  .paper-birthday .qualitiesPanel .qualityChipFrame:nth-child(5).qualityChipLong,
+  .paper-birthday .qualitiesPanel .qualityChipFrame:nth-child(5).qualityChipMedium {
+    grid-column: 1 / -1;
+    width: min(100%, calc(50% - 5px)) !important;
+    justify-self: center;
+  }
+
+  /* Give the brand line its own paper space instead of letting it fall below the sheet. */
+  .paper-birthday .componentAssetFrame.closing {
+    margin-bottom: 32px;
+  }
+
+  .paper-birthday .componentAssetFrame.closing > .componentAssetContent {
+    padding-bottom: 40px !important;
+  }
+
+  .paper-birthday .componentAssetFrame.closing > .componentAssetPaperLayer {
+    inset: -68px -4px -44px !important;
+    background-size: 100% 100% !important;
+  }
+
+  /* A mobile paper frame never lets the image protrude past its printed edge. */
+  .paper-birthday .messageSplitFixed .componentAssetFrame.mediaCardLandscape,
+  .paper-birthday .messageSplitFixed .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] {
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair .componentAssetContent {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair .mediaImage {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+  }
+
+  /* Route landscape captions remain visible in the lower field printed on the original frame. */
+  .route-adventure .mediaRailPair .mediaCardLandscape,
+  .route-adventure .mediaRailTrio .mediaCardLandscape {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) 64px;
+    overflow: hidden;
+  }
+
+  .route-adventure .mediaRailPair .mediaCardLandscape .mediaImage,
+  .route-adventure .mediaRailTrio .mediaCardLandscape .mediaImage {
+    position: relative !important;
+    inset: auto !important;
+    grid-row: 1;
+    align-self: stretch;
+    width: 88% !important;
+    height: calc(100% + 48px) !important;
+    margin-inline: auto;
+    min-height: 0 !important;
+    aspect-ratio: auto !important;
+    object-fit: cover;
+    object-position: center;
+    transform: none;
+  }
+
+  .route-adventure .mediaRailPair .mediaCardLandscape .mediaCaption,
+  .route-adventure .mediaRailTrio .mediaCardLandscape .mediaCaption {
+    position: relative !important;
+    inset: auto !important;
+    grid-row: 2;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 64px !important;
+    min-height: 64px !important;
+    padding: 20px 12px 0 !important;
+    box-sizing: border-box;
+    text-align: center;
+  }
+
+  .route-adventure .messageSplitPortrait .mediaCardPortrait {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) 72px;
+    overflow: hidden;
+  }
+
+  .route-adventure .messageSplitPortrait .mediaCardPortrait .mediaImage {
+    position: relative !important;
+    inset: auto !important;
+    grid-row: 1;
+    align-self: stretch;
+    width: 90% !important;
+    height: 100% !important;
+    margin-inline: auto;
+    min-height: 0 !important;
+    aspect-ratio: 3 / 4;
+  }
+
+  .route-adventure .messageSplitPortrait .mediaCardPortrait .mediaCaption {
+    position: relative !important;
+    inset: auto !important;
+    grid-row: 2;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 72px !important;
+    min-height: 72px !important;
+    padding: 0 12px !important;
+    box-sizing: border-box;
+    text-align: center;
+  }
+
+  /* Paper count stays beneath its title and does not wrap into a second line. */
+  .paper-birthday .messages .sectionHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .paper-birthday .messages .routeGreetingsCountButton {
+    align-self: flex-start;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Use the same readable two-by-two treatment as Route, including safe word wrapping. */
+  .paper-birthday .qualitiesPanel .chipList {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .paper-birthday .qualitiesPanel .qualityChipFrame {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .paper-birthday .qualitiesPanel .qualityChipFrame:nth-child(5) {
+    grid-column: 1 / -1;
+    width: min(100%, calc(50% - 5px)) !important;
+    justify-self: center;
+  }
+
+  .paper-birthday .qualitiesPanel .qualityChipFrame.qualityChipLong,
+  .paper-birthday .qualitiesPanel .qualityChipFrame.qualityChipMedium {
+    grid-column: auto !important;
+    width: 100% !important;
+    justify-self: stretch !important;
+  }
+
+  .paper-birthday .qualitiesPanel .qualityChipFrame:nth-child(5).qualityChipLong,
+  .paper-birthday .qualitiesPanel .qualityChipFrame:nth-child(5).qualityChipMedium {
+    grid-column: 1 / -1 !important;
+    width: min(100%, calc(50% - 5px)) !important;
+    justify-self: center !important;
+  }
+
+  .paper-birthday .qualitiesPanel .qualityChipFrame .chip {
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    word-break: normal;
+  }
+
+  /* The paper portrait uses its transparent PNG window, not the generic mobile photo box. */
+  .paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] {
+    width: min(100%, 420px) !important;
+    aspect-ratio: 3 / 4 !important;
+    margin-inline: auto;
+    overflow: hidden !important;
+  }
+
+  .paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] > .componentAssetContent {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    padding: 0 !important;
+    overflow: hidden;
+  }
+
+  .paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaPortraitViewport {
+    position: absolute !important;
+    inset: 8.8% 8.5% 13% 8.5% !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: hidden;
+  }
+
+  .paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaPortraitViewport .mediaImage {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    object-fit: cover;
+  }
+
+  .paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaCaption {
+    position: absolute !important;
+    right: 16% !important;
+    bottom: 9% !important;
+    left: 15% !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    height: 2.5em !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    text-align: center;
+  }
+
+  .paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] > .componentAssetOverlayLayer {
+    z-index: 4 !important;
+  }
+
+  /* In the two-photo paper layout every image is centred and clipped by its own frame. */
+  .paper-birthday .messageSplitFixed .mediaRailPair .componentAssetFrame.mediaCardLandscape {
+    width: 100% !important;
+    margin-inline: 0 !important;
+    transform: none !important;
+    overflow: hidden !important;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair .componentAssetFrame.mediaCardLandscape > .componentAssetContent {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) 52px;
+    width: 100%;
+    height: 100%;
+    padding: 8px 8px 6px !important;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair .mediaImage {
+    grid-row: 1;
+    align-self: stretch;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    aspect-ratio: auto !important;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair .mediaCaption {
+    position: relative !important;
+    inset: auto !important;
+    grid-row: 2;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    min-height: 0 !important;
+    padding: 6px 8px 0 !important;
+    text-align: center;
+  }
+
+  /* Three-line memory captions sit a little lower in their polaroid field. */
+  .paper-birthday .memoryPhotoCaptionWrap {
+    transform: translateY(17px);
+  }
+}
+
+@container final-card-shell (max-width: 899px) {
+  /* Keep the paper's printed border above both the photo and its handwriting. */
+  .paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] > .componentAssetOverlayLayer {
+    z-index: 8 !important;
+  }
+
+  .paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaCaption {
+    z-index: 9 !important;
+  }
+
+  .paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaPortraitViewport {
+    right: 6.5% !important;
+    bottom: 22% !important;
+    left: 6.5% !important;
+  }
+
+  /* Both paper landscapes share one contained image window and caption field. */
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame.mediaCardLandscape {
+    width: 100% !important;
+    margin-inline: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame.mediaCardLandscape > .componentAssetContent {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) 54px;
+    padding: 8px 8px 6px !important;
+    overflow: hidden !important;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame.mediaCardLandscape .mediaImage {
+    grid-row: 1;
+    align-self: stretch;
+    justify-self: stretch;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    aspect-ratio: auto !important;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame.mediaCardLandscape .mediaCaption {
+    grid-row: 2;
+    position: relative !important;
+    z-index: 9 !important;
+    transform: translateY(5px);
+  }
+}
+
+/* The mobile preview is not always registered as a CSS container.  Keep this
+   pair-specific geometry outside of the query so both paper polaroids have the
+   same photo window and the caption can only live in the lower printed field. */
+.paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame.mediaCardLandscape {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 4 / 3 !important;
+  margin: 0 !important;
+}
+
+.paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame.mediaCardLandscape .mediaImage {
+  position: absolute !important;
+  top: 6.5% !important;
+  right: 4.5% !important;
+  bottom: auto !important;
+  left: 4.5% !important;
+  width: 91% !important;
+  height: 67.5% !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  aspect-ratio: auto !important;
+  object-fit: cover;
+  object-position: center;
+}
+
+.paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame.mediaCardLandscape .mediaCaption {
+  position: absolute !important;
+  right: 8% !important;
+  bottom: 5.5% !important;
+  left: 8% !important;
+  z-index: 3 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 0 !important;
+  padding: 0 !important;
+  text-align: center;
+}
+
 /* Paper greeting photos: one stable polaroid geometry for both two- and
    three-photo selections.  The image is clipped to the transparent window of
    the artwork, while the caption has its own fixed lower field. */

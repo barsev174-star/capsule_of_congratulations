@@ -6,7 +6,7 @@ import styles from "./header.module.css";
 const navItems = [
   { href: "#how-it-works", label: "Как это работает" },
   { href: "/example", label: "Примеры" },
-  { href: "#ai", label: "AI-помощник" },
+  { href: "#ai", label: "ИИ-помощник" },
   { href: "#faq", label: "FAQ" },
   { href: "/account", label: "Мои открытки" }
 ];

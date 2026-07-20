@@ -1,5 +1,6 @@
 .section {
-  padding: 44px 0;
+  padding: 96px 0;
+  background: linear-gradient(180deg, var(--background) 0%, var(--surface-cream) 100%);
 }
 
 .shell {
@@ -10,7 +11,7 @@
 
 .heading {
   max-width: 720px;
-  margin: 0 auto 28px;
+  margin: 0 auto 36px;
   text-align: center;
 }
 
@@ -31,27 +32,28 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .card {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px;
-  border-radius: 18px;
+  min-height: 72px;
+  padding: 14px 16px;
+  border-radius: 16px;
   background: var(--surface-strong);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-soft);
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  transition: transform 220ms var(--motion-ease-out), box-shadow 220ms var(--motion-ease-out), border-color 220ms var(--motion-ease-out);
 }
 
-.section[data-motion-ready] .card:nth-child(-n+3) { transform: translateX(-20px); }
-.section[data-motion-ready] .card:nth-child(n+4) { transform: translateX(20px); }
+.section[data-motion-ready] .card:nth-child(-n+3) { transform: translateX(-32px); }
+.section[data-motion-ready] .card:nth-child(n+4) { transform: translateX(32px); }
 .section[data-motion-visible="true"] .card:nth-child(n) { transform: translateX(0); }
 
 .card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-card);
   border-color: var(--accent-soft);
 }
@@ -60,9 +62,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
   background: var(--accent-light);
   color: var(--accent);
   flex-shrink: 0;
@@ -71,7 +73,7 @@
 .cardTitle {
   margin: 0;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 800;
   line-height: 1.35;
   color: var(--text);
 }
@@ -94,7 +96,7 @@
 
 @media (min-width: 1024px) {
   .section {
-    padding: 56px 0;
+    padding: 112px 0;
   }
 
   .grid {
@@ -111,5 +113,15 @@
 
   .cardTitle {
     font-size: 0.96rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section[data-motion-ready] .card:nth-child(-n+3),
+  .section[data-motion-ready] .card:nth-child(n+4) {
+    transform: none;
+  }
+  .card:hover {
+    transform: translateY(-4px);
   }
 }

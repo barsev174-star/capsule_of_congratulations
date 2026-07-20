@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
-import { LegalDocumentModal } from "@/components/legal/legal-document-modal";
 import styles from "./footer.module.css";
 
 export function HomeFooter() {
@@ -32,9 +31,9 @@ export function HomeFooter() {
         </section>
         <nav className={styles.column} aria-label="Документы">
           <h2>Документы</h2>
-          <LegalDocumentModal document="offer">Публичная оферта</LegalDocumentModal>
-          <LegalDocumentModal document="privacy">Политика обработки данных</LegalDocumentModal>
-          <LegalDocumentModal document="refunds">Правила возврата</LegalDocumentModal>
+          <Link href="/offer">Публичная оферта</Link>
+          <Link href="/privacy">Политика обработки данных</Link>
+          <Link href="/refunds">Правила возврата</Link>
         </nav>
       </div>
       <div className={styles.bottomLine}>

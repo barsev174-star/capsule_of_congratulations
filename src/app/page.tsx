@@ -17,13 +17,13 @@ import styles from "./page.module.css";
 
 export const metadata: Metadata = {
   title: { absolute: "Slovesto — групповая онлайн-открытка с поздравлениями и фото" },
-  description: "Соберите поздравления и фотографии от друзей, близких или коллег в красивую онлайн-открытку, которую получатель сможет открыть и сохранить.",
+  description: "Соберите поздравления от друзей, близких или коллег и дополните их фотографиями в красивой онлайн-открытке. Создание и сбор доступны бесплатно, финальная передача — 399 ₽.",
   alternates: {
     canonical: "/"
   },
   openGraph: {
     title: "Slovesto — групповая онлайн-открытка с поздравлениями и фото",
-    description: "Соберите поздравления и фотографии от друзей, близких или коллег в красивую онлайн-открытку, которую получатель сможет открыть и сохранить.",
+    description: "Соберите поздравления от друзей, близких или коллег и дополните их фотографиями в красивой онлайн-открытке. Создание и сбор доступны бесплатно, финальная передача — 399 ₽.",
     url: "/"
   }
 };
@@ -49,6 +49,17 @@ export default async function HomePage() {
               alternateName: "Словесто",
               url: "https://slovesto.ru/",
               logo: "https://slovesto.ru/brand/logo-square-512.png"
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "Service",
+              name: "Финальная подготовка и передача онлайн-открытки Slovesto",
+              offers: {
+                "@type": "Offer",
+                price: "399",
+                priceCurrency: "RUB",
+                availability: "https://schema.org/InStock"
+              }
             }
           ])
         }}

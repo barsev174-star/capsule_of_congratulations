@@ -106,7 +106,7 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   padding: 8px 14px;
   border-radius: 999px;
   background: var(--surface-strong);
@@ -114,6 +114,11 @@
   color: var(--muted);
   font-size: 0.85rem;
   font-weight: 500;
+}
+
+.chip svg {
+  color: var(--accent);
+  flex-shrink: 0;
 }
 
 .visual {
@@ -189,7 +194,10 @@
   border-radius: 22px;
   background: linear-gradient(135deg, #fffaf5 0%, #f8eee6 100%);
   border: 1px solid var(--line);
-  box-shadow: 0 20px 50px rgba(191, 108, 71, 0.12);
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.6) inset,
+    0 22px 55px rgba(191, 108, 71, 0.14),
+    0 8px 20px rgba(191, 108, 71, 0.08);
   text-align: center;
   z-index: 1;
 }

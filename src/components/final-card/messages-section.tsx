@@ -234,6 +234,7 @@ export const MessagesSection = ({
   const dialogTriggerRef = useRef<"header" | "mobile">("header");
   const profile = getFinalCardMessageLayoutProfile(messageLayoutMode, messageMediaLayout);
   const isColumnMedia = profile.pageVariant === "column-media";
+  const supportsGreetingsDialog = isRouteAdventure || isPaperBirthday;
   const routeVisibleCount = profile.cardsPerPage;
   const remaining = contributions.length - visibleCount;
   const hasMore = remaining > 0;
@@ -268,14 +269,14 @@ export const MessagesSection = ({
 
   useEffect(() => {
     const openFromHeader = (event: Event) => {
-      if (isRouteAdventure && contributions.length > 0) {
+      if (supportsGreetingsDialog && contributions.length > 0) {
         dialogTriggerRef.current = (event as CustomEvent<{ source?: "header" | "mobile" }>).detail?.source ?? "header";
         setIsAllGreetingsOpen(true);
       }
     };
     window.addEventListener("route-greetings:open", openFromHeader);
     return () => window.removeEventListener("route-greetings:open", openFromHeader);
-  }, [contributions.length, isRouteAdventure]);
+  }, [contributions.length, supportsGreetingsDialog]);
 
   const closeAllGreetings = () => {
     if (dialogHistoryEntryRef.current) {
@@ -285,10 +286,10 @@ export const MessagesSection = ({
     }
   };
 
-  const allGreetingsDialog = isRouteAdventure && contributions.length > 0 ? (
+  const allGreetingsDialog = supportsGreetingsDialog && contributions.length > 0 ? (
       <dialog
         ref={dialogRef}
-        className={styles.allGreetingsDialog}
+        className={`${styles.allGreetingsDialog} ${isPaperBirthday ? styles.paperAllGreetingsDialog : ""}`.trim()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="all-greetings-title"
@@ -306,26 +307,26 @@ export const MessagesSection = ({
           closeAllGreetings();
         }}
       >
-        <div className={styles.allGreetingsDialogHeader}>
+        <div className={`${styles.allGreetingsDialogHeader} ${isPaperBirthday ? styles.paperAllGreetingsDialogHeader : ""}`.trim()}>
           <div>
             <h2 id="all-greetings-title">Все поздравления</h2>
             <p>{getRouteGreetingCountLabel(contributions.length)}</p>
           </div>
-          <button type="button" className={styles.dialogCloseButton} onClick={closeAllGreetings} aria-label="Закрыть все поздравления">
+          <button type="button" className={`${styles.dialogCloseButton} ${isPaperBirthday ? styles.paperDialogCloseButton : ""}`.trim()} onClick={closeAllGreetings} aria-label="Закрыть все поздравления">
             <span aria-hidden="true">×</span>
           </button>
         </div>
         <div className={styles.allGreetingsList}>
-          {contributions.map((item, index) => renderMessageCard(item, index, Number.POSITIVE_INFINITY, false, true, false))}
+          {contributions.map((item, index) => renderMessageCard(item, index, Number.POSITIVE_INFINITY, isPaperBirthday, isRouteAdventure, false))}
         </div>
       </dialog>
   ) : null;
 
-  const routeMobileShowAllButton = isRouteAdventure && contributions.length > routeVisibleCount ? (
+  const routeMobileShowAllButton = supportsGreetingsDialog && contributions.length > routeVisibleCount ? (
     <button
       type="button"
       ref={routeMobileShowAllButtonRef}
-      className={styles.showAllRouteButton}
+      className={`${styles.showAllRouteButton} ${isPaperBirthday ? styles.paperShowAllButton : ""}`.trim()}
       onClick={() => {
         dialogTriggerRef.current = "mobile";
         setIsAllGreetingsOpen(true);
@@ -335,7 +336,7 @@ export const MessagesSection = ({
     </button>
   ) : null;
 
-  const loadMoreButton = !isRouteAdventure && hasMore ? (
+  const loadMoreButton = !supportsGreetingsDialog && hasMore ? (
     <div className={styles.loadMoreWrap}>
       <button type="button" className={styles.loadMoreButton} onClick={handleLoadMore}>
         {remaining >= LOAD_MORE_STEP
@@ -352,7 +353,7 @@ export const MessagesSection = ({
     return (
       <div
         className={`${finalCardStyles.messageSplitFixed} ${
-          isRouteAdventure && messageMediaLayout === "portrait" ? finalCardStyles.messageSplitPortrait : ""
+          supportsGreetingsDialog && messageMediaLayout === "portrait" ? finalCardStyles.messageSplitPortrait : ""
         }`.trim()}
       >
         <div className={finalCardStyles.messageColumnScroller}>
@@ -365,7 +366,7 @@ export const MessagesSection = ({
                 isPaperBirthday,
                 isRouteAdventure,
                 !isRouteAdventure && index >= visibleCount,
-                isRouteAdventure && index >= routeVisibleCount
+                supportsGreetingsDialog && index >= routeVisibleCount
               )
             )}
           </div>
@@ -396,7 +397,7 @@ export const MessagesSection = ({
             isPaperBirthday,
             isRouteAdventure,
             !isRouteAdventure && index >= visibleCount,
-            isRouteAdventure && index >= routeVisibleCount
+            supportsGreetingsDialog && index >= routeVisibleCount
           )
         )}
       </div>
