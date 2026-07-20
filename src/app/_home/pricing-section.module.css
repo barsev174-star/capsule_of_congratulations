@@ -14,14 +14,14 @@
   max-width: 660px;
   margin: 0 auto 40px;
   text-align: center;
-  color: #b94f2b;
+  color: #705c50;
   font-size: 1rem;
   line-height: 1.55;
 }
 
 .title {
   margin: 0;
-  color: #d95a2e;
+  color: #4a332a;
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(2.15rem, 4vw, 3.15rem);
   line-height: 1.04;
@@ -46,7 +46,7 @@
 }
 
 .totalPrice span {
-  color: #c55b36;
+  color: #8c6758;
   font-size: 0.88rem;
 }
 
@@ -67,20 +67,20 @@
   padding: clamp(24px, 4vw, 34px);
   border-radius: 28px;
   background: rgba(255, 252, 248, 0.88);
-  box-shadow: 0 16px 36px rgba(217, 90, 46, 0.1), inset 0 0 0 1px rgba(217, 90, 46, 0.14);
+  box-shadow: 0 16px 36px rgba(92, 62, 46, 0.08), inset 0 0 0 1px rgba(107, 73, 54, 0.08);
   transition: transform 700ms var(--motion-ease-out), opacity 700ms var(--motion-ease-out);
 }
 
 .card h3 {
   margin: 0;
-  color: #d95a2e;
+  color: #4a332a;
   font-size: 1.2rem;
 }
 
 .cardTop p {
   max-width: 490px;
   margin: 7px 0 0;
-  color: #b94f2b;
+  color: #705c50;
   font-size: 0.92rem;
   line-height: 1.45;
   text-wrap: pretty;
@@ -113,7 +113,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  color: #b6502d;
+  color: #654d40;
   font-size: 0.95rem;
   line-height: 1.4;
 }
@@ -126,7 +126,7 @@
 
 .list li::before {
   content: "✓";
-  color: #c75b33;
+  color: #d95a2e;
   font-weight: 900;
 }
 
@@ -136,7 +136,7 @@
   flex: 0 0 auto;
   align-self: flex-start;
   text-align: right;
-  color: #b64c29;
+  color: #d95a2e;
   opacity: 0;
   transform: scale(0.94);
   transition: opacity 500ms var(--motion-ease-out) 300ms, transform 500ms var(--motion-ease-out) 300ms;
@@ -161,7 +161,7 @@
 
 .note {
   margin: 0;
-  color: #c55b36;
+  color: #8c6758;
   font-size: 0.84rem;
 }
 
@@ -194,7 +194,7 @@
 
 .action p {
   margin: 0;
-  color: #c55b36;
+  color: #8c6758;
   font-size: 0.88rem;
   text-wrap: pretty;
 }
@@ -219,9 +219,9 @@
   width: 62px;
   height: 54px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #f2b18d 0%, #e98555 100%);
+  background: linear-gradient(135deg, #e9c8b6 0%, #dab6a4 100%);
   box-shadow:
-    0 10px 26px rgba(217, 90, 46, 0.2),
+    0 10px 26px rgba(191, 108, 71, 0.18),
     inset 0 2px 0 rgba(255, 255, 255, 0.25);
   margin: 14px auto 0;
 }
@@ -263,7 +263,7 @@
   height: 20px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 2px 6px rgba(217, 90, 46, 0.12);
+  box-shadow: 0 2px 6px rgba(191, 108, 71, 0.1);
 }
 
 .giftBow span:first-child {

@@ -56,7 +56,7 @@ export function PricingSection() {
             Собрать открытку можно бесплатно
           </h2>
           <p>Оплата нужна только для финальной подготовки и передачи открытки получателю.</p>
-          <p className={styles.totalPrice}><strong>Финальная открытка — 399 ₽ единоразово</strong><span>Без подписки и регулярных платежей</span></p>
+          <p className={styles.totalPrice}><strong>Финальная подготовка и передача открытки — 399 ₽ единоразово</strong><span>Без подписки и регулярных платежей</span></p>
         </div>
         <div className={styles.grid}>
           <article className={`${styles.card} js-motion-card ${styles.freeCard}`}>

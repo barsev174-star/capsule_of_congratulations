@@ -56,6 +56,12 @@
   transform: scaleY(1);
 }
 
+@media (max-width: 767px) {
+  .line {
+    height: calc(100% - 192px);
+  }
+}
+
 .step {
   position: relative;
   display: grid;
