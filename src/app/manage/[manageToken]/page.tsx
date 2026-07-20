@@ -22,7 +22,12 @@ import { CopyLinkButton } from "./copy-link-button";
 import { TemplateSummary } from "./template-summary";
 import styles from "./manage-page.module.css";
 import { getAiCardInsight, getAiUsageSummary } from "@/lib/ai/repository";
-import { buildContributionFingerprint } from "@/lib/ai/card-insights";
+import {
+  BEST_QUOTE_COUNT,
+  BEST_QUOTE_MIN_CONTRIBUTION_COUNT,
+  buildContributionFingerprint,
+  isValidBestQuoteText
+} from "@/lib/ai/card-insights";
 import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository";
 import { getCardLifecycleLabel, isGiftAccessible } from "@/lib/cards/lifecycle";
 import { closeCollectionAction, deliverCardAction, openCollectionAction } from "./actions";
@@ -69,7 +74,12 @@ export default async function ManagePage({ params, searchParams }: Props) {
     getAiCardInsight(card.id, "qualities"),
     getGiftPollForManage(card.id)
   ]);
-  const generatedQuotes = quotesInsight?.items.map((item) => item.text) ?? [];
+  const hasValidGeneratedQuotes = Boolean(
+    quotesInsight &&
+    quotesInsight.items.length === BEST_QUOTE_COUNT &&
+    quotesInsight.items.every((item) => isValidBestQuoteText(item.text))
+  );
+  const generatedQuotes = hasValidGeneratedQuotes ? quotesInsight!.items.map((item) => item.text) : [];
   const generatedQualities = qualitiesInsight?.items.map((item) => item.text) ?? [];
   const contributionFingerprint = buildContributionFingerprint(visibleContributions);
   const eligibleGiftPollVoterCount = new Set(
@@ -78,7 +88,10 @@ export default async function ManagePage({ params, searchParams }: Props) {
       .map((contribution) => contribution.participantTokenHash)
       .filter((token): token is string => Boolean(token))
   ).size;
-  const quotesAreStale = Boolean(quotesInsight && quotesInsight.sourceFingerprint !== contributionFingerprint);
+  const quotesAreStale = Boolean(
+    quotesInsight &&
+    (!hasValidGeneratedQuotes || quotesInsight.sourceFingerprint !== contributionFingerprint)
+  );
   const qualitiesAreStale = Boolean(qualitiesInsight && qualitiesInsight.sourceFingerprint !== contributionFingerprint);
   const aiContent = { quotes: generatedQuotes, qualities: generatedQualities };
   const model = buildFinalCardViewModel(card, visibleContributions, mediaAssets, aiContent);
@@ -265,7 +278,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   mainGreetingStatusText={mainGreetingStatusText}
                   initialBestQuotes={generatedQuotes}
                   bestQuotesAreStale={quotesAreStale}
-                  canGenerateBestQuotes={visibleContributions.length >= 2}
+                  canGenerateBestQuotes={visibleContributions.length >= BEST_QUOTE_MIN_CONTRIBUTION_COUNT}
+                  bestQuotesMinimumContributionCount={BEST_QUOTE_MIN_CONTRIBUTION_COUNT}
                   initialQualities={generatedQualities}
                   qualitiesAreStale={qualitiesAreStale}
                   canGenerateQualities={visibleContributions.length >= 2}

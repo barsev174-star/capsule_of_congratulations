@@ -10,6 +10,7 @@ import {
 import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository";
 import { isGiftAccessible } from "@/lib/cards/lifecycle";
 import { getAiCardInsight } from "@/lib/ai/repository";
+import { BEST_QUOTE_COUNT, isValidBestQuoteText } from "@/lib/ai/card-insights";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 
 export const metadata = {
@@ -41,7 +42,9 @@ export default async function PreviewPage({ params }: Props) {
   ]);
 
   const model = buildFinalCardViewModel(card, contributions, mediaAssets, {
-    quotes: quotesInsight?.items.map((item) => item.text),
+    quotes: quotesInsight?.items.length === BEST_QUOTE_COUNT && quotesInsight.items.every((item) => isValidBestQuoteText(item.text))
+      ? quotesInsight.items.map((item) => item.text)
+      : [],
     qualities: qualitiesInsight?.items.map((item) => item.text)
   });
 

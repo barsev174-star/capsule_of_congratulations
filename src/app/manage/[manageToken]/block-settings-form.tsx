@@ -44,6 +44,7 @@ type Props = {
   initialBestQuotes: string[];
   bestQuotesAreStale: boolean;
   canGenerateBestQuotes: boolean;
+  bestQuotesMinimumContributionCount: number;
   initialQualities: string[];
   qualitiesAreStale: boolean;
   canGenerateQualities: boolean;
@@ -517,6 +518,7 @@ export const BlockSettingsForm = ({
   initialBestQuotes,
   bestQuotesAreStale,
   canGenerateBestQuotes,
+  bestQuotesMinimumContributionCount,
   initialQualities,
   qualitiesAreStale,
   canGenerateQualities,
@@ -1037,7 +1039,7 @@ export const BlockSettingsForm = ({
                         </div>
 
                         {quotesAreStale ? (
-                          <p className={styles.aiInsightStale}>Поздравления изменились — фразы лучше обновить.</p>
+                          <p className={styles.aiInsightStale}>Фразы нужно обновить: поздравления изменились или старые варианты не соответствуют текущему лимиту.</p>
                         ) : null}
 
                         {bestQuotes.length > 0 ? (
@@ -1067,7 +1069,7 @@ export const BlockSettingsForm = ({
                                 : "Выбрать 3 фразы"}
                           </button>
                           {!canGenerateBestQuotes ? (
-                            <span>Нужно хотя бы два активных поздравления.</span>
+                            <span>Лучшие фразы появятся, когда соберётся минимум {bestQuotesMinimumContributionCount} поздравлений — так мы сможем выбрать действительно разные и тёплые строки.</span>
                           ) : null}
                           {quotesMessage ? (
                             <span className={quotesMessage.includes("готовы") ? styles.contentEditorSuccess : styles.contentEditorError}>

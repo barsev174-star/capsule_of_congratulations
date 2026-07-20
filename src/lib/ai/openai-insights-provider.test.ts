@@ -21,7 +21,7 @@ describe("OpenAI insights provider", () => {
     vi.unstubAllGlobals();
   });
 
-  it("requests exactly three grounded quotes with strict JSON schema", async () => {
+  it("requests six candidate quotes with strict JSON schema", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       model: "gpt-5-mini",
       choices: [{ message: { content: JSON.stringify({ quotes: [
@@ -37,7 +37,7 @@ describe("OpenAI insights provider", () => {
 
     expect(result.quotes).toHaveLength(3);
     expect(body.response_format.json_schema.strict).toBe(true);
-    expect(body.response_format.json_schema.schema.properties.quotes.minItems).toBe(3);
+    expect(body.response_format.json_schema.schema.properties.quotes.minItems).toBe(6);
   });
 
   it("requests exactly five grounded qualities", async () => {

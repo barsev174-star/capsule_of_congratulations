@@ -1,4 +1,5 @@
 import { isTemplateId } from "@/lib/cards/templates";
+import { BEST_QUOTE_COUNT, isValidBestQuoteText } from "@/lib/ai/card-insights";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type { CardDraft, CardMediaAsset, Contribution } from "@/lib/cards/types";
 import { buildFinalCardLayout } from "@/lib/final-card/planner";
@@ -84,11 +85,13 @@ const getGenderSuffix = (name: string) => {
   return femaleEndings.some((ending) => trimmed.endsWith(ending)) ? "ая" : "ой";
 };
 
-const extractQuotes = (contributions: Contribution[]) =>
-  contributions
+const extractQuotes = (contributions: Contribution[]) => {
+  const quotes = contributions
     .map((item) => item.message.split(/[.!?]/)[0]?.trim())
-    .filter((item): item is string => Boolean(item && item.length > 20))
-    .slice(0, 3);
+    .filter((item): item is string => Boolean(item && isValidBestQuoteText(item)));
+
+  return quotes.length >= BEST_QUOTE_COUNT ? quotes.slice(0, BEST_QUOTE_COUNT) : [];
+};
 
 const buildSummaryText = (card: CardDraft, contributions: Contribution[]) => {
   if (card.description) {
@@ -197,7 +200,11 @@ export const buildFinalCardViewModel = (
   const messageMediaLayout = card.finalMessageSettings?.mediaLayout ?? "portrait";
   const layoutProfile = getFinalCardMessageLayoutProfile(messageLayoutMode, messageMediaLayout);
   const qualities = aiContent.qualities?.length ? aiContent.qualities.slice(0, 5) : extractQualities(contributions);
-  const quotes = aiContent.quotes?.length ? aiContent.quotes.slice(0, 3) : extractQuotes(contributions);
+  const quotes = aiContent.quotes === undefined
+    ? extractQuotes(contributions)
+    : aiContent.quotes.length === BEST_QUOTE_COUNT && aiContent.quotes.every(isValidBestQuoteText)
+      ? aiContent.quotes
+      : [];
   const memories = buildMemories(contributions);
   const mainGreeting = resolveMainGreeting(card, contributions);
   const visibleMessageContributions = mainGreeting
@@ -207,7 +214,7 @@ export const buildFinalCardViewModel = (
     hasSummary: true,
     hasQualities: qualities.length > 0,
     hasMemories: true,
-    hasQuotes: quotes.length > 0,
+    hasQuotes: quotes.length === BEST_QUOTE_COUNT,
     hasAiSummary: false
   };
 

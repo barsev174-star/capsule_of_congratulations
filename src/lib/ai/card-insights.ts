@@ -4,6 +4,13 @@ import type { AiCardInsightItem } from "@/lib/ai/types";
 import { textSimilarity } from "@/lib/ai/response-validation";
 import { containsTechnicalText, countCharacters } from "@/lib/ai/validation";
 
+export const BEST_QUOTE_COUNT = 3;
+export const BEST_QUOTE_CANDIDATE_COUNT = 6;
+export const BEST_QUOTE_MIN_CONTRIBUTION_COUNT = 6;
+export const BEST_QUOTE_TARGET_MIN_LENGTH = 55;
+export const BEST_QUOTE_TARGET_MAX_LENGTH = 80;
+export const BEST_QUOTE_HARD_MAX_LENGTH = 100;
+
 export const buildContributionFingerprint = (contributions: Contribution[]) =>
   createHash("sha256")
     .update(
@@ -12,6 +19,25 @@ export const buildContributionFingerprint = (contributions: Contribution[]) =>
         .join("\n")
     )
     .digest("hex");
+
+export const normalizeBestQuote = (value: string) =>
+  value
+    .replace(/\s+/g, " ")
+    .replace(/^["«„“]+|["»“”]+$/g, "")
+    .trim();
+
+export const isValidBestQuoteText = (value: string) => {
+  const text = normalizeBestQuote(value);
+  const sentenceCount = (text.match(/[.!?]+/g) ?? []).length;
+
+  return (
+    countCharacters(text) >= 18 &&
+    countCharacters(text) <= BEST_QUOTE_HARD_MAX_LENGTH &&
+    !text.includes("...") &&
+    !text.includes("…") &&
+    sentenceCount <= 2
+  );
+};
 
 export const validateBestQuoteCandidates = (
   value: unknown,
@@ -23,33 +49,33 @@ export const validateBestQuoteCandidates = (
       ? (value as { quotes: unknown[] }).quotes
       : null;
 
-  if (!rawItems || rawItems.length !== 3) return null;
+  if (!rawItems || rawItems.length < BEST_QUOTE_COUNT) return null;
   const sourceById = new Map(contributions.map((item) => [item.id, item.message]));
   const items: AiCardInsightItem[] = [];
 
   for (const item of rawItems) {
-    if (!item || typeof item !== "object") return null;
+    if (!item || typeof item !== "object") continue;
     const raw = item as Record<string, unknown>;
-    const text = typeof raw.text === "string" ? raw.text.replace(/\s+/g, " ").trim() : "";
+    const text = typeof raw.text === "string" ? normalizeBestQuote(raw.text) : "";
     const sourceContributionId = typeof raw.sourceContributionId === "string" ? raw.sourceContributionId : "";
     const source = sourceById.get(sourceContributionId);
 
     if (
       !source ||
-      countCharacters(text) < 18 ||
-      countCharacters(text) > 120 ||
+      !isValidBestQuoteText(text) ||
       containsTechnicalText(text) ||
       /поздравл|с\s+дн[её]м\s+рожд/iu.test(text)
     ) {
-      return null;
+      continue;
     }
-    if (textSimilarity(text, source) < 0.16) return null;
-    if (items.some((existing) => textSimilarity(existing.text, text) >= 0.82)) return null;
+    if (textSimilarity(text, source) < 0.16) continue;
+    if (items.some((existing) => textSimilarity(existing.text, text) >= 0.82)) continue;
 
     items.push({ text, sourceContributionId });
+    if (items.length === BEST_QUOTE_COUNT) return items;
   }
 
-  return items;
+  return null;
 };
 
 export const buildMockBestQuotes = (
@@ -60,7 +86,7 @@ export const buildMockBestQuotes = (
   const candidates = contributions.flatMap((contribution) => contribution.message
     .split(/(?<=[.!?])\s+/u)
     .map((sentence) => sentence.replace(/\s+/g, " ").trim())
-    .filter((sentence) => sentence.length >= 18)
+    .filter((sentence) => isValidBestQuoteText(sentence))
     .filter((sentence) => !/поздравл|с\s+дн[её]м\s+рожд|^(?:пусть|жела)/iu.test(sentence))
     .map((sentence) => ({
       sourceContributionId: contribution.id,
@@ -68,18 +94,16 @@ export const buildMockBestQuotes = (
         .replace(/^[А-ЯЁ][А-ЯЁа-яё-]+(?:\s+[А-ЯЁ][А-ЯЁа-яё-]+){0,2},\s*/u, "")
         .trim(),
       score: (/спасибо|благодаря|ценим|важн|дет|помог|забот|тянутся|рассказывает/iu.test(sentence) ? 20 : 0)
-        + Math.min(sentence.length, 120)
+        + Math.min(sentence.length, BEST_QUOTE_HARD_MAX_LENGTH)
     })))
-    .filter((candidate) => candidate.text.length >= 18)
+    .filter((candidate) => isValidBestQuoteText(candidate.text))
     .sort((left, right) => right.score - left.score);
 
   for (const candidate of candidates) {
-    const text = candidate.text.length <= 120
-      ? candidate.text
-      : `${candidate.text.slice(0, 119).replace(/\s+\S*$/, "").replace(/[,:;\s]+$/, "")}…`;
+    const text = candidate.text;
     if (items.some((item) => textSimilarity(item.text, text) >= 0.82)) continue;
     items.push({ text, sourceContributionId: candidate.sourceContributionId });
-    if (items.length === 3) break;
+    if (items.length === BEST_QUOTE_COUNT) break;
   }
 
   return items;

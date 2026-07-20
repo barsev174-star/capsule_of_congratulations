@@ -1,5 +1,13 @@
 # Журнал поставки
 
+## Update 2026-07-20 Best Phrases Guardrails And Paper Cleanup
+
+1. The `Best phrases` block is available only after at least six greetings are collected. The manager explains this requirement without showing a partial set of cards.
+2. The AI now proposes six candidates and the application publishes exactly three validated phrases. Each phrase targets 55–80 characters, never exceeds 100 characters, and cannot contain an ellipsis or be cut programmatically.
+3. Existing quotes that do not meet the current validation rules are withheld until the manager regenerates a complete valid set of three.
+4. The pink and beige watercolor-stain assets are disabled for the Paper Classic template on every viewport.
+5. Checks: focused Vitest suite, ESLint, and production build passed.
+
 ## Update 2026-07-20 Paper Classic Desktop Greeting Polaroids
 
 1. Для шаблона «Бумажный классический» закреплена отдельная desktop-композиция фотографий в блоке «Поздравления»; mobile-вёрстка не наследует эти правила.

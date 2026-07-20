@@ -414,7 +414,7 @@ export const scrapbookFloatingAssets: ScrapbookFloatingAsset[] = [
     rotate: -8,
     opacity: 0.32,
     zIndex: 1,
-    visible: true,
+    visible: false,
     hideOnMobile: true
   },
   {
@@ -430,7 +430,7 @@ export const scrapbookFloatingAssets: ScrapbookFloatingAsset[] = [
     rotate: 12,
     opacity: 0.32,
     zIndex: 1,
-    visible: true,
+    visible: false,
     hideOnMobile: true
   },
   {

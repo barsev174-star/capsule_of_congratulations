@@ -33,6 +33,7 @@ let localTemplateGenerationSequence = 0;
 import { generateLadderWithOpenAi, OPENAI_LADDER_PROMPT_VERSION } from "@/lib/ai/openai-ladder-provider";
 import { extractDraftSpecifics } from "@/lib/ai/greeting-specifics";
 import {
+  BEST_QUOTE_MIN_CONTRIBUTION_COUNT,
   buildContributionFingerprint,
   buildMockBestQuotes,
   buildMockQualities,
@@ -936,7 +937,7 @@ export const generateBestQuotes = async (input: {
   occasionText: string;
   contributions: Array<import("@/lib/cards/types").Contribution>;
 }): Promise<AiBestQuotesResult> => {
-  if (input.contributions.length < 2) {
+  if (input.contributions.length < BEST_QUOTE_MIN_CONTRIBUTION_COUNT) {
     throw new AiError("VALIDATION", "Для выбора лучших фраз нужно хотя бы два поздравления.");
   }
 

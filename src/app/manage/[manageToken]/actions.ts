@@ -30,6 +30,7 @@ import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository"
 import { assertCardContentEditable } from "@/lib/cards/lifecycle";
 import { validateContributionFormData, validateContributionMessage } from "@/lib/contributions/validation";
 import { generateBestQuotes, generateQualities } from "@/lib/ai/service";
+import { BEST_QUOTE_MIN_CONTRIBUTION_COUNT } from "@/lib/ai/card-insights";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type {
   FinalCardBlockId,
@@ -1015,12 +1016,30 @@ export async function generateBestQuotesAction(
   }
 
   const contributions = await listContributionsByCardId(card.id);
-  const result = await generateBestQuotes({
-    cardId: card.id,
-    recipientName: card.recipientName,
-    occasionText: card.occasionText,
-    contributions
-  });
+  if (contributions.length < BEST_QUOTE_MIN_CONTRIBUTION_COUNT) {
+    return {
+      ok: false,
+      message: `Лучшие фразы появятся, когда соберётся минимум ${BEST_QUOTE_MIN_CONTRIBUTION_COUNT} поздравлений — так мы сможем выбрать действительно разные и тёплые строки.`,
+      quotes: [],
+      usage: { used: 0, limit: 0, remaining: 0 }
+    };
+  }
+  let result: Awaited<ReturnType<typeof generateBestQuotes>>;
+  try {
+    result = await generateBestQuotes({
+      cardId: card.id,
+      recipientName: card.recipientName,
+      occasionText: card.occasionText,
+      contributions
+    });
+  } catch {
+    return {
+      ok: false,
+      message: "Пока не удалось подобрать три короткие самостоятельные фразы. Попробуйте после добавления новых поздравлений.",
+      quotes: [],
+      usage: { used: 0, limit: 0, remaining: 0 }
+    };
+  }
 
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 

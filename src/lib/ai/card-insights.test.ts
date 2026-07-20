@@ -1,7 +1,9 @@
 import {
+  BEST_QUOTE_HARD_MAX_LENGTH,
   buildContributionFingerprint,
   buildMockBestQuotes,
   buildMockQualities,
+  isValidBestQuoteText,
   validateBestQuoteCandidates,
   validateQualityCandidates
 } from "@/lib/ai/card-insights";
@@ -59,6 +61,11 @@ describe("AI card insights", () => {
     expect(result).toHaveLength(3);
   });
 
+  it("rejects ellipses and phrases longer than the hard limit", () => {
+    expect(isValidBestQuoteText("A complete phrase that ends with an ellipsis…")).toBe(false);
+    expect(isValidBestQuoteText("x".repeat(BEST_QUOTE_HARD_MAX_LENGTH + 1))).toBe(false);
+  });
+
   it("rejects a quote attributed to an unknown source", () => {
     const result = validateBestQuoteCandidates(
       contributions.map((item, index) => ({
@@ -95,7 +102,7 @@ describe("AI card insights", () => {
 
     expect(quotes).toHaveLength(3);
     expect(quotes.every((quote) => !/поздравл|с\s+дн[её]м\s+рожд/iu.test(quote.text))).toBe(true);
-    expect(quotes.every((quote) => quote.text.length <= 120)).toBe(true);
+    expect(quotes.every((quote) => quote.text.length <= BEST_QUOTE_HARD_MAX_LENGTH)).toBe(true);
     expect(quotes.map((quote) => quote.text).join(" ")).toContain("дети тянутся");
   });
 
