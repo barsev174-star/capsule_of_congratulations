@@ -7374,3 +7374,182 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
   height: var(--fc-column-stack-height);
   align-content: start;
 }
+/* Paper greeting photos: one stable polaroid geometry for both two- and
+   three-photo selections.  The image is clipped to the transparent window of
+   the artwork, while the caption has its own fixed lower field. */
+.paper-birthday .messageSplitFixed .mediaRailPair,
+.paper-birthday .messageSplitFixed .mediaRailTrio {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 18px !important;
+}
+
+.paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"],
+.paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] {
+  position: relative !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 4 / 3 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  transform: none !important;
+}
+
+.paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] > .componentAssetContent,
+.paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] > .componentAssetContent {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaImage,
+.paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaImage {
+  position: absolute !important;
+  top: 11.5% !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: 11.7% !important;
+  z-index: 1 !important;
+  display: block !important;
+  width: 76.6% !important;
+  height: 62.7% !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+.paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaCaption,
+.paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaCaption {
+  position: absolute !important;
+  right: 13% !important;
+  bottom: 6.5% !important;
+  left: 13% !important;
+  z-index: 3 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 11% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  line-height: 1.15 !important;
+  text-align: center !important;
+  text-wrap: pretty;
+}
+
+.paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .componentAssetOverlayLayer,
+.paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .componentAssetOverlayLayer {
+  inset: 0 !important;
+  z-index: 2 !important;
+}
+
+/* A full-width desktop rail made the stacked polaroids feel oversized.  Keep
+   the same 4:3 paper for every selection, but give it a deliberate, centered
+   desktop size so two and three photos share the exact same geometry. */
+@media (min-width: 900px) {
+  .paper-birthday .messageSplitFixed .mediaRailPair,
+  .paper-birthday .messageSplitFixed .mediaRailTrio {
+    justify-items: center !important;
+    gap: 14px !important;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"],
+  .paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] {
+    width: min(100%, 360px) !important;
+    max-width: 360px !important;
+  }
+}
+
+/* The two-photo mobile composition needs its handwriting optically closer to
+   the image.  The three-photo version intentionally keeps its current field. */
+@media (max-width: 899px) {
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaCaption {
+    bottom: 8.25% !important;
+  }
+}
+
+/* Desktop Paper follows the Route polaroid rhythm: the pictures use most of
+   their rail, alternate a subtle physical tilt, and keep the printed caption
+   field untouched.  Mobile deliberately retains its flat, contained stack. */
+@media (min-width: 900px) {
+  .paper-birthday .messageSplitFixed .mediaRailPair,
+  .paper-birthday .messageSplitFixed .mediaRailTrio {
+    gap: 10px !important;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"],
+  .paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] {
+    width: min(72.5%, 347px) !important;
+    max-width: 347px !important;
+  }
+
+  /* Size the picture window separately from the paper: the paper contracts
+     while the photo grows slightly and remains centred above the caption. */
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaImage,
+  .paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaImage {
+    top: 5% !important;
+    left: 4.1% !important;
+    width: 91.8% !important;
+    height: 75% !important;
+  }
+
+  /* Two lines of handwriting need a real lower polaroid field instead of
+     being clipped at the frame edge. */
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaCaption,
+  .paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaCaption {
+    bottom: 2.5% !important;
+    height: 17% !important;
+    line-height: 1.1 !important;
+  }
+
+  /* Keep the two-photo composition balanced instead of pinning its cards to
+     the opposite ends of the rail. */
+  .paper-birthday .messageSplitFixed .mediaRailPair {
+    align-content: start !important;
+    gap: 30px !important;
+    padding-top: 72px;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] {
+    width: min(90%, 418px) !important;
+    max-width: 418px !important;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaImage {
+    top: 5% !important;
+    left: 3.5% !important;
+    width: 91% !important;
+    height: 73.5% !important;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame:nth-child(1),
+  .paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame:nth-child(1) {
+    z-index: 3;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame:nth-child(2),
+  .paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame:nth-child(2) {
+    z-index: 2;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame:nth-child(3) {
+    z-index: 1;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame.mediaFrameTiltLeft,
+  .paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame.mediaFrameTiltLeft {
+    transform: rotate(-2.2deg) !important;
+  }
+
+  .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame.mediaFrameTiltRight,
+  .paper-birthday .messageSplitFixed .mediaRailTrio > .componentAssetFrame.mediaFrameTiltRight {
+    transform: rotate(2deg) !important;
+  }
+}
