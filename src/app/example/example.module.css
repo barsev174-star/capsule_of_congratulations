@@ -16,6 +16,7 @@
   --ex-radius-sm: 14px;
 
   min-height: 100vh;
+  overflow-x: clip;
   color: var(--ex-text);
   background:
     radial-gradient(circle at 72% 8%, rgba(255, 222, 196, 0.45), transparent 30%),
@@ -1165,3 +1166,279 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================================
+   Scroll-animations (docs/plankimi.md)
+   Elements are armed via [data-reveal] by useScrollReveal/ScrollReveal;
+   without JS everything stays visible.
+   ============================================================ */
+
+/* Hero collage: gentle float after the reveal (7s cycle). */
+.heroAssetWrap {
+  animation: heroFloat 7s ease-in-out 1.2s infinite alternate;
+}
+
+@keyframes heroFloat {
+  from { transform: scale(1.2) translateY(0); }
+  to { transform: scale(1.2) translateY(-4px); }
+}
+
+/* Template grid: reveal wrappers keep cards equal height. */
+.templateGrid > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.templateGrid > div > .templateCard {
+  flex: 1;
+}
+
+/* Template card hover: lift + stronger shadow + slight thumb zoom (240ms). */
+.templateCardSelectable {
+  transition:
+    transform 240ms var(--motion-ease-out, ease),
+    box-shadow 240ms ease,
+    border-color 240ms ease;
+}
+
+.templateCardSelectable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 46px rgba(93, 63, 33, 0.18);
+}
+
+.templateThumbImage {
+  transition: transform 240ms var(--motion-ease-out, ease);
+}
+
+.templateCardSelectable:hover .templateThumbImage {
+  transform: scale(1.015);
+}
+
+/* "Выбрано" badge pops in with scale-in. */
+.badgeTemplateSelected {
+  animation: badgePop 240ms var(--motion-ease-out, ease);
+}
+
+@keyframes badgePop {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Block header cascade: number (scale-in) slightly before title/description. */
+.blockHeaderText {
+  min-width: 0;
+}
+
+.block[data-reveal]:not([data-reveal-visible="true"]) .blockNumber,
+.block[data-reveal]:not([data-reveal-visible="true"]) .blockHeaderText {
+  opacity: 0;
+}
+
+.block[data-reveal-visible="true"] .blockNumber {
+  animation: blockNumberIn 420ms var(--motion-ease-out, ease) 120ms backwards;
+}
+
+.block[data-reveal-visible="true"] .blockHeaderText {
+  animation: blockHeaderIn 480ms var(--motion-ease-out, ease) 200ms backwards;
+}
+
+@keyframes blockNumberIn {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes blockHeaderIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Envelope mini-demo: one short peek when the block enters the viewport. */
+.animationAssetWrap[data-reveal-visible="true"] .animationAsset {
+  animation: envelopePeek 1050ms var(--motion-ease-soft, ease) 550ms 1 backwards;
+}
+
+@keyframes envelopePeek {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-11px); }
+  55% { transform: translateY(-11px); }
+  100% { transform: translateY(0); }
+}
+
+/* Scheme arrow fades in once (no blinking). */
+.animationScene[data-reveal]:not([data-reveal-visible="true"]) .animationSceneArrow {
+  opacity: 0;
+}
+
+.animationScene[data-reveal-visible="true"] .animationSceneArrow {
+  animation: arrowFade 480ms var(--motion-ease-out, ease) 450ms backwards;
+}
+
+@keyframes arrowFade {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 0.75; transform: none; }
+}
+
+/* Recipient-view collage: slide-left + slight scale, then subtle parallax. */
+.previewVisual[data-reveal] {
+  transform: translateX(-42px) scale(0.97);
+}
+
+.previewVisual[data-reveal-visible="true"] {
+  transform: translateY(var(--parallax-back, 0px));
+}
+
+.previewAsset {
+  transform: translateY(var(--parallax-front, 0px)) scale(1.03);
+}
+
+/* Feature list checkmarks pop in after each row. */
+.previewFeatures[data-reveal-visible="true"] li > span {
+  animation: checkPop 240ms var(--motion-ease-out, ease) backwards;
+}
+
+.previewFeatures[data-reveal-visible="true"] li:nth-child(1) > span { animation-delay: 340ms; }
+.previewFeatures[data-reveal-visible="true"] li:nth-child(2) > span { animation-delay: 410ms; }
+.previewFeatures[data-reveal-visible="true"] li:nth-child(3) > span { animation-delay: 480ms; }
+.previewFeatures[data-reveal-visible="true"] li:nth-child(4) > span { animation-delay: 550ms; }
+
+@keyframes checkPop {
+  from { transform: scale(0.4); }
+  to { transform: scale(1); }
+}
+
+/* Bottom CTA: fade-up + scale-in (0.975 → 1), icon first, one-shot button lift. */
+.bottomCta[data-reveal] {
+  transform: translateY(20px) scale(0.975);
+}
+
+.bottomCta[data-reveal]:not([data-reveal-visible="true"]) .bottomCtaDecor,
+.bottomCta[data-reveal]:not([data-reveal-visible="true"]) .bottomCtaText,
+.bottomCta[data-reveal]:not([data-reveal-visible="true"]) .primaryButton {
+  opacity: 0;
+}
+
+.bottomCta[data-reveal-visible="true"] .bottomCtaDecor {
+  animation: ctaItemIn 480ms var(--motion-ease-out, ease) 150ms backwards;
+}
+
+.bottomCta[data-reveal-visible="true"] .bottomCtaText {
+  animation: ctaItemIn 480ms var(--motion-ease-out, ease) 250ms backwards;
+}
+
+.bottomCta[data-reveal-visible="true"] .primaryButton {
+  animation:
+    ctaItemIn 480ms var(--motion-ease-out, ease) 350ms backwards,
+    ctaLift 500ms var(--motion-ease-out, ease) 1100ms backwards;
+}
+
+@keyframes ctaItemIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes ctaLift {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(-2px); }
+}
+
+/* Scroll-progress indicator (desktop only). */
+.stepIndicator {
+  position: fixed;
+  left: max(8px, calc(50% - 660px));
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-left: 4px;
+  z-index: 30;
+}
+
+.stepIndicator::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--ex-line-strong);
+}
+
+.stepIndicatorItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ex-text-soft);
+  font: inherit;
+  cursor: pointer;
+}
+
+.stepIndicatorDot {
+  position: relative;
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #d8c5b4;
+  box-shadow: 0 0 0 3px var(--ex-bg-light);
+  transition: transform 200ms var(--motion-ease-out, ease), background 200ms ease;
+}
+
+.stepIndicatorItemActive .stepIndicatorDot {
+  background: var(--ex-accent);
+  transform: scale(1.3);
+}
+
+.stepIndicatorLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .stepIndicator {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Recipient-view collage falls back to fade-up on mobile. */
+  .previewVisual[data-reveal] {
+    transform: translateY(28px);
+  }
+
+  /* Must come after the rule above: revealed collage settles. */
+  .previewVisual[data-reveal-visible="true"] {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroAssetWrap {
+    animation: none;
+  }
+
+  .badgeTemplateSelected {
+    animation: none;
+  }
+
+  .templateCardSelectable,
+  .templateThumbImage {
+    transition-duration: 120ms;
+  }
+
+  .previewAsset,
+  .previewVisual[data-reveal-visible="true"] {
+    transform: none;
+  }
+}
+

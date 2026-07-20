@@ -28,8 +28,8 @@ export function HeroSection() {
                 Создать открытку
               </button>
             </form>
-            <Link href="#templates" className={styles.secondaryAction}>
-              Посмотреть примеры
+            <Link href="/example" className={styles.secondaryAction}>
+              Посмотреть, как это выглядит
             </Link>
           </div>
 

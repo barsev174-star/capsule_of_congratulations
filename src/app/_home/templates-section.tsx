@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { getCardTemplates } from "@/lib/cards/templates-server";
 import { getTemplateAsset } from "./landing-assets";
 import styles from "./templates-section.module.css";
@@ -57,6 +58,11 @@ export async function TemplatesSection() {
               <h3 className={styles.cardTitle}>{template.name}</h3>
               <p className={styles.cardText}>{index === 0 ? "Тёплая бумажная открытка с мягкими деталями и атмосферой личного подарка." : "Новый стиль появится позже."}</p>
               <span className={index === 0 ? styles.availableBadge : styles.comingSoonBadge}>{index === 0 ? "Доступен" : "Скоро"}</span>
+              {index === 0 && (template.id === "paper-birthday" || template.id === "route-adventure") ? (
+                <Link className={styles.demoLink} href={`/example?template=${template.id}`}>
+                  Открыть интерактивный пример
+                </Link>
+              ) : null}
             </article>
           ))}
         </div>

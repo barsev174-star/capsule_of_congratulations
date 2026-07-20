@@ -15,14 +15,20 @@ export const clientEvents = [
   "funnel.participant_link_copied",
   "funnel.participant_form_opened",
   "gift_first_opened",
-  "client.unhandled_error"
+  "client.unhandled_error",
+  "demo_page_view",
+  "demo_template_selected",
+  "demo_animation_started",
+  "demo_card_opened",
+  "demo_create_clicked",
+  "demo_scroll_step_viewed"
 ] as const;
 
 export type ClientTelemetryEvent = (typeof clientEvents)[number];
 export type CriticalArea = "ai" | "database" | "email" | "media" | "publication" | "client";
 
 const clientEventSet = new Set<string>(clientEvents);
-const allowedClientContextKeys = new Set(["cardId", "source", "route", "component"]);
+const allowedClientContextKeys = new Set(["cardId", "source", "route", "component", "step", "template"]);
 
 export const parseClientTelemetry = (input: unknown): { event: ClientTelemetryEvent; context: LogContext } | null => {
   if (!input || typeof input !== "object") return null;

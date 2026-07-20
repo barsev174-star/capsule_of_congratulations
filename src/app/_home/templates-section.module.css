@@ -236,6 +236,24 @@
 }
 
 .availableBadge { background: rgba(64, 128, 77, .12); color: #397647; }
+
+.demoLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin: 10px 10px 0;
+  color: var(--accent-strong);
+  font-size: .82rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.demoLink::after { content: "→"; }
+.demoLink:hover { color: var(--accent); border-bottom-color: currentColor; }
+
 .comingSoon { opacity: .58; }
 .comingSoon:hover { transform: none; box-shadow: var(--shadow-soft); border-color: var(--line); }
 .comingSoonBadge { background: rgba(112, 92, 80, .1); color: #765f53; }

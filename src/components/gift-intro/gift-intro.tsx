@@ -20,6 +20,7 @@ type GiftIntroProps = {
   closedEnvelopeImage?: string;
   openEnvelopeImage?: string;
   forceIntro?: boolean;
+  onIntroDone?: () => void;
   children: React.ReactNode;
 };
 
@@ -50,6 +51,7 @@ export const GiftIntro = ({
   closedEnvelopeImage = "/assets/gift/envelope-closed.png",
   openEnvelopeImage = "/assets/gift/envelope-open.png",
   forceIntro = false,
+  onIntroDone,
   children
 }: GiftIntroProps) => {
   const getOpenedSnapshot = useCallback(() => {
@@ -67,7 +69,12 @@ export const GiftIntro = ({
   const [isFinalCardRevealed, setIsFinalCardRevealed] = useState(false);
   const [isHoveringCta, setIsHoveringCta] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const onIntroDoneRef = useRef(onIntroDone);
   const shouldSkipIntro = alreadyOpened && state === "idle" && !forceIntro;
+
+  useEffect(() => {
+    onIntroDoneRef.current = onIntroDone;
+  }, [onIntroDone]);
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach(clearTimeout);
@@ -111,6 +118,7 @@ export const GiftIntro = ({
     schedule(() => {
       saveOpenedFlag();
       setState("done");
+      onIntroDoneRef.current?.();
     }, INTRO_DURATION);
   }, [state, saveOpenedFlag, clearTimers, schedule]);
 
@@ -119,6 +127,7 @@ export const GiftIntro = ({
     saveOpenedFlag();
 
     setState("done");
+    onIntroDoneRef.current?.();
   }, [clearTimers, saveOpenedFlag]);
 
   const handleReplay = useCallback(() => {
