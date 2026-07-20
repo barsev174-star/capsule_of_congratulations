@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { startCardFromShowcaseAction } from "../home-actions";
@@ -12,6 +15,24 @@ const navItems = [
 ];
 
 export function HomeHeader() {
+  const mobileMenuRef = useRef<HTMLDetailsElement>(null);
+
+  const closeMobileMenu = () => {
+    if (mobileMenuRef.current) mobileMenuRef.current.open = false;
+  };
+
+  useEffect(() => {
+    const closeOnOutsidePointerDown = (event: PointerEvent) => {
+      const mobileMenu = mobileMenuRef.current;
+      if (mobileMenu?.open && event.target instanceof Node && !mobileMenu.contains(event.target)) {
+        mobileMenu.open = false;
+      }
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsidePointerDown);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointerDown);
+  }, []);
+
   return (
     <header className={styles.header}>
       <div className={styles.shell}>
@@ -27,10 +48,10 @@ export function HomeHeader() {
           ))}
         </nav>
 
-        <details className={styles.mobileMenu}>
+        <details ref={mobileMenuRef} className={styles.mobileMenu}>
           <summary aria-label="Открыть меню"><span /><span /><span /></summary>
           <nav aria-label="Мобильная навигация" className={styles.mobileNav}>
-            {navItems.map((item) => <a key={item.href} href={item.href}>{item.label}</a>)}
+            {navItems.map((item) => <a key={item.href} href={item.href} onClick={closeMobileMenu}>{item.label}</a>)}
           </nav>
         </details>
 

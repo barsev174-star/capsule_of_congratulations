@@ -14,14 +14,14 @@
   max-width: 660px;
   margin: 0 auto 40px;
   text-align: center;
-  color: #705c50;
+  color: #b94f2b;
   font-size: 1rem;
   line-height: 1.55;
 }
 
 .title {
   margin: 0;
-  color: #4a332a;
+  color: #d95a2e;
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(2.15rem, 4vw, 3.15rem);
   line-height: 1.04;
@@ -36,7 +36,7 @@
   display: grid;
   gap: 4px;
   margin-top: 8px !important;
-  color: #8c4b32;
+  color: #d95a2e;
 }
 
 .totalPrice strong {
@@ -46,7 +46,7 @@
 }
 
 .totalPrice span {
-  color: #8c6758;
+  color: #c55b36;
   font-size: 0.88rem;
 }
 
@@ -67,20 +67,20 @@
   padding: clamp(24px, 4vw, 34px);
   border-radius: 28px;
   background: rgba(255, 252, 248, 0.88);
-  box-shadow: 0 16px 36px rgba(92, 62, 46, 0.08), inset 0 0 0 1px rgba(107, 73, 54, 0.08);
+  box-shadow: 0 16px 36px rgba(217, 90, 46, 0.1), inset 0 0 0 1px rgba(217, 90, 46, 0.14);
   transition: transform 700ms var(--motion-ease-out), opacity 700ms var(--motion-ease-out);
 }
 
 .card h3 {
   margin: 0;
-  color: #4a332a;
+  color: #d95a2e;
   font-size: 1.2rem;
 }
 
 .cardTop p {
   max-width: 490px;
   margin: 7px 0 0;
-  color: #705c50;
+  color: #b94f2b;
   font-size: 0.92rem;
   line-height: 1.45;
   text-wrap: pretty;
@@ -113,7 +113,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  color: #654d40;
+  color: #b6502d;
   font-size: 0.95rem;
   line-height: 1.4;
 }
@@ -161,7 +161,7 @@
 
 .note {
   margin: 0;
-  color: #8c6758;
+  color: #c55b36;
   font-size: 0.84rem;
 }
 
@@ -180,7 +180,7 @@
   padding: 13px 22px;
   border: 0;
   border-radius: 14px;
-  background: var(--accent);
+  background: linear-gradient(180deg, #ef7240 0%, #df5f2e 100%);
   color: white;
   cursor: pointer;
   font: inherit;
@@ -188,13 +188,13 @@
   transition: background-color 180ms ease, transform 180ms ease;
 }
 
-.action button:hover { background: #c95630; }
+.action button:hover { background: linear-gradient(180deg, #ec6b37 0%, #d95a2a 100%); }
 .action button:active { transform: scale(0.96); }
 .action button:focus-visible { outline: 3px solid rgba(199, 91, 51, 0.35); outline-offset: 3px; }
 
 .action p {
   margin: 0;
-  color: #8c6758;
+  color: #c55b36;
   font-size: 0.88rem;
   text-wrap: pretty;
 }
@@ -219,9 +219,9 @@
   width: 62px;
   height: 54px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #e9c8b6 0%, #dab6a4 100%);
+  background: linear-gradient(135deg, #f2b18d 0%, #e98555 100%);
   box-shadow:
-    0 10px 26px rgba(191, 108, 71, 0.18),
+    0 10px 26px rgba(217, 90, 46, 0.2),
     inset 0 2px 0 rgba(255, 255, 255, 0.25);
   margin: 14px auto 0;
 }
@@ -263,7 +263,7 @@
   height: 20px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 2px 6px rgba(191, 108, 71, 0.1);
+  box-shadow: 0 2px 6px rgba(217, 90, 46, 0.12);
 }
 
 .giftBow span:first-child {
