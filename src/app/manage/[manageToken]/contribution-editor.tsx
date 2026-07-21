@@ -20,9 +20,9 @@ const initialState = {
 
 type AiEditTask = "improve" | "shorten";
 
-const variantLabels: Record<AiEditTask, string[]> = {
-  improve: ["Бережно", "Теплее", "Яснее"],
-  shorten: ["Бережно", "Короче", "Самое короткое"]
+const variantLabels: Record<AiEditTask, Record<AiVariant["id"], string>> = {
+  improve: { short: "Бережно", warm: "Теплее", style: "Яснее" },
+  shorten: { short: "Бережно", warm: "Короче", style: "Самое короткое" }
 };
 
 export const ContributionEditor = ({ cardId, contributionId, manageToken, initialMessage, messageLimit }: Props) => {
@@ -159,7 +159,7 @@ export const ContributionEditor = ({ cardId, contributionId, manageToken, initia
                 className={`${styles.contentAiVariantTab} ${index === activeVariantIndex ? styles.contentAiVariantTabActive : ""}`}
                 onClick={() => setActiveVariantIndex(index)}
               >
-                {variantLabels[aiTask][index]}
+                {variantLabels[aiTask][variant.id]}
               </button>
             ))}
           </div>
