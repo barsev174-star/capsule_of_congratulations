@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
 import { buildRobokassaCheckoutUrl, createRobokassaRefundJwt, formatRobokassaAmount, verifyRobokassaResult } from "./robokassa";
 
 const config = { merchantLogin: "shop", password1: "p1", password2: "p2", isTest: true, hashAlgorithm: "md5" as const };
@@ -22,6 +23,13 @@ describe("Robokassa checkout", () => {
     expect(url.searchParams.get("OutSum")).toBe("399.00");
     expect(url.searchParams.get("IsTest")).toBe("1");
     expect(url.searchParams.get("Receipt")).toBe(encodeURIComponent("{}"));
+    expect(url.searchParams.get("SuccessUrl2")).toBe(encodeURIComponent("https://slovesto.ru/pay/success"));
+    expect(url.searchParams.get("FailUrl2")).toBe(encodeURIComponent("https://slovesto.ru/pay/fail"));
+    expect(url.searchParams.get("SignatureValue")).toBe(createHash("md5").update([
+      "shop", "399.00", "123", encodeURIComponent("{}"),
+      encodeURIComponent("https://slovesto.ru/pay/success"), "GET",
+      encodeURIComponent("https://slovesto.ru/pay/fail"), "GET", "p1", "Shp_order=order-1"
+    ].join(":"), "utf8").digest("hex"));
     expect(url.searchParams.get("Shp_order")).toBe("order-1");
   });
 
