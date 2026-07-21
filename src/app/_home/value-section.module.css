@@ -41,19 +41,35 @@
   min-width: 0;
 }
 
+/* Мягкие подписи с тонким подчёркиванием */
 .panelLabel {
-  margin: 0 0 12px;
-  text-align: center;
+  position: relative;
+  width: fit-content;
+  margin: 0 auto 14px;
+  padding-bottom: 6px;
   color: var(--muted);
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.95rem;
+  font-style: italic;
+  text-align: center;
+}
+
+.panelLabel::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-soft), transparent);
 }
 
 /* Чат */
 .chat {
+  position: relative;
   display: grid;
-  gap: 10px;
+  gap: 9px;
   padding: 20px 18px 16px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.66);
@@ -69,8 +85,8 @@
 
 .msg:nth-child(1) { transform: rotate(-1.1deg); }
 .msg:nth-child(2) { transform: rotate(0.8deg); }
-.msg:nth-child(3) { transform: rotate(-0.7deg); }
-.msg:nth-child(4) { transform: rotate(1.2deg); }
+.msg:nth-child(3) { transform: rotate(-0.7deg); margin-top: -4px; }
+.msg:nth-child(4) { transform: rotate(1.2deg); margin-top: -2px; }
 
 .msgRight {
   justify-self: end;
@@ -105,13 +121,32 @@
   border-color: var(--accent-soft);
 }
 
-.msgFile {
-  color: var(--muted);
+.msgPhoto .msgBubble {
+  padding: 5px;
 }
 
-.msgFile svg {
-  color: var(--accent);
-  flex-shrink: 0;
+.msgImage {
+  display: block;
+  width: 172px;
+  height: auto;
+  border-radius: 10px;
+}
+
+/* «Новое» сообщение, мягко появляющееся в цикле */
+.msgGhost {
+  position: absolute;
+  right: 14px;
+  bottom: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.msgGhost .msgBubble {
+  border-radius: 14px 14px 4px 14px;
+  background: var(--surface-strong);
 }
 
 .chatMore {
@@ -144,7 +179,7 @@
   stroke-dashoffset: 0;
 }
 
-/* Собранная открытка */
+/* Собранная мини-открытка */
 .result {
   display: grid;
   gap: 14px;
@@ -155,69 +190,56 @@
   box-shadow: var(--shadow-card);
 }
 
-.resultPreview {
+.resultCollage {
+  position: relative;
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 18px;
+  align-items: center;
+  min-height: 150px;
 }
 
-.resultCardMini {
-  display: grid;
-  gap: 7px;
-  width: 108px;
-  padding: 14px 12px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #fffaf5 0%, #f8eee6 100%);
-  border: 1px solid var(--line);
-  box-shadow: 0 10px 24px rgba(191, 108, 71, 0.12);
-  transform: rotate(-3deg);
+.resultCollage :global(img) {
+  height: auto;
+  border: 3px solid #fffaf5;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(72, 49, 37, 0.16);
+  object-fit: cover;
 }
 
-.resultHeart {
-  color: var(--accent);
-  font-size: 1rem;
-  line-height: 1;
+.collageMain {
+  width: 56%;
+  transform: rotate(-2.5deg);
 }
 
-.resultStroke,
-.resultStrokeShort {
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(191, 108, 71, 0.16);
+.collageSmall {
+  width: 26%;
+  margin-left: -8%;
+  transform: rotate(5deg) translateY(10px);
 }
 
-.resultStrokeShort {
-  width: 64%;
-}
-
-.resultPhotos {
-  display: flex;
-}
-
-.resultPhotos span {
-  width: 44px;
-  height: 52px;
-  border-radius: 8px;
-  border: 2px solid #fffaf5;
-  box-shadow: 0 6px 14px rgba(72, 49, 37, 0.12);
-}
-
-.resultPhotos span:nth-child(1) {
-  background: linear-gradient(135deg, #f3d8cc 0%, #e4c2b0 100%);
+.collageTiny {
+  position: absolute;
+  left: 6%;
+  bottom: -6px;
+  width: 24%;
   transform: rotate(-7deg);
 }
 
-.resultPhotos span:nth-child(2) {
-  background: linear-gradient(135deg, #e4c2b0 0%, #d6b29c 100%);
-  margin-left: -14px;
-  transform: rotate(2deg) translateY(-3px);
+.resultGreeting {
+  margin: 0;
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.5;
+  text-align: center;
 }
 
-.resultPhotos span:nth-child(3) {
-  background: linear-gradient(135deg, #f8eee6 0%, #f3d8cc 100%);
-  margin-left: -14px;
-  transform: rotate(8deg);
+.resultHeart {
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--accent);
+  font-style: normal;
 }
 
 .resultStats {
@@ -273,22 +295,47 @@
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  padding: 16px 18px;
+  height: 100%;
+  padding: 18px;
   border-radius: 18px;
   background: var(--surface-strong);
   border: 1px solid var(--line);
+  transition: transform 220ms var(--motion-ease-out), box-shadow 220ms var(--motion-ease-out), background-color 220ms var(--motion-ease-out);
+}
+
+@media (min-width: 1024px) {
+  .advantage:hover {
+    transform: translateY(-3px);
+    background: var(--accent-light);
+    box-shadow: var(--shadow-card);
+  }
 }
 
 .advantageIcon {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 13px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   background: var(--accent-light);
   color: var(--accent);
   flex-shrink: 0;
+}
+
+.advantage:hover .advantageIcon {
+  background: var(--surface-strong);
+}
+
+.advantageDecor {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  color: var(--accent);
+  font-size: 0.8rem;
+  opacity: 0.75;
+  transform: rotate(12deg);
 }
 
 .advantageTitle {
@@ -304,7 +351,7 @@
   line-height: 1.5;
 }
 
-/* ---------- Анимация преобразования (один раз при появлении) ---------- */
+/* ---------- Анимация появления (один раз) ---------- */
 
 .section[data-motion-ready] .msg,
 .section[data-motion-ready] .chatMore {
@@ -352,6 +399,47 @@
   transform: translateY(0) scale(1);
 }
 
+/* ---------- Спокойный цикл «живого чата» (только desktop) ---------- */
+
+@keyframes msgDrift {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 3px -2px; }
+}
+
+@keyframes photoTilt {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(1.6deg); }
+}
+
+@keyframes ghostCycle {
+  0%, 18% { opacity: 0; transform: translateY(6px); }
+  30%, 62% { opacity: 1; transform: translateY(0); }
+  76%, 100% { opacity: 0; transform: translateY(-4px); }
+}
+
+@keyframes flowPulse {
+  0%, 100% { stroke-dashoffset: 0; opacity: 1; }
+  50% { stroke-dashoffset: 0.12; opacity: 0.75; }
+}
+
+@media (min-width: 1024px) {
+  .section[data-motion-visible="true"] .msg:nth-child(2) {
+    animation: msgDrift 7s ease-in-out 1.8s infinite;
+  }
+
+  .section[data-motion-visible="true"] .msgPhoto .msgImage {
+    animation: photoTilt 7s ease-in-out 2.2s infinite;
+  }
+
+  .section[data-motion-visible="true"] .msgGhost {
+    animation: ghostCycle 7s ease-in-out 2s infinite;
+  }
+
+  .section[data-motion-visible="true"] .flowPath {
+    animation: flowPulse 7s ease-in-out 2.4s infinite;
+  }
+}
+
 /* ---------- Адаптив ---------- */
 
 @media (min-width: 768px) {
@@ -378,5 +466,22 @@
 
   .advantages {
     margin-top: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section[data-motion-visible="true"] .msg:nth-child(2),
+  .section[data-motion-visible="true"] .msgPhoto .msgImage,
+  .section[data-motion-visible="true"] .msgGhost,
+  .section[data-motion-visible="true"] .flowPath {
+    animation: none;
+  }
+
+  .msgGhost {
+    display: none;
+  }
+
+  .advantage:hover {
+    transform: none;
   }
 }
