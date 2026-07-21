@@ -114,12 +114,13 @@ export const buildRobokassaCheckoutUrl = (input: {
   failUrl: string;
 }) => {
   const outSum = formatRobokassaAmount(input.amount);
+  const receipt = encodeURIComponent(input.receipt);
   const custom = sortedCustomParameters(input.customParameters);
   const signatureValue = signature([
     input.config.merchantLogin,
     outSum,
     input.invoiceId,
-    encodeURIComponent(input.receipt),
+    receipt,
     input.config.password1,
     ...custom
   ], input.config.hashAlgorithm);
@@ -128,7 +129,7 @@ export const buildRobokassaCheckoutUrl = (input: {
     OutSum: outSum,
     InvId: input.invoiceId,
     Description: input.description,
-    Receipt: input.receipt,
+    Receipt: receipt,
     SignatureValue: signatureValue,
     SuccessUrl2: input.successUrl,
     SuccessUrl2Method: "GET",

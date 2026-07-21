@@ -21,6 +21,7 @@ describe("Robokassa checkout", () => {
     }));
     expect(url.searchParams.get("OutSum")).toBe("399.00");
     expect(url.searchParams.get("IsTest")).toBe("1");
+    expect(url.searchParams.get("Receipt")).toBe(encodeURIComponent("{}"));
     expect(url.searchParams.get("Shp_order")).toBe("order-1");
   });
 
