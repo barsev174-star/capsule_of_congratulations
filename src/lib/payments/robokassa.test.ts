@@ -46,6 +46,13 @@ describe("Robokassa checkout", () => {
       signatureValue: "a73c2117a8aed74ba8c3ac157f3250a2",
       customParameters: { Shp_order: "other" }
     }, config)).toBe(false);
+    const sha256Config = { ...config, hashAlgorithm: "sha256" as const };
+    expect(verifyRobokassaResult({
+      outSum: "399.000000",
+      invId: "123",
+      signatureValue: createHash("sha256").update("399.000000:123:p2:Shp_order=order-1", "utf8").digest("hex"),
+      customParameters: { Shp_order: "order-1" }
+    }, sha256Config)).toBe(true);
   });
 
   it("creates a compact HS256 refund JWT", () => {

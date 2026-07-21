@@ -153,7 +153,8 @@ export const buildRobokassaCheckoutUrl = (input: {
 };
 
 export const verifyRobokassaResult = (result: RobokassaResult, config: RobokassaConfig) => {
-  if (!/^\d+(?:\.\d+)?$/.test(result.outSum) || !/^\d+$/.test(result.invId) || !/^[a-fA-F0-9]{32}$/.test(result.signatureValue)) {
+  const signatureLength = config.hashAlgorithm === "md5" ? 32 : 64;
+  if (!/^\d+(?:\.\d+)?$/.test(result.outSum) || !/^\d+$/.test(result.invId) || !new RegExp(`^[a-fA-F0-9]{${signatureLength}}$`).test(result.signatureValue)) {
     return false;
   }
   const expected = signature([result.outSum, result.invId, config.password2, ...sortedCustomParameters(result.customParameters)], config.hashAlgorithm);
