@@ -32,7 +32,7 @@
 .stepsGrid {
   position: relative;
   display: grid;
-  gap: 20px;
+  gap: 14px;
 }
 
 .line {
@@ -48,7 +48,7 @@
   );
   transform: scaleY(0);
   transform-origin: top;
-  transition: transform 900ms var(--motion-ease-out);
+  transition: transform 700ms var(--motion-ease-out);
   z-index: 0;
 }
 
@@ -68,13 +68,31 @@
   grid-template-columns: 72px 1fr;
   gap: 16px;
   align-items: start;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 550ms var(--motion-ease-out), transform 550ms var(--motion-ease-out);
-  transition-delay: calc(var(--step-index, 0) * 220ms);
 }
 
-.section[data-motion-visible="true"] .step {
+.section[data-motion-ready] .node,
+.section[data-motion-ready] .number,
+.section[data-motion-ready] .card {
+  opacity: 0;
+  transform: translateY(var(--motion-distance, 14px));
+  transition:
+    opacity var(--motion-normal, 420ms) var(--motion-ease-out),
+    transform var(--motion-normal, 420ms) var(--motion-ease-out);
+}
+
+/* Сначала линия, затем круги с иконками, затем карточки */
+.section[data-motion-ready] .node,
+.section[data-motion-ready] .number {
+  transition-delay: calc(420ms + var(--step-index, 0) * 160ms);
+}
+
+.section[data-motion-ready] .card {
+  transition-delay: calc(560ms + var(--step-index, 0) * 160ms);
+}
+
+.section[data-motion-visible="true"] .node,
+.section[data-motion-visible="true"] .number,
+.section[data-motion-visible="true"] .card {
   opacity: 1;
   transform: translateY(0);
 }
@@ -193,7 +211,9 @@
   .line {
     transform: scaleX(1) scaleY(1) !important;
   }
-  .step {
+  .section[data-motion-ready] .node,
+  .section[data-motion-ready] .number,
+  .section[data-motion-ready] .card {
     opacity: 1;
     transform: none;
     transition: none;

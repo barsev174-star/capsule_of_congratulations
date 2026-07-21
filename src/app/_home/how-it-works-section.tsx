@@ -4,7 +4,7 @@ const steps = [
   {
     number: "01",
     title: "Создайте открытку",
-    text: "Укажите получателя, повод, поле «От кого» и оформление.",
+    text: "Укажите получателя, повод и выберите оформление.",
     illustration: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -18,7 +18,7 @@ const steps = [
   {
     number: "02",
     title: "Отправьте ссылку участникам",
-    text: "Каждый участник добавит поздравление или воспользуется ИИ-помощником. Организатор сможет дополнить открытку фотографиями.",
+    text: "Участники добавят поздравления, а организатор — фотографии.",
     illustration: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="18" cy="5" r="3" />
@@ -58,7 +58,7 @@ export function HowItWorksSection() {
           {steps.map((step, index) => (
             <div
               key={step.number}
-              className={`${styles.step} js-motion-card`}
+              className={styles.step}
               style={{ "--step-index": index } as React.CSSProperties}
             >
               <span className={styles.number}>{step.number}</span>
