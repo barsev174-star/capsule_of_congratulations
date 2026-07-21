@@ -306,12 +306,18 @@
 }
 
 .card:hover .demoLink::after {
-  transform: translateX(4px);
+  transform: translateX(3px);
 }
 
 .demoLink:hover {
   color: var(--accent);
   border-bottom-color: currentColor;
+}
+
+.demoLink:focus-visible {
+  outline: 3px solid rgba(191, 108, 71, 0.24);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 
 .comingSoon {
@@ -357,7 +363,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card:hover .assetImage {
+  .card:hover .assetImage,
+  .card:hover .demoLink::after {
     transform: none;
   }
 }

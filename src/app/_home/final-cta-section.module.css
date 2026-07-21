@@ -191,6 +191,49 @@
 .section[data-motion-visible="true"] .card form { transition-delay: 680ms; }
 .section[data-motion-visible="true"] .hint { transition-delay: 760ms; }
 
+@media (max-width: 640px) {
+  .card {
+    padding: 44px 22px;
+  }
+
+  .decorImage {
+    width: 148px;
+  }
+
+  .decorLeft {
+    left: -30px;
+    bottom: -42px;
+  }
+
+  .section[data-motion-visible="true"] .decorLeft {
+    opacity: 0.55;
+  }
+
+  .decorRight {
+    right: 12px;
+    top: 14px;
+    gap: 8px;
+  }
+
+  .section[data-motion-visible="true"] .decorRight {
+    opacity: 0.5;
+  }
+
+  .decorEnvelope {
+    width: 82px;
+    height: 56px;
+    font-size: 1.15rem;
+  }
+
+  .decorHeart {
+    font-size: 1.3rem;
+  }
+
+  .decorSparkle {
+    font-size: 1rem;
+  }
+}
+
 @media (min-width: 768px) {
   .decorImage {
     width: 300px;

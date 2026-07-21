@@ -24,6 +24,7 @@
 .groupToggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin: 0; padding: 0; border: 0; background: transparent; color: #48342b; font: inherit; font-size: .88rem; font-weight: 800; letter-spacing: .01em; text-align: left; cursor: default; pointer-events: none; }
 .groupChevron { display: none; color: #a8582f; font-size: 1rem; transition: transform 220ms var(--motion-ease-out, ease); }
 .groupBody { display: contents; }
+.groupInner { display: contents; }
 
 @media (max-width: 640px) {
   .group { gap: 0; border-top: 1px solid rgba(104, 74, 57, .16); }
@@ -32,6 +33,17 @@
   .groupToggle:focus-visible { outline: 3px solid rgba(191, 108, 71, .24); outline-offset: 3px; border-radius: 6px; }
   .groupChevron { display: inline-block; }
   .groupOpen .groupChevron { transform: rotate(180deg); }
-  .groupBody { display: none; }
-  .groupOpen .groupBody { display: grid; gap: 2px; padding: 4px 0 14px; }
+  /* Плавное раскрытие без скачка высоты */
+  .groupBody { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 280ms var(--motion-ease-out, ease); }
+  .groupOpen .groupBody { grid-template-rows: 1fr; }
+  .groupInner { display: grid; gap: 2px; min-height: 0; overflow: hidden; padding: 0; transition: padding 280ms var(--motion-ease-out, ease); }
+  .groupOpen .groupInner { padding: 4px 0 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .groupBody,
+  .groupInner,
+  .groupChevron {
+    transition: none;
+  }
 }

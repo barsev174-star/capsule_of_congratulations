@@ -6,13 +6,15 @@ import styles from "./footer.module.css";
 type FooterGroupProps = {
   title: string;
   children: ReactNode;
+  /** Контент, который остаётся видимым даже в свёрнутом состоянии (например, email). */
+  pinned?: ReactNode;
 };
 
 /**
  * На мобильном — компактная раскрывающаяся секция.
  * На desktop группа всегда развёрнута, кнопка неактивна (см. footer.module.css).
  */
-export function FooterGroup({ title, children }: FooterGroupProps) {
+export function FooterGroup({ title, children, pinned }: FooterGroupProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -28,7 +30,10 @@ export function FooterGroup({ title, children }: FooterGroupProps) {
           <span className={styles.groupChevron} aria-hidden="true">⌄</span>
         </button>
       </h2>
-      <div className={styles.groupBody}>{children}</div>
+      {pinned}
+      <div className={styles.groupBody}>
+        <div className={styles.groupInner}>{children}</div>
+      </div>
     </div>
   );
 }
