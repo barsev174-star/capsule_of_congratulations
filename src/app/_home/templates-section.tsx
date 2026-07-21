@@ -20,7 +20,7 @@ function TemplateMiniature({ templateId, accent }: { templateId: string; accent:
   if (imageSrc) {
     return (
       <div className={styles.assetPreview}>
-        <Image src={imageSrc} alt="" fill className={styles.assetImage} sizes="220px" />
+        <Image src={imageSrc} alt="" fill className={styles.assetImage} sizes="(max-width: 639px) 92vw, (max-width: 1023px) 45vw, 590px" />
       </div>
     );
   }
