@@ -85,4 +85,21 @@ describe("universal ladder prompt", () => {
     expect(prompt.user).toContain("Анна, желаю радости и прекрасных дней!");
     expect(prompt.user).toContain("нельзя копировать или близко повторять");
   });
+
+  it("keeps a concrete neighbor story while treating a humor request as a direction", () => {
+    const prompt = buildLadderPrompt({
+      recipientName: "Сосед",
+      occasionText: "С Днём соседа!",
+      relationshipContext: "сосед",
+      draftNotes: "Он опора подъезда, часто помогает и никогда не отказывает. Мне помог завести машину в мороз, за это спасибо. Нужен какой-то юмор добавить в конце.",
+      messageLimit: 280
+    });
+
+    expect(prompt.context.humorRequested).toBe(true);
+    expect(prompt.context.sanitizedDraft).toContain("завести машину в мороз");
+    expect(prompt.context.sanitizedDraft).not.toContain("юмор");
+    expect(prompt.user).toContain("Лёгкий юмор в конце: нужен только в expressive");
+    expect(prompt.user).toContain("Никогда не пиши слова «с юмором»");
+    expect(prompt.user).toContain("Сохраняй грамматическую роль каждого факта");
+  });
 });

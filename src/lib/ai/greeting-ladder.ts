@@ -24,6 +24,21 @@ const normalizeRecipientAddress = (value: string, recipientName: string, address
   return value.replace(new RegExp(escapeRegExp(recipientName), "giu"), address);
 };
 
+const humorDirection = /(?:нуж(?:ен|на|но|ны)?|хоч(?:у|ется)|добав(?:ь|ьте|ить))[^.!?]{0,80}юмор[^.!?]*/iu;
+
+const extractGenerationDirections = (draftNotes: string) => {
+  const sentences = draftNotes
+    .split(/(?<=[.!?])\s+/u)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  const humorRequested = sentences.some((sentence) => humorDirection.test(sentence));
+
+  return {
+    humorRequested,
+    factualDraft: sentences.filter((sentence) => !humorDirection.test(sentence)).join(" ")
+  };
+};
+
 const inferRecipientNumber = (recipientName: string): "singular" | "plural" =>
   /\s+и\s+|,|&/iu.test(recipientName) ? "plural" : "singular";
 
@@ -36,6 +51,8 @@ const inferAuthorNumber = (fromLabel: string): "singular" | "plural" | "unknown"
 };
 
 export const buildLadderContext = (input: LadderRawInput) => {
+  const directions = extractGenerationDirections(input.draftNotes);
+  const factualDraft = directions.factualDraft || input.draftNotes;
   const relationship = inferRelationshipContext(input);
   const recipientNumber = inferRecipientNumber(input.recipientName);
   const authorNumber = inferAuthorNumber(input.fromLabel ?? "");
@@ -44,13 +61,13 @@ export const buildLadderContext = (input: LadderRawInput) => {
     ? input.recipientName.trim()
     : inferAddressName(input.recipientName, relationship.relationshipType).addressName;
   const occasion = inferOccasionContext(input);
-  const specifics = extractDraftSpecifics(input.draftNotes);
-  const draftFacts = input.draftNotes
+  const specifics = extractDraftSpecifics(factualDraft);
+  const draftFacts = factualDraft
     .split(/(?<=[.!?])\s+/u)
     .map((sentence) => sentence.trim())
     .filter((sentence) => sentence.length >= 12 && !/^(?:хочу|нужно|пусть|желаю|пожелать)/iu.test(sentence));
   const sanitizedDraft = normalizeRecipientAddress(
-    prepareDraftForPrompt(input.draftNotes, occasion.safeWishSummary),
+    prepareDraftForPrompt(factualDraft, occasion.safeWishSummary),
     input.recipientName,
     address
   );
@@ -64,6 +81,7 @@ export const buildLadderContext = (input: LadderRawInput) => {
     occasionCategory: occasion.occasionCategory,
     safeWishSummary: occasion.safeWishSummary,
     safeWishOptions: occasion.safeWishOptions,
+    humorRequested: directions.humorRequested,
     sanitizedDraft,
     draftFacts: draftFacts.map((fact) => normalizeRecipientAddress(fact, input.recipientName, address)),
     specifics
@@ -117,6 +135,7 @@ export const buildLadderPrompt = (input: LadderRawInput) => {
 - Безопасная выжимка пожелания: ${context.safeWishSummary}
 - Допустимые направления: ${context.safeWishOptions.join("; ")}
 - Явные факты из черновика: ${context.draftFacts.join("; ") || "нет"}
+- Лёгкий юмор в конце: ${context.humorRequested ? "нужен только в expressive; обыграй один конкретный факт" : "не добавляй без отдельной просьбы"}
 - ${authorVoice(context.authorNumber)}
 
 Уже добавленные поздравления, которые нельзя копировать или близко повторять:
@@ -124,11 +143,11 @@ ${existingMessages}
 
 Целевые лимиты с запасом: safe — до ${generationLimits.safe}; warm — до ${generationLimits.warm}; expressive — до ${generationLimits.expressive} символов.
 
-Правила: используй обращение «${context.address}». ${pronouns} Не вставляй подпись открытки. Не копируй черновик дословно. Не выдумывай пол автора. Не используй канцелярит и HR-язык. Не превращай пожелания в длинный список. В одном варианте используй не больше одного-двух направлений; пожелание можно опустить, если личного смысла достаточно. Три варианта должны заметно отличаться по степени свободы.
+Правила: используй обращение «${context.address}». ${pronouns} Не вставляй подпись открытки. Не копируй черновик дословно. Не выдумывай пол автора. Не используй канцелярит и HR-язык. Не превращай пожелания в длинный список. В одном варианте используй не больше одного-двух направлений; пожелание можно опустить, если личного смысла достаточно. Три варианта должны заметно отличаться по степени свободы. Сохраняй грамматическую роль каждого факта: поступок остаётся поступком, качество — качеством, а образ — естественным именным сравнением, а не искусственным действием. Каждое предложение должно иметь ясного исполнителя и естественное сказуемое. Во всех трёх вариантах сохрани хотя бы один конкретный личный факт из черновика; не заменяй его общими словами. ${context.humorRequested ? "В expressive закончи одной короткой доброй шуткой, связанной с конкретным фактом из черновика. Никогда не пиши слова «с юмором», «шутка» или пояснение, что это юмор." : ""}
 
 Перед JSON молча проверь: каждый текст естественно звучит по-русски; грамматические связи корректны; факты не усилены; safe самый простой, warm теплее, expressive живее, но не заметно длиннее остальных. Если фраза тяжёлая, перепиши проще.
 
-Верни safe/«Аккуратно», warm/«Теплее», expressive/«Живее».`
+Верни только JSON. В поле text не добавляй названия вариантов, их типы, Markdown или пояснения.`
   };
 };
 

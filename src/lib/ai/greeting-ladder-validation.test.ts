@@ -88,4 +88,33 @@ describe("ladder validation", () => {
     expect(variant.text).toBe("Ирина Олеговна, спасибо за вашу заботу о детях.");
     expect(ensureLadderVariantAddress(variant, "Ирина Олеговна")).toEqual(variant);
   });
+
+  it("rejects leaked variant labels", () => {
+    const result = validateLadderVariants([
+      { ...good[0], text: "Аккуратно — Анна, с выпускным!" },
+      good[1],
+      good[2]
+    ], input, buildLadderContext(input), limits);
+
+    expect(result.issues.map((issue) => issue.code)).toContain("VARIANT_LABEL_LEAK");
+  });
+
+  it("does not mistake the recipient role in a signature for a leaked signature", () => {
+    const neighborInput = {
+      recipientName: "Сосед",
+      occasionText: "С днём соседа!",
+      fromLabel: "Алексей — сосед из 15",
+      relationshipContext: "сосед",
+      draftNotes: "Спасибо за помощь с машиной в мороз.",
+      messageLimit: 280
+    } satisfies LadderRawInput;
+    const context = buildLadderContext(neighborInput);
+    const result = validateLadderVariants([
+      { type: "safe", label: "Аккуратно", text: "Сосед, спасибо за помощь с машиной в мороз." },
+      { type: "warm", label: "Теплее", text: "Сосед, спасибо, что всегда готовы прийти на помощь." },
+      { type: "expressive", label: "Живее", text: "Сосед, пусть машина заводится с первого раза." }
+    ], neighborInput, context, { safe: 200, warm: 230, expressive: 260 });
+
+    expect(result.issues.map((issue) => issue.code)).not.toContain("FROM_LABEL_LEAK");
+  });
 });

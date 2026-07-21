@@ -38,6 +38,18 @@ const scenarios: Record<string, {
     detailPattern: /внимательн|утренник|занима\p{L}*\s+с\s+детьми|дет\p{L}*\s+(?:е[её]|вас)\s+(?:слушают|любят)/iu,
     forbiddenSignature: /Ларис\p{L}*\s+Ф[её]доровн/iu
   },
+  neighbor: {
+    input: {
+      recipientName: "Сосед",
+      occasionText: "С днём соседа!",
+      fromLabel: "Алексей — сосед из 15",
+      relationshipContext: "сосед",
+      draftNotes: "Поздравляем соседа из 12 квартиры, он опора подъезда, часто помогает, никогда не отказывает. Мне машину помог в мороз запустить, за это ему спасибо. Стальных нервов ему, и здоровья, это же счастье главное. Нужен какой-то юмор добавить в конце.",
+      messageLimit: 280
+    },
+    detailPattern: /машин|мороз|подъезд/iu,
+    forbiddenSignature: /Алексей|из\s+15/iu
+  },
   wedding: {
     input: {
       recipientName: "Анна и Дмитрий",
@@ -65,10 +77,9 @@ const schemaFor = (requestedTypes: readonly string[]) => ({
         additionalProperties: false,
         properties: {
           type: { type: "string", enum: requestedTypes },
-          label: { type: "string" },
           text: { type: "string" }
         },
-        required: ["type", "label", "text"]
+        required: ["type", "text"]
       }
     }
   },
@@ -112,7 +123,8 @@ const requestLevels = async (args: {
     usage: payload.usage,
     latencyMs,
     raw,
-    variants: (JSON.parse(raw) as { variants: LadderVariant[] }).variants
+    variants: (JSON.parse(raw) as { variants: Array<Pick<LadderVariant, "type" | "text">> }).variants
+      .map((variant) => ({ ...variant, label: variant.type }))
   };
 };
 

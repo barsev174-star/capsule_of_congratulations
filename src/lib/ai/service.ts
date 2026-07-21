@@ -28,9 +28,11 @@ import { inferAddressName, inferOccasionContext, normalizeOccasionForSentence } 
 import { cleanupGreetingText } from "@/lib/ai/greeting-cleanup";
 import { buildLadderPrompt, buildLadderRetryPrompt } from "@/lib/ai/greeting-ladder";
 import { ensureLadderVariantAddress, fitLadderVariantToLimit, validateLadderVariants } from "@/lib/ai/greeting-ladder-validation";
+import { buildTwoStepComposePrompt, buildTwoStepPlanPrompt } from "@/lib/ai/greeting-two-step";
 
 let localTemplateGenerationSequence = 0;
 import { generateLadderWithOpenAi, OPENAI_LADDER_PROMPT_VERSION } from "@/lib/ai/openai-ladder-provider";
+import { generateGreetingContentPlanWithOpenAi, generateTwoStepVariantsWithOpenAi } from "@/lib/ai/openai-two-step-provider";
 import { extractDraftSpecifics } from "@/lib/ai/greeting-specifics";
 import {
   BEST_QUOTE_MIN_CONTRIBUTION_COUNT,
@@ -484,8 +486,14 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
   const providerName = getProviderName(process.env.AI_GREETING_PROVIDER ?? process.env.AI_PROVIDER);
   const matrixRequested = process.env.AI_GREETING_MODE === "matrix";
   const ladderRequested = process.env.AI_GREETING_MODE === "ladder";
-  const supportsSpecialMode = providerName === "openai" && (input.mode ?? "compose") === "compose";
-  const greetingMode = ladderRequested && supportsSpecialMode
+  const twoStepRequested = process.env.AI_GREETING_EXPERIMENT === "two_step";
+  // The editor's "Улучшить с AI" uses the same source text and needs the
+  // same semantic safeguards as a newly composed participant message.
+  // Shortening remains a separate, length-focused workflow.
+  const supportsSpecialMode = providerName === "openai" && (input.mode ?? "compose") !== "shorten";
+  const greetingMode = twoStepRequested && supportsSpecialMode
+    ? "two_step"
+    : ladderRequested && supportsSpecialMode
     ? "ladder"
     : matrixRequested && supportsSpecialMode
       ? "matrix"
@@ -493,10 +501,10 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
   const matrixPromptVersion = greetingMode === "matrix" ? getOpenAiMatrixPromptVersion() : undefined;
   const universalMatrix = matrixPromptVersion === OPENAI_MATRIX_PROMPT_VERSION || matrixPromptVersion === OPENAI_MATRIX_PROMPT_V3;
   const cleanupMatrix = matrixPromptVersion === OPENAI_MATRIX_PROMPT_VERSION;
-  if (process.env.NODE_ENV !== "production" && (matrixRequested || ladderRequested) && greetingMode === "classic") {
+  if (process.env.NODE_ENV !== "production" && (matrixRequested || ladderRequested || twoStepRequested) && greetingMode === "classic") {
     logger.warn("ai.special_mode_classic_fallback", "Selected greeting mode requires OpenAI compose generation; using classic", {
       provider: providerName,
-      requestedMode: process.env.AI_GREETING_MODE,
+      requestedMode: twoStepRequested ? "two_step" : process.env.AI_GREETING_MODE,
       mode: input.mode ?? "compose"
     });
   }
@@ -603,6 +611,61 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
           initial: initial.usage,
           retry: retryUsage,
           totalTokens: (initial.usage?.totalTokens ?? 0) + (retryUsage?.totalTokens ?? 0)
+        },
+        remainingCardGenerations: reservation.usage.remaining
+      });
+      return { generationId, variants, usage: reservation.usage, messageLimit: input.messageLimit };
+    }
+
+    if (greetingMode === "two_step") {
+      const twoStepInput = {
+        recipientName: input.recipientName,
+        occasionText: input.occasionText,
+        fromLabel: input.fromLabel,
+        relationshipContext: input.relationshipContext,
+        draftNotes: input.draftNotes,
+        messageLimit: input.messageLimit,
+        existingMessages
+      };
+      const planPrompt = buildTwoStepPlanPrompt(twoStepInput);
+      const planResult = await generateGreetingContentPlanWithOpenAi(planPrompt);
+      const composePrompt = buildTwoStepComposePrompt(twoStepInput, planResult.plan);
+      const composeResult = await generateTwoStepVariantsWithOpenAi(composePrompt);
+      const finalVariants = composeResult.variants.map((variant) => fitLadderVariantToLimit(
+        ensureLadderVariantAddress(variant, composePrompt.context.address),
+        composePrompt.limits[variant.type]
+      ));
+      const validation = validateLadderVariants(finalVariants, twoStepInput, composePrompt.context, composePrompt.limits);
+      if (validation.issues.length > 0) {
+        throw new AiError("AI_VALIDATION_FAILED", "Two-step greeting quality validation failed.");
+      }
+
+      variants = finalVariants.map((variant) => ({
+        id: variant.type === "safe" ? "short" : variant.type === "warm" ? "warm" : "style",
+        label: variant.label,
+        text: variant.text
+      }));
+      providerResult = { variants, model: composeResult.model };
+      await completeAiGeneration({
+        id: generationId,
+        cardId: input.cardId,
+        generationInput: { ...input, existingMessages },
+        variants,
+        provider: providerName,
+        model: providerResult.model
+      });
+      logger.info("ai.participant_generated", "Participant two-step AI draft generated", {
+        cardId: input.cardId,
+        provider: providerName,
+        model: providerResult.model,
+        greetingMode,
+        promptVersion: "greeting-openai-two-step-v1",
+        selectedVariants: variants.map((variant) => variant.id),
+        validationPassed: true,
+        tokenUsage: {
+          plan: planResult.usage,
+          compose: composeResult.usage,
+          totalTokens: (planResult.usage?.totalTokens ?? 0) + (composeResult.usage?.totalTokens ?? 0)
         },
         remainingCardGenerations: reservation.usage.remaining
       });

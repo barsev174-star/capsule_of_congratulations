@@ -2,7 +2,7 @@ import type { LadderVariant, LadderVariantType } from "@/lib/ai/greeting-ladder-
 import { AiError } from "@/lib/ai/types";
 import { logger } from "@/lib/logger";
 
-export const OPENAI_LADDER_PROMPT_VERSION = "greeting-openai-ladder-v1";
+export const OPENAI_LADDER_PROMPT_VERSION = "greeting-openai-ladder-v2";
 
 const labels: Record<LadderVariantType, string> = {
   safe: "Аккуратно",

@@ -7,7 +7,7 @@ const normalize = (value: string) => value
 const detailRules = [
   { id: "period", source: /всю\s+(?:учеб|жизн|дорог)\p{L}*|много\s+лет|кажд\p{L}*\s+раз|в\s+трудн\p{L}*\s+момент/iu },
   { id: "author-impact", source: /без\s+(?:нее|него|тебя|вас)[^.!?]{0,70}(?:оценк|сложн|хуже|труднее)|мне\s+было\s+легче|очень\s+помог|это\s+многое\s+значил/iu },
-  { id: "help-action", source: /приходил\p{L}*\s+на\s+помощь|помогал\p{L}*|выручал\p{L}*|поддерживал\p{L}*/iu },
+  { id: "help-action", source: /приходил\p{L}*\s+на\s+помощь|помог\p{L}*|выручал\p{L}*|поддерживал\p{L}*/iu },
   { id: "explain-action", source: /объяснял\p{L}*/iu },
   { id: "punctual", source: /пунктуальн\p{L}*/iu },
   { id: "reliable", source: /надежн\p{L}*|надёжн\p{L}*/iu },
@@ -68,7 +68,7 @@ export const extractDraftSpecifics = (draftNotes: string): DraftSpecifics => {
 const outputMatchers: Record<DraftSpecificDetail, RegExp> = {
   period: /всю\s+(?:учеб|жизн|дорог)\p{L}*|много\s+лет|кажд\p{L}*\s+раз|в\s+трудн\p{L}*\s+момент/iu,
   "author-impact": /без\s+(?:нее|него|тебя|вас|твоей|вашей)[^.!?]{0,75}(?:оценк|сложн|хуже|труднее)|оценк\p{L}*[^.!?]{0,35}скромнее|учит\p{L}*\s+было\s+(?:легче|сложнее)|это\s+(?:правда\s+)?многое\s+значил/iu,
-  "help-action": /приходил\p{L}*\s+на\s+помощь|помогал\p{L}*|помощ|выручал\p{L}*|поддерживал\p{L}*|поддержк/iu,
+  "help-action": /приходил\p{L}*\s+на\s+помощь|помог\p{L}*|помощ|выручал\p{L}*|поддерживал\p{L}*|поддержк/iu,
   "explain-action": /объяснял\p{L}*/iu,
   punctual: /пунктуальн\p{L}*|всегда\s+вовремя/iu,
   reliable: /надежн\p{L}*|надёжн\p{L}*|можно\s+положиться/iu,

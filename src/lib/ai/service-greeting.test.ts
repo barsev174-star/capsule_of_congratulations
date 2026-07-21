@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   generateWithOpenAi: vi.fn(),
   generateMatrixWithOpenAi: vi.fn(),
   generateLadderWithOpenAi: vi.fn(),
+  generateGreetingContentPlanWithOpenAi: vi.fn(),
+  generateTwoStepVariantsWithOpenAi: vi.fn(),
   generateBestQuotesWithOpenAi: vi.fn(),
   generateQualitiesWithOpenAi: vi.fn(),
   completeAiGeneration: vi.fn(),
@@ -31,6 +33,11 @@ vi.mock("@/lib/ai/openai-provider", () => ({
 vi.mock("@/lib/ai/openai-ladder-provider", () => ({
   generateLadderWithOpenAi: mocks.generateLadderWithOpenAi,
   OPENAI_LADDER_PROMPT_VERSION: "greeting-openai-ladder-v1"
+}));
+
+vi.mock("@/lib/ai/openai-two-step-provider", () => ({
+  generateGreetingContentPlanWithOpenAi: mocks.generateGreetingContentPlanWithOpenAi,
+  generateTwoStepVariantsWithOpenAi: mocks.generateTwoStepVariantsWithOpenAi
 }));
 
 vi.mock("@/lib/ai/openai-insights-provider", () => ({
@@ -90,10 +97,13 @@ describe("AI greeting service validation flow", () => {
     process.env.AI_PROVIDER = "gigachat";
     delete process.env.AI_GREETING_PROVIDER;
     delete process.env.AI_GREETING_MODE;
+    delete process.env.AI_GREETING_EXPERIMENT;
     mocks.generateWithGigaChat.mockReset();
     mocks.generateWithOpenAi.mockReset();
     mocks.generateMatrixWithOpenAi.mockReset();
     mocks.generateLadderWithOpenAi.mockReset();
+    mocks.generateGreetingContentPlanWithOpenAi.mockReset();
+    mocks.generateTwoStepVariantsWithOpenAi.mockReset();
     mocks.generateBestQuotesWithOpenAi.mockReset();
     mocks.generateQualitiesWithOpenAi.mockReset();
     mocks.completeAiGeneration.mockClear();
@@ -204,6 +214,40 @@ describe("AI greeting service validation flow", () => {
     ]);
     expect(mocks.generateLadderWithOpenAi).toHaveBeenCalledOnce();
     expect(mocks.generateMatrixWithOpenAi).not.toHaveBeenCalled();
+  });
+
+  it("uses the isolated two-step experiment only when enabled", async () => {
+    process.env.AI_GREETING_PROVIDER = "openai";
+    process.env.AI_GREETING_MODE = "ladder";
+    process.env.AI_GREETING_EXPERIMENT = "two_step";
+    mocks.generateGreetingContentPlanWithOpenAi.mockResolvedValue({
+      model: "gpt-5-mini",
+      usage: { totalTokens: 300 },
+      plan: {
+        generalActions: ["помогает во время учёбы"],
+        personalEpisodes: ["поддержала автора перед экзаменом"],
+        wishes: ["успехов"],
+        derivedQualities: ["отзывчивость"],
+        creativeRequest: "",
+        optionalContextDetails: []
+      }
+    });
+    mocks.generateTwoStepVariantsWithOpenAi.mockResolvedValue({
+      model: "gpt-5-mini",
+      usage: { totalTokens: 700 },
+      variants: [
+        { type: "safe", label: "Аккуратно", text: "Анна Ивановна, с выпускным! Спасибо за помощь во время учёбы. Желаем успехов." },
+        { type: "warm", label: "Теплее", text: "Анна Ивановна, с выпускным! Спасибо за отзывчивость и помощь во время учёбы. Желаем успехов." },
+        { type: "expressive", label: "Живее", text: "Анна Ивановна, с выпускным! Спасибо за помощь во время учёбы. Пусть впереди будет много удачных дней!" }
+      ]
+    });
+
+    const result = await generateParticipantMessage(input);
+
+    expect(result.variants.map((variant) => variant.id)).toEqual(["short", "warm", "style"]);
+    expect(mocks.generateGreetingContentPlanWithOpenAi).toHaveBeenCalledOnce();
+    expect(mocks.generateTwoStepVariantsWithOpenAi).toHaveBeenCalledOnce();
+    expect(mocks.generateLadderWithOpenAi).not.toHaveBeenCalled();
   });
 
   it("retries only a rejected ladder level", async () => {
