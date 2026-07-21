@@ -110,8 +110,45 @@
 }
 
 .section[data-motion-visible="true"] .decorLeft {
-  opacity: 0.55;
+  opacity: 0.85;
   transform: translateY(0);
+}
+
+/* Конверт слегка «открывается» */
+.decorImage {
+  width: 220px;
+  height: auto;
+  opacity: 0.95;
+  transform: rotate(0deg);
+  transition: transform 650ms var(--motion-ease-out) 350ms;
+}
+
+.section[data-motion-visible="true"] .decorImage {
+  transform: rotate(-4deg);
+}
+
+/* Карточка выходит из конверта на 8–12 px */
+.decorMiniCard {
+  position: absolute;
+  bottom: 62%;
+  left: 52%;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 44px;
+  border-radius: 9px;
+  background: rgba(255, 249, 244, 0.95);
+  color: var(--accent-strong);
+  font-size: 1rem;
+  box-shadow: 0 8px 20px rgba(72, 49, 37, 0.18);
+  transform: translateY(14px) rotate(5deg);
+  opacity: 0;
+  transition: opacity 550ms var(--motion-ease-out) 520ms, transform 550ms var(--motion-ease-out) 520ms;
+}
+
+.section[data-motion-visible="true"] .decorMiniCard {
+  opacity: 1;
+  transform: translateY(0) rotate(5deg);
 }
 
 .decorRight {
@@ -120,20 +157,39 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   opacity: 0;
-  transition: opacity 650ms var(--motion-ease-out) 420ms;
+  transition: opacity 650ms var(--motion-ease-out) 640ms;
 }
 
 .section[data-motion-visible="true"] .decorRight {
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
-.decorImage {
-  width: 220px;
-  height: auto;
-  opacity: 0.95;
+/* Текст и кнопка появляются после иллюстрации */
+.section[data-motion-ready] .title,
+.section[data-motion-ready] .subtitle,
+.section[data-motion-ready] .card form,
+.section[data-motion-ready] .hint {
+  opacity: 0;
+  transform: translateY(var(--motion-distance, 14px));
+  transition:
+    opacity var(--motion-normal, 420ms) var(--motion-ease-out),
+    transform var(--motion-normal, 420ms) var(--motion-ease-out);
 }
+
+.section[data-motion-visible="true"] .title,
+.section[data-motion-visible="true"] .subtitle,
+.section[data-motion-visible="true"] .card form,
+.section[data-motion-visible="true"] .hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section[data-motion-visible="true"] .title { transition-delay: 480ms; }
+.section[data-motion-visible="true"] .subtitle { transition-delay: 580ms; }
+.section[data-motion-visible="true"] .card form { transition-delay: 680ms; }
+.section[data-motion-visible="true"] .hint { transition-delay: 760ms; }
 
 @media (min-width: 768px) {
   .decorImage {
@@ -179,6 +235,12 @@
   color: #fff9f4;
 }
 
+.decorSparkleSmall {
+  font-size: 0.9rem;
+  color: #fff9f4;
+  opacity: 0.8;
+}
+
 .decorNote {
   width: 42px;
   height: 34px;
@@ -198,8 +260,21 @@
     transform: none;
   }
   .decorLeft,
-  .decorRight {
-    opacity: 0.55;
+  .decorRight,
+  .decorMiniCard {
+    opacity: 0.85;
+    transform: none;
+    transition: none;
+  }
+  .decorImage {
+    transform: none;
+    transition: none;
+  }
+  .section[data-motion-ready] .title,
+  .section[data-motion-ready] .subtitle,
+  .section[data-motion-ready] .card form,
+  .section[data-motion-ready] .hint {
+    opacity: 1;
     transform: none;
     transition: none;
   }

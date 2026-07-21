@@ -25,14 +25,17 @@ export function FinalCtaSection() {
                 <span>♥</span>
               </div>
             )}
+            <div className={styles.decorMiniCard}>
+              <span>♥</span>
+            </div>
           </div>
 
           <div className={styles.decorRight} aria-hidden="true">
-            <span className={styles.decorHeart}>♡</span>
             <span className={styles.decorSparkle}>✶</span>
             <span className={styles.decorNote}>
               <span>♥</span>
             </span>
+            <span className={styles.decorSparkleSmall}>✶</span>
           </div>
 
           <h2 className={`${styles.title} text-balance`}>

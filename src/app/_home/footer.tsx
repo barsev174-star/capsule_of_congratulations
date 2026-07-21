@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
+import { FooterGroup } from "./footer-group";
 import styles from "./footer.module.css";
 
 export function HomeFooter() {
@@ -11,12 +12,13 @@ export function HomeFooter() {
           <p className={styles.tagline}>Групповые онлайн-открытки,<br />поздравления и подарки</p>
           <p className={styles.details}>Исполнитель: Барыкина Кристина Сергеевна<br />Плательщик НПД · ИНН 745210969451<br />г. Челябинск</p>
         </section>
-        <nav className={styles.column} aria-label="Сервис">
-          <h2>Сервис</h2>
-          <Link href="/account">Мои открытки</Link>
-          <Link href="/create">Создать открытку</Link>
-          <Link href="/example">Пример открытки</Link>
-        </nav>
+        <FooterGroup title="Сервис">
+          <nav className={styles.groupNav} aria-label="Сервис">
+            <Link href="/account">Мои открытки</Link>
+            <Link href="/create">Создать открытку</Link>
+            <Link href="/example">Пример открытки</Link>
+          </nav>
+        </FooterGroup>
         <section className={styles.column} aria-labelledby="footer-support">
           <h2 id="footer-support">Поддержка</h2>
           <a className={styles.contactLink} href="mailto:support@slovesto.ru">
@@ -29,12 +31,13 @@ export function HomeFooter() {
           </a>
           <p className={styles.replyTime}>Обычно отвечаем в течение рабочего дня</p>
         </section>
-        <nav className={styles.column} aria-label="Документы">
-          <h2>Документы</h2>
-          <Link href="/offer">Публичная оферта</Link>
-          <Link href="/privacy">Политика обработки данных</Link>
-          <Link href="/refunds">Правила возврата</Link>
-        </nav>
+        <FooterGroup title="Документы">
+          <nav className={styles.groupNav} aria-label="Документы">
+            <Link href="/offer">Публичная оферта</Link>
+            <Link href="/privacy">Политика обработки данных</Link>
+            <Link href="/refunds">Правила возврата</Link>
+          </nav>
+        </FooterGroup>
       </div>
       <div className={styles.bottomLine}>
         <span>© 2026 Slovesto</span>

@@ -68,7 +68,6 @@ export function AiSection() {
       observer.disconnect();
       stopAuto();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const runDemo = () => {

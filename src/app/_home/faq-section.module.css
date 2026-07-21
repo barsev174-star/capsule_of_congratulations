@@ -49,8 +49,8 @@
   justify-content: space-between;
   gap: 16px;
   width: 100%;
-  min-height: 56px;
-  padding: 12px 16px;
+  min-height: 72px;
+  padding: 18px 20px;
   border: 0;
   background: transparent;
   color: #4a332a;
@@ -84,7 +84,7 @@
 
 .answer {
   margin: 0;
-  padding: 0 16px 14px;
+  padding: 0 20px 18px;
   color: #705c50;
   font-size: 0.9rem;
   line-height: 1.5;
@@ -112,10 +112,11 @@
     padding: 64px 18px;
   }
   .trigger {
-    padding: 12px 14px;
+    min-height: 68px;
+    padding: 16px 16px;
   }
   .answer {
-    padding: 0 14px 14px;
+    padding: 0 16px 16px;
   }
 }
 
