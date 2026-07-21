@@ -64,8 +64,8 @@ export const createRobokassaCheckout = async (input: {
       id, card_id, amount, currency, status, provider, provider_order_id, paid_at, created_at, updated_at,
       product_code, list_amount, discount_amount, payable_amount, price_version, merchant_account_id, seller_snapshot, provider_invoice_id, receipt_email, receipt,
       offer_version, refund_rules_version, privacy_version, offer_accepted_at, privacy_accepted_at
-    ) VALUES ($1, $2, $3, 'RUB', 'CREATED', 'robokassa', $4, NULL, now(), now(), 'final-card-v1', $3, 0, $3, 'final-card-v1', $5, $6::jsonb, $4::bigint, $7, $8::jsonb, $9, $10, $11, now(), now())`,
-      [orderId, card.id, amount, invoiceId, merchantAccount.id, JSON.stringify({ fullName: merchantAccount.sellerFullName, inn: merchantAccount.sellerInn, taxStatus: merchantAccount.sellerTaxStatus }), input.receiptEmail, receipt, LEGAL_VERSIONS.offer, LEGAL_VERSIONS.refunds, LEGAL_VERSIONS.privacy]);
+    ) VALUES ($1, $2, $3, 'RUB', 'CREATED', 'robokassa', $4, NULL, now(), now(), 'final-card-v1', $3, 0, $3, 'final-card-v1', $5, $6::jsonb, $12::bigint, $7, $8::jsonb, $9, $10, $11, now(), now())`,
+      [orderId, card.id, amount, invoiceId, merchantAccount.id, JSON.stringify({ fullName: merchantAccount.sellerFullName, inn: merchantAccount.sellerInn, taxStatus: merchantAccount.sellerTaxStatus }), input.receiptEmail, receipt, LEGAL_VERSIONS.offer, LEGAL_VERSIONS.refunds, LEGAL_VERSIONS.privacy, invoiceId]);
     await client.query(`INSERT INTO payment_attempts (
       id, order_id, provider, provider_payment_id, status, amount, currency, confirmation_url, idempotency_key, provider_payload
     ) VALUES ($1, $2, 'robokassa', $3, 'PENDING', $4, 'RUB', $5, $6, $7::jsonb)`,
