@@ -40,7 +40,9 @@ export function HeroSection() {
         <div className={styles.content}>
           <p className={styles.eyebrow}>Тёплые онлайн-открытки от близких</p>
           <h1 className={`${styles.title} text-balance`}>
-            Соберите открытку от всех — тёплый подарок, который хочется сохранить
+            <span className={styles.titleLine}>Соберите открытку от всех —</span>{" "}
+            <span className={styles.titleLine}>тёплый подарок, который</span>{" "}
+            <span className={styles.titleLine}>хочется сохранить</span>
           </h1>
           <p className={`${styles.subtitle} text-pretty`}>
             Создайте открытку, отправьте ссылку участникам, соберите тёплые слова и передайте получателю красивый общий подарок.

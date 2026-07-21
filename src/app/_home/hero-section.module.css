@@ -451,6 +451,18 @@
     padding: 24px 0 40px;
   }
 
+  .shell {
+    gap: 22px;
+  }
+
+  .actions {
+    margin-top: 24px;
+  }
+
+  .chips {
+    margin-top: 18px;
+  }
+
   .visual {
     min-height: 380px;
   }
@@ -545,5 +557,94 @@
   .polaroid {
     bottom: 70px;
     left: 100px;
+  }
+}
+
+/* Title lines for staggered reveal */
+.titleLine {
+  display: inline-block;
+}
+
+/* Staged entrance — активен только когда HomeMotion включил data-motion-ready
+   (при prefers-reduced-motion атрибут не ставится, контент виден сразу) */
+.section[data-motion-ready] .eyebrow,
+.section[data-motion-ready] .titleLine,
+.section[data-motion-ready] .subtitle,
+.section[data-motion-ready] .actions,
+.section[data-motion-ready] .chip,
+.section[data-motion-ready] .assetWrap {
+  opacity: 0;
+  transform: translateY(var(--motion-distance, 14px));
+  transition:
+    opacity var(--motion-slow, 650ms) var(--motion-ease-out, ease),
+    transform var(--motion-slow, 650ms) var(--motion-ease-out, ease);
+}
+
+/* У fallback-композиции уже есть transform (scale) — анимируем только прозрачность */
+.section[data-motion-ready] .composition {
+  opacity: 0;
+  transition: opacity var(--motion-slow, 650ms) var(--motion-ease-out, ease);
+}
+
+.section[data-motion-visible="true"] .eyebrow,
+.section[data-motion-visible="true"] .titleLine,
+.section[data-motion-visible="true"] .subtitle,
+.section[data-motion-visible="true"] .actions,
+.section[data-motion-visible="true"] .chip,
+.section[data-motion-visible="true"] .assetWrap {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section[data-motion-visible="true"] .composition {
+  opacity: 1;
+}
+
+.section[data-motion-visible="true"] .titleLine:nth-of-type(1) { transition-delay: 90ms; }
+.section[data-motion-visible="true"] .titleLine:nth-of-type(2) { transition-delay: 170ms; }
+.section[data-motion-visible="true"] .titleLine:nth-of-type(3) { transition-delay: 250ms; }
+.section[data-motion-visible="true"] .subtitle { transition-delay: 330ms; }
+.section[data-motion-visible="true"] .actions { transition-delay: 410ms; }
+.section[data-motion-visible="true"] .chip:nth-child(1) { transition-delay: 480ms; }
+.section[data-motion-visible="true"] .chip:nth-child(2) { transition-delay: 550ms; }
+.section[data-motion-visible="true"] .chip:nth-child(3) { transition-delay: 620ms; }
+.section[data-motion-visible="true"] .assetWrap { transition-delay: 540ms; }
+.section[data-motion-visible="true"] .composition { transition-delay: 540ms; }
+
+/* Очень слабое постоянное движение декоративного оверлея (2–3 px, лёгкий наклон) */
+@keyframes heroDecorDrift {
+  from { transform: translateY(-2px) rotate(0.8deg); }
+  to { transform: translateY(2px) rotate(-0.6deg); }
+}
+
+.heroDecor {
+  animation: heroDecorDrift 7s ease-in-out 1.4s infinite alternate;
+}
+
+/* Медленное появление декоративных сердечек в fallback-композиции */
+@keyframes heroDecorFade {
+  from { opacity: 0.25; }
+  to { opacity: 0.65; }
+}
+
+.decorHeart1,
+.decorHeart2 {
+  animation: heroDecorFade 5s ease-in-out infinite alternate;
+}
+
+.decorHeart2 {
+  animation-delay: 2.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroDecor,
+  .decorHeart1,
+  .decorHeart2 {
+    animation: none;
+  }
+
+  .visual {
+    transform: none;
+    transition: none;
   }
 }

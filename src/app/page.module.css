@@ -6,13 +6,13 @@
   scroll-behavior: smooth;
 }
 
-.page main > section[data-motion-ready] {
+.page main > section[data-motion-ready]:not([id="hero"]) {
   opacity: 0;
   transform: translateY(36px);
   transition: opacity 700ms var(--motion-ease-out), transform 700ms var(--motion-ease-out);
 }
 
-.page main > section[data-motion-ready][data-motion-visible="true"] { opacity: 1; transform: translateY(0); }
+.page main > section[data-motion-ready]:not([id="hero"])[data-motion-visible="true"] { opacity: 1; transform: translateY(0); }
 .page main > section[data-motion-index="3"][data-motion-ready] { transform: translateX(-48px); }
 .page main > section[data-motion-index="3"][data-motion-ready][data-motion-visible="true"] { transform: translateX(0); }
 .page main > section[data-motion-ready] .js-motion-card { opacity: 0; transform: translateY(28px); transition: opacity 600ms var(--motion-ease-out), transform 600ms var(--motion-ease-out); }

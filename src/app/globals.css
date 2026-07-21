@@ -17,9 +17,10 @@
   --shadow: 0 18px 60px rgba(72, 49, 37, 0.12);
   --shadow-soft: 0 18px 50px rgba(76, 45, 25, 0.08);
   --shadow-card: 0 12px 32px rgba(72, 49, 37, 0.08), 0 4px 8px rgba(72, 49, 37, 0.04);
-  --motion-fast: 240ms;
-  --motion-normal: 480ms;
-  --motion-slow: 720ms;
+  --motion-fast: 180ms;
+  --motion-normal: 420ms;
+  --motion-slow: 650ms;
+  --motion-distance: 14px;
   --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-ease-soft: cubic-bezier(0.25, 0.8, 0.25, 1);
 }
@@ -89,4 +90,15 @@ select {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(142, 79, 52, 0.58);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
