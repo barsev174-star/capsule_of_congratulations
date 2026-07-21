@@ -17,8 +17,7 @@ const leftFaqs = faqs.slice(0, 3);
 const rightFaqs = faqs.slice(3);
 
 export function FaqSection() {
-  // По умолчанию открыт вопрос «Сколько стоит открытка?»
-  const [openIndex, setOpenIndex] = useState<number>(4);
+  const [openIndex, setOpenIndex] = useState<number>(-1);
 
   const renderFaq = ([question, answer]: readonly [string, string], index: number) => {
     const open = index === openIndex;

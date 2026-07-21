@@ -23,6 +23,13 @@
   --motion-distance: 14px;
   --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-ease-soft: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --home-header-height: 68px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --home-header-height: 78px;
+  }
 }
 
 * {
@@ -62,6 +69,10 @@ select {
 
 .text-balance {
   text-wrap: balance;
+}
+
+section[id] {
+  scroll-margin-top: calc(var(--home-header-height, 68px) + 12px);
 }
 
 .text-pretty {
