@@ -11,7 +11,7 @@
 
 .heading {
   max-width: 720px;
-  margin: 0 auto 40px;
+  margin: 0 auto 32px;
   text-align: center;
 }
 
@@ -35,12 +35,13 @@
   gap: 14px;
 }
 
+/* Вертикальная пунктирная линия через центры кругов (mobile) */
 .line {
   position: absolute;
-  top: 46px;
-  left: 36px;
+  top: 27px;
+  left: 31px;
   width: 2px;
-  height: calc(100% - 120px);
+  height: calc(100% - 55px);
   background: repeating-linear-gradient(
     180deg,
     rgba(217, 106, 61, 0.55) 0 5px,
@@ -56,85 +57,103 @@
   transform: scaleY(1);
 }
 
-@media (max-width: 767px) {
-  .line {
-    height: calc(100% - 192px);
-  }
-}
-
 .step {
   position: relative;
   display: grid;
-  grid-template-columns: 72px 1fr;
-  gap: 16px;
+  grid-template-columns: 64px 1fr;
+  gap: 12px;
   align-items: start;
 }
 
+/* Первый вход в viewport: линия → номер и иконка → карточка (1 → 2 → 3) */
 .section[data-motion-ready] .node,
 .section[data-motion-ready] .number,
 .section[data-motion-ready] .card {
   opacity: 0;
-  transform: translateY(var(--motion-distance, 14px));
-  transition:
-    opacity var(--motion-normal, 420ms) var(--motion-ease-out),
-    transform var(--motion-normal, 420ms) var(--motion-ease-out);
-}
-
-/* Сначала линия, затем круги с иконками, затем карточки */
-.section[data-motion-ready] .node,
-.section[data-motion-ready] .number {
-  transition-delay: calc(420ms + var(--step-index, 0) * 160ms);
-}
-
-.section[data-motion-ready] .card {
-  transition-delay: calc(560ms + var(--step-index, 0) * 160ms);
 }
 
 .section[data-motion-visible="true"] .node,
-.section[data-motion-visible="true"] .number,
+.section[data-motion-visible="true"] .number {
+  animation: stepIn 360ms var(--motion-ease-out) calc(420ms + var(--step-index, 0) * 130ms) backwards;
+}
+
 .section[data-motion-visible="true"] .card {
-  opacity: 1;
-  transform: translateY(0);
+  animation: stepIn 380ms var(--motion-ease-out) calc(540ms + var(--step-index, 0) * 130ms) backwards;
+}
+
+@keyframes stepIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .number {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 26px;
-  height: 26px;
-  padding: 0 6px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 7px;
   border-radius: 999px;
   background: var(--accent-soft);
+  border: 1px solid rgba(217, 106, 61, 0.28);
   color: var(--accent-strong);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 800;
-  z-index: 2;
+  letter-spacing: 0.02em;
 }
 
 .node {
   position: relative;
+  justify-self: center;
+  z-index: 1;
+  display: grid;
+  place-items: center;
   width: 56px;
   height: 56px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--surface-strong) 0%, var(--surface-warm) 100%);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-soft);
-  display: grid;
-  place-items: center;
   color: var(--accent);
-  z-index: 1;
+  transition: transform 200ms var(--motion-ease-out);
 }
 
 .card {
-  padding: 18px;
+  position: relative;
+  padding: 16px 18px;
   border-radius: 18px;
   background: var(--surface-strong);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-soft);
+  transition:
+    transform 200ms var(--motion-ease-out),
+    border-color 200ms var(--motion-ease-out),
+    box-shadow 200ms var(--motion-ease-out);
+}
+
+/* Короткий соединительный штрих от круга к карточке (mobile: слева) */
+.card::before {
+  content: "";
+  position: absolute;
+  left: -13px;
+  top: 27px;
+  width: 11px;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(217, 106, 61, 0.5) 0 3px,
+    transparent 3px 6px
+  );
 }
 
 .cardTitle {
@@ -150,16 +169,30 @@
   line-height: 1.55;
 }
 
+/* Очень спокойный hover */
+@media (hover: hover) {
+  .step:hover .card {
+    transform: translateY(-2px);
+    border-color: var(--accent-soft);
+    box-shadow: var(--shadow-card);
+  }
+
+  .step:hover .node {
+    transform: translateY(-2px);
+  }
+}
+
 @media (min-width: 768px) {
   .stepsGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 32px;
   }
 
+  /* Горизонтальная линия через центры кругов первого и последнего шага */
   .line {
-    top: 36px;
-    left: calc(16.66% + 28px);
-    right: calc(16.66% + 28px);
+    top: 77px;
+    left: calc((100% - 64px) / 6);
+    right: calc((100% - 64px) / 6);
     width: auto;
     height: 2px;
     background: repeating-linear-gradient(
@@ -186,18 +219,32 @@
     position: relative;
     top: auto;
     left: auto;
-    margin-bottom: 4px;
   }
 
   .node {
     width: 72px;
     height: 72px;
+    margin-bottom: -6px;
   }
 
   .card {
     width: 100%;
-    min-height: 150px;
-    padding: 22px 20px;
+    min-height: 132px;
+    padding: 20px 26px 22px;
+  }
+
+  /* Соединительный штрих сверху карточки */
+  .card::before {
+    left: 50%;
+    top: -9px;
+    width: 2px;
+    height: 8px;
+    transform: translateX(-50%);
+    background: repeating-linear-gradient(
+      180deg,
+      rgba(217, 106, 61, 0.5) 0 3px,
+      transparent 3px 5px
+    );
   }
 }
 
@@ -210,12 +257,28 @@
 @media (prefers-reduced-motion: reduce) {
   .line {
     transform: scaleX(1) scaleY(1) !important;
+    transition: none;
   }
+
   .section[data-motion-ready] .node,
   .section[data-motion-ready] .number,
   .section[data-motion-ready] .card {
     opacity: 1;
-    transform: none;
+  }
+
+  .section[data-motion-visible="true"] .node,
+  .section[data-motion-visible="true"] .number,
+  .section[data-motion-visible="true"] .card {
+    animation: none;
+  }
+
+  .node,
+  .card {
     transition: none;
+  }
+
+  .step:hover .node,
+  .step:hover .card {
+    transform: none;
   }
 }

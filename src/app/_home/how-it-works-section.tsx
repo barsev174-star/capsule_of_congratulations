@@ -1,46 +1,73 @@
 import styles from "./how-it-works-section.module.css";
 
+/* Предметные иконки шагов в тёплой палитре Slovesto (декоративные). */
+
+function CreateCardIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <g transform="rotate(-6 20 24)">
+        <rect x="9" y="8" width="22" height="31" rx="3.5" fill="var(--surface-strong)" stroke="var(--text)" strokeOpacity="0.45" strokeWidth="1.6" />
+        <path d="M20 16.5c-1.3-1.9-4.1-1.7-5 .3-.8 1.9.6 3.7 5 6.2 4.4-2.5 5.8-4.3 5-6.2-.9-2-3.7-2.2-5-.3z" fill="var(--accent)" />
+        <path d="M14.5 28.5h11M14.5 33h7.5" stroke="var(--text)" strokeOpacity="0.3" strokeWidth="1.5" strokeLinecap="round" />
+      </g>
+      <g transform="rotate(40 35 27)">
+        <rect x="32.4" y="13" width="5.2" height="22" rx="2.6" fill="var(--accent)" />
+        <path d="M32.4 35l2.6 5.4 2.6-5.4z" fill="#8c6758" />
+      </g>
+    </svg>
+  );
+}
+
+function ShareLinkIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      {/* точки-участники */}
+      <circle cx="9" cy="11" r="2.7" fill="var(--accent-soft)" />
+      <circle cx="39" cy="10" r="2.7" fill="var(--accent-soft)" />
+      <circle cx="40" cy="37" r="2.7" fill="var(--accent-soft)" />
+      <circle cx="8" cy="38" r="2.7" fill="var(--accent-soft)" />
+      {/* звенья ссылки */}
+      <path d="M21 27a5.4 5.4 0 0 1 0-7.6l3.2-3.2a5.4 5.4 0 0 1 7.6 7.6" stroke="var(--accent)" strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M27 21a5.4 5.4 0 0 1 0 7.6l-3.2 3.2a5.4 5.4 0 0 1-7.6-7.6" stroke="var(--accent)" strokeWidth="2.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function DeliverIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      {/* открытка выходит из конверта */}
+      <g transform="rotate(-4 24 14)">
+        <rect x="16" y="4" width="16" height="15" rx="2.5" fill="var(--surface-strong)" stroke="var(--text)" strokeOpacity="0.45" strokeWidth="1.5" />
+        <path d="M24 9.2c-.9-1.3-2.8-1.2-3.4.2-.6 1.3.4 2.6 3.4 4.3 3-1.7 4-3 3.4-4.3-.6-1.4-2.5-1.5-3.4-.2z" fill="var(--accent)" />
+      </g>
+      {/* конверт */}
+      <rect x="10" y="15" width="28" height="21" rx="3.5" fill="var(--accent-light)" stroke="var(--accent)" strokeWidth="1.6" />
+      <path d="M11.5 17.5L24 26l12.5-8.5" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      {/* искра */}
+      <path d="M39 4l1.1 2.7 2.7 1.1-2.7 1.1L39 11.6l-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#E9A94B" />
+    </svg>
+  );
+}
+
 const steps = [
   {
     number: "01",
     title: "Создайте открытку",
     text: "Укажите получателя, повод и выберите оформление.",
-    illustration: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-        <line x1="16" y1="13" x2="8" y2="13" />
-        <line x1="16" y1="17" x2="8" y2="17" />
-        <line x1="10" y1="9" x2="8" y2="9" />
-      </svg>
-    )
+    illustration: <CreateCardIcon />
   },
   {
     number: "02",
     title: "Отправьте ссылку участникам",
     text: "Участники добавят поздравления, а организатор — фотографии.",
-    illustration: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="18" cy="5" r="3" />
-        <circle cx="6" cy="12" r="3" />
-        <circle cx="18" cy="19" r="3" />
-        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-      </svg>
-    )
+    illustration: <ShareLinkIcon />
   },
   {
     number: "03",
     title: "Передайте открытку получателю",
-    text: "После финальной проверки получатель откроет красивую страницу с поздравлениями, фотографиями и анимацией.",
-    illustration: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-        <polyline points="22,6 12,13 2,6" />
-        <path d="M12 13v7" />
-        <path d="M9 16h6" />
-      </svg>
-    )
+    text: "После финальной проверки получатель откроет открытку с поздравлениями, фотографиями и анимацией.",
+    illustration: <DeliverIcon />
   }
 ];
 
