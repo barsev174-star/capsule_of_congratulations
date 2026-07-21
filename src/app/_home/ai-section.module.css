@@ -39,8 +39,8 @@
 
 .demo {
   display: grid;
-  gap: 18px;
-  padding: 28px 22px;
+  gap: 14px;
+  padding: 26px 20px;
   border-radius: 28px;
   background: linear-gradient(135deg, #fffaf4, #fcebdd);
   box-shadow:
@@ -56,16 +56,16 @@
   transform: translateY(0);
 }
 
-/* Черновик — слегка наклонённый бумажный лист */
+/* Черновик — рабочий лист в линейку */
 .source {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 26px 22px 20px;
-  border-radius: 14px;
+  padding: 24px 20px 18px;
+  border-radius: 12px;
   background:
-    repeating-linear-gradient(0deg, rgba(191, 108, 71, 0.025) 0 2px, transparent 2px 8px),
+    repeating-linear-gradient(0deg, transparent 0 25px, rgba(191, 108, 71, 0.1) 25px 26px),
     #fffaf5;
   border: 1px solid rgba(191, 108, 71, 0.14);
   box-shadow: 0 14px 30px rgba(92, 62, 46, 0.12);
@@ -96,34 +96,11 @@
 }
 
 .sourceText {
-  margin: 6px 0 0;
+  flex: 1;
+  margin: 8px 0 0;
   color: #60483c;
-  font-size: 0.92rem;
-  line-height: 1.65;
-}
-
-.pencil {
-  position: absolute;
-  right: -8px;
-  bottom: 52px;
-  width: 6px;
-  height: 52px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, #ef7240 0%, #d95a2a 100%);
-  box-shadow: 0 5px 12px rgba(217, 90, 42, 0.3);
-  rotate: 28deg;
-}
-
-.pencil::after {
-  content: "";
-  position: absolute;
-  bottom: -7px;
-  left: 0;
-  width: 0;
-  height: 0;
-  border-left: 3px solid transparent;
-  border-right: 3px solid transparent;
-  border-top: 8px solid #8c6758;
+  font-size: 0.9rem;
+  line-height: 26px;
 }
 
 .demoButton {
@@ -154,16 +131,23 @@
   transform: scale(0.97);
 }
 
+.demoButton:focus-visible {
+  outline: 3px solid rgba(217, 106, 61, 0.4);
+  outline-offset: 3px;
+}
+
 .demoButton span {
   font-size: 0.75rem;
   opacity: 0.85;
 }
 
-/* Рукописная стрелка к результату */
+/* Рукописная стрелка + карандаш единой композицией */
 .arrow {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 56px;
   opacity: 0;
   transition: opacity 450ms var(--motion-ease-out) 300ms;
 }
@@ -186,30 +170,65 @@
   fill: none;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  transition: stroke-dashoffset 650ms var(--motion-ease-out) 360ms;
+  transition: stroke-dashoffset 650ms var(--motion-ease-out) 380ms;
 }
 
 .section[data-motion-visible="true"] .arrowPath {
   stroke-dashoffset: 0;
 }
 
-/* Результат — тёплая карточка поздравления */
+.pencil {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  width: 5px;
+  height: 38px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ef7240 0%, #d95a2a 100%);
+  box-shadow: 0 4px 10px rgba(217, 90, 42, 0.3);
+  rotate: 12deg;
+  translate: -30px -6px;
+}
+
+.pencil::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 2.5px solid transparent;
+  border-right: 2.5px solid transparent;
+  border-top: 7px solid #8c6758;
+}
+
+/* Карандаш один раз проходит несколько пикселей вдоль стрелки */
+@keyframes pencilSlide {
+  from { translate: -30px -6px; }
+  to { translate: -18px -10px; }
+}
+
+.section[data-motion-visible="true"] .pencil {
+  animation: pencilSlide 600ms var(--motion-ease-out) 1000ms both;
+}
+
+/* Результат — готовая карточка поздравления */
 .result {
   position: relative;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  gap: 16px;
-  min-height: 320px;
+  gap: 14px;
+  min-height: 300px;
   padding: 22px 24px 20px;
   border-radius: 18px;
   background:
-    repeating-linear-gradient(0deg, rgba(191, 108, 71, 0.02) 0 2px, transparent 2px 8px),
+    repeating-linear-gradient(0deg, rgba(191, 108, 71, 0.025) 0 2px, transparent 2px 26px),
     linear-gradient(150deg, #fffaf5 0%, var(--surface-cream) 100%);
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-card), inset 0 0 0 6px rgba(255, 250, 245, 0.5), inset 0 0 0 7px var(--line);
+  box-shadow: 0 14px 34px rgba(72, 49, 37, 0.1);
   opacity: 0;
   transform: translateY(22px);
-  transition: opacity 500ms var(--motion-ease-out) 400ms, transform 500ms var(--motion-ease-out) 400ms;
+  transition: opacity 500ms var(--motion-ease-out) 460ms, transform 500ms var(--motion-ease-out) 460ms;
 }
 
 .section[data-motion-visible="true"] .result {
@@ -227,6 +246,16 @@
   transform: rotate(10deg);
 }
 
+/* Одно небольшое движение сердца после появления */
+@keyframes heartPop {
+  0%, 100% { transform: rotate(10deg) scale(1); }
+  45% { transform: rotate(4deg) scale(1.18); }
+}
+
+.section[data-motion-visible="true"] .resultHeart {
+  animation: heartPop 600ms var(--motion-ease-out) 1150ms both;
+}
+
 .tabs {
   display: flex;
   gap: 4px;
@@ -237,14 +266,15 @@
 }
 
 .tab {
-  min-height: 34px;
+  position: relative;
+  min-height: 36px;
   padding: 0 16px;
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: #8c6758;
+  color: #7d6355;
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color var(--motion-fast, 180ms) ease, color var(--motion-fast, 180ms) ease;
 }
@@ -253,17 +283,36 @@
   color: #aa4b2a;
 }
 
+.tab:focus-visible {
+  outline: 2px solid rgba(217, 106, 61, 0.55);
+  outline-offset: 2px;
+}
+
 .tabActive,
 .tabActive:hover {
   background: var(--accent-soft);
   color: #aa4b2a;
-  box-shadow: 0 2px 6px rgba(92, 62, 46, 0.1);
+  font-weight: 600;
+}
+
+/* Тонкий акцент под активной вкладкой */
+.tabActive::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent-strong);
+  opacity: 0.65;
+  transform: translateX(-50%);
 }
 
 @keyframes variantIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -277,7 +326,7 @@
   font-family: Georgia, "Times New Roman", serif;
   font-size: 1.02rem;
   line-height: 1.7;
-  animation: variantIn 320ms var(--motion-ease-out);
+  animation: variantIn 240ms var(--motion-ease-out);
 }
 
 .select {
@@ -287,7 +336,7 @@
   width: fit-content;
   min-height: 44px;
   padding: 0 20px;
-  border: 1px solid rgba(217, 106, 61, 0.55);
+  border: 1.5px solid rgba(217, 106, 61, 0.7);
   border-radius: 999px;
   color: #d95a32;
   background: transparent;
@@ -298,12 +347,17 @@
 }
 
 .select:hover {
-  background: rgba(217, 106, 61, 0.08);
+  background: var(--accent-light);
   transform: translateY(-1px);
 }
 
 .select:active {
   transform: scale(0.97);
+}
+
+.select:focus-visible {
+  outline: 3px solid rgba(217, 106, 61, 0.4);
+  outline-offset: 3px;
 }
 
 .selectChosen,
@@ -316,27 +370,54 @@
 
 @media (min-width: 1024px) {
   .demo {
-    grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1.1fr);
+    grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1.1fr);
     gap: 14px;
-    padding: 32px 34px;
+    padding: 30px 32px;
     align-items: stretch;
   }
 
   .arrow {
     align-self: center;
+    min-height: 0;
   }
 
   .arrowLine {
-    width: 76px;
+    width: 88px;
     transform: none;
   }
 
+  .pencil {
+    left: 6px;
+    top: 30px;
+    height: 44px;
+    rotate: -38deg;
+    translate: 0 0;
+  }
+
+  @keyframes pencilSlideDesktop {
+    from { translate: 0 0; }
+    to { translate: 10px -4px; }
+  }
+
+  .section[data-motion-visible="true"] .pencil {
+    animation-name: pencilSlideDesktop;
+  }
+
   .result {
-    min-height: 300px;
+    min-height: 272px;
+    padding: 24px 26px 22px;
   }
 }
 
 @media (max-width: 640px) {
+  .demo {
+    gap: 8px;
+  }
+
+  .pencil {
+    height: 30px;
+  }
+
   .tabs {
     width: 100%;
     justify-content: center;
@@ -361,6 +442,11 @@
   .arrowPath {
     stroke-dashoffset: 0;
     transition: none;
+  }
+
+  .section[data-motion-visible="true"] .pencil,
+  .section[data-motion-visible="true"] .resultHeart {
+    animation: none;
   }
 
   .resultText {

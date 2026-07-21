@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import styles from "./ai-section.module.css";
 
 const draftText =
-  "Хочу поздравить коллегу Машу с днём рождения. Она всегда всё помнит и напоминает, когда мы что-то забываем. Когда я пришёл в команду, помогла разобраться и отвечала на миллион вопросов. Пожелать здоровья, путешествий, меньше срочных задач и больше времени на себя. Можно пошутить про календарь и дедлайны.";
+  "Хочу поздравить коллегу Машу с днем рождения. Она всегда всё помнит, напоминает когда мы что-то забываем. Когда я пришел в команду помогла разобраться, отвечала на миллион вопросов. Пожелать здоровья, путешествий, меньше срочных задач и больше времени на себя. Можно пошутить про календарь и дедлайны.";
 
-// Каждый вариант не длиннее 240 символов (214 / 217 / 203)
+// Каждый вариант не длиннее 240 символов (214 / 209 / 203)
 const variants: Array<[string, string]> = [
   [
     "Аккуратно",
@@ -14,7 +14,7 @@ const variants: Array<[string, string]> = [
   ],
   [
     "Теплее",
-    "Маша, с днём рождения! Спасибо за твою внимательность, терпение и поддержку. Благодаря тебе мне было намного легче освоиться в команде. Желаю здоровья, ярких путешествий, меньше срочных задач и больше времени на себя!"
+    "Маша, с днём рождения! Спасибо за твою внимательность, терпение и поддержку. Благодаря тебе мне было легче освоиться в команде. Желаю здоровья, ярких путешествий, меньше срочных задач и больше времени на себя!"
   ],
   [
     "Живее",
@@ -105,7 +105,6 @@ export function AiSection() {
             <button type="button" className={styles.demoButton} onClick={runDemo}>
               Получить варианты <span aria-hidden="true">✦</span>
             </button>
-            <span className={styles.pencil} aria-hidden="true" />
           </article>
 
           <div className={styles.arrow} aria-hidden="true">
@@ -113,6 +112,7 @@ export function AiSection() {
               <path d="M6 46 C 38 14, 82 14, 110 38" pathLength={1} className={styles.arrowPath} />
               <path d="M104 30 L 112 39 L 101 43" pathLength={1} className={styles.arrowPath} />
             </svg>
+            <span className={styles.pencil} />
           </div>
 
           <article className={styles.result}>
@@ -139,7 +139,7 @@ export function AiSection() {
               className={`${styles.select} ${chosen ? styles.selectChosen : ""}`}
               onClick={() => setChosen(true)}
             >
-              {chosen ? "Вариант выбран ✓" : "Выбрать этот вариант"}
+              {chosen ? "Вариант выбран ✓" : "Выбрать вариант ♡"}
             </button>
           </article>
         </div>
