@@ -74,10 +74,12 @@
 
 .section[data-motion-visible="true"] .node,
 .section[data-motion-visible="true"] .number {
+  opacity: 1;
   animation: stepIn 360ms var(--motion-ease-out) calc(420ms + var(--step-index, 0) * 130ms) backwards;
 }
 
 .section[data-motion-visible="true"] .card {
+  opacity: 1;
   animation: stepIn 380ms var(--motion-ease-out) calc(540ms + var(--step-index, 0) * 130ms) backwards;
 }
 
