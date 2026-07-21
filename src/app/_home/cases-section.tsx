@@ -1,61 +1,123 @@
 import styles from "./cases-section.module.css";
 
+/* Предметные мини-иллюстрации в едином тёплом стиле:
+   бумажные поверхности, терракотовые акценты, мягкие коричневые контуры. */
+
+function CakeIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      {/* свеча */}
+      <rect x="22.7" y="8.5" width="2.6" height="9" rx="1.3" fill="var(--accent)" />
+      <path d="M24 2.5c1.7 1.9 2.1 3.4 1.1 4.9-0.7 1-2 1-2.6-.1-0.7-1.3 0-3 1.5-4.8z" fill="#E9A94B" />
+      {/* верхний ярус */}
+      <rect x="15" y="19" width="18" height="9" rx="2.5" fill="var(--surface-strong)" stroke="var(--accent)" strokeWidth="1.6" />
+      <path d="M15 23.5c2.2 2.2 4 2.2 6 0 2 2.2 4 2.2 6 0 2 2.2 3.8 2.2 6 0" stroke="var(--accent)" strokeWidth="1.4" strokeLinecap="round" />
+      {/* нижний ярус */}
+      <rect x="10" y="28" width="28" height="10" rx="2.5" fill="var(--accent-light)" stroke="var(--accent)" strokeWidth="1.6" />
+      <path d="M10 32.5c2.6 2.4 4.7 2.4 7 0 2.3 2.4 4.7 2.4 7 0 2.3 2.4 4.4 2.4 7 0 2.6 2.4 4.4 2.4 7 0" stroke="var(--accent)" strokeWidth="1.4" strokeLinecap="round" />
+      {/* блюдце */}
+      <rect x="7" y="38.5" width="34" height="3" rx="1.5" fill="var(--text)" opacity="0.28" />
+    </svg>
+  );
+}
+
+function BookFlowerIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      {/* раскрытая книга */}
+      <path
+        d="M24 14.5c-4.2-3-9.3-3.6-14-2v22.5c4.7-1.6 9.8-1 14 2 4.2-3 9.3-3.6 14-2V12.5c-4.7-1.6-9.8-1-14 2z"
+        fill="var(--surface-strong)"
+        stroke="var(--text)"
+        strokeOpacity="0.55"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <path d="M24 14.5V37" stroke="var(--text)" strokeOpacity="0.35" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M14 19.5c2.4-.6 4.8-.4 7 .6M14 24.5c2.4-.6 4.8-.4 7 .6" stroke="var(--text)" strokeOpacity="0.3" strokeWidth="1.3" strokeLinecap="round" />
+      {/* цветок */}
+      <g transform="translate(33 12)">
+        <circle cx="0" cy="-4.4" r="2.5" fill="var(--accent-soft)" />
+        <circle cx="4.2" cy="-1.4" r="2.5" fill="var(--accent-soft)" />
+        <circle cx="2.6" cy="3.8" r="2.5" fill="var(--accent-soft)" />
+        <circle cx="-2.6" cy="3.8" r="2.5" fill="var(--accent-soft)" />
+        <circle cx="-4.2" cy="-1.4" r="2.5" fill="var(--accent-soft)" />
+        <circle cx="0" cy="0" r="2.1" fill="#E9A94B" />
+      </g>
+      <path d="M31 18.5c-1.5 2.5-2 5-1.5 7.5" stroke="var(--accent)" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TeamIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      {/* боковые фигуры */}
+      <circle cx="10.5" cy="17" r="4.6" fill="var(--accent-soft)" />
+      <path d="M2.8 33.5c.6-4.8 3.7-7.6 7.7-7.6 2.4 0 4.5 1 5.9 2.7" fill="var(--accent-soft)" />
+      <circle cx="37.5" cy="17" r="4.6" fill="var(--accent-soft)" />
+      <path d="M45.2 33.5c-.6-4.8-3.7-7.6-7.7-7.6-2.4 0-4.5 1-5.9 2.7" fill="var(--accent-soft)" />
+      {/* центральная фигура */}
+      <circle cx="24" cy="15" r="6" fill="var(--accent)" />
+      <path d="M12.5 36c1-7 5.7-11 11.5-11s10.5 4 11.5 11c0 1.2-1 2.2-2.2 2.2H14.7c-1.2 0-2.2-1-2.2-2.2z" fill="var(--accent)" />
+      {/* сердечко */}
+      <path d="M24 29.3c-1.1-1.6-3.4-1.5-4.2.2-.7 1.6.4 3.1 4.2 5.2 3.8-2.1 4.9-3.6 4.2-5.2-.8-1.7-3.1-1.8-4.2-.2z" fill="var(--surface-strong)" />
+    </svg>
+  );
+}
+
+function PolaroidIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <g transform="rotate(-6 24 24)">
+        <rect x="11" y="8" width="26" height="32" rx="3" fill="var(--surface-strong)" stroke="var(--text)" strokeOpacity="0.4" strokeWidth="1.6" />
+        <rect x="15" y="12" width="18" height="17" rx="1.5" fill="var(--accent-light)" />
+        {/* солнце и холмы внутри снимка */}
+        <circle cx="20" cy="17" r="2.4" fill="#E9A94B" />
+        <path d="M15 26.5l4.5-4.5 3.5 3.5 3-3 7 7v-1H15z" fill="var(--accent)" opacity="0.75" />
+        {/* сердечко-подпись */}
+        <path d="M24 33c-.9-1.3-2.7-1.2-3.4.2-.6 1.3.4 2.5 3.4 4.2 3-1.7 4-2.9 3.4-4.2-.7-1.4-2.5-1.5-3.4-.2z" fill="var(--accent)" />
+      </g>
+    </svg>
+  );
+}
+
+function BalloonIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      {/* маленький шар */}
+      <ellipse cx="33" cy="13" rx="6" ry="7" fill="var(--accent-soft)" />
+      <path d="M33 20l-1.4 2h2.8l-1.4-2z" fill="var(--accent-soft)" />
+      <path d="M33 22c-1 3 1 5 0 8" stroke="var(--text)" strokeOpacity="0.4" strokeWidth="1.3" strokeLinecap="round" />
+      {/* большой шар */}
+      <ellipse cx="19" cy="16" rx="9.5" ry="11" fill="var(--accent)" />
+      <ellipse cx="16" cy="12" rx="2.6" ry="3.6" fill="var(--surface-strong)" opacity="0.35" />
+      <path d="M19 27l-2 2.6h4l-2-2.6z" fill="var(--accent)" />
+      <path d="M19 29.6c-1.6 3.6 1.6 6 .4 9.4-.5 1.5-1.7 2.6-3.4 3.4" stroke="var(--text)" strokeOpacity="0.5" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function EnvelopeHeartIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      {/* сердце над конвертом */}
+      <path d="M24 15.5c-2-3-6.3-2.8-7.8.4-1.3 2.9.8 5.7 7.8 9.6 7-3.9 9.1-6.7 7.8-9.6-1.5-3.2-5.8-3.4-7.8-.4z" fill="var(--accent)" />
+      {/* конверт */}
+      <rect x="8" y="22" width="32" height="20" rx="3.5" fill="var(--surface-strong)" stroke="var(--text)" strokeOpacity="0.5" strokeWidth="1.7" />
+      <path d="M9.5 24.5l14.5 9.5 14.5-9.5" stroke="var(--text)" strokeOpacity="0.5" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M9.5 40.5l9-7M38.5 40.5l-9-7" stroke="var(--text)" strokeOpacity="0.3" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 const cases = [
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-      </svg>
-    ),
-    title: "День рождения коллеги"
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-      </svg>
-    ),
-    title: "Учителю или воспитателю"
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-    title: "От всей команды"
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-      </svg>
-    ),
-    title: "Для друга или подруги"
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
-    ),
-    title: "Юбилей"
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-      </svg>
-    ),
-    title: "Благодарность / прощание"
-  }
+  { icon: <CakeIcon />, title: "День рождения коллеги" },
+  { icon: <BookFlowerIcon />, title: "Учителю или воспитателю" },
+  { icon: <TeamIcon />, title: "От всей команды" },
+  { icon: <PolaroidIcon />, title: "Для друга или подруги" },
+  { icon: <BalloonIcon />, title: "Юбилей" },
+  { icon: <EnvelopeHeartIcon />, title: "Благодарность / прощание" }
 ];
 
 export function CasesSection() {

@@ -67,9 +67,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
   background: var(--accent-light);
   color: var(--accent);
   flex-shrink: 0;
@@ -131,7 +131,10 @@
   .section[data-motion-ready] .card:nth-child(n+4) {
     transform: none;
   }
-  .card:hover {
-    transform: translateY(-4px);
+  .card,
+  .card:hover,
+  .card:hover .icon {
+    transition: none;
+    transform: none;
   }
 }
