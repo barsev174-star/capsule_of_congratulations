@@ -1,6 +1,7 @@
 .section {
   padding: 96px 20px;
   background: linear-gradient(180deg, var(--background) 0%, var(--surface-peach) 100%);
+  overflow-x: clip;
 }
 
 .shell {
