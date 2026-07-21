@@ -11,7 +11,7 @@
 
 .heading {
   max-width: 720px;
-  margin: 0 auto 44px;
+  margin: 0 auto 34px;
   text-align: center;
 }
 
@@ -34,22 +34,24 @@
 .comparison {
   display: grid;
   gap: 8px;
-  align-items: center;
+  align-items: stretch;
 }
 
 .panel {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
 }
 
-/* Мягкие подписи с тонким подчёркиванием */
+/* Мягкие подписи с тонкой декоративной линией */
 .panelLabel {
   position: relative;
   width: fit-content;
   margin: 0 auto 14px;
-  padding-bottom: 6px;
-  color: var(--muted);
+  padding-bottom: 7px;
+  color: #6b5346;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 0.95rem;
+  font-size: 0.98rem;
   font-style: italic;
   text-align: center;
 }
@@ -57,8 +59,8 @@
 .panelLabel::after {
   content: "";
   position: absolute;
-  left: 8%;
-  right: 8%;
+  left: 6%;
+  right: 6%;
   bottom: 0;
   height: 2px;
   border-radius: 2px;
@@ -69,11 +71,14 @@
 .chat {
   position: relative;
   display: grid;
+  align-content: center;
   gap: 9px;
+  flex: 1;
   padding: 20px 18px 16px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.66);
-  border: 1px dashed var(--line-strong);
+  background: rgba(253, 243, 234, 0.72);
+  border: 1px dashed var(--line);
+  overflow: hidden;
 }
 
 .msg {
@@ -83,14 +88,20 @@
   max-width: 88%;
 }
 
-.msg:nth-child(1) { transform: rotate(-1.1deg); }
-.msg:nth-child(2) { transform: rotate(0.8deg); }
-.msg:nth-child(3) { transform: rotate(-0.7deg); margin-top: -4px; }
-.msg:nth-child(4) { transform: rotate(1.2deg); margin-top: -2px; }
+.msg:nth-child(1) { transform: rotate(-1.4deg); margin-left: 4px; }
+.msg:nth-child(2) { transform: rotate(1deg); }
+.msg:nth-child(4) { transform: rotate(1.6deg); margin-top: -3px; }
 
 .msgRight {
   justify-self: end;
   flex-direction: row-reverse;
+}
+
+/* Фото слегка выбивается из общей линии */
+.msgPhoto {
+  transform: rotate(-1.8deg);
+  margin-left: 22px;
+  margin-top: -4px;
 }
 
 .msgAvatar {
@@ -100,6 +111,8 @@
   flex-shrink: 0;
   box-shadow: inset 0 0 0 1px rgba(72, 49, 37, 0.08);
 }
+
+.msg:nth-child(3) .msgAvatar { transform: translateY(-4px); }
 
 .msgBubble {
   display: inline-flex;
@@ -127,16 +140,16 @@
 
 .msgImage {
   display: block;
-  width: 172px;
+  width: 176px;
   height: auto;
   border-radius: 10px;
 }
 
-/* «Новое» сообщение, мягко появляющееся в цикле */
+/* «Новое» сообщение, частично скрытое у края, мягко появляется в цикле */
 .msgGhost {
   position: absolute;
-  right: 14px;
-  bottom: 38px;
+  right: -14px;
+  bottom: 40px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -156,11 +169,12 @@
   font-size: 0.8rem;
 }
 
-/* Тонкая рисованная линия перехода */
+/* Рукописная стрелка перехода */
 .flow {
+  position: relative;
   display: flex;
   justify-content: center;
-  padding: 4px 0;
+  padding: 6px 0;
 }
 
 .flowLine {
@@ -170,7 +184,7 @@
 }
 
 .flowPath {
-  stroke: var(--accent);
+  stroke: var(--accent-strong);
   stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -179,15 +193,39 @@
   stroke-dashoffset: 0;
 }
 
+.flowSparkle {
+  position: absolute;
+  top: 0;
+  right: 22%;
+  color: var(--accent);
+  font-size: 0.85rem;
+  opacity: 0.7;
+  transform: rotate(12deg);
+}
+
 /* Собранная мини-открытка */
 .result {
+  position: relative;
   display: grid;
-  gap: 14px;
-  padding: 22px 20px 18px;
+  align-content: center;
+  gap: 13px;
+  flex: 1;
+  padding: 24px 20px 18px;
   border-radius: 22px;
-  background: linear-gradient(150deg, #fffaf5 0%, var(--surface-cream) 100%);
+  background:
+    repeating-linear-gradient(0deg, rgba(191, 108, 71, 0.022) 0 2px, transparent 2px 7px),
+    linear-gradient(150deg, #fffaf5 0%, var(--surface-cream) 100%);
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), inset 0 0 0 6px rgba(255, 250, 245, 0.55), inset 0 0 0 7px var(--line);
+}
+
+.resultFlower {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  color: var(--accent);
+  opacity: 0.55;
+  transform: rotate(10deg);
 }
 
 .resultCollage {
@@ -202,7 +240,7 @@
   height: auto;
   border: 3px solid #fffaf5;
   border-radius: 10px;
-  box-shadow: 0 8px 20px rgba(72, 49, 37, 0.16);
+  box-shadow: 0 10px 24px rgba(72, 49, 37, 0.22);
   object-fit: cover;
 }
 
@@ -229,23 +267,16 @@
   margin: 0;
   color: var(--text);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 0.95rem;
+  font-size: 0.98rem;
   font-style: italic;
   line-height: 1.5;
   text-align: center;
 }
 
-.resultHeart {
-  display: inline-block;
-  margin-right: 6px;
-  color: var(--accent);
-  font-style: normal;
-}
-
 .resultStats {
   display: flex;
   justify-content: center;
-  gap: 28px;
+  gap: 26px;
 }
 
 .stat {
@@ -262,7 +293,7 @@
 
 .statValue {
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--text);
   min-width: 1.2ch;
@@ -274,11 +305,26 @@
 }
 
 .resultNote {
-  margin: 0;
+  position: relative;
+  width: fit-content;
+  margin: 0 auto;
+  padding-bottom: 5px;
+  color: var(--accent-strong);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.95rem;
+  font-style: italic;
   text-align: center;
-  color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 600;
+}
+
+.resultNote::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-soft), transparent);
 }
 
 /* ---------- Три преимущества ---------- */
@@ -296,17 +342,18 @@
   align-items: flex-start;
   gap: 14px;
   height: 100%;
-  padding: 18px;
+  padding: 18px 22px;
   border-radius: 18px;
   background: var(--surface-strong);
   border: 1px solid var(--line);
-  transition: transform 220ms var(--motion-ease-out), box-shadow 220ms var(--motion-ease-out), background-color 220ms var(--motion-ease-out);
+  transition: transform 220ms var(--motion-ease-out), box-shadow 220ms var(--motion-ease-out), background-color 220ms var(--motion-ease-out), border-color 220ms var(--motion-ease-out);
 }
 
 @media (min-width: 1024px) {
   .advantage:hover {
     transform: translateY(-3px);
     background: var(--accent-light);
+    border-color: var(--accent-soft);
     box-shadow: var(--shadow-card);
   }
 }
@@ -316,8 +363,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 14px;
   background: var(--accent-light);
   color: var(--accent);
@@ -328,14 +375,77 @@
   background: var(--surface-strong);
 }
 
+/* Маленькие предметные элементы у иконок */
 .advantageDecor {
   position: absolute;
-  right: -6px;
-  top: -6px;
-  color: var(--accent);
-  font-size: 0.8rem;
-  opacity: 0.75;
-  transform: rotate(12deg);
+  right: -7px;
+  bottom: -5px;
+  pointer-events: none;
+}
+
+/* Собрать вместе — две мини-карточки */
+.decorCollect {
+  width: 18px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--surface-strong);
+  border: 1px solid var(--accent-soft);
+  box-shadow: 0 2px 4px rgba(72, 49, 37, 0.12);
+  transform: rotate(8deg);
+}
+
+.decorCollect::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 14px;
+  height: 11px;
+  border-radius: 3px;
+  background: var(--surface-warm);
+  border: 1px solid var(--accent-soft);
+  transform: rotate(-10deg);
+}
+
+/* Оформить красиво — маленький полароид */
+.decorPolaroid {
+  width: 16px;
+  height: 19px;
+  border-radius: 2px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 4px rgba(72, 49, 37, 0.12);
+  transform: rotate(10deg);
+}
+
+.decorPolaroid::before {
+  content: "";
+  position: absolute;
+  inset: 3px 3px 7px;
+  border-radius: 1px;
+  background: linear-gradient(135deg, var(--accent-soft), #e4c2b0);
+}
+
+/* Подарить как событие — конверт с открыткой */
+.decorEnvelope {
+  width: 19px;
+  height: 13px;
+  border-radius: 2px;
+  background: linear-gradient(135deg, #e9c8b6, #dab6a4);
+  box-shadow: 0 2px 4px rgba(72, 49, 37, 0.14);
+  transform: rotate(6deg);
+}
+
+.decorEnvelope::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: -4px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
 }
 
 .advantageTitle {
@@ -399,44 +509,53 @@
   transform: translateY(0) scale(1);
 }
 
-/* ---------- Спокойный цикл «живого чата» (только desktop) ---------- */
+/* ---------- Цикл «живого чата» (desktop, только в viewport) ---------- */
 
-@keyframes msgDrift {
+@keyframes msgLift {
   0%, 100% { translate: 0 0; }
-  50% { translate: 3px -2px; }
+  22%, 55% { translate: 0 -3px; }
+}
+
+@keyframes msgDriftSide {
+  0%, 100% { translate: 0 0; }
+  30%, 60% { translate: 3px -2px; }
 }
 
 @keyframes photoTilt {
   0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(1.6deg); }
+  35%, 65% { transform: rotate(1.2deg); }
 }
 
 @keyframes ghostCycle {
-  0%, 18% { opacity: 0; transform: translateY(6px); }
-  30%, 62% { opacity: 1; transform: translateY(0); }
-  76%, 100% { opacity: 0; transform: translateY(-4px); }
+  0%, 14% { opacity: 0; transform: translateY(6px); }
+  26%, 58% { opacity: 1; transform: translateY(0); }
+  72%, 100% { opacity: 0; transform: translateY(-4px); }
 }
 
-@keyframes flowPulse {
-  0%, 100% { stroke-dashoffset: 0; opacity: 1; }
-  50% { stroke-dashoffset: 0.12; opacity: 0.75; }
+@keyframes avatarDrift {
+  0%, 100% { transform: translateY(-4px); }
+  40%, 70% { transform: translate(-2px, -6px); }
 }
 
 @media (min-width: 1024px) {
-  .section[data-motion-visible="true"] .msg:nth-child(2) {
-    animation: msgDrift 7s ease-in-out 1.8s infinite;
+  .section[data-live="true"] .msg:nth-child(1) {
+    animation: msgLift 8s ease-in-out infinite;
   }
 
-  .section[data-motion-visible="true"] .msgPhoto .msgImage {
-    animation: photoTilt 7s ease-in-out 2.2s infinite;
+  .section[data-live="true"] .msg:nth-child(2) {
+    animation: msgDriftSide 8s ease-in-out infinite;
   }
 
-  .section[data-motion-visible="true"] .msgGhost {
-    animation: ghostCycle 7s ease-in-out 2s infinite;
+  .section[data-live="true"] .msgPhoto .msgImage {
+    animation: photoTilt 8s ease-in-out infinite;
   }
 
-  .section[data-motion-visible="true"] .flowPath {
-    animation: flowPulse 7s ease-in-out 2.4s infinite;
+  .section[data-live="true"] .msg:nth-child(3) .msgAvatar {
+    animation: avatarDrift 8s ease-in-out infinite;
+  }
+
+  .section[data-live="true"] .msgGhost {
+    animation: ghostCycle 8s ease-in-out infinite;
   }
 }
 
@@ -460,8 +579,13 @@
   }
 
   .flowLine {
-    width: 120px;
+    width: 140px;
     transform: none;
+  }
+
+  .flowSparkle {
+    top: 2px;
+    right: 12%;
   }
 
   .advantages {
@@ -469,11 +593,34 @@
   }
 }
 
+/* Mobile: компактнее, одно сообщение скрыто, цикл выключен */
+@media (max-width: 640px) {
+  .msgLast {
+    display: none;
+  }
+
+  .msgGhost {
+    display: none;
+  }
+
+  .msgImage {
+    width: 160px;
+  }
+
+  .resultGreeting {
+    font-size: 0.95rem;
+  }
+
+  .resultStats {
+    gap: 18px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .section[data-motion-visible="true"] .msg:nth-child(2),
-  .section[data-motion-visible="true"] .msgPhoto .msgImage,
-  .section[data-motion-visible="true"] .msgGhost,
-  .section[data-motion-visible="true"] .flowPath {
+  .section[data-live="true"] .msg,
+  .section[data-live="true"] .msgPhoto .msgImage,
+  .section[data-live="true"] .msgAvatar,
+  .section[data-live="true"] .msgGhost {
     animation: none;
   }
 
