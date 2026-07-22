@@ -29,9 +29,11 @@ describe("ContributionsStrip", () => {
     const { container } = render(<ContributionsStrip items={items} />);
 
     const cards = container.querySelectorAll("li");
-    expect(cards).toHaveLength(11);
-    expect(screen.getAllByText("Участник 7")).toHaveLength(1);
-    expect(cards[7]).toHaveAttribute("aria-hidden", "true");
+    expect(cards).toHaveLength(15);
+    expect(cards[4]).toHaveTextContent("Участник 1");
+    expect(cards[10]).toHaveTextContent("Участник 7");
+    expect(cards[0]).toHaveAttribute("aria-hidden", "true");
+    expect(cards[11]).toHaveAttribute("aria-hidden", "true");
   });
 
   it("даёт карусели и стрелкам доступные имена", () => {
@@ -61,7 +63,9 @@ describe("ContributionsStrip", () => {
 
   it("не выключает автопрокрутку от вертикального касания страницы", () => {
     vi.useFakeTimers();
+    const scrollBy = vi.fn();
     const scrollTo = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollBy", { configurable: true, value: scrollBy });
     Object.defineProperty(HTMLElement.prototype, "scrollTo", { configurable: true, value: scrollTo });
     Object.defineProperty(HTMLElement.prototype, "getBoundingClientRect", {
       configurable: true,
@@ -75,7 +79,7 @@ describe("ContributionsStrip", () => {
 
     act(() => { vi.advanceTimersByTime(5000); });
 
-    expect(scrollTo).toHaveBeenCalled();
+    expect(scrollBy).toHaveBeenCalled();
     vi.useRealTimers();
   });
 });

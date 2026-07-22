@@ -3072,23 +3072,18 @@
   white-space: nowrap;
 }
 
-.contribPeopleIcon::before {
-  width: 9px;
-  height: 9px;
-  top: 11px;
-  left: 9px;
-  border-radius: 50%;
-  box-shadow: 14px 3px 0 -2px currentColor;
+.contribPeopleIcon {
+  color: #e9652f;
 }
 
-.contribPeopleIcon::after {
-  width: 15px;
-  height: 8px;
-  left: 7px;
-  bottom: 10px;
-  border-radius: 12px 12px 0 0;
-  border-bottom-width: 0;
-  box-shadow: 14px 3px 0 -2px currentColor;
+.contribPeopleIcon svg {
+  width: 24px;
+  height: 24px;
+  overflow: visible;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
 }
 
 .contribCarousel {

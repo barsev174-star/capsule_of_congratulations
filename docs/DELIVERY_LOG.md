@@ -788,5 +788,11 @@
 # 2026-07-22 — Join: carousel gesture recovery
 
 - Restored native horizontal swipe by allowing horizontal panning inside the carousel viewport.
-- Vertical touches no longer stop autoplay; autoplay pauses only after a meaningful horizontal swipe or explicit navigation.
+- Vertical touches no longer stop autoplay; autoplay pauses only while a touch gesture is active.
 - Moved desktop arrows into fixed 48px grid gutters, keeping four full cards inside the viewport and hiding arrows on mobile.
+
+# 2026-07-22 — Join: seamless carousel loop and people icon
+
+- Added leading and trailing hidden clones, so swiping in either direction and autoplay continue through the first and last greeting without a visible end.
+- Autoplay pauses only while a touch gesture is active and resumes when it ends.
+- Replaced the CSS pseudo-icon with a dedicated two-person SVG mark for a clear, stable silhouette on desktop and mobile.

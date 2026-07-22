@@ -32,17 +32,16 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
   const viewportRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const loopResetRef = useRef<number | null>(null);
-  const touchStartRef = useRef<{ pointerId: number; x: number; y: number } | null>(null);
   const [visibleSlots, setVisibleSlots] = useState(4);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [hasFocus, setHasFocus] = useState(false);
   const [isInViewport, setIsInViewport] = useState(true);
   const [isDocumentVisible, setIsDocumentVisible] = useState(true);
-  const [manualStop, setManualStop] = useState(false);
+  const [isTouching, setIsTouching] = useState(false);
 
   const canNavigate = items.length > visibleSlots;
-  const loopItems = canNavigate ? [...items, ...items.slice(0, visibleSlots)] : items;
+  const loopItems = canNavigate ? [...items.slice(-visibleSlots), ...items, ...items.slice(0, visibleSlots)] : items;
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -68,6 +67,39 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
     if (loopResetRef.current !== null) window.clearTimeout(loopResetRef.current);
   }, []);
 
+  const getLoopPositions = useCallback(() => {
+    const step = getCardStep(listRef.current, viewportRef.current, visibleSlots);
+    const firstOriginal = visibleSlots * step;
+    return {
+      step,
+      firstOriginal,
+      lastOriginal: firstOriginal + Math.max(0, items.length - 1) * step,
+      afterOriginal: firstOriginal + items.length * step
+    };
+  }, [items.length, visibleSlots]);
+
+  const resetLoopPosition = useCallback((left: number) => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    if (loopResetRef.current !== null) window.clearTimeout(loopResetRef.current);
+    loopResetRef.current = window.setTimeout(() => {
+      viewport.scrollTo({ left, behavior: "auto" });
+      loopResetRef.current = null;
+    }, reducedMotion ? 0 : 220);
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    if (!canNavigate) return;
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      const { firstOriginal } = getLoopPositions();
+      viewport.scrollTo({ left: firstOriginal, behavior: "auto" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [canNavigate, getLoopPositions]);
+
   useEffect(() => {
     const viewport = viewportRef.current;
     if (!viewport || typeof IntersectionObserver === "undefined") return;
@@ -77,39 +109,38 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
     return () => observer.disconnect();
   }, []);
 
-  const move = useCallback((direction: "next" | "previous", manual = false) => {
+  useEffect(() => {
+    if (!canNavigate) return;
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const handleScroll = () => {
+      const { step, firstOriginal, lastOriginal, afterOriginal } = getLoopPositions();
+      if (!step) return;
+
+      if (viewport.scrollLeft <= firstOriginal - step * 0.5) {
+        resetLoopPosition(lastOriginal);
+      } else if (viewport.scrollLeft >= afterOriginal - step * 0.5) {
+        resetLoopPosition(firstOriginal);
+      }
+    };
+
+    viewport.addEventListener("scroll", handleScroll, { passive: true });
+    return () => viewport.removeEventListener("scroll", handleScroll);
+  }, [canNavigate, getLoopPositions, resetLoopPosition]);
+
+  const move = useCallback((direction: "next" | "previous") => {
     const viewport = viewportRef.current;
     if (!viewport || !canNavigate) return;
-    if (manual) setManualStop(true);
 
-    const step = getCardStep(listRef.current, viewport, visibleSlots);
+    const { step } = getLoopPositions();
     if (!step) return;
-    const maxScrollLeft = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
     const behavior: ScrollBehavior = reducedMotion ? "auto" : "smooth";
 
-    if (direction === "previous") {
-      if (viewport.scrollLeft <= 1) {
-        const lastOriginalPosition = Math.max(0, maxScrollLeft - visibleSlots * step);
-        viewport.scrollTo({ left: lastOriginalPosition, behavior: "auto" });
-        return;
-      }
-      viewport.scrollBy({ left: -step, behavior });
-      return;
-    }
+    viewport.scrollBy({ left: direction === "next" ? step : -step, behavior });
+  }, [canNavigate, getLoopPositions, reducedMotion]);
 
-    if (viewport.scrollLeft + step >= maxScrollLeft - 1) {
-      viewport.scrollTo({ left: maxScrollLeft, behavior });
-      if (loopResetRef.current !== null) window.clearTimeout(loopResetRef.current);
-      loopResetRef.current = window.setTimeout(() => {
-        viewport.scrollTo({ left: 0, behavior: "auto" });
-        loopResetRef.current = null;
-      }, reducedMotion ? 0 : 340);
-      return;
-    }
-    viewport.scrollBy({ left: step, behavior });
-  }, [canNavigate, reducedMotion, visibleSlots]);
-
-  const autoplayEnabled = canNavigate && !manualStop && !reducedMotion && !isHovered && !hasFocus && isInViewport && isDocumentVisible;
+  const autoplayEnabled = canNavigate && !reducedMotion && !isHovered && !hasFocus && !isTouching && isInViewport && isDocumentVisible;
 
   useEffect(() => {
     if (!autoplayEnabled) return;
@@ -117,21 +148,12 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
     return () => window.clearInterval(timer);
   }, [autoplayEnabled, move]);
 
-  const pauseForManualInteraction = () => setManualStop(true);
-
   const trackTouchStart = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
-    touchStartRef.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+    if (event.pointerType === "touch" || event.pointerType === "pen") setIsTouching(true);
   };
 
-  const pauseAfterHorizontalSwipe = (event: PointerEvent<HTMLDivElement>) => {
-    const start = touchStartRef.current;
-    touchStartRef.current = null;
-    if (!start || start.pointerId !== event.pointerId) return;
-
-    const horizontalDistance = Math.abs(event.clientX - start.x);
-    const verticalDistance = Math.abs(event.clientY - start.y);
-    if (horizontalDistance > 12 && horizontalDistance > verticalDistance) pauseForManualInteraction();
+  const resumeAfterTouch = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch" || event.pointerType === "pen") setIsTouching(false);
   };
 
   return (
@@ -146,11 +168,11 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
         if (!event.currentTarget.contains(event.relatedTarget)) setHasFocus(false);
       }}
       onPointerDown={trackTouchStart}
-      onPointerUp={pauseAfterHorizontalSwipe}
-      onPointerCancel={() => { touchStartRef.current = null; }}
+      onPointerUp={resumeAfterTouch}
+      onPointerCancel={() => setIsTouching(false)}
     >
       {canNavigate ? (
-        <button type="button" className={`${styles.contribArrow} ${styles.contribArrowPrevious}`} aria-label="Показать предыдущее поздравление" onClick={() => move("previous", true)}>
+        <button type="button" className={`${styles.contribArrow} ${styles.contribArrowPrevious}`} aria-label="Показать предыдущее поздравление" onClick={() => move("previous")}>
           <span aria-hidden="true">‹</span>
         </button>
       ) : null}
@@ -158,9 +180,9 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
       <div ref={viewportRef} className={styles.contribStripViewport}>
         <ul ref={listRef} className={styles.contribStripList}>
           {loopItems.map((item, index) => {
-            const duplicated = index >= items.length;
+            const duplicated = canNavigate && (index < visibleSlots || index >= visibleSlots + items.length);
             return (
-              <li key={`${duplicated ? "dup-" : ""}${item.id}`} className={styles.contribCard} aria-hidden={duplicated || undefined}>
+              <li key={`${duplicated ? "dup-" : ""}${index}-${item.id}`} className={styles.contribCard} aria-hidden={duplicated || undefined}>
                 <span className={styles.avatar} aria-hidden="true">{getInitial(item.authorName)}</span>
                 <span className={styles.contribCardBody}>
                   <span className={styles.contribAuthorName} title={item.authorName}>{item.authorName}</span>
@@ -174,7 +196,7 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
       </div>
 
       {canNavigate ? (
-        <button type="button" className={`${styles.contribArrow} ${styles.contribArrowNext}`} aria-label="Показать следующее поздравление" onClick={() => move("next", true)}>
+        <button type="button" className={`${styles.contribArrow} ${styles.contribArrowNext}`} aria-label="Показать следующее поздравление" onClick={() => move("next")}>
           <span aria-hidden="true">›</span>
         </button>
       ) : null}

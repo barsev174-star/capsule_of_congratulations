@@ -136,7 +136,14 @@ export default async function JoinCardPage({ params }: Props) {
           <section className={styles.contribStrip} aria-labelledby="contrib-strip-title">
             <div className={styles.contribStripHead}>
               <div className={styles.cardHeader}>
-                <span className={`${styles.cardIcon} ${styles.peopleIcon} ${styles.contribPeopleIcon}`} aria-hidden="true" />
+                <span className={`${styles.cardIcon} ${styles.contribPeopleIcon}`} aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" focusable="false">
+                    <circle cx="9" cy="8" r="3.25" />
+                    <path d="M3.75 19c.4-3.1 2.35-5.05 5.25-5.05s4.85 1.95 5.25 5.05" />
+                    <circle cx="17" cy="9" r="2.5" />
+                    <path d="M15.1 14.35c.57-.27 1.2-.4 1.9-.4 2.15 0 3.72 1.35 4.05 3.6" />
+                  </svg>
+                </span>
                 <div>
                   <h2 id="contrib-strip-title" className={styles.sectionTitle}>Уже добавили</h2>
                   <p className={styles.hint}>Открытка постепенно наполняется тёплыми словами.</p>
