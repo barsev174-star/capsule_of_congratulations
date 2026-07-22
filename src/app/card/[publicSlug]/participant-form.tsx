@@ -7,6 +7,7 @@ import type { AiVariant } from "@/lib/ai/types";
 import { AiHelper } from "./ai-helper";
 import { GiftPollVote } from "./gift-poll-vote";
 import { JoinSidePanel } from "./join-side-panel";
+import { GREETING_HINTS, type GreetingHint, type GreetingHintId } from "./greeting-hints";
 import { LegalDocumentModal } from "@/components/legal/legal-document-modal";
 import styles from "./participant-page.module.css";
 
@@ -58,9 +59,20 @@ export const ParticipantForm = ({
   const [isAiPending, startAiTransition] = useTransition();
   const pendingAiRequestId = useRef<string | null>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
+  const [activeHintId, setActiveHintId] = useState<GreetingHintId | null>(null);
+  const [hintIndexes, setHintIndexes] = useState<Record<GreetingHintId, number>>({
+    gratitude: 0,
+    qualities: 0,
+    memory: 0,
+    wishes: 0
+  });
+  const [hintBlockVisible, setHintBlockVisible] = useState(false);
   const router = useRouter();
   const isOverLimit = message.length > messageLimit;
-  const aiPanelState = aiVariants.length > 0 ? "variants" : isAiPending ? "loading" : "idle";
+  const activeHint = GREETING_HINTS.find((hint) => hint.id === activeHintId) ?? null;
+  const activeHintExample = activeHint ? activeHint.examples[hintIndexes[activeHint.id]] : null;
+  const aiPanelState =
+    aiVariants.length > 0 ? "variants" : aiIssues.length > 0 ? "error" : isAiPending ? "loading" : "idle";
   const clearSuccessOnEdit = () => {
     if (successMessage) {
       setSuccessMessage("");
@@ -182,8 +194,20 @@ export const ParticipantForm = ({
     messageRef.current?.focus({ preventScroll: true });
   };
 
-  const handlePromptSelect = (placeholder: string) => {
-    setMessagePlaceholder(placeholder);
+  const handleHintSelect = (hint: GreetingHint) => {
+    const isSameHint = activeHintId === hint.id;
+    const nextIndex = isSameHint
+      ? (hintIndexes[hint.id] + 1) % hint.examples.length
+      : hintIndexes[hint.id];
+
+    setActiveHintId(hint.id);
+    if (isSameHint) {
+      setHintIndexes((current) => ({ ...current, [hint.id]: nextIndex }));
+    }
+    setHintBlockVisible(true);
+    if (!message) {
+      setMessagePlaceholder(`Например: ${hint.examples[nextIndex]}`);
+    }
     messageRef.current?.focus();
   };
 
@@ -439,23 +463,51 @@ export const ParticipantForm = ({
                         ? `${message.length} символов · ИИ сократит до ${messageLimit}`
                         : `${message.length} символов · итоговое поздравление до ${messageLimit}`}
                     </span>
-                    {aiUndoDraft !== null ? (
-                      <button type="button" className={styles.undoChip} onClick={handleUndoVariant}>
+                    <div className={styles.editorToolbarActions}>
+                      <button
+                        type="button"
+                        className={styles.aiTrigger}
+                        onClick={generateAiVariants}
+                        disabled={isAiPending || aiLimitReached}
+                      >
+                        <span className={styles.aiTriggerIcon} aria-hidden="true" />
+                        {isAiPending ? "Готовим варианты..." : "Помочь с текстом"}
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.undoChip} ${aiUndoDraft === null ? styles.undoChipHidden : ""}`}
+                        onClick={handleUndoVariant}
+                        tabIndex={aiUndoDraft === null ? -1 : undefined}
+                        aria-hidden={aiUndoDraft === null}
+                      >
                         Отменить замену
                       </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      className={styles.aiTrigger}
-                      onClick={generateAiVariants}
-                      disabled={isAiPending || aiLimitReached}
-                    >
-                      <span className={styles.aiTriggerIcon} aria-hidden="true" />
-                      {isAiPending ? "Готовим варианты..." : "Помочь с текстом"}
-                    </button>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {activeHint && activeHintExample && hintBlockVisible ? (
+                <div className={styles.hintExample} id="join-hint-example" aria-live="polite">
+                  <p className={styles.hintExampleTitle}>
+                    <span aria-hidden="true">{activeHint.icon}</span>
+                    {activeHint.title}
+                  </p>
+                  <p className={styles.hintExampleText}>Например: {activeHintExample}</p>
+                  <div className={styles.hintExampleFooter}>
+                    <span className={styles.hintExampleNote}>
+                      Нажмите на подсказку ещё раз, чтобы увидеть другой пример.
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.hintHideButton}
+                      onClick={() => setHintBlockVisible(false)}
+                    >
+                      Скрыть
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </section>
 
@@ -467,7 +519,9 @@ export const ParticipantForm = ({
             limitReached={aiLimitReached}
             issues={aiIssues}
             remaining={aiRemaining}
-            onPromptSelect={handlePromptSelect}
+            activeHintId={activeHintId}
+            exampleBlockId="join-hint-example"
+            onHintSelect={handleHintSelect}
             onUseVariant={handleUseVariant}
             onRetry={generateAiVariants}
           />

@@ -2,43 +2,50 @@
 
 import { useState } from "react";
 import type { AiVariant } from "@/lib/ai/types";
+import { GREETING_HINTS, type GreetingHint, type GreetingHintId } from "./greeting-hints";
 import styles from "./participant-page.module.css";
 
-export type JoinSidePanelState = "idle" | "loading" | "variants";
+export type JoinSidePanelState = "idle" | "loading" | "variants" | "error";
 
-const PROMPTS = [
-  {
-    icon: "💛",
-    question: "За что хочется поблагодарить?",
-    placeholder: "Например: спасибо, что всегда поддерживаешь и веришь в меня…"
-  },
-  {
-    icon: "✨",
-    question: "Что особенно цените?",
-    placeholder: "Например: ценю твою искренность, чувство юмора и умение слушать…"
-  },
-  {
-    icon: "💫",
-    question: "Какой момент запомнился?",
-    placeholder: "Например: помню, как мы вместе…"
-  },
-  {
-    icon: "🎈",
-    question: "Что хочется пожелать?",
-    placeholder: "Например: желаю побольше радостных дней, тепла и вдохновения…"
+const LOADING_STEPS = ["Аккуратно", "Теплее", "Живее"];
+
+const hintAriaLabel = (hint: GreetingHint) =>
+  `Показать пример: ${hint.title.charAt(0).toLowerCase()}${hint.title.slice(1).replace(/\?$/, "")}`;
+
+const formatGenerationsLeft = (count: number) => {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return `Осталась ${count} генерация`;
   }
-];
+
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return `Осталось ${count} генерации`;
+  }
+
+  return `Осталось ${count} генераций`;
+};
 
 type VariantsProps = {
   variants: AiVariant[];
   generationId: string;
   isPending: boolean;
   limitReached: boolean;
+  remaining: number | null;
   onUseVariant: (text: string) => void;
   onRetry: () => void;
 };
 
-const JoinVariants = ({ variants, generationId, isPending, limitReached, onUseVariant, onRetry }: VariantsProps) => {
+const JoinVariants = ({
+  variants,
+  generationId,
+  isPending,
+  limitReached,
+  remaining,
+  onUseVariant,
+  onRetry
+}: VariantsProps) => {
   const [activeVariantIndex, setActiveVariantIndex] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const activeVariant = variants[activeVariantIndex] ?? variants[0];
@@ -94,15 +101,23 @@ const JoinVariants = ({ variants, generationId, isPending, limitReached, onUseVa
           id={panelId}
           aria-labelledby={tabId(activeVariantIndex)}
         >
-          <h3 className={styles.variantTitle}>{activeVariant.label}</h3>
-          <p className={styles.message}>{activeVariant.text}</p>
+          <div key={activeVariant.id} className={styles.variantCardContent}>
+            <p className={styles.message}>{activeVariant.text}</p>
+          </div>
           <div className={styles.variantActions}>
             <button type="button" className={styles.useButton} onClick={() => applyVariant(activeVariant.text)}>
               Использовать вариант
             </button>
-            <button type="button" className={styles.retryButton} disabled={isPending || limitReached} onClick={onRetry}>
-              Получить ещё варианты
-            </button>
+            <div className={styles.variantRetryGroup}>
+              <button type="button" className={styles.retryButton} disabled={isPending || limitReached} onClick={onRetry}>
+                Получить ещё варианты
+              </button>
+              {remaining !== null ? (
+                <span className={styles.variantRemaining}>
+                  {remaining > 0 ? formatGenerationsLeft(remaining) : "Лимит AI-вариантов исчерпан"}
+                </span>
+              ) : null}
+            </div>
           </div>
         </article>
       </div>
@@ -118,7 +133,9 @@ type Props = {
   limitReached: boolean;
   issues: string[];
   remaining: number | null;
-  onPromptSelect: (placeholder: string) => void;
+  activeHintId: GreetingHintId | null;
+  exampleBlockId: string;
+  onHintSelect: (hint: GreetingHint) => void;
   onUseVariant: (text: string) => void;
   onRetry: () => void;
 };
@@ -131,7 +148,9 @@ export const JoinSidePanel = ({
   limitReached,
   issues,
   remaining,
-  onPromptSelect,
+  activeHintId,
+  exampleBlockId,
+  onHintSelect,
   onUseVariant,
   onRetry
 }: Props) => {
@@ -163,14 +182,24 @@ export const JoinSidePanel = ({
             </button>
 
             <ul className={`${styles.promptList} ${promptsOpen ? styles.promptListOpen : ""}`}>
-              {PROMPTS.map((prompt) => (
-                <li key={prompt.question}>
-                  <button type="button" className={styles.promptButton} onClick={() => onPromptSelect(prompt.placeholder)}>
-                    <span className={styles.promptIcon} aria-hidden="true">{prompt.icon}</span>
-                    <span>{prompt.question}</span>
-                  </button>
-                </li>
-              ))}
+              {GREETING_HINTS.map((hint) => {
+                const isActive = hint.id === activeHintId;
+                return (
+                  <li key={hint.id}>
+                    <button
+                      type="button"
+                      className={`${styles.promptButton} ${isActive ? styles.promptButtonActive : ""}`}
+                      aria-pressed={isActive}
+                      aria-controls={exampleBlockId}
+                      aria-label={hintAriaLabel(hint)}
+                      onClick={() => onHintSelect(hint)}
+                    >
+                      <span className={styles.promptIcon} aria-hidden="true">{hint.icon}</span>
+                      <span>{hint.title}</span>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
 
             <p className={styles.privacyLock}>
@@ -189,11 +218,44 @@ export const JoinSidePanel = ({
                 <p className={styles.hint}>Сохраняем ваши мысли и укладываем текст в формат открытки.</p>
               </div>
             </div>
-            <span className={styles.loadingDots} aria-hidden="true">
-              <span />
-              <span />
-              <span />
+            <span className={styles.loadingTrack} aria-hidden="true">
+              <span className={styles.loadingLine} />
             </span>
+            <ul className={styles.loadingSkeletons} aria-hidden="true">
+              {LOADING_STEPS.map((label, index) => (
+                <li key={label} className={styles.loadingSkeleton} style={{ animationDelay: `${index * 180}ms` }}>
+                  <span className={styles.loadingSkeletonLabel}>{label}</span>
+                  <span className={styles.loadingSkeletonBar} />
+                  <span className={`${styles.loadingSkeletonBar} ${styles.loadingSkeletonBarShort}`} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {state === "error" ? (
+          <div className={styles.panelState}>
+            <div className={styles.sidePanelHead}>
+              <span className={styles.sidePanelWand} aria-hidden="true" />
+              <div>
+                <h2 className={styles.sectionTitle}>Не получилось подготовить варианты</h2>
+                <p className={styles.hint}>
+                  Ваш текст остался в поле. Попробуйте ещё раз через несколько секунд.
+                </p>
+              </div>
+            </div>
+            {issues.length > 0 ? (
+              <ul className={styles.panelErrorList}>
+                {issues.map((issue) => (
+                  <li key={issue}>{issue}</li>
+                ))}
+              </ul>
+            ) : null}
+            <div>
+              <button type="button" className={styles.panelRetryButton} disabled={isPending} onClick={onRetry}>
+                Повторить
+              </button>
+            </div>
           </div>
         ) : null}
 
@@ -204,25 +266,10 @@ export const JoinSidePanel = ({
             generationId={generationId}
             isPending={isPending}
             limitReached={limitReached}
+            remaining={remaining}
             onUseVariant={onUseVariant}
             onRetry={onRetry}
           />
-        ) : null}
-
-        {issues.length > 0 ? (
-          <div className={styles.errorBox} role="alert">
-            <ul className={styles.errorList}>
-              {issues.map((issue) => (
-                <li key={issue}>{issue}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        {remaining !== null && state !== "loading" ? (
-          <span className={styles.note}>
-            {remaining > 0 ? `Можно попробовать ещё ${remaining} раз` : "Лимит AI-вариантов исчерпан"}
-          </span>
         ) : null}
       </section>
     </aside>
