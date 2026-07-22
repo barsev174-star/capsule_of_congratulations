@@ -37,6 +37,7 @@ export const ContributionEditor = ({ cardId, contributionId, manageToken, initia
   const [isAiPending, setIsAiPending] = useState(false);
   const [aiTask, setAiTask] = useState<AiEditTask>("improve");
   const formRef = useRef<HTMLFormElement>(null);
+  const pendingRequestId = useRef<string | null>(null);
   const remaining = messageLimit - message.length;
   const activeVariant = aiVariants[activeVariantIndex] ?? aiVariants[0];
 
@@ -51,6 +52,8 @@ export const ContributionEditor = ({ cardId, contributionId, manageToken, initia
   }, [message, lastSubmitted]);
 
   const requestAiEdit = async (task: AiEditTask) => {
+    const requestId = pendingRequestId.current ?? crypto.randomUUID();
+    pendingRequestId.current = requestId;
     setIsAiPending(true);
     setAiError("");
     setAiTask(task);
@@ -60,6 +63,7 @@ export const ContributionEditor = ({ cardId, contributionId, manageToken, initia
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          requestId,
           cardId,
           contributionId,
           manageToken,
@@ -86,6 +90,7 @@ export const ContributionEditor = ({ cardId, contributionId, manageToken, initia
     } catch {
       setAiError("Не удалось связаться с AI-помощником. Проверьте соединение и попробуйте ещё раз.");
     } finally {
+      pendingRequestId.current = null;
       setIsAiPending(false);
     }
   };

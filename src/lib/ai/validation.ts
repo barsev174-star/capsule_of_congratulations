@@ -51,6 +51,7 @@ export const containsTechnicalText = (value: string) =>
 export const validateAiGenerationRequest = (input: unknown): AiValidationResult => {
   const body = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
   const issues: AiValidationIssue[] = [];
+  const requestId = normalizeText(body.requestId);
   const cardId = normalizeText(body.cardId);
   const publicSlug = normalizeText(body.publicSlug);
   const manageToken = normalizeText(body.manageToken);
@@ -64,6 +65,10 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
     : "compose";
   const draftLength = countCharacters(draftNotes);
   const draftLimit = mode === "compose" ? AI_DRAFT_LIMIT : AI_SHORTEN_DRAFT_LIMIT;
+
+  if (requestId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)) {
+    issues.push({ field: "requestId", message: "Не удалось подтвердить запрос к AI-помощнику." });
+  }
 
   if (!cardId) {
     issues.push({ field: "cardId", message: "Не удалось определить открытку для AI-помощника." });
@@ -113,6 +118,7 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
   return {
     success: true,
     data: {
+      requestId: requestId || undefined,
       cardId,
       publicSlug: publicSlug || undefined,
       manageToken: manageToken || undefined,
@@ -128,6 +134,7 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
 export const validateAiGenerationFormData = (formData: FormData): AiValidationResult =>
   validateAiGenerationRequest({
     cardId: formData.get("cardId"),
+    requestId: formData.get("requestId"),
     publicSlug: formData.get("publicSlug"),
     manageToken: formData.get("manageToken"),
     contributionId: formData.get("contributionId"),

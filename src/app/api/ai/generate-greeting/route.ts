@@ -103,6 +103,7 @@ export async function POST(request: Request) {
   try {
     const result = await generateParticipantMessage({
       cardId: card.id,
+      requestId: input.requestId,
       recipientName: card.recipientName,
       fromLabel: card.fromLabel,
       relationshipContext: sourceContribution?.authorRole || input.relationshipContext,
@@ -116,6 +117,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, result }, { status: 200 });
   } catch (error) {
+    if (error instanceof AiError && error.code === "AI_REQUEST_IN_PROGRESS") {
+      return NextResponse.json(
+        { ok: false, code: error.code, message: "Такой запрос уже выполняется. Подождите несколько секунд." },
+        { status: 409 }
+      );
+    }
     if (error instanceof AiError && error.code === "LIMIT_REACHED") {
       const isPaid = await hasPaidAiEntitlement(card.id);
       const paidMessage = "AI-варианты закончились для этой открытки.";

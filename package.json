@@ -20,6 +20,8 @@
     "test": "vitest run",
     "test:greetings:matrix": "vitest run src/lib/ai/openai-provider.live.test.ts --reporter=verbose",
     "test:greetings:levels": "vitest run src/lib/ai/openai-assistance-levels.live.test.ts --reporter=verbose",
+    "test:greetings:semantic-corpus": "vitest run src/lib/ai/greeting-semantic-fixtures.test.ts --reporter=verbose",
+    "test:greetings:semantic-live": "vitest run src/lib/ai/greeting-semantic-evaluation.live.test.ts --reporter=verbose",
     "test:reminders:email:live": "node --env-file=.env.local scripts/run-reminder-email-live.mjs",
     "test:watch": "vitest"
   },

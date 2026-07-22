@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { AI_DRAFT_LIMIT } from "@/lib/ai/validation";
 import type { AiVariant } from "@/lib/ai/types";
 import styles from "./participant-page.module.css";
@@ -41,8 +41,11 @@ export const AiHelper = ({
   const [resultLimit, setResultLimit] = useState(messageLimit);
   const [limitReached, setLimitReached] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const pendingRequestId = useRef<string | null>(null);
 
   const handleGenerate = async (style: string) => {
+    const requestId = pendingRequestId.current ?? crypto.randomUUID();
+    pendingRequestId.current = requestId;
     setIssues([]);
     setInsertFeedback("");
 
@@ -51,11 +54,13 @@ export const AiHelper = ({
       response = await fetch("/api/ai/generate-greeting", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cardId, publicSlug, manageToken, draftNotes, style, relationshipContext })
+        body: JSON.stringify({ requestId, cardId, publicSlug, manageToken, draftNotes, style, relationshipContext })
       });
     } catch {
       setIssues(["Не удалось связаться с AI-помощником. Проверьте соединение и попробуйте ещё раз."]);
       return;
+    } finally {
+      pendingRequestId.current = null;
     }
 
     const payload = await response.json();

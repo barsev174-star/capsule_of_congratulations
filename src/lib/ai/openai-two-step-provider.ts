@@ -8,19 +8,19 @@ const labels: Record<LadderVariantType, string> = {
   expressive: "Живее"
 };
 
-const variantsSchema = {
+const variantsSchema = (types: LadderVariantType[]) => ({
   type: "object",
   additionalProperties: false,
   properties: {
     variants: {
       type: "array",
-      minItems: 3,
-      maxItems: 3,
+      minItems: types.length,
+      maxItems: types.length,
       items: {
         type: "object",
         additionalProperties: false,
         properties: {
-          type: { type: "string", enum: ["safe", "warm", "expressive"] },
+          type: { type: "string", enum: types },
           text: { type: "string" }
         },
         required: ["type", "text"]
@@ -28,7 +28,7 @@ const variantsSchema = {
     }
   },
   required: ["variants"]
-};
+});
 
 const planSchema = {
   type: "object",
@@ -98,16 +98,20 @@ export const generateGreetingContentPlanWithOpenAi = async (input: { system: str
   return { ...result, plan: value as GreetingContentPlan };
 };
 
-export const generateTwoStepVariantsWithOpenAi = async (input: { system: string; user: string }) => {
-  const result = await requestJson({ ...input, schema: variantsSchema, name: "greeting_two_step_variants", maxCompletionTokens: 1800 });
+export const generateTwoStepVariantsWithOpenAi = async (
+  input: { system: string; user: string },
+  requestedTypes: LadderVariantType[] = ["safe", "warm", "expressive"]
+) => {
+  const result = await requestJson({ ...input, schema: variantsSchema(requestedTypes), name: "greeting_two_step_variants", maxCompletionTokens: 1800 });
   const source = result.value as { variants?: Array<{ type?: unknown; text?: unknown }> };
-  if (!Array.isArray(source.variants) || source.variants.length !== 3) throw new AiError("INVALID_PROVIDER_RESPONSE", "OpenAI returned an invalid two-step variant set.");
+  if (!Array.isArray(source.variants) || source.variants.length !== requestedTypes.length) throw new AiError("INVALID_PROVIDER_RESPONSE", "OpenAI returned an invalid two-step variant set.");
   const variants = source.variants.map((variant): LadderVariant => {
-    if ((variant.type !== "safe" && variant.type !== "warm" && variant.type !== "expressive") || typeof variant.text !== "string" || !variant.text.trim()) {
+    if (!requestedTypes.includes(variant.type as LadderVariantType) || typeof variant.text !== "string" || !variant.text.trim()) {
       throw new AiError("INVALID_PROVIDER_RESPONSE", "OpenAI returned an invalid two-step variant.");
     }
-    return { type: variant.type, label: labels[variant.type], text: variant.text.trim() };
+    const type = variant.type as LadderVariantType;
+    return { type, label: labels[type], text: variant.text.trim() };
   });
-  if (new Set(variants.map((variant) => variant.type)).size !== 3) throw new AiError("INVALID_PROVIDER_RESPONSE", "OpenAI returned duplicate two-step variants.");
+  if (new Set(variants.map((variant) => variant.type)).size !== requestedTypes.length) throw new AiError("INVALID_PROVIDER_RESPONSE", "OpenAI returned duplicate two-step variants.");
   return { ...result, variants };
 };

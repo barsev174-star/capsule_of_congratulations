@@ -47,6 +47,7 @@ const inferAuthorNumber = (fromLabel: string): "singular" | "plural" | "unknown"
   if (!value) return "unknown";
   if (/от\s+(?:нас|семьи|друзей|коллег|родителей|команды|класса|группы|всех)/iu.test(value)) return "plural";
   if (/от\s+(?:меня|друга|подруги|родителя|мамы|папы|коллеги|сокурсника|однокурсника|брата|сестры|сына|дочери)/iu.test(value)) return "singular";
+  if (/\b(?:родитель|мама|папа|бабушка|дедушка|коллега|друг|подруга|сосед|сокурсник|однокурсник)\b/iu.test(value)) return "singular";
   return "unknown";
 };
 

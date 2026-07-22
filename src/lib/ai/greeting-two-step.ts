@@ -72,3 +72,17 @@ expressive: та же основа; если creativeRequest просит юмо
 ${JSON.stringify(plan)}`
   };
 };
+
+export const buildTwoStepRepairPrompt = (
+  input: LadderRawInput,
+  plan: GreetingContentPlan,
+  rejected: Array<{ type: "safe" | "warm" | "expressive"; reasons: string[] }>,
+  accepted: Array<{ type: "safe" | "warm" | "expressive"; text: string }>
+) => {
+  const base = buildTwoStepComposePrompt(input, plan);
+  return {
+    ...base,
+    requestedTypes: rejected.map((item) => item.type),
+    user: `${base.user}\n\nИсправь только варианты: ${rejected.map((item) => item.type).join(", ")}.\nПричины проверки:\n${rejected.map((item) => `— ${item.type}: ${item.reasons.join("; ")}`).join("\n")}\nУже принятые варианты не изменяй и не повторяй:\n${accepted.map((item) => `— ${item.type}: ${item.text}`).join("\n")}\nВерни JSON только с исправляемыми вариантами.`
+  };
+};

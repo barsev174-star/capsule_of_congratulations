@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   completeAiUsageEvent,
   completeAiGeneration,
+  getAiGenerationRequestState,
   getAiUsageSummary,
   releaseAiGeneration,
   reserveAiGeneration,
@@ -28,7 +29,9 @@ import { inferAddressName, inferOccasionContext, normalizeOccasionForSentence } 
 import { cleanupGreetingText } from "@/lib/ai/greeting-cleanup";
 import { buildLadderPrompt, buildLadderRetryPrompt } from "@/lib/ai/greeting-ladder";
 import { ensureLadderVariantAddress, fitLadderVariantToLimit, validateLadderVariants } from "@/lib/ai/greeting-ladder-validation";
-import { buildTwoStepComposePrompt, buildTwoStepPlanPrompt } from "@/lib/ai/greeting-two-step";
+import { buildTwoStepComposePrompt, buildTwoStepPlanPrompt, buildTwoStepRepairPrompt } from "@/lib/ai/greeting-two-step";
+import { buildSemanticPrompt, buildSemanticRepairPrompt, GREETING_PROMPT_VERSION, validateSemanticVariants } from "@/lib/ai/greeting-semantic";
+import { generateSemanticGreetingWithOpenAi, repairSemanticGreetingWithOpenAi } from "@/lib/ai/openai-semantic-provider";
 
 let localTemplateGenerationSequence = 0;
 import { generateLadderWithOpenAi, OPENAI_LADDER_PROMPT_VERSION } from "@/lib/ai/openai-ladder-provider";
@@ -58,6 +61,7 @@ import type {
   AiVariant
 } from "@/lib/ai/types";
 import { logger } from "@/lib/logger";
+import { recordTelemetryEvent } from "@/lib/telemetry-repository";
 
 const negativePatterns = [/крич/i, /ор[её]/i, /руг/i, /зл/i, /бесит/i, /ненав/i, /туп/i];
 
@@ -486,7 +490,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
   const providerName = getProviderName(process.env.AI_GREETING_PROVIDER ?? process.env.AI_PROVIDER);
   const matrixRequested = process.env.AI_GREETING_MODE === "matrix";
   const ladderRequested = process.env.AI_GREETING_MODE === "ladder";
-  const twoStepRequested = process.env.AI_GREETING_EXPERIMENT === "two_step";
+  const twoStepRequested = process.env.AI_GREETING_EXPERIMENT === "two_step" || process.env.AI_GREETING_EXPERIMENT === "semantic";
   // The editor's "Улучшить с AI" uses the same source text and needs the
   // same semantic safeguards as a newly composed participant message.
   // Shortening remains a separate, length-focused workflow.
@@ -509,10 +513,24 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
     });
   }
   const usageSummary = await getAiUsageSummary(input.cardId);
-  const generationId = randomUUID();
+  const generationId = input.requestId ?? randomUUID();
+  const existingRequest = await getAiGenerationRequestState(generationId, input.cardId);
+  if (existingRequest?.status === "succeeded") {
+    return { generationId, variants: existingRequest.variants, usage: usageSummary, messageLimit: input.messageLimit };
+  }
+  if (existingRequest?.status === "pending") {
+    throw new AiError("AI_REQUEST_IN_PROGRESS", "AI generation request is already in progress.");
+  }
   const reservation = await reserveAiGeneration({ id: generationId, cardId: input.cardId, limit: usageSummary.limit });
 
   if (!reservation) {
+    const racedRequest = await getAiGenerationRequestState(generationId, input.cardId);
+    if (racedRequest?.status === "succeeded") {
+      return { generationId, variants: racedRequest.variants, usage: await getAiUsageSummary(input.cardId), messageLimit: input.messageLimit };
+    }
+    if (racedRequest?.status === "pending") {
+      throw new AiError("AI_REQUEST_IN_PROGRESS", "AI generation request is already in progress.");
+    }
     throw new AiError("LIMIT_REACHED", "AI generation limit reached for this card.");
   }
 
@@ -627,25 +645,55 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         messageLimit: input.messageLimit,
         existingMessages
       };
-      const planPrompt = buildTwoStepPlanPrompt(twoStepInput);
-      const planResult = await generateGreetingContentPlanWithOpenAi(planPrompt);
-      const composePrompt = buildTwoStepComposePrompt(twoStepInput, planResult.plan);
-      const composeResult = await generateTwoStepVariantsWithOpenAi(composePrompt);
-      const finalVariants = composeResult.variants.map((variant) => fitLadderVariantToLimit(
-        ensureLadderVariantAddress(variant, composePrompt.context.address),
-        composePrompt.limits[variant.type]
-      ));
-      const validation = validateLadderVariants(finalVariants, twoStepInput, composePrompt.context, composePrompt.limits);
-      if (validation.issues.length > 0) {
-        throw new AiError("AI_VALIDATION_FAILED", "Two-step greeting quality validation failed.");
+      const semanticPrompt = buildSemanticPrompt(twoStepInput);
+      const semanticResult = await generateSemanticGreetingWithOpenAi(semanticPrompt);
+      let semanticVariants = semanticResult.variants;
+      let semanticValidation = validateSemanticVariants(semanticVariants, semanticPrompt.limits);
+      let repairUsage: typeof semanticResult.usage;
+      const repairError = semanticValidation.hardErrors[0];
+      if (repairError) {
+        const repairPrompt = buildSemanticRepairPrompt(semanticPrompt, semanticResult.plan, repairError.type, semanticVariants[repairError.type].text, repairError.code);
+        const repair = await repairSemanticGreetingWithOpenAi(repairPrompt, repairError.type);
+        repairUsage = repair.usage;
+        semanticVariants = { ...semanticVariants, [repairError.type]: { text: repair.text } };
+        semanticValidation = validateSemanticVariants(semanticVariants, semanticPrompt.limits);
       }
-
-      variants = finalVariants.map((variant) => ({
-        id: variant.type === "safe" ? "short" : variant.type === "warm" ? "warm" : "style",
-        label: variant.label,
-        text: variant.text
+      if (semanticValidation.hardErrors.length > 0) throw new AiError("AI_VALIDATION_FAILED", "Semantic greeting has an objective format error.");
+      logger.info("ai.semantic_generation", "Semantic greeting diagnostics", {
+        cardId: input.cardId, promptVersion: GREETING_PROMPT_VERSION, durationMs: semanticResult.durationMs,
+        repairUsed: Boolean(repairError), repairReason: repairError?.code,
+        hardErrors: semanticValidation.hardErrors, softWarnings: semanticValidation.softWarnings,
+        variantLengths: semanticValidation.entries.map((entry) => ({ type: entry.type, length: Array.from(entry.text).length, limit: semanticPrompt.limits[entry.type] })),
+        tokenUsage: { main: semanticResult.usage, repair: repairUsage }
+      });
+      try {
+        await recordTelemetryEvent({
+          kind: "funnel",
+          event: "ai.semantic_generation",
+          cardId: input.cardId,
+          errorId: null,
+          context: {
+            promptVersion: GREETING_PROMPT_VERSION,
+            mainDurationMs: semanticResult.durationMs,
+            repairUsed: Boolean(repairError),
+            repairReason: repairError?.code ?? null,
+            hardErrorCodes: semanticValidation.hardErrors.map((item) => item.code),
+            softWarningCodes: semanticValidation.softWarnings.map((item) => item.code),
+            variantLengths: semanticValidation.entries.map((entry) => ({ type: entry.type, length: Array.from(entry.text).length, limit: semanticPrompt.limits[entry.type] })),
+            inputTokens: semanticResult.usage?.inputTokens ?? null,
+            outputTokens: semanticResult.usage?.outputTokens ?? null,
+            repairTokens: repairUsage?.totalTokens ?? null
+          }
+        });
+      } catch {
+        logger.warn("ai.semantic_telemetry_failed", "Semantic greeting diagnostics could not be persisted", { cardId: input.cardId });
+      }
+      variants = (["safe", "warm", "expressive"] as const).map((type) => ({
+        id: type === "safe" ? "short" : type === "warm" ? "warm" : "style",
+        label: type === "safe" ? "Аккуратно" : type === "warm" ? "Теплее" : "Живее",
+        text: semanticVariants[type].text.trim()
       }));
-      providerResult = { variants, model: composeResult.model };
+      providerResult = { variants, model: semanticResult.model };
       await completeAiGeneration({
         id: generationId,
         cardId: input.cardId,
@@ -659,13 +707,13 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         provider: providerName,
         model: providerResult.model,
         greetingMode,
-        promptVersion: "greeting-openai-two-step-v1",
+        promptVersion: GREETING_PROMPT_VERSION,
         selectedVariants: variants.map((variant) => variant.id),
         validationPassed: true,
         tokenUsage: {
-          plan: planResult.usage,
-          compose: composeResult.usage,
-          totalTokens: (planResult.usage?.totalTokens ?? 0) + (composeResult.usage?.totalTokens ?? 0)
+          main: semanticResult.usage,
+          repair: repairUsage,
+          totalTokens: (semanticResult.usage?.totalTokens ?? 0) + (repairUsage?.totalTokens ?? 0)
         },
         remainingCardGenerations: reservation.usage.remaining
       });

@@ -31,6 +31,21 @@ describe("validateAiGenerationFormData", () => {
     }
   });
 
+  it("accepts a request id and rejects a malformed one", () => {
+    const valid = validateAiGenerationFormData(buildFormData({
+      requestId: "f9a3a1e4-6a2d-4e52-b1cf-8c7e61e12ec5",
+      cardId: "card_1", publicSlug: "card-slug", draftNotes: "Спасибо за помощь и за ваши добрые слова в важный момент.", style: "warm-simple"
+    }));
+    expect(valid.success).toBe(true);
+    if (valid.success) expect(valid.data.requestId).toBe("f9a3a1e4-6a2d-4e52-b1cf-8c7e61e12ec5");
+
+    const invalid = validateAiGenerationFormData(buildFormData({
+      requestId: "not-a-request-id", cardId: "card_1", publicSlug: "card-slug", draftNotes: "Спасибо за помощь и за ваши добрые слова в важный момент.", style: "warm-simple"
+    }));
+    expect(invalid.success).toBe(false);
+    if (!invalid.success) expect(invalid.issues.some((issue) => issue.field === "requestId")).toBe(true);
+  });
+
   it("returns issues when required AI inputs are missing", () => {
     const result = validateAiGenerationFormData(
       buildFormData({

@@ -117,4 +117,25 @@ describe("ladder validation", () => {
 
     expect(result.issues.map((issue) => issue.code)).not.toContain("FROM_LABEL_LEAK");
   });
+
+  it("allows an explicit female author to use a matching first-person form", () => {
+    const parentInput = {
+      recipientName: "Ирина Олеговна",
+      occasionText: "С днём педагога!",
+      fromLabel: "Татьяна родитель",
+      relationshipContext: "родитель воспитанника",
+      draftNotes: "Спасибо за заботу о детях.",
+      messageLimit: 280
+    } satisfies LadderRawInput;
+    const variants: LadderVariant[] = [
+      { type: "safe", label: "Аккуратно", text: "Ирина Олеговна, с днём педагога! Спасибо за заботу о детях." },
+      { type: "warm", label: "Теплее", text: "Ирина Олеговна, я благодарна вам за заботу о детях. С днём педагога!" },
+      { type: "expressive", label: "Живее", text: "Ирина Олеговна, с днём педагога! Пусть у вас будет больше сил и радости." }
+    ];
+
+    const result = validateLadderVariants(variants, parentInput, buildLadderContext(parentInput), limits);
+
+    expect(result.issues.map((issue) => issue.code)).not.toContain("UNKNOWN_AUTHOR_GENDER");
+    expect(result.issues.map((issue) => issue.code)).not.toContain("FROM_LABEL_LEAK");
+  });
 });

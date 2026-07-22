@@ -13,6 +13,10 @@ import type {
   AiVariant
 } from "@/lib/ai/types";
 
+export type AiGenerationRequestState =
+  | { status: "pending" }
+  | { status: "succeeded"; variants: AiVariant[] };
+
 const aiLogFilePath = join(process.cwd(), "data", "ai-generations.json");
 const paymentOrdersFilePath = join(process.cwd(), "data", "payment-orders.json");
 const aiInsightsFilePath = join(process.cwd(), "data", "ai-card-insights.json");
@@ -103,11 +107,17 @@ export const reserveAiGeneration = async (input: {
         return null;
       }
 
-      await client.query(
+      const insertResult = await client.query(
         `INSERT INTO ai_usage_events (id, card_id, generation_type, status, created_at)
-         VALUES ($1, $2, $3, 'pending', now())`,
+         VALUES ($1, $2, $3, 'pending', now())
+         ON CONFLICT (id) DO NOTHING
+         RETURNING id`,
         [input.id, input.cardId, generationType]
       );
+      if (insertResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return null;
+      }
       await client.query("COMMIT");
 
       return {
@@ -127,6 +137,7 @@ export const reserveAiGeneration = async (input: {
   }
 
   const entries = await readAiLogs();
+  if (entries.some((entry) => entry.id === input.id)) return null;
   const usedBefore = entries.filter(
     (entry) => entry.cardId === input.cardId
   ).length;
@@ -152,6 +163,37 @@ export const reserveAiGeneration = async (input: {
       remaining: input.limit - usedBefore - 1
     }
   };
+};
+
+export const getAiGenerationRequestState = async (
+  id: string,
+  cardId: string
+): Promise<AiGenerationRequestState | null> => {
+  if (!id) return null;
+
+  if (isPostgresConfigured()) {
+    const result = await getPostgresPool().query<{ status: "pending" | "succeeded"; output: unknown }>(
+      `SELECT usage.status, draft.output
+       FROM ai_usage_events usage
+       LEFT JOIN ai_generation_drafts draft ON draft.id = usage.id AND draft.card_id = usage.card_id
+       WHERE usage.id = $1 AND usage.card_id = $2`,
+      [id, cardId]
+    );
+    const row = result.rows[0];
+    if (!row) return null;
+    if (row.status !== "succeeded") return { status: "pending" };
+    return Array.isArray(row.output) ? { status: "succeeded", variants: row.output as AiVariant[] } : { status: "pending" };
+  }
+
+  const entry = (await readAiLogs()).find((item) => item.id === id && item.cardId === cardId);
+  if (!entry) return null;
+  if (entry.status !== "succeeded") return { status: "pending" };
+  try {
+    const variants = entry.outputText ? JSON.parse(entry.outputText) : null;
+    return Array.isArray(variants) ? { status: "succeeded", variants: variants as AiVariant[] } : { status: "pending" };
+  } catch {
+    return { status: "pending" };
+  }
 };
 
 export const completeAiGeneration = async (input: {

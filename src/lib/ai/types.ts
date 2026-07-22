@@ -13,6 +13,7 @@ export type AiGenerationType = "participant_message" | "best_quotes" | "qualitie
 export type AiCardInsightType = "quotes" | "qualities";
 
 export type AiGenerationRequest = {
+  requestId?: string;
   cardId: string;
   publicSlug?: string;
   manageToken?: string;
@@ -24,6 +25,7 @@ export type AiGenerationRequest = {
 };
 
 export type AiGenerationInput = {
+  requestId?: string;
   cardId: string;
   recipientName: string;
   fromLabel?: string;
@@ -138,7 +140,8 @@ export type AiErrorCode =
   | "PROVIDER_UNAVAILABLE"
   | "INVALID_JSON"
   | "AI_VALIDATION_FAILED"
-  | "INVALID_PROVIDER_RESPONSE";
+  | "INVALID_PROVIDER_RESPONSE"
+  | "AI_REQUEST_IN_PROGRESS";
 
 export class AiError extends Error {
   constructor(
