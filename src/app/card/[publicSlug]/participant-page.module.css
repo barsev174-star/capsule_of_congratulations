@@ -3072,6 +3072,25 @@
   white-space: nowrap;
 }
 
+.contribPeopleIcon::before {
+  width: 9px;
+  height: 9px;
+  top: 11px;
+  left: 9px;
+  border-radius: 50%;
+  box-shadow: 14px 3px 0 -2px currentColor;
+}
+
+.contribPeopleIcon::after {
+  width: 15px;
+  height: 8px;
+  left: 7px;
+  bottom: 10px;
+  border-radius: 12px 12px 0 0;
+  border-bottom-width: 0;
+  box-shadow: 14px 3px 0 -2px currentColor;
+}
+
 .contribCarousel {
   position: relative;
   margin-top: 14px;
@@ -3079,6 +3098,8 @@
 
 .contribStripViewport {
   overflow-x: auto;
+  box-sizing: border-box;
+  padding-inline: 24px;
   overscroll-behavior-x: contain;
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
@@ -3099,14 +3120,15 @@
 }
 
 .contribCard {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: start;
   gap: 10px;
   box-sizing: border-box;
   flex: 0 0 calc((100% - 36px) / 4);
   min-width: 0;
-  height: 74px;
-  padding: 12px 14px;
+  height: 82px;
+  padding: 10px 12px;
   border-radius: 16px;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.74), rgba(255, 248, 242, 0.72));
   box-shadow:
@@ -3118,40 +3140,40 @@
 
 .contribCardBody {
   display: grid;
+  grid-template-rows: 1.15em 1.2em 1.35em;
   min-width: 0;
   gap: 2px;
 }
 
-.contribCardName {
-  display: flex;
-  min-width: 0;
-  color: #4d3327;
-  font-size: 0.9rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
 .contribAuthorName {
+  display: block;
   overflow: hidden;
   min-width: 0;
+  color: #4d3327;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.15;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .contribCardRole {
+  display: -webkit-box;
   overflow: hidden;
-  flex: 0 1 38%;
   min-width: 0;
   color: #8c7366;
+  font-size: 0.76rem;
   font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.2;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
 }
 
 .contribCardText {
   overflow: hidden;
   color: #5d4436;
   font-size: 0.85rem;
-  line-height: 1.45;
+  line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -3193,11 +3215,11 @@
 }
 
 .contribArrowPrevious {
-  left: -20px;
+  left: 2px;
 }
 
 .contribArrowNext {
-  right: -20px;
+  right: 2px;
 }
 
 @media (max-width: 560px) {
@@ -3261,23 +3283,28 @@
     margin-top: 10px;
   }
 
+  .contribStripViewport {
+    padding-inline: 0;
+  }
+
   .contribCard {
-    flex-basis: 84%;
-    height: 72px;
+    grid-template-columns: 36px minmax(0, 1fr);
+    flex-basis: 88%;
+    height: 92px;
     gap: 8px;
-    padding: 10px 12px;
+    padding: 9px 10px;
   }
 
   .contribStripList {
     gap: 10px;
   }
 
-  .contribCardName {
+  .contribAuthorName {
     font-size: 0.84rem;
   }
 
   .contribCardRole {
-    flex-basis: 36%;
+    -webkit-line-clamp: 2;
   }
 
   .contribCardText {
@@ -3286,29 +3313,7 @@
   }
 
   .contribArrow {
-    top: auto;
-    bottom: 0;
-    width: 40px;
-    height: 40px;
-    transform: none;
-  }
-
-  .contribArrow::before {
-    position: absolute;
-    inset: -2px;
-    content: "";
-  }
-
-  .contribArrowPrevious {
-    left: calc(50% - 48px);
-  }
-
-  .contribArrowNext {
-    right: calc(50% - 48px);
-  }
-
-  .contribCarousel:has(.contribArrow) {
-    padding-bottom: 48px;
+    display: none;
   }
 }
 

@@ -147,10 +147,8 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
               <li key={`${duplicated ? "dup-" : ""}${item.id}`} className={styles.contribCard} aria-hidden={duplicated || undefined}>
                 <span className={styles.avatar} aria-hidden="true">{getInitial(item.authorName)}</span>
                 <span className={styles.contribCardBody}>
-                  <span className={styles.contribCardName}>
-                    <span className={styles.contribAuthorName}>{item.authorName}</span>
-                    {item.authorRole ? <span className={styles.contribCardRole}> · {item.authorRole}</span> : null}
-                  </span>
+                  <span className={styles.contribAuthorName} title={item.authorName}>{item.authorName}</span>
+                  <span className={styles.contribCardRole} title={item.authorRole ?? undefined}>{item.authorRole ?? ""}</span>
                   <span className={styles.contribCardText}>{item.message}</span>
                 </span>
               </li>

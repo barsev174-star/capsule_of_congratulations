@@ -42,6 +42,16 @@ describe("ContributionsStrip", () => {
     expect(screen.getByRole("button", { name: "Показать следующее поздравление" })).toBeInTheDocument();
   });
 
+  it("показывает имя, подпись и фрагмент поздравления отдельными строками", () => {
+    render(<ContributionsStrip items={items} />);
+
+    const name = screen.getAllByText("Участник 1")[0];
+    const role = screen.getAllByText("мама Миши")[0];
+    const message = screen.getAllByText("Тёплое поздравление номер 1")[0];
+    expect(name).not.toBe(role);
+    expect(role).not.toBe(message);
+  });
+
   it("не показывает навигацию, когда на desktop помещаются все карточки", () => {
     render(<ContributionsStrip items={items.slice(0, 4)} />);
 

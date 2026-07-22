@@ -136,7 +136,7 @@ export default async function JoinCardPage({ params }: Props) {
           <section className={styles.contribStrip} aria-labelledby="contrib-strip-title">
             <div className={styles.contribStripHead}>
               <div className={styles.cardHeader}>
-                <span className={`${styles.cardIcon} ${styles.peopleIcon}`} aria-hidden="true" />
+                <span className={`${styles.cardIcon} ${styles.peopleIcon} ${styles.contribPeopleIcon}`} aria-hidden="true" />
                 <div>
                   <h2 id="contrib-strip-title" className={styles.sectionTitle}>Уже добавили</h2>
                   <p className={styles.hint}>Открытка постепенно наполняется тёплыми словами.</p>
