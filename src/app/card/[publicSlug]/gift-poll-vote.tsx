@@ -23,6 +23,7 @@ export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, invite
   const [isPending, startTransition] = useTransition();
   const sectionRef = useRef<HTMLElement>(null);
   const successRef = useRef<HTMLElement>(null);
+  const skippedRef = useRef<HTMLElement>(null);
   const storageKey = `participant-submission-${publicSlug}`;
   const skipKey = `participant-gift-poll-skip-${publicSlug}`;
 
@@ -60,6 +61,9 @@ export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, invite
   }, [view, revealed]);
   useEffect(() => {
     if (view === "voted") requestAnimationFrame(() => successRef.current?.focus());
+  }, [view]);
+  useEffect(() => {
+    if (view === "skipped") requestAnimationFrame(() => skippedRef.current?.focus());
   }, [view]);
 
   if (!poll && closed) return <section className={styles.giftPollSuccess} aria-live="polite"><strong>{closed.has_vote ? "Голосование завершено" : "Поздравление добавлено"}</strong><p>{closed.has_vote ? "Ваш выбор был сохранён." : "Голосование за подарок уже завершено."}</p></section>;
@@ -105,7 +109,7 @@ export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, invite
     </section>
   );
 
-  if (view === "skipped") return <section className={styles.giftPollSuccess} aria-live="polite"><strong>Поздравление добавлено</strong><button type="button" className={styles.giftPollTextButton} onClick={() => { window.localStorage.removeItem(skipKey); setRevealed(true); setView("form"); }}>Вернуться к голосованию</button></section>;
+  if (view === "skipped") return <section ref={skippedRef} tabIndex={-1} className={styles.giftPollSkipped} aria-live="polite"><strong><span aria-hidden="true">✓</span> Поздравление добавлено</strong><p>Голосование пропущено <span aria-hidden="true">·</span> <button type="button" className={styles.giftPollTextButton} aria-expanded={false} aria-controls="gift-poll-section" onClick={() => { window.localStorage.removeItem(skipKey); setRevealed(true); setView("form"); }}>Вернуться</button></p></section>;
 
   if (view === "voted") return <section ref={successRef} tabIndex={-1} className={styles.giftPollSuccess} aria-live="polite"><strong>Спасибо, ваш голос учтён</strong><p>Ваш выбор увидит только организатор.</p>{selectedOption ? <p className={styles.giftPollChoice}>Ваш выбор: <b>{titleCase(selectedOption.title)}</b></p> : null}<button type="button" className={styles.giftPollTextButton} onClick={() => setView("editing")}>Изменить выбор</button></section>;
 

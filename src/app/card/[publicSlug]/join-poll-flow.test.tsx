@@ -169,8 +169,10 @@ describe("GiftPollVote — post-submit сценарий", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "Пропустить сейчас" }));
     expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+    expect(screen.getByText(/голосование пропущено/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Вернуться" })).toHaveAttribute("aria-controls", "gift-poll-section");
 
-    await userEvent.click(screen.getByRole("button", { name: "Вернуться к голосованию" }));
+    await userEvent.click(screen.getByRole("button", { name: "Вернуться" }));
     expect(await screen.findByRole("radiogroup")).toBeInTheDocument();
   });
 
