@@ -132,7 +132,6 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
       onPointerDown={(event) => {
         if (event.pointerType === "touch" || event.pointerType === "pen") pauseForManualInteraction();
       }}
-      onWheel={pauseForManualInteraction}
     >
       {canNavigate ? (
         <button type="button" className={`${styles.contribArrow} ${styles.contribArrowPrevious}`} aria-label="Показать предыдущее поздравление" onClick={() => move("previous", true)}>
@@ -149,7 +148,7 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
                 <span className={styles.avatar} aria-hidden="true">{getInitial(item.authorName)}</span>
                 <span className={styles.contribCardBody}>
                   <span className={styles.contribCardName}>
-                    {item.authorName}
+                    <span className={styles.contribAuthorName}>{item.authorName}</span>
                     {item.authorRole ? <span className={styles.contribCardRole}> · {item.authorRole}</span> : null}
                   </span>
                   <span className={styles.contribCardText}>{item.message}</span>

@@ -3075,6 +3075,8 @@
   box-shadow:
     0 0 0 1px rgba(92, 64, 48, 0.08),
     0 8px 18px rgba(83, 49, 28, 0.05);
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 
 .contribCardBody {
@@ -3084,17 +3086,28 @@
 }
 
 .contribCardName {
-  overflow: hidden;
+  display: flex;
+  min-width: 0;
   color: #4d3327;
   font-size: 0.9rem;
   font-weight: 800;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.contribAuthorName {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
 .contribCardRole {
+  overflow: hidden;
+  flex: 0 1 38%;
+  min-width: 0;
   color: #8c7366;
   font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .contribCardText {
@@ -3152,31 +3165,129 @@
 
 @media (max-width: 560px) {
   .contribStrip {
-    padding: 20px;
+    padding: 14px 16px 16px;
     border-radius: 24px;
   }
 
+  .contribStripHead {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    column-gap: 10px;
+    row-gap: 5px;
+    align-items: center;
+  }
+
+  .contribStripHead .cardHeader,
+  .contribStripHead .cardHeader > div {
+    display: contents;
+  }
+
+  .contribStripHead .cardIcon {
+    grid-column: 1;
+    grid-row: 1;
+    width: 36px;
+    height: 36px;
+  }
+
+  .contribStripHead .sectionTitle {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    font-size: 1.35rem;
+    line-height: 1;
+    text-wrap: nowrap;
+  }
+
+  .contribStripHead .contribStripCount {
+    grid-column: 3;
+    grid-row: 1;
+    padding: 5px 8px;
+    font-size: 0.74rem;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .contribStripHead .hint {
+    display: -webkit-box;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    overflow: hidden;
+    margin: 0;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    color: #6e5549;
+    font-size: 0.88rem;
+    line-height: 1.35;
+  }
+
+  .contribCarousel {
+    margin-top: 10px;
+  }
+
   .contribCard {
-    flex-basis: 86%;
-    height: 76px;
+    flex-basis: 84%;
+    height: 72px;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .contribStripList {
+    gap: 10px;
+  }
+
+  .contribCardName {
+    font-size: 0.84rem;
+  }
+
+  .contribCardRole {
+    flex-basis: 36%;
+  }
+
+  .contribCardText {
+    font-size: 0.78rem;
+    line-height: 1.35;
   }
 
   .contribArrow {
     top: auto;
-    bottom: 8px;
+    bottom: 0;
+    width: 40px;
+    height: 40px;
     transform: none;
   }
 
+  .contribArrow::before {
+    position: absolute;
+    inset: -2px;
+    content: "";
+  }
+
   .contribArrowPrevious {
-    left: 0;
+    left: calc(50% - 48px);
   }
 
   .contribArrowNext {
-    right: 0;
+    right: calc(50% - 48px);
   }
 
   .contribCarousel:has(.contribArrow) {
-    padding-bottom: 56px;
+    padding-bottom: 48px;
+  }
+}
+
+@media (max-width: 370px) {
+  .contribStripHead {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .contribStripHead .contribStripCount {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .contribStripHead .hint {
+    grid-row: 3;
   }
 }
 
