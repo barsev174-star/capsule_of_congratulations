@@ -105,7 +105,7 @@ export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, invite
     </section>
   );
 
-  if (view === "skipped") return <section className={styles.giftPollSuccess} aria-live="polite"><strong>Поздравление добавлено</strong></section>;
+  if (view === "skipped") return <section className={styles.giftPollSuccess} aria-live="polite"><strong>Поздравление добавлено</strong><button type="button" className={styles.giftPollTextButton} onClick={() => { window.localStorage.removeItem(skipKey); setRevealed(true); setView("form"); }}>Вернуться к голосованию</button></section>;
 
   if (view === "voted") return <section ref={successRef} tabIndex={-1} className={styles.giftPollSuccess} aria-live="polite"><strong>Спасибо, ваш голос учтён</strong><p>Ваш выбор увидит только организатор.</p>{selectedOption ? <p className={styles.giftPollChoice}>Ваш выбор: <b>{titleCase(selectedOption.title)}</b></p> : null}<button type="button" className={styles.giftPollTextButton} onClick={() => setView("editing")}>Изменить выбор</button></section>;
 

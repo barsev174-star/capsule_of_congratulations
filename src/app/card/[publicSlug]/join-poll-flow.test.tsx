@@ -162,6 +162,18 @@ describe("GiftPollVote — post-submit сценарий", () => {
     expect(screen.getByRole("button", { name: "Повторить" })).toBeEnabled();
   });
 
+  it("после пропуска позволяет вернуться к голосованию", async () => {
+    window.localStorage.setItem(storageKey, crypto.randomUUID());
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ poll }) }));
+    render(<GiftPollVote publicSlug={slug} active />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Пропустить сейчас" }));
+    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Вернуться к голосованию" }));
+    expect(await screen.findByRole("radiogroup")).toBeInTheDocument();
+  });
+
   it("уже проголосовавшему показывает «Голос учтён»", async () => {
     window.localStorage.setItem(storageKey, crypto.randomUUID());
     vi.stubGlobal(
