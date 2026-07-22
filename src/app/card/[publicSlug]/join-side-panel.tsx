@@ -70,8 +70,15 @@ const JoinVariants = ({
     return (
       <div className={styles.variantCollapsedRow}>
         <span>Вариант вставлен</span>
-        <button type="button" className={styles.variantCollapsedButton} onClick={() => setCollapsed(false)}>
+        <button
+          type="button"
+          className={styles.variantCollapsedButton}
+          aria-expanded={false}
+          aria-controls={panelId}
+          onClick={() => setCollapsed(false)}
+        >
           Показать остальные
+          <span className={styles.variantCollapsedIcon} aria-hidden="true">▾</span>
         </button>
       </div>
     );
@@ -108,9 +115,11 @@ const JoinVariants = ({
           </div>
           <div className={styles.variantActions}>
             <button type="button" className={styles.useButton} onClick={() => applyVariant(activeVariant.text)}>
+              <span aria-hidden="true">↓</span>
               Использовать вариант
             </button>
             <button type="button" className={styles.retryButton} disabled={isPending || limitReached} onClick={onRetry}>
+              <span aria-hidden="true">↻</span>
               Получить ещё
             </button>
           </div>
