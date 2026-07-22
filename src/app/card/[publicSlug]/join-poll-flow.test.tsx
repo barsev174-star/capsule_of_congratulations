@@ -18,6 +18,16 @@ const poll = {
   selectedOptionId: null as string | null
 };
 
+const pollWithFiveOptions = {
+  ...poll,
+  options: [
+    ...poll.options,
+    { id: "o3", title: "цветы", description: null, imageUrl: null, priceLabel: null, productUrl: null },
+    { id: "o4", title: "театр", description: null, imageUrl: null, priceLabel: null, productUrl: null },
+    { id: "o5", title: "ужин", description: null, imageUrl: null, priceLabel: null, productUrl: null }
+  ]
+};
+
 const panelProps = {
   variants: [],
   generationId: "",
@@ -97,6 +107,16 @@ describe("JoinSidePanel — приоритет состояний", () => {
 });
 
 describe("GiftPollVote — post-submit сценарий", () => {
+  it("передаёт количество вариантов в сетку для count-aware раскладки", async () => {
+    window.localStorage.setItem(storageKey, crypto.randomUUID());
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ poll: pollWithFiveOptions }) }));
+    const { container } = render(<GiftPollVote publicSlug={slug} active />);
+
+    await screen.findByRole("radiogroup");
+    expect(container.querySelector("[data-count='5']")).toBeInTheDocument();
+    expect(screen.getAllByRole("radio")).toHaveLength(5);
+  });
+
   it("до отправки поздравления ничего не показывает", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ teaser: poll }) }));
     const { container } = render(<GiftPollVote publicSlug={slug} active={false} inviteToReveal />);
