@@ -3035,22 +3035,29 @@
   white-space: nowrap;
 }
 
-.contribStripViewport {
-  overflow-x: auto;
+.contribCarousel {
+  position: relative;
   margin-top: 14px;
-  scrollbar-width: thin;
 }
 
-.contribStripTrack {
-  display: flex;
-  width: max-content;
+.contribStripViewport {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  touch-action: pan-y;
+}
+
+.contribStripViewport::-webkit-scrollbar {
+  display: none;
 }
 
 .contribStripList {
   display: flex;
   gap: 12px;
   margin: 0;
-  padding: 0 12px 4px 0;
+  padding: 0;
   list-style: none;
 }
 
@@ -3058,7 +3065,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 240px;
+  box-sizing: border-box;
+  flex: 0 0 calc((100% - 36px) / 4);
+  min-width: 0;
+  height: 74px;
   padding: 12px 14px;
   border-radius: 16px;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.74), rgba(255, 248, 242, 0.72));
@@ -3096,26 +3106,48 @@
   white-space: nowrap;
 }
 
-.contribStripMarquee {
-  overflow: hidden;
+.contribArrow {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 250, 245, 0.96);
+  box-shadow: 0 4px 14px rgba(104, 55, 29, 0.14), inset 0 0 0 1px rgba(210, 91, 47, 0.24);
+  color: #d9683c;
+  cursor: pointer;
+  font-size: 1.65rem;
+  line-height: 1;
+  transform: translateY(-50%);
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease, scale 160ms ease;
 }
 
-.contribStripMarquee .contribStripTrack {
-  animation: contribStripScroll 38s linear infinite;
+.contribArrow:hover,
+.contribArrow:focus-visible {
+  background: #fff4ec;
+  box-shadow: 0 6px 18px rgba(104, 55, 29, 0.18), inset 0 0 0 1px rgba(210, 91, 47, 0.42);
+  color: #c95327;
 }
 
-.contribStripMarquee:hover .contribStripTrack,
-.contribStripMarquee:focus-within .contribStripTrack {
-  animation-play-state: paused;
+.contribArrow:focus-visible {
+  outline: 2px solid #d9683c;
+  outline-offset: 3px;
 }
 
-@keyframes contribStripScroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
+.contribArrow:active {
+  scale: 0.96;
+}
+
+.contribArrowPrevious {
+  left: -20px;
+}
+
+.contribArrowNext {
+  right: -20px;
 }
 
 @media (max-width: 560px) {
@@ -3125,16 +3157,35 @@
   }
 
   .contribCard {
-    width: 208px;
+    flex-basis: 86%;
+    height: 76px;
+  }
+
+  .contribArrow {
+    top: auto;
+    bottom: 8px;
+    transform: none;
+  }
+
+  .contribArrowPrevious {
+    left: 0;
+  }
+
+  .contribArrowNext {
+    right: 0;
+  }
+
+  .contribCarousel:has(.contribArrow) {
+    padding-bottom: 56px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .contribStripMarquee {
-    overflow-x: auto;
+  .contribStripViewport {
+    scroll-behavior: auto;
   }
 
-  .contribStripMarquee .contribStripTrack {
-    animation: none;
+  .contribArrow {
+    transition: none;
   }
 }

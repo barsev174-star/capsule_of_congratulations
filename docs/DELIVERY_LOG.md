@@ -760,3 +760,9 @@
 5. Kept the existing ability to change a submitted choice while the poll is open.
 6. Tightened mobile option cards and made the skip action a lower-emphasis text action.
 7. Added project-palette WebKit autofill styling for the join form.
+# 2026-07-22 — Join: карусель «Уже добавили»
+
+- Переработан существующий `ContributionsStrip` на `/join/[slug]`: нативный горизонтальный carousel со snap-позициями, стрелками и циклическим продолжением через скрытые клоны.
+- В carousel передаются все видимые поздравления, а не только первые шесть; после отправки `router.refresh()` актуализирует счётчик и состав списка без полной перезагрузки документа.
+- Autoplay делает один шаг раз в 5 секунд только при избытке карточек и останавливается при наведении, фокусе, touch/колесе, скрытой вкладке, выходе блока из viewport, `prefers-reduced-motion` и навсегда после первого ручного действия до обновления страницы.
+- Системный horizontal scrollbar скрыт; mobile использует swipe и `scroll-snap` с видимым краем следующей карточки.

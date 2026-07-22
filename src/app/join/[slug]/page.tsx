@@ -38,8 +38,6 @@ const formatCount = (count: number) => {
   return `${count} поздравлений`;
 };
 
-const previewContributionsLimit = 6;
-
 export default async function JoinCardPage({ params }: Props) {
   const { slug } = await params;
   const [card, lifecycle] = await Promise.all([getCardDraftByPublicSlug(slug), getCardLifecycleByPublicSlug(slug)]);
@@ -57,7 +55,6 @@ export default async function JoinCardPage({ params }: Props) {
   const recipientName = card.recipientName || "дорогого человека";
   const fromLabel = card.fromLabel?.trim();
   const occasionText = card.occasionText || "повод пока уточняется";
-  const previewContributions = contributions.slice(0, previewContributionsLimit);
   const isClosed = lifecycle.collectionStatus !== "OPEN" || lifecycle.deliveryStatus === "DELIVERED";
   const isLimitReached = contributionCount >= CARD_CONTRIBUTION_LIMIT;
 
@@ -154,7 +151,7 @@ export default async function JoinCardPage({ params }: Props) {
               <p className={styles.empty}>Пока никто не добавил поздравление. Ваше может быть первым.</p>
             ) : (
               <ContributionsStrip
-                items={previewContributions.map((contribution) => ({
+                items={contributions.map((contribution) => ({
                   id: contribution.id,
                   authorName: contribution.authorName,
                   authorRole: contribution.authorRole,
