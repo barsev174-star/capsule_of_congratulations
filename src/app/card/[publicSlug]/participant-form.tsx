@@ -25,6 +25,9 @@ type Props = {
   greetingMode?: "classic" | "matrix" | "ladder";
 };
 
+const DEFAULT_MESSAGE_PLACEHOLDER =
+  "Напишите несколько теплых слов: что цените, за что благодарны, какой момент хочется вспомнить...";
+
 export const ParticipantForm = ({
   cardId,
   publicSlug,
@@ -39,6 +42,7 @@ export const ParticipantForm = ({
   const [authorName, setAuthorName] = useState("");
   const [authorRole, setAuthorRole] = useState("");
   const [message, setMessage] = useState("");
+  const [messagePlaceholder, setMessagePlaceholder] = useState(DEFAULT_MESSAGE_PLACEHOLDER);
   const [aiGenerationIds, setAiGenerationIds] = useState<string[]>([]);
   const [aiResetSignal, setAiResetSignal] = useState(0);
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -50,10 +54,13 @@ export const ParticipantForm = ({
   const [aiIssues, setAiIssues] = useState<string[]>([]);
   const [aiRemaining, setAiRemaining] = useState<number | null>(null);
   const [aiLimitReached, setAiLimitReached] = useState(false);
-  const [aiInsertFeedback, setAiInsertFeedback] = useState("");
+  const [aiUndoDraft, setAiUndoDraft] = useState<string | null>(null);
   const [isAiPending, startAiTransition] = useTransition();
   const pendingAiRequestId = useRef<string | null>(null);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
+  const isOverLimit = message.length > messageLimit;
+  const aiPanelState = aiVariants.length > 0 ? "variants" : isAiPending ? "loading" : "idle";
   const clearSuccessOnEdit = () => {
     if (successMessage) {
       setSuccessMessage("");
@@ -96,6 +103,7 @@ export const ParticipantForm = ({
     setAuthorName("");
     setAuthorRole("");
     setMessage("");
+    setMessagePlaceholder(DEFAULT_MESSAGE_PLACEHOLDER);
     setAiGenerationIds([]);
     setAiResetSignal((current) => current + 1);
     setAiVariants([]);
@@ -103,7 +111,7 @@ export const ParticipantForm = ({
     setAiIssues([]);
     setAiRemaining(null);
     setAiLimitReached(false);
-    setAiInsertFeedback("");
+    setAiUndoDraft(null);
     router.refresh();
   };
 
@@ -111,7 +119,6 @@ export const ParticipantForm = ({
     const requestId = pendingAiRequestId.current ?? crypto.randomUUID();
     pendingAiRequestId.current = requestId;
     setAiIssues([]);
-    setAiInsertFeedback("");
 
     let response: Response;
     try {
@@ -160,6 +167,174 @@ export const ParticipantForm = ({
     });
   };
 
+  const handleUseVariant = (text: string) => {
+    setAiUndoDraft(message);
+    setMessage(text);
+    setSuccessMessage("");
+  };
+
+  const handleUndoVariant = () => {
+    if (aiUndoDraft === null) {
+      return;
+    }
+    setMessage(aiUndoDraft);
+    setAiUndoDraft(null);
+    messageRef.current?.focus({ preventScroll: true });
+  };
+
+  const handlePromptSelect = (placeholder: string) => {
+    setMessagePlaceholder(placeholder);
+    messageRef.current?.focus();
+  };
+
+  const handleMessageChange = (value: string) => {
+    clearSuccessOnEdit();
+    setMessage(value);
+    setAiUndoDraft(null);
+  };
+
+  const submitDisabled =
+    isPending || Boolean(successMessage) || !participantConsent || !message.trim() || (isJoin && isOverLimit);
+
+  if (!isJoin) {
+    return (
+      <>
+        {hasSubmitted ? (
+          <section className={styles.participantSubmitted} aria-live="polite">
+            <strong>Поздравление добавлено</strong>
+            <p>Спасибо — ваши слова стали частью общей открытки.</p>
+          </section>
+        ) : (
+        <section className={styles.formCard}>
+          <div className={styles.cardHeader}>
+            <div>
+              <h2 className={styles.sectionTitle}>Ваше поздравление</h2>
+              <p className={styles.hint}>
+                {`Напишите сами или попросите AI помочь с черновиком. Лучше уложиться в ${messageLimit} символов, чтобы текст красиво смотрелся в готовой открытке.`}
+              </p>
+            </div>
+          </div>
+
+          <form
+            className={styles.form}
+            action={(formData) => {
+              formData.set("cardId", cardId);
+
+              startTransition(async () => {
+                await handleSubmit(formData);
+              });
+            }}
+          >
+            {issues.length > 0 ? (
+              <div className={styles.errorBox} aria-live="polite">
+                <strong>Нужно поправить несколько полей:</strong>
+                <ul className={styles.errorList}>
+                  {issues.map((issue) => (
+                    <li key={`${issue.field}-${issue.message}`}>{issue.message}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {successMessage ? (
+              <div className={styles.successCard} aria-live="polite">
+                <strong>💌 Слова подарены</strong>
+                <p>{successMessage}</p>
+              </div>
+            ) : null}
+
+            <input type="hidden" name="cardId" value={cardId} />
+            <input type="hidden" name="aiGenerationIds" value={aiGenerationIds.join(",")} />
+
+            <div className={styles.fieldGrid}>
+              <div className={styles.field}>
+                <label htmlFor="authorName">Ваше имя</label>
+                <input
+                  id="authorName"
+                  name="authorName"
+                  placeholder="Например, Ольга"
+                  required
+                  value={authorName}
+                  onChange={(event) => {
+                    clearSuccessOnEdit();
+                    setAuthorName(event.target.value);
+                  }}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label htmlFor="authorRole">Подпись под именем</label>
+                <input
+                  id="authorRole"
+                  name="authorRole"
+                  placeholder="коллега, друг, семья..."
+                  value={authorRole}
+                  onChange={(event) => {
+                    clearSuccessOnEdit();
+                    setAuthorRole(event.target.value);
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className={styles.field}>
+              <div className={styles.fieldLabelRow}>
+                <label htmlFor="message">Текст поздравления</label>
+                <span className={styles.counter}>
+                  {message.length} / {messageLimit}
+                </span>
+              </div>
+              <textarea
+                id="message"
+                name="message"
+                placeholder={DEFAULT_MESSAGE_PLACEHOLDER}
+                required
+                maxLength={1500}
+                value={message}
+                onChange={(event) => handleMessageChange(event.target.value)}
+              />
+              <span className={styles.fieldHint}>
+                Пишите просто и по-настоящему. Даже несколько теплых фраз уже много значат.
+              </span>
+            </div>
+            <label className={styles.consent}>
+              <input name="participantConsent" type="checkbox" checked={participantConsent} onChange={(event) => setParticipantConsent(event.target.checked)} required />
+              <span>Я согласен на обработку моего имени и поздравления, а также на их показ организатору, получателю открытки и пользователям, имеющим ссылку на открытку. Подробнее — в <LegalDocumentModal document="privacy">политике обработки персональных данных</LegalDocumentModal>.</span>
+            </label>
+
+            <div className={styles.actions}>
+              <button type="submit" className={styles.submitButton} disabled={isPending || Boolean(successMessage) || !participantConsent}>
+                {!successMessage ? <span className={styles.buttonIcon} aria-hidden="true" /> : null}
+                {successMessage ? "✓ Слова подарены" : isPending ? "Добавляем..." : "Подарить слова"}
+              </button>
+              <p className={styles.submitHint}>Ваше поздравление попадёт в открытку.</p>
+            </div>
+          </form>
+        </section>
+        )}
+
+        {!hasSubmitted ? <AiHelper
+          key={aiResetSignal}
+          cardId={cardId}
+          publicSlug={publicSlug}
+          occasionText={occasionText}
+          relationshipContext={authorRole}
+          messageLimit={messageLimit}
+          onUseText={(text) => {
+            setMessage(text);
+            setSuccessMessage("");
+          }}
+          onGeneration={(generationId) => {
+            setAiGenerationIds((current) => current.includes(generationId) ? current : [...current, generationId]);
+          }}
+          variant={variant}
+          greetingMode={greetingMode}
+        /> : null}
+        <GiftPollVote key={hasSubmitted ? "participant-submitted" : "participant-new"} publicSlug={publicSlug} active={hasSubmitted} focusOnReveal={Boolean(successMessage)} />
+      </>
+    );
+  }
+
   return (
     <>
       {hasSubmitted ? (
@@ -168,21 +343,8 @@ export const ParticipantForm = ({
           <p>Спасибо — ваши слова стали частью общей открытки.</p>
         </section>
       ) : (
-      <section className={styles.formCard}>
-        <div className={styles.cardHeader}>
-          {variant === "join" ? <span className={`${styles.cardIcon} ${styles.pencilIcon}`} aria-hidden="true" /> : null}
-          <div>
-            <h2 className={styles.sectionTitle}>Ваше поздравление</h2>
-            <p className={styles.hint}>
-              {variant === "join"
-                ? "Напишите от себя — просто и по-настоящему"
-                : `Напишите сами или попросите AI помочь с черновиком. Лучше уложиться в ${messageLimit} символов, чтобы текст красиво смотрелся в готовой открытке.`}
-            </p>
-          </div>
-        </div>
-
         <form
-          className={styles.form}
+          className={styles.formShell}
           action={(formData) => {
             formData.set("cardId", cardId);
 
@@ -191,144 +353,148 @@ export const ParticipantForm = ({
             });
           }}
         >
-          {issues.length > 0 ? (
-            <div className={styles.errorBox} aria-live="polite">
-              <strong>Нужно поправить несколько полей:</strong>
-              <ul className={styles.errorList}>
-                {issues.map((issue) => (
-                  <li key={`${issue.field}-${issue.message}`}>{issue.message}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+          <section className={`${styles.formCard} ${styles.formCardMain}`}>
+            <div className={styles.form}>
+              <div className={styles.cardHeader}>
+                <span className={`${styles.cardIcon} ${styles.pencilIcon}`} aria-hidden="true" />
+                <div>
+                  <h2 className={styles.sectionTitle}>Ваше поздравление</h2>
+                  <p className={styles.hint}>Напишите от себя — просто и по-настоящему.</p>
+                </div>
+              </div>
 
-          {successMessage ? (
-            <div className={styles.successCard} aria-live="polite">
-              <strong>💌 Слова подарены</strong>
-              <p>{successMessage}</p>
-            </div>
-          ) : null}
-
-          <input type="hidden" name="cardId" value={cardId} />
-          <input type="hidden" name="aiGenerationIds" value={aiGenerationIds.join(",")} />
-
-          <div className={styles.fieldGrid}>
-            <div className={styles.field}>
-              <label htmlFor="authorName">Ваше имя</label>
-              <input
-                id="authorName"
-                name="authorName"
-                placeholder="Например, Ольга"
-                required
-                value={authorName}
-                onChange={(event) => {
-                  clearSuccessOnEdit();
-                  setAuthorName(event.target.value);
-                }}
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label htmlFor="authorRole">Подпись под именем</label>
-              <input
-                id="authorRole"
-                name="authorRole"
-                placeholder="коллега, друг, семья..."
-                value={authorRole}
-                onChange={(event) => {
-                  clearSuccessOnEdit();
-                  setAuthorRole(event.target.value);
-                }}
-              />
-            </div>
-          </div>
-
-          <div className={styles.field}>
-            <div className={styles.fieldLabelRow}>
-              <label htmlFor="message">Текст поздравления</label>
-              <span className={styles.counter}>
-                {message.length} / {messageLimit}
-              </span>
-            </div>
-            <textarea
-              id="message"
-              name="message"
-              placeholder="Напишите несколько теплых слов: что цените, за что благодарны, какой момент хочется вспомнить..."
-              required
-              maxLength={1500}
-              value={message}
-              onChange={(event) => {
-                clearSuccessOnEdit();
-                setMessage(event.target.value);
-              }}
-            />
-            <div className={styles.fieldFooterRow}>
-              <span className={styles.fieldHint}>
-                Пишите просто и по-настоящему. Даже несколько теплых фраз уже много значат.
-              </span>
-              {isJoin ? (
-                <button
-                  type="button"
-                  className={styles.aiTrigger}
-                  onClick={generateAiVariants}
-                  disabled={isAiPending || aiLimitReached}
-                >
-                  <span className={styles.aiTriggerIcon} aria-hidden="true" />
-                  {isAiPending ? "Готовим варианты..." : "Помочь с текстом"}
-                </button>
+              {issues.length > 0 ? (
+                <div className={styles.errorBox} aria-live="polite">
+                  <strong>Нужно поправить несколько полей:</strong>
+                  <ul className={styles.errorList}>
+                    {issues.map((issue) => (
+                      <li key={`${issue.field}-${issue.message}`}>{issue.message}</li>
+                    ))}
+                  </ul>
+                </div>
               ) : null}
+
+              {successMessage ? (
+                <div className={styles.successCard} aria-live="polite">
+                  <strong>💌 Слова подарены</strong>
+                  <p>{successMessage}</p>
+                </div>
+              ) : null}
+
+              <input type="hidden" name="cardId" value={cardId} />
+              <input type="hidden" name="aiGenerationIds" value={aiGenerationIds.join(",")} />
+
+              <div className={styles.fieldGrid}>
+                <div className={styles.field}>
+                  <label htmlFor="authorName">Ваше имя</label>
+                  <input
+                    id="authorName"
+                    name="authorName"
+                    placeholder="Например, Ольга"
+                    required
+                    value={authorName}
+                    onChange={(event) => {
+                      clearSuccessOnEdit();
+                      setAuthorName(event.target.value);
+                    }}
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <label htmlFor="authorRole">Подпись — необязательно</label>
+                  <input
+                    id="authorRole"
+                    name="authorRole"
+                    placeholder="мама Миши, коллега, семья Ивановых"
+                    value={authorRole}
+                    onChange={(event) => {
+                      clearSuccessOnEdit();
+                      setAuthorRole(event.target.value);
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.field}>
+                <div className={styles.fieldLabelRow}>
+                  <label htmlFor="message">Текст поздравления</label>
+                </div>
+                <div className={`${styles.editorShell} ${isOverLimit ? styles.editorShellOver : ""}`}>
+                  <textarea
+                    id="message"
+                    name="message"
+                    ref={messageRef}
+                    placeholder={messagePlaceholder}
+                    required
+                    maxLength={1500}
+                    value={message}
+                    aria-describedby="join-editor-limit"
+                    aria-invalid={isOverLimit}
+                    onChange={(event) => handleMessageChange(event.target.value)}
+                    onBlur={() => setMessagePlaceholder(DEFAULT_MESSAGE_PLACEHOLDER)}
+                  />
+                  <div className={styles.editorToolbar}>
+                    <span className={styles.editorCounter} id="join-editor-limit">
+                      {isOverLimit
+                        ? `${message.length} символов · ИИ сократит до ${messageLimit}`
+                        : `${message.length} символов · итоговое поздравление до ${messageLimit}`}
+                    </span>
+                    {aiUndoDraft !== null ? (
+                      <button type="button" className={styles.undoChip} onClick={handleUndoVariant}>
+                        Отменить замену
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className={styles.aiTrigger}
+                      onClick={generateAiVariants}
+                      disabled={isAiPending || aiLimitReached}
+                    >
+                      <span className={styles.aiTriggerIcon} aria-hidden="true" />
+                      {isAiPending ? "Готовим варианты..." : "Помочь с текстом"}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <label className={styles.consent}>
-            <input name="participantConsent" type="checkbox" checked={participantConsent} onChange={(event) => setParticipantConsent(event.target.checked)} required />
-            <span>Я согласен на обработку моего имени и поздравления, а также на их показ организатору, получателю открытки и пользователям, имеющим ссылку на открытку. Подробнее — в <LegalDocumentModal document="privacy">политике обработки персональных данных</LegalDocumentModal>.</span>
-          </label>
+          </section>
 
-          <div className={styles.actions}>
-            <button type="submit" className={styles.submitButton} disabled={isPending || Boolean(successMessage) || !participantConsent}>
-              {!successMessage ? <span className={styles.buttonIcon} aria-hidden="true" /> : null}
-              {successMessage ? "✓ Слова подарены" : isPending ? "Добавляем..." : "Подарить слова"}
-            </button>
-            <p className={styles.submitHint}>Ваше поздравление попадёт в открытку.</p>
-          </div>
+          <JoinSidePanel
+            state={aiPanelState}
+            variants={aiVariants}
+            generationId={aiGenerationId}
+            isPending={isAiPending}
+            limitReached={aiLimitReached}
+            issues={aiIssues}
+            remaining={aiRemaining}
+            onPromptSelect={handlePromptSelect}
+            onUseVariant={handleUseVariant}
+            onRetry={generateAiVariants}
+          />
+
+          <section className={`${styles.formCard} ${styles.formCardFooter}`}>
+            <div className={styles.form}>
+              <label className={styles.consent}>
+                <input name="participantConsent" type="checkbox" checked={participantConsent} onChange={(event) => setParticipantConsent(event.target.checked)} required />
+                <span>Я согласен на обработку моего имени и поздравления, а также на их показ организатору, получателю открытки и пользователям, имеющим ссылку на открытку. Подробнее — в <LegalDocumentModal document="privacy">политике обработки персональных данных</LegalDocumentModal>.</span>
+              </label>
+
+              {isOverLimit ? (
+                <p className={styles.submitLimitHint} aria-live="polite">
+                  Выберите вариант ИИ или сократите текст до {messageLimit} символов.
+                </p>
+              ) : null}
+
+              <div className={styles.actions}>
+                <button type="submit" className={styles.submitButton} disabled={submitDisabled}>
+                  {!successMessage ? <span className={styles.buttonIcon} aria-hidden="true" /> : null}
+                  {successMessage ? "✓ Слова подарены" : isPending ? "Добавляем..." : "Подарить слова"}
+                </button>
+              </div>
+            </div>
+          </section>
         </form>
-      </section>
       )}
-
-      {!hasSubmitted && isJoin ? (
-        <JoinSidePanel
-          variants={aiVariants}
-          generationId={aiGenerationId}
-          isPending={isAiPending}
-          limitReached={aiLimitReached}
-          insertFeedback={aiInsertFeedback}
-          issues={aiIssues}
-          remaining={aiRemaining}
-          onUseVariant={(text) => {
-            setMessage(text);
-            setSuccessMessage("");
-            setAiInsertFeedback("Текст вставлен в поздравление");
-          }}
-          onRetry={generateAiVariants}
-        />
-      ) : null}
-      {!hasSubmitted && !isJoin ? <AiHelper
-        key={aiResetSignal}
-        cardId={cardId}
-        publicSlug={publicSlug}
-        occasionText={occasionText}
-        relationshipContext={authorRole}
-        messageLimit={messageLimit}
-        onUseText={(text) => {
-          setMessage(text);
-          setSuccessMessage("");
-        }}
-        onGeneration={(generationId) => {
-          setAiGenerationIds((current) => current.includes(generationId) ? current : [...current, generationId]);
-        }}
-        variant={variant}
-        greetingMode={greetingMode}
-      /> : null}
       <GiftPollVote key={hasSubmitted ? "participant-submitted" : "participant-new"} publicSlug={publicSlug} active={hasSubmitted} focusOnReveal={Boolean(successMessage)} />
     </>
   );

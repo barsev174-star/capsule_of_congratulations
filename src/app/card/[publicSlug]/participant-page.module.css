@@ -670,7 +670,7 @@
   color: var(--muted);
 }
 
-.consent { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; color: #6e5549; font-size: .9rem; line-height: 1.45; border-radius: 14px; background: rgba(255, 255, 255, .56); }
+.consent { display: flex; align-items: flex-start; gap: 10px; padding: 6px 4px; color: #6e5549; font-size: .9rem; line-height: 1.45; border-radius: 14px; }
 .consent input { width: 18px; height: 18px; margin-top: 2px; flex: 0 0 auto; accent-color: #c65431; }
 .consent a { color: #a7482a; text-decoration-thickness: 1px; text-underline-offset: 2px; }
 
@@ -1762,7 +1762,7 @@
 
 @media (min-width: 960px) {
   .layout {
-    grid-template-columns: 1.1fr 0.9fr;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
     align-items: start;
   }
 
@@ -2134,5 +2134,366 @@
 
   .aiTrigger {
     align-self: flex-start;
+  }
+}
+
+
+/* Join: unified editor + dynamic side panel states */
+.formShell {
+  display: contents;
+}
+
+.formCardMain {
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.formCardFooter {
+  margin-top: -24px;
+  padding-top: 4px;
+  border-top-right-radius: 0;
+  border-top-left-radius: 0;
+}
+
+.editorShell {
+  overflow: hidden;
+  border: 1px solid rgba(92, 64, 48, 0.14);
+  border-radius: 16px;
+  background: #fffcf8;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.75) inset;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.editorShell:hover {
+  border-color: rgba(92, 67, 51, 0.3);
+  background: #fffdf9;
+}
+
+.editorShell:focus-within {
+  border-color: rgba(191, 108, 71, 0.55);
+  box-shadow:
+    0 0 0 4px rgba(191, 108, 71, 0.13),
+    0 1px 0 rgba(255, 255, 255, 0.75) inset;
+}
+
+.editorShell textarea {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  min-height: 160px;
+}
+
+.editorShell textarea:hover,
+.editorShell textarea:focus {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.editorToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(92, 64, 48, 0.09);
+  background: rgba(255, 250, 244, 0.66);
+}
+
+.editorCounter {
+  flex: 1 1 auto;
+  min-width: 180px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.editorShellOver {
+  border-color: rgba(187, 124, 66, 0.45);
+}
+
+.editorShellOver .editorCounter {
+  color: #a6562f;
+  font-weight: 700;
+}
+
+.undoChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #8e4f34;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(92, 64, 48, 0.14);
+  transition:
+    transform 150ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.undoChip:hover {
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(92, 64, 48, 0.2), 0 6px 12px rgba(83, 49, 28, 0.06);
+}
+
+.undoChip:active {
+  transform: scale(0.96);
+}
+
+.undoChip:focus-visible {
+  outline: 3px solid rgba(191, 108, 71, 0.28);
+  outline-offset: 3px;
+}
+
+.submitLimitHint {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 246, 231, 0.9);
+  box-shadow: 0 0 0 1px rgba(187, 124, 66, 0.16);
+  color: #8c5a3c;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.panelState {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  animation: joinPanelFadeUp 220ms ease both;
+}
+
+@keyframes joinPanelFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.promptsToggle {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(92, 64, 48, 0.1);
+  color: #50372b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.promptsToggle:focus-visible {
+  outline: 3px solid rgba(191, 108, 71, 0.28);
+  outline-offset: 3px;
+}
+
+.promptsToggleIcon {
+  position: relative;
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  transition: transform 180ms ease;
+}
+
+.promptsToggleIcon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-right: 2px solid #a6562f;
+  border-bottom: 2px solid #a6562f;
+  transform: rotate(45deg) translate(-2px, -2px);
+}
+
+.promptsToggleIconOpen {
+  transform: rotate(180deg);
+}
+
+.promptList {
+  display: none;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.promptListOpen {
+  display: grid;
+}
+
+.promptButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(92, 64, 48, 0.08);
+  color: #50372b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: left;
+  transition:
+    transform 150ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.promptButton:hover {
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: inset 0 0 0 1px rgba(92, 64, 48, 0.12), 0 6px 14px rgba(83, 49, 28, 0.05);
+}
+
+.promptButton:active {
+  transform: scale(0.98);
+}
+
+.promptButton:focus-visible {
+  outline: 3px solid rgba(191, 108, 71, 0.28);
+  outline-offset: 3px;
+}
+
+.promptIcon {
+  flex: 0 0 auto;
+  font-size: 1rem;
+}
+
+.privacyLock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #977a68;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.loadingDots {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 2px;
+}
+
+.loadingDots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #dd8659;
+  opacity: 0.4;
+  animation: joinDotWave 1.2s ease-in-out infinite;
+}
+
+.loadingDots span:nth-child(2) {
+  animation-delay: 160ms;
+}
+
+.loadingDots span:nth-child(3) {
+  animation-delay: 320ms;
+}
+
+@keyframes joinDotWave {
+  0%, 100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateY(-3px);
+  }
+}
+
+.variantCollapsedRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(92, 64, 48, 0.08);
+  color: #6f7c4a;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.variantCollapsedButton {
+  border: 0;
+  background: transparent;
+  color: #c6542f;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.variantCollapsedButton:focus-visible {
+  outline: 3px solid rgba(191, 108, 71, 0.28);
+  outline-offset: 3px;
+}
+
+@media (min-width: 960px) {
+  .sidePanelCard {
+    min-height: 360px;
+  }
+
+  .promptList {
+    display: grid;
+  }
+}
+
+@media (max-width: 959px) {
+  .promptsToggle {
+    display: flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panelState {
+    animation: none;
+  }
+
+  .loadingDots span {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .editorShell,
+  .aiTrigger,
+  .undoChip,
+  .promptButton,
+  .promptsToggle,
+  .promptsToggleIcon,
+  .variantCollapsedButton {
+    transition: none;
   }
 }
