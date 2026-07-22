@@ -48,6 +48,7 @@ const JoinVariants = ({
 }: VariantsProps) => {
   const [activeVariantIndex, setActiveVariantIndex] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
+  const [inserted, setInserted] = useState(false);
   const activeVariant = variants[activeVariantIndex] ?? variants[0];
 
   if (!activeVariant) {
@@ -59,6 +60,7 @@ const JoinVariants = ({
 
   const applyVariant = (text: string) => {
     onUseVariant(text);
+    setInserted(true);
     if (window.matchMedia("(max-width: 959px)").matches) {
       setCollapsed(true);
     }
@@ -108,19 +110,24 @@ const JoinVariants = ({
             <button type="button" className={styles.useButton} onClick={() => applyVariant(activeVariant.text)}>
               Использовать вариант
             </button>
-            <div className={styles.variantRetryGroup}>
-              <button type="button" className={styles.retryButton} disabled={isPending || limitReached} onClick={onRetry}>
-                Получить ещё варианты
-              </button>
-              {remaining !== null ? (
-                <span className={styles.variantRemaining}>
-                  {remaining > 0 ? formatGenerationsLeft(remaining) : "Лимит AI-вариантов исчерпан"}
-                </span>
-              ) : null}
-            </div>
+            <button type="button" className={styles.retryButton} disabled={isPending || limitReached} onClick={onRetry}>
+              Получить ещё
+            </button>
           </div>
         </article>
       </div>
+      <footer className={styles.panelFooter}>
+        <p className={styles.panelFooterNote}>
+          {inserted
+            ? "Выбранный текст уже добавлен в поле слева. Его можно свободно отредактировать перед отправкой."
+            : "Текст не отправится автоматически. После выбора его можно отредактировать слева."}
+        </p>
+        {remaining !== null ? (
+          <span className={styles.panelFooterCounter}>
+            {remaining > 0 ? formatGenerationsLeft(remaining) : "Лимит AI-вариантов исчерпан"}
+          </span>
+        ) : null}
+      </footer>
     </div>
   );
 };
@@ -230,10 +237,15 @@ export const JoinSidePanel = ({
               </div>
             ) : null}
 
-            <p className={styles.privacyLock}>
-              <span aria-hidden="true">🔒</span>
-              Черновик и варианты хранятся только до отправки.
-            </p>
+            <footer className={styles.panelFooter}>
+              <p className={styles.panelFooterNote}>
+                Пример не вставляется автоматически — напишите мысль своими словами.
+              </p>
+              <p className={styles.privacyLock}>
+                <span aria-hidden="true">🔒</span>
+                Черновик и варианты хранятся только до отправки.
+              </p>
+            </footer>
           </div>
         ) : null}
 
@@ -258,6 +270,11 @@ export const JoinSidePanel = ({
                 </li>
               ))}
             </ul>
+            <footer className={styles.panelFooter}>
+              <p className={styles.panelFooterNote}>
+                <span aria-hidden="true">⏳</span> Обычно это занимает несколько секунд.
+              </p>
+            </footer>
           </div>
         ) : null}
 

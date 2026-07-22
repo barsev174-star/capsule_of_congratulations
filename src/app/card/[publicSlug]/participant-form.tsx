@@ -203,7 +203,6 @@ export const ParticipantForm = ({
       setHintIndexes((current) => ({ ...current, [hint.id]: nextIndex }));
     }
     setHintBlockVisible(true);
-    messageRef.current?.focus();
   };
 
   const handleMessageChange = (value: string) => {
