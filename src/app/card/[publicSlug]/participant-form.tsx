@@ -7,7 +7,6 @@ import type { AiVariant } from "@/lib/ai/types";
 import { AiHelper } from "./ai-helper";
 import { GiftPollVote } from "./gift-poll-vote";
 import { JoinSidePanel } from "./join-side-panel";
-import { JoinPollSheet, JoinPollTeaserView, JoinPollVotedView, JoinPollVotingForm, type JoinPoll } from "./join-poll";
 import { GREETING_HINTS, type GreetingHint, type GreetingHintId } from "./greeting-hints";
 import { LegalDocumentModal } from "@/components/legal/legal-document-modal";
 import styles from "./participant-page.module.css";
@@ -67,10 +66,7 @@ export const ParticipantForm = ({
     wishes: 0
   });
   const [hintBlockVisible, setHintBlockVisible] = useState(false);
-  const [pollTeaser, setPollTeaser] = useState<JoinPoll | null>(null);
-  const [pollView, setPollView] = useState<"teaser" | "voting" | "voted">("teaser");
-  const [pollVotedOptionId, setPollVotedOptionId] = useState<string | null>(null);
-  const [pollSheetOpen, setPollSheetOpen] = useState(false);
+  const [hasActivePoll, setHasActivePoll] = useState(false);
   const router = useRouter();
   const isOverLimit = message.length > messageLimit;
   const activeHint = GREETING_HINTS.find((hint) => hint.id === activeHintId) ?? null;
@@ -97,44 +93,16 @@ export const ParticipantForm = ({
     let cancelled = false;
     void fetch(`/api/join/${publicSlug}/gift-poll`)
       .then((response) => (response.ok ? response.json() : null))
-      .then((payload: { teaser?: JoinPoll | null } | null) => {
+      .then((payload: { teaser?: unknown } | null) => {
         if (!cancelled) {
-          setPollTeaser(payload?.teaser ?? null);
+          setHasActivePoll(Boolean(payload?.teaser));
         }
-      });
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
   }, [isJoin, publicSlug]);
-
-  const openPollVoting = () => {
-    if (window.matchMedia("(max-width: 959px)").matches) {
-      setPollSheetOpen(true);
-      return;
-    }
-    setPollView("voting");
-  };
-
-  const handlePollVoted = (optionId: string) => {
-    setPollVotedOptionId(optionId);
-    setPollView("voted");
-    setPollSheetOpen(false);
-  };
-
-  const pollSlot = pollTeaser ? (
-    pollView === "voting" ? (
-      <JoinPollVotingForm
-        publicSlug={publicSlug}
-        poll={pollTeaser}
-        onVoted={handlePollVoted}
-        onCancel={() => setPollView(pollVotedOptionId ? "voted" : "teaser")}
-      />
-    ) : pollView === "voted" && pollVotedOptionId ? (
-      <JoinPollVotedView poll={pollTeaser} optionId={pollVotedOptionId} onChangeVote={openPollVoting} />
-    ) : (
-      <JoinPollTeaserView poll={pollTeaser} onOpenVoting={openPollVoting} />
-    )
-  ) : null;
 
   const handleSubmit = async (formData: FormData) => {
     setIssues([]);
@@ -545,7 +513,7 @@ export const ParticipantForm = ({
             activeHintExample={activeHintExample}
             hintExampleVisible={hintBlockVisible}
             exampleBlockId="join-hint-example"
-            pollSlot={pollSlot}
+            hasActivePoll={hasActivePoll}
             onHintSelect={handleHintSelect}
             onHideHintExample={() => setHintBlockVisible(false)}
             onUseVariant={handleUseVariant}
@@ -575,15 +543,12 @@ export const ParticipantForm = ({
           </section>
         </form>
       )}
-      {pollSheetOpen && pollTeaser ? (
-        <JoinPollSheet
-          publicSlug={publicSlug}
-          poll={pollTeaser}
-          onVoted={handlePollVoted}
-          onClose={() => setPollSheetOpen(false)}
-        />
-      ) : null}
-      <GiftPollVote key={hasSubmitted ? "participant-submitted" : "participant-new"} publicSlug={publicSlug} active={hasSubmitted} focusOnReveal={Boolean(successMessage)} />
+      <GiftPollVote
+        key={hasSubmitted ? "participant-submitted" : "participant-new"}
+        publicSlug={publicSlug}
+        active={hasSubmitted}
+        inviteToReveal
+      />
     </>
   );
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import type { AiVariant } from "@/lib/ai/types";
 import { GREETING_HINTS, type GreetingHint, type GreetingHintId } from "./greeting-hints";
 import styles from "./participant-page.module.css";
@@ -153,7 +153,7 @@ type Props = {
   activeHintExample: string | null;
   hintExampleVisible: boolean;
   exampleBlockId: string;
-  pollSlot?: ReactNode;
+  hasActivePoll?: boolean;
   onHintSelect: (hint: GreetingHint) => void;
   onHideHintExample: () => void;
   onUseVariant: (text: string) => void;
@@ -172,7 +172,7 @@ export const JoinSidePanel = ({
   activeHintExample,
   hintExampleVisible,
   exampleBlockId,
-  pollSlot = null,
+  hasActivePoll = false,
   onHintSelect,
   onHideHintExample,
   onUseVariant,
@@ -183,9 +183,7 @@ export const JoinSidePanel = ({
   return (
     <aside className={styles.sidePanel} aria-label="AI-помощник поздравления">
       <section className={`${styles.aiCard} ${styles.joinAiCard} ${styles.sidePanelCard}`} aria-live="polite">
-        {state === "idle" && pollSlot ? pollSlot : null}
-
-        {state === "idle" && !pollSlot ? (
+        {state === "idle" ? (
           <div className={styles.panelState}>
             <div className={styles.sidePanelHead}>
               <span className={styles.sidePanelWand} aria-hidden="true" />
@@ -248,6 +246,13 @@ export const JoinSidePanel = ({
                   Нажмите на подсказку ещё раз, чтобы увидеть другой пример.
                 </span>
               </div>
+            ) : null}
+
+            {hasActivePoll ? (
+              <p className={styles.panelPollTeaser}>
+                <span aria-hidden="true">🎁</span>
+                После поздравления можно помочь выбрать подарок
+              </p>
             ) : null}
 
             <footer className={styles.panelFooter}>
