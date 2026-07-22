@@ -3092,19 +3092,22 @@
 }
 
 .contribCarousel {
-  position: relative;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  align-items: center;
+  column-gap: 8px;
   margin-top: 14px;
 }
 
 .contribStripViewport {
   overflow-x: auto;
+  overflow-y: hidden;
   box-sizing: border-box;
-  padding-inline: 24px;
   overscroll-behavior-x: contain;
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
 }
 
 .contribStripViewport::-webkit-scrollbar {
@@ -3179,29 +3182,28 @@
 }
 
 .contribArrow {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
   display: grid;
+  box-sizing: border-box;
   width: 40px;
   height: 40px;
+  justify-self: center;
   place-items: center;
-  border: 0;
+  border: 1px solid rgba(217, 104, 60, 0.38);
   border-radius: 999px;
   background: rgba(255, 250, 245, 0.96);
-  box-shadow: 0 4px 14px rgba(104, 55, 29, 0.14), inset 0 0 0 1px rgba(210, 91, 47, 0.24);
+  box-shadow: 0 3px 10px rgba(104, 55, 29, 0.08);
   color: #d9683c;
   cursor: pointer;
   font-size: 1.65rem;
   line-height: 1;
-  transform: translateY(-50%);
-  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease, scale 160ms ease;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, scale 160ms ease;
 }
 
 .contribArrow:hover,
 .contribArrow:focus-visible {
   background: #fff4ec;
-  box-shadow: 0 6px 18px rgba(104, 55, 29, 0.18), inset 0 0 0 1px rgba(210, 91, 47, 0.42);
+  border-color: rgba(201, 83, 39, 0.62);
+  box-shadow: 0 4px 12px rgba(104, 55, 29, 0.1);
   color: #c95327;
 }
 
@@ -3214,15 +3216,7 @@
   scale: 0.96;
 }
 
-.contribArrowPrevious {
-  left: 2px;
-}
-
-.contribArrowNext {
-  right: 2px;
-}
-
-@media (max-width: 560px) {
+@media (max-width: 719px) {
   .contribStrip {
     padding: 14px 16px 16px;
     border-radius: 24px;
@@ -3280,11 +3274,12 @@
   }
 
   .contribCarousel {
+    display: block;
     margin-top: 10px;
   }
 
   .contribStripViewport {
-    padding-inline: 0;
+    touch-action: pan-x pan-y;
   }
 
   .contribCard {

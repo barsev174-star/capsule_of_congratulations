@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ContributionsStrip, type ContributionStripItem } from "./contributions-strip";
 
@@ -57,5 +57,25 @@ describe("ContributionsStrip", () => {
 
     expect(screen.queryByRole("button", { name: "Показать предыдущее поздравление" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Показать следующее поздравление" })).not.toBeInTheDocument();
+  });
+
+  it("не выключает автопрокрутку от вертикального касания страницы", () => {
+    vi.useFakeTimers();
+    const scrollTo = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollTo", { configurable: true, value: scrollTo });
+    Object.defineProperty(HTMLElement.prototype, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ width: 100, height: 80, top: 0, right: 100, bottom: 80, left: 0, x: 0, y: 0, toJSON: () => ({}) })
+    });
+
+    render(<ContributionsStrip items={items} />);
+    const carousel = screen.getByLabelText("Поздравления участников");
+    fireEvent.pointerDown(carousel, { pointerType: "touch", pointerId: 1, clientX: 40, clientY: 20 });
+    fireEvent.pointerUp(carousel, { pointerType: "touch", pointerId: 1, clientX: 42, clientY: 80 });
+
+    act(() => { vi.advanceTimersByTime(5000); });
+
+    expect(scrollTo).toHaveBeenCalled();
+    vi.useRealTimers();
   });
 });

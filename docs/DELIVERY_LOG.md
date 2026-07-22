@@ -784,3 +784,9 @@
 - Имя, подпись и фрагмент поздравления разделены на три строки; подпись показывается в сохранённом виде, без автоматического префикса.
 - Desktop-карточки получили боковые gutters для стрелок, mobile показывает одну полную карточку и около 10% следующей без отдельной строки управления.
 - Иконка блока уточнена до двух силуэтов; сохранены терракотовый акцент интерактивных деталей, swipe и autoplay.
+
+# 2026-07-22 — Join: carousel gesture recovery
+
+- Restored native horizontal swipe by allowing horizontal panning inside the carousel viewport.
+- Vertical touches no longer stop autoplay; autoplay pauses only after a meaningful horizontal swipe or explicit navigation.
+- Moved desktop arrows into fixed 48px grid gutters, keeping four full cards inside the viewport and hiding arrows on mobile.

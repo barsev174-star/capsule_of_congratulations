@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 import styles from "./participant-page.module.css";
 
 export type ContributionStripItem = {
@@ -32,6 +32,7 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
   const viewportRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const loopResetRef = useRef<number | null>(null);
+  const touchStartRef = useRef<{ pointerId: number; x: number; y: number } | null>(null);
   const [visibleSlots, setVisibleSlots] = useState(4);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -118,6 +119,21 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
 
   const pauseForManualInteraction = () => setManualStop(true);
 
+  const trackTouchStart = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
+    touchStartRef.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+  };
+
+  const pauseAfterHorizontalSwipe = (event: PointerEvent<HTMLDivElement>) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start || start.pointerId !== event.pointerId) return;
+
+    const horizontalDistance = Math.abs(event.clientX - start.x);
+    const verticalDistance = Math.abs(event.clientY - start.y);
+    if (horizontalDistance > 12 && horizontalDistance > verticalDistance) pauseForManualInteraction();
+  };
+
   return (
     <div
       className={styles.contribCarousel}
@@ -129,9 +145,9 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setHasFocus(false);
       }}
-      onPointerDown={(event) => {
-        if (event.pointerType === "touch" || event.pointerType === "pen") pauseForManualInteraction();
-      }}
+      onPointerDown={trackTouchStart}
+      onPointerUp={pauseAfterHorizontalSwipe}
+      onPointerCancel={() => { touchStartRef.current = null; }}
     >
       {canNavigate ? (
         <button type="button" className={`${styles.contribArrow} ${styles.contribArrowPrevious}`} aria-label="Показать предыдущее поздравление" onClick={() => move("previous", true)}>
