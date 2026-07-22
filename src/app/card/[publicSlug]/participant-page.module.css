@@ -925,7 +925,7 @@
 }
 
 .variantTab {
-  min-height: 38px;
+  min-height: 32px;
   padding: 0 8px;
   border: 0;
   border-radius: 12px;
@@ -1952,7 +1952,7 @@
   }
 
   .variantTab {
-    min-height: 34px;
+    min-height: 30px;
     padding: 0 5px;
     border-radius: 10px;
     font-size: 0.82rem;
@@ -2454,25 +2454,23 @@
   align-items: center;
   gap: 6px;
   min-height: 44px;
-  padding: 0 16px;
-  border: 1px solid rgba(198, 84, 47, 0.45);
+  padding: 6px 12px;
+  border: 0;
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.76);
+  background: transparent;
   color: #c6542f;
   cursor: pointer;
   font: inherit;
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
   transition:
     background-color 160ms ease,
-    box-shadow 160ms ease,
     transform 150ms ease;
 }
 
 .variantCollapsedButton:hover {
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(198, 84, 47, 0.1);
+  background: rgba(255, 252, 248, 0.85);
 }
 
 .variantCollapsedButton:active {
@@ -2686,11 +2684,12 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-height: 38px;
-  padding: 0 14px;
-  border-color: rgba(198, 84, 47, 0.3);
+  min-height: 36px;
+  padding: 0 12px;
+  border-color: rgba(198, 84, 47, 0.28);
   background: transparent;
-  font-weight: 700;
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .sidePanelCard .useButton:hover,
@@ -2871,7 +2870,7 @@
     flex: 1 1 100%;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    gap: 8px;
   }
 
   .aiTrigger,
@@ -2903,4 +2902,50 @@
   .aiTriggerIcon {
     display: none;
   }
+}
+
+
+/* Join: final polish — compact mobile result, lifted footer, CTA disabled state */
+@media (max-width: 959px) {
+  .sidePanelCard .variantCard {
+    padding: 14px;
+  }
+
+  .variantCardContent {
+    min-height: 6em;
+  }
+
+  .sidePanelCard .variantActions {
+    margin-top: 10px;
+    gap: 8px;
+  }
+
+  .sidePanelCard .message {
+    font-size: 0.97rem;
+  }
+}
+
+@media (min-width: 960px) {
+  .panelFooter {
+    padding-bottom: 8px;
+  }
+}
+
+.submitButton:disabled {
+  background: linear-gradient(180deg, #f7cdb8 0%, #f2bda2 100%);
+  color: #9c4f33;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
+  transform: none;
+}
+
+.submitButton:disabled:hover {
+  background: linear-gradient(180deg, #f7cdb8 0%, #f2bda2 100%);
+  box-shadow: none;
+  transform: none;
+}
+
+.submitButton:disabled .buttonIcon::before {
+  border-left-color: #9c4f33;
 }
