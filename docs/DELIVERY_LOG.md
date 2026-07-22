@@ -796,3 +796,8 @@
 - Added leading and trailing hidden clones, so swiping in either direction and autoplay continue through the first and last greeting without a visible end.
 - Autoplay pauses only while a touch gesture is active and resumes when it ends.
 - Replaced the CSS pseudo-icon with a dedicated two-person SVG mark for a clear, stable silhouette on desktop and mobile.
+
+# 2026-07-22 — Join: stable carousel looping
+
+- The loop reset now occurs only after scroll snap has finished, eliminating the visible mid-scroll jump at the first and last cards.
+- Autoplay no longer depends on the viewport observer and runs after reload on mobile and desktop; reduced-motion mode uses an instant step instead of a smooth transition.

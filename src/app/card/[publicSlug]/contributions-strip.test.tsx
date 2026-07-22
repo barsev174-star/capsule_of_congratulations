@@ -82,4 +82,27 @@ describe("ContributionsStrip", () => {
     expect(scrollBy).toHaveBeenCalled();
     vi.useRealTimers();
   });
+
+  it("продолжает автопрокрутку без плавной анимации при reduced motion", () => {
+    vi.useFakeTimers();
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === "(prefers-reduced-motion: reduce)",
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    })) as unknown as typeof window.matchMedia;
+    const scrollBy = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollBy", { configurable: true, value: scrollBy });
+    Object.defineProperty(HTMLElement.prototype, "scrollTo", { configurable: true, value: vi.fn() });
+    Object.defineProperty(HTMLElement.prototype, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ width: 100, height: 80, top: 0, right: 100, bottom: 80, left: 0, x: 0, y: 0, toJSON: () => ({}) })
+    });
+
+    render(<ContributionsStrip items={items} />);
+    act(() => { vi.advanceTimersByTime(5000); });
+
+    expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ behavior: "auto" }));
+    vi.useRealTimers();
+  });
 });

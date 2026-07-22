@@ -36,7 +36,6 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
   const [reducedMotion, setReducedMotion] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [hasFocus, setHasFocus] = useState(false);
-  const [isInViewport, setIsInViewport] = useState(true);
   const [isDocumentVisible, setIsDocumentVisible] = useState(true);
   const [isTouching, setIsTouching] = useState(false);
 
@@ -81,12 +80,8 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
   const resetLoopPosition = useCallback((left: number) => {
     const viewport = viewportRef.current;
     if (!viewport) return;
-    if (loopResetRef.current !== null) window.clearTimeout(loopResetRef.current);
-    loopResetRef.current = window.setTimeout(() => {
-      viewport.scrollTo({ left, behavior: "auto" });
-      loopResetRef.current = null;
-    }, reducedMotion ? 0 : 220);
-  }, [reducedMotion]);
+    viewport.scrollTo({ left, behavior: "auto" });
+  }, []);
 
   useEffect(() => {
     if (!canNavigate) return;
@@ -101,32 +96,35 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
   }, [canNavigate, getLoopPositions]);
 
   useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport || typeof IntersectionObserver === "undefined") return;
-
-    const observer = new IntersectionObserver(([entry]) => setIsInViewport(entry.isIntersecting), { threshold: 0.15 });
-    observer.observe(viewport);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
     if (!canNavigate) return;
     const viewport = viewportRef.current;
     if (!viewport) return;
 
-    const handleScroll = () => {
+    const finishLoop = () => {
       const { step, firstOriginal, lastOriginal, afterOriginal } = getLoopPositions();
       if (!step) return;
 
-      if (viewport.scrollLeft <= firstOriginal - step * 0.5) {
+      if (viewport.scrollLeft <= 1) {
         resetLoopPosition(lastOriginal);
-      } else if (viewport.scrollLeft >= afterOriginal - step * 0.5) {
+      } else if (viewport.scrollLeft >= afterOriginal - 1) {
         resetLoopPosition(firstOriginal);
       }
     };
 
-    viewport.addEventListener("scroll", handleScroll, { passive: true });
-    return () => viewport.removeEventListener("scroll", handleScroll);
+    const scheduleLoopFinish = () => {
+      if (loopResetRef.current !== null) window.clearTimeout(loopResetRef.current);
+      loopResetRef.current = window.setTimeout(() => {
+        finishLoop();
+        loopResetRef.current = null;
+      }, 140);
+    };
+
+    viewport.addEventListener("scroll", scheduleLoopFinish, { passive: true });
+    viewport.addEventListener("scrollend", finishLoop);
+    return () => {
+      viewport.removeEventListener("scroll", scheduleLoopFinish);
+      viewport.removeEventListener("scrollend", finishLoop);
+    };
   }, [canNavigate, getLoopPositions, resetLoopPosition]);
 
   const move = useCallback((direction: "next" | "previous") => {
@@ -140,7 +138,7 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
     viewport.scrollBy({ left: direction === "next" ? step : -step, behavior });
   }, [canNavigate, getLoopPositions, reducedMotion]);
 
-  const autoplayEnabled = canNavigate && !reducedMotion && !isHovered && !hasFocus && !isTouching && isInViewport && isDocumentVisible;
+  const autoplayEnabled = canNavigate && !isHovered && !hasFocus && !isTouching && isDocumentVisible;
 
   useEffect(() => {
     if (!autoplayEnabled) return;
