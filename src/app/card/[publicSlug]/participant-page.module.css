@@ -1763,7 +1763,12 @@
 @media (min-width: 960px) {
   .layout {
     grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-    align-items: start;
+    align-items: stretch;
+  }
+
+  .sidePanel {
+    grid-column: 2;
+    grid-row: 1 / span 2;
   }
 
   .fieldGrid {
@@ -2058,14 +2063,14 @@
 }
 
 .sidePanel {
-  display: grid;
-  align-content: start;
-  gap: 16px;
+  display: flex;
   min-width: 0;
 }
 
 .sidePanelCard {
-  display: grid;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   gap: 14px;
 }
 
@@ -2266,9 +2271,10 @@
 }
 
 .panelState {
-  display: grid;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   gap: 14px;
-  align-content: start;
   animation: joinPanelFadeUp 220ms ease both;
 }
 
@@ -2387,7 +2393,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0;
+  margin: auto 0 0;
+  padding-top: 6px;
   color: #977a68;
   font-size: 0.82rem;
   line-height: 1.45;
@@ -2461,10 +2468,6 @@
 }
 
 @media (min-width: 960px) {
-  .sidePanelCard {
-    min-height: 360px;
-  }
-
   .promptList {
     display: grid;
   }
@@ -2509,75 +2512,6 @@
 
 .undoChipHidden {
   visibility: hidden;
-}
-
-.hintExample {
-  display: grid;
-  gap: 8px;
-  padding: 14px 16px;
-  border: 1px solid rgba(198, 84, 47, 0.18);
-  border-radius: 16px;
-  background: linear-gradient(145deg, rgba(255, 247, 238, 0.9), rgba(255, 242, 229, 0.82));
-  animation: joinPanelFadeUp 220ms ease both;
-}
-
-.hintExampleTitle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: #50372b;
-  font-size: 0.92rem;
-  font-weight: 800;
-}
-
-.hintExampleText {
-  margin: 0;
-  min-height: 3.1em;
-  color: #5d4436;
-  font-size: 0.95rem;
-  line-height: 1.55;
-}
-
-.hintExampleFooter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px 12px;
-}
-
-.hintExampleNote {
-  color: #977a68;
-  font-size: 0.8rem;
-  line-height: 1.4;
-}
-
-.hintHideButton {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 0 12px;
-  border: 1px solid rgba(198, 84, 47, 0.35);
-  border-radius: 999px;
-  background: transparent;
-  color: #c6542f;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 700;
-  transition:
-    background-color 160ms ease,
-    box-shadow 160ms ease;
-}
-
-.hintHideButton:hover {
-  background: rgba(255, 252, 248, 0.85);
-}
-
-.hintHideButton:focus-visible {
-  outline: 3px solid rgba(198, 84, 47, 0.3);
-  outline-offset: 3px;
 }
 
 .promptButtonActive {
@@ -2753,7 +2687,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hintExample,
   .loadingSkeleton,
   .variantCardContent {
     animation: none;
@@ -2774,10 +2707,83 @@
     background-position: 0 0;
   }
 
-  .hintHideButton,
   .panelRetryButton,
   .sidePanelCard .useButton,
   .sidePanelCard .retryButton {
+    transition: none;
+  }
+}
+
+
+/* Join: example area inside the hints panel */
+.panelExample {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 244, 233, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(198, 84, 47, 0.14);
+}
+
+.panelExampleHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.panelExampleLabel {
+  color: #a6562f;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.panelExampleHide {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin: -4px -6px -4px 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #c6542f;
+  cursor: pointer;
+  font: inherit;
+  font-size: 1.05rem;
+  line-height: 1;
+  transition: background-color 160ms ease;
+}
+
+.panelExampleHide:hover {
+  background: rgba(255, 252, 248, 0.9);
+}
+
+.panelExampleHide:focus-visible {
+  outline: 3px solid rgba(198, 84, 47, 0.3);
+  outline-offset: 2px;
+}
+
+.panelExampleText {
+  margin: 0;
+  min-height: 2.6em;
+  color: #5d4436;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  animation: joinPanelFadeUp 200ms ease both;
+}
+
+.panelExampleNote {
+  color: #977a68;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panelExampleText,
+  .panelExampleHide {
+    animation: none;
     transition: none;
   }
 }

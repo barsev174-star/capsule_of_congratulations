@@ -134,8 +134,11 @@ type Props = {
   issues: string[];
   remaining: number | null;
   activeHintId: GreetingHintId | null;
+  activeHintExample: string | null;
+  hintExampleVisible: boolean;
   exampleBlockId: string;
   onHintSelect: (hint: GreetingHint) => void;
+  onHideHintExample: () => void;
   onUseVariant: (text: string) => void;
   onRetry: () => void;
 };
@@ -149,8 +152,11 @@ export const JoinSidePanel = ({
   issues,
   remaining,
   activeHintId,
+  activeHintExample,
+  hintExampleVisible,
   exampleBlockId,
   onHintSelect,
+  onHideHintExample,
   onUseVariant,
   onRetry
 }: Props) => {
@@ -201,6 +207,28 @@ export const JoinSidePanel = ({
                 );
               })}
             </ul>
+
+            {activeHintExample && hintExampleVisible ? (
+              <div className={styles.panelExample} id={exampleBlockId} aria-live="polite">
+                <div className={styles.panelExampleHead}>
+                  <span className={styles.panelExampleLabel}>Например:</span>
+                  <button
+                    type="button"
+                    className={styles.panelExampleHide}
+                    aria-label="Скрыть пример"
+                    onClick={onHideHintExample}
+                  >
+                    ×
+                  </button>
+                </div>
+                <p key={activeHintExample} className={styles.panelExampleText}>
+                  {activeHintExample}
+                </p>
+                <span className={styles.panelExampleNote}>
+                  Нажмите на подсказку ещё раз, чтобы увидеть другой пример.
+                </span>
+              </div>
+            ) : null}
 
             <p className={styles.privacyLock}>
               <span aria-hidden="true">🔒</span>

@@ -43,7 +43,6 @@ export const ParticipantForm = ({
   const [authorName, setAuthorName] = useState("");
   const [authorRole, setAuthorRole] = useState("");
   const [message, setMessage] = useState("");
-  const [messagePlaceholder, setMessagePlaceholder] = useState(DEFAULT_MESSAGE_PLACEHOLDER);
   const [aiGenerationIds, setAiGenerationIds] = useState<string[]>([]);
   const [aiResetSignal, setAiResetSignal] = useState(0);
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -115,7 +114,6 @@ export const ParticipantForm = ({
     setAuthorName("");
     setAuthorRole("");
     setMessage("");
-    setMessagePlaceholder(DEFAULT_MESSAGE_PLACEHOLDER);
     setAiGenerationIds([]);
     setAiResetSignal((current) => current + 1);
     setAiVariants([]);
@@ -205,9 +203,6 @@ export const ParticipantForm = ({
       setHintIndexes((current) => ({ ...current, [hint.id]: nextIndex }));
     }
     setHintBlockVisible(true);
-    if (!message) {
-      setMessagePlaceholder(`Например: ${hint.examples[nextIndex]}`);
-    }
     messageRef.current?.focus();
   };
 
@@ -448,14 +443,13 @@ export const ParticipantForm = ({
                     id="message"
                     name="message"
                     ref={messageRef}
-                    placeholder={messagePlaceholder}
+                    placeholder={DEFAULT_MESSAGE_PLACEHOLDER}
                     required
                     maxLength={1500}
                     value={message}
                     aria-describedby="join-editor-limit"
                     aria-invalid={isOverLimit}
                     onChange={(event) => handleMessageChange(event.target.value)}
-                    onBlur={() => setMessagePlaceholder(DEFAULT_MESSAGE_PLACEHOLDER)}
                   />
                   <div className={styles.editorToolbar}>
                     <span className={styles.editorCounter} id="join-editor-limit">
@@ -466,15 +460,6 @@ export const ParticipantForm = ({
                     <div className={styles.editorToolbarActions}>
                       <button
                         type="button"
-                        className={styles.aiTrigger}
-                        onClick={generateAiVariants}
-                        disabled={isAiPending || aiLimitReached}
-                      >
-                        <span className={styles.aiTriggerIcon} aria-hidden="true" />
-                        {isAiPending ? "Готовим варианты..." : "Помочь с текстом"}
-                      </button>
-                      <button
-                        type="button"
                         className={`${styles.undoChip} ${aiUndoDraft === null ? styles.undoChipHidden : ""}`}
                         onClick={handleUndoVariant}
                         tabIndex={aiUndoDraft === null ? -1 : undefined}
@@ -482,32 +467,19 @@ export const ParticipantForm = ({
                       >
                         Отменить замену
                       </button>
+                      <button
+                        type="button"
+                        className={styles.aiTrigger}
+                        onClick={generateAiVariants}
+                        disabled={isAiPending || aiLimitReached}
+                      >
+                        <span className={styles.aiTriggerIcon} aria-hidden="true" />
+                        {isAiPending ? "Готовим варианты..." : "Помочь с текстом"}
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
-
-              {activeHint && activeHintExample && hintBlockVisible ? (
-                <div className={styles.hintExample} id="join-hint-example" aria-live="polite">
-                  <p className={styles.hintExampleTitle}>
-                    <span aria-hidden="true">{activeHint.icon}</span>
-                    {activeHint.title}
-                  </p>
-                  <p className={styles.hintExampleText}>Например: {activeHintExample}</p>
-                  <div className={styles.hintExampleFooter}>
-                    <span className={styles.hintExampleNote}>
-                      Нажмите на подсказку ещё раз, чтобы увидеть другой пример.
-                    </span>
-                    <button
-                      type="button"
-                      className={styles.hintHideButton}
-                      onClick={() => setHintBlockVisible(false)}
-                    >
-                      Скрыть
-                    </button>
-                  </div>
-                </div>
-              ) : null}
             </div>
           </section>
 
@@ -520,8 +492,11 @@ export const ParticipantForm = ({
             issues={aiIssues}
             remaining={aiRemaining}
             activeHintId={activeHintId}
+            activeHintExample={activeHintExample}
+            hintExampleVisible={hintBlockVisible}
             exampleBlockId="join-hint-example"
             onHintSelect={handleHintSelect}
+            onHideHintExample={() => setHintBlockVisible(false)}
             onUseVariant={handleUseVariant}
             onRetry={generateAiVariants}
           />
