@@ -374,11 +374,13 @@ export const ParticipantForm = ({
 
   return (
     <>
-      {hasSubmitted && !hasActivePoll ? (
-        <section className={styles.participantSubmitted} aria-live="polite">
-          <strong>Поздравление добавлено</strong>
-          <p>Спасибо — ваши слова стали частью общей открытки.</p>
-        </section>
+      {hasSubmitted ? (
+        hasActivePoll ? null : (
+          <section className={styles.participantSubmitted} aria-live="polite">
+            <strong>Поздравление добавлено</strong>
+            <p>Спасибо — ваши слова стали частью общей открытки.</p>
+          </section>
+        )
       ) : (
         <form
           className={styles.formShell}
