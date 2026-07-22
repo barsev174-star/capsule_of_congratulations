@@ -1968,3 +1968,171 @@
   .giftPollSecondaryButton { width: 100%; }
   .giftPollOptionImage { width: 72px; height: 72px; }
 }
+
+
+/* Join: AI trigger inside the main greeting form + dynamic side panel */
+.fieldFooterRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
+}
+
+.fieldFooterRow .fieldHint {
+  flex: 1 1 220px;
+}
+
+.aiTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid rgba(233, 101, 47, 0.42);
+  border-radius: 999px;
+  background: linear-gradient(145deg, rgba(255, 244, 233, 0.94), rgba(255, 231, 212, 0.9));
+  color: #c6542f;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  box-shadow: 0 6px 14px rgba(83, 49, 28, 0.06);
+  transition:
+    transform 150ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.aiTrigger:hover {
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgba(233, 101, 47, 0.12),
+    0 8px 18px rgba(83, 49, 28, 0.08);
+}
+
+.aiTrigger:active {
+  transform: scale(0.96);
+}
+
+.aiTrigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.aiTrigger:focus-visible {
+  outline: 3px solid rgba(191, 108, 71, 0.28);
+  outline-offset: 3px;
+}
+
+.aiTriggerIcon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+}
+
+.aiTriggerIcon::before,
+.aiTriggerIcon::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+}
+
+.aiTriggerIcon::before {
+  width: 12px;
+  height: 2.5px;
+  background: currentColor;
+  transform: rotate(-38deg);
+}
+
+.aiTriggerIcon::after {
+  width: 4px;
+  height: 4px;
+  top: 1px;
+  right: 1px;
+  background: transparent;
+  box-shadow: 0 0 0 1.6px currentColor;
+}
+
+.sidePanel {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+}
+
+.sidePanelCard {
+  display: grid;
+  gap: 14px;
+}
+
+.sidePanelHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.sidePanelWand {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  background: rgba(255, 252, 248, 0.92);
+  color: #e9652f;
+  box-shadow: 0 10px 26px rgba(83, 49, 28, 0.08);
+}
+
+.sidePanelWand::before,
+.sidePanelWand::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+}
+
+.sidePanelWand::before {
+  width: 20px;
+  height: 4px;
+  background: currentColor;
+  transform: rotate(-38deg);
+}
+
+.sidePanelWand::after {
+  width: 6px;
+  height: 6px;
+  top: 10px;
+  right: 11px;
+  background: transparent;
+  box-shadow: 0 0 0 2px currentColor;
+}
+
+.sidePanelVariants {
+  margin-top: 0;
+}
+
+.sidePanelPending {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 252, 248, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(92, 64, 48, 0.08);
+  color: #7f6558;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 560px) {
+  .fieldFooterRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .aiTrigger {
+    align-self: flex-start;
+  }
+}

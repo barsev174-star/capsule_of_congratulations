@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { AI_DRAFT_LIMIT } from "@/lib/ai/validation";
+import type { AiVariant } from "@/lib/ai/types";
 import { AiHelper } from "./ai-helper";
 import { GiftPollVote } from "./gift-poll-vote";
+import { JoinSidePanel } from "./join-side-panel";
 import { LegalDocumentModal } from "@/components/legal/legal-document-modal";
 import styles from "./participant-page.module.css";
 
@@ -41,6 +44,15 @@ export const ParticipantForm = ({
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [participantConsent, setParticipantConsent] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const isJoin = variant === "join";
+  const [aiVariants, setAiVariants] = useState<AiVariant[]>([]);
+  const [aiGenerationId, setAiGenerationId] = useState("");
+  const [aiIssues, setAiIssues] = useState<string[]>([]);
+  const [aiRemaining, setAiRemaining] = useState<number | null>(null);
+  const [aiLimitReached, setAiLimitReached] = useState(false);
+  const [aiInsertFeedback, setAiInsertFeedback] = useState("");
+  const [isAiPending, startAiTransition] = useTransition();
+  const pendingAiRequestId = useRef<string | null>(null);
   const router = useRouter();
   const clearSuccessOnEdit = () => {
     if (successMessage) {
@@ -86,7 +98,66 @@ export const ParticipantForm = ({
     setMessage("");
     setAiGenerationIds([]);
     setAiResetSignal((current) => current + 1);
+    setAiVariants([]);
+    setAiGenerationId("");
+    setAiIssues([]);
+    setAiRemaining(null);
+    setAiLimitReached(false);
+    setAiInsertFeedback("");
     router.refresh();
+  };
+
+  const handleAiGenerate = async () => {
+    const requestId = pendingAiRequestId.current ?? crypto.randomUUID();
+    pendingAiRequestId.current = requestId;
+    setAiIssues([]);
+    setAiInsertFeedback("");
+
+    let response: Response;
+    try {
+      response = await fetch("/api/ai/generate-greeting", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId,
+          cardId,
+          publicSlug,
+          draftNotes: Array.from(message).slice(0, AI_DRAFT_LIMIT).join(""),
+          style: "touching",
+          relationshipContext: authorRole
+        })
+      });
+    } catch {
+      setAiIssues(["Не удалось связаться с AI-помощником. Проверьте соединение и попробуйте ещё раз."]);
+      return;
+    } finally {
+      pendingAiRequestId.current = null;
+    }
+
+    const payload = await response.json();
+    if (!response.ok) {
+      setAiLimitReached(response.status === 429);
+      setAiIssues(
+        payload.issues
+          ? payload.issues.map((issue: { message: string }) => issue.message)
+          : [payload.message ?? "Не удалось получить варианты текста."]
+      );
+      return;
+    }
+
+    setAiVariants(payload.result.variants);
+    setAiGenerationId(payload.result.generationId);
+    setAiGenerationIds((current) =>
+      current.includes(payload.result.generationId) ? current : [...current, payload.result.generationId]
+    );
+    setAiRemaining(payload.result.usage.remaining);
+    setAiLimitReached(payload.result.usage.remaining === 0);
+  };
+
+  const generateAiVariants = () => {
+    startAiTransition(async () => {
+      await handleAiGenerate();
+    });
   };
 
   return (
@@ -191,9 +262,22 @@ export const ParticipantForm = ({
                 setMessage(event.target.value);
               }}
             />
-            <span className={styles.fieldHint}>
-              Пишите просто и по-настоящему. Даже несколько теплых фраз уже много значат.
-            </span>
+            <div className={styles.fieldFooterRow}>
+              <span className={styles.fieldHint}>
+                Пишите просто и по-настоящему. Даже несколько теплых фраз уже много значат.
+              </span>
+              {isJoin ? (
+                <button
+                  type="button"
+                  className={styles.aiTrigger}
+                  onClick={generateAiVariants}
+                  disabled={isAiPending || aiLimitReached}
+                >
+                  <span className={styles.aiTriggerIcon} aria-hidden="true" />
+                  {isAiPending ? "Готовим варианты..." : "Помочь с текстом"}
+                </button>
+              ) : null}
+            </div>
           </div>
           <label className={styles.consent}>
             <input name="participantConsent" type="checkbox" checked={participantConsent} onChange={(event) => setParticipantConsent(event.target.checked)} required />
@@ -211,7 +295,24 @@ export const ParticipantForm = ({
       </section>
       )}
 
-      {!hasSubmitted ? <AiHelper
+      {!hasSubmitted && isJoin ? (
+        <JoinSidePanel
+          variants={aiVariants}
+          generationId={aiGenerationId}
+          isPending={isAiPending}
+          limitReached={aiLimitReached}
+          insertFeedback={aiInsertFeedback}
+          issues={aiIssues}
+          remaining={aiRemaining}
+          onUseVariant={(text) => {
+            setMessage(text);
+            setSuccessMessage("");
+            setAiInsertFeedback("Текст вставлен в поздравление");
+          }}
+          onRetry={generateAiVariants}
+        />
+      ) : null}
+      {!hasSubmitted && !isJoin ? <AiHelper
         key={aiResetSignal}
         cardId={cardId}
         publicSlug={publicSlug}
