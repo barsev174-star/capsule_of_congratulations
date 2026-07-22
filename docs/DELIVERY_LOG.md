@@ -801,3 +801,4 @@
 
 - The loop reset now occurs only after scroll snap has finished, eliminating the visible mid-scroll jump at the first and last cards.
 - Autoplay no longer depends on the viewport observer and runs after reload on mobile and desktop; reduced-motion mode uses an instant step instead of a smooth transition.
+- Mobile loop detection uses the viewport's actual scroll boundary, so the next swipe remains available after the final greeting.

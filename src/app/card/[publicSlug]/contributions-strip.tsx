@@ -31,7 +31,7 @@ const getCardStep = (list: HTMLUListElement | null, viewport: HTMLDivElement | n
 export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }) => {
   const viewportRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
-  const loopResetRef = useRef<number | null>(null);
+  const loopFrameRef = useRef<number | null>(null);
   const [visibleSlots, setVisibleSlots] = useState(4);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -63,7 +63,7 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
   }, []);
 
   useEffect(() => () => {
-    if (loopResetRef.current !== null) window.clearTimeout(loopResetRef.current);
+    if (loopFrameRef.current !== null) window.cancelAnimationFrame(loopFrameRef.current);
   }, []);
 
   const getLoopPositions = useCallback(() => {
@@ -72,8 +72,7 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
     return {
       step,
       firstOriginal,
-      lastOriginal: firstOriginal + Math.max(0, items.length - 1) * step,
-      afterOriginal: firstOriginal + items.length * step
+      lastOriginal: firstOriginal + Math.max(0, items.length - 1) * step
     };
   }, [items.length, visibleSlots]);
 
@@ -101,22 +100,23 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
     if (!viewport) return;
 
     const finishLoop = () => {
-      const { step, firstOriginal, lastOriginal, afterOriginal } = getLoopPositions();
+      const { step, firstOriginal, lastOriginal } = getLoopPositions();
       if (!step) return;
+      const maxScrollLeft = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
 
       if (viewport.scrollLeft <= 1) {
         resetLoopPosition(lastOriginal);
-      } else if (viewport.scrollLeft >= afterOriginal - 1) {
+      } else if (viewport.scrollLeft >= maxScrollLeft - 1) {
         resetLoopPosition(firstOriginal);
       }
     };
 
     const scheduleLoopFinish = () => {
-      if (loopResetRef.current !== null) window.clearTimeout(loopResetRef.current);
-      loopResetRef.current = window.setTimeout(() => {
+      if (loopFrameRef.current !== null) window.cancelAnimationFrame(loopFrameRef.current);
+      loopFrameRef.current = window.requestAnimationFrame(() => {
         finishLoop();
-        loopResetRef.current = null;
-      }, 140);
+        loopFrameRef.current = null;
+      });
     };
 
     viewport.addEventListener("scroll", scheduleLoopFinish, { passive: true });
