@@ -12,7 +12,7 @@ const poll = {
   title: "Выбор подарка",
   question: "Что дарим?",
   options: [
-    { id: "o1", title: "книга", description: null, imageUrl: null, priceLabel: null, productUrl: null },
+    { id: "o1", title: "книга", description: null, imageUrl: null, priceLabel: null, productUrl: "https://example.com/book" },
     { id: "o2", title: "сертификат", description: null, imageUrl: null, priceLabel: null, productUrl: null }
   ],
   selectedOptionId: null as string | null
@@ -112,6 +112,7 @@ describe("GiftPollVote — post-submit сценарий", () => {
 
     const button = await screen.findByRole("button", { name: /перейти к голосованию/i });
     expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getAllByText("Поздравление добавлено")).toHaveLength(1);
     expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
   });
 
@@ -125,7 +126,38 @@ describe("GiftPollVote — post-submit сценарий", () => {
 
     expect(await screen.findByRole("radiogroup")).toBeInTheDocument();
     expect(screen.getByText(/помогите выбрать подарок/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Какой вариант лучше выбрать для подарка?")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Отдать голос" })).toBeDisabled();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("выбирает карточку отдельно от товарной ссылки", async () => {
+    window.localStorage.setItem(storageKey, crypto.randomUUID());
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ poll }) }));
+    render(<GiftPollVote publicSlug={slug} active />);
+
+    const option = await screen.findByRole("radio", { name: /книга/i });
+    await userEvent.click(screen.getByRole("link", { name: /открыть вариант «книга»/i }));
+    expect(option).toHaveAttribute("aria-checked", "false");
+
+    await userEvent.click(option);
+    expect(option).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("button", { name: "Отдать голос" })).toBeEnabled();
+  });
+
+  it("при ошибке сохраняет выбор и предлагает повторить", async () => {
+    window.localStorage.setItem(storageKey, crypto.randomUUID());
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ poll }) })
+      .mockResolvedValueOnce({ ok: false }));
+    render(<GiftPollVote publicSlug={slug} active />);
+
+    await userEvent.click(await screen.findByRole("radio", { name: /книга/i }));
+    await userEvent.click(screen.getByRole("button", { name: "Отдать голос" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/ваш выбор сохранён/i);
+    expect(screen.getByRole("radio", { name: /книга/i })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("button", { name: "Повторить" })).toBeEnabled();
   });
 
   it("уже проголосовавшему показывает «Голос учтён»", async () => {
@@ -136,7 +168,8 @@ describe("GiftPollVote — post-submit сценарий", () => {
     );
     render(<GiftPollVote publicSlug={slug} active={true} inviteToReveal />);
 
-    expect(await screen.findByText("Голос учтён")).toBeInTheDocument();
+    expect(await screen.findByText("Спасибо, ваш голос учтён")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Изменить выбор" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /перейти к голосованию/i })).not.toBeInTheDocument();
   });
 

@@ -751,3 +751,12 @@
 6. Added permanent cleanup for expired deletions and unpublished cards inactive for more than 90 days, including related database rows and files.
 7. Added protected retention endpoint, VPS cron helper and structured audit logs without personal content.
 8. Extended local smoke to verify delete, public 404, restore and retention purge of both expired deletions and inactive drafts.
+## Update 2026-07-22 Join Post-Submit Vote Flow
+
+1. Consolidated the `/join` confirmation and optional gift poll into one post-submit path, so the greeting-success heading is not repeated.
+2. Made the participant-facing question neutral and independent of the recipient name or poll mode.
+3. Reworked poll option interaction: the card selects a choice, while a product link opens independently in a new tab.
+4. Added distinct selected, disabled, loading, error and completion states; a failed vote retains the selected option.
+5. Kept the existing ability to change a submitted choice while the poll is open.
+6. Tightened mobile option cards and made the skip action a lower-emphasis text action.
+7. Added project-palette WebKit autofill styling for the join form.

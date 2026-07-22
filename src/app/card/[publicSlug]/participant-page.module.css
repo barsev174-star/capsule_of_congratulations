@@ -627,6 +627,17 @@
   outline: none;
 }
 
+.field input:-webkit-autofill,
+.field input:-webkit-autofill:hover,
+.field input:-webkit-autofill:focus,
+.field textarea:-webkit-autofill,
+.field textarea:-webkit-autofill:hover,
+.field textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  box-shadow: 0 0 0 1000px #fffcf8 inset;
+  caret-color: var(--text);
+}
+
 .field textarea {
   min-height: 180px;
   resize: vertical;
@@ -1696,6 +1707,9 @@
   gap: 12px;
 }
 
+.giftPollFieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
 .giftPollOption {
   position: relative;
   display: grid;
@@ -1729,7 +1743,9 @@
 .giftPollOptionCopy a { width: max-content; color: #ec662f; text-decoration: underline; }
 .giftPollRadio { width: 18px; height: 18px; margin-top: 2px; border: 2px solid #c9a990; border-radius: 50%; }
 .giftPollOptionSelected .giftPollRadio { border-color: #e9652f; box-shadow: inset 0 0 0 4px #fff4e6, inset 0 0 0 8px #e9652f; }
-.giftPollActions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.giftPollOption[aria-disabled="true"] { cursor: wait; opacity: .7; pointer-events: none; }
+.giftPollActions { display: grid; gap: 8px; align-items: start; }
+.giftPollActions .submitButton { width: 100%; }
 .giftPollSecondaryButton { min-height: 44px; padding: 0 18px; border: 1px solid rgba(236, 102, 47, .72); border-radius: 999px; background: rgba(255, 252, 248, .76); color: #ec662f; font: inherit; font-weight: 800; cursor: pointer; transition-property: transform, background-color, box-shadow; transition-duration: 160ms; }
 .giftPollSecondaryButton:hover { background: #fff; box-shadow: 0 8px 16px rgba(83, 49, 28, .07); }
 .giftPollSecondaryButton:active { transform: scale(.96); }
@@ -1743,6 +1759,14 @@
 .giftPollSelectedSummary em { color: #df5728; font-style: normal; font-weight: 800; }
 .giftPollSelectedSummary a { width: max-content; max-width: 100%; overflow: hidden; color: #bd5d32; font-size: .88rem; text-overflow: ellipsis; white-space: nowrap; }
 .giftPollChangeHint { font-size: .9rem; }
+.giftPollInviteButton { min-height: 44px; padding: 0 18px; border: 1px solid rgba(189, 93, 50, .45); border-radius: 999px; background: transparent; color: #a94f2a; font: inherit; font-weight: 700; cursor: pointer; }
+.giftPollInviteButton:hover { background: rgba(255,255,255,.65); }
+.giftPollInviteButton:focus-visible,
+.giftPollTextButton:focus-visible { outline: 3px solid rgba(233, 101, 47, .25); outline-offset: 3px; }
+.giftPollTextButton { justify-self: start; min-height: 44px; padding: 0 10px; border: 0; background: transparent; color: #a55f3a; font: inherit; font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
+.giftPollTextButton:hover { color: #7f4225; }
+.giftPollTextButton:disabled { color: #a88b7c; cursor: not-allowed; text-decoration: none; }
+.giftPollChoice { color: #50372b !important; }
 
 .successCard {
   padding: 12px 14px;
@@ -1979,8 +2003,9 @@
   .giftPollTeaser,
   .participantSubmitted { padding: 22px; border-radius: 24px; }
   .giftPollOptions { grid-template-columns: 1fr; }
-  .giftPollActions { display: grid; grid-template-columns: 1fr; }
-  .giftPollSecondaryButton { width: 100%; }
+  .giftPollActions { grid-template-columns: 1fr; }
+  .giftPollInviteButton { width: 100%; }
+  .giftPollTextButton { justify-self: center; }
   .giftPollOptionImage { width: 72px; height: 72px; }
 }
 

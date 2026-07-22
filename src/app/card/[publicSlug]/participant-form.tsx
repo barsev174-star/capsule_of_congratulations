@@ -374,7 +374,7 @@ export const ParticipantForm = ({
 
   return (
     <>
-      {hasSubmitted ? (
+      {hasSubmitted && !hasActivePoll ? (
         <section className={styles.participantSubmitted} aria-live="polite">
           <strong>Поздравление добавлено</strong>
           <p>Спасибо — ваши слова стали частью общей открытки.</p>
