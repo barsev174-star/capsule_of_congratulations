@@ -127,6 +127,8 @@ describe("GiftPollVote — post-submit сценарий", () => {
     expect(await screen.findByRole("radiogroup")).toBeInTheDocument();
     expect(screen.getByText(/помогите выбрать подарок/i)).toBeInTheDocument();
     expect(screen.getAllByText("Какой вариант лучше выбрать для подарка?")).toHaveLength(2);
+    expect(screen.getByText("Поздравление добавлено")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /перейти к голосованию/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Отдать голос" })).toBeDisabled();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });

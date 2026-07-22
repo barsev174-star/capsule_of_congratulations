@@ -109,7 +109,9 @@ export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, invite
 
   if (view === "voted") return <section ref={successRef} tabIndex={-1} className={styles.giftPollSuccess} aria-live="polite"><strong>Спасибо, ваш голос учтён</strong><p>Ваш выбор увидит только организатор.</p>{selectedOption ? <p className={styles.giftPollChoice}>Ваш выбор: <b>{titleCase(selectedOption.title)}</b></p> : null}<button type="button" className={styles.giftPollTextButton} onClick={() => setView("editing")}>Изменить выбор</button></section>;
 
-  return <section ref={sectionRef} id="gift-poll-section" tabIndex={-1} className={styles.giftPollCard} aria-labelledby="gift-poll-title">
+  return <>
+    {revealed ? <section className={styles.giftPollCompactSuccess} aria-live="polite"><strong><span aria-hidden="true">✓</span> Поздравление добавлено</strong><p>Спасибо — ваши слова стали частью общей открытки.</p></section> : null}
+    <section ref={sectionRef} id="gift-poll-section" tabIndex={-1} className={styles.giftPollCard} aria-labelledby="gift-poll-title">
     <p className={styles.giftPollEyebrow}>НЕОБЯЗАТЕЛЬНЫЙ ШАГ</p>
     <h2 id="gift-poll-title" className={styles.sectionTitle}>Помогите выбрать подарок</h2>
     <p className={styles.hint}>{POLL_QUESTION}</p>
@@ -120,5 +122,6 @@ export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, invite
     </fieldset>
     {error ? <div className={styles.giftPollError} role="alert"><p>{error}</p></div> : null}
     <div className={styles.giftPollActions}><button type="button" className={styles.submitButton} disabled={!selectedOptionId || isPending} onClick={saveVote}>{isPending ? "Отправляем голос…" : error ? "Повторить" : isEditing ? "Сохранить выбор" : "Отдать голос"}</button>{!isEditing ? <button type="button" className={styles.giftPollTextButton} disabled={isPending} onClick={skip}>Пропустить сейчас</button> : null}</div>
-  </section>;
+    </section>
+  </>;
 };
