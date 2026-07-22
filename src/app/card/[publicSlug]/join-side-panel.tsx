@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { AiVariant } from "@/lib/ai/types";
 import { GREETING_HINTS, type GreetingHint, type GreetingHintId } from "./greeting-hints";
 import styles from "./participant-page.module.css";
@@ -153,6 +153,7 @@ type Props = {
   activeHintExample: string | null;
   hintExampleVisible: boolean;
   exampleBlockId: string;
+  pollSlot?: ReactNode;
   onHintSelect: (hint: GreetingHint) => void;
   onHideHintExample: () => void;
   onUseVariant: (text: string) => void;
@@ -171,6 +172,7 @@ export const JoinSidePanel = ({
   activeHintExample,
   hintExampleVisible,
   exampleBlockId,
+  pollSlot = null,
   onHintSelect,
   onHideHintExample,
   onUseVariant,
@@ -181,7 +183,9 @@ export const JoinSidePanel = ({
   return (
     <aside className={styles.sidePanel} aria-label="AI-помощник поздравления">
       <section className={`${styles.aiCard} ${styles.joinAiCard} ${styles.sidePanelCard}`} aria-live="polite">
-        {state === "idle" ? (
+        {state === "idle" && pollSlot ? pollSlot : null}
+
+        {state === "idle" && !pollSlot ? (
           <div className={styles.panelState}>
             <div className={styles.sidePanelHead}>
               <span className={styles.sidePanelWand} aria-hidden="true" />

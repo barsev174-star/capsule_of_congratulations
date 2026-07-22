@@ -69,7 +69,7 @@ export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false }: { pu
   const skip = () => { window.localStorage.setItem(skipKey, "1"); setView("skipped"); };
   const isEditing = view === "editing";
 
-  if (!active) return <section className={styles.giftPollTeaser} aria-label="Голосование за подарок"><p className={styles.giftPollEyebrow}>ЕЩЁ ОДИН НЕОБЯЗАТЕЛЬНЫЙ ШАГ</p><h2 className={styles.sectionTitle}>После поздравления можно помочь выбрать {poll.mode === "budget" ? "бюджет" : "подарок"}</h2><p className={styles.hint}>Организатор добавил несколько вариантов. Ваш выбор увидит только он.</p><div className={styles.giftPollTeaserOptions} aria-hidden="true">{poll.options.map((option) => <span key={option.id}>{option.imageUrl ? <img src={option.imageUrl} alt="" /> : null}<b>{titleCase(option.title)}</b></span>)}</div></section>;
+  if (!active) return null;
 
   if (view === "skipped") return <section className={styles.giftPollSuccess} aria-live="polite"><strong>Поздравление добавлено</strong><p>Вы пропустили выбор {poll.mode === "budget" ? "бюджета" : "подарка"}.</p><button type="button" className={styles.giftPollSecondaryButton} onClick={() => { window.localStorage.removeItem(skipKey); setView("form"); }}>Помочь выбрать {poll.mode === "budget" ? "бюджет" : "подарок"}</button></section>;
 

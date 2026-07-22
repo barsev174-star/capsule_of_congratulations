@@ -5,6 +5,7 @@ import { BrandLogo } from "@/components/brand/brand-logo";
 import { getCardDraftByPublicSlug, listAllContributionsByCardId, listContributionsByCardId } from "@/lib/cards/repository";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import { ParticipantForm } from "@/app/card/[publicSlug]/participant-form";
+import { ContributionsStrip } from "@/app/card/[publicSlug]/contributions-strip";
 import { EventReminderForm } from "./reminder-form";
 import { getMinimumReminderEventDate } from "@/lib/reminders/validation";
 import styles from "@/app/card/[publicSlug]/participant-page.module.css";
@@ -37,7 +38,6 @@ const formatCount = (count: number) => {
   return `${count} поздравлений`;
 };
 
-const getInitial = (name: string) => name.trim().charAt(0).toUpperCase() || "Д";
 const previewContributionsLimit = 6;
 
 export default async function JoinCardPage({ params }: Props) {
@@ -58,7 +58,6 @@ export default async function JoinCardPage({ params }: Props) {
   const fromLabel = card.fromLabel?.trim();
   const occasionText = card.occasionText || "повод пока уточняется";
   const previewContributions = contributions.slice(0, previewContributionsLimit);
-  const hasMoreContributions = contributions.length > previewContributionsLimit;
   const isClosed = lifecycle.collectionStatus !== "OPEN" || lifecycle.deliveryStatus === "DELIVERED";
   const isLimitReached = contributionCount >= CARD_CONTRIBUTION_LIMIT;
 
@@ -137,40 +136,31 @@ export default async function JoinCardPage({ params }: Props) {
             />
           )}
 
-          <section className={styles.listCard}>
-            <div className={styles.listCardTop}>
+          <section className={styles.contribStrip} aria-labelledby="contrib-strip-title">
+            <div className={styles.contribStripHead}>
               <div className={styles.cardHeader}>
                 <span className={`${styles.cardIcon} ${styles.peopleIcon}`} aria-hidden="true" />
                 <div>
-                  <h2 className={styles.sectionTitle}>Уже добавили</h2>
-                  <p className={styles.hint}>Посмотрите, что написали другие, и добавьте свой личный штрих.</p>
+                  <h2 id="contrib-strip-title" className={styles.sectionTitle}>Уже добавили</h2>
+                  <p className={styles.hint}>Открытка постепенно наполняется тёплыми словами.</p>
                 </div>
               </div>
-              {hasMoreContributions ? (
-                <button type="button" className={styles.showAllButton}>
-                  Показать все
-                  <span aria-hidden="true">›</span>
-                </button>
+              {contributions.length > 0 ? (
+                <span className={styles.contribStripCount}>{formatCount(contributions.length)}</span>
               ) : null}
             </div>
 
             {contributions.length === 0 ? (
               <p className={styles.empty}>Пока никто не добавил поздравление. Ваше может быть первым.</p>
             ) : (
-              <div className={styles.list}>
-                {previewContributions.map((contribution) => (
-                  <article key={contribution.id} className={styles.listItem}>
-                    <div className={styles.listHeader}>
-                      <span className={styles.avatar} aria-hidden="true">{getInitial(contribution.authorName)}</span>
-                      <span>
-                        <span className={styles.author}>{contribution.authorName}</span>
-                        {contribution.authorRole ? <span className={styles.role}>{contribution.authorRole}</span> : null}
-                      </span>
-                    </div>
-                    <p className={styles.listText}>{contribution.message}</p>
-                  </article>
-                ))}
-              </div>
+              <ContributionsStrip
+                items={previewContributions.map((contribution) => ({
+                  id: contribution.id,
+                  authorName: contribution.authorName,
+                  authorRole: contribution.authorRole,
+                  message: contribution.message
+                }))}
+              />
             )}
           </section>
 
