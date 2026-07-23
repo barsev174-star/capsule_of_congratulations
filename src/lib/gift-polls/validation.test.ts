@@ -22,6 +22,7 @@ describe("gift poll validation", () => {
   it("normalizes valid budget amounts and rejects non-monetary values", () => {
     expect(normalizeBudgetAmount("5000")).toBe("5 000 ₽");
     expect(normalizeBudgetAmount("5 000 ₽")).toBe("5 000 ₽");
+    expect(normalizeBudgetAmount("5\u00a0000 ₽")).toBe("5 000 ₽");
     expect(normalizeBudgetAmount("пять тысяч")).toBeNull();
     expect(normalizeBudgetAmount("0")).toBeNull();
   });

@@ -15,7 +15,7 @@ export const isSafeProductUrl = (value: string) => {
 };
 
 export const normalizeBudgetAmount = (value: string) => {
-  const normalized = value.trim().replaceAll(" ", "").replaceAll("₽", "");
+  const normalized = value.trim().replace(/\s/g, "").replaceAll("₽", "");
   if (!/^\d{1,7}$/.test(normalized)) return null;
   const amount = Number(normalized);
   if (!Number.isSafeInteger(amount) || amount < 1) return null;

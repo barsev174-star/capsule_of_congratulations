@@ -807,3 +807,8 @@
 
 - A single desktop contribution now uses the full carousel viewport instead of the reserved arrow columns.
 - Adding a budget or gift option immediately marks the editor for autosave, so the new option is included in the next persisted settings snapshot.
+
+# 2026-07-23 — Budget option normalization
+
+- Budget amount normalization now accepts formatted values with non-breaking spaces, so previously saved levels remain valid when another amount is added.
+- Verified the budget poll end-to-end: a fourth 4,000-ruble option persists after a page reload.
