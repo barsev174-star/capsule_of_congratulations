@@ -817,6 +817,13 @@
 - A single desktop contribution now uses the full carousel viewport instead of the reserved arrow columns.
 - Adding a budget or gift option immediately marks the editor for autosave, so the new option is included in the next persisted settings snapshot.
 
+# 2026-07-23 — Gift poll: import-first editor and explicit gift edits
+
+- Gift variants can be created from a product link or copied shop text; available title, description, price and image are prefilled, while manual addition remains available in the same entry block.
+- The gift-variant list starts empty, has a clear count and opens only one editor at a time. The expanded editor is visually separated from the compact card and uses explicit save/cancel actions.
+- Photo replacement uses a local preview and waits for «Сохранить изменения» before uploading. Current-photo removal is also applied only on save; cancelling restores the prior state.
+- Desktop editor fields place title and estimated price in one row, with description and product link below; mobile uses one column and keeps photo actions attached to the preview.
+
 # 2026-07-23 — Budget option normalization
 
 - Budget amount normalization now accepts formatted values with non-breaking spaces, so previously saved levels remain valid when another amount is added.

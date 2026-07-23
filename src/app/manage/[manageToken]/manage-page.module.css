@@ -8262,3 +8262,123 @@ button.contentFilterPill {
 .giftPollPage[data-poll-status="draft"] .giftPollDraftStatusCard { order: 1; }
 .giftPollPage[data-poll-status="draft"] .giftPollDraftParticipantView { order: 2; }
 .giftPollPage[data-poll-status="draft"] .giftPollDraftChecklist { order: 3; }
+
+/* Import-first gift option flow: one calm entry point that expands into the regular editor. */
+.giftPollImportCard { display: grid; gap: 12px; padding: 18px; border-radius: 22px; background: linear-gradient(135deg, rgba(255,255,255,.86), rgba(255,243,235,.9)); box-shadow: 0 0 0 1px rgba(233,101,47,.15), 0 12px 26px rgba(91,58,38,.06); }
+.giftPollImportCard > div:first-child { display: grid; gap: 4px; }
+.giftPollImportCard strong { color: #4b3024; font-size: 1.02rem; }
+.giftPollImportCard p { margin: 0; color: #806452; font-size: .9rem; line-height: 1.45; text-wrap: pretty; }
+.giftPollImportField { display: grid; gap: 6px; color: #624a3b; font-size: .88rem; font-weight: 750; }
+.giftPollImportField textarea { width: 100%; min-height: 88px; box-sizing: border-box; resize: vertical; padding: 11px 12px; border: 1px solid rgba(98,72,58,.18); border-radius: 14px; background: rgba(255,255,255,.84); color: #34251f; font: inherit; line-height: 1.4; }
+.giftPollImportField textarea:focus { outline: 3px solid rgba(233,101,47,.18); border-color: rgba(233,101,47,.58); }
+.giftPollImportActions { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; color: #806452; font-size: .86rem; }
+.giftPollImportButton, .giftPollPhotoRemove { min-height: 42px; padding: 0 15px; border-radius: 12px; border: 1px solid rgba(233,101,47,.46); background: rgba(255,255,255,.82); color: #b6572c; font: inherit; font-weight: 800; cursor: pointer; transition-property: transform, box-shadow, background-color; transition-duration: 160ms; }
+.giftPollImportButton:hover:not(:disabled) { background: #fff; box-shadow: 0 8px 18px rgba(121,72,48,.1); }
+.giftPollImportButton:active:not(:disabled), .giftPollPhotoRemove:active { transform: scale(.96); }
+.giftPollImportButton:disabled { cursor: wait; opacity: .58; }
+.giftPollImportNotice, .giftPollImportError { margin: 0; font-size: .88rem; line-height: 1.4; }
+.giftPollImportNotice { color: #487243 !important; }.giftPollImportError { color: #a64e35 !important; }
+.giftPollOptionBody input[type="file"] { padding: 9px; border: 1px dashed rgba(98,72,58,.25); border-radius: 12px; background: rgba(255,255,255,.58); color: #624a3b; font: inherit; }
+.giftPollPhotoRemove { grid-column: 1 / -1; justify-self: start; min-height: 34px; padding: 0 10px; border-radius: 9px; border-color: rgba(133,69,55,.26); color: #954b35; font-size: .82rem; }
+.giftPollOptionBody input:not([type="file"]) { touch-action: none; user-select: text; -webkit-user-select: text; -webkit-touch-callout: default; }
+.giftPollOptionBody input[type="file"] { min-height: 46px; padding: 4px; cursor: pointer; }
+.giftPollOptionBody input[type="file"]::file-selector-button { min-height: 34px; margin-right: 9px; padding: 0 11px; border: 1px solid rgba(233,101,47,.42); border-radius: 8px; background: #fff3eb; color: #b6572c; font: inherit; font-size: .84rem; font-weight: 800; cursor: pointer; transition-property: background-color, transform; transition-duration: 160ms; }
+.giftPollOptionBody input[type="file"]::file-selector-button:active { transform: scale(.96); }
+@media (max-width: 760px) { .giftPollOptionFields { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { .giftPollImportCard { padding: 15px; border-radius: 20px; }.giftPollImportButton { width: 100%; }.giftPollImportActions { display: grid; }.giftPollImportActions span { text-align: center; } }
+
+/* Clear add → review → edit hierarchy for gift poll options. */
+.giftPollSavedListHeader { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-top: 10px; padding-top: 18px; border-top: 1px solid rgba(98,72,58,.12); }
+.giftPollSavedListHeader h4 { margin: 0; color: #4d3327; font-size: .96rem; }
+.giftPollSavedListHeader span { color: #806452; font-size: .8rem; font-weight: 700; }
+.giftPollOptionsEmpty { margin: 0; padding: 18px; border: 1px dashed rgba(236,102,47,.32); border-radius: 13px; background: #fffaf6; color: #806452; font-size: .86rem; line-height: 1.45; text-align: center; }
+.giftPollOptionEditing { border-color: rgba(236,102,47,.62); box-shadow: 0 10px 24px rgba(236,102,47,.09); }
+.giftPollEditingBadge { width: fit-content; padding: 3px 7px; border-radius: 999px; background: #fff0e8; color: #ec662f; font-size: .68rem; font-weight: 800; line-height: 1.2; }
+.giftPollOptionBodyHeader { display: flex; grid-column: 1 / -1; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 11px; border-bottom: 1px solid rgba(98,72,58,.1); }
+.giftPollOptionBodyHeader strong { color: #4d3327; font-size: .92rem; }
+.giftPollOptionBodyHeader span { color: #806452; font-size: .76rem; }
+.giftPollEditorActions { display: flex; grid-column: 1 / -1; flex-wrap: wrap; gap: 9px; justify-content: flex-end; padding-top: 4px; }
+.giftPollEditorSave, .giftPollEditorCancel, .giftPollManualAddButton { min-height: 40px; padding: 0 14px; border: 1px solid #ec662f; border-radius: 10px; font: inherit; font-size: .84rem; font-weight: 800; cursor: pointer; transition: background-color 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease; }
+.giftPollEditorSave, .giftPollImportButton { border-color: #ec662f; background: #ec662f; color: #fff; box-shadow: 0 8px 16px rgba(236,102,47,.18); }
+.giftPollEditorCancel, .giftPollManualAddButton { background: #fff; color: #ec662f; }
+.giftPollEditorSave:hover, .giftPollImportButton:hover:not(:disabled) { background: #d95728; box-shadow: 0 9px 18px rgba(236,102,47,.22); }
+.giftPollEditorCancel:hover, .giftPollManualAddButton:hover:not(:disabled) { background: #fff3eb; color: #d95728; }
+.giftPollEditorSave:active, .giftPollEditorCancel:active, .giftPollManualAddButton:active { transform: scale(.96); }
+.giftPollManualAddButton:disabled { cursor: default; opacity: .42; }
+
+/* All interactive actions in the poll use the same orange accent. */
+.giftPollIconAction, .giftPollMoveButton { color: #ec662f !important; }
+.giftPollIconActionMuted { color: rgba(236,102,47,.34) !important; }
+.giftPollIconActionMuted:hover { color: rgba(236,102,47,.34) !important; }
+.giftPollPhotoRemove, .giftPollRemoveOption, .giftPollAddOption, .giftPollOpenButton, .giftPollCloseButton, .giftPollSelectedButton { border-color: rgba(236,102,47,.58); background: #fff7f2; color: #ec662f; }
+.giftPollPhotoRemove:hover, .giftPollRemoveOption:hover, .giftPollAddOption:hover, .giftPollOpenButton:hover, .giftPollCloseButton:hover, .giftPollSelectedButton:hover { border-color: #ec662f; background: #fff0e8; color: #d95728; }
+.giftPollOptionBody input[type="file"]::file-selector-button { border-color: rgba(236,102,47,.58); background: #fff0e8; color: #ec662f; }
+
+@media (max-width: 760px) {
+  .giftPollDragHint { display: none; }
+  .giftPollOptionCardHeader, .giftPollBudgetEditor .giftPollOptionCardHeader { grid-template-columns: minmax(0,1fr) 45px; }
+  .giftPollOptionPreview, .giftPollBudgetPreview { grid-column: 1; }
+  .giftPollOptionResult { grid-column: 2; }
+  .giftPollProgress, .giftPollOptionCardActions { grid-column: 1 / -1; }
+  .giftPollOptionCardActions { gap: 8px; }
+  .giftPollIconAction, .giftPollMoveButton { min-width: 44px !important; min-height: 44px; }
+}
+
+@media (max-width: 640px) {
+  .giftPollImportActions { grid-template-columns: 1fr; }
+  .giftPollManualAddButton { width: 100%; }
+  .giftPollSavedListHeader, .giftPollOptionBodyHeader { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .giftPollEditorActions { display: grid; grid-template-columns: 1fr; }
+  .giftPollEditorSave, .giftPollEditorCancel { width: 100%; }
+}
+
+/* Final editor polish: one card frame, a quiet editing surface, explicit actions. */
+.giftPollOptionEditor[data-editing="true"] { overflow: hidden; border-color: #ec662f; box-shadow: 0 12px 26px rgba(236,102,47,.1); }
+.giftPollOptionTitleLine { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.giftPollOptionTitleLine > strong { min-width: 0; }
+.giftPollOptionBody { grid-template-columns: minmax(0, 1fr) minmax(180px, .72fr); gap: 14px 16px; padding: 20px 18px 16px; border-top-color: rgba(98,72,58,.16); background: #fff7f0; }
+.giftPollOptionBodyHeader { align-items: center; padding: 0 0 13px; border-bottom: 0; }
+.giftPollOptionBodyHeader h4 { margin: 0; color: #4d3327; font-size: .96rem; text-wrap: balance; }
+.giftPollOptionBodyHeader h4:focus-visible { outline: 3px solid rgba(236,102,47,.3); outline-offset: 4px; border-radius: 4px; }
+.giftPollCollapseText { min-height: 40px; padding: 0 10px; border: 0; border-radius: 9px; background: transparent; color: #ec662f; font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; }
+.giftPollCollapseText:hover, .giftPollCollapseText:focus-visible { background: #fff0e8; color: #d95728; outline: none; }
+.giftPollCollapseText:active { transform: scale(.96); }
+.giftPollOptionTitleField, .giftPollOptionPriceField { grid-column: auto; }
+.giftPollOptionFullField, .giftPollPhotoEditor { grid-column: 1 / -1; }
+.giftPollOptionBody > .giftPollOptionFullField { grid-column: 1 / -1; }
+.giftPollOpenProductLink { width: fit-content; color: #ec662f; font-size: .8rem; font-weight: 800; text-decoration: none; }
+.giftPollOpenProductLink:hover, .giftPollOpenProductLink:focus-visible { color: #d95728; text-decoration: underline; outline: none; }
+.giftPollPhotoEditor { display: flex; flex-wrap: wrap; align-items: center; gap: 9px 12px; padding-top: 2px; color: #624a3b; font-size: .86rem; }
+.giftPollPhotoEditor > strong { width: 100%; color: #624a3b; font-size: .88rem; }
+.giftPollPhotoEditor > strong span { color: #9a8171; font-weight: 500; }
+.giftPollPhotoEditor > span { flex: 0 0 100%; color: #806452; font-size: .78rem; font-weight: 800; }
+.giftPollPhotoEditor p { flex: 0 0 100%; margin: -3px 0 0; color: #806452; font-size: .8rem; }
+.giftPollPhotoPreview { width: 72px; height: 72px; flex: 0 0 auto; object-fit: cover; border-radius: 10px; outline: 1px solid rgba(0,0,0,.1); }
+.giftPollPhotoInput { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.giftPollPhotoChoose, .giftPollPhotoRemove { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; padding: 0 12px; border: 1px solid rgba(236,102,47,.58); border-radius: 9px; background: #fff; color: #ec662f; font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; }
+.giftPollPhotoChoose:hover, .giftPollPhotoChoose:focus-visible, .giftPollPhotoRemove:hover, .giftPollPhotoRemove:focus-visible { border-color: #ec662f; background: #fff0e8; color: #d95728; outline: none; }
+.giftPollPhotoChoose:active, .giftPollPhotoRemove:active { transform: scale(.96); }
+.giftPollEditorActions { align-items: center; justify-content: flex-end; padding-top: 2px; }
+.giftPollEditorSave { min-height: 44px; }
+.giftPollEditorSave:disabled { cursor: default; opacity: .48; box-shadow: none; }
+.giftPollEditorNotice { color: #487243; font-size: .8rem; font-weight: 800; }
+.giftPollEditorNoticeError { color: #b54d2b; }
+.giftPollIconAction:focus-visible, .giftPollMoveButton:focus-visible { outline: 3px solid rgba(236,102,47,.3); outline-offset: 2px; }
+
+/* These selectors intentionally outrank the older generic editor rules. */
+.giftPollOptionBody > label.giftPollOptionTitleField, .giftPollOptionBody > label.giftPollOptionPriceField { grid-column: auto !important; }
+.giftPollOptionBody > .giftPollOptionFullField, .giftPollOptionBody > .giftPollPhotoEditor { grid-column: 1 / -1; }
+.giftPollPhotoEditor > strong { display: block; flex: 0 0 100%; width: 100%; }
+img.giftPollPhotoPreview { display: block; width: 72px !important; max-width: 72px !important; height: 72px !important; max-height: 72px !important; }
+input.giftPollPhotoInput { position: absolute !important; width: 1px !important; min-width: 1px !important; height: 1px !important; min-height: 1px !important; margin: -1px !important; padding: 0 !important; overflow: hidden !important; clip: rect(0 0 0 0) !important; clip-path: inset(50%) !important; border: 0 !important; white-space: nowrap !important; }
+
+@media (max-width: 760px) {
+  .giftPollOptionBody { grid-template-columns: minmax(0, 1fr); padding: 18px 15px calc(15px + env(safe-area-inset-bottom)); }
+  .giftPollOptionBody > label.giftPollOptionTitleField, .giftPollOptionBody > label.giftPollOptionPriceField, .giftPollOptionBody > .giftPollOptionFullField, .giftPollOptionBody > .giftPollPhotoEditor { grid-column: auto !important; }
+  .giftPollPhotoEditor { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: start; gap: 8px 10px; }
+  .giftPollPhotoEditor > strong, .giftPollPhotoEditor > span, .giftPollPhotoEditor > p { grid-column: 1 / -1; }
+  .giftPollPhotoEditor > img { grid-column: 1; grid-row: 3 / span 2; }
+  .giftPollPhotoEditor > .giftPollPhotoChoose, .giftPollPhotoEditor > .giftPollPhotoRemove { width: fit-content; min-width: 0; grid-column: 2; }
+  .giftPollPhotoEditor > .giftPollPhotoChoose { grid-row: 3; }
+  .giftPollPhotoEditor > .giftPollPhotoRemove { grid-row: 4; }
+}

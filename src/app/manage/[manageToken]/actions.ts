@@ -45,6 +45,7 @@ import type {
 } from "@/lib/final-card/types";
 import { logger } from "@/lib/logger";
 import { saveCardMediaFile } from "@/lib/media/local-card-media-storage";
+import { importGiftOptionImage } from "@/lib/gift-polls/image-storage";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
 import { getGiftPath, getJoinPath, getManagePath } from "@/lib/routes/card-links";
 import { reportCriticalError } from "@/lib/telemetry";
@@ -167,8 +168,8 @@ export async function saveGiftPollAction(_previous: GiftPollFormState, formData:
   if (options.some((option) => option.title.length > 60 || (option.description?.length ?? 0) > 140 || (option.priceLabel?.length ?? 0) > 30)) {
     return giftPollState(false, "Проверьте лимиты: название до 60, описание до 140, сумма до 30 символов.");
   }
-  if (options.some((option) => (option.productUrl && !isSafeProductUrl(option.productUrl)) || (option.imageUrl && !isSafeProductUrl(option.imageUrl)))) {
-    return giftPollState(false, "Ссылка на товар и изображение должны начинаться с https://.");
+  if (options.some((option) => (option.productUrl && !isSafeProductUrl(option.productUrl)) || (option.imageUrl && !option.imageUrl.startsWith("/uploads/gift-options/") && !isSafeProductUrl(option.imageUrl)))) {
+    return giftPollState(false, "Ссылка на товар должна начинаться с https://.");
   }
   if (existingPoll && existingPoll.totalVotes > 0) {
     if (existingPoll.title !== title || existingPoll.question !== question) {
@@ -192,7 +193,16 @@ export async function saveGiftPollAction(_previous: GiftPollFormState, formData:
   if (closesAtValue && (!closesAt || Number.isNaN(closesAt.getTime()))) return giftPollState(false, "Укажите корректную дату завершения или оставьте поле пустым.");
 
   const poll = await createGiftPoll({ cardId: card.id, mode, title, question, closesAt: closesAt?.toISOString() ?? null });
-  await Promise.all(options.map((option) => saveGiftPollOption({
+  const optionsForSave = await Promise.all(options.map(async (option) => {
+    if (!option.imageUrl || option.imageUrl.startsWith("/uploads/gift-options/")) return option;
+    try {
+      return { ...option, imageUrl: await importGiftOptionImage(card.id, option.imageUrl) };
+    } catch {
+      // A failed marketplace image must never prevent the organizer from saving the option.
+      return { ...option, imageUrl: null };
+    }
+  }));
+  await Promise.all(optionsForSave.map((option) => saveGiftPollOption({
     id: option.id, pollId: poll.id, title: option.title, description: option.description,
     imageUrl: option.imageUrl, priceLabel: option.priceLabel, productUrl: option.productUrl, sortOrder: option.index
   })));
