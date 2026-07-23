@@ -51,6 +51,14 @@ const getFirstAvailableSlot = (assets: CardMediaAsset[], slots: CardMediaSlot[])
 
 const getSlotTypeLabel = (slot: CardMediaSlot) => (verticalSlots.includes(slot) ? "Вертикальное" : "Горизонтальное");
 
+const formatFileSize = (sizeBytes: number) => `${(sizeBytes / 1024 / 1024).toFixed(1).replace(".", ",")} МБ`;
+
+const getFileNameParts = (fileName: string) => {
+  const lastDotIndex = fileName.lastIndexOf(".");
+  if (lastDotIndex <= 0 || lastDotIndex === fileName.length - 1) return { base: fileName, extension: "" };
+  return { base: fileName.slice(0, lastDotIndex), extension: fileName.slice(lastDotIndex) };
+};
+
 type SlotOption = {
   slot: CardMediaSlot;
   isOccupied: boolean;
@@ -62,7 +70,8 @@ const SlotDropdown = ({
   assets,
   hideOccupied = false,
   onChange,
-  name
+  name,
+  label = "Использовать в блоке"
 }: {
   options: SlotOption[];
   value: CardMediaSlot;
@@ -70,6 +79,7 @@ const SlotDropdown = ({
   hideOccupied?: boolean;
   onChange?: (slot: CardMediaSlot) => void;
   name?: string;
+  label?: string;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -98,7 +108,7 @@ const SlotDropdown = ({
 
   return (
     <div ref={wrapperRef} className={`${styles.mediaLibrarySlotSelect} ${isOpen ? styles.mediaLibrarySlotSelectOpen : ""}`}>
-      <span>Использовать в блоке</span>
+      <span>{label}</span>
       <input type="hidden" name={name} value={value} />
       <div className={styles.mediaLibrarySlotTriggerWrap}>
         <button
@@ -142,12 +152,14 @@ const MediaAssetRow = ({
   asset,
   manageToken,
   availableSlots,
-  assets
+  assets,
+  onDeleted
 }: {
   asset: CardMediaAsset;
   manageToken: string;
   availableSlots: CardMediaSlot[];
   assets: CardMediaAsset[];
+  onDeleted?: () => void;
 }) => {
   const [deleteState, deleteAction, deletePending] = useActionState(deleteCardMediaAction, initialState);
   const [, startDeleteTransition] = useTransition();
@@ -158,6 +170,7 @@ const MediaAssetRow = ({
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const formRef = useRef<HTMLFormElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const submittedMediaKeyRef = useRef<string | null>(null);
   const mediaAutoSaveReadyRef = useRef(false);
   const saveFormId = `media-save-${asset.id}`;
@@ -202,7 +215,10 @@ const MediaAssetRow = ({
       }
     };
     const closeMenuOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsMenuOpen(false);
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+        menuTriggerRef.current?.focus();
+      }
     };
 
     document.addEventListener("pointerdown", closeMenuOnOutsidePress);
@@ -212,6 +228,10 @@ const MediaAssetRow = ({
       document.removeEventListener("keydown", closeMenuOnEscape);
     };
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (deleteState.ok) onDeleted?.();
+  }, [deleteState.ok, onDeleted]);
 
   const handleCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCaption(e.target.value);
@@ -232,8 +252,8 @@ const MediaAssetRow = ({
   };
 
   return (
-    <article className={styles.mediaLibraryItem}>
-      <div className={styles.mediaLibraryThumb}>
+    <article id={`media-asset-${asset.id}`} tabIndex={-1} className={styles.mediaLibraryItem}>
+      <div className={`${styles.mediaLibraryThumb} ${verticalSlots.includes(asset.slot) ? styles.mediaLibraryThumbVertical : ""}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={asset.publicUrl} alt={caption || asset.captionSubtitle || slotBaseLabels[asset.slot]} />
       </div>
@@ -255,7 +275,8 @@ const MediaAssetRow = ({
                 maxLength={45}
               />
               <span className={styles.mediaLibraryCaptionHint}>
-                {caption.length}/45 · для полароида лучше до двух строк
+                <span>Для полароида лучше до двух строк</span>
+                <strong>{caption.length} / 45</strong>
               </span>
             </label>
             <div className={styles.mediaLibrarySlotField}>
@@ -268,23 +289,26 @@ const MediaAssetRow = ({
               assets={assets.filter((item) => item.id !== asset.id)}
               onChange={handleSlotChange}
               name="slot"
+              label="Разместить в блоке"
             />
               <span className={styles.mediaLibraryTypeBadge}>{getSlotTypeLabel(slot)}</span>
             </div>
             <div ref={menuRef} className={styles.mediaLibraryMenuWrap}>
               <button
+                ref={menuTriggerRef}
                 type="button"
                 className={styles.contentIconButton}
                 onClick={() => setIsMenuOpen((current) => !current)}
                 aria-expanded={isMenuOpen}
+                aria-controls={`media-menu-${asset.id}`}
                 aria-label="Действия с фото"
               >
                 ⋮
               </button>
               {isMenuOpen ? (
-                <div className={styles.mediaLibraryMenu}>
+                <div id={`media-menu-${asset.id}`} className={styles.mediaLibraryMenu}>
                   <button type="button" className={styles.mediaLibraryMenuItem} onClick={handleDelete} disabled={deletePending}>
-                    {deletePending ? "Удаляем..." : "Удалить"}
+                    {deletePending ? "Удаляем..." : "Удалить фото"}
                   </button>
                 </div>
               ) : null}
@@ -311,17 +335,34 @@ const MediaAssetRow = ({
 
 const MediaUploadForm = ({
   manageToken,
-  assets,
-  defaultSlot
+  defaultSlot,
+  onSuccess
 }: {
   manageToken: string;
-  assets: CardMediaAsset[];
   defaultSlot?: CardMediaSlot;
+  onSuccess: () => void;
 }) => {
   const [saveState, saveAction, savePending] = useActionState(saveCardMediaAction, initialState);
   const [, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFileName, setSelectedFileName] = useState("");
+  const successHandledRef = useRef(false);
+  const previewUrlRef = useRef<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [rightsConfirmed, setRightsConfirmed] = useState(false);
+  const [caption, setCaption] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!saveState.ok || successHandledRef.current) return;
+    successHandledRef.current = true;
+    onSuccess();
+  }, [onSuccess, saveState.ok]);
 
   if (!defaultSlot) {
     return <p className={styles.mediaLibraryFull}>Все доступные места заполнены. Можно заменить или удалить фото ниже.</p>;
@@ -329,7 +370,19 @@ const MediaUploadForm = ({
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    setSelectedFileName(file ? file.name : "");
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    const nextPreviewUrl = file ? URL.createObjectURL(file) : null;
+    previewUrlRef.current = nextPreviewUrl;
+    setPreviewUrl(nextPreviewUrl);
+    setSelectedFile(file ?? null);
+  };
+
+  const handleRemoveFile = () => {
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = null;
+    setPreviewUrl(null);
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -356,42 +409,54 @@ const MediaUploadForm = ({
       <input type="hidden" name="manageToken" value={manageToken} />
       <input type="hidden" name="assetId" value="" />
       <input type="hidden" name="captionSubtitle" value="" />
-      <label className={styles.mediaLibraryUploadCaptionLabel}>
-        <span>Подпись</span>
-        <input name="captionTitle" className={styles.contentPhotoInput} placeholder="Например, Закат на море" maxLength={45} />
-      </label>
-      <SlotDropdown
-        options={allSlots.map((slotItem) => {
-          const usedAsset = assets.find((item) => item.slot === slotItem);
-          return { slot: slotItem, isOccupied: Boolean(usedAsset) };
-        })}
-        value={defaultSlot}
-        assets={assets}
-        hideOccupied
-        name="slot"
-      />
-      <div className={styles.mediaLibraryUploadActions}>
+      <p className={styles.mediaLibraryUploadTarget}>
+        Фото будет добавлено в блок «Поздравления». Место можно изменить после загрузки.
+      </p>
+      <div className={styles.mediaLibraryFilePicker}>
         <input
           ref={fileInputRef}
+          id="media-upload-file"
           name="file"
           type="file"
           accept="image/jpeg,image/png,image/webp"
           className={styles.mediaLibraryUploadFileInput}
           onChange={handleFileChange}
         />
-        <button
-          type="button"
-          className={styles.mediaLibraryUploadFileButton}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          Выберите файл
-        </button>
-        <span className={styles.mediaLibraryUploadFileStatus}>{selectedFileName || "Файл не выбран"}</span>
-        <button type="submit" className={styles.contentPrimaryButton} disabled={savePending}>
-          {savePending ? "Загружаем..." : "Добавить фото"}
-        </button>
+        {!selectedFile ? <label htmlFor="media-upload-file" className={styles.mediaLibraryUploadFileButton}>Выбрать фото</label> : null}
+        <span className={styles.mediaLibraryUploadFileHelp}>JPG, PNG или WebP · до 6 МБ</span>
       </div>
-      <label className={styles.mediaRightsConsent}><input name="rightsConfirmed" type="checkbox" required /> <span>Подтверждаю, что имею право использовать загружаемые материалы и при необходимости получил согласие изображённых лиц.</span></label>
+      {selectedFile ? (
+        <div className={styles.mediaLibraryUploadContent}>
+          <div className={styles.mediaLibrarySelectedFile}>
+            {previewUrl ? (
+              <div className={styles.mediaLibraryUploadPreview}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={previewUrl} alt="Предварительный просмотр выбранного фото" />
+              </div>
+            ) : null}
+            <p className={styles.mediaLibraryUploadFileStatus} title={selectedFile.name}>
+              <span className={styles.mediaLibraryFileName} title={selectedFile.name}><span>{getFileNameParts(selectedFile.name).base}</span><b>{getFileNameParts(selectedFile.name).extension}</b></span> · {formatFileSize(selectedFile.size)}
+            </p>
+            <div className={styles.mediaLibraryFileActions}>
+              <label htmlFor="media-upload-file" className={styles.mediaLibraryUploadFileButton}>Заменить</label>
+              <button type="button" className={styles.mediaLibraryRemoveFileButton} onClick={handleRemoveFile}>Удалить</button>
+            </div>
+          </div>
+          <div className={styles.mediaLibraryUploadFields}>
+            <label className={styles.mediaLibraryUploadCaptionLabel}>
+              <span>Подпись</span>
+              <textarea name="captionTitle" value={caption} onChange={(event) => setCaption(event.target.value)} aria-describedby="media-upload-caption-counter" className={`${styles.contentPhotoInput} ${styles.mediaLibraryCaptionTextarea}`} placeholder="Например, Закат на море" rows={2} />
+              <small>Подпись необязательна</small>
+              <span id="media-upload-caption-counter" className={`${styles.mediaLibraryCaptionCounter} ${caption.length >= 40 ? styles.mediaLibraryCaptionCounterNearLimit : ""} ${caption.length > 45 ? styles.mediaLibraryCaptionCounterError : ""}`}>{caption.length} / 45</span>
+            </label>
+            {caption.length > 45 ? <span className={styles.contentEditorError}>Подпись длиннее 45 символов.</span> : null}
+            <label className={styles.mediaRightsConsent}><input name="rightsConfirmed" type="checkbox" required checked={rightsConfirmed} onChange={(event) => setRightsConfirmed(event.target.checked)} /> <span>Подтверждаю, что имею право использовать загружаемые материалы и при необходимости получил согласие изображённых лиц.</span></label>
+            <button type="submit" className={`${styles.contentPrimaryButton} ${styles.mediaLibraryUploadSubmit}`} disabled={!rightsConfirmed || caption.length > 45 || savePending}>
+              {savePending ? "Добавляем фото…" : "Добавить фото"}
+            </button>
+          </div>
+        </div>
+      ) : null}
       {saveState.message ? (
         <span className={saveState.ok ? styles.contentEditorSuccess : styles.contentEditorError}>{saveState.message}</span>
       ) : null}
@@ -518,6 +583,7 @@ const MediaLibraryGroup = ({
 export const MediaManager = ({ manageToken, mediaAssets, mediaLayout }: Props) => {
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [isUploadFormOpen, setIsUploadFormOpen] = useState(false);
+  const addPhotoButtonRef = useRef<HTMLButtonElement>(null);
   const messageSlots = messageSlotMap[mediaLayout];
   const requiredVertical = messageSlots.filter((slot) => verticalSlots.includes(slot)).length;
   const requiredHorizontal = messageSlots.filter((slot) => messageLandscapeSlots.includes(slot)).length + memorySlots.length;
@@ -539,6 +605,23 @@ export const MediaManager = ({ manageToken, mediaAssets, mediaLayout }: Props) =
 
     return true;
   });
+  const selectFilter = (nextFilter: MediaFilter, button: HTMLButtonElement) => {
+    setMediaFilter(nextFilter);
+    button.scrollIntoView({ block: "nearest", inline: "nearest" });
+  };
+  const focusAfterDelete = (nextAssetId?: string) => {
+    window.requestAnimationFrame(() => {
+      const nextCard = nextAssetId ? document.getElementById(`media-asset-${nextAssetId}`) : null;
+      (nextCard ?? addPhotoButtonRef.current)?.focus();
+    });
+  };
+  const filters = (
+    <div className={`${styles.contentFilterRow} ${styles.mediaLibraryFilterRow}`}>
+      <button type="button" aria-pressed={mediaFilter === "all"} className={`${styles.contentFilterPill} ${mediaFilter === "all" ? styles.contentFilterPillActive : ""}`} onClick={(event) => selectFilter("all", event.currentTarget)}>Все {mediaAssets.length}</button>
+      <button type="button" aria-pressed={mediaFilter === "horizontal"} className={`${styles.contentFilterPill} ${mediaFilter === "horizontal" ? styles.contentFilterPillActive : ""}`} onClick={(event) => selectFilter("horizontal", event.currentTarget)}>Горизонтальные {horizontalMediaCount}</button>
+      <button type="button" aria-pressed={mediaFilter === "vertical"} className={`${styles.contentFilterPill} ${mediaFilter === "vertical" ? styles.contentFilterPillActive : ""}`} onClick={(event) => selectFilter("vertical", event.currentTarget)}>Вертикальные {verticalMediaCount}</button>
+    </div>
+  );
 
   return (
     <section className={styles.mediaManagerStack}>
@@ -548,11 +631,13 @@ export const MediaManager = ({ manageToken, mediaAssets, mediaLayout }: Props) =
             <h2 className={styles.contentPanelTitle}>Фото открытки</h2>
             <div className={styles.contentToolbar}>
               <button
+                ref={addPhotoButtonRef}
                 type="button"
                 className={`${styles.mediaLibraryUploadToggle} ${isUploadFormOpen ? styles.mediaLibraryUploadToggleActive : ""}`}
                 onClick={() => setIsUploadFormOpen((current) => !current)}
+                aria-expanded={isUploadFormOpen}
               >
-                {isUploadFormOpen ? "Скрыть форму" : "Загрузить фото"}
+                {isUploadFormOpen ? <><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m18 15-6-6-6 6" /></svg>Свернуть форму</> : "+ Добавить фото"}
               </button>
             </div>
           </div>
@@ -561,40 +646,27 @@ export const MediaManager = ({ manageToken, mediaAssets, mediaLayout }: Props) =
           </p>
         </div>
 
-        <div className={`${styles.contentFilterRow} ${styles.mediaLibraryFilterRow}`}>
-          <button
-            type="button"
-            className={`${styles.contentFilterPill} ${mediaFilter === "all" ? styles.contentFilterPillActive : ""}`}
-            onClick={() => setMediaFilter("all")}
-          >
-            Все {mediaAssets.length}
-          </button>
-          <button
-            type="button"
-            className={`${styles.contentFilterPill} ${mediaFilter === "horizontal" ? styles.contentFilterPillActive : ""}`}
-            onClick={() => setMediaFilter("horizontal")}
-          >
-            Горизонтальные {horizontalMediaCount}
-          </button>
-          <button
-            type="button"
-            className={`${styles.contentFilterPill} ${mediaFilter === "vertical" ? styles.contentFilterPillActive : ""}`}
-            onClick={() => setMediaFilter("vertical")}
-          >
-            Вертикальные {verticalMediaCount}
-          </button>
-        </div>
+        {!isUploadFormOpen ? filters : null}
 
         {isUploadFormOpen ? (
           <div className={styles.mediaLibraryUploadCard}>
-            <MediaUploadForm manageToken={manageToken} assets={mediaAssets} defaultSlot={defaultUploadSlot} />
+            <MediaUploadForm
+              manageToken={manageToken}
+              defaultSlot={defaultUploadSlot}
+              onSuccess={() => {
+                setMediaFilter("all");
+                setIsUploadFormOpen(false);
+              }}
+            />
           </div>
         ) : null}
 
+        {isUploadFormOpen ? filters : null}
+
         {visibleMediaAssets.length > 0 ? (
           <div className={styles.mediaLibraryList}>
-            {visibleMediaAssets.map((asset) => (
-              <MediaAssetRow key={`${asset.id}-${asset.slot}`} asset={asset} manageToken={manageToken} availableSlots={allSlots} assets={mediaAssets} />
+            {visibleMediaAssets.map((asset, index) => (
+              <MediaAssetRow key={`${asset.id}-${asset.slot}`} asset={asset} manageToken={manageToken} availableSlots={allSlots} assets={mediaAssets} onDeleted={() => focusAfterDelete(visibleMediaAssets[index + 1]?.id)} />
             ))}
           </div>
         ) : (

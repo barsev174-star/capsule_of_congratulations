@@ -3550,11 +3550,20 @@ button.contentFilterPill {
 }
 
 .mediaLibraryCaptionHint {
-  display: block;
-  margin-top: 5px;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  margin-top: 2px;
   color: var(--m-muted);
   font-size: 0.72rem;
   line-height: 1.3;
+}
+
+.mediaLibraryCaptionHint strong {
+  flex: 0 0 auto;
+  color: #6f4d3d;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .contentVisibilityBadge {
@@ -3823,10 +3832,10 @@ button.contentFilterPill {
 }
 
 .mediaManagerStack .mediaLibraryHint {
-  overflow: hidden;
   font-size: 1rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.5;
+  text-wrap: pretty;
+  white-space: normal;
 }
 
 .mediaLibraryCounter {
@@ -3877,6 +3886,7 @@ button.contentFilterPill {
   grid-template-columns: minmax(0, 1fr) minmax(220px, max-content) auto;
   grid-template-rows: auto auto auto;
   gap: 6px 10px;
+  padding-right: 56px;
   align-items: start;
   min-width: 0;
 }
@@ -3925,37 +3935,50 @@ button.contentFilterPill {
 }
 
 .mediaLibraryItemFields .mediaLibraryMenuWrap {
-  grid-row: 1 / 4;
-  align-self: start;
-  margin-top: 20px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  grid-row: auto;
+  align-self: auto;
+  margin-top: 0;
   display: flex;
   align-items: center;
 }
 
+@media (min-width: 761px) {
+  .mediaLibraryItemFields .mediaLibraryMenuWrap {
+    top: 36px;
+  }
+}
+
 .mediaLibraryUploadCard {
-  padding: 16px;
-  border: 0;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow:
-    0 0 0 1px rgba(92, 62, 46, 0.07),
-    0 10px 24px rgba(89, 61, 44, 0.06);
+  padding-top: 16px;
+  border-top: 1px solid rgba(98, 72, 58, 0.12);
 }
 
 .mediaLibraryUploadForm {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr);
-  grid-template-rows: auto auto auto;
-  gap: 8px 16px;
-  align-items: end;
+  gap: 14px;
+  min-width: 0;
+}
+
+.mediaLibraryUploadContent {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(320px, 1.2fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.mediaLibrarySelectedFile,
+.mediaLibraryUploadFields {
+  display: grid;
+  gap: 10px;
   min-width: 0;
 }
 
 .mediaLibraryUploadCaptionLabel {
   display: grid;
-  grid-column: 1;
-  grid-row: 1 / 3;
-  grid-template-rows: auto auto;
   gap: 6px;
   min-width: 0;
 }
@@ -3964,6 +3987,19 @@ button.contentFilterPill {
   color: #5f4337;
   font-size: 0.82rem;
   font-weight: 900;
+}
+
+.mediaLibraryUploadCaptionLabel small,
+.mediaLibraryUploadFileHelp {
+  color: #8b705e;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.mediaLibraryCaptionTextarea {
+  min-height: 84px;
+  padding: 12px 14px;
+  resize: vertical;
 }
 
 .mediaLibraryUploadForm .mediaLibrarySlotSelect {
@@ -4010,7 +4046,10 @@ button.contentFilterPill {
 }
 
 .mediaLibraryUploadFileButton {
-  flex: 0 0 auto;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
   padding: 0 18px;
   border: 1px solid rgba(233, 101, 47, 0.35);
@@ -4032,6 +4071,29 @@ button.contentFilterPill {
   background: #ffffff;
 }
 
+.mediaLibraryFileActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mediaLibraryRemoveFileButton {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: #a64431;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.mediaLibraryRemoveFileButton:hover,
+.mediaLibraryRemoveFileButton:focus-visible {
+  color: #8f3124;
+  text-decoration: underline;
+}
+
 .mediaLibraryUploadFileStatus {
   flex: 1 1 auto;
   min-width: 0;
@@ -4043,10 +4105,72 @@ button.contentFilterPill {
   text-overflow: ellipsis;
 }
 
+.mediaLibraryFileName {
+  display: inline-flex;
+  max-width: min(100%, 280px);
+  vertical-align: bottom;
+}
+
+.mediaLibraryFileName > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mediaLibraryFileName b {
+  flex: 0 0 auto;
+}
+
+.mediaLibraryFilePicker {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mediaLibraryUploadPreview {
+  width: min(100%, 360px);
+  height: clamp(200px, 18vw, 260px);
+  overflow: hidden;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.mediaLibraryUploadPreview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mediaLibraryUploadSubmit {
+  justify-self: end;
+  min-height: 48px;
+  width: min(100%, 300px);
+}
+
+.mediaLibraryCaptionCounter {
+  justify-self: end;
+  color: #8b705e;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.mediaLibraryCaptionCounterNearLimit {
+  color: var(--m-accent);
+  font-weight: 800;
+}
+
+.mediaLibraryCaptionCounterError {
+  color: #a64431;
+}
+
 .mediaLibraryUploadToggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   min-height: 44px;
   padding: 0 18px;
   border: 1px solid rgba(233, 101, 47, 0.35);
@@ -4070,6 +4194,13 @@ button.contentFilterPill {
   background: #ffffff;
 }
 
+.mediaLibraryUploadToggleActive {
+  padding-inline: 10px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
 .mediaManagerActionButton {
   gap: 8px;
   font-size: 1rem;
@@ -4088,6 +4219,17 @@ button.contentFilterPill {
   background: rgba(255, 246, 238, 0.82);
   color: #6d4b3b;
   box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.12);
+}
+
+.mediaLibraryUploadForm .mediaLibraryUploadTarget {
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #705c50;
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .mediaLibraryUploadTarget span {
@@ -4253,8 +4395,8 @@ button.contentFilterPill {
 }
 
 .mediaLibraryMenuWrap .contentIconButton {
-  height: 48px;
-  width: 48px;
+  height: 44px;
+  width: 44px;
   box-sizing: border-box;
   padding: 0;
   border-radius: 16px;
@@ -4309,6 +4451,7 @@ button.contentFilterPill {
 }
 
 .mediaLibraryItem {
+  position: relative;
   display: flex;
   gap: 14px;
   align-items: flex-start;
@@ -4356,6 +4499,10 @@ button.contentFilterPill {
   object-fit: cover;
   outline: 1px solid rgba(0, 0, 0, 0.1);
   outline-offset: -1px;
+}
+
+.mediaLibraryThumbVertical img {
+  object-fit: contain;
 }
 
 .mediaLibraryTypeBadge {
@@ -7857,6 +8004,77 @@ button.contentFilterPill {
 
 .mediaRightsConsent { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 9px; color: #755b4e; font-size: .82rem; line-height: 1.4; }
 .mediaRightsConsent input { width: 17px; height: 17px; margin-top: 2px; flex: 0 0 auto; accent-color: #c65431; }
+
+@media (max-width: 760px) {
+  .mediaLibraryFilterRow {
+    padding-right: 32px;
+    scrollbar-width: none;
+  }
+
+  .mediaLibraryFilterRow::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mediaLibraryUploadContent {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .mediaLibraryUploadPreview {
+    width: 100%;
+    height: clamp(180px, 52vw, 220px);
+  }
+
+  .mediaLibraryUploadSubmit {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .mediaLibraryFileName {
+    max-width: min(100%, 240px);
+  }
+
+  .mediaLibraryItem {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .mediaLibraryThumb {
+    width: min(180px, 55vw);
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .mediaLibraryItemFields {
+    gap: 8px;
+    padding-right: 0;
+  }
+
+  .mediaLibraryCaptionField,
+  .mediaLibrarySlotField {
+    gap: 4px;
+  }
+
+  .mediaLibraryCaptionHint {
+    margin-top: 0;
+  }
+
+  .mediaLibraryItemFields .mediaLibraryMenuWrap {
+    top: 12px;
+    right: 12px;
+  }
+}
+
+@media (max-width: 389px) {
+  .mediaLibraryUnifiedCard .contentPanelTopRow {
+    display: grid;
+    gap: 6px;
+  }
+
+  .mediaLibraryUnifiedCard .contentToolbar {
+    justify-content: flex-start;
+  }
+}
 
 .organizerAccessBlock {
   display: grid;

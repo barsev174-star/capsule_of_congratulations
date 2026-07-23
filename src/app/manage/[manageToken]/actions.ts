@@ -66,6 +66,7 @@ const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "me
 const messageLayoutModes: FinalCardMessageLayoutMode[] = ["grid-2", "carousel-1", "carousel-2", "column-media"];
 const mediaLayouts: FinalCardMessageMediaLayout[] = ["portrait", "landscape-pair", "landscape-trio"];
 const mediaSlots: CardMediaSlot[] = ["portrait", "landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c"];
+const defaultMediaSlotOrder: CardMediaSlot[] = ["landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c", "portrait"];
 const finalMediaSlots: FinalCardMediaSlot[] = ["portrait", "landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c"];
 
 const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -836,14 +837,14 @@ export async function saveCardMediaAction(
   formData: FormData
 ) {
   const manageToken = String(formData.get("manageToken") ?? "");
-  const slot = String(formData.get("slot") ?? "") as CardMediaSlot;
+  let slot = String(formData.get("slot") ?? "") as CardMediaSlot;
   const captionTitle = String(formData.get("captionTitle") ?? "").trim();
   const captionSubtitle = String(formData.get("captionSubtitle") ?? "").trim();
   const existingAssetId = String(formData.get("assetId") ?? "");
   const file = formData.get("file");
   const rightsConfirmed = formData.get("rightsConfirmed") === "on";
 
-  if (!manageToken || !mediaSlots.includes(slot)) {
+  if (!manageToken) {
     return { ok: false, message: "Не удалось определить слот для фото." };
   }
 
@@ -872,6 +873,18 @@ export async function saveCardMediaAction(
     }
 
     const currentAssets = await listCardMediaAssetsByCardId(card.id);
+    // New uploads always take the first free greeting slot. The organizer can
+    // move the photo later from its card in the media list.
+    if (!existingAssetId) {
+      const resolvedSlot = defaultMediaSlotOrder.find((candidate) => !currentAssets.some((asset) => asset.slot === candidate));
+      if (!resolvedSlot) {
+        return { ok: false, message: "Все доступные места для фотографий заполнены." };
+      }
+      slot = resolvedSlot;
+    }
+    if (!mediaSlots.includes(slot)) {
+      return { ok: false, message: "Не удалось определить слот для фото." };
+    }
     const existingSlotAsset = currentAssets.find((item) => item.slot === slot);
     const isReplacingExistingAsset = Boolean(existingAssetId || existingSlotAsset);
 
@@ -933,6 +946,10 @@ export async function saveCardMediaAction(
 
   if (!existingAssetId) {
     return { ok: false, message: "Выберите файл для загрузки." };
+  }
+
+  if (!mediaSlots.includes(slot)) {
+    return { ok: false, message: "Не удалось определить слот для фото." };
   }
 
   const currentAssets = await listCardMediaAssetsByCardId(card.id);
