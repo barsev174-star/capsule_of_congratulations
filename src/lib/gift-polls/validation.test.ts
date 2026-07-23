@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultGiftPollCopy, isSafeProductUrl, normalizeBudgetAmount, normalizeGiftPollMode } from "./validation";
+import { defaultGiftPollCopy, isSafeProductUrl, isSystemDefaultPollQuestion, normalizeBudgetAmount, normalizeGiftPollMode } from "./validation";
 
 describe("gift poll validation", () => {
   it("keeps the two supported poll modes", () => {
@@ -9,8 +9,14 @@ describe("gift poll validation", () => {
   });
 
   it("uses clear defaults for gift and budget decisions", () => {
-    expect(defaultGiftPollCopy("gift", "Ирина").question).toContain("Ирина");
+    expect(defaultGiftPollCopy("gift", "Ирина").question).toBe("Какой вариант лучше выбрать для подарка?");
+    expect(defaultGiftPollCopy("budget", "Ирина").question).toBe("Какой бюджет лучше выбрать для подарка?");
     expect(defaultGiftPollCopy("budget", "Ирина").title).toContain("бюджет");
+  });
+
+  it("recognizes legacy defaults without treating custom questions as defaults", () => {
+    expect(isSystemDefaultPollQuestion("Какой бюджет больше подойдёт для подарка Ирине?", "budget", "Ирине")).toBe(true);
+    expect(isSystemDefaultPollQuestion("Какой бюджет подойдёт нашей команде?", "budget", "Ирине")).toBe(false);
   });
 
   it("allows only HTTPS product links", () => {

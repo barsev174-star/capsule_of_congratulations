@@ -2,13 +2,13 @@
 /* eslint-disable @next/next/no-img-element -- store-hosted previews are intentionally external. */
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { getDefaultPollQuestion, getDefaultPollTitle } from "@/lib/gift-polls/validation";
 import styles from "./participant-page.module.css";
 
 type Option = { id: string; title: string; description: string | null; imageUrl: string | null; priceLabel: string | null; productUrl: string | null };
 type Poll = { id?: string; mode: "gift" | "budget"; title: string; question: string; closesAt?: string | null; options: Option[]; selectedOptionId?: string | null };
 type View = "invite" | "form" | "skipped" | "voted" | "editing";
 
-const POLL_QUESTION = "Какой вариант лучше выбрать для подарка?";
 const price = (value: string | null) => value ? (/[₽р]\.?$/iu.test(value.trim()) ? `≈ ${value.trim()}` : `≈ ${value.trim()} ₽`) : null;
 const titleCase = (value: string) => value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : value;
 
@@ -100,6 +100,8 @@ export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, invite
     document.getElementById(`gift-poll-option-${poll.options[nextIndex].id}`)?.focus();
   };
   const isEditing = view === "editing";
+  const pollTitle = poll.title.trim() || getDefaultPollTitle(poll.mode);
+  const pollQuestion = poll.question.trim() || getDefaultPollQuestion(poll.mode);
 
   if (view === "invite") return (
     <section className={styles.giftPollSuccess} aria-live="polite">
@@ -117,12 +119,12 @@ export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, invite
     {revealed ? <section className={styles.giftPollCompactSuccess} aria-live="polite"><strong><span aria-hidden="true">✓</span> Поздравление добавлено</strong><p>Спасибо — ваши слова стали частью общей открытки.</p></section> : null}
     <section ref={sectionRef} id="gift-poll-section" tabIndex={-1} className={styles.giftPollCard} aria-labelledby="gift-poll-title">
     <p className={styles.giftPollEyebrow}>НЕОБЯЗАТЕЛЬНЫЙ ШАГ</p>
-    <h2 id="gift-poll-title" className={styles.sectionTitle}>Помогите выбрать подарок</h2>
-    <p className={styles.hint}>{POLL_QUESTION}</p>
+    <h2 id="gift-poll-title" className={styles.sectionTitle}>{pollTitle}</h2>
+    <p className={styles.hint}>{pollQuestion}</p>
     <p className={styles.giftPollPrivacy}>Ваш выбор увидит только организатор. Результаты другим участникам не показываем.</p>
     <fieldset className={styles.giftPollFieldset} disabled={isPending}>
-      <legend className={styles.srOnly}>{POLL_QUESTION}</legend>
-      <div className={styles.giftPollOptions} data-count={poll.options.length} role="radiogroup" aria-label={POLL_QUESTION}>{poll.options.map((option, index) => <article key={option.id} id={`gift-poll-option-${option.id}`} tabIndex={selectedOptionId === option.id ? 0 : -1} role="radio" aria-checked={selectedOptionId === option.id} aria-disabled={isPending || undefined} className={`${styles.giftPollOption} ${poll.mode === "budget" ? styles.giftPollBudgetOption : ""} ${selectedOptionId === option.id ? styles.giftPollOptionSelected : ""}`} onClick={() => choose(option.id)} onKeyDown={(event) => handleOptionKeyDown(event, index)}>{option.imageUrl ? <img src={option.imageUrl} alt="" className={styles.giftPollOptionImage} /> : null}<span className={styles.giftPollOptionCopy}>{poll.mode === "budget" ? <span className={styles.giftPollBudgetLabel}>Общий бюджет</span> : null}<strong>{titleCase(option.title)}</strong>{option.description && option.description.trim().toLowerCase() !== option.title.trim().toLowerCase() ? <span>{option.description}</span> : null}{price(option.priceLabel) ? <em>{price(option.priceLabel)}</em> : null}{option.productUrl ? <a href={option.productUrl} target="_blank" rel="noopener noreferrer" aria-label={`Открыть вариант «${option.title}» в новой вкладке`} onClick={(event) => event.stopPropagation()}>Посмотреть вариант →</a> : null}</span><span className={styles.giftPollRadio} aria-hidden="true" /></article>)}</div>
+      <legend className={styles.srOnly}>{pollQuestion}</legend>
+      <div className={styles.giftPollOptions} data-count={poll.options.length} role="radiogroup" aria-label={pollQuestion}>{poll.options.map((option, index) => <article key={option.id} id={`gift-poll-option-${option.id}`} tabIndex={selectedOptionId === option.id ? 0 : -1} role="radio" aria-checked={selectedOptionId === option.id} aria-disabled={isPending || undefined} className={`${styles.giftPollOption} ${poll.mode === "budget" ? styles.giftPollBudgetOption : ""} ${selectedOptionId === option.id ? styles.giftPollOptionSelected : ""}`} onClick={() => choose(option.id)} onKeyDown={(event) => handleOptionKeyDown(event, index)}>{option.imageUrl ? <img src={option.imageUrl} alt="" className={styles.giftPollOptionImage} /> : null}<span className={styles.giftPollOptionCopy}><strong>{titleCase(option.title)}</strong>{option.description && option.description.trim().toLowerCase() !== option.title.trim().toLowerCase() ? <span>{option.description}</span> : null}{price(option.priceLabel) ? <em>{price(option.priceLabel)}</em> : null}{option.productUrl ? <a href={option.productUrl} target="_blank" rel="noopener noreferrer" aria-label={`Открыть вариант «${option.title}» в новой вкладке`} onClick={(event) => event.stopPropagation()}>Посмотреть вариант →</a> : null}</span><span className={styles.giftPollRadio} aria-hidden="true" /></article>)}</div>
     </fieldset>
     {error ? <div className={styles.giftPollError} role="alert"><p>{error}</p></div> : null}
     <div className={styles.giftPollActions}><button type="button" className={styles.submitButton} disabled={!selectedOptionId || isPending} onClick={saveVote}>{isPending ? "Отправляем голос…" : error ? "Повторить" : isEditing ? "Сохранить выбор" : "Отдать голос"}</button>{!isEditing ? <button type="button" className={styles.giftPollTextButton} disabled={isPending} onClick={skip}>Пропустить сейчас</button> : null}</div>

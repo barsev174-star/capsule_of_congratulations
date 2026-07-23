@@ -812,3 +812,9 @@
 
 - Budget amount normalization now accepts formatted values with non-breaking spaces, so previously saved levels remain valid when another amount is added.
 - Verified the budget poll end-to-end: a fourth 4,000-ruble option persists after a page reload.
+
+# 2026-07-23 — Join: budget poll copy and cards
+
+- The participant page now renders the poll title and question saved by the organizer. Empty legacy questions fall back to neutral mode-specific copy without recipient names.
+- Switching between gift and budget updates only system defaults, including the previous recipient-based defaults; organizer-written copy remains unchanged.
+- Budget cards show the amount first, optional explanation second, and a compact radio affordance on the right. The repeated “Общий бюджет” label was removed.

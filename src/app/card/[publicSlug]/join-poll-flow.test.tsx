@@ -28,6 +28,17 @@ const pollWithFiveOptions = {
   ]
 };
 
+const budgetPoll = {
+  ...poll,
+  mode: "budget" as const,
+  title: "Выберем общий бюджет",
+  question: "Какую сумму заложить на подарок?",
+  options: [
+    { id: "b1", title: "3 000 ₽", description: "Небольшой общий подарок", imageUrl: null, priceLabel: null, productUrl: null },
+    { id: "b2", title: "5 000 ₽", description: null, imageUrl: null, priceLabel: null, productUrl: null }
+  ]
+};
+
 const panelProps = {
   variants: [],
   generationId: "",
@@ -117,6 +128,26 @@ describe("GiftPollVote — post-submit сценарий", () => {
     expect(screen.getAllByRole("radio")).toHaveLength(5);
   });
 
+  it("показывает сохранённые заголовок и вопрос, а бюджет выводит без технической подписи", async () => {
+    window.localStorage.setItem(storageKey, crypto.randomUUID());
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ poll: budgetPoll }) }));
+    render(<GiftPollVote publicSlug={slug} active />);
+
+    expect(await screen.findByRole("heading", { name: budgetPoll.title })).toBeInTheDocument();
+    expect(screen.getAllByText(budgetPoll.question)).toHaveLength(2);
+    expect(screen.getByRole("radiogroup", { name: budgetPoll.question })).toBeInTheDocument();
+    expect(screen.getByText("Небольшой общий подарок")).toBeInTheDocument();
+    expect(screen.queryByText("Общий бюджет")).not.toBeInTheDocument();
+  });
+
+  it("подставляет системный вопрос, если в сохранённом опросе он пустой", async () => {
+    window.localStorage.setItem(storageKey, crypto.randomUUID());
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ poll: { ...budgetPoll, question: "   " } }) }));
+    render(<GiftPollVote publicSlug={slug} active />);
+
+    expect(await screen.findByRole("radiogroup", { name: "Какой бюджет лучше выбрать для подарка?" })).toBeInTheDocument();
+  });
+
   it("до отправки поздравления ничего не показывает", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ teaser: poll }) }));
     const { container } = render(<GiftPollVote publicSlug={slug} active={false} inviteToReveal />);
@@ -145,8 +176,8 @@ describe("GiftPollVote — post-submit сценарий", () => {
     await userEvent.click(button);
 
     expect(await screen.findByRole("radiogroup")).toBeInTheDocument();
-    expect(screen.getByText(/помогите выбрать подарок/i)).toBeInTheDocument();
-    expect(screen.getAllByText("Какой вариант лучше выбрать для подарка?")).toHaveLength(2);
+    expect(screen.getByRole("heading", { name: poll.title })).toBeInTheDocument();
+    expect(screen.getAllByText(poll.question)).toHaveLength(2);
     expect(screen.getByText("Поздравление добавлено")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /перейти к голосованию/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Отдать голос" })).toBeDisabled();

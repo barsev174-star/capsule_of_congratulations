@@ -1743,9 +1743,10 @@
 .giftPollOptionImage { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; outline: 1px solid rgba(0, 0, 0, 0.1); }
 .giftPollOptionCopy { display: grid; gap: 2px; min-width: 0; }
 .giftPollOptionCopy strong { color: #4d3327; }
-.giftPollBudgetOption { min-height: 92px; align-items: center; background: linear-gradient(135deg, #fffaf0, #fff1dc); }
-.giftPollBudgetOption .giftPollOptionCopy strong { color: #a94f2a; font-size: 1.28rem; font-variant-numeric: tabular-nums; }
-.giftPollBudgetLabel { color: #8b6851; font-size: .76rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.giftPollBudgetOption { grid-template-columns: minmax(0, 1fr) auto; min-height: 80px; align-items: start; padding: 12px 14px; background: linear-gradient(135deg, #fffaf0, #fff1dc); }
+.giftPollBudgetOption .giftPollOptionCopy { gap: 4px; }
+.giftPollBudgetOption .giftPollOptionCopy strong { color: #a94f2a; font-size: 1.28rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.giftPollBudgetOption .giftPollRadio { margin-top: 2px; }
 .giftPollOptionCopy span { color: #917b6b; font-size: .82rem; font-style: normal; }
 .giftPollOptionCopy em { color: #d6683d; font-size: .84rem; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; }
 .giftPollOptionCopy a { width: max-content; color: #ec662f; font-size: .82rem; font-style: normal; text-decoration: none; text-underline-offset: 3px; }

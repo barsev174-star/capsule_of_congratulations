@@ -22,9 +22,26 @@ export const normalizeBudgetAmount = (value: string) => {
   return `${new Intl.NumberFormat("ru-RU").format(amount)} ₽`;
 };
 
-export const defaultGiftPollCopy = (mode: GiftPollMode, recipientName: string) => ({
-  title: mode === "budget" ? "Помогите выбрать бюджет" : "Помогите выбрать подарок",
-  question: mode === "budget"
-    ? `Какой бюджет больше подойдёт для подарка ${recipientName || "дорогому человеку"}?`
-    : `Какой вариант больше подойдёт ${recipientName || "дорогому человеку"}?`
+export const getDefaultPollTitle = (mode: GiftPollMode) => mode === "budget" ? "Помогите выбрать бюджет" : "Помогите выбрать подарок";
+
+export const getDefaultPollQuestion = (mode: GiftPollMode) => mode === "budget"
+  ? "Какой бюджет лучше выбрать для подарка?"
+  : "Какой вариант лучше выбрать для подарка?";
+
+// `recipientName` remains optional for callers saved before the neutral defaults.
+export const defaultGiftPollCopy = (mode: GiftPollMode, _recipientName?: string) => ({
+  title: getDefaultPollTitle(mode),
+  question: getDefaultPollQuestion(mode)
 });
+
+export const isSystemDefaultPollTitle = (value: string, mode: GiftPollMode) => value.trim() === getDefaultPollTitle(mode);
+
+export const isSystemDefaultPollQuestion = (value: string, mode: GiftPollMode, recipientName?: string) => {
+  const question = value.trim();
+  if (!question || question === getDefaultPollQuestion(mode)) return true;
+  const subject = recipientName?.trim() || "дорогому человеку";
+  const legacyQuestion = mode === "budget"
+    ? `Какой бюджет больше подойдёт для подарка ${subject}?`
+    : `Какой вариант больше подойдёт ${subject}?`;
+  return question === legacyQuestion;
+};
