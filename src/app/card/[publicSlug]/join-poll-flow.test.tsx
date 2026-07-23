@@ -237,7 +237,7 @@ describe("GiftPollVote — post-submit сценарий", () => {
     expect(await screen.findByRole("radiogroup")).toBeInTheDocument();
   });
 
-  it("уже проголосовавшему показывает «Голос учтён»", async () => {
+  it("уже проголосовавшему показывает компактное состояние голоса и позволяет вернуться к редактированию", async () => {
     window.localStorage.setItem(storageKey, crypto.randomUUID());
     vi.stubGlobal(
       "fetch",
@@ -245,9 +245,14 @@ describe("GiftPollVote — post-submit сценарий", () => {
     );
     render(<GiftPollVote publicSlug={slug} active={true} inviteToReveal />);
 
-    expect(await screen.findByText("Спасибо, ваш голос учтён")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Изменить выбор" })).toBeInTheDocument();
+    expect(await screen.findByText("Голос учтён")).toBeInTheDocument();
+    expect(screen.getByText("Книга")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Изменить" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /перейти к голосованию/i })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Изменить" }));
+    expect(await screen.findByRole("button", { name: "Сохранить выбор" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /книга/i })).toHaveAttribute("aria-checked", "true");
   });
 
   it("без inviteToReveal сохраняет прежнее поведение: форма голосования сразу", async () => {

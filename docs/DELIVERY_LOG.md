@@ -823,3 +823,8 @@
 
 - Mobile rules now explicitly place every budget choice in the single grid column, including the fourth and fifth cards in a five-option poll.
 - When no budget option has an explanation, the whole option set uses the same compact card height while retaining the 44px-or-larger touch target.
+
+# 2026-07-23 — Join: stable option cards and vote confirmation
+
+- The option radio is anchored to the top-right corner of every card, with content reserving space for it; selected styling keeps the same box dimensions.
+- The vote confirmation is now compact and vote-specific: it shows the selected option beside the “Изменить” action, preserves a keyboard return to the selected card, and protects the mobile submit action with a safe-area bottom inset.
