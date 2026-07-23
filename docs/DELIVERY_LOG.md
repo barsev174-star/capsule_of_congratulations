@@ -818,3 +818,8 @@
 - The participant page now renders the poll title and question saved by the organizer. Empty legacy questions fall back to neutral mode-specific copy without recipient names.
 - Switching between gift and budget updates only system defaults, including the previous recipient-based defaults; organizer-written copy remains unchanged.
 - Budget cards show the amount first, optional explanation second, and a compact radio affordance on the right. The repeated “Общий бюджет” label was removed.
+
+# 2026-07-23 — Join: budget grid mobile override
+
+- Mobile rules now explicitly place every budget choice in the single grid column, including the fourth and fifth cards in a five-option poll.
+- When no budget option has an explanation, the whole option set uses the same compact card height while retaining the 44px-or-larger touch target.

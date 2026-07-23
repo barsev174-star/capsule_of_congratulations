@@ -140,6 +140,16 @@ describe("GiftPollVote — post-submit сценарий", () => {
     expect(screen.queryByText("Общий бюджет")).not.toBeInTheDocument();
   });
 
+  it("помечает бюджет без пояснений компактным режимом, сохраняя порядок карточек", async () => {
+    window.localStorage.setItem(storageKey, crypto.randomUUID());
+    const pollWithoutExplanations = { ...budgetPoll, options: budgetPoll.options.map((option) => ({ ...option, description: null })) };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ poll: pollWithoutExplanations }) }));
+    const { container } = render(<GiftPollVote publicSlug={slug} active />);
+
+    expect(await screen.findByRole("radiogroup")).toHaveAttribute("data-compact", "true");
+    expect([...container.querySelectorAll("[role='radio']")].map((option) => option.id)).toEqual(["gift-poll-option-b1", "gift-poll-option-b2"]);
+  });
+
   it("подставляет системный вопрос, если в сохранённом опросе он пустой", async () => {
     window.localStorage.setItem(storageKey, crypto.randomUUID());
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ poll: { ...budgetPoll, question: "   " } }) }));

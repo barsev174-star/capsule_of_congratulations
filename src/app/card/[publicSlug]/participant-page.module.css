@@ -1747,6 +1747,7 @@
 .giftPollBudgetOption .giftPollOptionCopy { gap: 4px; }
 .giftPollBudgetOption .giftPollOptionCopy strong { color: #a94f2a; font-size: 1.28rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .giftPollBudgetOption .giftPollRadio { margin-top: 2px; }
+.giftPollOptions[data-compact="true"] .giftPollBudgetOption { min-height: 68px; }
 .giftPollOptionCopy span { color: #917b6b; font-size: .82rem; font-style: normal; }
 .giftPollOptionCopy em { color: #d6683d; font-size: .84rem; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; }
 .giftPollOptionCopy a { width: max-content; color: #ec662f; font-size: .82rem; font-style: normal; text-decoration: none; text-underline-offset: 3px; }
@@ -1774,15 +1775,19 @@
 
 @media (max-width: 767px) {
   .giftPollOptions,
-  .giftPollOptions[data-count="4"] { grid-template-columns: 1fr; }
+  .giftPollOptions[data-count="4"] { grid-template-columns: minmax(0, 1fr); }
 
-  .giftPollOptions .giftPollOption,
+  .giftPollOptions[data-count] .giftPollOption,
   .giftPollOptions[data-count="3"] .giftPollOption:last-child,
-  .giftPollOptions[data-count="5"] .giftPollOption:last-child {
-    grid-column: auto;
-    width: auto;
+  .giftPollOptions[data-count="5"] .giftPollOption:nth-child(4),
+  .giftPollOptions[data-count="5"] .giftPollOption:nth-child(5) {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
     justify-self: stretch;
   }
+
+  .giftPollOptions[data-compact="true"] .giftPollBudgetOption { min-height: 64px; padding-block: 10px; }
 }
 .giftPollActions { display: grid; gap: 8px; align-items: start; margin-top: 4px; padding-bottom: 2px; }
 .giftPollActions .submitButton { width: 100%; max-width: 540px; margin-inline: auto; }
