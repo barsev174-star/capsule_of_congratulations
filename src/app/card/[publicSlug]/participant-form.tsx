@@ -550,6 +550,7 @@ export const ParticipantForm = ({
         publicSlug={publicSlug}
         active={hasSubmitted}
         inviteToReveal
+        showGreetingSuccess={isJoin}
       />
     </>
   );

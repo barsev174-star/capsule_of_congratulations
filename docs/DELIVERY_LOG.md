@@ -828,3 +828,8 @@
 
 - The option radio is anchored to the top-right corner of every card, with content reserving space for it; selected styling keeps the same box dimensions.
 - The vote confirmation is now compact and vote-specific: it shows the selected option beside the “Изменить” action, preserves a keyboard return to the selected card, and protects the mobile submit action with a safe-area bottom inset.
+
+# 2026-07-23 — Join: independent greeting confirmation
+
+- The confirmation that a greeting was added now remains above every poll post-submit state: invitation, vote recorded, skipped poll, and vote editing.
+- Poll UI is vote-specific only; the footer note now describes delivery rather than publication, its icon is an eye, and the example/reminder blocks received small spacing and text-width refinements.

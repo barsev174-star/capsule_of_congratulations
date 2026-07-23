@@ -213,7 +213,7 @@ export default async function JoinCardPage({ params }: Props) {
 
           <aside className={styles.footerNote}>
             <span className={styles.footerIcon} aria-hidden="true" />
-            <p>Ваши слова попадут в открытку и будут видны получателю после публикации.</p>
+            <p>Ваши слова попадут в открытку и станут видны получателю после её передачи.</p>
             <span className={styles.footerHeart} aria-hidden="true" />
           </aside>
         </div>

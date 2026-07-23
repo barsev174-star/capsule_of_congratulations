@@ -131,7 +131,7 @@ describe("GiftPollVote — post-submit сценарий", () => {
   it("показывает сохранённые заголовок и вопрос, а бюджет выводит без технической подписи", async () => {
     window.localStorage.setItem(storageKey, crypto.randomUUID());
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ poll: budgetPoll }) }));
-    render(<GiftPollVote publicSlug={slug} active />);
+    render(<GiftPollVote publicSlug={slug} active showGreetingSuccess />);
 
     expect(await screen.findByRole("heading", { name: budgetPoll.title })).toBeInTheDocument();
     expect(screen.getAllByText(budgetPoll.question)).toHaveLength(2);
@@ -169,7 +169,7 @@ describe("GiftPollVote — post-submit сценарий", () => {
   it("после отправки с опросом показывает приглашение, а не форму голосования", async () => {
     window.localStorage.setItem(storageKey, crypto.randomUUID());
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ poll }) }));
-    render(<GiftPollVote publicSlug={slug} active={true} inviteToReveal />);
+    render(<GiftPollVote publicSlug={slug} active={true} inviteToReveal showGreetingSuccess />);
 
     const button = await screen.findByRole("button", { name: /перейти к голосованию/i });
     expect(button).toHaveAttribute("aria-expanded", "false");
@@ -180,7 +180,7 @@ describe("GiftPollVote — post-submit сценарий", () => {
   it("по нажатию раскрывает полноширинную inline-секцию голосования", async () => {
     window.localStorage.setItem(storageKey, crypto.randomUUID());
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ poll }) }));
-    render(<GiftPollVote publicSlug={slug} active={true} inviteToReveal />);
+    render(<GiftPollVote publicSlug={slug} active={true} inviteToReveal showGreetingSuccess />);
 
     const button = await screen.findByRole("button", { name: /перейти к голосованию/i });
     await userEvent.click(button);
@@ -226,9 +226,10 @@ describe("GiftPollVote — post-submit сценарий", () => {
   it("после пропуска позволяет вернуться к голосованию", async () => {
     window.localStorage.setItem(storageKey, crypto.randomUUID());
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ poll }) }));
-    render(<GiftPollVote publicSlug={slug} active />);
+    render(<GiftPollVote publicSlug={slug} active showGreetingSuccess />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Пропустить сейчас" }));
+    expect(screen.getByText("Поздравление добавлено")).toBeInTheDocument();
     expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
     expect(screen.getByText(/голосование пропущено/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Вернуться" })).toHaveAttribute("aria-controls", "gift-poll-section");
@@ -243,9 +244,10 @@ describe("GiftPollVote — post-submit сценарий", () => {
       "fetch",
       vi.fn().mockResolvedValue({ ok: true, json: async () => ({ poll: { ...poll, selectedOptionId: "o1" } }) })
     );
-    render(<GiftPollVote publicSlug={slug} active={true} inviteToReveal />);
+    render(<GiftPollVote publicSlug={slug} active={true} inviteToReveal showGreetingSuccess />);
 
     expect(await screen.findByText("Голос учтён")).toBeInTheDocument();
+    expect(screen.getByText("Поздравление добавлено")).toBeInTheDocument();
     expect(screen.getByText("Книга")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Изменить" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /перейти к голосованию/i })).not.toBeInTheDocument();
