@@ -802,3 +802,8 @@
 - The loop reset now occurs only after scroll snap has finished, eliminating the visible mid-scroll jump at the first and last cards.
 - Autoplay no longer depends on the viewport observer and runs after reload on mobile and desktop; reduced-motion mode uses an instant step instead of a smooth transition.
 - Mobile loop detection uses the viewport's actual scroll boundary, so the next swipe remains available after the final greeting.
+
+# 2026-07-23 — Join and gift poll persistence
+
+- A single desktop contribution now uses the full carousel viewport instead of the reserved arrow columns.
+- Adding a budget or gift option immediately marks the editor for autosave, so the new option is included in the next persisted settings snapshot.

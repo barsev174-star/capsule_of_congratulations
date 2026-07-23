@@ -156,7 +156,7 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
 
   return (
     <div
-      className={styles.contribCarousel}
+      className={`${styles.contribCarousel} ${!canNavigate ? styles.contribCarouselStatic : ""}`}
       aria-roledescription="carousel"
       aria-label="Поздравления участников"
       onMouseEnter={() => setIsHovered(true)}

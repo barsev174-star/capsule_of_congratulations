@@ -3094,6 +3094,10 @@
   margin-top: 14px;
 }
 
+.contribCarouselStatic {
+  display: block;
+}
+
 .contribStripViewport {
   overflow-x: auto;
   overflow-y: hidden;

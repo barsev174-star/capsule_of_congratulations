@@ -174,7 +174,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
               </article>;
             })}
           </div>
-          {totalVotes === 0 && options.length < 6 ? <button type="button" className={styles.giftPollAddOptionWide} onClick={() => { const option = emptyOption(); setOptions((current) => [...current, option]); setExpandedIds((current) => [...current, option.id]); }}>＋ Добавить {isBudget ? "сумму" : "вариант"}</button> : null}
+          {totalVotes === 0 && options.length < 6 ? <button type="button" className={styles.giftPollAddOptionWide} onClick={() => { const option = emptyOption(); setOptions((current) => [...current, option]); setExpandedIds((current) => [...current, option.id]); markForAutoSave(); }}>＋ Добавить {isBudget ? "сумму" : "вариант"}</button> : null}
         </section>
         {state.message ? <p className={state.ok ? styles.giftPollFormSuccess : styles.giftPollFormError} aria-live="polite">{state.message}</p> : null}
         <p className={styles.giftPollAutosaveStatus} aria-live="polite">{pending ? "Сохраняем изменения…" : state.ok ? "Сохранено" : "Изменения сохраняются автоматически"}</p>

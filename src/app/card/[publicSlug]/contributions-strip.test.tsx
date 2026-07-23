@@ -61,6 +61,12 @@ describe("ContributionsStrip", () => {
     expect(screen.queryByRole("button", { name: "Показать следующее поздравление" })).not.toBeInTheDocument();
   });
 
+  it("не сжимает единственное поздравление в зону скрытых стрелок", () => {
+    render(<ContributionsStrip items={items.slice(0, 1)} />);
+
+    expect(screen.getByLabelText("Поздравления участников").className).toContain("contribCarouselStatic");
+  });
+
   it("не выключает автопрокрутку от вертикального касания страницы", () => {
     vi.useFakeTimers();
     const scrollBy = vi.fn();
