@@ -25,6 +25,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const summary = await getTelemetrySummary(days);
   const counts = new Map(summary.funnel.map((item) => [item.event, item.count]));
   const maxCount = Math.max(1, ...funnelOrder.map((event) => counts.get(event) ?? 0));
+  const formatAiCost = (value: number) => summary.aiCost.generations ? `${value.toFixed(3)} ₽` : "—";
 
   return (
     <>
@@ -44,6 +45,16 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         <div className={styles.statCard}><p className={styles.statValue}>{summary.uniqueCards}</p><p className={styles.statLabel}>Открыток в пути</p></div>
         <div className={styles.statCard}><p className={styles.statValue}>{summary.criticalErrors}</p><p className={styles.statLabel}>Критических ошибок</p></div>
       </div>
+
+      <section className={`${styles.panel} ${styles.analyticsPanel}`}>
+        <h2 className={styles.panelTitle}>Расходы на ИИ</h2>
+        <div className={styles.statsGrid}>
+          <div className={styles.statCard}><p className={styles.statValue}>{formatAiCost(summary.aiCost.totalRub)}</p><p className={styles.statLabel}>Всего за период</p></div>
+          <div className={styles.statCard}><p className={styles.statValue}>{formatAiCost(summary.aiCost.averageGenerationRub)}</p><p className={styles.statLabel}>В среднем за генерацию</p></div>
+          <div className={styles.statCard}><p className={styles.statValue}>{formatAiCost(summary.aiCost.averageCardRub)}</p><p className={styles.statLabel}>В среднем на открытку</p></div>
+        </div>
+        <p className={styles.emptyState}>{summary.aiCost.generations ? `Учтено генераций: ${summary.aiCost.generations}; открыток: ${summary.aiCost.cards}.` : "Данные появятся после первой двухшаговой генерации с новой версией учёта."} Черновики и тексты поздравлений здесь не сохраняются.</p>
+      </section>
 
       <section className={`${styles.panel} ${styles.analyticsPanel}`}>
         <h2 className={styles.panelTitle}>Воронка</h2>

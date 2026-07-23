@@ -12,6 +12,7 @@ import type {
   AiUsageReservation,
   AiVariant
 } from "@/lib/ai/types";
+import type { GreetingSemanticPlan } from "@/lib/ai/greeting-two-stage";
 
 export type AiGenerationRequestState =
   | { status: "pending" }
@@ -21,6 +22,7 @@ const aiLogFilePath = join(process.cwd(), "data", "ai-generations.json");
 const paymentOrdersFilePath = join(process.cwd(), "data", "payment-orders.json");
 const aiInsightsFilePath = join(process.cwd(), "data", "ai-card-insights.json");
 const aiAllowancesFilePath = join(process.cwd(), "data", "ai-card-allowances.json");
+const semanticPlanCacheFilePath = join(process.cwd(), "data", "ai-semantic-plan-cache.json");
 
 const ensureJsonFile = async (filePath: string) => {
   await mkdir(dirname(filePath), { recursive: true });
@@ -194,6 +196,38 @@ export const getAiGenerationRequestState = async (
   } catch {
     return { status: "pending" };
   }
+};
+
+export const getCachedSemanticPlan = async (cacheKey: string, cardId: string): Promise<{ plan: GreetingSemanticPlan; model: string } | null> => {
+  if (isPostgresConfigured()) {
+    const result = await getPostgresPool().query<{ plan: GreetingSemanticPlan; extractor_model: string }>(
+      "SELECT plan, extractor_model FROM ai_semantic_plan_cache WHERE cache_key = $1 AND card_id = $2 AND expires_at > now()",
+      [cacheKey, cardId]
+    );
+    const row = result.rows[0];
+    return row ? { plan: row.plan, model: row.extractor_model } : null;
+  }
+  const entries = await readJsonArray<Array<{ cacheKey: string; cardId: string; plan: GreetingSemanticPlan; model: string; expiresAt: string }>>(semanticPlanCacheFilePath) as unknown as Array<{ cacheKey: string; cardId: string; plan: GreetingSemanticPlan; model: string; expiresAt: string }>;
+  const item = entries.find((entry) => entry.cacheKey === cacheKey && entry.cardId === cardId && new Date(entry.expiresAt).getTime() > Date.now());
+  return item ? { plan: item.plan, model: item.model } : null;
+};
+
+export const cacheSemanticPlan = async (input: { cacheKey: string; cardId: string; plan: GreetingSemanticPlan; model: string }) => {
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  if (isPostgresConfigured()) {
+    await getPostgresPool().query(
+      `INSERT INTO ai_semantic_plan_cache (cache_key, card_id, plan, extractor_model, expires_at)
+       VALUES ($1, $2, $3::jsonb, $4, $5)
+       ON CONFLICT (cache_key) DO UPDATE SET plan = EXCLUDED.plan, extractor_model = EXCLUDED.extractor_model, expires_at = EXCLUDED.expires_at`,
+      [input.cacheKey, input.cardId, JSON.stringify(input.plan), input.model, expiresAt]
+    );
+    return;
+  }
+  const existing = await readJsonArray<{ cacheKey: string; cardId: string; plan: GreetingSemanticPlan; model: string; expiresAt: string }>(semanticPlanCacheFilePath);
+  const next = existing.filter((entry) => entry.cacheKey !== input.cacheKey && new Date(entry.expiresAt).getTime() > Date.now());
+  next.push({ ...input, expiresAt });
+  await ensureJsonFile(semanticPlanCacheFilePath);
+  await writeFile(semanticPlanCacheFilePath, JSON.stringify(next, null, 2), "utf8");
 };
 
 export const completeAiGeneration = async (input: {

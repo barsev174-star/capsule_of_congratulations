@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import {
   completeAiUsageEvent,
   completeAiGeneration,
+  cacheSemanticPlan,
+  getCachedSemanticPlan,
   getAiGenerationRequestState,
   getAiUsageSummary,
   releaseAiGeneration,
@@ -32,6 +34,9 @@ import { ensureLadderVariantAddress, fitLadderVariantToLimit, validateLadderVari
 import { buildTwoStepComposePrompt, buildTwoStepPlanPrompt, buildTwoStepRepairPrompt } from "@/lib/ai/greeting-two-step";
 import { buildSemanticPrompt, buildSemanticRepairPrompt, GREETING_PROMPT_VERSION, validateSemanticVariants } from "@/lib/ai/greeting-semantic";
 import { generateSemanticGreetingWithOpenAi, repairSemanticGreetingWithOpenAi } from "@/lib/ai/openai-semantic-provider";
+import { buildComposerPrompt, buildComposerRepairPrompt, buildExtractorPrompt, getSafeFactCoverageSignal, getSemanticPlanCacheKey, GREETING_COMPOSER_PROMPT_VERSION, GREETING_EXTRACTOR_PROMPT_VERSION, validateComposerVariants } from "@/lib/ai/greeting-two-stage";
+import { composeGreetingVariants, extractGreetingSemantics, repairGreetingVariant } from "@/lib/ai/openai-two-stage-provider";
+import { estimateAiUsageCost, sumAiUsageCosts } from "@/lib/ai/usage-cost";
 
 let localTemplateGenerationSequence = 0;
 import { generateLadderWithOpenAi, OPENAI_LADDER_PROMPT_VERSION } from "@/lib/ai/openai-ladder-provider";
@@ -615,12 +620,12 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         generationInput: { ...input, existingMessages },
         variants,
         provider: providerName,
-        model: providerResult.model
+        model: providerResult!.model
       });
       logger.info("ai.participant_generated", "Participant AI draft generated", {
         cardId: input.cardId,
         provider: providerName,
-        model: providerResult.model,
+        model: providerResult!.model,
         greetingMode,
         promptVersion: OPENAI_LADDER_PROMPT_VERSION,
         selectedVariants: variants.map((variant) => variant.id),
@@ -630,12 +635,50 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
           retry: retryUsage,
           totalTokens: (initial.usage?.totalTokens ?? 0) + (retryUsage?.totalTokens ?? 0)
         },
-        remainingCardGenerations: reservation.usage.remaining
+        remainingCardGenerations: reservation!.usage.remaining
       });
       return { generationId, variants, usage: reservation.usage, messageLimit: input.messageLimit };
     }
 
     if (greetingMode === "two_step") {
+      const stageInput = {
+        recipientName: input.recipientName, occasionText: input.occasionText, fromLabel: input.fromLabel,
+        relationshipContext: input.relationshipContext, draftNotes: input.draftNotes, messageLimit: input.messageLimit,
+        existingMessages
+      };
+      const cacheKey = getSemanticPlanCacheKey(stageInput);
+      const cachedPlan = await getCachedSemanticPlan(cacheKey, input.cardId);
+      const extractor = cachedPlan ? null : await extractGreetingSemantics(buildExtractorPrompt(stageInput));
+      const plan = cachedPlan?.plan ?? extractor!.plan;
+      if (!cachedPlan) await cacheSemanticPlan({ cacheKey, cardId: input.cardId, plan, model: extractor!.model });
+      const composerPrompt = buildComposerPrompt(stageInput, plan);
+      const composer = await composeGreetingVariants(composerPrompt);
+      let composerVariants = composer.variants;
+      let validation = validateComposerVariants(composerVariants, composerPrompt.limits);
+      const repairError = validation.hardErrors[0];
+      let repairUsage: typeof composer.usage;
+      if (repairError) {
+        const repair = await repairGreetingVariant(buildComposerRepairPrompt(composerPrompt, repairError.type, composerVariants[repairError.type].text, repairError.code), repairError.type);
+        composerVariants = { ...composerVariants, [repairError.type]: { text: repair.text } };
+        repairUsage = repair.usage;
+        validation = validateComposerVariants(composerVariants, composerPrompt.limits);
+      }
+      if (validation.hardErrors.length > 0) throw new AiError("AI_VALIDATION_FAILED", "Composer returned an objective format error.");
+      variants = (["safe", "warm", "expressive"] as const).map((type) => ({ id: type === "safe" ? "short" : type === "warm" ? "warm" : "style", label: type === "safe" ? "Аккуратно" : type === "warm" ? "Теплее" : "Живее", text: cleanupGreetingText(composerVariants[type].text, input) }));
+      const safeFactCoverage = getSafeFactCoverageSignal(plan, variants[0].text);
+      providerResult = { variants, model: composer.model };
+      await completeAiGeneration({ id: generationId, cardId: input.cardId, generationInput: { ...input, existingMessages }, variants, provider: providerName, model: composer.model });
+      const extractorCost = extractor ? estimateAiUsageCost(extractor.model, extractor.usage) : null;
+      const composerCost = estimateAiUsageCost(composer.model, composer.usage);
+      const repairCost = repairUsage ? estimateAiUsageCost(composer.model, repairUsage) : null;
+      const totalCostRub = sumAiUsageCosts(...[extractorCost, composerCost, repairCost].filter((cost): cost is NonNullable<typeof cost> => Boolean(cost)));
+      const context = { extractorPromptVersion: GREETING_EXTRACTOR_PROMPT_VERSION, composerPromptVersion: GREETING_COMPOSER_PROMPT_VERSION, extractorModel: cachedPlan?.model ?? extractor!.model, composerModel: composer.model, cacheHit: Boolean(cachedPlan), extractorDurationMs: extractor?.durationMs ?? 0, composerDurationMs: composer.durationMs, extractorUsage: extractorCost, composerUsage: composerCost, repairUsage: repairCost, totalCostRub, safeFactCoverage, repairUsed: Boolean(repairError), repairReason: repairError?.code ?? null, hardErrorCodes: validation.hardErrors.map((item) => item.code), softWarningCodes: validation.softWarnings.map((item) => item.code), variantLengths: validation.entries.map((entry) => ({ type: entry.type, length: Array.from(entry.text).length, limit: composerPrompt.limits[entry.type] })) };
+      logger.info("ai.two_stage_generation", "Two-stage greeting generated", { cardId: input.cardId, ...context, requestId: generationId });
+      try { await recordTelemetryEvent({ kind: "funnel", event: "ai.two_stage_generation", cardId: input.cardId, errorId: null, context }); } catch { logger.warn("ai.two_stage_telemetry_failed", "Two-stage diagnostics could not be persisted", { cardId: input.cardId }); }
+      return { generationId, variants, usage: reservation.usage, messageLimit: input.messageLimit };
+    }
+
+    if (false && greetingMode === "two_step") {
       const twoStepInput = {
         recipientName: input.recipientName,
         occasionText: input.occasionText,
@@ -693,31 +736,31 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         label: type === "safe" ? "Аккуратно" : type === "warm" ? "Теплее" : "Живее",
         text: semanticVariants[type].text.trim()
       }));
-      providerResult = { variants, model: semanticResult.model };
+      providerResult = { variants: variants!, model: semanticResult.model };
       await completeAiGeneration({
         id: generationId,
         cardId: input.cardId,
         generationInput: { ...input, existingMessages },
-        variants,
+        variants: variants!,
         provider: providerName,
-        model: providerResult.model
+        model: providerResult!.model
       });
       logger.info("ai.participant_generated", "Participant two-step AI draft generated", {
         cardId: input.cardId,
         provider: providerName,
-        model: providerResult.model,
+        model: providerResult!.model,
         greetingMode,
         promptVersion: GREETING_PROMPT_VERSION,
-        selectedVariants: variants.map((variant) => variant.id),
+        selectedVariants: variants!.map((variant) => variant.id),
         validationPassed: true,
         tokenUsage: {
           main: semanticResult.usage,
           repair: repairUsage,
           totalTokens: (semanticResult.usage?.totalTokens ?? 0) + (repairUsage?.totalTokens ?? 0)
         },
-        remainingCardGenerations: reservation.usage.remaining
+        remainingCardGenerations: reservation!.usage.remaining
       });
-      return { generationId, variants, usage: reservation.usage, messageLimit: input.messageLimit };
+      return { generationId, variants: variants!, usage: reservation!.usage, messageLimit: input.messageLimit };
     }
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
