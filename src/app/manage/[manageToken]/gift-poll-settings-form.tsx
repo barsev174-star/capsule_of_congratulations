@@ -82,12 +82,19 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
   const [state, formAction, pending] = useActionState(saveGiftPollAction, initialState);
   const markForAutoSave = () => setAutoSaveVersion((version) => version + 1);
   const patchOption = (index: number, key: keyof EditableOption, value: string) => { setOptions((current) => current.map((option, itemIndex) => itemIndex === index ? { ...option, [key]: value } : option)); if (mode === "budget") markForAutoSave(); };
-  const submitAutoSave = useCallback(() => {
+  const submitAutoSave = useCallback((optionsSnapshot = options) => {
     const form = formRef.current;
-    if (pending || !form?.checkValidity()) return;
+    if (pending || !form) return false;
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return false;
+    }
     lastSubmittedAutoSaveVersion.current = autoSaveVersion;
+    const optionsPayload = form.elements.namedItem("optionsPayload");
+    if (optionsPayload instanceof HTMLInputElement) optionsPayload.value = JSON.stringify(optionsSnapshot);
     form.requestSubmit();
-  }, [autoSaveVersion, pending]);
+    return true;
+  }, [autoSaveVersion, options, pending]);
   const toggleOption = (id: string) => {
     const isClosing = expandedIds.includes(id);
     const openId = expandedIds[0];
@@ -131,17 +138,23 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
     setEditorNotice(null);
     setSavingOptionId(id);
     try {
+      let optionsSnapshot = options;
       if (photoChange?.kind === "replace" && !photoChange.uploadedUrl) {
         const data = new FormData(); data.set("manageToken", manageToken); data.set("file", await compressImageFile(photoChange.file).catch(() => photoChange.file));
         const response = await fetch("/api/manage/gift-option-image", { method: "POST", body: data });
         const result = await response.json() as { imageUrl?: string; message?: string };
         if (!response.ok || !result.imageUrl) throw new Error(result.message ?? "Не удалось загрузить фото");
-        setOptions((current) => current.map((option) => option.id === id ? { ...option, imageUrl: result.imageUrl! } : option));
+        optionsSnapshot = options.map((option) => option.id === id ? { ...option, imageUrl: result.imageUrl! } : option);
+        setOptions(optionsSnapshot);
         setPendingPhotoChanges((current) => ({ ...current, [id]: { ...photoChange, uploadedUrl: result.imageUrl! } }));
       } else if (photoChange?.kind === "remove") {
-        setOptions((current) => current.map((option) => option.id === id ? { ...option, imageUrl: "" } : option));
+        optionsSnapshot = options.map((option) => option.id === id ? { ...option, imageUrl: "" } : option);
+        setOptions(optionsSnapshot);
       }
-      window.setTimeout(() => submitAutoSave(), 0);
+      if (!submitAutoSave(optionsSnapshot)) {
+        setSavingOptionId(null);
+        setEditorNotice({ id, message: "Заполните обязательные поля вариантов, затем повторите сохранение.", error: true });
+      }
     } catch (error) {
       setSavingOptionId(null);
       setEditorNotice({ id, message: error instanceof Error ? error.message : "Не удалось сохранить изменения", error: true });
