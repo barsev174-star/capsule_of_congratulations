@@ -148,7 +148,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 56px;
+  min-height: 44px;
   opacity: 0;
   transition: opacity 450ms var(--motion-ease-out) 300ms;
 }
@@ -181,14 +181,14 @@
 .pencil {
   position: absolute;
   left: 50%;
-  top: 8px;
+  top: 5px;
   width: 5px;
   height: 38px;
   border-radius: 3px;
   background: linear-gradient(180deg, #ef7240 0%, #d95a2a 100%);
   box-shadow: 0 4px 10px rgba(217, 90, 42, 0.3);
-  rotate: 12deg;
-  translate: -30px -6px;
+  rotate: -24deg;
+  translate: -15px 0;
 }
 
 .pencil::after {
@@ -210,7 +210,7 @@
 }
 
 .section[data-motion-visible="true"] .pencil {
-  animation: pencilSlide 600ms var(--motion-ease-out) 1000ms both;
+  animation: none;
 }
 
 /* Результат — готовая карточка поздравления */
@@ -388,10 +388,10 @@
   }
 
   .pencil {
-    left: 6px;
-    top: 30px;
+    top: -34px;
+    left: 42px;
     height: 44px;
-    rotate: -38deg;
+    rotate: 38deg;
     translate: 0 0;
   }
 
@@ -416,7 +416,11 @@
   }
 
   .pencil {
-    height: 30px;
+    width: 4px;
+    height: 26px;
+    top: 2px;
+    rotate: 42deg;
+    translate: 18px 2px;
   }
 
   .tabs {

@@ -85,11 +85,12 @@ export function PricingSection() {
         </div>
         <div className={styles.grid}>
           <div className={styles.gridArrow} aria-hidden="true">
-            <svg viewBox="0 0 120 60" fill="none">
-              <path d="M6 46 C 38 14, 82 14, 110 38" pathLength={1} className={styles.gridArrowPath} />
-              <path d="M104 30 L 112 39 L 101 43" pathLength={1} className={styles.gridArrowPath} />
-            </svg>
-          </div>
+          <svg viewBox="0 0 120 60" fill="none">
+            <path d="M6 46 C 38 14, 82 14, 110 38" pathLength={1} className={styles.gridArrowPath} />
+            <path d="M104 30 L 112 39 L 101 43" pathLength={1} className={styles.gridArrowPath} />
+          </svg>
+          <span className={styles.gridPencil} />
+        </div>
           <article className={`${styles.card} js-motion-card ${styles.freeCard}`}>
             <div className={styles.cardTop}>
               <div><h3>До оплаты</h3><p>Можно создать и полностью подготовить открытку:</p></div>

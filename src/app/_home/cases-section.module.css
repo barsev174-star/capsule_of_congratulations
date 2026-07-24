@@ -89,6 +89,29 @@
   color: var(--text);
 }
 
+@media (min-width: 360px) and (max-width: 767px) {
+  .card {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 10px;
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .cardTitle {
+    min-width: 0;
+    font-size: 14px;
+    line-height: 1.2;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+}
+
 @media (max-width: 359px) {
   .grid {
     grid-template-columns: 1fr;

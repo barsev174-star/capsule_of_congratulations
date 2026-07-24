@@ -38,10 +38,10 @@
 /* Вертикальная пунктирная линия через центры кругов (mobile) */
 .line {
   position: absolute;
-  top: 27px;
+  top: 28px;
   left: 31px;
   width: 2px;
-  height: calc(100% - 55px);
+  height: calc(100% - 174px);
   background: repeating-linear-gradient(
     180deg,
     rgba(217, 106, 61, 0.55) 0 5px,
@@ -96,8 +96,8 @@
 
 .number {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: -24px;
+  left: 76px;
   z-index: 2;
   display: inline-flex;
   align-items: center;
@@ -112,6 +112,7 @@
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.02em;
+  transform: none;
 }
 
 .node {
@@ -218,9 +219,10 @@
   }
 
   .number {
-    position: relative;
-    top: auto;
-    left: auto;
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   .node {

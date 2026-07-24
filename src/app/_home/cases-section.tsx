@@ -117,7 +117,7 @@ const cases = [
   { icon: <TeamIcon />, title: "От всей команды" },
   { icon: <PolaroidIcon />, title: "Для друга или подруги" },
   { icon: <BalloonIcon />, title: "Юбилей" },
-  { icon: <EnvelopeHeartIcon />, title: "Благодарность / прощание" }
+  { icon: <EnvelopeHeartIcon />, title: "Благодарность или прощание" }
 ];
 
 export function CasesSection() {

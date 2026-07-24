@@ -87,6 +87,45 @@
     height: auto;
   }
 
+  .gridPencil {
+    position: absolute;
+    top: -36px;
+    left: 51px;
+    width: 5px;
+    height: 48px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #ef7240 0%, #d95a2a 100%);
+    box-shadow: 0 4px 10px rgba(217, 90, 42, 0.3);
+    transform: rotate(32deg);
+  }
+
+  .gridPencil::before {
+    content: "";
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 5px;
+    height: 8px;
+    background: linear-gradient(180deg, #efc49f 0%, #d8a77f 100%);
+    clip-path: polygon(0 0, 100% 0, 84% 100%, 16% 100%);
+  }
+
+  .gridPencil::after {
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    width: 0;
+    height: 0;
+    border-left: 2.5px solid transparent;
+    border-right: 2.5px solid transparent;
+    border-top: 7px solid #8c6758;
+  }
+
+  .preparePencil {
+    display: none;
+  }
+
   .gridArrowPath {
     stroke: var(--accent);
     stroke-width: 2.5;

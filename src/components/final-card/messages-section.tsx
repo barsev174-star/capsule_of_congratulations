@@ -102,7 +102,8 @@ const renderMediaFigure = (
   title: string,
   fallbackText: string,
   className: string,
-  isPaperBirthday: boolean
+  isPaperBirthday: boolean,
+  isRouteAdventure: boolean
 ) => {
   const frameClassName =
     slot === "portrait"
@@ -111,7 +112,31 @@ const renderMediaFigure = (
         ? `${className} ${finalCardStyles.mediaFrameTiltRight}`
         : `${className} ${finalCardStyles.mediaFrameTiltLeft}`;
 
-  const content = (
+  const usesRouteMomentFrame = isRouteAdventure && slot !== "portrait";
+  const content = usesRouteMomentFrame ? (
+    <>
+      {asset ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={asset.publicUrl}
+            alt={asset.captionTitle || asset.captionSubtitle || title}
+            className={finalCardStyles.memoryPhotoImage}
+          />
+          <div className={finalCardStyles.memoryPhotoCaptionWrap}>
+            <p className={finalCardStyles.memoryPhotoCaption}>
+              {asset.captionTitle || asset.captionSubtitle || title}
+            </p>
+          </div>
+        </>
+      ) : (
+        <>
+          <span className={finalCardStyles.mediaLabel}>{title}</span>
+          <p className={finalCardStyles.mediaHint}>{fallbackText}</p>
+        </>
+      )}
+    </>
+  ) : (
     <>
       {asset ? (
         <>
@@ -147,6 +172,10 @@ const renderMediaFigure = (
     </>
   );
 
+  if (usesRouteMomentFrame) {
+    return <figure className={finalCardStyles.memoryPhotoCard}>{content}</figure>;
+  }
+
   if (!isPaperBirthday) {
     return <figure className={frameClassName}>{content}</figure>;
   }
@@ -165,7 +194,8 @@ const renderMediaFigure = (
 const renderMediaRail = (
   messageMediaAssets: CardMediaAsset[],
   messageMediaLayout: FinalCardMessageMediaLayout,
-  isPaperBirthday: boolean
+  isPaperBirthday: boolean,
+  isRouteAdventure: boolean
 ) => {
   if (messageMediaLayout === "landscape-pair" || messageMediaLayout === "landscape-trio") {
     return (
@@ -180,7 +210,8 @@ const renderMediaRail = (
           "Горизонтальное фото A",
           "Здесь может появиться первое горизонтальное фото.",
           finalCardStyles.mediaCardLandscape,
-          isPaperBirthday
+          isPaperBirthday,
+          isRouteAdventure
         )}
         {renderMediaFigure(
           messageMediaAssets[1],
@@ -188,7 +219,8 @@ const renderMediaRail = (
           "Горизонтальное фото B",
           "Здесь может появиться второе горизонтальное фото.",
           finalCardStyles.mediaCardLandscape,
-          isPaperBirthday
+          isPaperBirthday,
+          isRouteAdventure
         )}
         {messageMediaLayout === "landscape-trio"
           ? renderMediaFigure(
@@ -197,7 +229,8 @@ const renderMediaRail = (
               "Горизонтальное фото C",
               "Здесь может появиться третье горизонтальное фото.",
               finalCardStyles.mediaCardLandscape,
-              isPaperBirthday
+              isPaperBirthday,
+              isRouteAdventure
             )
           : null}
       </div>
@@ -212,7 +245,8 @@ const renderMediaRail = (
         "Вертикальное фото",
         "Здесь предусмотрено место под одно заметное вертикальное фото.",
         finalCardStyles.mediaCardPortrait,
-        isPaperBirthday
+        isPaperBirthday,
+        isRouteAdventure
       )}
     </div>
   );
@@ -374,7 +408,7 @@ export const MessagesSection = ({
           {routeMobileShowAllButton}
           {allGreetingsDialog}
         </div>
-        {renderMediaRail(messageMediaAssets, messageMediaLayout, isPaperBirthday)}
+        {renderMediaRail(messageMediaAssets, messageMediaLayout, isPaperBirthday, isRouteAdventure)}
       </div>
     );
   }
