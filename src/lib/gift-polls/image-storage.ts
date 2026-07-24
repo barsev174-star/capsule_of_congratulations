@@ -4,14 +4,14 @@ import { randomUUID } from "node:crypto";
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 
-const ROOT = join(process.cwd(), "public", "uploads", "gift-options");
+export const GIFT_OPTION_UPLOADS_STORAGE_ROOT = join(process.cwd(), "public", "uploads", "gift-options");
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const allowed = new Map([["image/jpeg", ".jpg"], ["image/png", ".png"], ["image/webp", ".webp"]]);
 
 export const saveGiftOptionUpload = async (cardId: string, file: File) => {
   const extension = allowed.get(file.type);
   if (!extension || !file.size || file.size > MAX_IMAGE_BYTES) throw new Error("invalid image");
-  const directory = join(ROOT, cardId); const fileName = `${Date.now()}-${randomUUID()}${extension}`;
+  const directory = join(GIFT_OPTION_UPLOADS_STORAGE_ROOT, cardId); const fileName = `${Date.now()}-${randomUUID()}${extension}`;
   await mkdir(directory, { recursive: true }); await writeFile(join(directory, fileName), Buffer.from(await file.arrayBuffer()));
   return `/uploads/gift-options/${cardId}/${fileName}`;
 };
@@ -40,7 +40,7 @@ export const importGiftOptionImage = async (cardId: string, sourceUrl: string) =
     if (!response.ok || !extension || size > MAX_IMAGE_BYTES) throw new Error("invalid image");
     const bytes = new Uint8Array(await response.arrayBuffer());
     if (!bytes.byteLength || bytes.byteLength > MAX_IMAGE_BYTES) throw new Error("invalid image");
-    const directory = join(ROOT, cardId); const fileName = `${Date.now()}-${randomUUID()}${extension}`;
+    const directory = join(GIFT_OPTION_UPLOADS_STORAGE_ROOT, cardId); const fileName = `${Date.now()}-${randomUUID()}${extension}`;
     await mkdir(directory, { recursive: true }); await writeFile(join(directory, fileName), bytes);
     return `/uploads/gift-options/${cardId}/${fileName}`;
   }
