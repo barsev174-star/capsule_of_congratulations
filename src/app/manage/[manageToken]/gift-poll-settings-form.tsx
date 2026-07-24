@@ -279,8 +279,8 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
               const percent = totalVotes ? Math.round((votes / totalVotes) * 100) : 0;
               const isSavedOption = Boolean(poll?.options.some((savedOption) => savedOption.id === option.id));
               const isLockedOption = isSavedOption && totalVotes > 0;
-              const canRemoveOption = options.length > 2 && (!isSavedOption || totalVotes === 0);
-              const deleteBlockedMessage = totalVotes > 0 && isSavedOption ? "Удалить невозможно, голосование уже идёт" : "Нужно оставить минимум два варианта";
+              const canRemoveOption = !isSavedOption || totalVotes === 0;
+              const deleteBlockedMessage = "Удалить невозможно, голосование уже идёт";
               const photoChange = pendingPhotoChanges[option.id];
               const optionDirty = hasUnsavedChanges(option.id);
               return <article key={option.id} data-editing={expanded} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (draggedOptionId) moveOptionTo(draggedOptionId, option.id); setDraggedOptionId(null); }} onDragEnd={() => setDraggedOptionId(null)} className={`${styles.giftPollOptionEditor} ${isBudget ? styles.giftPollBudgetEditor : ""} ${expanded ? styles.giftPollOptionEditing : ""} ${draggedOptionId === option.id ? styles.giftPollOptionDragging : ""}`}>

@@ -59,7 +59,7 @@ import {
   saveGiftPollOption,
   selectGiftPollOption
 } from "@/lib/gift-polls/repository";
-import { GIFT_POLL_MAX_OPTIONS, GIFT_POLL_MIN_OPTIONS, isSafeProductUrl, normalizeBudgetAmount, normalizeGiftPollMode } from "@/lib/gift-polls/validation";
+import { GIFT_POLL_MAX_OPTIONS, isSafeProductUrl, normalizeBudgetAmount, normalizeGiftPollMode } from "@/lib/gift-polls/validation";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
@@ -163,8 +163,8 @@ export async function saveGiftPollAction(_previous: GiftPollFormState, formData:
   })).filter((option): option is { id: string; title: string; description: string | null; priceLabel: string | null; productUrl: string | null; imageUrl: string | null; index: number } => Boolean(option.title));
 
   if (!title || !question) return giftPollState(false, "Заполните заголовок и вопрос для участников.");
-  if (options.length < GIFT_POLL_MIN_OPTIONS || options.length > GIFT_POLL_MAX_OPTIONS) {
-    return giftPollState(false, `Добавьте от ${GIFT_POLL_MIN_OPTIONS} до ${GIFT_POLL_MAX_OPTIONS} вариантов.`);
+  if (options.length > GIFT_POLL_MAX_OPTIONS) {
+    return giftPollState(false, `Можно добавить не более ${GIFT_POLL_MAX_OPTIONS} вариантов.`);
   }
   if (options.some((option) => option.title.length > 60 || (option.description?.length ?? 0) > 140 || (option.priceLabel?.length ?? 0) > 30)) {
     return giftPollState(false, "Проверьте лимиты: название до 60, описание до 140, сумма до 30 символов.");

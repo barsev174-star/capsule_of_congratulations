@@ -824,6 +824,11 @@
 - Photo replacement uses a local preview and waits for «Сохранить изменения» before uploading. Current-photo removal is also applied only on save; cancelling restores the prior state.
 - Desktop editor fields place title and estimated price in one row, with description and product link below; mobile uses one column and keeps photo actions attached to the preview.
 
+# 2026-07-24 — Gift poll: draft option limits
+
+- The 2–6 option rule now applies only when opening a poll. Drafts may contain from 0 to 6 options, so an organizer can save a single imported gift or remove an unnecessary option before launch.
+- The manager continues to prevent a seventh option and shows the minimum-two requirement in the launch readiness state.
+
 # 2026-07-23 — Budget option normalization
 
 - Budget amount normalization now accepts formatted values with non-breaking spaces, so previously saved levels remain valid when another amount is added.
