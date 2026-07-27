@@ -15,6 +15,7 @@ data/ai-card-allowances.json
 data/payment-orders.json
 data/event-reminders.json
 data/telemetry-events.json
+data/public-share-media/
 public/uploads/
 docs/*.png
 !docs/Аватары.png

@@ -16,7 +16,7 @@ import styles from "./final-card.module.css";
 type Props = {
   model: FinalCardViewModel;
   debugAssets?: boolean;
-  mode?: "gift" | "preview";
+  mode?: "gift" | "preview" | "public";
   manageToken?: string;
 };
 
@@ -46,6 +46,15 @@ const getParticipantSummary = (count: number) => {
   }
 
   return { people: `${count} человек`, action: "оставили поздравления" };
+};
+
+const getCountLabel = (count: number, forms: [string, string, string]) => {
+  const lastTwo = count % 100;
+  if (lastTwo >= 11 && lastTwo <= 14) return forms[2];
+  const last = count % 10;
+  if (last === 1) return forms[0];
+  if (last >= 2 && last <= 4) return forms[1];
+  return forms[2];
 };
 
 const getPaperBirthdayHeroScaleClass = (recipientName: string) => {
@@ -82,6 +91,13 @@ const PeopleIcon = () => (
       strokeWidth="1.6"
       strokeLinecap="round"
     />
+  </svg>
+);
+
+const CameraIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M4 8.5h3l1.3-2h7.4l1.3 2h3v10.2A2.3 2.3 0 0 1 17.7 21H6.3A2.3 2.3 0 0 1 4 18.7V8.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    <circle cx="12" cy="14" r="3.2" stroke="currentColor" strokeWidth="1.7" />
   </svg>
 );
 
@@ -148,9 +164,12 @@ const getQuoteAssetId = (index: number) => {
 
 export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageToken }: Props) => {
   const isPreview = mode === "preview";
+  const isPublic = mode === "public";
   const isPaperBirthday = model.style === "paper-birthday";
   const isRouteAdventure = model.style === "route-adventure";
   const participantSummary = getParticipantSummary(model.participantCount);
+  const publicPhotoCount = model.publicPhotoCount ?? null;
+  const publicFullCardHasPhotos = model.publicFullCardHasPhotos ?? model.memoryMediaAssets.length > 0;
   const heroScaleClass = isPaperBirthday ? getPaperBirthdayHeroScaleClass(model.recipientName) : "";
   const heroNameWords = model.recipientName
     .trim()
@@ -192,6 +211,10 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
       )}
 
       {model.blocks.map((block) => {
+        if (isPublic && ["summary", "messages", "ai-summary", "closing"].includes(block.id)) {
+          return null;
+        }
+
         if (block.id === "hero") {
           const heroBody = (
             <>
@@ -214,7 +237,9 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                   <span className={styles.heroNameLine}>{heroNameContent}</span>
                 </h1>
                 <p className={styles.subtitle}>
-                  {model.heroDescription ? (
+                  {isPublic ? (
+                    <span>Близкие люди собрали здесь тёплые слова, фотографии и приятные моменты.</span>
+                  ) : model.heroDescription ? (
                     <span>{model.heroDescription}</span>
                   ) : isRouteAdventure ? (
                     <span>В этой открытке — тёплые слова, важные моменты и личные пожелания.</span>
@@ -226,7 +251,11 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                     </>
                   )}
                 </p>
-                <div className={styles.heroCtaRow}>
+                {isPublic && (model.participantCount > 0 || (publicPhotoCount !== null && publicPhotoCount > 0)) ? <div className={styles.publicHeroStats} aria-label="Состав публичной открытки">
+                  {model.participantCount > 0 ? <span className={styles.publicHeroStat}><PeopleIcon /><strong>{model.participantCount}</strong> {getCountLabel(model.participantCount, ["поздравление", "поздравления", "поздравлений"])}</span> : null}
+                  {publicPhotoCount && publicPhotoCount > 0 ? <span className={styles.publicHeroStat} aria-label={`${publicPhotoCount} ${getCountLabel(publicPhotoCount, ["фотография", "фотографии", "фотографий"])} в полной открытке`}><CameraIcon /><strong>{publicPhotoCount}</strong> фото в открытке</span> : null}
+                </div> : null}
+                {!isPublic ? <div className={styles.heroCtaRow}>
                   <span className={styles.heroParticipants}>
                     <span className={styles.heroParticipantsIcon}>
                       <PeopleIcon />
@@ -240,7 +269,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                     </span>
                     Открыть поздравления
                   </a>
-                </div>
+                </div> : null}
               </div>
             </>
           );
@@ -305,7 +334,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
           const qualitiesBody = (
             <>
               <h2 className={styles.sectionTitle}>За что тебя ценят</h2>
-              <p className={styles.sectionSubtitle}>Собрано из поздравлений</p>
+              {!isPublic ? <p className={styles.sectionSubtitle}>Собрано из поздравлений</p> : null}
               <div className={styles.chipList}>
                 {visibleQualities.map((quality, index) => {
                   const color = chipColors[index % chipColors.length];
@@ -493,7 +522,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
           const content = (
             <>
               {renderAnchorLayer("bestPhrases")}
-              <h2 className={styles.sectionTitle}>Лучшие фразы</h2>
+              <h2 className={styles.sectionTitle}>{isPublic ? "Особенно тёплые слова" : "Лучшие фразы"}</h2>
               {model.quotes.length > 0 ? (
                 <div className={`${styles.grid} ${styles.quotesGrid}`}>
                   {model.quotes.map((quote, index) =>
@@ -621,13 +650,25 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
         return null;
       })}
 
+      {isPublic ? (() => {
+        const note = <>
+          <h2 className={styles.publicFullCardTitle}>В полной открытке — ещё больше тепла</h2>
+          <p className={styles.publicFullCardText}>
+            {publicFullCardHasPhotos
+              ? "Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для того, кому она была подарена. Там есть личные поздравления, больше фотографий и важные воспоминания."
+              : "Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для того, кому она была подарена. Там есть личные поздравления и важные воспоминания."}
+          </p>
+        </>;
+        return isPaperBirthday ? <ScrapbookComponentFrame as="section" assetId="summaryPaper" className={`${styles.publicFullCardNote} ${styles.decorAnchor}`}>{note}</ScrapbookComponentFrame> : <section className={styles.publicFullCardNote}>{note}</section>;
+      })() : null}
+
       {isPaperBirthday ? <ScrapbookDecorDebugPanel /> : null}
     </>
   );
 
   return (
     <main
-      className={`${styles.page} ${styleClassMap[model.style]} ${
+      className={`${styles.page} ${styleClassMap[model.style]} ${isPublic ? styles.publicCard : ""} ${
         isPaperBirthday && debugAssets ? styles.assetDebugActive : ""
       }`.trim()}
     >

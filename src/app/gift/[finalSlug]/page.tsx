@@ -8,6 +8,9 @@ import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { getAiCardInsight } from "@/lib/ai/repository";
 import { BEST_QUOTE_COUNT, isValidBestQuoteText } from "@/lib/ai/card-insights";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
+import { getPublicShareEditor } from "@/lib/public-shares/service";
+import Link from "next/link";
+import publicShareStyles from "./public-share-entry.module.css";
 
 type Props = {
   params: Promise<{
@@ -34,16 +37,17 @@ export default async function GiftPage({ params, searchParams }: Props) {
     notFound();
   }
 
-  const [contributions, mediaAssets, quotesInsight, qualitiesInsight] = await Promise.all([
+  const [contributions, mediaAssets, quotesInsight, qualitiesInsight, publicShareEditor] = await Promise.all([
     listContributionsByCardId(card.id),
     listCardMediaAssetsByCardId(card.id),
     getAiCardInsight(card.id, "quotes"),
-    getAiCardInsight(card.id, "qualities")
+    getAiCardInsight(card.id, "qualities"),
+    getPublicShareEditor(finalSlug)
   ]);
   const template = cardTemplates.find((item) => item.id === card.templateId);
   const model = buildFinalCardViewModel(card, contributions, mediaAssets, {
-    quotes: quotesInsight?.items.length === BEST_QUOTE_COUNT && quotesInsight.items.every((item) => isValidBestQuoteText(item.text))
-      ? quotesInsight.items.map((item) => item.text)
+    quotes: (quotesInsight?.items.length ?? 0) >= BEST_QUOTE_COUNT && quotesInsight?.items.every((item) => isValidBestQuoteText(item.text))
+      ? quotesInsight.items.slice(0, BEST_QUOTE_COUNT).map((item) => item.text)
       : [],
     qualities: qualitiesInsight?.items.map((item) => item.text)
   });
@@ -61,6 +65,6 @@ export default async function GiftPage({ params, searchParams }: Props) {
       forceIntro={isForceIntroEnabled}
     >
       <FinalCard model={model} debugAssets={isAssetDebugEnabled} manageToken={card.manageToken} />
-    </GiftIntro></>
+    </GiftIntro>{publicShareEditor ? <section className={publicShareStyles.card}><div><p>{publicShareEditor.share?.status === "ACTIVE" ? "Публичная версия активна" : "Поделиться открыткой"}</p><h2>{publicShareEditor.share?.status === "ACTIVE" ? "Настройте или отключите публичную страницу" : "Создайте безопасную публичную версию"}</h2><span>Личные поздравления, авторы и оригиналы фотографий останутся приватными.</span></div><Link href={`/gift/${finalSlug}/share`}>{publicShareEditor.share?.status === "ACTIVE" ? "Настроить публичную версию" : "Настроить публичную версию"}</Link></section> : null}</>
   );
 }

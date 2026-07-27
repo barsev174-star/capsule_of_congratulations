@@ -42,8 +42,8 @@ export default async function PreviewPage({ params }: Props) {
   ]);
 
   const model = buildFinalCardViewModel(card, contributions, mediaAssets, {
-    quotes: quotesInsight?.items.length === BEST_QUOTE_COUNT && quotesInsight.items.every((item) => isValidBestQuoteText(item.text))
-      ? quotesInsight.items.map((item) => item.text)
+    quotes: (quotesInsight?.items.length ?? 0) >= BEST_QUOTE_COUNT && quotesInsight?.items.every((item) => isValidBestQuoteText(item.text))
+      ? quotesInsight.items.slice(0, BEST_QUOTE_COUNT).map((item) => item.text)
       : [],
     qualities: qualitiesInsight?.items.map((item) => item.text)
   });

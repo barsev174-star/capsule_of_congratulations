@@ -61,6 +61,15 @@ describe("AI card insights", () => {
     expect(result).toHaveLength(3);
   });
 
+  it("keeps a valid set when fewer than six candidates are available", () => {
+    const result = validateBestQuoteCandidates(
+      contributions.slice(0, 4).map((item) => ({ text: item.message, sourceContributionId: item.id })),
+      contributions
+    );
+
+    expect(result).toHaveLength(3);
+  });
+
   it("rejects ellipses and phrases longer than the hard limit", () => {
     expect(isValidBestQuoteText("A complete phrase that ends with an ellipsis…")).toBe(false);
     expect(isValidBestQuoteText("x".repeat(BEST_QUOTE_HARD_MAX_LENGTH + 1))).toBe(false);

@@ -18,6 +18,9 @@ export type FinalCardViewModel = {
   fromLabel: string;
   heroDescription: string | null;
   participantCount: number;
+  /** Public-page-only aggregate metadata. It never contains private media or text. */
+  publicPhotoCount?: number | null;
+  publicFullCardHasPhotos?: boolean;
   finalSlug: string;
   summaryTitle: string;
   summaryText: string;

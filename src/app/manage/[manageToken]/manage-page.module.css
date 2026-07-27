@@ -619,6 +619,25 @@
   gap: 18px;
 }
 
+.compositionSettingsFieldset {
+  display: grid;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.compositionLockedNotice {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(164, 96, 52, 0.22);
+  border-radius: 14px;
+  background: var(--accent-light);
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
 .studioCanvasCard,
 .controlCard {
   display: grid;
@@ -1483,6 +1502,26 @@
 
 .contentAiButton:active {
   transform: scale(0.96);
+}
+
+.contentAiButtonPrimary {
+  border-color: #ec662f;
+  background: linear-gradient(135deg, #f47a3c, #e95d27);
+  color: #fff;
+  box-shadow: 0 7px 15px rgba(212, 81, 35, 0.2);
+}
+
+.contentAiButtonPrimary:hover:not(:disabled) {
+  border-color: #d95728;
+  background: linear-gradient(135deg, #f98543, #dd5123);
+  box-shadow: 0 10px 20px rgba(212, 81, 35, 0.28);
+}
+
+.contentAiButtonPrimary:disabled {
+  border-color: rgba(233, 101, 47, 0.22);
+  background: rgba(233, 101, 47, 0.14);
+  color: rgba(150, 73, 38, 0.56);
+  box-shadow: none;
 }
 
 .giftPollManager {
@@ -2499,24 +2538,55 @@ button.contentFilterPill {
   counter-reset: best-quotes;
 }
 
-.aiInsightList li {
+.aiQuoteChoice {
   position: relative;
+  display: grid;
+  grid-template-columns: 22px 24px minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
   margin: 0;
-  padding: 12px 14px 12px 42px;
+  padding: 12px 14px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.88);
   color: #4a352d;
   line-height: 1.5;
   text-wrap: pretty;
-  box-shadow: 0 0 0 1px rgba(98, 72, 58, 0.08);
-  counter-increment: best-quotes;
+  box-shadow: 0 0 0 1px rgba(98, 72, 58, 0.08), 0 3px 9px rgba(121, 72, 48, 0.035);
+  cursor: pointer;
+  transition-property: background-color, box-shadow, transform;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
 
-.aiInsightList li::before {
-  content: counter(best-quotes);
-  position: absolute;
-  left: 14px;
-  top: 12px;
+.aiQuoteChoice:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.28), 0 7px 16px rgba(121, 72, 48, 0.08);
+}
+
+.aiQuoteChoice:has(input:focus-visible) {
+  outline: 3px solid rgba(233, 101, 47, 0.28);
+  outline-offset: 2px;
+}
+
+.aiQuoteChoiceSelected {
+  background: rgba(255, 237, 224, 0.9);
+  box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.42), 0 5px 13px rgba(194, 86, 42, 0.1);
+}
+
+.aiQuoteChoice input {
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: var(--m-accent);
+}
+
+.aiQuoteNumber {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(233, 101, 47, 0.1);
   color: var(--m-accent);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -8191,6 +8261,12 @@ button.contentFilterPill {
   font-weight: 800;
   line-height: 1.1;
   text-align: center;
+}
+
+.statusBadgeGranted {
+  border-color: rgba(58, 125, 75, 0.22);
+  background: rgba(86, 154, 99, 0.14);
+  color: #2f7844;
 }
 
 .statusContent {

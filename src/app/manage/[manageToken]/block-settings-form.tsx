@@ -13,7 +13,7 @@ import type {
   FinalCardOptionalBlockId
 } from "@/lib/final-card/types";
 import { getManagePath } from "@/lib/routes/card-links";
-import { generateBestQuotesAction, generateQualitiesAction, updateFinalPresentationSettingsAction } from "./actions";
+import { generateBestQuotesAction, generateQualitiesAction, saveBestQuoteSelectionAction, updateFinalPresentationSettingsAction } from "./actions";
 import styles from "./manage-page.module.css";
 
 type BlockOption = {
@@ -49,6 +49,7 @@ type Props = {
   qualitiesAreStale: boolean;
   canGenerateQualities: boolean;
   initialAiUsage: AiUsage;
+  isContentEditable: boolean;
 };
 
 type RenderedBlock = {
@@ -522,7 +523,8 @@ export const BlockSettingsForm = ({
   initialQualities,
   qualitiesAreStale,
   canGenerateQualities,
-  initialAiUsage
+  initialAiUsage,
+  isContentEditable
 }: Props) => {
   const router = useRouter();
   const [layoutMode, setLayoutMode] = useState<FinalCardMessageLayoutMode>(initialLayoutMode);
@@ -598,8 +600,10 @@ export const BlockSettingsForm = ({
     submittedCompositionKeyRef.current = null;
     return result;
   };
-  const [, formAction, isPending] = useActionState(handleSettingsAction, initialState);
+  const [settingsState, formAction, isPending] = useActionState(handleSettingsAction, initialState);
+  const [, startSettingsSaveTransition] = useTransition();
   const [bestQuotes, setBestQuotes] = useState(initialBestQuotes);
+  const [selectedBestQuotes, setSelectedBestQuotes] = useState(() => initialBestQuotes.slice(0, 3));
   const [quotesAreStale, setQuotesAreStale] = useState(bestQuotesAreStale);
   const [quotesMessage, setQuotesMessage] = useState("");
   const [aiUsage, setAiUsage] = useState(initialAiUsage);
@@ -616,9 +620,31 @@ export const BlockSettingsForm = ({
       setQuotesMessage(result.message);
       if (!result.ok) return;
       setBestQuotes(result.quotes);
+      setSelectedBestQuotes(result.quotes.slice(0, 3));
       setQuotesAreStale(false);
       setAiUsage(result.usage);
       router.refresh();
+    });
+  };
+
+  const toggleBestQuote = (quote: string) => {
+    setSelectedBestQuotes((current) => {
+      if (current.includes(quote)) return current.filter((item) => item !== quote);
+      if (current.length === 3) return current;
+      return [...current, quote];
+    });
+  };
+
+  const saveBestQuoteSelection = () => {
+    setQuotesMessage("");
+    startQuotesTransition(async () => {
+      const result = await saveBestQuoteSelectionAction(manageToken, selectedBestQuotes);
+      setQuotesMessage(result.message);
+      if (result.ok) {
+        setBestQuotes(result.quotes);
+        setSelectedBestQuotes(result.quotes.slice(0, 3));
+        router.refresh();
+      }
     });
   };
 
@@ -640,19 +666,20 @@ export const BlockSettingsForm = ({
       autoSaveReadyRef.current = true;
       return;
     }
-    if (!isCompositionDirty || !formRef.current || isPending) return;
+    if (!isContentEditable || !isCompositionDirty || !formRef.current || isPending) return;
     if (submittedCompositionKeyRef.current === currentCompositionKey) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
       submittedCompositionKeyRef.current = currentCompositionKey;
       setSaveStatus("saving");
-      formRef.current?.requestSubmit();
+      const form = formRef.current;
+      if (form) startSettingsSaveTransition(() => formAction(new FormData(form)));
       autoSaveTimerRef.current = null;
     }, 500);
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [currentCompositionKey, isCompositionDirty, isPending]);
+  }, [currentCompositionKey, formAction, isCompositionDirty, isContentEditable, isPending, startSettingsSaveTransition]);
 
   const resolveDropPosition = (
     targetBlockId: FinalCardBlockId,
@@ -842,6 +869,8 @@ export const BlockSettingsForm = ({
         <input key={option.id} type="hidden" name={option.id} value={blockState[option.id] ? "on" : ""} />
       ))}
 
+      {!isContentEditable ? <p className={styles.compositionLockedNotice} role="status">Открытка уже передана получателю. Её приватное содержание и оформление зафиксированы.</p> : null}
+      <fieldset className={styles.compositionSettingsFieldset} disabled={!isContentEditable}>
       <section className={styles.studioCanvasCard}>
         <div className={styles.compositionToolbar}>
           <p className={styles.compositionToolbarText}>
@@ -1032,9 +1061,9 @@ export const BlockSettingsForm = ({
                       <div className={styles.aiInsightPanel}>
                         <div className={styles.aiInsightHeader}>
                           <div>
-                            <h4 className={styles.messageSettingsTitle}>Три лучшие фразы</h4>
+                            <h4 className={styles.messageSettingsTitle}>Лучшие фразы</h4>
                             <p>
-                              AI выберет сильные строки из активных поздравлений, не добавляя новых мыслей.
+                              AI подготовит от трёх до шести сильных строк из активных поздравлений. Выберите ровно три — они попадут в финальную открытку.
                             </p>
                           </div>
                           <span className={styles.aiInsightUsage}>
@@ -1047,18 +1076,23 @@ export const BlockSettingsForm = ({
                         ) : null}
 
                         {bestQuotes.length > 0 ? (
-                          <ol className={styles.aiInsightList}>
+                          <div className={styles.aiInsightList} role="group" aria-label="Выбор лучших фраз">
                             {bestQuotes.map((quote, quoteIndex) => (
-                              <li key={`${quote}-${quoteIndex}`}>{quote}</li>
+                              <label className={`${styles.aiQuoteChoice} ${selectedBestQuotes.includes(quote) ? styles.aiQuoteChoiceSelected : ""}`} key={`${quote}-${quoteIndex}`}>
+                                <input type="checkbox" checked={selectedBestQuotes.includes(quote)} onChange={() => toggleBestQuote(quote)} disabled={isQuotesPending || (!selectedBestQuotes.includes(quote) && selectedBestQuotes.length === 3)} />
+                                <span className={styles.aiQuoteNumber}>{quoteIndex + 1}</span>
+                                <span>{quote}</span>
+                              </label>
                             ))}
-                          </ol>
+                          </div>
                         ) : (
                           <p className={styles.aiInsightEmpty}>
-                            После генерации здесь появятся три фразы для финальной открытки.
+                            После генерации здесь появятся от трёх до шести вариантов. Выберите ровно три для финальной открытки.
                           </p>
                         )}
 
                         <div className={styles.aiInsightActions}>
+                          {bestQuotes.length >= 3 ? <button type="button" className={`${styles.contentAiButton} ${styles.contentAiButtonPrimary}`} onClick={saveBestQuoteSelection} disabled={isQuotesPending || selectedBestQuotes.length !== 3}>Сохранить выбранные: {selectedBestQuotes.length}/3</button> : null}
                           <button
                             type="button"
                             className={styles.contentAiButton}
@@ -1070,7 +1104,7 @@ export const BlockSettingsForm = ({
                               ? "Выбираем фразы..."
                               : bestQuotes.length > 0
                                 ? "Обновить фразы"
-                                : "Выбрать 3 фразы"}
+                                : "Подобрать фразы"}
                           </button>
                           {!canGenerateBestQuotes ? (
                             <span>Лучшие фразы появятся, когда соберётся минимум {bestQuotesMinimumContributionCount} поздравлений — так мы сможем выбрать действительно разные и тёплые строки.</span>
@@ -1267,10 +1301,13 @@ export const BlockSettingsForm = ({
           )}
         </div>
       </section>
+      </fieldset>
 
       <div className={styles.compositionAutoSaveStatus}>
         {isPending || saveStatus === "saving"
           ? "Сохраняем..."
+          : settingsState.message && !settingsState.ok
+            ? settingsState.message
           : saveStatus === "saved"
             ? "Изменения сохранены"
             : null}

@@ -1,0 +1,1 @@
+.page{min-height:100vh}.actions{position:relative;z-index:5;display:flex;justify-content:center;padding:56px 16px 0;background:var(--card-page-bg,#fff5eb)}@media(max-width:620px){.actions{padding-top:36px}}

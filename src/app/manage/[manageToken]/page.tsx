@@ -79,7 +79,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
   ]);
   const hasValidGeneratedQuotes = Boolean(
     quotesInsight &&
-    quotesInsight.items.length === BEST_QUOTE_COUNT &&
+    quotesInsight.items.length >= BEST_QUOTE_COUNT &&
     quotesInsight.items.every((item) => isValidBestQuoteText(item.text))
   );
   const generatedQuotes = hasValidGeneratedQuotes ? quotesInsight!.items.map((item) => item.text) : [];
@@ -287,6 +287,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   qualitiesAreStale={qualitiesAreStale}
                   canGenerateQualities={visibleContributions.length >= 2}
                   initialAiUsage={aiUsage}
+                  isContentEditable={lifecycle.deliveryStatus !== "DELIVERED"}
                 />
               </section>
             </div>
@@ -393,7 +394,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   <div>
                     <div className={styles.statusHeadingRow}>
                       <h2>Статус открытки</h2>
-                      <span className={styles.statusBadge}>{lifecycle.hasAdminAccess ? "Доступ предоставлен" : lifecycleLabel}</span>
+                      <span className={`${styles.statusBadge} ${giftAccessible ? styles.statusBadgeGranted : ""}`}>{giftAccessible ? "Доступ предоставлен" : lifecycleLabel}</span>
                     </div>
                     <p>Сбор, оплата и передача управляются отдельно. После передачи содержимое фиксируется.</p>
                   </div>
@@ -401,8 +402,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 {lifecycle.deliveryStatus === "DELIVERED" ? (
                   <div className={styles.statusContent}>
                     <div className={styles.statusCopy}>
-                      <h3>{lifecycle.paymentStatus === "PAID" ? "Открытка передана" : "Доступ получателя приостановлен"}</h3>
-                      <p>{lifecycle.paymentStatus === "PAID" ? "Финальная версия уже неизменяема. Её можно открыть или отправить ссылку получателю." : "Передача уже была выполнена, но доступ по финальной ссылке сейчас отключён."}</p>
+                      <h3>{giftAccessible ? "Открытка передана" : "Доступ получателя приостановлен"}</h3>
+                      <p>{giftAccessible ? "Финальная версия уже неизменяема. Её можно открыть или отправить ссылку получателю." : "Передача уже была выполнена, но доступ по финальной ссылке сейчас отключён."}</p>
                     </div>
                     {giftAccessible ? <div className={styles.statusActions}>
                       <Link href={getGiftPath(card.finalSlug)} className={styles.statusPrimaryAction}>Открыть открытку</Link>

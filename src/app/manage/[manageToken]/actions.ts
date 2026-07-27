@@ -49,6 +49,7 @@ import { importGiftOptionImage } from "@/lib/gift-polls/image-storage";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
 import { getGiftPath, getJoinPath, getManagePath } from "@/lib/routes/card-links";
 import { reportCriticalError } from "@/lib/telemetry";
+import { getAiCardInsight, saveAiCardInsight } from "@/lib/ai/repository";
 import { ContributionLimitReachedError } from "@/lib/contributions/limits";
 import {
   closeGiftPoll,
@@ -1025,6 +1026,38 @@ export async function deleteCardMediaAction(
 
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
   return { ok: true, message: "Фото удалено." };
+}
+
+export async function saveBestQuoteSelectionAction(
+  manageToken: string,
+  selectedQuotes: string[]
+): Promise<{ ok: boolean; message: string; quotes: string[] }> {
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) return { ok: false, message: "Секретная ссылка управления больше не актуальна.", quotes: [] };
+
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования.", quotes: [] };
+  }
+
+  const selected = [...new Set(selectedQuotes.map((quote) => quote.trim()).filter(Boolean))];
+  if (selected.length !== 3) return { ok: false, message: "Выберите ровно три фразы.", quotes: [] };
+
+  const insight = await getAiCardInsight(card.id, "quotes");
+  if (!insight || insight.items.length < 3) return { ok: false, message: "Сначала подготовьте варианты фраз.", quotes: [] };
+
+  const candidateByText = new Map(insight.items.map((item) => [item.text, item]));
+  if (selected.some((quote) => !candidateByText.has(quote))) {
+    return { ok: false, message: "Можно выбрать только варианты, подготовленные для этой открытки.", quotes: [] };
+  }
+
+  const selectedItems = selected.map((quote) => candidateByText.get(quote)!);
+  const remainingItems = insight.items.filter((item) => !selected.includes(item.text));
+  const items = [...selectedItems, ...remainingItems];
+  await saveAiCardInsight({ ...insight, items, updatedAt: new Date().toISOString() });
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+  return { ok: true, message: "Выбранные фразы сохранены для финальной открытки.", quotes: items.map((item) => item.text) };
 }
 
 export async function generateBestQuotesAction(

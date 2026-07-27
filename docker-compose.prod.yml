@@ -32,6 +32,7 @@ services:
       - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-3100}:3000"
     volumes:
       - ./public/uploads:/app/public/uploads
+      - ./data/public-share-media:/app/data/public-share-media
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1"]
       interval: 30s

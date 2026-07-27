@@ -72,10 +72,10 @@ export const validateBestQuoteCandidates = (
     if (items.some((existing) => textSimilarity(existing.text, text) >= 0.82)) continue;
 
     items.push({ text, sourceContributionId });
-    if (items.length === BEST_QUOTE_COUNT) return items;
+    if (items.length === BEST_QUOTE_CANDIDATE_COUNT) return items;
   }
 
-  return null;
+  return items.length >= BEST_QUOTE_COUNT ? items : null;
 };
 
 export const buildMockBestQuotes = (
@@ -103,7 +103,7 @@ export const buildMockBestQuotes = (
     const text = candidate.text;
     if (items.some((item) => textSimilarity(item.text, text) >= 0.82)) continue;
     items.push({ text, sourceContributionId: candidate.sourceContributionId });
-    if (items.length === BEST_QUOTE_COUNT) break;
+    if (items.length === BEST_QUOTE_CANDIDATE_COUNT) break;
   }
 
   return items;
