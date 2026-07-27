@@ -742,8 +742,7 @@ export async function updateFinalPresentationSettingsAction(
   const memoryDescription =
     String(formData.get("memoryDescription") ?? "").trim().slice(0, 180) ||
     "Фото, которые хочется сохранить";
-  const memoryPhotoCountValue = Number(formData.get("memoryPhotoCount"));
-  const memoryPhotoCount: FinalCardMemorySettings["photoCount"] = memoryPhotoCountValue === 2 ? 2 : 3;
+  const memoryPhotoCount: FinalCardMemorySettings["photoCount"] = 3;
   const finalBlockOrder = formData
     .getAll("blockOrder")
     .map((value) => String(value))
@@ -1059,10 +1058,11 @@ export async function generateBestQuotesAction(
       occasionText: card.occasionText,
       contributions
     });
-  } catch {
+  } catch (error) {
+    const errorId = await reportCriticalError("ai", error, { cardId: card.id, operation: "best_quotes" });
     return {
       ok: false,
-      message: "Пока не удалось подобрать три короткие самостоятельные фразы. Попробуйте после добавления новых поздравлений.",
+      message: `Пока не удалось подобрать три короткие самостоятельные фразы. Попробуйте ещё раз. Если ошибка повторится, сообщите код: ${errorId}.`,
       quotes: [],
       usage: { used: 0, limit: 0, remaining: 0 }
     };
@@ -1093,12 +1093,23 @@ export async function generateQualitiesAction(
   }
 
   const contributions = await listContributionsByCardId(card.id);
-  const result = await generateQualities({
-    cardId: card.id,
-    recipientName: card.recipientName,
-    occasionText: card.occasionText,
-    contributions
-  });
+  let result: Awaited<ReturnType<typeof generateQualities>>;
+  try {
+    result = await generateQualities({
+      cardId: card.id,
+      recipientName: card.recipientName,
+      occasionText: card.occasionText,
+      contributions
+    });
+  } catch (error) {
+    const errorId = await reportCriticalError("ai", error, { cardId: card.id, operation: "qualities" });
+    return {
+      ok: false,
+      message: `Не удалось определить качества. Попробуйте ещё раз. Если ошибка повторится, сообщите код: ${errorId}.`,
+      qualities: [],
+      usage: { used: 0, limit: 0, remaining: 0 }
+    };
+  }
 
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 

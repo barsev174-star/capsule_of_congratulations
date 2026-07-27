@@ -535,7 +535,7 @@ export const BlockSettingsForm = ({
   const [memoryMediaSlots] = useState<FinalCardMediaSlot[]>(initialMemoryMediaSlots);
   const [messageMediaAssetIds, setMessageMediaAssetIds] = useState<string[]>(initialMessageMediaAssetIds);
   const [memoryMediaAssetIds] = useState<string[]>(initialMemoryMediaAssetIds);
-  const [memoryPhotoCount, setMemoryPhotoCount] = useState<2 | 3>(initialMemoryPhotoCount);
+  const memoryPhotoCount = 3;
   const [memoryTitle, setMemoryTitle] = useState(initialMemoryTitle);
   const [memoryDescription, setMemoryDescription] = useState(initialMemoryDescription);
   const [draggedBlockId, setDraggedBlockId] = useState<FinalCardBlockId | null>(null);
@@ -549,7 +549,7 @@ export const BlockSettingsForm = ({
       mediaLayout: initialMediaLayout,
       memoryTitle: initialMemoryTitle,
       memoryDescription: initialMemoryDescription,
-      memoryPhotoCount: initialMemoryPhotoCount
+      memoryPhotoCount: 3
     })
   );
 
@@ -585,7 +585,7 @@ export const BlockSettingsForm = ({
   const formRef = useRef<HTMLFormElement>(null);
   const submittedCompositionKeyRef = useRef<string | null>(null);
   const autoSaveReadyRef = useRef(false);
-  const lastAutoSaveAtRef = useRef(0);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const handleSettingsAction = async (previousState: typeof initialState, formData: FormData) => {
     const result = await updateFinalPresentationSettingsAction(previousState, formData);
@@ -642,12 +642,16 @@ export const BlockSettingsForm = ({
     }
     if (!isCompositionDirty || !formRef.current || isPending) return;
     if (submittedCompositionKeyRef.current === currentCompositionKey) return;
-    const now = Date.now();
-    if (now - lastAutoSaveAtRef.current < 800) return;
-    lastAutoSaveAtRef.current = now;
-    submittedCompositionKeyRef.current = currentCompositionKey;
-    setSaveStatus("saving");
-    formRef.current.requestSubmit();
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      submittedCompositionKeyRef.current = currentCompositionKey;
+      setSaveStatus("saving");
+      formRef.current?.requestSubmit();
+      autoSaveTimerRef.current = null;
+    }, 500);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
   }, [currentCompositionKey, isCompositionDirty, isPending]);
 
   const resolveDropPosition = (
@@ -1203,25 +1207,13 @@ export const BlockSettingsForm = ({
                             </label>
                           </div>
                         </div>
-                        <div className={styles.mediaVariantTabs}>
-                          {[2, 3].map((count) => (
-                            <button
-                              key={count}
-                              type="button"
-                              className={`${styles.mediaVariantTab} ${memoryPhotoCount === count ? styles.mediaVariantTabActive : ""}`}
-                              onClick={() => setMemoryPhotoCount(count as 2 | 3)}
-                            >
-                              {count} фото
-                            </button>
-                          ))}
-                        </div>
                         <div className={styles.photoReadinessPanel}>
                           <div>
                             <strong>Фото для блока “Моменты”</strong>
-                            <p>Для выбранного вида нужно {memoryPhotoCount} горизонтальных фото.</p>
+                            <p>Для блока используются 3 горизонтальных фото.</p>
                           </div>
                           <span>
-                            Для блока нужно {memoryPhotoCount} фото · доступно{" "}
+                            Для блока нужно 3 фото · доступно{" "}
                             {mediaAssets.filter((asset) => horizontalMediaSlots.includes(asset.slot as CardMediaSlot)).length}
                           </span>
                           <a href={`${getManagePath(manageToken)}?tab=content`} className={styles.previewSecondaryLink}>

@@ -64,15 +64,18 @@ export default async function ManagePage({ params, searchParams }: Props) {
     notFound();
   }
 
+  const isDesignTab = activeTab === "design";
+  const isContentTab = activeTab === "content";
+  const isGiftTab = activeTab === "gift";
   const [allContributions, cardTemplates, visibleContributions, mediaAssets, aiUsage, quotesInsight, qualitiesInsight, giftPoll] = await Promise.all([
-    listAllContributionsByCardId(card.id),
-    getCardTemplates(),
+    isContentTab ? listAllContributionsByCardId(card.id) : Promise.resolve([]),
+    isDesignTab || isContentTab ? getCardTemplates() : Promise.resolve([]),
     listContributionsByCardId(card.id),
-    listCardMediaAssetsByCardId(card.id),
-    getAiUsageSummary(card.id),
-    getAiCardInsight(card.id, "quotes"),
-    getAiCardInsight(card.id, "qualities"),
-    getGiftPollForManage(card.id)
+    isDesignTab || isContentTab ? listCardMediaAssetsByCardId(card.id) : Promise.resolve([]),
+    isDesignTab ? getAiUsageSummary(card.id) : Promise.resolve({ used: 0, limit: 0, remaining: 0 }),
+    isDesignTab ? getAiCardInsight(card.id, "quotes") : Promise.resolve(null),
+    isDesignTab ? getAiCardInsight(card.id, "qualities") : Promise.resolve(null),
+    isGiftTab ? getGiftPollForManage(card.id) : Promise.resolve(null)
   ]);
   const hasValidGeneratedQuotes = Boolean(
     quotesInsight &&
@@ -327,7 +330,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                     <p>Красивый момент вручения: конверт открывается, и открытка появляется плавно и с теплом.</p>
                   </div>
                 </div>
-                <p className={styles.lockedHint}>Анимация будет доступна получателю после публикации.</p>
+                <p className={styles.lockedHint}>Анимация будет доступна получателю после передачи открытки.</p>
               </section>
 
               {lifecycle.deliveryStatus !== "DELIVERED" ? <section className={`${styles.sidebarCard} ${styles.inviteCard}`}>
@@ -471,7 +474,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
           </div>
         ) : activeTab === "gift" ? (
           <div className={styles.giftPollTabShell}>
-            <GiftPollSettingsForm manageToken={manageToken} recipientName={card.recipientName} publicSlug={card.publicSlug} poll={giftPoll} eligibleVoterCount={eligibleGiftPollVoterCount} />
+            <GiftPollSettingsForm manageToken={manageToken} recipientName={card.recipientName} publicSlug={card.publicSlug} poll={giftPoll} eligibleVoterCount={eligibleGiftPollVoterCount} collectionIsOpen={lifecycle.collectionStatus === "OPEN"} />
           </div>
         ) : (
           <ContentStudio

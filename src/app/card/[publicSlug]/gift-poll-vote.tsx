@@ -7,6 +7,7 @@ import styles from "./participant-page.module.css";
 
 type Option = { id: string; title: string; description: string | null; imageUrl: string | null; priceLabel: string | null; productUrl: string | null };
 type Poll = { id?: string; mode: "gift" | "budget"; title: string; question: string; closesAt?: string | null; options: Option[]; selectedOptionId?: string | null };
+type ClosedPoll = { hasVote: boolean; selectedOption: Option | null };
 type View = "invite" | "form" | "skipped" | "voted" | "editing";
 
 const price = (value: string | null) => value ? (/[₽р]\.?$/iu.test(value.trim()) ? `≈ ${value.trim()}` : `≈ ${value.trim()} ₽`) : null;
@@ -14,7 +15,7 @@ const titleCase = (value: string) => value ? `${value.charAt(0).toUpperCase()}${
 
 export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, inviteToReveal = false, showGreetingSuccess = false }: { publicSlug: string; active: boolean; focusOnReveal?: boolean; inviteToReveal?: boolean; showGreetingSuccess?: boolean }) => {
   const [poll, setPoll] = useState<Poll | null>(null);
-  const [closed, setClosed] = useState<{ has_vote: boolean } | null>(null);
+  const [closed, setClosed] = useState<ClosedPoll | null>(null);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [savedOptionId, setSavedOptionId] = useState<string | null>(null);
   const [view, setView] = useState<View>("form");
@@ -32,7 +33,7 @@ export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, invite
     const headers = token ? { "x-participant-token": token } : undefined;
     void fetch(`/api/join/${publicSlug}/gift-poll`, { headers })
       .then((response) => response.ok ? response.json() : null)
-      .then((payload: { poll?: Poll | null; teaser?: Poll | null; closed?: { has_vote: boolean } | null } | null) => {
+      .then((payload: { poll?: Poll | null; teaser?: Poll | null; closed?: ClosedPoll | null } | null) => {
         const nextPoll = active ? payload?.poll ?? null : payload?.teaser ?? null;
         setPoll(nextPoll);
         setClosed(active ? payload?.closed ?? null : null);
@@ -69,7 +70,7 @@ export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, invite
     if (view === "editing" && selectedOptionId) requestAnimationFrame(() => document.getElementById(`gift-poll-option-${selectedOptionId}`)?.focus());
   }, [selectedOptionId, view]);
 
-  if (!poll && closed) return <section className={styles.giftPollSuccess} aria-live="polite"><strong>{closed.has_vote ? "Голосование завершено" : "Поздравление добавлено"}</strong><p>{closed.has_vote ? "Ваш выбор был сохранён." : "Голосование за подарок уже завершено."}</p></section>;
+  if (!poll && closed) return <section className={styles.giftPollSuccess} aria-live="polite"><strong>Голосование завершено</strong>{closed.selectedOption ? <><p>Организатор выбрал вариант:</p><p className={styles.giftPollChoice}><b>{titleCase(closed.selectedOption.title)}</b></p>{closed.selectedOption.description ? <p>{closed.selectedOption.description}</p> : null}</> : <p>Организатор завершил голосование. Итоговый вариант появится здесь после выбора.</p>}{closed.hasVote ? <p>Ваш голос был учтён.</p> : null}</section>;
   if (!poll || !active) return null;
 
   const selectedOption = poll.options.find((option) => option.id === (savedOptionId ?? selectedOptionId));

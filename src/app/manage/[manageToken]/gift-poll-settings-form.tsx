@@ -57,7 +57,7 @@ const GiftOptionImporter = ({ manageToken, disabled, onAdd, onManualAdd }: { man
   </section>;
 };
 
-export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, poll, eligibleVoterCount }: { manageToken: string; recipientName: string; publicSlug: string; poll: GiftPollWithOptions | null; eligibleVoterCount: number }) => {
+export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, poll, eligibleVoterCount, collectionIsOpen }: { manageToken: string; recipientName: string; publicSlug: string; poll: GiftPollWithOptions | null; eligibleVoterCount: number; collectionIsOpen: boolean }) => {
   const [enabled, setEnabled] = useState(Boolean(poll));
   const [mode, setMode] = useState<Mode>(poll?.mode ?? "gift");
   const [title, setTitle] = useState(poll?.title?.trim() || defaultGiftPollCopy(poll?.mode ?? "gift").title);
@@ -349,7 +349,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
           <section className={`${styles.giftPollParticipantView} ${styles.giftPollDraftParticipantView}`}>
             <strong>Как это видит участник</strong>
             <p>Голосование появится после того, как участник отправит поздравление.</p>
-            <a href={`/join/${publicSlug}`} target="_blank" rel="noopener noreferrer" className={styles.giftPollParticipantLink}>Посмотреть как участник</a>
+            {collectionIsOpen ? <a href={`/join/${publicSlug}`} target="_blank" rel="noopener noreferrer" className={styles.giftPollParticipantLink}>Посмотреть как участник</a> : <p>Форма участника станет доступна после открытия сбора поздравлений.</p>}
           </section>
           <section className={styles.giftPollDraftChecklist}>
             <strong>Перед открытием</strong>
@@ -371,7 +371,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
         <section className={styles.giftPollParticipantView}>
           <strong>Как это видит участник</strong>
           <p>Голосование появится после того, как участник отправит поздравление.</p>
-          <a href={`/join/${publicSlug}`} target="_blank" rel="noopener noreferrer" className={styles.giftPollParticipantLink}>Открыть форму участника</a>
+          {collectionIsOpen ? <a href={`/join/${publicSlug}`} target="_blank" rel="noopener noreferrer" className={styles.giftPollParticipantLink}>Открыть форму участника</a> : <p>Форма участника станет доступна после открытия сбора поздравлений.</p>}
         </section>
         {poll?.status !== "draft" ? <section className={styles.giftPollFinishCard}>
           <strong>Завершение голосования</strong>

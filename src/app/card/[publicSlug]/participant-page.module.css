@@ -1944,6 +1944,21 @@
     padding: 14px 16px;
   }
 
+  .stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stat {
+    align-items: flex-start;
+    min-height: 52px;
+  }
+
+  .stat strong {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
   .formCard,
   .listCard,
   .successCard,

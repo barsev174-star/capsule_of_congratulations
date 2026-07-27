@@ -297,7 +297,7 @@ export const routeAdventureDemoCardModel: FinalCardViewModel = {
   messageLayoutMode: "column-media",
   messageMediaLayout: "landscape-trio",
   showAllMessagesLink: false,
-  footerSignature: "Спасибо всем, кто был рядом на этом маршруте.\n\nС теплом,\nдрузья",
+  footerSignature: "Спасибо всем, кто был рядом на этом маршруте.",
   blocks: [
     { id: "hero", required: true },
     { id: "summary", required: true },

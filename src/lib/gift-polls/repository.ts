@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getPostgresPool, isPostgresConfigured } from "@/lib/db/postgres";
-import type { GiftPoll, GiftPollOption, GiftPollWithOptions, ParticipantGiftPoll } from "./types";
+import type { ClosedParticipantGiftPollState, GiftPoll, GiftPollOption, GiftPollWithOptions, ParticipantGiftPoll } from "./types";
 
 type PollRow = {
   id: string; card_id: string; mode: GiftPoll["mode"]; title: string; question: string;
@@ -142,20 +142,28 @@ export const getGiftPollTeaser = async (cardId: string): Promise<Pick<Participan
 
 export const getClosedGiftPollParticipantState = async (cardId: string, participantTokenHash: string) => {
   if (!isPostgresConfigured()) return null;
-  const result = await getPostgresPool().query<{ has_vote: boolean }>(
+  const result = await getPostgresPool().query<{ has_vote: boolean; id: string | null; title: string | null; description: string | null; image_url: string | null; price_label: string | null; product_url: string | null }>(
     `SELECT EXISTS(
-       SELECT 1 FROM gift_votes v
-       JOIN gift_polls p ON p.id = v.poll_id
+       SELECT 1 FROM gift_votes v JOIN gift_polls p ON p.id = v.poll_id
        WHERE p.card_id = $1 AND p.status = 'closed' AND v.participant_token_hash = $2
-     ) AS has_vote
-     WHERE EXISTS(
+     ) AS has_vote,
+     o.id, o.title, o.description, o.image_url, o.price_label, o.product_url
+     FROM gift_polls p
+     LEFT JOIN gift_poll_options o ON o.id = p.selected_option_id AND o.deleted_at IS NULL
+     WHERE p.card_id = $1 AND p.status = 'closed'
+       AND EXISTS(
        SELECT 1 FROM contributions
        WHERE card_id = $1 AND participant_token_hash = $2 AND status = 'visible'
-     )
-       AND EXISTS(SELECT 1 FROM gift_polls WHERE card_id = $1 AND status = 'closed')`,
+     ) LIMIT 1`,
     [cardId, participantTokenHash]
   );
-  return result.rows[0] ?? null;
+  const row = result.rows[0];
+  if (!row) return null;
+  const selectedOption = row.id && row.title ? {
+    id: row.id, title: row.title, description: row.description, imageUrl: row.image_url,
+    priceLabel: row.price_label, productUrl: row.product_url
+  } : null;
+  return { hasVote: row.has_vote, selectedOption } satisfies ClosedParticipantGiftPollState;
 };
 
 export const upsertGiftVote = async (cardId: string, optionId: string, participantTokenHash: string) => {

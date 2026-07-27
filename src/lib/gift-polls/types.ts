@@ -39,3 +39,8 @@ export type ParticipantGiftPoll = Pick<GiftPoll, "id" | "mode" | "title" | "ques
   options: Array<Pick<GiftPollOption, "id" | "title" | "description" | "imageUrl" | "priceLabel" | "productUrl">>;
   selectedOptionId: string | null;
 };
+
+export type ClosedParticipantGiftPollState = {
+  hasVote: boolean;
+  selectedOption: Pick<GiftPollOption, "id" | "title" | "description" | "imageUrl" | "priceLabel" | "productUrl"> | null;
+};
