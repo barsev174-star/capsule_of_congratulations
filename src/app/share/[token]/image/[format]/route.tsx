@@ -22,6 +22,11 @@ const trim = (text: string, max: number) => {
   return `${cut || text.slice(0, max).trimEnd()}…`;
 };
 const asset = (origin: string, path: string) => new URL(path, origin).toString();
+const publicOrigin = (request: Request) => {
+  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configuredUrl) return new URL(configuredUrl).origin;
+  return new URL(request.url).origin;
+};
 const exportFonts = async () => Promise.all([
   readFile(join(process.cwd(), "public", "fonts", "Caveat-Cyrillic-600.woff")),
   readFile(join(process.cwd(), "public", "fonts", "PTSans-Cyrillic-400.woff"))
@@ -173,7 +178,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   const selectedFormat = format as Format;
   const { width, height } = formats[selectedFormat];
   const [caveat, ptSans] = await exportFonts();
-  const image = new ImageResponse(<ExportCard payload={payload} format={selectedFormat} origin={new URL(request.url).origin} />, { width, height, fonts: [
+  const image = new ImageResponse(<ExportCard payload={payload} format={selectedFormat} origin={publicOrigin(request)} />, { width, height, fonts: [
     { name: "Caveat", data: caveat, weight: 600, style: "normal" },
     { name: "PT Sans", data: ptSans, weight: 400, style: "normal" }
   ] });
