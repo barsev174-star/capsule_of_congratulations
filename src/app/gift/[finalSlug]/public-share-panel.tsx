@@ -65,9 +65,11 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
   const [publishRequested, setPublishRequested] = useState(false);
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const savedPhotoIdsKey = photos.map((photo) => photo.cardMediaAssetId).join(",");
-  useEffect(() => {
+  const [appliedPhotoIdsKey, setAppliedPhotoIdsKey] = useState(savedPhotoIdsKey);
+  if (appliedPhotoIdsKey !== savedPhotoIdsKey) {
+    setAppliedPhotoIdsKey(savedPhotoIdsKey);
     setSelectedPhotoIds(photos.map((photo) => photo.cardMediaAssetId).slice(0, 3));
-  }, [savedPhotoIdsKey]);
+  }
   const togglePhrase = (phrase: string) => {
     if (pending) return;
     setSelectedPhrases((current) => current.includes(phrase) ? current.filter((item) => item !== phrase) : current.length === 3 ? current : [...current, phrase]);
@@ -100,16 +102,13 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
   };
   const openExactPreview = () => {
     setVisibilityMessage("");
+    setPublishRequested(false);
     setPreviewRequested(true);
     formRef.current?.requestSubmit();
   };
-  useEffect(() => {
-    if (!previewRequested || pending) return;
-    setPreviewRequested(false);
-    if (state.ok) router.push(`/gift/${finalSlug}/share/preview`);
-  }, [previewRequested, pending, state, finalSlug, router]);
   const startPublish = () => {
     setVisibilityMessage("");
+    setPreviewRequested(false);
     if (!share || hasUnsavedChanges) {
       setPublishRequested(true);
       formRef.current?.requestSubmit();
@@ -118,10 +117,19 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
     changeVisibility("publish");
   };
   useEffect(() => {
-    if (!publishRequested || pending) return;
-    setPublishRequested(false);
-    if (state.ok) changeVisibility("publish");
-  }, [publishRequested, pending, state]);
+    if (pending || !state.ok) return;
+    if (previewRequested) {
+      router.push(`/gift/${finalSlug}/share/preview`);
+      return;
+    }
+    if (publishRequested) {
+      startVisibilityTransition(async () => {
+        const result = await publishPublicShareAction(finalSlug);
+        setVisibilityMessage(result.message);
+        router.refresh();
+      });
+    }
+  }, [pending, state, previewRequested, publishRequested, finalSlug, router]);
   useEffect(() => {
     if (!revokeDialogOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -142,11 +150,13 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
     photos: selectedPhotoIds,
     captions: selectedPhotoIds.map((photoId) => captions[photoId]?.trim() ?? ""),
   }), [displayName, headlinePreset, showOccasion, showGreetingCount, showPhotoCount, photoConsent, selectedPhrases, selectedPhotoIds, captions]);
+  const [submittedSignature, setSubmittedSignature] = useState(formSignature);
   const [savedSignature, setSavedSignature] = useState(formSignature);
-  const submittedSignatureRef = useRef(formSignature);
-  useEffect(() => {
-    if (!pending && state.ok) setSavedSignature(submittedSignatureRef.current);
-  }, [pending, state]);
+  const [lastActionState, setLastActionState] = useState(state);
+  if (lastActionState !== state) {
+    setLastActionState(state);
+    if (state.ok) setSavedSignature(submittedSignature);
+  }
 
   const isActive = share?.status === "ACTIVE";
   const isDraft = share?.status === "DRAFT";
@@ -193,7 +203,7 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
     <section className={styles.shell}>
       {!share && wasRevoked ? <p className={styles.statusRevoked}>Публичная страница отключена. При желании создайте новую — у неё будет новая ссылка.</p> : null}
       <div className={styles.layout}>
-        <form action={formAction} className={styles.form} ref={formRef} onSubmit={() => { submittedSignatureRef.current = formSignature; }}>
+        <form action={formAction} className={styles.form} ref={formRef} onSubmit={() => { setSubmittedSignature(formSignature); }}>
           <section className={styles.card} aria-labelledby="share-section-basics">
             <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">1</span><h3 id="share-section-basics">Основные сведения</h3></header>
             <div className={styles.fieldGrid}>
@@ -328,7 +338,7 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
             <div className={styles.actionBarInner}>
               <p className={`${styles.saveStatus} ${hasUnsavedChanges ? styles.saveStatusDirty : ""}`} role="status">{saveStatusText}</p>
               <div className={styles.actionButtons}>
-                <button type="submit" disabled={saveDisabled}>{pending ? "Сохраняем…" : share ? "Сохранить изменения" : "Создать черновик"}</button>
+                <button type="submit" disabled={saveDisabled} onClick={() => { setPreviewRequested(false); setPublishRequested(false); }}>{pending ? "Сохраняем…" : share ? "Сохранить изменения" : "Создать черновик"}</button>
                 {!isActive || hasUnsavedChanges ? (
                   <button type="button" className={styles.secondary} onClick={openExactPreview} disabled={validationBlocked}>
                     <span className={styles.labelFull}>{pending && previewRequested ? "Сохраняем черновик…" : previewLabel}</span>

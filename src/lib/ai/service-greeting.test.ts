@@ -11,6 +11,9 @@ const mocks = vi.hoisted(() => ({
   generateTwoStepVariantsWithOpenAi: vi.fn(),
   generateBestQuotesWithOpenAi: vi.fn(),
   generateQualitiesWithOpenAi: vi.fn(),
+  extractGreetingSemantics: vi.fn(),
+  composeGreetingVariants: vi.fn(),
+  repairGreetingVariant: vi.fn(),
   completeAiGeneration: vi.fn(),
   releaseAiGeneration: vi.fn()
 }));
@@ -40,6 +43,12 @@ vi.mock("@/lib/ai/openai-two-step-provider", () => ({
   generateTwoStepVariantsWithOpenAi: mocks.generateTwoStepVariantsWithOpenAi
 }));
 
+vi.mock("@/lib/ai/openai-two-stage-provider", () => ({
+  extractGreetingSemantics: mocks.extractGreetingSemantics,
+  composeGreetingVariants: mocks.composeGreetingVariants,
+  repairGreetingVariant: mocks.repairGreetingVariant
+}));
+
 vi.mock("@/lib/ai/openai-insights-provider", () => ({
   generateBestQuotesWithOpenAi: mocks.generateBestQuotesWithOpenAi,
   generateQualitiesWithOpenAi: mocks.generateQualitiesWithOpenAi
@@ -61,6 +70,9 @@ vi.mock("@/lib/ai/repository", () => ({
   completeAiGeneration: mocks.completeAiGeneration,
   completeAiUsageEvent: vi.fn(),
   releaseAiGeneration: mocks.releaseAiGeneration,
+  getAiGenerationRequestState: vi.fn().mockResolvedValue(null),
+  getCachedSemanticPlan: vi.fn().mockResolvedValue(null),
+  cacheSemanticPlan: vi.fn(),
   saveAiCardInsight: vi.fn()
 }));
 
@@ -124,7 +136,10 @@ describe("AI greeting service validation flow", () => {
     const contributions = [
       { id: "one", message: "Спасибо за твою поддержку и умение найти добрые слова в нужный момент.", updatedAt: "2026-01-01" },
       { id: "two", message: "Твоё чувство юмора делает каждый обычный день намного светлее и теплее.", updatedAt: "2026-01-02" },
-      { id: "three", message: "На тебя всегда можно положиться, и рядом с тобой становится спокойнее.", updatedAt: "2026-01-03" }
+      { id: "three", message: "На тебя всегда можно положиться, и рядом с тобой становится спокойнее.", updatedAt: "2026-01-03" },
+      { id: "four", message: "Ты всегда находишь время помочь, даже когда сама занята по горло.", updatedAt: "2026-01-04" },
+      { id: "five", message: "С тобой любой разговор становится легче и любая трудность — короче.", updatedAt: "2026-01-05" },
+      { id: "six", message: "Спасибо за заботу и внимание к мелочам, которые на самом деле самые важные.", updatedAt: "2026-01-06" }
     ] as never;
     mocks.generateBestQuotesWithOpenAi.mockResolvedValue({
       model: "gpt-5-mini",
@@ -220,33 +235,41 @@ describe("AI greeting service validation flow", () => {
     process.env.AI_GREETING_PROVIDER = "openai";
     process.env.AI_GREETING_MODE = "ladder";
     process.env.AI_GREETING_EXPERIMENT = "two_step";
-    mocks.generateGreetingContentPlanWithOpenAi.mockResolvedValue({
+    mocks.extractGreetingSemantics.mockResolvedValue({
       model: "gpt-5-mini",
       usage: { totalTokens: 300 },
+      durationMs: 5,
       plan: {
-        generalActions: ["помогает во время учёбы"],
-        personalEpisodes: ["поддержала автора перед экзаменом"],
+        authorVoice: "WE",
+        authorGender: "UNKNOWN",
+        addressForm: "VY",
+        recipientNumber: "ONE",
+        coreFacts: ["помогает во время учёбы"],
+        contextFacts: [],
+        appreciation: ["помощь во время учёбы"],
         wishes: ["успехов"],
-        derivedQualities: ["отзывчивость"],
-        creativeRequest: "",
-        optionalContextDetails: []
+        derivedQualities: [],
+        editorialIntent: { humor: "NONE", humorPlacement: "ANY", warmthRequested: false, expressivenessRequested: false, otherNotes: [] },
+        phrasesWorthPreserving: [],
+        ambiguities: []
       }
     });
-    mocks.generateTwoStepVariantsWithOpenAi.mockResolvedValue({
+    mocks.composeGreetingVariants.mockResolvedValue({
       model: "gpt-5-mini",
       usage: { totalTokens: 700 },
-      variants: [
-        { type: "safe", label: "Аккуратно", text: "Анна Ивановна, с выпускным! Спасибо за помощь во время учёбы. Желаем успехов." },
-        { type: "warm", label: "Теплее", text: "Анна Ивановна, с выпускным! Спасибо за отзывчивость и помощь во время учёбы. Желаем успехов." },
-        { type: "expressive", label: "Живее", text: "Анна Ивановна, с выпускным! Спасибо за помощь во время учёбы. Пусть впереди будет много удачных дней!" }
-      ]
+      durationMs: 8,
+      variants: {
+        safe: { text: "Анна Ивановна, с выпускным! Спасибо за помощь во время учёбы. Желаем успехов." },
+        warm: { text: "Анна Ивановна, с выпускным! Спасибо за отзывчивость и помощь во время учёбы. Желаем успехов." },
+        expressive: { text: "Анна Ивановна, с выпускным! Спасибо за помощь во время учёбы. Пусть впереди будет много удачных дней!" }
+      }
     });
 
     const result = await generateParticipantMessage(input);
 
     expect(result.variants.map((variant) => variant.id)).toEqual(["short", "warm", "style"]);
-    expect(mocks.generateGreetingContentPlanWithOpenAi).toHaveBeenCalledOnce();
-    expect(mocks.generateTwoStepVariantsWithOpenAi).toHaveBeenCalledOnce();
+    expect(mocks.extractGreetingSemantics).toHaveBeenCalledOnce();
+    expect(mocks.composeGreetingVariants).toHaveBeenCalledOnce();
     expect(mocks.generateLadderWithOpenAi).not.toHaveBeenCalled();
   });
 
