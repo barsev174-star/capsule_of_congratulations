@@ -63,7 +63,24 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
   useEffect(() => {
     setSelectedPhotoIds(photos.map((photo) => photo.cardMediaAssetId));
   }, [savedPhotoIdsKey]);
-  const togglePhrase = (phrase: string) => setSelectedPhrases((current) => current.includes(phrase) ? current.filter((item) => item !== phrase) : current.length === 3 ? current : [...current, phrase]);
+  const togglePhrase = (phrase: string) => {
+    if (pending) return;
+    setSelectedPhrases((current) => current.includes(phrase) ? current.filter((item) => item !== phrase) : current.length === 3 ? current : [...current, phrase]);
+  };
+  const movePhrase = (orderIndex: number, delta: number) => setSelectedPhrases((current) => {
+    const targetIndex = orderIndex + delta;
+    if (targetIndex < 0 || targetIndex >= current.length) return current;
+    const next = [...current];
+    [next[orderIndex], next[targetIndex]] = [next[targetIndex], next[orderIndex]];
+    return next;
+  });
+  const handlePhraseKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, phrase: string) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === " " || event.key === "Enter") {
+      event.preventDefault();
+      togglePhrase(phrase);
+    }
+  };
   const togglePhoto = (photoId: string) => setSelectedPhotoIds((current) => current.includes(photoId) ? current.filter((id) => id !== photoId) : current.length === 6 ? current : [...current, photoId]);
   const changeVisibility = (operation: "publish" | "revoke") => {
     setVisibilityMessage("");
@@ -98,11 +115,80 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
       {!share && wasRevoked ? <p className={styles.statusRevoked}>Публичная версия снята с публикации. При желании создайте новую.</p> : null}
       <div className={styles.layout}>
         <form action={formAction} className={styles.form} ref={formRef}>
-          <label>Публичное имя<input name="displayName" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={60} /></label>
-          <label>Заголовок<select name="headlinePreset" value={headlinePreset} onChange={(event) => setHeadlinePreset(event.target.value)}><option value="GIFTED_CARD">Мне подарили открытку</option><option value="THANK_YOU">Спасибо за этот подарок</option><option value="LOOK_WHAT_I_GOT">Посмотрите, что мне подарили</option></select></label>
-          <fieldset><legend>Показывать на публичной странице</legend><label><input type="checkbox" name="showOccasion" checked={showOccasion} onChange={(event) => setShowOccasion(event.target.checked)} /> Повод</label><label><input type="checkbox" name="showGreetingCount" checked={showGreetingCount} onChange={(event) => setShowGreetingCount(event.target.checked)} /> Количество поздравлений</label><label><input type="checkbox" name="showPhotoCount" checked={showPhotoCount} onChange={(event) => setShowPhotoCount(event.target.checked)} /> Количество фотографий</label></fieldset>
-          <section className={styles.autoSection}><h3>За что меня ценят</h3><div className={styles.qualities}>{publicQualities.map((quality) => <span key={quality.id}>{quality.text}</span>)}</div></section>
-          <fieldset className={styles.phraseFieldset}><legend>Лучшие фразы</legend><p>Выберите три фразы для публичной версии.</p><strong className={selectedPhrases.length === 3 ? styles.ready : styles.attention}>Выбрано: {selectedPhrases.length}/3</strong><div className={styles.phraseChoices}>{phraseCandidates.map((phrase, index) => <label className={`${styles.phraseChoice} ${selectedPhrases.includes(phrase) ? styles.phraseChoiceSelected : ""}`} key={phrase}><input type="checkbox" name="phraseText" value={phrase} checked={selectedPhrases.includes(phrase)} onChange={() => togglePhrase(phrase)} disabled={pending || (!selectedPhrases.includes(phrase) && selectedPhrases.length === 3)} /><span>{index < 3 ? "Выбрано организатором" : "Вариант"}</span><b>{phrase}</b></label>)}</div></fieldset>
+          <section className={styles.card} aria-labelledby="share-section-basics">
+            <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">1</span><h3 id="share-section-basics">Основные сведения</h3></header>
+            <div className={styles.fieldGrid}>
+              <label>Публичное имя<input name="displayName" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={60} /><span className={styles.fieldHint}>Так вас увидят на публичной странице.</span></label>
+              <label>Заголовок на странице<select name="headlinePreset" value={headlinePreset} onChange={(event) => setHeadlinePreset(event.target.value)}><option value="GIFTED_CARD">Мне подарили открытку</option><option value="THANK_YOU">Спасибо за этот подарок</option><option value="LOOK_WHAT_I_GOT">Посмотрите, что мне подарили</option></select><span className={styles.fieldHint}>Короткая фраза над открыткой.</span></label>
+            </div>
+            <div className={styles.counterGroup}>
+              <p className={styles.counterGroupLabel}>Что показывать на публичной странице</p>
+              <div className={styles.counterCards}>
+                <label className={`${styles.counterCard} ${showOccasion ? styles.counterCardSelected : ""}`}>
+                  <input className={styles.visuallyHidden} type="checkbox" name="showOccasion" checked={showOccasion} onChange={(event) => setShowOccasion(event.target.checked)} />
+                  <span className={styles.counterIcon} aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8c-1.5 0-3-1.3-3-3s3-3 3 3c0-3 3-4.5 3-3s-1.5 3-3 3"/></svg></span>
+                  <span>Повод</span>
+                  <span className={styles.counterCheck} aria-hidden="true">✓</span>
+                </label>
+                <label className={`${styles.counterCard} ${showGreetingCount ? styles.counterCardSelected : ""}`}>
+                  <input className={styles.visuallyHidden} type="checkbox" name="showGreetingCount" checked={showGreetingCount} onChange={(event) => setShowGreetingCount(event.target.checked)} />
+                  <span className={styles.counterIcon} aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z"/></svg></span>
+                  <span>Количество поздравлений</span>
+                  <span className={styles.counterCheck} aria-hidden="true">✓</span>
+                </label>
+                <label className={`${styles.counterCard} ${showPhotoCount ? styles.counterCardSelected : ""}`}>
+                  <input className={styles.visuallyHidden} type="checkbox" name="showPhotoCount" checked={showPhotoCount} onChange={(event) => setShowPhotoCount(event.target.checked)} />
+                  <span className={styles.counterIcon} aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m4 18 5-5 3 3 4-4 4 4"/></svg></span>
+                  <span>Количество фотографий</span>
+                  <span className={styles.counterCheck} aria-hidden="true">✓</span>
+                </label>
+              </div>
+            </div>
+          </section>
+          <section className={styles.card} aria-labelledby="share-section-qualities">
+            <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">2</span><h3 id="share-section-qualities">За что меня ценят</h3></header>
+            <p className={styles.cardHint}>Эти качества появятся на публичной странице.</p>
+            <div className={styles.qualities}>{publicQualities.map((quality) => <span key={quality.id}>{quality.text}</span>)}</div>
+            <p className={styles.cardNote}>Можно выбрать до 5 качеств</p>
+          </section>
+          <section className={styles.card} aria-labelledby="share-section-phrases">
+            <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">3</span><h3 id="share-section-phrases">Особенно тёплые слова</h3></header>
+            <p className={styles.cardHint}>Выберите три фразы. Они появятся на странице в выбранном порядке.</p>
+            <strong className={selectedPhrases.length === 3 ? styles.ready : styles.attention}>Выбрано: {selectedPhrases.length}/3</strong>
+            <div className={styles.phraseChoices}>
+              {phraseCandidates.map((phrase, index) => {
+                const orderIndex = selectedPhrases.indexOf(phrase);
+                const isSelected = orderIndex !== -1;
+                const selectionFull = selectedPhrases.length === 3;
+                return (
+                  <div
+                    key={phrase}
+                    role="checkbox"
+                    aria-checked={isSelected}
+                    aria-disabled={!isSelected && selectionFull}
+                    aria-label={phrase}
+                    tabIndex={0}
+                    className={`${styles.phraseChoice} ${isSelected ? styles.phraseChoiceSelected : ""}`}
+                    onClick={() => togglePhrase(phrase)}
+                    onKeyDown={(event) => handlePhraseKeyDown(event, phrase)}
+                  >
+                    <div className={styles.phraseTop}>
+                      {isSelected ? <span className={styles.orderBadge} aria-label={`Порядок на странице: ${orderIndex + 1}`}>{orderIndex + 1}</span> : null}
+                      {index < 3 ? <span className={styles.organizerBadge}>Рекомендовано организатором</span> : null}
+                      {isSelected ? (
+                        <span className={styles.reorderButtons}>
+                          <button type="button" aria-label="Переместить фразу выше" disabled={orderIndex === 0} onClick={(event) => { event.stopPropagation(); movePhrase(orderIndex, -1); }}>↑</button>
+                          <button type="button" aria-label="Переместить фразу ниже" disabled={orderIndex === selectedPhrases.length - 1} onClick={(event) => { event.stopPropagation(); movePhrase(orderIndex, 1); }}>↓</button>
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className={styles.phraseText}>{phrase}</span>
+                  </div>
+                );
+              })}
+            </div>
+            {selectedPhrases.map((phrase) => <input key={phrase} type="hidden" name="phraseText" value={phrase} />)}
+          </section>
           {mediaAssets.length > 0 ? <fieldset><legend>Публичные фотографии — до шести</legend><p>Выберите фото и при необходимости измените подписи.</p><strong className={styles.photoCount}>Выбрано: {selectedPhotoIds.length}/6</strong><div className={styles.photoGrid}>{mediaAssets.map((asset) => { const savedPhoto = photos.find((photo) => photo.cardMediaAssetId === asset.id); const isSelected = selectedPhotoIds.includes(asset.id); return <label className={styles.photo} key={asset.id}><input type="checkbox" name="photoAssetId" value={asset.id} checked={isSelected} onChange={() => togglePhoto(asset.id)} disabled={pending || (!isSelected && selectedPhotoIds.length === 6)} /><img src={asset.publicUrl} alt="Фото из открытки" /><span><input name={`caption:${asset.id}`} defaultValue={defaultPublicCaption(asset, savedPhoto?.publicCaption)} maxLength={120} placeholder="Короткая подпись" /></span></label>; })}</div><label className={styles.consent}><input type="checkbox" name="photoConsentAccepted" checked={photoConsent} onChange={(event) => setPhotoConsent(event.target.checked)} /> Подтверждаю право на публикацию выбранных фотографий.</label></fieldset> : null}
           {state.message ? <p className={state.ok ? styles.success : styles.error}>{state.message}</p> : null}
           {visibilityMessage ? <p className={visibilityMessage.includes("не удалось") ? styles.error : styles.success}>{visibilityMessage}</p> : null}
