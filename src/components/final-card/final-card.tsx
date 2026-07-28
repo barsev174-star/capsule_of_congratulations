@@ -16,7 +16,7 @@ import styles from "./final-card.module.css";
 type Props = {
   model: FinalCardViewModel;
   debugAssets?: boolean;
-  mode?: "gift" | "preview" | "public";
+  mode?: "gift" | "preview" | "public" | "draft-preview";
   manageToken?: string;
 };
 
@@ -164,7 +164,7 @@ const getQuoteAssetId = (index: number) => {
 
 export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageToken }: Props) => {
   const isPreview = mode === "preview";
-  const isPublic = mode === "public";
+  const isPublic = mode === "public" || mode === "draft-preview";
   const isPaperBirthday = model.style === "paper-birthday";
   const isRouteAdventure = model.style === "route-adventure";
   const participantSummary = getParticipantSummary(model.participantCount);

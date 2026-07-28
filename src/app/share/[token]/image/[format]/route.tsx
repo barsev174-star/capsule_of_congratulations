@@ -8,7 +8,7 @@ import { getPublicSharePayload } from "@/lib/public-shares/service";
 export const runtime = "nodejs";
 
 const formats = {
-  story: { width: 1080, height: 1920, phrases: 1, photos: 3 },
+  story: { width: 1080, height: 1920, phrases: 2, photos: 3 },
   post: { width: 1080, height: 1350, phrases: 2, photos: 3 },
   print: { width: 1240, height: 1754, phrases: 3, photos: 3 }
 } as const;
@@ -38,7 +38,7 @@ const Polaroid = ({ photo, index, width, height, origin }: { photo: Payload["pho
   <div style={{ position: "relative", display: "flex", width, height, flexShrink: 0, transform: `rotate(${index === 1 ? 1.4 : index === 2 ? -1.1 : -1.8}deg)` }}>
     <img src={photo.url} style={{ position: "absolute", left: "8.2%", top: "12.5%", width: "83.6%", height: "60.5%", objectFit: "cover", outline: "1px solid rgba(0,0,0,.1)" }} />
     <img src={asset(origin, "/templates/scrapbook-clean/polaroid-frame-horizontal.png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
-    <div style={{ position: "absolute", left: "9%", right: "9%", bottom: "4.8%", height: "18.5%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", color: "#5d4436", fontFamily: "Caveat", fontSize: Math.max(15, Math.round(width * .064)), lineHeight: 1.04, textAlign: "center" }}>{trim(photo.caption, width >= 420 ? 66 : 48)}</div>
+    <div style={{ position: "absolute", left: "9%", right: "9%", bottom: "7%", height: "18.5%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", color: "#5d4436", fontFamily: "Caveat", fontSize: Math.max(15, Math.round(width * .064)), lineHeight: 1.04, textAlign: "center" }}>{trim(photo.caption, width >= 420 ? 66 : 48)}</div>
   </div>
 );
 
@@ -51,11 +51,11 @@ const ExportCard = ({ payload, format, origin }: { payload: Payload; format: For
   const headingSize = isStory ? 68 : isPrint ? 56 : 53;
   const heroPhotoWidth = isStory ? 120 : isPrint ? 112 : 106;
   const heroPadding = isStory ? "52px 52px 32px" : isPrint ? "62px 55px 46px" : "38px 44px 26px";
-  const largePhotoWidth = isStory ? 450 : isPrint ? 480 : 340;
-  const smallPhotoWidth = isStory ? 260 : isPrint ? 310 : 225;
+  const largePhotoWidth = isStory ? 438 : isPrint ? 430 : 370;
+  const smallPhotoWidth = isStory ? 258 : isPrint ? 335 : 282;
   const singlePhotoWidth = isStory ? 520 : isPrint ? 540 : 390;
   const momentPhotoSize = (index: number) => {
-    const width = photos.length === 1 ? singlePhotoWidth : photos.length === 2 || index === 0 ? largePhotoWidth : smallPhotoWidth;
+    const width = photos.length === 1 ? singlePhotoWidth : photos.length === 2 ? (isStory ? 430 : isPrint ? 475 : 430) : index === 0 ? largePhotoWidth : smallPhotoWidth;
     return { width, height: Math.round(width * .75) };
   };
   const counterPhoto = payload.share.showPhotoCount && payload.card.photoCount > 0 ? `${payload.card.photoCount} фото в открытке` : null;
@@ -71,22 +71,27 @@ const ExportCard = ({ payload, format, origin }: { payload: Payload; format: For
         {payload.share.showOccasion && payload.card.occasionText ? <div style={{ display: "flex", padding: "6px 13px", borderRadius: 10, background: "rgba(255,246,235,.78)", color: "#cd637b", fontSize: isStory ? 18 : 15, fontWeight: 700 }}>{payload.card.occasionText}</div> : null}
         {payload.share.displayName ? <div style={{ display: "flex", maxWidth: isStory ? 530 : isPrint ? 640 : 560, marginTop: 12, color: "#c75e79", fontFamily: "Caveat", fontSize: headingSize, fontWeight: 600, lineHeight: .92, textAlign: "center" }}>{payload.share.displayName}</div> : null}
         <div style={{ display: "flex", maxWidth: isStory ? 620 : 730, marginTop: 18, fontSize: isStory ? 28 : isPrint ? 21 : 24, lineHeight: 1.35, textAlign: "center" }}>Близкие люди собрали здесь тёплые слова, фотографии и приятные моменты.</div>
-        {counters.length ? <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10, marginTop: 12 }}>{counters.map((item) => <div key={item} style={{ display: "flex", padding: "8px 13px", borderRadius: 99, background: "rgba(255,255,255,.78)", boxShadow: "0 2px 5px rgba(75,45,28,.09)", color: "#714b3b", fontSize: isStory ? 15 : 14, fontWeight: 700 }}>{item}</div>)}</div> : null}
+        {counters.length ? <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10, marginTop: 8 }}>{counters.map((item) => <div key={item} style={{ display: "flex", padding: "8px 13px", borderRadius: 99, background: "rgba(255,255,255,.78)", boxShadow: "0 2px 5px rgba(75,45,28,.09)", color: "#714b3b", fontSize: isStory ? 15 : 14, fontWeight: 700 }}>{item}</div>)}</div> : null}
       </div>, { minHeight: isStory ? 425 : isPrint ? 365 : 250 })}
 
-      {payload.qualities.length ? paper(origin, <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", padding: isStory ? "23px 20px 21px" : isPrint ? "30px 22px" : "21px 22px" }}>
+      {payload.qualities.length ? paper(origin, <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", padding: isStory ? "20px 20px 18px" : isPrint ? "26px 22px" : "18px 22px" }}>
         <div style={{ display: "flex", fontFamily: "Caveat", fontWeight: 600, fontSize: isStory ? 43 : isPrint ? 37 : 32 }}>За что тебя ценят</div>
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: isStory ? 8 : 10, marginTop: isStory ? 12 : 15 }}>{payload.qualities.slice(0, 5).map((quality, index) => <div key={quality} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: isStory ? 392 : isPrint ? 174 : 164, minHeight: isStory ? 74 : isPrint ? 62 : 58, padding: "10px 18px", backgroundImage: `url(${asset(origin, ["/templates/scrapbook-clean/quality-card-pink.png", "/templates/scrapbook-clean/quality-card-green.png", "/templates/scrapbook-clean/quality-card-blue.png", "/templates/scrapbook-clean/quality-card-beige.png", "/templates/scrapbook-clean/quality-card-violet.png"][index])})`, backgroundSize: "100% 100%", color: "#554035", fontFamily: "Caveat", fontSize: isStory ? 29 : isPrint ? 21 : 18, lineHeight: 1.02, textAlign: "center", transform: `rotate(${index % 2 ? 1 : -1}deg)` }}>{quality}</div>)}</div>
-      </div>, { minHeight: isStory ? 195 : isPrint ? 175 : 132 }) : null}
+      </div>, { minHeight: isStory ? 180 : isPrint ? 160 : 122 }) : null}
 
-      {photos.length ? paper(origin, <div style={{ display: "flex", flexDirection: "column", width: "100%", padding: isStory ? "23px 18px 22px" : isPrint ? "35px 22px" : "22px 22px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}><img src={asset(origin, "/templates/scrapbook-clean/camera.png")} style={{ width: isStory ? 40 : 34, height: isStory ? 40 : 34, objectFit: "contain", filter: "contrast(1.35) saturate(1.2)" }} /><div style={{ display: "flex", flexDirection: "column" }}><div style={{ display: "flex", fontFamily: "Caveat", fontWeight: 600, fontSize: isStory ? 40 : isPrint ? 35 : 30 }}>Моменты</div><div style={{ display: "flex", marginTop: 0, color: "#765f50", fontFamily: "Caveat", fontSize: isStory ? 22 : isPrint ? 18 : 17 }}>Фото, которые хочется сохранить</div></div></div>
-        <div style={{ display: "flex", alignItems: isStory ? "center" : "flex-start", justifyContent: "center", gap: isStory ? 12 : 14, marginTop: isStory ? 14 : 17 }}>{photos.map((photo, index) => { const size = momentPhotoSize(index); return <Polaroid key={photo.id} photo={photo} index={index} width={size.width} height={size.height} origin={origin} />; })}</div>
-      </div>, { minHeight: isStory ? 475 : isPrint ? 485 : 305 }) : null}
+      {photos.length ? paper(origin, <div style={{ display: "flex", flexDirection: "column", width: "100%", padding: isStory ? "20px 18px 18px" : isPrint ? "27px 22px 24px" : "18px 22px 19px" }}>
+        {photos.length === 3 ? <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: isStory ? 12 : 14 }}>
+          {(() => { const main = momentPhotoSize(0); return <Polaroid photo={photos[0]} index={0} width={main.width} height={main.height} origin={origin} />; })()}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: isStory ? 9 : 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, minHeight: isStory ? 68 : 58 }}><img src={asset(origin, "/templates/scrapbook-clean/camera.png")} style={{ width: isStory ? 38 : 33, height: isStory ? 38 : 33, objectFit: "contain", filter: "contrast(1.6) saturate(1.25)" }} /><div style={{ display: "flex", flexDirection: "column" }}><div style={{ display: "flex", fontFamily: "Caveat", fontWeight: 600, fontSize: isStory ? 40 : isPrint ? 35 : 30 }}>Моменты</div><div style={{ display: "flex", color: "#765f50", fontFamily: "Caveat", fontSize: isStory ? 21 : isPrint ? 18 : 17 }}>Фото, которые хочется сохранить</div></div></div>
+            <div style={{ display: "flex", gap: isStory ? 10 : 12 }}>{photos.slice(1).map((photo, index) => { const size = momentPhotoSize(index + 1); return <Polaroid key={photo.id} photo={photo} index={index + 1} width={size.width} height={size.height} origin={origin} />; })}</div>
+          </div>
+        </div> : <><div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}><img src={asset(origin, "/templates/scrapbook-clean/camera.png")} style={{ width: isStory ? 40 : 34, height: isStory ? 40 : 34, objectFit: "contain", filter: "contrast(1.6) saturate(1.25)" }} /><div style={{ display: "flex", flexDirection: "column" }}><div style={{ display: "flex", fontFamily: "Caveat", fontWeight: 600, fontSize: isStory ? 40 : isPrint ? 35 : 30 }}>Моменты</div><div style={{ display: "flex", color: "#765f50", fontFamily: "Caveat", fontSize: isStory ? 22 : isPrint ? 18 : 17 }}>Фото, которые хочется сохранить</div></div></div><div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: isStory ? 12 : 14, marginTop: isStory ? 12 : 14 }}>{photos.map((photo, index) => { const size = momentPhotoSize(index); return <Polaroid key={photo.id} photo={photo} index={index} width={size.width} height={size.height} origin={origin} />; })}</div></>}
+      </div>, { minHeight: photos.length === 3 ? (isStory ? 390 : isPrint ? 360 : 330) : (isStory ? 450 : isPrint ? 450 : 330) }) : null}
 
       {phrases.length ? paper(origin, <div style={{ display: "flex", flexDirection: "column", width: "100%", padding: isStory ? "24px 28px" : isPrint ? "30px 24px" : "22px 24px" }}>
         <div style={{ display: "flex", justifyContent: "center", fontFamily: "Caveat", fontWeight: 600, fontSize: isStory ? 42 : isPrint ? 35 : 30 }}>Особенно тёплые слова</div>
-        <div style={{ display: "flex", gap: 16, marginTop: isStory ? 14 : 16 }}>{phrases.map((phrase, index) => <div key={phrase} style={{ position: "relative", display: "flex", flex: 1, alignItems: "center", minHeight: isStory ? 165 : isPrint ? 154 : 126, padding: isStory ? "25px 78px" : isPrint ? "25px 54px" : "21px 48px", overflow: "hidden", backgroundImage: `url(${asset(origin, ["/templates/scrapbook-clean/quote-card-pink-v2.png", "/templates/scrapbook-clean/quote-card-beige.png", "/templates/scrapbook-clean/quote-card-blue.png"][index])})`, backgroundSize: "100% 100%", color: "#4d382f", fontSize: isStory ? 23 : isPrint ? 20 : 19, lineHeight: 1.28, transform: `rotate(${index ? 1 : -1}deg)` }}><span style={{ display: "flex", position: "absolute", left: "7%", top: "13%", color: "#d17182", fontFamily: "Caveat", fontSize: isStory ? 44 : 34 }}>“</span><span style={{ display: "flex", width: "100%", maxHeight: "100%", overflow: "hidden" }}>{trim(phrase, isStory ? 145 : isPrint ? 82 : 102)}</span><span style={{ display: "flex", position: "absolute", right: "7%", bottom: "12%", color: "#ce1f4d", fontFamily: "Caveat", fontSize: isStory ? 31 : 25 }}>♥</span></div>)}</div>
+        <div style={{ display: "flex", gap: 16, marginTop: isStory ? 14 : 16 }}>{phrases.map((phrase, index) => <div key={phrase} style={{ position: "relative", display: "flex", flex: 1, alignItems: "center", minHeight: isStory ? 165 : isPrint ? 154 : 126, padding: isStory ? "25px 54px 25px 78px" : isPrint ? "24px 42px 24px 60px" : "20px 42px 20px 58px", overflow: "hidden", backgroundImage: `url(${asset(origin, ["/templates/scrapbook-clean/quote-card-pink-v2.png", "/templates/scrapbook-clean/quote-card-beige.png", "/templates/scrapbook-clean/quote-card-blue.png"][index])})`, backgroundSize: "100% 100%", color: "#4d382f", fontSize: isStory ? 23 : isPrint ? 20 : 19, lineHeight: 1.28, transform: `rotate(${index ? 1 : -1}deg)` }}><span style={{ display: "flex", position: "absolute", left: "7%", top: "13%", color: "#d17182", fontFamily: "Caveat", fontSize: isStory ? 44 : 34 }}>“</span><span style={{ display: "flex", width: "100%", maxHeight: "100%", overflow: "hidden" }}>{trim(phrase, isStory ? 80 : isPrint ? 82 : 102)}</span></div>)}</div>
       </div>, { minHeight: isStory ? 245 : isPrint ? 275 : 185 }) : null}
 
       {paper(origin, <div style={{ display: "flex", width: "100%", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: isStory ? "23px 48px" : isPrint ? "31px 42px" : "19px 38px", textAlign: "center" }}>

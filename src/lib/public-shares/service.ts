@@ -201,6 +201,62 @@ export const getPublicSharePresentation = async (token: string) => {
   };
 };
 
+/**
+ * Builds the same public-card model as the live share, but resolves only the
+ * current owner's draft and uses a private preview-photo route.  It never
+ * exposes a public token or original media URL to the preview page.
+ */
+export const getPublicShareDraftPreviewPresentation = async (finalSlug: string) => {
+  const editor = await getPublicShareEditor(finalSlug);
+  if (!editor?.share) return null;
+
+  const { card, share } = editor;
+  const contributions = await listContributionsByCardId(card.id);
+  const assetById = new Map(editor.mediaAssets.map((asset) => [asset.id, asset]));
+  const publicMediaAssets = editor.photos.flatMap((photo) => {
+    const asset = assetById.get(photo.cardMediaAssetId);
+    if (!asset || !publicSharePhotoSlots.has(asset.slot)) return [];
+    const caption = photo.publicCaption || asset.captionSubtitle || asset.captionTitle;
+    return [{
+      ...asset,
+      publicUrl: `/gift/${encodeURIComponent(finalSlug)}/share/preview/photo/${photo.id}`,
+      captionTitle: caption,
+      captionSubtitle: caption
+    }];
+  });
+  const baseModel = buildFinalCardViewModel(card, contributions, publicMediaAssets, {
+    qualities: share.publicQualities.map((item) => item.text),
+    quotes: share.publicPhrases.map((item) => item.text)
+  });
+  const fullCardModel = buildFinalCardViewModel(card, contributions, editor.mediaAssets);
+  const fullCardPhotoCount = new Set([
+    ...fullCardModel.messageMediaAssets.map((asset) => asset.id),
+    ...fullCardModel.memoryMediaAssets.map((asset) => asset.id)
+  ]).size;
+  const publicBlocks = baseModel.blocks.filter((block) => ["hero", "qualities", "quotes"].includes(block.id) || (block.id === "memories" && publicMediaAssets.length > 0));
+
+  return {
+    publicName: share.showPublicName ? share.displayName : null,
+    model: {
+      ...baseModel,
+      // FinalCard does not use this field in public modes. Keep the private
+      // route credential out of the rendered preview model regardless.
+      finalSlug: "",
+      recipientName: share.displayName || firstName(card.recipientName) || card.recipientName,
+      occasionLabel: share.showOccasion ? card.occasionText : "",
+      participantCount: share.showGreetingCount ? contributions.length : 0,
+      publicPhotoCount: share.showPhotoCount && fullCardPhotoCount > 0 ? fullCardPhotoCount : null,
+      publicFullCardHasPhotos: fullCardPhotoCount > 0,
+      qualities: share.publicQualities.map((item) => item.text),
+      quotes: share.publicPhrases.map((item) => item.text),
+      mediaAssets: publicMediaAssets,
+      messageMediaAssets: [],
+      memoryMediaAssets: publicMediaAssets,
+      blocks: publicBlocks
+    }
+  };
+};
+
 export const getPublicSharePhotoForToken = async (token: string, photoId: string) => {
   const share = await getAccessiblePublicShareByTokenHash(hashPublicShareToken(token));
   return share ? getPublicSharePhoto(share.id, photoId) : null;
