@@ -57,23 +57,16 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
     const savedSelection = share?.publicPhrases.map((phrase) => phrase.text).filter((phrase) => phraseCandidates.includes(phrase)) ?? [];
     return savedSelection.length === 3 ? savedSelection : phraseCandidates.slice(0, 3);
   });
-  const [selectedPhotoIds, setSelectedPhotoIds] = useState(() => photos.map((photo) => photo.cardMediaAssetId));
+  const [selectedPhotoIds, setSelectedPhotoIds] = useState(() => photos.map((photo) => photo.cardMediaAssetId).slice(0, 3));
   const [previewRequested, setPreviewRequested] = useState(false);
   const savedPhotoIdsKey = photos.map((photo) => photo.cardMediaAssetId).join(",");
   useEffect(() => {
-    setSelectedPhotoIds(photos.map((photo) => photo.cardMediaAssetId));
+    setSelectedPhotoIds(photos.map((photo) => photo.cardMediaAssetId).slice(0, 3));
   }, [savedPhotoIdsKey]);
   const togglePhrase = (phrase: string) => {
     if (pending) return;
     setSelectedPhrases((current) => current.includes(phrase) ? current.filter((item) => item !== phrase) : current.length === 3 ? current : [...current, phrase]);
   };
-  const movePhrase = (orderIndex: number, delta: number) => setSelectedPhrases((current) => {
-    const targetIndex = orderIndex + delta;
-    if (targetIndex < 0 || targetIndex >= current.length) return current;
-    const next = [...current];
-    [next[orderIndex], next[targetIndex]] = [next[targetIndex], next[orderIndex]];
-    return next;
-  });
   const handlePhraseKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, phrase: string) => {
     if (event.target !== event.currentTarget) return;
     if (event.key === " " || event.key === "Enter") {
@@ -83,15 +76,8 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
   };
   const togglePhoto = (photoId: string) => {
     if (pending) return;
-    setSelectedPhotoIds((current) => current.includes(photoId) ? current.filter((id) => id !== photoId) : current.length === 6 ? current : [...current, photoId]);
+    setSelectedPhotoIds((current) => current.includes(photoId) ? current.filter((id) => id !== photoId) : current.length === 3 ? current : [...current, photoId]);
   };
-  const movePhoto = (orderIndex: number, delta: number) => setSelectedPhotoIds((current) => {
-    const targetIndex = orderIndex + delta;
-    if (targetIndex < 0 || targetIndex >= current.length) return current;
-    const next = [...current];
-    [next[orderIndex], next[targetIndex]] = [next[targetIndex], next[orderIndex]];
-    return next;
-  });
   const handlePhotoKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, photoId: string) => {
     if (event.target !== event.currentTarget) return;
     if (event.key === " " || event.key === "Enter") {
@@ -192,12 +178,6 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
                     <div className={styles.phraseTop}>
                       {isSelected ? <span className={styles.orderBadge} aria-label={`Порядок на странице: ${orderIndex + 1}`}>{orderIndex + 1}</span> : null}
                       {index < 3 ? <span className={styles.organizerBadge}>Рекомендовано организатором</span> : null}
-                      {isSelected ? (
-                        <span className={styles.reorderButtons}>
-                          <button type="button" aria-label="Переместить фразу выше" disabled={orderIndex === 0} onClick={(event) => { event.stopPropagation(); movePhrase(orderIndex, -1); }}>↑</button>
-                          <button type="button" aria-label="Переместить фразу ниже" disabled={orderIndex === selectedPhrases.length - 1} onClick={(event) => { event.stopPropagation(); movePhrase(orderIndex, 1); }}>↓</button>
-                        </span>
-                      ) : null}
                     </div>
                     <span className={styles.phraseText}>{phrase}</span>
                   </div>
@@ -209,30 +189,13 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
           {mediaAssets.length > 0 ? (
             <section className={styles.card} aria-labelledby="share-section-photos">
               <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">4</span><h3 id="share-section-photos">Публичные фотографии</h3></header>
-              <p className={styles.cardHint}>Выберите фотографии и при необходимости измените подписи.</p>
-              <strong className={styles.photoCount}>Выбрано {selectedPhotoIds.length} из 6</strong>
-              {selectedPhotoAssets.length > 1 ? (
-                <div className={styles.photoOrder}>
-                  <p className={styles.photoOrderLabel}>Порядок фотографий</p>
-                  <ol className={styles.photoOrderList}>
-                    {selectedPhotoAssets.map((asset, index) => (
-                      <li key={asset.id}>
-                        <img src={asset.publicUrl} alt="" />
-                        <span className={styles.photoOrderNumber} aria-hidden="true">{index + 1}</span>
-                        <span className={styles.photoOrderButtons}>
-                          <button type="button" aria-label={`Переместить фотографию ${index + 1} левее`} disabled={index === 0} onClick={() => movePhoto(index, -1)}>←</button>
-                          <button type="button" aria-label={`Переместить фотографию ${index + 1} правее`} disabled={index === selectedPhotoAssets.length - 1} onClick={() => movePhoto(index, 1)}>→</button>
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              ) : null}
+              <p className={styles.cardHint}>Выберите до трёх фотографий и при необходимости измените подписи.</p>
+              <strong className={styles.photoCount}>Выбрано {selectedPhotoIds.length} из 3</strong>
               <div className={styles.photoGrid}>
                 {mediaAssets.map((asset) => {
                   const orderIndex = selectedPhotoIds.indexOf(asset.id);
                   const isSelected = orderIndex !== -1;
-                  const selectionFull = selectedPhotoIds.length === 6;
+                  const selectionFull = selectedPhotoIds.length === 3;
                   const savedPhoto = photos.find((photo) => photo.cardMediaAssetId === asset.id);
                   return (
                     <div
@@ -307,7 +270,7 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
           {mediaAssets.length > 0 ? (
             <section className={styles.summaryBlock}>
               <h4>Публичные фотографии</h4>
-              <p>{selectedPhotoIds.length} из 6</p>
+              <p>{selectedPhotoIds.length} из 3</p>
               {selectedPhotoAssets.length > 0 ? (
                 <ol className={styles.summaryPhotos}>{selectedPhotoAssets.map((asset, index) => <li key={asset.id}><img src={asset.publicUrl} alt="" /><span aria-hidden="true">{index + 1}</span></li>)}</ol>
               ) : null}

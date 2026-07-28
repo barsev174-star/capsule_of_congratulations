@@ -11,7 +11,7 @@ import type { PublicCardShare, PublicShareEditorInput, PublicSharePayloadV1 } fr
 
 export const PUBLIC_PHOTO_CONSENT_VERSION = "public-photo-consent-v1";
 const publicSharePhotoSlots = new Set(["landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c"]);
-const PUBLIC_SHARE_PHOTO_LIMIT = 6;
+const PUBLIC_SHARE_PHOTO_LIMIT = 3;
 
 const clean = (value: string | null | undefined, max: number) => value?.trim().slice(0, max) || null;
 const firstName = (value: string) => value.trim().split(/\s+/)[0]?.slice(0, 60) || null;
@@ -19,7 +19,7 @@ const firstName = (value: string) => value.trim().split(/\s+/)[0]?.slice(0, 60) 
 const validateInput = (input: PublicShareEditorInput) => {
   if (input.publicQualities.length > 5) throw new Error("Можно показать не более пяти качеств.");
   if (input.publicPhrases.length !== 3) throw new Error("Выберите ровно три тёплые фразы.");
-  if (input.photoAssetIds.length > PUBLIC_SHARE_PHOTO_LIMIT) throw new Error("Можно показать не более шести фотографий.");
+  if (input.photoAssetIds.length > PUBLIC_SHARE_PHOTO_LIMIT) throw new Error("Можно показать не более трёх фотографий.");
   if (input.photoAssetIds.length > 0 && !input.photoConsentAccepted) throw new Error("Подтвердите право на публичное использование выбранных фотографий.");
 };
 
