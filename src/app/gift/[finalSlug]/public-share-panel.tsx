@@ -50,7 +50,6 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
   };
 
   return <section className={styles.shell}>
-    <div className={styles.heading}><div><p>Публичная версия</p><h2>Похвастаться открыткой</h2><span>Личные поздравления и остальные фотографии останутся приватными.</span></div></div>
     {!share && wasRevoked ? <p className={styles.statusRevoked}>Публичная версия снята с публикации. При желании создайте новую.</p> : null}
     <form action={formAction} className={styles.form}>
       <label>Публичное имя<input name="displayName" defaultValue={share?.displayName ?? defaultDisplayName ?? ""} maxLength={60} /></label>

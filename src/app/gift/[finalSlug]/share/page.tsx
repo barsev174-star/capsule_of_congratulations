@@ -8,5 +8,28 @@ export default async function PublicShareEditorPage({ params }: { params: Promis
   const { finalSlug } = await params;
   const editor = await getPublicShareEditor(finalSlug);
   if (!editor) notFound();
-  return <main className={styles.page}><header><Link href={`/gift/${finalSlug}`}>← Вернуться к открытке</Link><p>Публичная версия</p><h1>Похвастаться открыткой</h1><span>Выберите только то, чем готовы поделиться.</span></header><PublicSharePanel finalSlug={finalSlug} defaultDisplayName={editor.defaultDisplayName} share={editor.share} photos={editor.photos} mediaAssets={editor.mediaAssets} phraseCandidates={editor.phraseCandidates} publicQualities={editor.publicQualities} wasRevoked={editor.wasRevoked} publicSharePath={editor.publicSharePath} /></main>;
+  return (
+    <main className={styles.page}>
+      <header className={styles.header}>
+        <Link className={styles.backLink} href={`/gift/${finalSlug}`}>← Вернуться к открытке</Link>
+        <p className={styles.eyebrow}>Публичная версия</p>
+        <h1 className={styles.title}>Похвастаться открыткой</h1>
+        <p className={styles.subtitle}>
+          Выберите только то, чем готовы поделиться.<br />
+          Личные поздравления и остальные фотографии останутся приватными.
+        </p>
+      </header>
+      <PublicSharePanel
+        finalSlug={finalSlug}
+        defaultDisplayName={editor.defaultDisplayName}
+        share={editor.share}
+        photos={editor.photos}
+        mediaAssets={editor.mediaAssets}
+        phraseCandidates={editor.phraseCandidates}
+        publicQualities={editor.publicQualities}
+        wasRevoked={editor.wasRevoked}
+        publicSharePath={editor.publicSharePath}
+      />
+    </main>
+  );
 }
