@@ -348,36 +348,6 @@
   box-shadow: 0 0 0 3px rgba(212, 90, 39, 0.18);
 }
 
-.form fieldset {
-  display: grid;
-  gap: 10px;
-  margin: 0;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.form legend {
-  padding: 0 4px;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.15rem;
-  font-weight: 700;
-}
-
-.form fieldset > p {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.45;
-  text-wrap: pretty;
-}
-
-.form fieldset > label:not(.photo) {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-}
-
 .form input[type="checkbox"] {
   accent-color: var(--accent-strong);
 }
@@ -632,6 +602,94 @@
   text-wrap: pretty;
 }
 
+.photoOrder {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(253, 243, 234, 0.6);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.photoOrderLabel {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.photoOrderList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.photoOrderList li {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.photoOrderList img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 10px;
+  outline: 1px solid var(--line-strong);
+}
+
+.photoOrderNumber {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: -18px;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  box-shadow: 0 0 0 2px var(--surface-cream);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.photoOrderButtons {
+  display: flex;
+  gap: 6px;
+}
+
+.photoOrderButtons button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface-strong);
+  color: var(--accent-strong);
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition-property: background-color, opacity;
+  transition-duration: 160ms;
+}
+
+.photoOrderButtons button:hover:not(:disabled) {
+  background: var(--accent-light);
+}
+
+.photoOrderButtons button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.photoOrderButtons button:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
 .photoGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -640,42 +698,86 @@
 
 .photo {
   display: grid;
-  grid-template-columns: auto 1fr;
   gap: 8px;
-  align-items: start;
+  align-content: start;
   padding: 8px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.62);
+  border-radius: 14px;
+  background: #fffdf9;
+  box-shadow: 0 0 0 1px var(--line), 0 3px 9px rgba(76, 49, 29, 0.04);
+  cursor: pointer;
+  transition-property: box-shadow, transform;
+  transition-duration: 160ms;
 }
 
-.photo:focus-within {
+.photo:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(212, 90, 39, 0.4), 0 7px 16px rgba(76, 49, 29, 0.08);
+}
+
+.photo:focus-visible {
   outline: 2px solid var(--accent-strong);
   outline-offset: 2px;
 }
 
-.photo img {
-  grid-column: 2;
+.photo[aria-disabled="true"] {
+  cursor: default;
+}
+
+.photoSelected {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 2px var(--accent-strong), 0 10px 20px rgba(76, 49, 29, 0.12);
+}
+
+.photoImageWrap {
+  position: relative;
+  display: block;
+}
+
+.photoImageWrap img {
+  display: block;
   width: 100%;
   aspect-ratio: 1.35;
   object-fit: cover;
-  border-radius: 8px;
-  outline: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 9px;
+  outline: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.photo span {
-  grid-column: 1 / -1;
+.photoOrderBadge {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  box-shadow: 0 1px 4px rgba(72, 49, 37, 0.35);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
-.photo span input {
-  padding: 8px;
-  font-size: 0.85rem;
+.photoCaption {
+  padding: 8px 10px !important;
+  font-size: 0.85rem !important;
 }
 
 .consent {
-  display: flex !important;
-  gap: 8px;
+  display: flex;
+  gap: 10px;
   align-items: flex-start;
+  min-height: 44px;
   font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.consent input {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  margin-top: 2px;
 }
 
 .actions {

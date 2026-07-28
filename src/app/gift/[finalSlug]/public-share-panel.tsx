@@ -81,7 +81,24 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
       togglePhrase(phrase);
     }
   };
-  const togglePhoto = (photoId: string) => setSelectedPhotoIds((current) => current.includes(photoId) ? current.filter((id) => id !== photoId) : current.length === 6 ? current : [...current, photoId]);
+  const togglePhoto = (photoId: string) => {
+    if (pending) return;
+    setSelectedPhotoIds((current) => current.includes(photoId) ? current.filter((id) => id !== photoId) : current.length === 6 ? current : [...current, photoId]);
+  };
+  const movePhoto = (orderIndex: number, delta: number) => setSelectedPhotoIds((current) => {
+    const targetIndex = orderIndex + delta;
+    if (targetIndex < 0 || targetIndex >= current.length) return current;
+    const next = [...current];
+    [next[orderIndex], next[targetIndex]] = [next[targetIndex], next[orderIndex]];
+    return next;
+  });
+  const handlePhotoKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, photoId: string) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === " " || event.key === "Enter") {
+      event.preventDefault();
+      togglePhoto(photoId);
+    }
+  };
   const changeVisibility = (operation: "publish" | "revoke") => {
     setVisibilityMessage("");
     startVisibilityTransition(async () => {
@@ -189,7 +206,67 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
             </div>
             {selectedPhrases.map((phrase) => <input key={phrase} type="hidden" name="phraseText" value={phrase} />)}
           </section>
-          {mediaAssets.length > 0 ? <fieldset><legend>Публичные фотографии — до шести</legend><p>Выберите фото и при необходимости измените подписи.</p><strong className={styles.photoCount}>Выбрано: {selectedPhotoIds.length}/6</strong><div className={styles.photoGrid}>{mediaAssets.map((asset) => { const savedPhoto = photos.find((photo) => photo.cardMediaAssetId === asset.id); const isSelected = selectedPhotoIds.includes(asset.id); return <label className={styles.photo} key={asset.id}><input type="checkbox" name="photoAssetId" value={asset.id} checked={isSelected} onChange={() => togglePhoto(asset.id)} disabled={pending || (!isSelected && selectedPhotoIds.length === 6)} /><img src={asset.publicUrl} alt="Фото из открытки" /><span><input name={`caption:${asset.id}`} defaultValue={defaultPublicCaption(asset, savedPhoto?.publicCaption)} maxLength={120} placeholder="Короткая подпись" /></span></label>; })}</div><label className={styles.consent}><input type="checkbox" name="photoConsentAccepted" checked={photoConsent} onChange={(event) => setPhotoConsent(event.target.checked)} /> Подтверждаю право на публикацию выбранных фотографий.</label></fieldset> : null}
+          {mediaAssets.length > 0 ? (
+            <section className={styles.card} aria-labelledby="share-section-photos">
+              <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">4</span><h3 id="share-section-photos">Публичные фотографии</h3></header>
+              <p className={styles.cardHint}>Выберите фотографии и при необходимости измените подписи.</p>
+              <strong className={styles.photoCount}>Выбрано {selectedPhotoIds.length} из 6</strong>
+              {selectedPhotoAssets.length > 1 ? (
+                <div className={styles.photoOrder}>
+                  <p className={styles.photoOrderLabel}>Порядок фотографий</p>
+                  <ol className={styles.photoOrderList}>
+                    {selectedPhotoAssets.map((asset, index) => (
+                      <li key={asset.id}>
+                        <img src={asset.publicUrl} alt="" />
+                        <span className={styles.photoOrderNumber} aria-hidden="true">{index + 1}</span>
+                        <span className={styles.photoOrderButtons}>
+                          <button type="button" aria-label={`Переместить фотографию ${index + 1} левее`} disabled={index === 0} onClick={() => movePhoto(index, -1)}>←</button>
+                          <button type="button" aria-label={`Переместить фотографию ${index + 1} правее`} disabled={index === selectedPhotoAssets.length - 1} onClick={() => movePhoto(index, 1)}>→</button>
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ) : null}
+              <div className={styles.photoGrid}>
+                {mediaAssets.map((asset) => {
+                  const orderIndex = selectedPhotoIds.indexOf(asset.id);
+                  const isSelected = orderIndex !== -1;
+                  const selectionFull = selectedPhotoIds.length === 6;
+                  const savedPhoto = photos.find((photo) => photo.cardMediaAssetId === asset.id);
+                  return (
+                    <div
+                      key={asset.id}
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      aria-disabled={!isSelected && selectionFull}
+                      aria-label={isSelected ? `Фотография из открытки, выбрана, порядок ${orderIndex + 1}` : "Фотография из открытки"}
+                      tabIndex={0}
+                      className={`${styles.photo} ${isSelected ? styles.photoSelected : ""}`}
+                      onClick={() => togglePhoto(asset.id)}
+                      onKeyDown={(event) => handlePhotoKeyDown(event, asset.id)}
+                    >
+                      <span className={styles.photoImageWrap}>
+                        <img src={asset.publicUrl} alt="" />
+                        {isSelected ? <span className={styles.photoOrderBadge} aria-hidden="true">{orderIndex + 1}</span> : null}
+                      </span>
+                      <input
+                        className={styles.photoCaption}
+                        name={`caption:${asset.id}`}
+                        defaultValue={defaultPublicCaption(asset, savedPhoto?.publicCaption)}
+                        maxLength={120}
+                        placeholder="Добавьте короткую подпись"
+                        aria-label="Подпись к фотографии"
+                        onClick={(event) => event.stopPropagation()}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              {selectedPhotoIds.map((photoId) => <input key={photoId} type="hidden" name="photoAssetId" value={photoId} />)}
+              <label className={styles.consent}><input type="checkbox" name="photoConsentAccepted" checked={photoConsent} onChange={(event) => setPhotoConsent(event.target.checked)} /> Подтверждаю право на публикацию выбранных фотографий.</label>
+            </section>
+          ) : null}
           {state.message ? <p className={state.ok ? styles.success : styles.error}>{state.message}</p> : null}
           {visibilityMessage ? <p className={visibilityMessage.includes("не удалось") ? styles.error : styles.success}>{visibilityMessage}</p> : null}
           {state.shareUrl ? <p className={styles.success}>Ссылка: <a href={state.shareUrl} target="_blank" rel="noreferrer">Открыть публичную версию</a></p> : null}
