@@ -2772,6 +2772,23 @@ body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
   }
 }
 
+/* Public share footer for Route uses the kraft note rather than a dark card. */
+.route-adventure.publicCard .publicFullCardNote {
+  min-height: 230px;
+  padding: clamp(54px, 8vw, 94px) clamp(38px, 8vw, 112px);
+  border: 0;
+  border-radius: 0;
+  background: url("/templates/route-adventure/closing-kraft-note.png") center / 100% 100% no-repeat;
+  box-shadow: none;
+  color: #35291d;
+  text-align: center;
+}
+
+.route-adventure.publicCard .publicFullCardNote .publicFullCardTitle,
+.route-adventure.publicCard .publicFullCardNote .publicFullCardText {
+  color: #3d2d1e;
+}
+
 /* The preview container is not always a named CSS container, so keep the pair geometry explicit as a final rule. */
 .paper-birthday .messageSplitFixed .mediaRailPair > .componentAssetFrame[data-component-asset-id="messagePolaroidLandscape"] .mediaImage {
   top: 6.5% !important;
