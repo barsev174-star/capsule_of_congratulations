@@ -62,6 +62,8 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
   });
   const [selectedPhotoIds, setSelectedPhotoIds] = useState(() => photos.map((photo) => photo.cardMediaAssetId).slice(0, 3));
   const [previewRequested, setPreviewRequested] = useState(false);
+  const [publishRequested, setPublishRequested] = useState(false);
+  const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const savedPhotoIdsKey = photos.map((photo) => photo.cardMediaAssetId).join(",");
   useEffect(() => {
     setSelectedPhotoIds(photos.map((photo) => photo.cardMediaAssetId).slice(0, 3));
@@ -106,6 +108,28 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
     setPreviewRequested(false);
     if (state.ok) router.push(`/gift/${finalSlug}/share/preview`);
   }, [previewRequested, pending, state, finalSlug, router]);
+  const startPublish = () => {
+    setVisibilityMessage("");
+    if (!share || hasUnsavedChanges) {
+      setPublishRequested(true);
+      formRef.current?.requestSubmit();
+      return;
+    }
+    changeVisibility("publish");
+  };
+  useEffect(() => {
+    if (!publishRequested || pending) return;
+    setPublishRequested(false);
+    if (state.ok) changeVisibility("publish");
+  }, [publishRequested, pending, state]);
+  useEffect(() => {
+    if (!revokeDialogOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setRevokeDialogOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [revokeDialogOpen]);
 
   const formSignature = useMemo(() => JSON.stringify({
     displayName: displayName.trim(),
@@ -123,9 +147,27 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
   useEffect(() => {
     if (!pending && state.ok) setSavedSignature(submittedSignatureRef.current);
   }, [pending, state]);
+
+  const isActive = share?.status === "ACTIVE";
+  const isDraft = share?.status === "DRAFT";
   const hasUnsavedChanges = formSignature !== savedSignature;
   const consentError = selectedPhotoIds.length > 0 && !photoConsent;
-  const saveBlocked = pending || selectedPhrases.length !== 3 || consentError;
+  const validationBlocked = pending || selectedPhrases.length !== 3 || consentError;
+  const saveDisabled = validationBlocked || (share !== null && !hasUnsavedChanges);
+  const publishPending = publishRequested || isVisibilityPending;
+  const previewLabel = isActive ? "Посмотреть изменения" : "Посмотреть перед публикацией";
+  const publicLinkLabel = hasUnsavedChanges ? "Открыть опубликованную страницу" : "Открыть публичную страницу";
+  const saveStatusText = pending
+    ? "Сохраняем…"
+    : isVisibilityPending
+      ? "Обновляем…"
+      : isActive && hasUnsavedChanges
+        ? "Есть неопубликованные изменения"
+        : hasUnsavedChanges
+          ? "Есть несохранённые изменения"
+          : share
+            ? "Все изменения сохранены"
+            : "Черновик ещё не сохранён";
 
   const selectedPhotoAssets = selectedPhotoIds
     .map((photoId) => mediaAssets.find((asset) => asset.id === photoId))
@@ -136,9 +178,20 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
     showPhotoCount ? "Количество фотографий" : null,
   ].filter((label): label is string => Boolean(label));
 
+  const publishButton = isDraft ? (
+    <button type="button" className={styles.publishButton} disabled={publishPending || selectedPhrases.length !== 3 || consentError} onClick={startPublish}>
+      {publishPending ? "Публикуем…" : "Опубликовать публичную страницу"}
+    </button>
+  ) : null;
+  const revokeButton = isActive ? (
+    <button type="button" className={styles.revoke} disabled={isVisibilityPending} onClick={() => setRevokeDialogOpen(true)}>
+      {isVisibilityPending ? "Отключаем…" : "Отключить публичную страницу"}
+    </button>
+  ) : null;
+
   return (
     <section className={styles.shell}>
-      {!share && wasRevoked ? <p className={styles.statusRevoked}>Публичная версия снята с публикации. При желании создайте новую.</p> : null}
+      {!share && wasRevoked ? <p className={styles.statusRevoked}>Публичная страница отключена. При желании создайте новую — у неё будет новая ссылка.</p> : null}
       <div className={styles.layout}>
         <form action={formAction} className={styles.form} ref={formRef} onSubmit={() => { submittedSignatureRef.current = formSignature; }}>
           <section className={styles.card} aria-labelledby="share-section-basics">
@@ -175,11 +228,11 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
             <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">2</span><h3 id="share-section-qualities">За что меня ценят</h3></header>
             <p className={styles.cardHint}>Эти качества появятся на публичной странице.</p>
             <div className={styles.qualities}>{publicQualities.map((quality) => <span key={quality.id}>{quality.text}</span>)}</div>
-            <p className={styles.cardNote}>Можно выбрать до 5 качеств</p>
+            {publicQualities.length > 0 ? <p className={styles.cardNote}>На публичной странице будут показаны эти {publicQualities.length} {plural(publicQualities.length, ["качество", "качества", "качеств"])}.</p> : null}
           </section>
           <section className={styles.card} aria-labelledby="share-section-phrases">
             <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">3</span><h3 id="share-section-phrases">Особенно тёплые слова</h3></header>
-            <p className={styles.cardHint}>Выберите три фразы. Они появятся на странице в выбранном порядке.</p>
+            <p className={styles.cardHint}>Выберите три фразы. Фразы появятся в том порядке, в котором вы их выберете.</p>
             <strong className={selectedPhrases.length === 3 ? styles.ready : styles.attention}>Выбрано: {selectedPhrases.length}/3</strong>
             <div className={styles.phraseChoices}>
               {phraseCandidates.map((phrase, index) => {
@@ -212,8 +265,8 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
           {mediaAssets.length > 0 ? (
             <section className={styles.card} aria-labelledby="share-section-photos">
               <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">4</span><h3 id="share-section-photos">Публичные фотографии</h3></header>
-              <p className={styles.cardHint}>Выберите до трёх фотографий и при необходимости измените подписи.</p>
-              <strong className={selectedPhotoIds.length === 3 ? styles.ready : styles.photoCount}>Выбрано {selectedPhotoIds.length} из 3</strong>
+              <p className={styles.cardHint}>Выберите до трёх фотографий. Они появятся в том порядке, в котором вы их выберете. При необходимости измените подписи.</p>
+              <strong className={selectedPhotoIds.length === 3 ? styles.ready : styles.photoCount}>Выбрано фото: {selectedPhotoIds.length} из 3</strong>
               <div className={styles.photoGrid}>
                 {mediaAssets.map((asset) => {
                   const orderIndex = selectedPhotoIds.indexOf(asset.id);
@@ -252,43 +305,43 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
               {selectedPhotoIds.map((photoId) => <input key={photoId} type="hidden" name="photoAssetId" value={photoId} />)}
             </section>
           ) : null}
-          {mediaAssets.length > 0 ? (
+          {mediaAssets.length > 0 && selectedPhotoIds.length > 0 ? (
             <section className={styles.card} aria-labelledby="share-section-consent">
-              <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">5</span><h3 id="share-section-consent">Подтверждение</h3></header>
-              <p className={styles.cardHint}>Подтвердите, что выбранные фотографии можно показывать публично. Оригиналы останутся приватными, а для публичной страницы будут использованы безопасные копии.</p>
+              <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">5</span><h3 id="share-section-consent">Разрешение на публикацию фотографий</h3></header>
+              <p className={styles.cardHint}>Выбранные фотографии смогут увидеть все, у кого есть ссылка на публичную страницу.</p>
               <label className={styles.consent}>
                 <input type="checkbox" name="photoConsentAccepted" checked={photoConsent} onChange={(event) => setPhotoConsent(event.target.checked)} aria-invalid={consentError} aria-describedby={consentError ? "photo-consent-error" : undefined} />
-                <span>Подтверждаю, что у меня есть право на публикацию выбранных фотографий.</span>
+                <span>Я подтверждаю, что могу разрешить публичное использование выбранных фотографий.</span>
               </label>
               {consentError ? <p className={styles.consentError} id="photo-consent-error">Без подтверждения нельзя сохранить публичные фотографии.</p> : null}
             </section>
           ) : null}
           {state.message ? <p className={state.ok ? styles.success : styles.error}>{state.message}</p> : null}
           {visibilityMessage ? <p className={visibilityMessage.includes("не удалось") ? styles.error : styles.success}>{visibilityMessage}</p> : null}
-          {state.shareUrl ? <p className={styles.success}>Ссылка: <a href={state.shareUrl} target="_blank" rel="noreferrer">Открыть публичную версию</a></p> : null}
+          {state.shareUrl ? <p className={styles.success}>Ссылка: <a href={state.shareUrl} target="_blank" rel="noreferrer">Открыть публичную страницу</a></p> : null}
+          <div className={styles.mobileActions}>
+            {isActive && hasUnsavedChanges && publicSharePath ? <Link className={styles.secondary} href={publicSharePath} target="_blank">Открыть опубликованную страницу</Link> : null}
+            {publishButton}
+            {revokeButton}
+          </div>
           <div className={styles.actionBar}>
             <div className={styles.actionBarInner}>
-              <p className={`${styles.saveStatus} ${hasUnsavedChanges ? styles.saveStatusDirty : ""}`} role="status">
-                {pending ? "Сохраняем…" : hasUnsavedChanges ? "Есть несохранённые изменения" : share ? "Все изменения сохранены" : "Черновик ещё не сохранён"}
-              </p>
+              <p className={`${styles.saveStatus} ${hasUnsavedChanges ? styles.saveStatusDirty : ""}`} role="status">{saveStatusText}</p>
               <div className={styles.actionButtons}>
-                <button type="submit" disabled={saveBlocked}>{pending ? "Сохраняем…" : share ? "Сохранить изменения" : "Создать черновик"}</button>
-                <button type="button" className={styles.secondary} onClick={openExactPreview} disabled={saveBlocked}>{pending && previewRequested ? "Сохраняем черновик…" : "Предпросмотр"}</button>
-                <span className={styles.extraActions}>
-                  {share?.status === "ACTIVE" && publicSharePath ? <Link className={styles.secondary} href={publicSharePath} target="_blank">Открыть публичную версию</Link> : null}
-                  {share?.status === "DRAFT" ? <button type="button" className={styles.secondary} disabled={isVisibilityPending || saveBlocked} onClick={() => changeVisibility("publish")}>{isVisibilityPending ? "Публикуем…" : "Опубликовать"}</button> : null}
-                  {share?.status === "ACTIVE" ? <button type="button" className={styles.revoke} disabled={isVisibilityPending} onClick={() => changeVisibility("revoke")}>{isVisibilityPending ? "Снимаем с публикации…" : "Снять с публикации"}</button> : null}
-                </span>
-                {share ? (
-                  <details className={styles.moreMenu}>
-                    <summary>Ещё</summary>
-                    <span className={styles.moreMenuList}>
-                      {share.status === "ACTIVE" && publicSharePath ? <Link className={styles.secondary} href={publicSharePath} target="_blank">Открыть публичную версию</Link> : null}
-                      {share.status === "DRAFT" ? <button type="button" className={styles.secondary} disabled={isVisibilityPending || saveBlocked} onClick={() => changeVisibility("publish")}>{isVisibilityPending ? "Публикуем…" : "Опубликовать"}</button> : null}
-                      {share.status === "ACTIVE" ? <button type="button" className={styles.revoke} disabled={isVisibilityPending} onClick={() => changeVisibility("revoke")}>{isVisibilityPending ? "Снимаем с публикации…" : "Снять с публикации"}</button> : null}
-                    </span>
-                  </details>
+                <button type="submit" disabled={saveDisabled}>{pending ? "Сохраняем…" : share ? "Сохранить изменения" : "Создать черновик"}</button>
+                {!isActive || hasUnsavedChanges ? (
+                  <button type="button" className={styles.secondary} onClick={openExactPreview} disabled={validationBlocked}>
+                    <span className={styles.labelFull}>{pending && previewRequested ? "Сохраняем черновик…" : previewLabel}</span>
+                    <span className={styles.labelShort}>{pending && previewRequested ? "Сохраняем…" : isActive ? "Посмотреть изменения" : "Посмотреть"}</span>
+                  </button>
                 ) : null}
+                {isActive && publicSharePath ? (
+                  <Link className={`${hasUnsavedChanges ? styles.secondary : ""} ${hasUnsavedChanges ? styles.hideOnMobile : ""}`} href={publicSharePath} target="_blank">{publicLinkLabel}</Link>
+                ) : null}
+                <span className={styles.desktopExtras}>
+                  {publishButton}
+                  {revokeButton}
+                </span>
               </div>
             </div>
           </div>
@@ -321,29 +374,66 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
             {selectedPhrases.length > 0 ? (
               <>
                 <p>{selectedPhrases.length} {plural(selectedPhrases.length, ["фраза", "фразы", "фраз"])} в выбранном порядке</p>
-                <ol className={styles.summaryPhrases}>{selectedPhrases.map((phrase) => <li key={phrase}>{phrase}</li>)}</ol>
+                <ol className={styles.summaryPhrases}>
+                  {selectedPhrases.map((phrase, phraseIndex) => (
+                    <li key={phrase}>
+                      <span className={styles.summaryPhraseNumber} aria-hidden="true">{phraseIndex + 1}</span>
+                      <span className={styles.summaryPhraseText}>{phrase}</span>
+                    </li>
+                  ))}
+                </ol>
               </>
             ) : <p className={styles.summaryMuted}>Фразы не выбраны</p>}
           </section>
           {mediaAssets.length > 0 ? (
             <section className={styles.summaryBlock}>
               <h4>Публичные фотографии</h4>
-              <p>{selectedPhotoIds.length} из 3</p>
+              <p>Выбрано фото: {selectedPhotoIds.length} из 3</p>
               {selectedPhotoAssets.length > 0 ? (
                 <ol className={styles.summaryPhotos}>{selectedPhotoAssets.map((asset, index) => <li key={asset.id}><img src={asset.publicUrl} alt="" /><span aria-hidden="true">{index + 1}</span></li>)}</ol>
               ) : null}
             </section>
           ) : null}
-          <section className={styles.summaryBlock}>
-            <h4>Подтверждение</h4>
-            <p className={photoConsent ? undefined : styles.summaryMuted}>{photoConsent ? "Право на публикацию подтверждено" : "Право на публикацию не подтверждено"}</p>
-          </section>
+          {mediaAssets.length > 0 ? (
+            <section className={styles.summaryBlock}>
+              <h4>Подтверждение</h4>
+              <p className={photoConsent ? undefined : styles.summaryMuted}>{photoConsent ? "Право на публикацию подтверждено" : "Право на публикацию не подтверждено"}</p>
+            </section>
+          ) : null}
           <div className={styles.summaryPreview}>
-            <button type="button" onClick={openExactPreview} disabled={pending || selectedPhrases.length !== 3}>{pending && previewRequested ? "Сохраняем черновик…" : "Открыть точный предпросмотр"}</button>
-            <p>Вы увидите открытку так, как её увидят другие.</p>
+            {!isActive ? (
+              <>
+                <button type="button" onClick={openExactPreview} disabled={validationBlocked}>{pending && previewRequested ? "Сохраняем черновик…" : "Посмотреть перед публикацией"}</button>
+                <p>Страница ещё не опубликована. Вы увидите её такой, какой она станет после публикации.</p>
+              </>
+            ) : hasUnsavedChanges ? (
+              <>
+                <p className={styles.summaryStatusNote}>Есть неопубликованные изменения</p>
+                <button type="button" onClick={openExactPreview} disabled={validationBlocked}>{pending && previewRequested ? "Сохраняем черновик…" : "Посмотреть изменения"}</button>
+                {publicSharePath ? <Link className={styles.summarySecondary} href={publicSharePath} target="_blank">Открыть опубликованную страницу</Link> : null}
+                <p>Предпросмотр покажет текущие изменения. Опубликованная страница пока выглядит по-прежнему.</p>
+              </>
+            ) : (
+              <>
+                {publicSharePath ? <Link className={styles.summaryPrimary} href={publicSharePath} target="_blank">Открыть публичную страницу</Link> : null}
+                <p>Так страницу сейчас видят все, у кого есть ссылка.</p>
+              </>
+            )}
           </div>
         </aside>
       </div>
+      {revokeDialogOpen ? (
+        <div className={styles.dialogOverlay} onClick={() => { if (!isVisibilityPending) setRevokeDialogOpen(false); }}>
+          <div className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="revoke-dialog-title" onClick={(event) => event.stopPropagation()}>
+            <h3 id="revoke-dialog-title">Отключить публичную страницу?</h3>
+            <p>Ссылка перестанет открываться. Позже публичную страницу можно будет создать снова, но у неё будет новая ссылка.</p>
+            <div className={styles.dialogActions}>
+              <button type="button" className={styles.dialogCancel} autoFocus disabled={isVisibilityPending} onClick={() => setRevokeDialogOpen(false)}>Оставить включённой</button>
+              <button type="button" className={styles.dialogDanger} disabled={isVisibilityPending} onClick={() => { setRevokeDialogOpen(false); changeVisibility("revoke"); }}>{isVisibilityPending ? "Отключаем…" : "Отключить страницу"}</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

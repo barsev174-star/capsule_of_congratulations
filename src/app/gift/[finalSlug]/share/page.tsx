@@ -13,10 +13,10 @@ export default async function PublicShareEditorPage({ params }: { params: Promis
       <header className={styles.header}>
         <Link className={styles.backLink} href={`/gift/${finalSlug}`}>← Вернуться к открытке</Link>
         <p className={styles.eyebrow}>Публичная версия</p>
-        <h1 className={styles.title}>Похвастаться открыткой</h1>
+        <h1 className={styles.title}>Поделиться открыткой</h1>
         <p className={styles.subtitle}>
-          Выберите только то, чем готовы поделиться.<br />
-          Личные поздравления и остальные фотографии останутся приватными.
+          Выберите, что будет видно на публичной странице.<br />
+          Личные поздравления и остальные фотографии останутся только в полной открытке.
         </p>
       </header>
       <PublicSharePanel

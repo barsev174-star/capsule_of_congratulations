@@ -36,7 +36,7 @@
   right: 0;
   bottom: 0;
   z-index: 40;
-  padding: 10px 16px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--line);
   background: rgba(255, 250, 245, 0.94);
   backdrop-filter: blur(10px);
@@ -70,8 +70,12 @@
   flex-wrap: wrap;
 }
 
-.extraActions {
+.desktopExtras {
   display: contents;
+}
+
+.labelShort {
+  display: none;
 }
 
 .actionBar button,
@@ -121,17 +125,25 @@
   background: var(--accent-light);
 }
 
+.actionBar .publishButton {
+  background: var(--text);
+}
+
+.actionBar .publishButton:hover:not(:disabled) {
+  background: #241a15;
+}
+
 .actionBar .revoke {
   background: transparent;
-  color: #a54d5d;
-  box-shadow: inset 0 0 0 1px rgba(165, 77, 93, 0.25);
+  color: #985040;
+  box-shadow: inset 0 0 0 1px rgba(152, 80, 64, 0.3);
 }
 
 .actionBar .revoke:hover {
-  background: #fdf0ec;
+  background: #faf0ea;
 }
 
-.moreMenu {
+.mobileActions {
   display: none;
 }
 
@@ -140,6 +152,90 @@
   color: #ae4055;
   font-size: 0.85rem;
   font-weight: 650;
+}
+
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(51, 39, 34, 0.45);
+}
+
+.dialog {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface-strong);
+  box-shadow: var(--shadow);
+}
+
+.dialog h3 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.3rem;
+}
+
+.dialog p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.dialogActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.dialogActions button {
+  flex: 1 1 auto;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition-property: background-color, opacity;
+  transition-duration: 160ms;
+}
+
+.dialogActions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dialogActions button:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
+.dialogCancel {
+  border: 1px solid var(--line-strong);
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.dialogCancel:hover:not(:disabled) {
+  background: var(--surface-soft);
+}
+
+.dialogDanger {
+  border: 0;
+  background: #985040;
+  color: #fff;
+}
+
+.dialogDanger:hover:not(:disabled) {
+  background: #7f4536;
 }
 
 .layout {
@@ -154,6 +250,8 @@
   top: 24px;
   display: grid;
   gap: 16px;
+  max-height: calc(100svh - 130px);
+  overflow-y: auto;
   padding: 20px;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -219,24 +317,47 @@
 
 .summaryPhrases {
   display: grid;
-  gap: 6px;
-  margin: 4px 0 0;
-  padding-left: 20px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 .summaryPhrases li {
-  padding-left: 2px;
-  font-size: 0.85rem;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 9px 0;
 }
 
-.summaryPhrases li::marker {
-  color: var(--accent-strong);
+.summaryPhrases li:first-child {
+  padding-top: 2px;
+}
+
+.summaryPhrases li + li {
+  border-top: 1px solid var(--line);
+}
+
+.summaryPhraseNumber {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  color: #fff;
+  font-size: 0.72rem;
   font-weight: 800;
+}
+
+.summaryPhraseText {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .summaryPhotos {
@@ -284,25 +405,58 @@
   border-top: 1px solid var(--line);
 }
 
-.summaryPreview button {
-  min-height: 44px;
+.summaryStatusNote {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.88rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.summaryPreview button,
+.summaryPreview a {
+  display: block;
   box-sizing: border-box;
-  padding: 10px 16px;
+  min-height: 44px;
+  padding: 11px 16px;
   border: 0;
   border-radius: 14px;
-  background: var(--accent-strong);
-  color: #fff;
   font-weight: 750;
+  text-align: center;
+  text-decoration: none;
   cursor: pointer;
   transition-property: transform, opacity, background-color;
   transition-duration: 160ms;
 }
 
-.summaryPreview button:hover:not(:disabled) {
+.summaryPreview button {
+  width: 100%;
+  background: var(--accent-strong);
+  color: #fff;
+}
+
+.summaryPreview .summaryPrimary {
+  background: var(--accent-strong);
+  color: #fff;
+}
+
+.summaryPreview button:hover:not(:disabled),
+.summaryPreview .summaryPrimary:hover {
   background: #bd4f20;
 }
 
-.summaryPreview button:active {
+.summaryPreview .summarySecondary {
+  background: var(--surface-strong);
+  color: var(--accent-strong);
+  box-shadow: inset 0 0 0 1px rgba(212, 90, 39, 0.4);
+}
+
+.summaryPreview .summarySecondary:hover {
+  background: var(--accent-light);
+}
+
+.summaryPreview button:active,
+.summaryPreview a:active {
   transform: scale(0.97);
 }
 
@@ -311,7 +465,8 @@
   cursor: not-allowed;
 }
 
-.summaryPreview button:focus-visible {
+.summaryPreview button:focus-visible,
+.summaryPreview a:focus-visible {
   outline: 2px solid var(--accent-strong);
   outline-offset: 2px;
 }
@@ -736,6 +891,8 @@
 
   .summary {
     position: static;
+    max-height: none;
+    overflow-y: visible;
   }
 }
 
@@ -758,57 +915,70 @@
     padding: 11px;
   }
 
-  .extraActions {
+  .desktopExtras {
     display: none;
   }
 
-  .moreMenu {
-    display: block;
-    position: relative;
+  .hideOnMobile {
+    display: none !important;
   }
 
-  .moreMenu summary {
-    display: flex;
-    align-items: center;
+  .labelFull {
+    display: none;
+  }
+
+  .labelShort {
+    display: inline;
+  }
+
+  .mobileActions {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobileActions button,
+  .mobileActions a {
+    display: block;
+    width: 100%;
     min-height: 44px;
     box-sizing: border-box;
-    padding: 10px 16px;
+    padding: 11px 16px;
+    border: 0;
     border-radius: 14px;
-    background: var(--surface-strong);
-    box-shadow: inset 0 0 0 1px rgba(212, 90, 39, 0.4);
-    color: var(--accent-strong);
     font-weight: 750;
+    text-align: center;
+    text-decoration: none;
     cursor: pointer;
-    list-style: none;
+    transition-property: background-color, opacity;
+    transition-duration: 160ms;
   }
 
-  .moreMenu summary::-webkit-details-marker {
-    display: none;
+  .mobileActions button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
   }
 
-  .moreMenu summary:focus-visible {
+  .mobileActions button:focus-visible,
+  .mobileActions a:focus-visible {
     outline: 2px solid var(--accent-strong);
     outline-offset: 2px;
   }
 
-  .moreMenuList {
-    position: absolute;
-    right: 0;
-    bottom: calc(100% + 8px);
-    display: grid;
-    gap: 8px;
-    min-width: 230px;
-    padding: 10px;
-    border: 1px solid var(--line);
-    border-radius: 14px;
+  .mobileActions .secondary {
     background: var(--surface-strong);
-    box-shadow: var(--shadow-card);
+    color: var(--accent-strong);
+    box-shadow: inset 0 0 0 1px rgba(212, 90, 39, 0.4);
   }
 
-  .moreMenuList a,
-  .moreMenuList button {
-    width: 100%;
-    text-align: center;
+  .mobileActions .publishButton {
+    background: var(--text);
+    color: #fff;
+  }
+
+  .mobileActions .revoke {
+    background: transparent;
+    color: #985040;
+    box-shadow: inset 0 0 0 1px rgba(152, 80, 64, 0.3);
   }
 
   .actionBarInner {
@@ -824,7 +994,7 @@
   }
 
   .actionButtons > button,
-  .actionButtons > .secondary {
+  .actionButtons > a {
     flex: 1 1 auto;
     text-align: center;
   }
