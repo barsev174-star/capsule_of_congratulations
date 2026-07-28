@@ -30,8 +30,52 @@
   box-shadow: inset 0 0 0 1px rgba(191, 108, 71, 0.28);
 }
 
-.actions button,
-.actions a {
+.actionBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  background: rgba(255, 250, 245, 0.94);
+  backdrop-filter: blur(10px);
+}
+
+.actionBarInner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  max-width: 932px;
+  margin: 0 auto;
+}
+
+.saveStatus {
+  margin: 0 auto 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.saveStatusDirty {
+  color: var(--accent-strong);
+  font-weight: 650;
+}
+
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.extraActions {
+  display: contents;
+}
+
+.actionBar button,
+.actionBar a {
   min-height: 44px;
   box-sizing: border-box;
   padding: 10px 18px;
@@ -46,35 +90,56 @@
   transition-duration: 160ms;
 }
 
-.actions button:hover:not(:disabled),
-.actions a:hover {
+.actionBar button:hover:not(:disabled),
+.actionBar a:hover {
   background: #bd4f20;
 }
 
-.actions button:active,
-.actions a:active {
+.actionBar button:active,
+.actionBar a:active {
   transform: scale(0.97);
 }
 
-.actions button:disabled {
+.actionBar button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.actions button:focus-visible,
-.actions a:focus-visible {
+.actionBar button:focus-visible,
+.actionBar a:focus-visible {
   outline: 2px solid var(--accent-strong);
   outline-offset: 2px;
 }
 
-.actions .preview {
+.actionBar .secondary {
   background: var(--surface-strong);
   color: var(--accent-strong);
   box-shadow: inset 0 0 0 1px rgba(212, 90, 39, 0.4);
 }
 
-.actions .preview:hover {
+.actionBar .secondary:hover {
   background: var(--accent-light);
+}
+
+.actionBar .revoke {
+  background: transparent;
+  color: #a54d5d;
+  box-shadow: inset 0 0 0 1px rgba(165, 77, 93, 0.25);
+}
+
+.actionBar .revoke:hover {
+  background: #fdf0ec;
+}
+
+.moreMenu {
+  display: none;
+}
+
+.consentError {
+  margin: 0;
+  color: #ae4055;
+  font-size: 0.85rem;
+  font-weight: 650;
 }
 
 .layout {
@@ -656,22 +721,6 @@
   margin-top: 2px;
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.actions .revoke {
-  background: var(--surface-strong);
-  color: #a54d5d;
-  box-shadow: inset 0 0 0 1px rgba(165, 77, 93, 0.25);
-}
-
-.actions .revoke:hover {
-  background: #fdf0ec;
-}
-
 .success {
   color: #39704b;
 }
@@ -709,9 +758,74 @@
     padding: 11px;
   }
 
-  .actions button,
-  .actions a {
+  .extraActions {
+    display: none;
+  }
+
+  .moreMenu {
+    display: block;
+    position: relative;
+  }
+
+  .moreMenu summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 10px 16px;
+    border-radius: 14px;
+    background: var(--surface-strong);
+    box-shadow: inset 0 0 0 1px rgba(212, 90, 39, 0.4);
+    color: var(--accent-strong);
+    font-weight: 750;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .moreMenu summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .moreMenu summary:focus-visible {
+    outline: 2px solid var(--accent-strong);
+    outline-offset: 2px;
+  }
+
+  .moreMenuList {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    display: grid;
+    gap: 8px;
+    min-width: 230px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface-strong);
+    box-shadow: var(--shadow-card);
+  }
+
+  .moreMenuList a,
+  .moreMenuList button {
     width: 100%;
+    text-align: center;
+  }
+
+  .actionBarInner {
+    gap: 10px;
+  }
+
+  .saveStatus {
+    flex: 1 1 100%;
+  }
+
+  .actionButtons {
+    flex: 1 1 100%;
+  }
+
+  .actionButtons > button,
+  .actionButtons > .secondary {
+    flex: 1 1 auto;
     text-align: center;
   }
 }

@@ -53,6 +53,9 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
   const [showGreetingCount, setShowGreetingCount] = useState(share?.showGreetingCount ?? true);
   const [showPhotoCount, setShowPhotoCount] = useState(share?.showPhotoCount ?? true);
   const [photoConsent, setPhotoConsent] = useState(photos.length > 0);
+  const [captions, setCaptions] = useState<Record<string, string>>(() => Object.fromEntries(
+    mediaAssets.map((asset) => [asset.id, defaultPublicCaption(asset, photos.find((photo) => photo.cardMediaAssetId === asset.id)?.publicCaption)])
+  ));
   const [selectedPhrases, setSelectedPhrases] = useState(() => {
     const savedSelection = share?.publicPhrases.map((phrase) => phrase.text).filter((phrase) => phraseCandidates.includes(phrase)) ?? [];
     return savedSelection.length === 3 ? savedSelection : phraseCandidates.slice(0, 3);
@@ -104,6 +107,26 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
     if (state.ok) router.push(`/gift/${finalSlug}/share/preview`);
   }, [previewRequested, pending, state, finalSlug, router]);
 
+  const formSignature = useMemo(() => JSON.stringify({
+    displayName: displayName.trim(),
+    headlinePreset,
+    showOccasion,
+    showGreetingCount,
+    showPhotoCount,
+    photoConsent,
+    phrases: selectedPhrases,
+    photos: selectedPhotoIds,
+    captions: selectedPhotoIds.map((photoId) => captions[photoId]?.trim() ?? ""),
+  }), [displayName, headlinePreset, showOccasion, showGreetingCount, showPhotoCount, photoConsent, selectedPhrases, selectedPhotoIds, captions]);
+  const [savedSignature, setSavedSignature] = useState(formSignature);
+  const submittedSignatureRef = useRef(formSignature);
+  useEffect(() => {
+    if (!pending && state.ok) setSavedSignature(submittedSignatureRef.current);
+  }, [pending, state]);
+  const hasUnsavedChanges = formSignature !== savedSignature;
+  const consentError = selectedPhotoIds.length > 0 && !photoConsent;
+  const saveBlocked = pending || selectedPhrases.length !== 3 || consentError;
+
   const selectedPhotoAssets = selectedPhotoIds
     .map((photoId) => mediaAssets.find((asset) => asset.id === photoId))
     .filter((asset): asset is CardMediaAsset => Boolean(asset));
@@ -117,7 +140,7 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
     <section className={styles.shell}>
       {!share && wasRevoked ? <p className={styles.statusRevoked}>Публичная версия снята с публикации. При желании создайте новую.</p> : null}
       <div className={styles.layout}>
-        <form action={formAction} className={styles.form} ref={formRef}>
+        <form action={formAction} className={styles.form} ref={formRef} onSubmit={() => { submittedSignatureRef.current = formSignature; }}>
           <section className={styles.card} aria-labelledby="share-section-basics">
             <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">1</span><h3 id="share-section-basics">Основные сведения</h3></header>
             <div className={styles.fieldGrid}>
@@ -190,13 +213,12 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
             <section className={styles.card} aria-labelledby="share-section-photos">
               <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">4</span><h3 id="share-section-photos">Публичные фотографии</h3></header>
               <p className={styles.cardHint}>Выберите до трёх фотографий и при необходимости измените подписи.</p>
-              <strong className={styles.photoCount}>Выбрано {selectedPhotoIds.length} из 3</strong>
+              <strong className={selectedPhotoIds.length === 3 ? styles.ready : styles.photoCount}>Выбрано {selectedPhotoIds.length} из 3</strong>
               <div className={styles.photoGrid}>
                 {mediaAssets.map((asset) => {
                   const orderIndex = selectedPhotoIds.indexOf(asset.id);
                   const isSelected = orderIndex !== -1;
                   const selectionFull = selectedPhotoIds.length === 3;
-                  const savedPhoto = photos.find((photo) => photo.cardMediaAssetId === asset.id);
                   return (
                     <div
                       key={asset.id}
@@ -216,7 +238,8 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
                       <input
                         className={styles.photoCaption}
                         name={`caption:${asset.id}`}
-                        defaultValue={defaultPublicCaption(asset, savedPhoto?.publicCaption)}
+                        value={captions[asset.id] ?? ""}
+                        onChange={(event) => setCaptions((current) => ({ ...current, [asset.id]: event.target.value }))}
                         maxLength={120}
                         placeholder="Добавьте короткую подпись"
                         aria-label="Подпись к фотографии"
@@ -227,13 +250,48 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
                 })}
               </div>
               {selectedPhotoIds.map((photoId) => <input key={photoId} type="hidden" name="photoAssetId" value={photoId} />)}
-              <label className={styles.consent}><input type="checkbox" name="photoConsentAccepted" checked={photoConsent} onChange={(event) => setPhotoConsent(event.target.checked)} /> Подтверждаю право на публикацию выбранных фотографий.</label>
+            </section>
+          ) : null}
+          {mediaAssets.length > 0 ? (
+            <section className={styles.card} aria-labelledby="share-section-consent">
+              <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">5</span><h3 id="share-section-consent">Подтверждение</h3></header>
+              <p className={styles.cardHint}>Подтвердите, что выбранные фотографии можно показывать публично. Оригиналы останутся приватными, а для публичной страницы будут использованы безопасные копии.</p>
+              <label className={styles.consent}>
+                <input type="checkbox" name="photoConsentAccepted" checked={photoConsent} onChange={(event) => setPhotoConsent(event.target.checked)} aria-invalid={consentError} aria-describedby={consentError ? "photo-consent-error" : undefined} />
+                <span>Подтверждаю, что у меня есть право на публикацию выбранных фотографий.</span>
+              </label>
+              {consentError ? <p className={styles.consentError} id="photo-consent-error">Без подтверждения нельзя сохранить публичные фотографии.</p> : null}
             </section>
           ) : null}
           {state.message ? <p className={state.ok ? styles.success : styles.error}>{state.message}</p> : null}
           {visibilityMessage ? <p className={visibilityMessage.includes("не удалось") ? styles.error : styles.success}>{visibilityMessage}</p> : null}
           {state.shareUrl ? <p className={styles.success}>Ссылка: <a href={state.shareUrl} target="_blank" rel="noreferrer">Открыть публичную версию</a></p> : null}
-          <div className={styles.actions}><button type="submit" disabled={pending || selectedPhrases.length !== 3}>{pending ? "Сохраняем…" : share ? "Сохранить изменения" : "Создать черновик"}</button>{share ? <Link className={styles.preview} href={`/gift/${finalSlug}/share/preview`}>Предпросмотреть черновик</Link> : null}{share?.status === "ACTIVE" && publicSharePath ? <Link className={styles.preview} href={publicSharePath} target="_blank">Открыть публичную версию</Link> : null}{share?.status === "DRAFT" ? <button type="button" disabled={isVisibilityPending || selectedPhrases.length !== 3} onClick={() => changeVisibility("publish")}>{isVisibilityPending ? "Публикуем…" : "Опубликовать"}</button> : null}{share?.status === "ACTIVE" ? <button type="button" className={styles.revoke} disabled={isVisibilityPending} onClick={() => changeVisibility("revoke")}>{isVisibilityPending ? "Снимаем с публикации…" : "Снять с публикации"}</button> : null}</div>
+          <div className={styles.actionBar}>
+            <div className={styles.actionBarInner}>
+              <p className={`${styles.saveStatus} ${hasUnsavedChanges ? styles.saveStatusDirty : ""}`} role="status">
+                {pending ? "Сохраняем…" : hasUnsavedChanges ? "Есть несохранённые изменения" : share ? "Все изменения сохранены" : "Черновик ещё не сохранён"}
+              </p>
+              <div className={styles.actionButtons}>
+                <button type="submit" disabled={saveBlocked}>{pending ? "Сохраняем…" : share ? "Сохранить изменения" : "Создать черновик"}</button>
+                <button type="button" className={styles.secondary} onClick={openExactPreview} disabled={saveBlocked}>{pending && previewRequested ? "Сохраняем черновик…" : "Предпросмотр"}</button>
+                <span className={styles.extraActions}>
+                  {share?.status === "ACTIVE" && publicSharePath ? <Link className={styles.secondary} href={publicSharePath} target="_blank">Открыть публичную версию</Link> : null}
+                  {share?.status === "DRAFT" ? <button type="button" className={styles.secondary} disabled={isVisibilityPending || saveBlocked} onClick={() => changeVisibility("publish")}>{isVisibilityPending ? "Публикуем…" : "Опубликовать"}</button> : null}
+                  {share?.status === "ACTIVE" ? <button type="button" className={styles.revoke} disabled={isVisibilityPending} onClick={() => changeVisibility("revoke")}>{isVisibilityPending ? "Снимаем с публикации…" : "Снять с публикации"}</button> : null}
+                </span>
+                {share ? (
+                  <details className={styles.moreMenu}>
+                    <summary>Ещё</summary>
+                    <span className={styles.moreMenuList}>
+                      {share.status === "ACTIVE" && publicSharePath ? <Link className={styles.secondary} href={publicSharePath} target="_blank">Открыть публичную версию</Link> : null}
+                      {share.status === "DRAFT" ? <button type="button" className={styles.secondary} disabled={isVisibilityPending || saveBlocked} onClick={() => changeVisibility("publish")}>{isVisibilityPending ? "Публикуем…" : "Опубликовать"}</button> : null}
+                      {share.status === "ACTIVE" ? <button type="button" className={styles.revoke} disabled={isVisibilityPending} onClick={() => changeVisibility("revoke")}>{isVisibilityPending ? "Снимаем с публикации…" : "Снять с публикации"}</button> : null}
+                    </span>
+                  </details>
+                ) : null}
+              </div>
+            </div>
+          </div>
         </form>
         <aside className={styles.summary} aria-label="Что будет опубликовано">
           <div>
