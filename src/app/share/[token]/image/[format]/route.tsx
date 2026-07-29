@@ -69,15 +69,47 @@ const Surface = ({ origin, image, children, style = {}, imageFit = "fill", image
   </div>
 );
 
+// Satori reliably renders <img> layers, while CSS background shorthand drops
+// transparent scrapbook PNGs in some export environments. Keep those assets as
+// explicit layers so the paper template matches the public card.
+const PaperLayer = ({ origin, image, style = {} }: { origin: string; image: string; style?: Record<string, unknown> }) => (
+  <img src={asset(origin, image)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill", pointerEvents: "none", ...style }} />
+);
+
+const PaperHeroPolaroid = ({ origin, photo, side, format }: { origin: string; photo: string; side: "left" | "right"; format: Format }) => {
+  const compact = format === "post";
+  const width = compact ? 104 : format === "print" ? 132 : 144;
+  const height = Math.round(width * 1.18);
+  const rotation = side === "left" ? -10 : 7;
+  const left = side === "left"
+    ? compact ? 2 : 12
+    : compact ? 910 : format === "print" ? 1000 : 846;
+  return <div style={{ position: "absolute", display: "flex", left, top: compact ? 18 : 14, width, height, overflow: "hidden", transform: `rotate(${rotation}deg)`, zIndex: 1 }}>
+    <img src={asset(origin, photo)} style={{ position: "absolute", left: "8%", top: "7%", width: "84%", height: "68%", objectFit: "cover" }} />
+    <img src={asset(origin, "/templates/scrapbook-clean/polaroid-transparent.png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
+  </div>;
+};
+
+const PaperHeroDecor = ({ origin, format }: { origin: string; format: Format }) => <>
+  <PaperHeroPolaroid origin={origin} photo="/templates/scrapbook-clean/top-polaroid-cake.png" side="left" format={format} />
+  <PaperHeroPolaroid origin={origin} photo="/templates/scrapbook-clean/top-polaroid-bouquet.png" side="right" format={format} />
+  <img src={asset(origin, "/templates/scrapbook-clean/heart-sticker-puffy-gold.png")} style={{ position: "absolute", left: format === "post" ? 128 : 194, top: format === "post" ? 72 : 116, width: format === "post" ? 27 : 43, transform: "rotate(18deg)", zIndex: 2 }} />
+</>;
+
+const PaperMomentsDecor = ({ origin, format }: { origin: string; format: Format }) => <>
+  <img src={asset(origin, "/templates/scrapbook-clean/camera.png")} style={{ position: "absolute", top: format === "post" ? 10 : 20, left: format === "post" ? "48%" : "42%", width: format === "post" ? 46 : 76, transform: "rotate(8deg)", opacity: .9, zIndex: 1 }} />
+  <img src={asset(origin, "/templates/scrapbook-clean/heart-sticker-puffy-pink.png")} style={{ position: "absolute", top: format === "post" ? 36 : 58, right: format === "post" ? 44 : 76, width: format === "post" ? 35 : 56, transform: "rotate(14deg)", zIndex: 1 }} />
+</>;
+
 const PhotoCard = ({ photo, index, width, theme, origin, captionSize, format }: { photo: Payload["photos"][number]; index: number; width: number; theme: Theme; origin: string; captionSize: number; format: Format }) => {
   const route = theme === "route";
-  const height = Math.round(width * (route ? .69 : .75));
+  const height = Math.round(width * (route ? .69 : .707));
   const frame = themeAssets[theme].polaroid;
   const isPrintSidePhoto = format === "print" && index > 0;
   const isPostSecondPhoto = format === "post" && index === 1;
   const isCompactCaption = isPrintSidePhoto || isPostSecondPhoto;
-  const captionHeight = format === "story" ? "18%" : isCompactCaption ? "18.5%" : "20%";
-  const captionBottom = format === "story" ? "1.5%" : isCompactCaption ? "0.5%" : "2.5%";
+  const captionHeight = route ? format === "story" ? "18%" : isCompactCaption ? "18.5%" : "20%" : "15%";
+  const captionBottom = route ? format === "story" ? "1.5%" : isCompactCaption ? "0.5%" : "2.5%" : "9%";
   const captionLineHeight = format === "story" ? .96 : isCompactCaption ? 1 : format === "post" ? 1.03 : 1.06;
   const routeCaptionSize = format === "story"
     ? Math.min(captionSize, Math.round(width * .068))
@@ -85,21 +117,21 @@ const PhotoCard = ({ photo, index, width, theme, origin, captionSize, format }: 
       ? captionSize - 1
       : captionSize;
   const captionLimit = format === "story" ? (width >= 420 ? 62 : 44) : format === "post" ? 54 : 68;
-  return <div style={{ position: "relative", display: "flex", width, height, flexShrink: 0, transform: `rotate(${index === 1 ? 1.2 : index === 2 ? -1.2 : -1.5}deg)`, boxShadow: "0 8px 16px rgba(0,0,0,.22)" }}>
+  return <div style={{ position: "relative", display: "flex", width, height, flexShrink: 0, transform: `rotate(${index === 1 ? 1.2 : index === 2 ? -1.2 : -1.5}deg)`, boxShadow: route ? "0 8px 16px rgba(0,0,0,.22)" : "none" }}>
     {route ? <img src={asset(origin, frame)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
-    <img src={photo.url} style={{ position: "absolute", left: route ? "6%" : "8.2%", top: route ? "5.1%" : "12.5%", width: route ? "88%" : "83.6%", height: route ? "75.9%" : "60.5%", objectFit: "cover", outline: "1px solid rgba(0,0,0,.1)" }} />
+    <img src={photo.url} style={{ position: "absolute", left: route ? "6%" : "10%", top: route ? "5.1%" : "14%", width: route ? "88%" : "80%", height: route ? "75.9%" : "56%", objectFit: "cover", ...(route ? { outline: "1px solid rgba(0,0,0,.1)" } : {}) }} />
     {!route ? <img src={asset(origin, frame)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
     {route ? <img src={asset(origin, "/templates/route-adventure/polaroid-narrow-cream-overlay.png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
     <div style={{ position: "absolute", left: route ? "8%" : "9%", right: route ? "8%" : "9%", bottom: route ? captionBottom : "5%", height: route ? captionHeight : "22%", display: "flex", alignItems: "center", justifyContent: "center", ...(format === "story" ? {} : { maxHeight: "2.12em" }), overflow: "hidden", color: "#3b2b1e", fontFamily: "Caveat", fontSize: route ? routeCaptionSize : captionSize, fontWeight: 600, lineHeight: captionLineHeight, textAlign: "center" }}>{trim(photo.caption, captionLimit)}</div>
   </div>;
 };
 
-const CounterIcon = ({ kind, size }: { kind: "greetings" | "photos"; size: number }) => kind === "greetings" ? <div style={{ position: "relative", display: "flex", width: size, height: size, flexShrink: 0 }}>
-  <span style={{ position: "absolute", left: Math.round(size * .34), top: 0, width: Math.round(size * .32), height: Math.round(size * .32), boxSizing: "border-box", border: "2px solid #efbd67", borderRadius: 999 }} />
-  <span style={{ position: "absolute", left: Math.round(size * .12), bottom: 0, width: Math.round(size * .76), height: Math.round(size * .43), boxSizing: "border-box", border: "2px solid #efbd67", borderRadius: "10px 10px 5px 5px" }} />
-</div> : <div style={{ position: "relative", display: "flex", width: size, height: Math.round(size * .78), flexShrink: 0, boxSizing: "border-box", border: "2px solid #efbd67", borderRadius: 3 }}>
-  <span style={{ position: "absolute", left: Math.round(size * .2), bottom: Math.round(size * .13), width: Math.round(size * .5), height: Math.round(size * .28), boxSizing: "border-box", borderLeft: "2px solid #efbd67", borderTop: "2px solid #efbd67", transform: "skewY(-28deg)" }} />
-  <span style={{ position: "absolute", right: Math.round(size * .13), top: Math.round(size * .13), width: 4, height: 4, background: "#efbd67", borderRadius: 999 }} />
+const CounterIcon = ({ kind, size, color = "#efbd67" }: { kind: "greetings" | "photos"; size: number; color?: string }) => kind === "greetings" ? <div style={{ position: "relative", display: "flex", width: size, height: size, flexShrink: 0 }}>
+  <span style={{ position: "absolute", left: Math.round(size * .34), top: 0, width: Math.round(size * .32), height: Math.round(size * .32), boxSizing: "border-box", border: `2px solid ${color}`, borderRadius: 999 }} />
+  <span style={{ position: "absolute", left: Math.round(size * .12), bottom: 0, width: Math.round(size * .76), height: Math.round(size * .43), boxSizing: "border-box", border: `2px solid ${color}`, borderRadius: "10px 10px 5px 5px" }} />
+</div> : <div style={{ position: "relative", display: "flex", width: size, height: Math.round(size * .78), flexShrink: 0, boxSizing: "border-box", border: `2px solid ${color}`, borderRadius: 3 }}>
+  <span style={{ position: "absolute", left: Math.round(size * .2), bottom: Math.round(size * .13), width: Math.round(size * .5), height: Math.round(size * .28), boxSizing: "border-box", borderLeft: `2px solid ${color}`, borderTop: `2px solid ${color}`, transform: "skewY(-28deg)" }} />
+  <span style={{ position: "absolute", right: Math.round(size * .13), top: Math.round(size * .13), width: 4, height: 4, background: color, borderRadius: 999 }} />
 </div>;
 
 const ExportCard = ({ payload, format, origin }: { payload: Payload; format: Format; origin: string }) => {
@@ -110,6 +142,13 @@ const ExportCard = ({ payload, format, origin }: { payload: Payload; format: For
   const phrases = payload.phrases.slice(0, formats[format].phrases);
   const counters = [payload.share.showGreetingCount ? `${payload.card.greetingCount} поздравлений` : null, payload.share.showPhotoCount && payload.card.photoCount > 0 ? `${payload.card.photoCount} фото в открытке` : null].filter(Boolean);
   const panelStyle = theme === "route" ? { border: "1px solid rgba(184,137,71,.58)", borderRadius: 15, boxShadow: "0 10px 22px rgba(0,0,0,.2)" } : {};
+  const paper = theme === "paper";
+  const paperHeroHeight = format === "story" ? p.hero : format === "post" ? 225 : 330;
+  const paperQualitiesHeight = format === "story" ? p.qualities : 245;
+  // Keep the full footer safely inside the fixed raster canvas for the tall exports.
+  const paperMomentsHeight = format === "story" ? 540 : format === "post" ? 420 : 595;
+  const paperFooterHeight = format === "story" ? p.footer : format === "post" ? 200 : 224;
+  const paperQualityAssets = ["/templates/scrapbook-clean/quality-card-pink.png", "/templates/scrapbook-clean/quality-card-violet.png", "/templates/scrapbook-clean/quality-card-beige.png", "/templates/scrapbook-clean/quality-card-green.png", "/templates/scrapbook-clean/quality-card-blue.png"];
   const titleStyle = { display: "flex", justifyContent: "center", fontFamily: theme === "paper" ? "Caveat" : "PT Sans", fontSize: p.section, fontWeight: 700, color: a.text, textAlign: "center" as const };
 
   const momentHeading = <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}><div style={{ ...titleStyle, fontSize: p.momentsTitle }}>Моменты</div><div style={{ display: "flex", color: a.muted, fontFamily: "Caveat", fontSize: p.momentsLead, marginTop: -4 }}>Фото, которыми хочется поделиться</div></div>;
@@ -132,30 +171,31 @@ const ExportCard = ({ payload, format, origin }: { payload: Payload; format: For
 
   return <div style={{ position: "relative", display: "flex", width: "100%", height: "100%", overflow: "hidden", boxSizing: "border-box", padding: format === "print" ? "34px 38px 52px" : p.pad, background: theme === "route" ? "#0d1714" : "#f6dfb9", color: a.text, fontFamily: "PT Sans" }}>
     <img src={asset(origin, a.background)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: theme === "route" ? .16 : .34 }} />
-    <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: p.gap, width: "100%" }}>
-      <Surface origin={origin} image={a.hero} imageFit={theme === "route" && format === "post" ? "cover" : "fill"} imagePosition={format === "post" ? "center top" : "center"} style={{ minHeight: p.hero }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", padding: theme === "route" ? format === "post" ? "8px 110px 6px" : "38px 120px 28px" : "42px 70px 26px", textAlign: "center" }}>
+    <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: paper ? 4 : p.gap, width: "100%" }}>
+      <Surface origin={origin} image={a.hero} imageFit={theme === "route" && format === "post" ? "cover" : "fill"} imagePosition={format === "post" ? "center top" : "center"} style={{ minHeight: paper ? paperHeroHeight : p.hero }}>
+        {paper ? <PaperHeroDecor origin={origin} format={format} /> : null}
+        <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", padding: theme === "route" ? format === "post" ? "8px 110px 6px" : "38px 120px 28px" : format === "post" ? "26px 70px 10px" : "42px 70px 26px", textAlign: "center" }}>
           {payload.share.showOccasion && payload.card.occasionText ? <div style={{ display: "flex", color: a.accent, fontSize: p.occasion, fontWeight: 700 }}>{payload.card.occasionText}</div> : null}
           {payload.share.displayName ? <div style={{ display: "flex", justifyContent: "center", maxWidth: "100%", marginTop: 9, color: a.text, fontFamily: theme === "paper" ? "Caveat" : "PT Sans", fontSize: p.name, fontWeight: 700, lineHeight: .96, textAlign: "center" }}>{trim(payload.share.displayName, 46)}</div> : null}
-          <div style={{ display: "flex", maxWidth: 800, marginTop: 14, color: a.muted, fontSize: p.body, lineHeight: 1.23 }}>Близкие люди собрали здесь тёплые слова, фотографии и приятные моменты.</div>
-          {counters.length ? <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 12, marginTop: 13 }}>{counters.map((item, index) => <div key={item} style={{ display: "flex", alignItems: "center", gap: 9, padding: "10px 18px", background: "linear-gradient(135deg,#8a592d,#5b351d)", border: "1px solid rgba(225,181,100,.72)", borderRadius: 999, boxShadow: "inset 0 1px 0 rgba(255,239,196,.2), 0 3px 8px rgba(0,0,0,.2)", color: "#fff1d0", fontSize: p.counter, fontWeight: 700 }}><CounterIcon kind={index === 0 ? "greetings" : "photos"} size={Math.round(p.counter * .8)} />{item}</div>)}</div> : null}
+          <div style={{ display: "flex", maxWidth: 800, marginTop: paper && format === "post" ? 10 : 14, color: a.muted, fontSize: paper && format === "post" ? p.body - 2 : p.body, lineHeight: 1.23 }}>Близкие люди собрали здесь тёплые слова, фотографии и приятные моменты.</div>
+          {counters.length ? <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 12, marginTop: paper && format === "post" ? 9 : 13 }}>{counters.map((item, index) => <div key={item} style={{ display: "flex", alignItems: "center", gap: 9, padding: paper ? format === "post" ? "6px 14px" : "8px 15px" : "10px 18px", background: paper ? "rgba(255,252,246,.9)" : "linear-gradient(135deg,#8a592d,#5b351d)", border: paper ? "1px solid rgba(199,94,121,.24)" : "1px solid rgba(225,181,100,.72)", borderRadius: 999, boxShadow: paper ? "0 3px 7px rgba(103,72,55,.12)" : "inset 0 1px 0 rgba(255,239,196,.2), 0 3px 8px rgba(0,0,0,.2)", color: paper ? "#6a453b" : "#fff1d0", fontSize: p.counter, fontWeight: 700 }}><CounterIcon kind={index === 0 ? "greetings" : "photos"} size={Math.round(p.counter * .8)} color={paper ? "#c75e79" : undefined} />{item}</div>)}</div> : null}
         </div>
       </Surface>
 
-      {payload.qualities.length ? <Surface origin={origin} image={theme === "route" ? "/templates/route-adventure/qualities-walnut-wood.png" : a.section} style={{ minHeight: p.qualities, ...panelStyle }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", padding: "14px 22px" }}>
+      {payload.qualities.length ? <Surface origin={origin} image={theme === "route" ? "/templates/route-adventure/qualities-walnut-wood.png" : a.section} style={{ minHeight: paper ? paperQualitiesHeight : p.qualities, ...panelStyle }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", padding: paper && format === "post" ? "8px 22px" : "14px 22px" }}>
           <div style={titleStyle}>За что тебя ценят</div>
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 9, marginTop: 10 }}>
-            {payload.qualities.slice(0, 5).map((quality, index) => <div key={quality} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: format === "story" ? 430 : format === "post" ? 450 : 520, minHeight: format === "post" ? 42 : 50, padding: "7px 14px", boxSizing: "border-box", background: theme === "route" ? "linear-gradient(135deg,#674225,#3f281a)" : `url(${asset(origin, a.quote[index % a.quote.length])}) center / 100% 100%`, ...(theme === "route" ? { border: "1px solid rgba(209,166,94,.52)", borderRadius: 8 } : {}), color: a.panelText, fontSize: p.quality, fontWeight: 700, lineHeight: 1.04, textAlign: "center" }}>{trim(quality, 28)}</div>)}
+            {payload.qualities.slice(0, 5).map((quality, index) => <div key={quality} style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: paper ? format === "story" ? 430 : format === "post" ? 450 : 515 : format === "story" ? 430 : format === "post" ? 450 : 520, minHeight: paper ? format === "post" ? 52 : 68 : format === "post" ? 42 : 50, padding: "7px 14px", boxSizing: "border-box", overflow: "hidden", background: theme === "route" ? "linear-gradient(135deg,#674225,#3f281a)" : "transparent", ...(theme === "route" ? { border: "1px solid rgba(209,166,94,.52)", borderRadius: 8 } : {}), color: a.panelText, fontSize: p.quality, fontWeight: 700, lineHeight: 1.04, textAlign: "center" }}>{paper ? <PaperLayer origin={origin} image={paperQualityAssets[index]} style={{ transform: "scale(1.04)" }} /> : null}<span style={{ position: "relative", zIndex: 1, display: "flex" }}>{trim(quality, 28)}</span></div>)}
           </div>
         </div>
       </Surface> : null}
 
-      {photos.length ? <Surface origin={origin} image={theme === "route" ? a.section : a.section} style={{ minHeight: p.moments, ...panelStyle }}><div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: format === "story" || format === "print" ? "0 14px" : "16px 14px", boxSizing: "border-box" }}>{moments}</div></Surface> : null}
+      {photos.length ? <Surface origin={origin} image={theme === "route" ? a.section : a.section} style={{ minHeight: paper ? paperMomentsHeight : p.moments, ...(paper ? { width: "calc(100% + 28px)", marginLeft: -14 } : {}), ...panelStyle }}><div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: format === "story" || format === "print" ? "0 14px" : "16px 14px", boxSizing: "border-box" }}>{paper ? <PaperMomentsDecor origin={origin} format={format} /> : null}<div style={{ position: "relative", zIndex: 2, display: "flex", width: "100%" }}>{moments}</div></div></Surface> : null}
 
-      {phrases.length ? <div style={{ display: "flex", flexDirection: "column", width: "100%" }}><div style={titleStyle}>Особенно тёплые слова</div><div style={{ display: "flex", gap: format === "post" ? 10 : format === "print" ? 8 : 14, marginTop: 10 }}>{phrases.map((phrase, index) => <div key={phrase} style={{ position: "relative", display: "flex", flex: 1, alignItems: "center", minHeight: format === "post" ? p.quotes - 54 : format === "print" ? p.quotes - 58 : p.quotes - 62, padding: format === "post" ? "12px 26px 12px 74px" : format === "print" ? "14px 20px 14px 62px" : "22px 40px", boxSizing: "border-box", overflow: "hidden", background: theme === "route" ? `linear-gradient(180deg,rgba(75,74,69,.94),rgba(41,44,43,.98)),url(${asset(origin, a.quote[0])}) center / 100% 100%` : `url(${asset(origin, a.quote[index % a.quote.length])}) center / 100% 100%`, ...(theme === "route" ? { border: "1px solid #b88947", borderRadius: 16 } : {}), color: a.text, fontSize: p.quote, fontWeight: 700, lineHeight: 1.2, textAlign: "center" }}><span style={{ position: "absolute", left: format === "post" ? 24 : format === "print" ? 18 : "7%", top: format === "story" ? "9%" : "14%", color: a.accent, fontFamily: "Caveat", fontSize: p.quote + 15 }}>“</span><span style={{ display: "flex", ...(format === "story" ? {} : { justifyContent: "center", width: "100%" }), maxHeight: "3.6em", overflow: "hidden" }}>{trim(phrase, format === "print" ? 118 : 92)}</span></div>)}</div></div> : null}
+      {phrases.length ? <div style={{ display: "flex", flexDirection: "column", width: "100%" }}><div style={titleStyle}>Особенно тёплые слова</div><div style={{ display: "flex", gap: format === "post" ? 10 : format === "print" ? 8 : 14, marginTop: 10 }}>{phrases.map((phrase, index) => <div key={phrase} style={{ position: "relative", display: "flex", flex: 1, alignItems: "center", minHeight: format === "post" ? p.quotes - 54 : format === "print" ? p.quotes - 58 : p.quotes - 62, padding: format === "post" ? "12px 26px 12px 74px" : format === "print" ? "14px 20px 14px 62px" : "22px 40px", boxSizing: "border-box", overflow: "hidden", background: theme === "route" ? `linear-gradient(180deg,rgba(75,74,69,.94),rgba(41,44,43,.98)),url(${asset(origin, a.quote[0])}) center / 100% 100%` : "transparent", ...(theme === "route" ? { border: "1px solid #b88947", borderRadius: 16 } : {}), color: a.text, fontSize: paper ? p.quote - (format === "story" ? 2 : 4) : p.quote, fontWeight: 700, lineHeight: 1.2, textAlign: "center" }}>{paper ? <PaperLayer origin={origin} image={a.quote[index % a.quote.length]} style={{ transform: "translate(-5%,-4%) scale(1.14)" }} /> : null}<span style={{ position: "absolute", zIndex: 1, left: format === "post" ? 24 : format === "print" ? 18 : "7%", top: format === "story" ? "9%" : "14%", color: a.accent, fontFamily: "Caveat", fontSize: p.quote + 15 }}>“</span><span style={{ position: "relative", zIndex: 1, display: "flex", ...(format === "story" ? {} : { justifyContent: "center", width: "100%" }), maxHeight: "3.6em", overflow: "hidden" }}>{trim(phrase, format === "print" ? 118 : 92)}</span></div>)}</div></div> : null}
 
-      <Surface origin={origin} image={a.footer} style={{ minHeight: p.footer, marginBottom: format === "story" ? 12 : format === "print" ? 6 : 0 }}><div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", padding: format === "story" ? "18px 52px 24px" : "10px 52px 14px", boxSizing: "border-box", textAlign: "center" }}><div style={{ display: "flex", color: theme === "route" ? "#392719" : a.text, fontFamily: "Caveat", fontSize: p.footerTitle, fontWeight: 600 }}>В полной открытке — ещё больше тепла</div><div style={{ display: "flex", maxWidth: 850, marginTop: 5, color: theme === "route" ? "#5d4734" : a.muted, fontSize: p.footerBody, lineHeight: 1.2 }}>Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для получателя.</div><img src={asset(origin, "/brand/email-logo.png")} style={{ width: p.logo, height: Math.round(p.logo * .23), objectFit: "contain", marginTop: format === "story" ? 8 : 6 }} /><div style={{ display: "flex", marginTop: 3, color: theme === "route" ? "#5d4734" : a.muted, fontSize: p.tagline }}>Место, где слова становятся подарком</div></div></Surface>
+      <Surface origin={origin} image={a.footer} style={{ minHeight: paper ? paperFooterHeight : p.footer, marginBottom: paper ? format === "story" ? 12 : format === "print" ? 20 : 8 : format === "story" ? 12 : format === "print" ? 6 : 0 }}><div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", padding: format === "story" ? "12px 52px 10px" : format === "print" ? "8px 52px 6px" : "10px 52px 14px", boxSizing: "border-box", textAlign: "center" }}><div style={{ display: "flex", color: theme === "route" ? "#392719" : a.text, fontFamily: "Caveat", fontSize: paper && format === "post" ? p.footerTitle - 3 : p.footerTitle, fontWeight: 600 }}>В полной открытке — ещё больше тепла</div><div style={{ display: "flex", maxWidth: 850, marginTop: 5, color: theme === "route" ? "#5d4734" : a.muted, fontSize: paper && format === "post" ? p.footerBody - 2 : p.footerBody, lineHeight: 1.2 }}>Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для получателя.</div><img src={asset(origin, "/brand/email-logo.png")} style={{ width: p.logo, height: Math.round(p.logo * .23), objectFit: "contain", marginTop: format === "story" ? 8 : 6 }} /><div style={{ display: "flex", marginTop: 3, color: theme === "route" ? "#5d4734" : a.muted, fontSize: paper && format === "post" ? p.tagline - 1 : p.tagline }}>Место, где слова становятся подарком</div></div></Surface>
     </div>
   </div>;
 };

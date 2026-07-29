@@ -15,6 +15,17 @@ const PUBLIC_SHARE_PHOTO_LIMIT = 3;
 
 const clean = (value: string | null | undefined, max: number) => value?.trim().slice(0, max) || null;
 const firstName = (value: string) => value.trim().split(/\s+/)[0]?.slice(0, 60) || null;
+const getFinalCardPhotoCount = (
+  card: Parameters<typeof buildFinalCardViewModel>[0],
+  contributions: Parameters<typeof buildFinalCardViewModel>[1],
+  mediaAssets: Parameters<typeof buildFinalCardViewModel>[2]
+) => {
+  const model = buildFinalCardViewModel(card, contributions, mediaAssets);
+  return new Set([
+    ...model.messageMediaAssets.map((asset) => asset.id),
+    ...model.memoryMediaAssets.map((asset) => asset.id)
+  ]).size;
+};
 
 const validateInput = (input: PublicShareEditorInput) => {
   if (input.publicQualities.length > 5) throw new Error("Можно показать не более пяти качеств.");
@@ -139,10 +150,13 @@ export const getPublicSharePayload = async (token: string): Promise<PublicShareP
   const card = await getCardDraftById(share.cardId);
   if (!card) return null;
   const [photos, contributions, allMediaAssets] = await Promise.all([listPublicSharePhotos(share.id), listContributionsByCardId(card.id), listCardMediaAssetsByCardId(card.id)]);
+  // Paper exports should show the same total as the public card. Route keeps
+  // its established export counter unchanged while its layout remains frozen.
+  const photoCount = card.templateId === "paper-birthday" ? getFinalCardPhotoCount(card, contributions, allMediaAssets) : allMediaAssets.length;
   return {
     version: 1,
     share: { displayName: share.displayName, headlinePreset: share.headlinePreset, showOccasion: share.showOccasion, showGreetingCount: share.showGreetingCount, showPhotoCount: share.showPhotoCount },
-    card: { templateId: card.templateId, occasionText: share.showOccasion ? card.occasionText : null, fromLabel: card.fromLabel, greetingCount: share.showGreetingCount ? contributions.length : 0, photoCount: share.showPhotoCount ? allMediaAssets.length : 0 },
+    card: { templateId: card.templateId, occasionText: share.showOccasion ? card.occasionText : null, fromLabel: card.fromLabel, greetingCount: share.showGreetingCount ? contributions.length : 0, photoCount: share.showPhotoCount ? photoCount : 0 },
     summary: share.publicSummary, qualities: share.publicQualities.map((item) => item.text), phrases: share.publicPhrases.map((item) => item.text),
     photos: photos.map((photo) => ({ id: photo.id, url: `/share/${encodeURIComponent(token)}/photo/${photo.id}`, caption: photo.publicCaption }))
   };
@@ -174,11 +188,7 @@ export const getPublicSharePresentation = async (token: string) => {
     qualities: share.publicQualities.map((item) => item.text),
     quotes: share.publicPhrases.map((item) => item.text)
   });
-  const fullCardModel = buildFinalCardViewModel(card, contributions, mediaAssets);
-  const fullCardPhotoCount = new Set([
-    ...fullCardModel.messageMediaAssets.map((asset) => asset.id),
-    ...fullCardModel.memoryMediaAssets.map((asset) => asset.id)
-  ]).size;
+  const fullCardPhotoCount = getFinalCardPhotoCount(card, contributions, mediaAssets);
   const publicBlocks = baseModel.blocks.filter((block) => ["hero", "qualities", "quotes"].includes(block.id) || (block.id === "memories" && publicMediaAssets.length > 0));
   return {
     publicName: share.showPublicName ? share.displayName : null,
@@ -228,11 +238,7 @@ export const getPublicShareDraftPreviewPresentation = async (finalSlug: string) 
     qualities: share.publicQualities.map((item) => item.text),
     quotes: share.publicPhrases.map((item) => item.text)
   });
-  const fullCardModel = buildFinalCardViewModel(card, contributions, editor.mediaAssets);
-  const fullCardPhotoCount = new Set([
-    ...fullCardModel.messageMediaAssets.map((asset) => asset.id),
-    ...fullCardModel.memoryMediaAssets.map((asset) => asset.id)
-  ]).size;
+  const fullCardPhotoCount = getFinalCardPhotoCount(card, contributions, editor.mediaAssets);
   const publicBlocks = baseModel.blocks.filter((block) => ["hero", "qualities", "quotes"].includes(block.id) || (block.id === "memories" && publicMediaAssets.length > 0));
 
   return {
