@@ -9,153 +9,141 @@ export const runtime = "nodejs";
 
 const formats = {
   story: { width: 1080, height: 1920, phrases: 2, photos: 3 },
-  post: { width: 1080, height: 1350, phrases: 2, photos: 3 },
+  post: { width: 1080, height: 1350, phrases: 2, photos: 2 },
   print: { width: 1240, height: 1754, phrases: 3, photos: 3 }
 } as const;
 
 type Format = keyof typeof formats;
 type Payload = NonNullable<Awaited<ReturnType<typeof getPublicSharePayload>>>;
 
-const trim = (text: string, max: number) => {
-  if (text.length <= max) return text;
-  const cut = text.slice(0, max + 1).replace(/\s+\S*$/, "").trimEnd();
-  return `${cut || text.slice(0, max).trimEnd()}…`;
+// These are deliberately independent compositions, not a scale of /share.
+// Values are pixels in the raster canvas; print is rendered at 1240 × 1754.
+const layout = {
+  story: { pad: 28, gap: 10, hero: 405, qualities: 205, moments: 600, quotes: 270, footer: 280, occasion: 31, name: 84, body: 36, counter: 30, section: 50, quality: 32, momentsTitle: 58, momentsLead: 30, caption: 30, quote: 35, footerTitle: 40, footerBody: 27, logo: 190, tagline: 22, mainPhoto: 567, sidePhoto: 369 },
+  post: { pad: 24, gap: 8, hero: 200, qualities: 225, moments: 370, quotes: 155, footer: 250, occasion: 23, name: 54, body: 24, counter: 21, section: 39, quality: 27, momentsTitle: 45, momentsLead: 25, caption: 26, quote: 28, footerTitle: 32, footerBody: 21, logo: 160, tagline: 16, mainPhoto: 470, sidePhoto: 340 },
+  print: { pad: 38, gap: 8, hero: 310, qualities: 225, moments: 620, quotes: 210, footer: 250, occasion: 27, name: 58, body: 29, counter: 25, section: 43, quality: 25, momentsTitle: 54, momentsLead: 28, caption: 25, quote: 28, footerTitle: 34, footerBody: 22, logo: 168, tagline: 18, mainPhoto: 609, sidePhoto: 417 }
+} as const;
+
+const trim = (text: string | null | undefined, max: number) => {
+  const normalized = typeof text === "string" ? text.trim() : "";
+  if (normalized.length <= max) return normalized;
+  const cut = normalized.slice(0, max + 1).replace(/\s+\S*$/, "").trimEnd();
+  return `${cut || normalized.slice(0, max).trimEnd()}…`;
 };
 const asset = (origin: string, path: string) => new URL(path, origin).toString();
 const publicOrigin = (request: Request) => {
-  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (configuredUrl) return new URL(configuredUrl).origin;
-  return new URL(request.url).origin;
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  return typeof configured === "string" && configured.trim() ? new URL(configured).origin : new URL(request.url).origin;
 };
 const exportFonts = async () => Promise.all([
   readFile(join(process.cwd(), "public", "fonts", "Caveat-Cyrillic-600.woff")),
   readFile(join(process.cwd(), "public", "fonts", "PTSans-Cyrillic-400.woff"))
 ]);
 
-const paper = (origin: string, children: React.ReactNode, style: Record<string, unknown> = {}) => (
-  <div style={{ position: "relative", display: "flex", overflow: "hidden", ...style }}>
-    <img src={asset(origin, "/templates/scrapbook-clean/torn-paper-section1.png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
+type Theme = "paper" | "route";
+const themeAssets = {
+  paper: {
+    background: "/templates/scrapbook-clean/bg-paper-texture.png",
+    hero: "/templates/scrapbook-clean/torn-paper-section1.png",
+    section: "/templates/scrapbook-clean/torn-paper-section1.png",
+    polaroid: "/templates/scrapbook-clean/polaroid-frame-horizontal.png",
+    quote: ["/templates/scrapbook-clean/quote-card-pink-v2.png", "/templates/scrapbook-clean/quote-card-beige.png", "/templates/scrapbook-clean/quote-card-blue.png"],
+    footer: "/templates/scrapbook-clean/torn-paper-section1.png",
+    text: "#4d382f", muted: "#765f50", accent: "#c75e79", panelText: "#554035"
+  },
+  route: {
+    background: "/templates/route-adventure/bg-topographic.png",
+    hero: "/templates/route-adventure/hero-expedition.png",
+    section: "/templates/route-adventure/moments-field-panel.png",
+    polaroid: "/templates/route-adventure/polaroid-narrow-cream.png",
+    quote: ["/templates/route-adventure/quotes-gunmetal.png"],
+    footer: "/templates/route-adventure/closing-kraft-note.png",
+    text: "#f3e8d0", muted: "#cbbb9d", accent: "#d1a65e", panelText: "#f3e8d0"
+  }
+} as const;
+
+const Surface = ({ origin, image, children, style = {}, imageFit = "fill", imagePosition = "center" }: { origin: string; image: string; children: React.ReactNode; style?: Record<string, unknown>; imageFit?: "fill" | "cover"; imagePosition?: string }) => (
+  <div style={{ position: "relative", display: "flex", overflow: "hidden", width: "100%", boxSizing: "border-box", ...style }}>
+    <img src={asset(origin, image)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: imageFit, objectPosition: imagePosition }} />
     <div style={{ position: "relative", display: "flex", width: "100%" }}>{children}</div>
   </div>
 );
 
-const Polaroid = ({ photo, index, width, height, origin }: { photo: Payload["photos"][number]; index: number; width: number; height: number; origin: string }) => (
-  <div style={{ position: "relative", display: "flex", width, height, flexShrink: 0, transform: `rotate(${index === 1 ? 1.4 : index === 2 ? -1.1 : -1.8}deg)` }}>
-    <img src={photo.url} style={{ position: "absolute", left: "8.2%", top: "12.5%", width: "83.6%", height: "60.5%", objectFit: "cover", outline: "1px solid rgba(0,0,0,.1)" }} />
-    <img src={asset(origin, "/templates/scrapbook-clean/polaroid-frame-horizontal.png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
-    <div style={{ position: "absolute", left: "9%", right: "9%", bottom: "7%", height: "18.5%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", color: "#5d4436", fontFamily: "Caveat", fontSize: Math.max(15, Math.round(width * .064)), lineHeight: 1.04, textAlign: "center" }}>{trim(photo.caption, width >= 420 ? 66 : 48)}</div>
-  </div>
-);
-
-const PaperExportCard = ({ payload, format, origin }: { payload: Payload; format: Format; origin: string }) => {
-  const preset = formats[format];
-  const isStory = format === "story";
-  const isPrint = format === "print";
-  const photos = payload.photos.slice(0, preset.photos).map((photo) => ({ ...photo, url: new URL(photo.url, origin).toString() }));
-  const phrases = payload.phrases.slice(0, preset.phrases);
-  const headingSize = isStory ? 68 : isPrint ? 56 : 53;
-  const heroPhotoWidth = isStory ? 120 : isPrint ? 112 : 106;
-  const heroPadding = isStory ? "52px 52px 32px" : isPrint ? "62px 55px 46px" : "38px 44px 26px";
-  const largePhotoWidth = isStory ? 438 : isPrint ? 430 : 370;
-  const smallPhotoWidth = isStory ? 258 : isPrint ? 335 : 282;
-  const singlePhotoWidth = isStory ? 520 : isPrint ? 540 : 390;
-  const momentPhotoSize = (index: number) => {
-    const width = photos.length === 1 ? singlePhotoWidth : photos.length === 2 ? (isStory ? 430 : isPrint ? 475 : 430) : index === 0 ? largePhotoWidth : smallPhotoWidth;
-    return { width, height: Math.round(width * .75) };
-  };
-  const counterPhoto = payload.share.showPhotoCount && payload.card.photoCount > 0 ? `${payload.card.photoCount} фото в открытке` : null;
-  const counters = [payload.share.showGreetingCount ? `${payload.card.greetingCount} поздравлений` : null, counterPhoto].filter(Boolean);
-  const sectionGap = isStory ? 10 : isPrint ? 11 : 9;
-
-  return <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", padding: isStory ? 30 : isPrint ? 22 : 20, background: "#f6dfb9", color: "#453027", fontFamily: "PT Sans", position: "relative" }}>
-    <img src={asset(origin, "/templates/scrapbook-clean/bg-paper-texture.png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: .34 }} />
-    <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: sectionGap, width: "100%" }}>
-      {paper(origin, <div style={{ display: "flex", width: "100%", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: heroPadding, textAlign: "center" }}>
-        <div style={{ position: "absolute", display: "flex", left: 26, top: 26, padding: 7, background: "#fffdf6", boxShadow: "0 6px 10px rgba(70,44,28,.2)", transform: "rotate(-7deg)" }}><img src={asset(origin, "/templates/scrapbook-clean/top-polaroid-cake.png")} style={{ width: heroPhotoWidth, height: heroPhotoWidth * 1.18, objectFit: "cover" }} /></div>
-        <div style={{ position: "absolute", display: "flex", right: 26, top: 26, padding: 7, background: "#fffdf6", boxShadow: "0 6px 10px rgba(70,44,28,.2)", transform: "rotate(6deg)" }}><img src={asset(origin, "/templates/scrapbook-clean/top-polaroid-bouquet.png")} style={{ width: heroPhotoWidth, height: heroPhotoWidth * 1.18, objectFit: "cover" }} /></div>
-        {payload.share.showOccasion && payload.card.occasionText ? <div style={{ display: "flex", padding: "6px 13px", borderRadius: 10, background: "rgba(255,246,235,.78)", color: "#cd637b", fontSize: isStory ? 18 : 15, fontWeight: 700 }}>{payload.card.occasionText}</div> : null}
-        {payload.share.displayName ? <div style={{ display: "flex", maxWidth: isStory ? 530 : isPrint ? 640 : 560, marginTop: 12, color: "#c75e79", fontFamily: "Caveat", fontSize: headingSize, fontWeight: 600, lineHeight: .92, textAlign: "center" }}>{payload.share.displayName}</div> : null}
-        <div style={{ display: "flex", maxWidth: isStory ? 620 : 730, marginTop: 18, fontSize: isStory ? 28 : isPrint ? 21 : 24, lineHeight: 1.35, textAlign: "center" }}>Близкие люди собрали здесь тёплые слова, фотографии и приятные моменты.</div>
-        {counters.length ? <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10, marginTop: 8 }}>{counters.map((item) => <div key={item} style={{ display: "flex", padding: "8px 13px", borderRadius: 99, background: "rgba(255,255,255,.78)", boxShadow: "0 2px 5px rgba(75,45,28,.09)", color: "#714b3b", fontSize: isStory ? 15 : 14, fontWeight: 700 }}>{item}</div>)}</div> : null}
-      </div>, { minHeight: isStory ? 425 : isPrint ? 365 : 250 })}
-
-      {payload.qualities.length ? paper(origin, <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", padding: isStory ? "20px 20px 18px" : isPrint ? "26px 22px" : "18px 22px" }}>
-        <div style={{ display: "flex", fontFamily: "Caveat", fontWeight: 600, fontSize: isStory ? 43 : isPrint ? 37 : 32 }}>За что тебя ценят</div>
-        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: isStory ? 8 : 10, marginTop: isStory ? 12 : 15 }}>{payload.qualities.slice(0, 5).map((quality, index) => <div key={quality} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: isStory ? 392 : isPrint ? 174 : 164, minHeight: isStory ? 74 : isPrint ? 62 : 58, padding: "10px 18px", backgroundImage: `url(${asset(origin, ["/templates/scrapbook-clean/quality-card-pink.png", "/templates/scrapbook-clean/quality-card-green.png", "/templates/scrapbook-clean/quality-card-blue.png", "/templates/scrapbook-clean/quality-card-beige.png", "/templates/scrapbook-clean/quality-card-violet.png"][index])})`, backgroundSize: "100% 100%", color: "#554035", fontFamily: "Caveat", fontSize: isStory ? 29 : isPrint ? 21 : 18, lineHeight: 1.02, textAlign: "center", transform: `rotate(${index % 2 ? 1 : -1}deg)` }}>{quality}</div>)}</div>
-      </div>, { minHeight: isStory ? 180 : isPrint ? 160 : 122 }) : null}
-
-      {photos.length ? paper(origin, <div style={{ display: "flex", flexDirection: "column", width: "100%", padding: isStory ? "20px 18px 18px" : isPrint ? "27px 22px 24px" : "18px 22px 19px" }}>
-        {photos.length === 3 ? <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: isStory ? 12 : 14 }}>
-          {(() => { const main = momentPhotoSize(0); return <Polaroid photo={photos[0]} index={0} width={main.width} height={main.height} origin={origin} />; })()}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: isStory ? 9 : 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7, minHeight: isStory ? 68 : 58 }}><img src={asset(origin, "/templates/scrapbook-clean/camera.png")} style={{ width: isStory ? 38 : 33, height: isStory ? 38 : 33, objectFit: "contain", filter: "contrast(1.6) saturate(1.25)" }} /><div style={{ display: "flex", flexDirection: "column" }}><div style={{ display: "flex", fontFamily: "Caveat", fontWeight: 600, fontSize: isStory ? 40 : isPrint ? 35 : 30 }}>Моменты</div><div style={{ display: "flex", color: "#765f50", fontFamily: "Caveat", fontSize: isStory ? 21 : isPrint ? 18 : 17 }}>Фото, которые хочется сохранить</div></div></div>
-            <div style={{ display: "flex", gap: isStory ? 10 : 12 }}>{photos.slice(1).map((photo, index) => { const size = momentPhotoSize(index + 1); return <Polaroid key={photo.id} photo={photo} index={index + 1} width={size.width} height={size.height} origin={origin} />; })}</div>
-          </div>
-        </div> : <><div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}><img src={asset(origin, "/templates/scrapbook-clean/camera.png")} style={{ width: isStory ? 40 : 34, height: isStory ? 40 : 34, objectFit: "contain", filter: "contrast(1.6) saturate(1.25)" }} /><div style={{ display: "flex", flexDirection: "column" }}><div style={{ display: "flex", fontFamily: "Caveat", fontWeight: 600, fontSize: isStory ? 40 : isPrint ? 35 : 30 }}>Моменты</div><div style={{ display: "flex", color: "#765f50", fontFamily: "Caveat", fontSize: isStory ? 22 : isPrint ? 18 : 17 }}>Фото, которые хочется сохранить</div></div></div><div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: isStory ? 12 : 14, marginTop: isStory ? 12 : 14 }}>{photos.map((photo, index) => { const size = momentPhotoSize(index); return <Polaroid key={photo.id} photo={photo} index={index} width={size.width} height={size.height} origin={origin} />; })}</div></>}
-      </div>, { minHeight: photos.length === 3 ? (isStory ? 390 : isPrint ? 360 : 330) : (isStory ? 450 : isPrint ? 450 : 330) }) : null}
-
-      {phrases.length ? paper(origin, <div style={{ display: "flex", flexDirection: "column", width: "100%", padding: isStory ? "24px 28px" : isPrint ? "30px 24px" : "22px 24px" }}>
-        <div style={{ display: "flex", justifyContent: "center", fontFamily: "Caveat", fontWeight: 600, fontSize: isStory ? 42 : isPrint ? 35 : 30 }}>Особенно тёплые слова</div>
-        <div style={{ display: "flex", gap: 16, marginTop: isStory ? 14 : 16 }}>{phrases.map((phrase, index) => <div key={phrase} style={{ position: "relative", display: "flex", flex: 1, alignItems: "center", minHeight: isStory ? 165 : isPrint ? 154 : 126, padding: isStory ? "25px 54px 25px 78px" : isPrint ? "24px 42px 24px 60px" : "20px 42px 20px 58px", overflow: "hidden", backgroundImage: `url(${asset(origin, ["/templates/scrapbook-clean/quote-card-pink-v2.png", "/templates/scrapbook-clean/quote-card-beige.png", "/templates/scrapbook-clean/quote-card-blue.png"][index])})`, backgroundSize: "100% 100%", color: "#4d382f", fontSize: isStory ? 23 : isPrint ? 20 : 19, lineHeight: 1.28, transform: `rotate(${index ? 1 : -1}deg)` }}><span style={{ display: "flex", position: "absolute", left: "7%", top: "13%", color: "#d17182", fontFamily: "Caveat", fontSize: isStory ? 44 : 34 }}>“</span><span style={{ display: "flex", width: "100%", maxHeight: "100%", overflow: "hidden" }}>{trim(phrase, isStory ? 80 : isPrint ? 82 : 102)}</span></div>)}</div>
-      </div>, { minHeight: isStory ? 245 : isPrint ? 275 : 185 }) : null}
-
-      {paper(origin, <div style={{ display: "flex", width: "100%", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: isStory ? "23px 48px" : isPrint ? "31px 42px" : "19px 38px", textAlign: "center" }}>
-        <img src={asset(origin, "/templates/scrapbook-clean/footer-floral-cluster.png")} style={{ position: "absolute", right: 0, bottom: 0, width: isStory ? 145 : 124 }} />
-        <div style={{ display: "flex", maxWidth: 750, fontFamily: "Caveat", fontWeight: 600, fontSize: isStory ? 31 : isPrint ? 29 : 27 }}>В полной открытке — ещё больше тепла</div>
-        <div style={{ display: "flex", maxWidth: 760, marginTop: 5, color: "#695044", fontSize: isStory ? 16 : isPrint ? 20 : 14, lineHeight: 1.28 }}>Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для получателя.</div>
-        <img src={asset(origin, "/brand/email-logo.png")} style={{ width: isStory ? 166 : isPrint ? 154 : 144, height: isStory ? 37 : 35, objectFit: "contain", marginTop: 10 }} />
-        <div style={{ display: "flex", marginTop: 1, color: "#816658", fontSize: isStory ? 13 : isPrint ? 16 : 11 }}>Место, где слова становятся подарком</div>
-      </div>, { minHeight: isStory ? 176 : isPrint ? 200 : 126 })}
-    </div>
+const PhotoCard = ({ photo, index, width, theme, origin, captionSize }: { photo: Payload["photos"][number]; index: number; width: number; theme: Theme; origin: string; captionSize: number }) => {
+  const route = theme === "route";
+  const height = Math.round(width * (route ? .69 : .75));
+  const frame = themeAssets[theme].polaroid;
+  return <div style={{ position: "relative", display: "flex", width, height, flexShrink: 0, transform: `rotate(${index === 1 ? 1.2 : index === 2 ? -1.2 : -1.5}deg)`, boxShadow: "0 8px 16px rgba(0,0,0,.22)" }}>
+    {route ? <img src={asset(origin, frame)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
+    <img src={photo.url} style={{ position: "absolute", left: route ? "6%" : "8.2%", top: route ? "5.1%" : "12.5%", width: route ? "88%" : "83.6%", height: route ? "75.9%" : "60.5%", objectFit: "cover", outline: "1px solid rgba(0,0,0,.1)" }} />
+    {!route ? <img src={asset(origin, frame)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
+    {route ? <img src={asset(origin, "/templates/route-adventure/polaroid-narrow-cream-overlay.png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
+    <div style={{ position: "absolute", left: route ? "8%" : "9%", right: route ? "8%" : "9%", bottom: route ? "1.5%" : "5%", height: route ? "18%" : "22%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", color: "#3b2b1e", fontFamily: "Caveat", fontSize: route ? Math.min(captionSize, Math.round(width * .068)) : captionSize, fontWeight: 600, lineHeight: .96, textAlign: "center" }}>{trim(photo.caption, width >= 420 ? 62 : 44)}</div>
   </div>;
 };
 
-const RoutePhoto = ({ photo, index, width, origin }: { photo: Payload["photos"][number]; index: number; width: number; origin: string }) => {
-  const height = Math.round(width * .67);
-  return <div style={{ position: "relative", display: "flex", width, height, flexShrink: 0, boxSizing: "border-box", transform: `rotate(${index === 1 ? 1.2 : index === 2 ? -1.4 : -1.8}deg)`, boxShadow: "0 12px 20px rgba(0,0,0,.24)" }}>
-    <img src={asset(origin, "/templates/route-adventure/polaroid-narrow-cream.png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
-    <img src={photo.url} style={{ position: "absolute", left: "6%", top: "5.1%", width: "88%", height: "75.9%", objectFit: "cover", outline: "1px solid rgba(0,0,0,.1)" }} />
-    <img src={asset(origin, "/templates/route-adventure/polaroid-narrow-cream-overlay.png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
-    <div style={{ position: "absolute", left: "8%", width: "84%", bottom: "4%", height: "16%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", color: "#3b2b1e", fontFamily: "Caveat", fontSize: Math.max(14, Math.round(width * .055)), fontWeight: 600, lineHeight: 1.04, textAlign: "center" }}>{trim(photo.caption, width >= 400 ? 62 : 46)}</div>
-  </div>;
-};
+const CounterIcon = ({ kind, size }: { kind: "greetings" | "photos"; size: number }) => kind === "greetings" ? <div style={{ position: "relative", display: "flex", width: size, height: size, flexShrink: 0 }}>
+  <span style={{ position: "absolute", left: Math.round(size * .34), top: 0, width: Math.round(size * .32), height: Math.round(size * .32), boxSizing: "border-box", border: "2px solid #efbd67", borderRadius: 999 }} />
+  <span style={{ position: "absolute", left: Math.round(size * .12), bottom: 0, width: Math.round(size * .76), height: Math.round(size * .43), boxSizing: "border-box", border: "2px solid #efbd67", borderRadius: "10px 10px 5px 5px" }} />
+</div> : <div style={{ position: "relative", display: "flex", width: size, height: Math.round(size * .78), flexShrink: 0, boxSizing: "border-box", border: "2px solid #efbd67", borderRadius: 3 }}>
+  <span style={{ position: "absolute", left: Math.round(size * .2), bottom: Math.round(size * .13), width: Math.round(size * .5), height: Math.round(size * .28), boxSizing: "border-box", borderLeft: "2px solid #efbd67", borderTop: "2px solid #efbd67", transform: "skewY(-28deg)" }} />
+  <span style={{ position: "absolute", right: Math.round(size * .13), top: Math.round(size * .13), width: 4, height: 4, background: "#efbd67", borderRadius: 999 }} />
+</div>;
 
-const RouteRivet = ({ side }: { side: "left" | "right" }) => (
-  <div style={{ position: "absolute", top: 18, [side]: 20, zIndex: 2, width: 10, height: 10, border: "1px solid rgba(255,225,159,.5)", borderRadius: "50%", background: "radial-gradient(circle at 35% 30%,#f0cf83 0 14%,#8f6734 48%,#3e2a16 100%)", boxShadow: "0 1px 2px rgba(0,0,0,.45)" }} />
-);
-
-const RouteExportCard = ({ payload, format, origin }: { payload: Payload; format: Format; origin: string }) => {
-  const preset = formats[format];
-  const isStory = format === "story";
-  const isPrint = format === "print";
-  const photos = payload.photos.slice(0, preset.photos).map((photo) => ({ ...photo, url: new URL(photo.url, origin).toString() }));
-  const phrases = payload.phrases.slice(0, preset.phrases);
+const ExportCard = ({ payload, format, origin }: { payload: Payload; format: Format; origin: string }) => {
+  const p = layout[format];
+  const theme: Theme = payload.card.templateId === "route-adventure" ? "route" : "paper";
+  const a = themeAssets[theme];
+  const photos = payload.photos.slice(0, formats[format].photos).map((photo) => ({ ...photo, url: new URL(photo.url, origin).toString() }));
+  const phrases = payload.phrases.slice(0, formats[format].phrases);
   const counters = [payload.share.showGreetingCount ? `${payload.card.greetingCount} поздравлений` : null, payload.share.showPhotoCount && payload.card.photoCount > 0 ? `${payload.card.photoCount} фото в открытке` : null].filter(Boolean);
-  const panel = (children: React.ReactNode, surface: string, style: Record<string, unknown> = {}) => { const isHeroSurface = surface === "/templates/route-adventure/hero-expedition.png"; return <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: isHeroSurface ? "center" : "stretch", width: "100%", boxSizing: "border-box", overflow: "hidden", ...(isHeroSurface ? { backgroundImage: `url(${asset(origin, surface)})`, backgroundSize: !isStory ? "cover" : "100% 100%", backgroundPosition: "center" } : {}), ...style }}>{!isHeroSurface ? <img src={asset(origin, surface)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill" }} /> : null}{children}</div>; };
-  const largeWidth = isStory ? 430 : isPrint ? 430 : 365;
-  const smallWidth = isStory ? 245 : isPrint ? 325 : 275;
-  const pairWidth = isStory ? 420 : isPrint ? 470 : 410;
+  const panelStyle = theme === "route" ? { border: "1px solid rgba(184,137,71,.58)", borderRadius: 15, boxShadow: "0 10px 22px rgba(0,0,0,.2)" } : {};
+  const titleStyle = { display: "flex", justifyContent: "center", fontFamily: theme === "paper" ? "Caveat" : "PT Sans", fontSize: p.section, fontWeight: 700, color: a.text, textAlign: "center" as const };
 
-  return <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", padding: isStory ? 30 : isPrint ? 24 : 20, gap: isStory ? 12 : 10, overflow: "hidden", background: "#10251b", color: "#f3e8d0", fontFamily: "PT Sans" }}>
-    <img src={asset(origin, "/templates/route-adventure/bg-topographic.png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: .88 }} />
-    <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: isStory ? 12 : 10, width: "100%", height: "100%" }}>
-      {panel(<><img src={asset(origin, "/templates/route-adventure/compass-medallion.png")} style={{ position: "absolute", left: isStory ? 22 : 18, top: 18, width: isStory ? 96 : 78, height: isStory ? 96 : 78, objectFit: "contain", opacity: .9 }} /><img src={asset(origin, "/templates/route-adventure/expedition-stamp.png")} style={{ position: "absolute", right: isStory ? 24 : 20, top: 19, width: isStory ? 105 : 84, objectFit: "contain", opacity: .92 }} /><div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: isStory ? "62px 130px 34px" : isPrint ? "50px 112px 30px" : "38px 98px 24px", textAlign: "center" }}>{payload.share.showOccasion && payload.card.occasionText ? <div style={{ display: "flex", color: "#d1a65e", fontSize: isStory ? 18 : 15, fontWeight: 700, letterSpacing: .4 }}>{payload.card.occasionText}</div> : null}{payload.share.displayName ? <div style={{ display: "flex", marginTop: 8, color: "#f3e8d0", fontSize: isStory ? 56 : isPrint ? 46 : 43, fontWeight: 700, lineHeight: .95, textAlign: "center" }}>{payload.share.displayName}</div> : null}<div style={{ display: "flex", maxWidth: isStory ? 650 : 760, marginTop: 16, color: "#cbbb9d", fontSize: isStory ? 26 : isPrint ? 20 : 22, lineHeight: 1.32 }}>Близкие люди собрали здесь тёплые слова, фотографии и приятные моменты.</div>{counters.length ? <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 9, marginTop: 13 }}>{counters.map((item) => <div key={item} style={{ display: "flex", padding: "7px 12px", borderRadius: 3, background: "rgba(14,23,20,.72)", boxShadow: "inset 0 0 0 1px rgba(209,166,94,.55)", color: "#f3e8d0", fontSize: isStory ? 15 : 14 }}>{item}</div>)}</div> : null}</div></>, "/templates/route-adventure/hero-expedition.png", { minHeight: isStory ? 355 : isPrint ? 292 : 235 })}
+  const momentHeading = <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}><div style={{ ...titleStyle, fontSize: p.momentsTitle }}>Моменты</div><div style={{ display: "flex", color: a.muted, fontFamily: "Caveat", fontSize: p.momentsLead, marginTop: -4 }}>Фото, которыми хочется поделиться</div></div>;
+  const moments = photos.length === 3 && format !== "post" ? <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%" }}>
+    <div style={{ display: "flex", alignSelf: "flex-start", ...(format === "story" ? { position: "absolute", left: 48, top: 80, zIndex: 1 } : { position: "absolute", left: 42, top: 60, zIndex: 1 }) }}>{momentHeading}</div>
+    <div style={{ display: "flex", alignItems: format === "story" ? "flex-start" : "flex-end", justifyContent: "center", gap: format === "story" || format === "print" ? 8 : 18, marginTop: format === "story" ? 100 : 40, width: "100%", ...(format === "story" ? { transform: "translateX(25px)" } : format === "print" ? { transform: "translateX(22px)" } : {}) }}>
+      <div style={{ display: "flex", paddingTop: format === "print" ? 0 : format === "story" ? 128 : 10, ...(format === "print" ? { transform: "translateX(-67px)" } : {}) }}><PhotoCard photo={photos[0]} index={0} width={p.mainPhoto} theme={theme} origin={origin} captionSize={p.caption} /></div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{photos.slice(1).map((photo, index) => <PhotoCard key={photo.id} photo={photo} index={index + 1} width={p.sidePhoto} theme={theme} origin={origin} captionSize={p.caption} />)}</div>
+    </div>
+  </div> : photos.length === 2 && format === "post" ? <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 24, width: "100%" }}>
+    <PhotoCard photo={photos[0]} index={0} width={p.mainPhoto} theme={theme} origin={origin} captionSize={p.caption} />
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>{momentHeading}<PhotoCard photo={photos[1]} index={1} width={p.sidePhoto} theme={theme} origin={origin} captionSize={p.caption} /></div>
+  </div> : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%" }}>
+    <div style={{ ...titleStyle, fontSize: p.momentsTitle }}>Моменты</div><div style={{ display: "flex", color: a.muted, fontFamily: "Caveat", fontSize: p.momentsLead, marginTop: -4 }}>Фото, которыми хочется поделиться</div>
+    <div style={{ display: "flex", justifyContent: "center", gap: 18, marginTop: 12 }}>{photos.map((photo, index) => <PhotoCard key={photo.id} photo={photo} index={index} width={photos.length === 1 ? p.mainPhoto + 115 : p.mainPhoto} theme={theme} origin={origin} captionSize={p.caption} />)}</div>
+  </div>;
 
-      {payload.qualities.length ? panel(<div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", padding: isStory ? "22px 22px 20px" : isPrint ? "22px" : "17px 20px" }}><RouteRivet side="left" /><RouteRivet side="right" /><div style={{ display: "flex", color: "#f3e8d0", fontSize: isStory ? 40 : isPrint ? 34 : 30, fontWeight: 700 }}>За что тебя ценят</div><div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: isStory ? 9 : 10, marginTop: 13 }}>{payload.qualities.slice(0, 5).map((quality) => <div key={quality} style={{ display: "flex", alignItems: "center", justifyContent: "center", ...(isStory ? { width: 392 } : { minWidth: isPrint ? 155 : 145 }), minHeight: isStory ? 55 : 48, padding: "8px 15px", border: "1px solid rgba(209,166,94,.52)", borderRadius: 8, background: "linear-gradient(135deg,#674225,#3f281a)", boxShadow: "inset 0 1px 0 rgba(255,244,210,.1)", color: "#f3e8d0", fontSize: isStory ? 19 : isPrint ? 16 : 15, fontWeight: 700, textAlign: "center" }}>{quality}</div>)}</div></div>, "/templates/route-adventure/qualities-walnut-wood.png", { minHeight: isStory ? 195 : isPrint ? 140 : 120, border: "1px solid rgba(184,137,71,.62)", borderRadius: 16, boxShadow: "0 14px 26px rgba(0,0,0,.2)" }) : null}
+  return <div style={{ position: "relative", display: "flex", width: "100%", height: "100%", overflow: "hidden", boxSizing: "border-box", padding: format === "print" ? "34px 38px 52px" : p.pad, background: theme === "route" ? "#0d1714" : "#f6dfb9", color: a.text, fontFamily: "PT Sans" }}>
+    <img src={asset(origin, a.background)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: theme === "route" ? .16 : .34 }} />
+    <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: p.gap, width: "100%" }}>
+      <Surface origin={origin} image={a.hero} imageFit={theme === "route" && format === "post" ? "cover" : "fill"} imagePosition={format === "post" ? "center top" : "center"} style={{ minHeight: p.hero }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", padding: theme === "route" ? format === "post" ? "8px 110px 6px" : "38px 120px 28px" : "42px 70px 26px", textAlign: "center" }}>
+          {payload.share.showOccasion && payload.card.occasionText ? <div style={{ display: "flex", color: a.accent, fontSize: p.occasion, fontWeight: 700 }}>{payload.card.occasionText}</div> : null}
+          {payload.share.displayName ? <div style={{ display: "flex", justifyContent: "center", maxWidth: "100%", marginTop: 9, color: a.text, fontFamily: theme === "paper" ? "Caveat" : "PT Sans", fontSize: p.name, fontWeight: 700, lineHeight: .96, textAlign: "center" }}>{trim(payload.share.displayName, 46)}</div> : null}
+          <div style={{ display: "flex", maxWidth: 800, marginTop: 14, color: a.muted, fontSize: p.body, lineHeight: 1.23 }}>Близкие люди собрали здесь тёплые слова, фотографии и приятные моменты.</div>
+          {counters.length ? <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 12, marginTop: 13 }}>{counters.map((item, index) => <div key={item} style={{ display: "flex", alignItems: "center", gap: 9, padding: "10px 18px", background: "linear-gradient(135deg,#8a592d,#5b351d)", border: "1px solid rgba(225,181,100,.72)", borderRadius: 999, boxShadow: "inset 0 1px 0 rgba(255,239,196,.2), 0 3px 8px rgba(0,0,0,.2)", color: "#fff1d0", fontSize: p.counter, fontWeight: 700 }}><CounterIcon kind={index === 0 ? "greetings" : "photos"} size={Math.round(p.counter * .8)} />{item}</div>)}</div> : null}
+        </div>
+      </Surface>
 
-      {photos.length ? panel(<div style={{ display: "flex", flexDirection: "column", padding: isStory ? "20px 17px 18px" : isPrint ? "24px 20px" : "18px 20px" }}>{photos.length === 3 ? <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: isStory ? 12 : 14 }}><RoutePhoto photo={photos[0]} index={0} width={largeWidth} origin={origin} /><div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}><div style={{ display: "flex", alignItems: "center", gap: 9 }}><img src={asset(origin, "/templates/route-adventure/compass-medallion.png")} style={{ width: isStory ? 34 : 28, height: isStory ? 34 : 28, objectFit: "contain" }} /><div style={{ display: "flex", flexDirection: "column" }}><div style={{ display: "flex", color: "#f3e8d0", fontSize: isStory ? 38 : isPrint ? 33 : 29, fontWeight: 700 }}>Моменты</div><div style={{ display: "flex", color: "#cbbb9d", fontFamily: "Caveat", fontSize: isStory ? 20 : 17 }}>Фото, которыми хочется поделиться</div></div></div><div style={{ display: "flex", gap: isStory ? 10 : 12 }}>{photos.slice(1).map((photo, index) => <RoutePhoto key={photo.id} photo={photo} index={index + 1} width={smallWidth} origin={origin} />)}</div></div></div> : <><div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9 }}><img src={asset(origin, "/templates/route-adventure/compass-medallion.png")} style={{ width: isStory ? 34 : 28, height: isStory ? 34 : 28, objectFit: "contain" }} /><div style={{ display: "flex", flexDirection: "column" }}><div style={{ display: "flex", color: "#f3e8d0", fontSize: isStory ? 38 : isPrint ? 33 : 29, fontWeight: 700 }}>Моменты</div><div style={{ display: "flex", color: "#cbbb9d", fontFamily: "Caveat", fontSize: isStory ? 20 : 17 }}>Фото, которыми хочется поделиться</div></div></div><div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginTop: 13 }}>{photos.map((photo, index) => <RoutePhoto key={photo.id} photo={photo} index={index} width={photos.length === 1 ? largeWidth + 50 : pairWidth} origin={origin} />)}</div></>}</div>, "/templates/route-adventure/moments-field-panel.png", { minHeight: photos.length === 3 ? (isStory ? 390 : isPrint ? 360 : 320) : (isStory ? 420 : isPrint ? 410 : 300) }) : null}
+      {payload.qualities.length ? <Surface origin={origin} image={theme === "route" ? "/templates/route-adventure/qualities-walnut-wood.png" : a.section} style={{ minHeight: p.qualities, ...panelStyle }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", padding: "14px 22px" }}>
+          <div style={titleStyle}>За что тебя ценят</div>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 9, marginTop: 10 }}>
+            {payload.qualities.slice(0, 5).map((quality, index) => <div key={quality} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: format === "story" ? 430 : format === "post" ? 450 : 520, minHeight: format === "post" ? 42 : 50, padding: "7px 14px", boxSizing: "border-box", background: theme === "route" ? "linear-gradient(135deg,#674225,#3f281a)" : `url(${asset(origin, a.quote[index % a.quote.length])}) center / 100% 100%`, ...(theme === "route" ? { border: "1px solid rgba(209,166,94,.52)", borderRadius: 8 } : {}), color: a.panelText, fontSize: p.quality, fontWeight: 700, lineHeight: 1.04, textAlign: "center" }}>{trim(quality, 28)}</div>)}
+          </div>
+        </div>
+      </Surface> : null}
 
-      {phrases.length ? <div style={{ display: "flex", flexDirection: "column", width: "100%", padding: isStory ? "8px 26px" : isPrint ? "10px 24px" : "8px 22px", boxSizing: "border-box" }}><div style={{ display: "flex", justifyContent: "center", color: "#f3e8d0", fontSize: isStory ? 39 : isPrint ? 33 : 29, fontWeight: 700 }}>Особенно тёплые слова</div><div style={{ display: "flex", gap: 14, marginTop: 13 }}>{phrases.map((phrase) => <div key={phrase} style={{ position: "relative", display: "flex", flex: 1, alignItems: "center", minHeight: isStory ? 145 : isPrint ? 138 : 116, padding: isStory ? "23px 38px" : isPrint ? "22px 34px" : "18px 30px", border: "1px solid #b88947", borderRadius: 16, background: `radial-gradient(circle at 45% 35%,rgba(255,236,200,.1),transparent 55%),linear-gradient(180deg,rgba(75,74,69,.92),rgba(41,44,43,.96)),url(${asset(origin, "/templates/route-adventure/quotes-gunmetal.png")}) center / 100% 100% no-repeat`, boxShadow: "0 14px 24px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.18)", color: "#f3e8d0", fontSize: isStory ? 20 : isPrint ? 19 : 17, fontWeight: 700, lineHeight: 1.28, textAlign: "center", textShadow: "0 1px 2px rgba(0,0,0,.7)" }}><span style={{ position: "absolute", top: "8%", left: "8%", color: "#d1a65e", fontFamily: "Caveat", fontSize: isStory ? 40 : 32 }}>“</span><span style={{ display: "flex", width: "100%", maxHeight: "100%", overflow: "hidden" }}>{trim(phrase, isStory ? 80 : isPrint ? 82 : 92)}</span></div>)}</div></div> : null}
+      {photos.length ? <Surface origin={origin} image={theme === "route" ? a.section : a.section} style={{ minHeight: p.moments, ...panelStyle }}><div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: format === "story" || format === "print" ? "0 14px" : "16px 14px", boxSizing: "border-box" }}>{moments}</div></Surface> : null}
 
-      {panel(<div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: isStory ? "22px 46px" : isPrint ? "27px 42px" : "18px 34px", textAlign: "center" }}><div style={{ display: "flex", color: "#392719", fontFamily: "Caveat", fontSize: isStory ? 29 : isPrint ? 27 : 25, fontWeight: 600 }}>В полной открытке — ещё больше тепла</div><div style={{ display: "flex", marginTop: 5, color: "#5d4734", fontSize: isStory ? 16 : isPrint ? 19 : 14, lineHeight: 1.28 }}>Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для получателя.</div><img src={asset(origin, "/brand/email-logo.png")} style={{ width: isStory ? 160 : 145, height: 34, objectFit: "contain", marginTop: 10 }} /></div>, "/templates/route-adventure/closing-kraft-note.png", { minHeight: isStory ? 155 : isPrint ? 175 : 118 })}
+      {phrases.length ? <div style={{ display: "flex", flexDirection: "column", width: "100%" }}><div style={titleStyle}>Особенно тёплые слова</div><div style={{ display: "flex", gap: 14, marginTop: 10 }}>{phrases.map((phrase, index) => <div key={phrase} style={{ position: "relative", display: "flex", flex: 1, alignItems: "center", minHeight: p.quotes - 62, padding: "22px 40px", boxSizing: "border-box", overflow: "hidden", background: theme === "route" ? `linear-gradient(180deg,rgba(75,74,69,.94),rgba(41,44,43,.98)),url(${asset(origin, a.quote[0])}) center / 100% 100%` : `url(${asset(origin, a.quote[index % a.quote.length])}) center / 100% 100%`, ...(theme === "route" ? { border: "1px solid #b88947", borderRadius: 16 } : {}), color: a.text, fontSize: p.quote, fontWeight: 700, lineHeight: 1.2, textAlign: "center" }}><span style={{ position: "absolute", left: "7%", top: "9%", color: a.accent, fontFamily: "Caveat", fontSize: p.quote + 15 }}>“</span><span style={{ display: "flex", maxHeight: "3.6em", overflow: "hidden" }}>{trim(phrase, format === "print" ? 118 : 92)}</span></div>)}</div></div> : null}
+
+      <Surface origin={origin} image={a.footer} style={{ minHeight: p.footer, marginBottom: format === "story" ? 12 : format === "print" ? 6 : 0 }}><div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", padding: format === "story" ? "18px 52px 24px" : "16px 52px 22px", boxSizing: "border-box", textAlign: "center" }}><div style={{ display: "flex", color: theme === "route" ? "#392719" : a.text, fontFamily: "Caveat", fontSize: p.footerTitle, fontWeight: 600 }}>В полной открытке — ещё больше тепла</div><div style={{ display: "flex", maxWidth: 850, marginTop: 5, color: theme === "route" ? "#5d4734" : a.muted, fontSize: p.footerBody, lineHeight: 1.2 }}>Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для получателя.</div><img src={asset(origin, "/brand/email-logo.png")} style={{ width: p.logo, height: Math.round(p.logo * .23), objectFit: "contain", marginTop: 8 }} /><div style={{ display: "flex", marginTop: 3, color: theme === "route" ? "#5d4734" : a.muted, fontSize: p.tagline }}>Место, где слова становятся подарком</div></div></Surface>
     </div>
   </div>;
 };
-
-const ExportCard = ({ payload, format, origin }: { payload: Payload; format: Format; origin: string }) =>
-  payload.card.templateId === "route-adventure"
-    ? <RouteExportCard payload={payload} format={format} origin={origin} />
-    : <PaperExportCard payload={payload} format={format} origin={origin} />;
 
 const makePdf = (jpeg: Buffer, width: number, height: number) => {
   const content = Buffer.from("q\n595.28 0 0 841.89 0 0 cm\n/Im0 Do\nQ\n");
@@ -182,10 +170,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   const selectedFormat = format as Format;
   const { width, height } = formats[selectedFormat];
   const [caveat, ptSans] = await exportFonts();
-  const image = new ImageResponse(<ExportCard payload={payload} format={selectedFormat} origin={publicOrigin(request)} />, { width, height, fonts: [
-    { name: "Caveat", data: caveat, weight: 600, style: "normal" },
-    { name: "PT Sans", data: ptSans, weight: 400, style: "normal" }
-  ] });
+  const image = new ImageResponse(<ExportCard payload={payload} format={selectedFormat} origin={publicOrigin(request)} />, { width, height, fonts: [{ name: "Caveat", data: caveat, weight: 600, style: "normal" }, { name: "PT Sans", data: ptSans, weight: 400, style: "normal" }] });
   const png = Buffer.from(await image.arrayBuffer());
   const preview = new URL(request.url).searchParams.get("preview") === "1";
   if (selectedFormat !== "print" || preview) return new Response(new Uint8Array(await sharp(png).flatten({ background: "#f6dfb9" }).png().toBuffer()), { headers: { "Content-Type": "image/png", "Cache-Control": "no-store" } });
