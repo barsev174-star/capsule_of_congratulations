@@ -9,14 +9,14 @@ describe("DesignPhotoSummary", () => {
         assignedCount={2}
         requiredCount={3}
         context="messages"
-        href="/manage/token?tab=content&focus=congratulations-photos"
+        href="/manage/token?tab=photos&focus=congratulations-photos"
       />
     );
 
     expect(screen.getByText("Выбрано 2 из 3")).toBeInTheDocument();
     expect(screen.getByText(/назначить ещё одну фотографию/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Назначить фотографии" }))
-      .toHaveAttribute("href", "/manage/token?tab=content&focus=congratulations-photos");
+      .toHaveAttribute("href", "/manage/token?tab=photos&focus=congratulations-photos");
     expect(container.querySelector("select")).toBeNull();
     expect(container.querySelector("img")).toBeNull();
     expect(screen.queryByText(/доступно/i)).toBeNull();
@@ -37,12 +37,12 @@ describe("DesignPhotoSummary", () => {
         assignedCount={3}
         requiredCount={3}
         context="memories"
-        href="/manage/token?tab=content&focus=moments-photos"
+        href="/manage/token?tab=photos&focus=moments-photos"
       />
     );
 
     expect(screen.getByText("Выбрано 3 из 3")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Изменить фотографии" }))
-      .toHaveAttribute("href", "/manage/token?tab=content&focus=moments-photos");
+      .toHaveAttribute("href", "/manage/token?tab=photos&focus=moments-photos");
   });
 });

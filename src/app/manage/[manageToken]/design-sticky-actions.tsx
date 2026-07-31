@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { deliverCardAction, openCollectionAction } from "./actions";
 import { ShareLinkButton } from "./copy-link-button";
+import { useMobileInputActivity } from "./use-mobile-input-activity";
 import styles from "./manage-page.module.css";
 
 type PrimaryAction =
@@ -21,6 +22,7 @@ export const DesignStickyActions = ({
   primaryAction
 }: Props) => {
   const [basicsState, setBasicsState] = useState({ isDirty: false, isPending: false });
+  const isInputActive = useMobileInputActivity();
 
   useEffect(() => {
     const handleState = (event: Event) => {
@@ -76,7 +78,12 @@ export const DesignStickyActions = ({
   );
 
   return (
-    <div className={styles.designStickyActions}>
+    <div
+      className={`${styles.designStickyActions} ${
+        isInputActive ? styles.mobileStickySuppressed : ""
+      }`}
+      aria-hidden={isInputActive}
+    >
       <div className={styles.designStickyActionsInner}>
         <div className={styles.designSaveSummary} role="status" aria-live="polite">
           <span aria-hidden="true">{basicsState.isDirty ? "•" : "✓"}</span>

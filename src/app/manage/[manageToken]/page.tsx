@@ -19,7 +19,7 @@ import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { BasicsSettingsForm } from "./basics-settings-form";
 import { BlockSettingsForm } from "./block-settings-form";
 import { ContentStudio } from "./content-studio";
-import { CopyLinkButton, ShareLinkButton } from "./copy-link-button";
+import { CopyLinkButton } from "./copy-link-button";
 import { TemplateSummary } from "./template-summary";
 import styles from "./manage-page.module.css";
 import { getAiCardInsight, getAiUsageSummary } from "@/lib/ai/repository";
@@ -41,8 +41,14 @@ import { buildCardBlockReadiness, buildOrganizerJourney } from "@/lib/manage/car
 import { ManageMobileMenu } from "./manage-mobile-menu";
 import { DesignStickyActions } from "./design-sticky-actions";
 import { DesignRail } from "./design-rail";
-import { CloseCollectionButton } from "./close-collection-button";
-import { isContentFocus } from "./content-focus";
+import {
+  isContentFocus,
+  resolveEditorTab,
+  type EditorTab
+} from "./content-focus";
+import { EditorSidebarCard } from "./editor-sidebar-card";
+import { ParticipantLinkCard } from "./participant-link-card";
+import { PreparationProgress } from "./preparation-progress";
 
 type Props = {
   params: Promise<{
@@ -51,24 +57,65 @@ type Props = {
   searchParams: Promise<{
     tab?: string;
     focus?: string;
+    section?: string;
   }>;
 };
 
 const tabItems = [
-  { id: "design", label: "Оформление", mobileLabel: "Оформление" },
-  { id: "content", label: "Поздравления и фото", mobileLabel: "Поздравления" },
+  { id: "design", label: "Оформление", mobileLabel: "Открытка" },
+  { id: "congratulations", label: "Поздравления", mobileLabel: "Поздравления" },
+  { id: "photos", label: "Фотографии", mobileLabel: "Фото" },
   { id: "gift", label: "Выбор подарка", mobileLabel: "Подарок" }
-] as const;
+] as const satisfies ReadonlyArray<{
+  id: EditorTab;
+  label: string;
+  mobileLabel: string;
+}>;
 
-type ManageTab = (typeof tabItems)[number]["id"];
+const EditorTabIcon = ({ tab }: { tab: EditorTab }) => {
+  if (tab === "design") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+        <path d="M7 8.5h10M7 12h6M7 15.5h8" />
+      </svg>
+    );
+  }
+
+  if (tab === "congratulations") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 5.5h16v11H9l-4.5 3v-3H4z" />
+        <path d="M8 10.2c1.1-1.4 2.7-.7 3.2.3.5-1 2.1-1.7 3.2-.3 1.3 1.7-1.2 3.3-3.2 4.5-2-1.2-4.5-2.8-3.2-4.5Z" />
+      </svg>
+    );
+  }
+
+  if (tab === "photos") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+        <circle cx="9" cy="9.5" r="1.5" />
+        <path d="m5.5 17 4.3-4.2 2.8 2.4 2.5-2.6 3.4 4.4" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3.5 10.5h17v10h-17zM2.5 6.5h19v4h-19zM12 6.5v14" />
+      <path d="M7.2 6.5C4.4 6.5 4 3.2 6 2.7c1.8-.5 4 1.5 6 3.8-2 .1-3.6 0-4.8 0ZM16.8 6.5c2.8 0 3.2-3.3 1.2-3.8-1.8-.5-4 1.5-6 3.8 2 .1 3.6 0 4.8 0Z" />
+    </svg>
+  );
+};
 
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
 
 export default async function ManagePage({ params, searchParams }: Props) {
   const { manageToken } = await params;
-  const { tab, focus } = await searchParams;
-  const activeTab: ManageTab = tabItems.some((item) => item.id === tab) ? (tab as ManageTab) : "design";
+  const { tab, focus, section } = await searchParams;
   const contentFocus = isContentFocus(focus) ? focus : null;
+  const activeTab = resolveEditorTab({ tab, section, focus: contentFocus });
   const [card, lifecycle] = await Promise.all([getCardDraftByManageToken(manageToken), getCardLifecycleByManageToken(manageToken)]);
 
   if (!card || !lifecycle) {
@@ -76,17 +123,17 @@ export default async function ManagePage({ params, searchParams }: Props) {
   }
 
   const isDesignTab = activeTab === "design";
-  const isContentTab = activeTab === "content";
+  const isMaterialTab = activeTab === "congratulations" || activeTab === "photos";
   const isGiftTab = activeTab === "gift";
   const [allContributions, cardTemplates, visibleContributions, mediaAssets, mediaAssignments, aiUsage, quotesInsight, qualitiesInsight, giftPoll] = await Promise.all([
-    isContentTab ? listAllContributionsByCardId(card.id) : Promise.resolve([]),
-    isDesignTab || isContentTab ? getCardTemplates() : Promise.resolve([]),
+    listAllContributionsByCardId(card.id),
+    isDesignTab ? getCardTemplates() : Promise.resolve([]),
     listContributionsByCardId(card.id),
-    isContentTab ? listCardMediaAssetsByCardId(card.id) : Promise.resolve([]),
+    listCardMediaAssetsByCardId(card.id),
     isDesignTab ? listCardMediaAssetAssignmentsByCardId(card.id) : Promise.resolve([]),
-    isDesignTab ? getAiUsageSummary(card.id) : Promise.resolve({ used: 0, limit: 0, remaining: 0 }),
-    isDesignTab ? getAiCardInsight(card.id, "quotes") : Promise.resolve(null),
-    isDesignTab ? getAiCardInsight(card.id, "qualities") : Promise.resolve(null),
+    isDesignTab || isMaterialTab ? getAiUsageSummary(card.id) : Promise.resolve({ used: 0, limit: 0, remaining: 0 }),
+    isDesignTab || isMaterialTab ? getAiCardInsight(card.id, "quotes") : Promise.resolve(null),
+    isDesignTab || isMaterialTab ? getAiCardInsight(card.id, "qualities") : Promise.resolve(null),
     isGiftTab ? getGiftPollForManage(card.id) : Promise.resolve(null)
   ]);
   const hasValidGeneratedQuotes = Boolean(
@@ -109,7 +156,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
   );
   const qualitiesAreStale = Boolean(qualitiesInsight && qualitiesInsight.sourceFingerprint !== contributionFingerprint);
   const aiContent = { quotes: generatedQuotes, qualities: generatedQualities };
-  const model = isContentTab ? buildFinalCardViewModel(card, visibleContributions, mediaAssets, aiContent) : null;
+  const model = isMaterialTab ? buildFinalCardViewModel(card, visibleContributions, mediaAssets, aiContent) : null;
   const style = isTemplateId(card.templateId) ? card.templateId : "warm-classic";
   const selectedTemplate = cardTemplates.find((template) => template.id === card.templateId) ?? cardTemplates[0];
   const layoutMode = card.finalMessageSettings?.layoutMode ?? "grid-2";
@@ -149,7 +196,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const mainGreetingContribution = visibleContributions.find((contribution) => contribution.id === mainGreetingContributionId);
   const mainGreetingStatusText = mainGreetingContribution
     ? `Выбрано поздравление от ${mainGreetingContribution.authorName}. В открытке оно будет показано как «Самые важные слова».`
-    : "Главное поздравление пока не выбрано. Откройте вкладку «Поздравления и фото» и отметьте одно активное поздравление.";
+    : "Главное поздравление пока не выбрано. Откройте вкладку «Поздравления» и отметьте одно активное поздравление.";
 
   const blockMeta: Record<FinalCardOptionalBlockId, { label: string; description: string }> = {
     summary: {
@@ -187,8 +234,6 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const recipientName = card.recipientName.trim() || "нового получателя";
   const fromLabel = card.fromLabel.trim() || "группы";
   const occasionText = card.occasionText.trim() || "повод не указан";
-  const previewMessages = visibleContributions.slice(0, 1);
-  const previewMessage = previewMessages[0];
   const participantLink = getJoinUrl(card.publicSlug);
   const lifecycleLabel = getCardLifecycleLabel(lifecycle);
   const giftAccessible = isGiftAccessible(lifecycle);
@@ -212,23 +257,13 @@ export default async function ManagePage({ params, searchParams }: Props) {
     visibleContributionCount: visibleContributions.length
   });
   const resolveDesignActionHref = (action: { kind: "anchor" | "tab"; target: string }) => {
-    if (action.kind === "tab") return `${getManagePath(manageToken)}?tab=${action.target}`;
+    if (action.kind === "tab") {
+      const target = action.target === "content" ? "congratulations" : action.target;
+      return `${getManagePath(manageToken)}?tab=${target}`;
+    }
     if (action.target === "preview") return getPreviewPath(manageToken);
     return `#${action.target}`;
   };
-  const mobileJourneySteps = lifecycle.collectionStatus === "DRAFT"
-    ? [
-        { label: "Основа", status: organizerJourney.steps[0].status },
-        { label: "Оформление", status: organizerJourney.steps[1].status },
-        { label: "Состав", status: organizerJourney.steps[4].status },
-        { label: "Запуск", status: organizerJourney.steps[2].status }
-      ]
-    : [
-        { label: "Основа", status: organizerJourney.steps[0].status },
-        { label: "Сбор", status: organizerJourney.steps[2].status },
-        { label: "Поздравления", status: organizerJourney.steps[3].status },
-        { label: "Настройка", status: organizerJourney.steps[4].status }
-      ];
   const primaryPreviewHref = giftAccessible
     ? getGiftPath(card.finalSlug)
     : getPreviewPath(manageToken);
@@ -264,35 +299,6 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 : resolveDesignActionHref(organizerJourney.nextAction),
             external: organizerJourney.nextAction.target === "preview"
           };
-  const currentJourneyStep =
-    organizerJourney.steps.find((step) => step.status === "CURRENT") ??
-    organizerJourney.steps[organizerJourney.steps.length - 1];
-  const mobileProgressTitle =
-    lifecycle.deliveryStatus === "DELIVERED"
-      ? "Открытка передана"
-      : lifecycle.collectionStatus === "OPEN"
-        ? "Сбор открыт"
-        : organizerJourney.allBlocksReady
-          ? "Подготовка завершена"
-          : "Подготовка открытки";
-  const mobileProgressStatus =
-    lifecycle.collectionStatus === "OPEN"
-      ? visibleContributions.length === 0
-        ? "Следующий шаг — пригласить участников"
-        : `Следующий шаг — ${currentJourneyStep.label.toLowerCase()}`
-      : lifecycle.collectionStatus === "DRAFT" && collectionReady
-        ? "Можно открыть сбор"
-        : `${mobileJourneySteps.filter((step) => step.status === "COMPLETED").length} из ${mobileJourneySteps.length} готово`;
-  const mobileProgressMessage =
-    lifecycle.collectionStatus === "DRAFT"
-      ? collectionReady
-        ? "Откройте сбор, чтобы получить ссылку для участников."
-        : `Для открытия сбора завершите шаг: ${organizerJourney.nextAction.label.toLowerCase()}.`
-      : organizerJourney.allBlocksReady
-        ? "Оформление готово. Проверьте открытку перед оплатой и передачей."
-        : visibleContributions.length === 0
-          ? "Отправьте ссылку участникам и дождитесь первых поздравлений."
-          : "Материалы появились. Завершите настройки отмеченных блоков.";
   const journeyActionLinks =
     lifecycle.collectionStatus === "OPEN" && organizerJourney.currentStepId === "materials"
       ? organizerJourney.remainingActions
@@ -315,6 +321,23 @@ export default async function ManagePage({ params, searchParams }: Props) {
       : lifecycle.collectionStatus === "CLOSED"
         ? "Сбор закрыт"
         : "Черновик";
+  const firstIncompleteBlock = blockReadiness.find(
+    (block) =>
+      block.enabled &&
+      (block.status === "ACTION_REQUIRED" || block.status === "WAITING_FOR_CONTENT")
+  );
+  const contentStickyAction = firstIncompleteBlock
+    ? {
+        label: "Продолжить настройку",
+        href: `${getManagePath(manageToken)}?tab=design#block-${firstIncompleteBlock.blockId}`
+      }
+    : {
+        label: organizerJourney.nextAction.label,
+        href:
+          organizerJourney.nextAction.target === "preview"
+            ? primaryPreviewHref
+            : resolveDesignActionHref(organizerJourney.nextAction)
+      };
 
   return (
     <main className={styles.page}>
@@ -336,8 +359,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
               <span className={styles.managerLifecycleDesktop}>{lifecycleLabel}</span>
               <span className={styles.managerLifecycleMobile}>{mobileLifecycleLabel}</span>
               <span className={styles.managerFromChip}>{fromLabel}</span>
-              <span>{visibleContributions.length} поздравлений</span>
-              <span>{isDesignTab ? mediaAssignments.length : mediaAssets.length} фото</span>
+              <span className={styles.managerCountChip}>{allContributions.length} поздравлений</span>
+              <span className={styles.managerCountChip}>{mediaAssets.length} фото</span>
               <span className={styles.aiChip}>AI: осталось {aiLimitRemaining} из {aiLimitTotal}</span>
             </div>
           </div>
@@ -363,41 +386,42 @@ export default async function ManagePage({ params, searchParams }: Props) {
         </header>
 
         <nav className={styles.tabBar} aria-label="Разделы управления открыткой">
-          {tabItems.map((item) => (
-            <Link
-              key={item.id}
-              href={`${getManagePath(manageToken)}?tab=${item.id}`}
-              className={`${styles.tabLink} ${activeTab === item.id ? styles.tabLinkActive : ""}`}
-              aria-current={activeTab === item.id ? "page" : undefined}
-              aria-label={item.label}
-            >
-              <span className={styles.tabLabelDesktop}>{item.label}</span>
-              <span className={styles.tabLabelMobile}>{item.mobileLabel}</span>
-            </Link>
-          ))}
+          {tabItems.map((item) => {
+            const count =
+              item.id === "congratulations"
+                ? allContributions.length
+                : item.id === "photos"
+                  ? mediaAssets.length
+                  : null;
+            const ariaLabel = count === null ? item.label : `${item.label}, ${count}`;
+
+            return (
+              <Link
+                key={item.id}
+                href={`${getManagePath(manageToken)}?tab=${item.id}`}
+                className={`${styles.tabLink} ${activeTab === item.id ? styles.tabLinkActive : ""}`}
+                aria-current={activeTab === item.id ? "page" : undefined}
+                aria-label={ariaLabel}
+              >
+                <span className={styles.tabLabelDesktop}>{item.label}</span>
+                <span className={styles.tabLabelMobile} aria-hidden="true">
+                  <span className={styles.tabMobileIconWrap}>
+                    <EditorTabIcon tab={item.id} />
+                    {count === null ? null : (
+                      <span className={styles.tabMobileBadge}>{count}</span>
+                    )}
+                  </span>
+                  <span className={styles.tabMobileText}>{item.mobileLabel}</span>
+                </span>
+              </Link>
+            );
+          })}
         </nav>
 
         {activeTab === "design" ? (
           <>
-          <section className={styles.mobileProgressCard} aria-label="Подготовка открытки">
-            <div className={styles.mobileProgressHeader}>
-              <div>
-                <strong>{mobileProgressTitle}</strong>
-                <span>{mobileProgressStatus}</span>
-              </div>
-            </div>
-            <ol className={styles.mobileProgressSteps}>
-              {mobileJourneySteps.map((step, index) => (
-                <li key={step.label} data-status={step.status}>
-                  <span>{step.status === "COMPLETED" ? "✓" : index + 1}</span>
-                  <small>{step.label}</small>
-                </li>
-              ))}
-            </ol>
-            <p className={styles.mobileProgressHint}>{mobileProgressMessage}</p>
-          </section>
-          <div className={styles.designStudio}>
-            <div className={styles.designMain}>
+          <div className={`${styles.editorWorkspace} ${styles.designStudio}`}>
+            <div className={`${styles.editorMain} ${styles.designMain}`}>
 
               <section className={`${styles.panel} ${styles.basicsSection}`} id="basics-section">
                 <div className={styles.sectionStepHeader}>
@@ -463,14 +487,13 @@ export default async function ManagePage({ params, searchParams }: Props) {
               steps={organizerJourney.steps}
               completedCount={organizerJourney.completedCount}
               lifecycleLabel={lifecycleLabel}
-              giftAccessible={giftAccessible}
+              persistenceKey={`card-preparation:${manageToken}`}
               actionLinks={journeyActionLinks}
-              hasMobileOperations={
-                lifecycle.collectionStatus !== "DRAFT" ||
-                lifecycle.deliveryStatus === "DELIVERED"
-              }
               templateCard={
-                <section className={`${styles.sidebarCard} ${styles.templateSection}`} id="template-section">
+                <EditorSidebarCard
+                  className={`${styles.sidebarCard} ${styles.templateSection}`}
+                  id="template-section"
+                >
                   <div className={styles.sidebarCardHeader}>
                     <div>
                       <h2>Шаблон открытки</h2>
@@ -483,11 +506,11 @@ export default async function ManagePage({ params, searchParams }: Props) {
                     templates={cardTemplates}
                     initialTemplateId={selectedTemplate.id}
                   />
-                </section>
+                </EditorSidebarCard>
               }
             >
                 {lifecycle.deliveryStatus === "DELIVERED" ? (
-                  <div className={styles.statusContent}>
+                  <EditorSidebarCard className={`${styles.lifecycleSidebarCard} ${styles.statusContent}`}>
                     <div className={styles.statusCopy}>
                       <h3>{giftAccessible ? "Финальная ссылка" : "Доступ получателя приостановлен"}</h3>
                       <p>{giftAccessible ? "Финальная версия уже неизменяема. Её можно открыть или отправить ссылку получателю." : "Передача уже была выполнена, но доступ по финальной ссылке сейчас отключён."}</p>
@@ -495,9 +518,9 @@ export default async function ManagePage({ params, searchParams }: Props) {
                     {giftAccessible ? <div className={styles.statusActions}>
                       <CopyLinkButton value={getGiftPath(card.finalSlug)} label="Скопировать ссылку" cardId={card.id} telemetrySource="gift" className={styles.statusSecondaryAction} />
                     </div> : null}
-                  </div>
+                  </EditorSidebarCard>
                 ) : lifecycle.collectionStatus === "DRAFT" ? (
-                  !collectionReady ? <div className={styles.statusContent}>
+                  !collectionReady ? <EditorSidebarCard className={`${styles.lifecycleSidebarCard} ${styles.statusContent}`}>
                     <div className={styles.statusCopy}>
                       <h3>Что осталось заполнить</h3>
                       <ul className={styles.lifecycleMissingList}>
@@ -507,37 +530,17 @@ export default async function ManagePage({ params, searchParams }: Props) {
                         {!card.templateId ? <li>Шаблон открытки</li> : null}
                       </ul>
                     </div>
-                  </div>
+                  </EditorSidebarCard>
                   : null
                 ) : lifecycle.collectionStatus === "OPEN" ? (
-                  <div className={`${styles.statusContent} ${styles.participantLinkPanel}`}>
-                    <div className={styles.statusCopy}>
-                      <h3>Ссылка для участников</h3>
-                      <p>{visibleContributions.length === 0 ? "Сбор открыт. Отправьте приглашение участникам и дождитесь первых поздравлений." : `Получено поздравлений: ${visibleContributions.length}.`}</p>
-                    </div>
-                    <div className={styles.statusActions}>
-                    <div className={styles.lifecycleShareActions}>
-                      <ShareLinkButton value={participantLink} className={`${styles.statusPrimaryAction} ${styles.lifecycleShareDesktop}`} />
-                      <CopyLinkButton value={participantLink} cardId={card.id} telemetrySource="participant" copiedLabel="Ссылка скопирована" className={styles.statusSecondaryAction} />
-                    </div>
-                    <div className={styles.lifecycleCollectionControl}>
-                      <strong>Управление сбором</strong>
-                      <CloseCollectionButton manageToken={manageToken} />
-                    </div>
-                    {lifecycle.paymentStatus === "PAID" || lifecycle.hasAdminAccess ? <div className={styles.paymentStatePanel}>
-                      <strong>{lifecycle.hasAdminAccess ? "✓ Доступ предоставлен" : "✓ Оплата подтверждена"}</strong>
-                      <span>{lifecycle.hasAdminAccess ? "Платные возможности открыты. Сбор поздравлений продолжается." : "Платные возможности открыты. Лимит ИИ: 30 обращений на открытку. Сбор поздравлений продолжается."}</span>
-                    </div> : <details className={styles.lifecycleAdditionalActions}>
-                      <summary>Дополнительные действия</summary>
-                      <div>
-                        <span>Оплата не закроет сбор и не передаст открытку получателю.</span>
-                        <PaymentCheckoutButton manageToken={manageToken} className={styles.statusTertiaryAction} containerClassName={styles.paymentCheckout} fieldClassName={styles.paymentEmailField} consentClassName={styles.paymentConsent} messageClassName={styles.paymentMessage} collapsible revealLabel="Перейти к оплате заранее" />
-                      </div>
-                    </details>}
-                    </div>
-                  </div>
+                  <ParticipantLinkCard
+                    manageToken={manageToken}
+                    participantLink={participantLink}
+                    contributionCount={visibleContributions.length}
+                    lifecycle={lifecycle}
+                  />
                 ) : lifecycle.paymentStatus === "PAID" || lifecycle.hasAdminAccess ? (
-                  <div className={styles.statusContent}>
+                  <EditorSidebarCard className={`${styles.lifecycleSidebarCard} ${styles.statusContent}`}>
                     <div className={styles.statusCopy}>
                       <h3>Передача получателю</h3>
                       <p>Проверьте финальную версию. После передачи содержимое и настройки открытки станут неизменяемыми.</p>
@@ -546,9 +549,9 @@ export default async function ManagePage({ params, searchParams }: Props) {
                     <div className={styles.statusActions}>
                       <form action={openCollectionAction}><input type="hidden" name="manageToken" value={manageToken} /><button type="submit" className={styles.statusSecondaryAction}>Открыть сбор снова</button></form>
                     </div>
-                  </div>
+                  </EditorSidebarCard>
                 ) : (
-                  <div className={`${styles.statusContent} ${styles.statusContentStacked}`}>
+                  <EditorSidebarCard className={`${styles.lifecycleSidebarCard} ${styles.statusContent} ${styles.statusContentStacked}`}>
                     <div className={styles.statusCopy}>
                       <h3>Оплата и передача</h3>
                       <p>Проверьте поздравления, фотографии и оформление. Для передачи открытки получателю нужна подтверждённая оплата.</p>
@@ -559,7 +562,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                       <PaymentCheckoutButton manageToken={manageToken} className={styles.statusPrimaryAction} containerClassName={styles.paymentCheckout} fieldClassName={styles.paymentEmailField} consentClassName={styles.paymentConsent} messageClassName={styles.paymentMessage} />
                       <form action={openCollectionAction}><input type="hidden" name="manageToken" value={manageToken} /><button type="submit" className={styles.statusSecondaryAction}>Открыть сбор снова</button></form>
                     </div>
-                  </div>
+                  </EditorSidebarCard>
                 )}
             </DesignRail>
           </div>
@@ -569,8 +572,50 @@ export default async function ManagePage({ params, searchParams }: Props) {
           />
           </>
         ) : activeTab === "gift" ? (
-          <div className={styles.giftPollTabShell}>
-            <GiftPollSettingsForm manageToken={manageToken} recipientName={card.recipientName} publicSlug={card.publicSlug} poll={giftPoll} eligibleVoterCount={eligibleGiftPollVoterCount} collectionIsOpen={lifecycle.collectionStatus === "OPEN"} />
+          <div className={`${styles.editorWorkspace} ${styles.giftEditorWorkspace}`}>
+            <div className={`${styles.editorMain} ${styles.giftPollTabShell}`}>
+              <GiftPollSettingsForm
+                manageToken={manageToken}
+                recipientName={card.recipientName}
+                publicSlug={card.publicSlug}
+                poll={giftPoll}
+                eligibleVoterCount={eligibleGiftPollVoterCount}
+                collectionIsOpen={lifecycle.collectionStatus === "OPEN"}
+              />
+            </div>
+            <aside
+              className={`${styles.editorSidebar} ${styles.giftContextRail}`}
+              aria-label="Панель выбора подарка"
+            >
+              <PreparationProgress
+                steps={organizerJourney.steps}
+                completedCount={organizerJourney.completedCount}
+                lifecycleLabel={lifecycleLabel}
+                persistenceKey={`card-preparation:${manageToken}`}
+              />
+              <EditorSidebarCard className={styles.giftStateCard}>
+                <div className={styles.editorSidebarCardHeading}>
+                  <h2>Состояние подарка</h2>
+                  <p>
+                    {!giftPoll
+                      ? "Выбор подарка пока не настроен."
+                      : giftPoll.status === "open"
+                        ? `Голосование открыто · голосов: ${giftPoll.totalVotes}`
+                        : giftPoll.status === "closed"
+                          ? "Голосование завершено."
+                          : "Настройки сохранены в черновике."}
+                  </p>
+                </div>
+              </EditorSidebarCard>
+              {lifecycle.collectionStatus === "OPEN" ? (
+                <ParticipantLinkCard
+                  manageToken={manageToken}
+                  participantLink={participantLink}
+                  contributionCount={visibleContributions.length}
+                  lifecycle={lifecycle}
+                />
+              ) : null}
+            </aside>
           </div>
         ) : (
           <ContentStudio
@@ -584,15 +629,19 @@ export default async function ManagePage({ params, searchParams }: Props) {
             memoryAssignedCount={model?.memoryMediaAssets.length ?? 0}
             memoryRequiredCount={memoryPhotoCount}
             messageLimit={layoutProfile.maxChars}
-            recipientName={recipientName}
             occasionText={occasionText}
-            fromLabel={fromLabel}
-            publicSlug={card.publicSlug}
-            templateAccent={selectedTemplate.accent}
-            previewMessage={previewMessage}
             cardId={card.id}
             mainGreetingContributionId={mainGreetingContributionId}
             focus={contentFocus}
+            section={activeTab}
+            journeySteps={organizerJourney.steps}
+            journeyCompletedCount={organizerJourney.completedCount}
+            lifecycle={lifecycle}
+            lifecycleLabel={lifecycleLabel}
+            participantLink={participantLink}
+            collectionReady={collectionReady}
+            giftAccessible={giftAccessible}
+            stickyAction={contentStickyAction}
             greetingMode={process.env.AI_GREETING_MODE === "ladder" ? "ladder" : process.env.AI_GREETING_MODE === "matrix" ? "matrix" : "classic"}
           />
         )}

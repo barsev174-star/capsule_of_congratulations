@@ -660,12 +660,12 @@ export const MediaManager = ({
 
         <div className={styles.mediaAssignmentSummary} aria-label="Размещение фотографий">
           <section id="congratulations-photos" className={styles.mediaFocusTarget}>
-            <h3 data-focus-heading>Фотографии поздравлений</h3>
-            <span>Выбрано {messageAssignedCount} из {messageRequiredCount}</span>
+            <h3 data-focus-heading>Для поздравлений</h3>
+            <span>{messageAssignedCount} из {messageRequiredCount}</span>
           </section>
           <section id="moments-photos" className={styles.mediaFocusTarget}>
-            <h3 data-focus-heading>Моменты</h3>
-            <span>Выбрано {memoryAssignedCount} из {memoryRequiredCount}</span>
+            <h3 data-focus-heading>Для моментов</h3>
+            <span>{memoryAssignedCount} из {memoryRequiredCount}</span>
           </section>
           <span>Всего фотографий: {mediaAssets.length}</span>
         </div>

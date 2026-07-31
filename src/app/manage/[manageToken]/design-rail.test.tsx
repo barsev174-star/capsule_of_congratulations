@@ -1,6 +1,6 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import type { OrganizerJourneyStep } from "@/lib/manage/card-design-readiness";
 import { DesignRail } from "./design-rail";
 
@@ -14,6 +14,10 @@ const steps: OrganizerJourneyStep[] = [
 ];
 
 describe("DesignRail", () => {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+  });
+
   it("shows a compact preparation summary and expands to all stages", async () => {
     const user = userEvent.setup();
     render(
@@ -21,7 +25,7 @@ describe("DesignRail", () => {
         steps={steps}
         completedCount={2}
         lifecycleLabel="Черновик"
-        giftAccessible={false}
+        persistenceKey="preparation-test"
         templateCard={<section aria-label="Шаблон">Шаблон</section>}
       />
     );
@@ -32,7 +36,11 @@ describe("DesignRail", () => {
     expect(screen.getByText("2 из 6 этапов завершено")).toBeInTheDocument();
     expect(screen.getByText("Сейчас")).toBeInTheDocument();
     expect(screen.getByText("Дальше")).toBeInTheDocument();
-    expect(screen.getByText(/Ещё 2 этапа/)).toBeInTheDocument();
+    const preparation = screen.getByRole("region", { name: "Подготовка открытки" });
+    const template = screen.getByRole("region", { name: "Шаблон" });
+    expect(
+      preparation.compareDocumentPosition(template) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).not.toBe(0);
 
     const toggle = screen.getByRole("button", { name: "Показать все этапы" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
@@ -40,11 +48,36 @@ describe("DesignRail", () => {
 
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(toggle).toHaveTextContent("Свернуть этапы");
-    const fullJourney = document.getElementById("card-preparation-details");
+    const fullJourney = document.getElementById(toggle.getAttribute("aria-controls") ?? "");
     expect(fullJourney).not.toBeNull();
     expect(within(fullJourney!).getAllByRole("listitem")).toHaveLength(6);
 
     await user.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("restores the expanded state during the current browser session", async () => {
+    const user = userEvent.setup();
+    const renderRail = () =>
+      render(
+        <DesignRail
+          steps={steps}
+          completedCount={2}
+          lifecycleLabel="Черновик"
+          persistenceKey="preparation-session-test"
+          templateCard={<section aria-label="Шаблон">Шаблон</section>}
+        />
+      );
+
+    const firstRender = renderRail();
+    await user.click(screen.getByRole("button", { name: "Показать все этапы" }));
+    expect(window.sessionStorage.getItem("preparation-session-test")).toBe("expanded");
+    firstRender.unmount();
+
+    renderRail();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Свернуть этапы" }))
+        .toHaveAttribute("aria-expanded", "true");
+    });
   });
 });

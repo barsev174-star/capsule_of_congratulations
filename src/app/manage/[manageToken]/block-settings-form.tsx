@@ -191,6 +191,17 @@ const blockMeta: Record<
   }
 };
 
+const allFinalCardBlockIds: FinalCardBlockId[] = [
+  "hero",
+  "summary",
+  "qualities",
+  "messages",
+  "memories",
+  "quotes",
+  "ai-summary",
+  "closing"
+];
+
 const fixedBlockIds: FinalCardBlockId[] = ["hero", "closing"];
 
 const buildRequiredCanvasBlock = (blockId: FinalCardBlockId): RenderedBlock => ({
@@ -929,6 +940,28 @@ export const BlockSettingsForm = ({
       document.getElementById(`block-${blockId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
+
+  useEffect(() => {
+    const blockId = window.location.hash.replace("#block-", "") as FinalCardBlockId;
+    if (!allFinalCardBlockIds.includes(blockId)) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      setExpandedBlocks((current) =>
+        window.matchMedia("(max-width: 899px)").matches
+          ? { [blockId]: true }
+          : { ...current, [blockId]: true }
+      );
+
+      window.requestAnimationFrame(() => {
+        document.getElementById(`block-${blockId}`)?.scrollIntoView({
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+          block: "start"
+        });
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   const toggleBlock = (blockId: FinalCardBlockId, nextValue: boolean) => {
     setBlockState((current) => ({

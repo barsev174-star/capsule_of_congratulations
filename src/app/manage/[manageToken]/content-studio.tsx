@@ -1,21 +1,48 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useActionState, useCallback, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties, type DragEvent as ReactDragEvent } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type DragEvent as ReactDragEvent
+} from "react";
 import { useRouter } from "next/navigation";
+import type { CardLifecycle } from "@/lib/cards/lifecycle";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
-import { getManagePath, getPreviewPath } from "@/lib/routes/card-links";
+import type { OrganizerJourneyStep } from "@/lib/manage/card-design-readiness";
 import { AiHelper } from "@/app/card/[publicSlug]/ai-helper";
 import { ContributionEditor } from "./contribution-editor";
 import { MediaManager } from "./media-manager";
+import { ShareLinkButton } from "./copy-link-button";
+import { EditorSidebarCard } from "./editor-sidebar-card";
+import { ParticipantLinkCard } from "./participant-link-card";
+import { PreparationProgress } from "./preparation-progress";
+import { useMobileInputActivity } from "./use-mobile-input-activity";
 import {
   addManualContributionAction,
+  openCollectionAction,
   reorderContributionsAction,
   setContributionStatusAction,
   setMainGreetingAction
 } from "./actions";
-import { contentFocusSectionIds, type ContentFocus } from "./content-focus";
+import {
+  contentFocusSectionIds,
+  type ContentFocus,
+  type ContentSection
+} from "./content-focus";
+import {
+  canReorderContributions,
+  filterContributions,
+  normalizeContributionSearch,
+  type ContributionFilter
+} from "./content-studio-model";
 import styles from "./manage-page.module.css";
 
 type Props = {
@@ -28,15 +55,25 @@ type Props = {
   memoryAssignedCount: number;
   memoryRequiredCount: number;
   messageLimit: number;
-  recipientName: string;
   occasionText: string;
-  fromLabel: string;
-  publicSlug: string;
-  templateAccent: string;
-  previewMessage?: Contribution;
   cardId: string;
   mainGreetingContributionId: string | null;
   focus: ContentFocus | null;
+  section: ContentSection;
+  journeySteps: OrganizerJourneyStep[];
+  journeyCompletedCount: number;
+  lifecycle: Pick<
+    CardLifecycle,
+    "collectionStatus" | "deliveryStatus" | "paymentStatus" | "hasAdminAccess"
+  >;
+  lifecycleLabel: string;
+  participantLink: string;
+  collectionReady: boolean;
+  giftAccessible: boolean;
+  stickyAction: {
+    label: string;
+    href: string;
+  };
   greetingMode?: "classic" | "matrix" | "ladder";
 };
 
@@ -45,14 +82,179 @@ type DropTarget = {
   position: "before" | "after";
 };
 
-type ContributionFilter = "all" | "active" | "hidden" | "too-long" | "no-role";
-
 const initialState = {
   ok: false,
   message: ""
 };
 
 const MAIN_GREETING_MESSAGE_LIMIT = 500;
+
+const ContentLifecycleCard = ({
+  manageToken,
+  contributionCount,
+  lifecycle,
+  participantLink,
+  collectionReady,
+  giftAccessible,
+  stickyAction
+}: {
+  manageToken: string;
+  contributionCount: number;
+  lifecycle: Pick<
+    CardLifecycle,
+    "collectionStatus" | "deliveryStatus" | "paymentStatus" | "hasAdminAccess"
+  >;
+  participantLink: string;
+  collectionReady: boolean;
+  giftAccessible: boolean;
+  stickyAction: { label: string; href: string };
+}) => {
+  const isDelivered = lifecycle.deliveryStatus === "DELIVERED";
+
+  if (lifecycle.collectionStatus === "OPEN" && !isDelivered) {
+    return (
+      <ParticipantLinkCard
+        manageToken={manageToken}
+        participantLink={participantLink}
+        contributionCount={contributionCount}
+        lifecycle={lifecycle}
+      />
+    );
+  }
+
+  return (
+    <EditorSidebarCard className={styles.contentParticipantCard}>
+      <div className={styles.editorSidebarCardHeading}>
+        <div>
+          <h2>{isDelivered ? "Открытка передана" : "Ссылка для участников"}</h2>
+          <p>
+            {isDelivered
+              ? giftAccessible
+                ? "Финальная открытка доступна получателю."
+                : "Доступ по финальной ссылке сейчас приостановлен."
+              : `Получено поздравлений: ${contributionCount}`}
+          </p>
+        </div>
+      </div>
+
+      {isDelivered ? (
+        <Link href={stickyAction.href} className={styles.contentContextPrimaryButton}>
+          Посмотреть открытку
+        </Link>
+      ) : lifecycle.collectionStatus === "CLOSED" ? (
+        <div className={styles.contentParticipantActions}>
+          <p>Сбор закрыт. При необходимости его можно снова открыть для участников.</p>
+          <form action={openCollectionAction}>
+            <input type="hidden" name="manageToken" value={manageToken} />
+            <button type="submit" className={styles.contentContextPrimaryButton}>
+              Открыть сбор снова
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div className={styles.contentParticipantActions}>
+          <p>
+            {collectionReady
+              ? "Откройте сбор, чтобы получить активную ссылку для участников."
+              : "Сначала заполните обязательные поля открытки во вкладке «Оформление»."}
+          </p>
+          {collectionReady ? (
+            <form action={openCollectionAction}>
+              <input type="hidden" name="manageToken" value={manageToken} />
+              <button type="submit" className={styles.contentContextPrimaryButton}>
+                Открыть сбор
+              </button>
+            </form>
+          ) : (
+            <Link href={stickyAction.href} className={styles.contentContextPrimaryButton}>
+              Продолжить настройку
+            </Link>
+          )}
+        </div>
+      )}
+
+      {lifecycle.hasAdminAccess ? (
+        <div className={styles.contentAccessGranted}>
+          <span aria-hidden="true">✓</span>
+          <div>
+            <strong>Доступ предоставлен</strong>
+            <p>Платные возможности открытки открыты. Сбор поздравлений продолжается.</p>
+          </div>
+        </div>
+      ) : null}
+    </EditorSidebarCard>
+  );
+};
+
+const ContentStickyAction = ({
+  manageToken,
+  contributionCount,
+  lifecycle,
+  participantLink,
+  collectionReady,
+  stickyAction
+}: {
+  manageToken: string;
+  contributionCount: number;
+  lifecycle: Pick<CardLifecycle, "collectionStatus" | "deliveryStatus">;
+  participantLink: string;
+  collectionReady: boolean;
+  stickyAction: { label: string; href: string };
+}) => {
+  const isInputActive = useMobileInputActivity();
+  let action;
+
+  if (lifecycle.deliveryStatus === "DELIVERED") {
+    action = (
+      <Link href={stickyAction.href} className={styles.contentStickyPrimary}>
+        Посмотреть открытку
+      </Link>
+    );
+  } else if (lifecycle.collectionStatus === "DRAFT" && collectionReady) {
+    action = (
+      <form action={openCollectionAction}>
+        <input type="hidden" name="manageToken" value={manageToken} />
+        <button type="submit" className={styles.contentStickyPrimary}>
+          Открыть сбор
+        </button>
+      </form>
+    );
+  } else if (lifecycle.collectionStatus === "OPEN" && contributionCount === 0) {
+    action = (
+      <ShareLinkButton
+        value={participantLink}
+        label="Поделиться ссылкой"
+        className={styles.contentStickyPrimary}
+      />
+    );
+  } else if (lifecycle.collectionStatus === "CLOSED") {
+    action = (
+      <form action={openCollectionAction}>
+        <input type="hidden" name="manageToken" value={manageToken} />
+        <button type="submit" className={styles.contentStickyPrimary}>
+          Открыть сбор снова
+        </button>
+      </form>
+    );
+  } else {
+    action = (
+      <Link href={stickyAction.href} className={styles.contentStickyPrimary}>
+        {stickyAction.label}
+      </Link>
+    );
+  }
+
+  return (
+    <div
+      className={`${styles.contentStickyAction} ${
+        isInputActive ? styles.mobileStickySuppressed : ""
+      }`}
+      aria-hidden={isInputActive}
+    >
+      {action}
+    </div>
+  );
+};
 
 export const ContentStudio = ({
   manageToken,
@@ -64,15 +266,19 @@ export const ContentStudio = ({
   memoryAssignedCount,
   memoryRequiredCount,
   messageLimit,
-  recipientName,
   occasionText,
-  fromLabel,
-  publicSlug,
-  templateAccent,
-  previewMessage,
   cardId,
   mainGreetingContributionId,
   focus,
+  section,
+  journeySteps,
+  journeyCompletedCount,
+  lifecycle,
+  lifecycleLabel,
+  participantLink,
+  collectionReady,
+  giftAccessible,
+  stickyAction,
   greetingMode = "classic"
 }: Props) => {
   const router = useRouter();
@@ -83,11 +289,13 @@ export const ContentStudio = ({
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [expandedContributionIds, setExpandedContributionIds] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<ContributionFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isManualFormOpen, setIsManualFormOpen] = useState(false);
   const [manualMessage, setManualMessage] = useState("");
   const [manualAiGenerationIds, setManualAiGenerationIds] = useState<string[]>([]);
   const [isAiHelpOpen, setIsAiHelpOpen] = useState(false);
-  const [isTipsOpen, setIsTipsOpen] = useState(false);
+  const [highlightedContributionId, setHighlightedContributionId] = useState<string | null>(null);
+  const highlightTimerRef = useRef<number | null>(null);
   const [savedContributionOrderKey, setSavedContributionOrderKey] = useState(
     allContributions.map((contribution) => contribution.id).join(":")
   );
@@ -103,10 +311,20 @@ export const ContentStudio = ({
   );
 
   const tooLongCount = allContributions.filter((contribution) => getRecommendedOverflow(contribution) > 0).length;
-  const withinLimitCount = allContributions.length - tooLongCount;
   const hiddenCount = allContributions.filter((contribution) => contribution.status === "hidden").length;
   const activeCount = allContributions.filter((contribution) => contribution.status === "visible").length;
   const noRoleCount = allContributions.filter((contribution) => !contribution.authorRole?.trim()).length;
+  const mainGreetingContribution =
+    allContributions.find(
+      (contribution) =>
+        contribution.id === mainGreetingContributionId &&
+        contribution.status === "visible"
+    ) ?? null;
+  const normalizedSearchQuery = normalizeContributionSearch(searchQuery);
+  const canReorder = canReorderContributions({
+    filter: activeFilter,
+    searchQuery
+  });
   const currentContributionOrderKey = contributionOrder.join(":");
   const [orderSaveStatus, setOrderSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const orderFormRef = useRef<HTMLFormElement>(null);
@@ -152,26 +370,13 @@ export const ContentStudio = ({
   }, [allContributions, contributionOrder]);
 
   const visibleContributions = useMemo(() => {
-    return orderedContributions.filter((contribution) => {
-      if (activeFilter === "active") {
-        return contribution.status === "visible";
-      }
-
-      if (activeFilter === "hidden") {
-        return contribution.status === "hidden";
-      }
-
-      if (activeFilter === "too-long") {
-        return getRecommendedOverflow(contribution) > 0;
-      }
-
-      if (activeFilter === "no-role") {
-        return !contribution.authorRole?.trim();
-      }
-
-      return true;
+    return filterContributions({
+      contributions: orderedContributions,
+      filter: activeFilter,
+      searchQuery,
+      getRecommendedOverflow
     });
-  }, [activeFilter, getRecommendedOverflow, orderedContributions]);
+  }, [activeFilter, getRecommendedOverflow, orderedContributions, searchQuery]);
 
   const moveContribution = (targetContributionId: string, pointerPosition: "before" | "after") => {
     if (!draggedContributionId || draggedContributionId === targetContributionId) {
@@ -308,11 +513,24 @@ export const ContentStudio = ({
   };
 
   const toggleContribution = (contributionId: string) => {
+    if (!expandedContributionIds.includes(contributionId)) {
+      setIsManualFormOpen(false);
+    }
     setExpandedContributionIds((current) =>
       current.includes(contributionId)
         ? current.filter((id) => id !== contributionId)
         : [contributionId]
     );
+  };
+
+  const openManualForm = () => {
+    setExpandedContributionIds([]);
+    setIsManualFormOpen(true);
+  };
+
+  const toggleManualForm = () => {
+    if (!isManualFormOpen) setExpandedContributionIds([]);
+    setIsManualFormOpen((current) => !current);
   };
 
   const handleManualContributionSubmit = (formData: FormData) => {
@@ -330,6 +548,36 @@ export const ContentStudio = ({
     });
   };
 
+  const focusContributionControl = useCallback((contributionId: string) => {
+    setActiveFilter("all");
+    setSearchQuery("");
+    setIsManualFormOpen(false);
+    setExpandedContributionIds([contributionId]);
+    setHighlightedContributionId(contributionId);
+
+    if (highlightTimerRef.current) window.clearTimeout(highlightTimerRef.current);
+    highlightTimerRef.current = window.setTimeout(() => {
+      setHighlightedContributionId(null);
+    }, 1800);
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const card = document.getElementById(`contribution-${contributionId}`);
+        card?.scrollIntoView({ behavior: "smooth", block: "center" });
+        document.getElementById(`main-greeting-control-${contributionId}`)?.focus({
+          preventScroll: true
+        });
+      });
+    });
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (highlightTimerRef.current) window.clearTimeout(highlightTimerRef.current);
+    },
+    []
+  );
+
   useEffect(() => {
     if (!focus) return;
 
@@ -345,39 +593,21 @@ export const ContentStudio = ({
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [focus]);
+  }, [section, focus]);
 
   return (
     <div className={styles.contentStudio}>
-      <section className={styles.contentStatusBar}>
-        <div className={styles.contentStatusItem}>
-          <span className={`${styles.contentStatusDot} ${styles.contentStatusDotWarm}`} />
-          <span>{allContributions.length} поздравлений собрано</span>
-        </div>
-        <div className={styles.contentStatusItem}>
-          <span className={`${styles.contentStatusDot} ${styles.contentStatusDotOk}`} />
-          <span>{withinLimitCount} подходят по длине</span>
-        </div>
-        <div className={styles.contentStatusItem}>
-          <span className={`${styles.contentStatusDot} ${styles.contentStatusDotAlert}`} />
-          <span>{tooLongCount} нужно сократить</span>
-        </div>
-        <div className={styles.contentStatusItem}>
-          <span className={`${styles.contentStatusDot} ${styles.contentStatusDotWarm}`} />
-          <span>{mediaAssets.length} фото добавлено</span>
-        </div>
-      </section>
-
-      <div className={styles.contentLayout}>
-        <section className={styles.contentPanel} id="greetings-section">
+      <div className={`${styles.editorWorkspace} ${styles.contentLayout}`}>
+        <div className={`${styles.editorMain} ${styles.contentWorkspaceMain}`}>
+          {section === "congratulations" ? (
+        <section
+          className={styles.contentPanel}
+          id="content-panel-congratulations"
+        >
           <div className={styles.contentPanelHeader}>
-            <div id="main-congratulation" className={styles.contentFocusTarget}>
-              <h3 data-focus-heading>Главное поздравление</h3>
-              <p>Выберите одно поздравление в списке ниже — оно будет выделено в открытке.</p>
-            </div>
             <div className={styles.contentPanelTopRow}>
               <div className={styles.contentPanelTitleWrap}>
-                <h2 className={styles.contentPanelTitle}>Поздравления</h2>
+                <h2 className={styles.contentPanelTitle}>Все поздравления</h2>
                 {orderSaveStatus !== "idle" ? (
                   <span className={styles.contentOrderStatusText}>
                     {orderSaveStatus === "saving" ? "Сохраняем…" : "Изменения сохранены"}
@@ -388,7 +618,7 @@ export const ContentStudio = ({
                 <button
                   type="button"
                   className={`${styles.mediaLibraryUploadToggle} ${styles.mediaManagerActionButton}`}
-                  onClick={() => setIsManualFormOpen((current) => !current)}
+                  onClick={toggleManualForm}
                 >
                   <span>{isManualFormOpen ? "−" : "+"}</span>
                   <span>{isManualFormOpen ? "Скрыть форму" : "Добавить вручную"}</span>
@@ -397,11 +627,100 @@ export const ContentStudio = ({
             </div>
 
             <div>
-              <p className={styles.contentPanelText}>Модерируйте поздравления, выделяйте главное и изменяйте порядок.</p>
+              <p className={styles.contentPanelText}>
+                Модерируйте поздравления, выберите главное и при необходимости измените порядок.
+              </p>
             </div>
+
+            <section
+              id="main-congratulation"
+              className={`${styles.contentMainGreetingCard} ${
+                mainGreetingContribution ? "" : styles.contentMainGreetingCardEmpty
+              }`}
+            >
+              <div className={styles.contentMainGreetingIntro}>
+                <span className={styles.contentMainGreetingIcon} aria-hidden="true">☆</span>
+                <div>
+                  <h3 data-focus-heading>Главное поздравление</h3>
+                  <p>Это поздравление будет показано отдельным акцентным блоком.</p>
+                </div>
+              </div>
+              {mainGreetingContribution ? (
+                <div className={styles.contentMainGreetingSelection}>
+                  <div className={styles.contentAvatar}>
+                    {mainGreetingContribution.authorAvatarUrl ? (
+                      <Image
+                        src={mainGreetingContribution.authorAvatarUrl}
+                        alt=""
+                        width={52}
+                        height={52}
+                        unoptimized
+                        className={styles.contentAvatarImage}
+                      />
+                    ) : (
+                      mainGreetingContribution.authorName.trim().slice(0, 1).toUpperCase() || "?"
+                    )}
+                  </div>
+                  <div>
+                    <strong>{mainGreetingContribution.authorName}</strong>
+                    <p>{mainGreetingContribution.message}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.contentContextSecondaryButton}
+                    onClick={() => focusContributionControl(mainGreetingContribution.id)}
+                  >
+                    Изменить
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.contentMainGreetingMissing}>
+                  <p>
+                    Выберите одно поздравление — оно станет главным личным блоком открытки.
+                  </p>
+                  {allContributions.some((contribution) => contribution.status === "visible") ? (
+                    <button
+                      type="button"
+                      className={styles.contentContextSecondaryButton}
+                      onClick={() => {
+                        const firstVisible = orderedContributions.find(
+                          (contribution) => contribution.status === "visible"
+                        );
+                        if (firstVisible) focusContributionControl(firstVisible.id);
+                      }}
+                    >
+                      Выбрать главное поздравление
+                    </button>
+                  ) : null}
+                </div>
+              )}
+            </section>
           </div>
 
-          <div className={styles.contentFilterRow}>
+          <div className={styles.contentListControls}>
+            <label className={styles.contentSearch}>
+              <span className={styles.visuallyHidden}>Поиск поздравлений</span>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Поиск по имени, роли или тексту"
+              />
+            </label>
+
+          <div className={styles.contentFilterRow} aria-label="Фильтры поздравлений">
             <button
               type="button"
               className={`${styles.contentFilterPill} ${activeFilter === "all" ? styles.contentFilterPillActive : ""}`}
@@ -428,7 +747,7 @@ export const ContentStudio = ({
               className={`${styles.contentFilterPill} ${activeFilter === "too-long" ? styles.contentFilterPillActive : ""}`}
               onClick={() => setActiveFilter("too-long")}
             >
-              Слишком длинные {tooLongCount}
+              Нужно сократить {tooLongCount}
             </button>
             <button
               type="button"
@@ -438,6 +757,13 @@ export const ContentStudio = ({
               Без роли {noRoleCount}
             </button>
           </div>
+          </div>
+
+          {!canReorder ? (
+            <p className={styles.contentReorderHint}>
+              Чтобы изменить порядок, очистите поиск и выберите фильтр «Все».
+            </p>
+          ) : null}
 
           {isManualFormOpen ? (
             <form action={handleManualContributionSubmit} className={styles.manualContributionForm}>
@@ -519,24 +845,65 @@ export const ContentStudio = ({
           ) : null}
 
           {visibleContributions.length === 0 ? (
-            <p className={styles.empty}>Пока поздравлений нет. Сначала участники должны добавить свои сообщения.</p>
+            allContributions.length === 0 ? (
+              <div className={styles.contentEmptyState}>
+                <h3>Поздравлений пока нет</h3>
+                <p>Поделитесь ссылкой с участниками или добавьте поздравление вручную.</p>
+                <div>
+                  {lifecycle.collectionStatus === "OPEN" ? (
+                    <ShareLinkButton
+                      value={participantLink}
+                      label="Поделиться ссылкой"
+                      className={styles.contentContextPrimaryButton}
+                    />
+                  ) : null}
+                  <button
+                    type="button"
+                    className={styles.contentContextSecondaryButton}
+                    onClick={openManualForm}
+                  >
+                    Добавить вручную
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.contentEmptyState}>
+                <h3>Ничего не найдено</h3>
+                <p>Попробуйте изменить запрос или выбрать другой фильтр.</p>
+                <button
+                  type="button"
+                  className={styles.contentContextSecondaryButton}
+                  onClick={() => {
+                    setSearchQuery("");
+                    setActiveFilter("all");
+                  }}
+                >
+                  Сбросить поиск и фильтры
+                </button>
+              </div>
+            )
           ) : (
             <div className={styles.contentCards}>
-              {visibleContributions.map((contribution, index) => {
+              {visibleContributions.map((contribution) => {
                 const recommendedLimit = getRecommendedMessageLimit(contribution);
                 const overflow = contribution.message.length - recommendedLimit;
                 const isTooLong = overflow > 0;
                 const isHidden = contribution.status === "hidden";
                 const isExpanded = expandedContributionIds.includes(contribution.id);
-                const isMainGreeting = mainGreetingContributionId === contribution.id;
+                const isMainGreeting = mainGreetingContribution?.id === contribution.id;
+                const globalIndex = contributionOrder.indexOf(contribution.id);
 
                 return (
                   <article
                     key={contribution.id}
+                    id={`contribution-${contribution.id}`}
                     className={[
                       styles.contentContributionCard,
                       isTooLong ? styles.contentContributionCardWarn : "",
                       isExpanded ? styles.contentContributionCardExpanded : "",
+                      highlightedContributionId === contribution.id
+                        ? styles.contentContributionCardHighlighted
+                        : "",
                       draggedContributionId === contribution.id ? styles.contentContributionCardDragging : "",
                       dropTarget?.contributionId === contribution.id ? styles.contentContributionCardDropTarget : "",
                       dropTarget?.contributionId === contribution.id && dropTarget.position === "before"
@@ -555,36 +922,51 @@ export const ContentStudio = ({
                     <div className={styles.contentCardHead}>
                       <div className={styles.contentCardTopRow}>
                         <div className={styles.contentContributionLead}>
-                          <button
-                            type="button"
-                            className={styles.contentGripButtonPlain}
-                            draggable
-                            onDragStart={(event) => handleDragStart(event, contribution.id)}
-                            onDragEnd={() => {
-                              setDraggedContributionId(null);
-                              setDropTarget(null);
-                            }}
-                            aria-label={`Перетащить поздравление ${contribution.authorName}`}
-                          >
-                            <svg
-                              className={styles.contentGripPlain}
-                              width="16"
-                              height="16"
-                              viewBox="0 0 16 16"
-                              fill="none"
-                              aria-hidden="true"
+                          {canReorder ? (
+                            <button
+                              type="button"
+                              className={styles.contentGripButtonPlain}
+                              draggable
+                              onDragStart={(event) => handleDragStart(event, contribution.id)}
+                              onDragEnd={() => {
+                                setDraggedContributionId(null);
+                                setDropTarget(null);
+                              }}
+                              aria-label={`Перетащить поздравление ${contribution.authorName}`}
                             >
-                              <circle cx="4" cy="4" r="1.5" fill="currentColor" />
-                              <circle cx="12" cy="4" r="1.5" fill="currentColor" />
-                              <circle cx="4" cy="8" r="1.5" fill="currentColor" />
-                              <circle cx="12" cy="8" r="1.5" fill="currentColor" />
-                              <circle cx="4" cy="12" r="1.5" fill="currentColor" />
-                              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                            </svg>
-                          </button>
-                          <span className={styles.contentOrder}>#{index + 1}</span>
+                              <svg
+                                className={styles.contentGripPlain}
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <circle cx="4" cy="4" r="1.5" fill="currentColor" />
+                                <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+                                <circle cx="4" cy="8" r="1.5" fill="currentColor" />
+                                <circle cx="12" cy="8" r="1.5" fill="currentColor" />
+                                <circle cx="4" cy="12" r="1.5" fill="currentColor" />
+                                <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                              </svg>
+                            </button>
+                          ) : (
+                            <span className={styles.contentGripPlaceholder} aria-hidden="true" />
+                          )}
+                          <span className={styles.contentOrder}>#{globalIndex + 1}</span>
                           <div className={styles.contentAvatar}>
-                            {contribution.authorName.trim().slice(0, 1).toUpperCase() || "?"}
+                            {contribution.authorAvatarUrl ? (
+                              <Image
+                                src={contribution.authorAvatarUrl}
+                                alt=""
+                                width={52}
+                                height={52}
+                                unoptimized
+                                className={styles.contentAvatarImage}
+                              />
+                            ) : (
+                              contribution.authorName.trim().slice(0, 1).toUpperCase() || "?"
+                            )}
                           </div>
                           <div className={styles.contentIdentityStack}>
                             <div className={styles.contentIdentityInline}>
@@ -608,26 +990,31 @@ export const ContentStudio = ({
                         </div>
 
                         <div className={styles.contentTopControls}>
-                          <div className={styles.contentMoveButtons} aria-label={`Порядок поздравления ${contribution.authorName}`}>
-                            <button
-                              type="button"
-                              className={styles.contentMoveButton}
-                              onClick={() => moveContributionByStep(contribution.id, "up")}
-                              disabled={index === 0}
-                              aria-label={`Поднять поздравление ${contribution.authorName}`}
+                          {canReorder ? (
+                            <div
+                              className={styles.contentMoveButtons}
+                              aria-label={`Порядок поздравления ${contribution.authorName}`}
                             >
-                              ↑
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.contentMoveButton}
-                              onClick={() => moveContributionByStep(contribution.id, "down")}
-                              disabled={index === visibleContributions.length - 1}
-                              aria-label={`Опустить поздравление ${contribution.authorName}`}
-                            >
-                              ↓
-                            </button>
-                          </div>
+                              <button
+                                type="button"
+                                className={styles.contentMoveButton}
+                                onClick={() => moveContributionByStep(contribution.id, "up")}
+                                disabled={globalIndex === 0}
+                                aria-label={`Поднять поздравление ${contribution.authorName}`}
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.contentMoveButton}
+                                onClick={() => moveContributionByStep(contribution.id, "down")}
+                                disabled={globalIndex === contributionOrder.length - 1}
+                                aria-label={`Опустить поздравление ${contribution.authorName}`}
+                              >
+                                ↓
+                              </button>
+                            </div>
+                          ) : null}
                           <button
                             type="button"
                             className={styles.contentChevronButton}
@@ -655,6 +1042,7 @@ export const ContentStudio = ({
                             <input type="hidden" name="manageToken" value={manageToken} />
                             <input type="hidden" name="contributionId" value={isMainGreeting ? "" : contribution.id} />
                             <button
+                              id={`main-greeting-control-${contribution.id}`}
                               type="submit"
                               className={`${styles.contentSoftButton} ${isMainGreeting ? styles.contentMainActionActive : ""}`}
                               disabled={isHidden}
@@ -703,87 +1091,51 @@ export const ContentStudio = ({
           )}
 
         </section>
-
-        <aside className={styles.contentRail}>
+        ) : (
           <section
-            className={styles.contentPreviewCard}
-            style={
-              {
-                "--preview-accent": templateAccent
-              } as CSSProperties
-            }
+            className={styles.contentPhotoSection}
+            id="content-panel-photos"
           >
-            <div className={styles.contentPreviewHeader}>
-              <h2 className={styles.contentRailTitle}>Предпросмотр поздравлений</h2>
-              <p className={styles.previewStatusLine}>
-                <span className={styles.previewStatusDot} />
-                <span>Обновляется автоматически</span>
-              </p>
-            </div>
-
-            <article className={styles.contentPreviewStory}>
-              <section className={styles.contentPreviewCover}>
-                <span className={styles.contentPreviewKicker}>Открытка для тебя</span>
-                <strong>{recipientName}</strong>
-                <p>{occasionText}</p>
-                <small>{fromLabel}</small>
-              </section>
-
-              <section className={styles.contentPreviewMessageCard}>
-                <div className={styles.contentPreviewAvatar} />
-                <div className={styles.contentPreviewMessageBody}>
-                  <div className={styles.contentPreviewMessageMeta}>
-                    <strong>{previewMessage?.authorName || "Дима"}</strong>
-                    <span>{previewMessage?.authorRole || "ученик"}</span>
-                  </div>
-                  <p>
-                    {previewMessage?.message.slice(0, 140) ||
-                      "Очень хочется сказать вам теплые слова и поблагодарить за добро, которое вы даете людям..."}
-                  </p>
-                </div>
-              </section>
-
-              <section className={styles.contentPreviewFinal}>
-                <span>Спасибо, что ты с нами!</span>
-                <p>Вперед - к мечтам.</p>
-              </section>
-            </article>
-
-            <Link href={getPreviewPath(manageToken)} target="_blank" className={styles.previewLinkButton}>
-              Открыть полный просмотр
-            </Link>
+            <MediaManager
+              manageToken={manageToken}
+              mediaAssets={mediaAssets}
+              mediaLayout={mediaLayout}
+              messageAssignedCount={messageAssignedCount}
+              messageRequiredCount={messageRequiredCount}
+              memoryAssignedCount={memoryAssignedCount}
+              memoryRequiredCount={memoryRequiredCount}
+            />
           </section>
+        )}
+        </div>
 
-          <MediaManager
-            manageToken={manageToken}
-            mediaAssets={mediaAssets}
-            mediaLayout={mediaLayout}
-            messageAssignedCount={messageAssignedCount}
-            messageRequiredCount={messageRequiredCount}
-            memoryAssignedCount={memoryAssignedCount}
-            memoryRequiredCount={memoryRequiredCount}
+        <aside className={`${styles.editorSidebar} ${styles.contentContextRail}`}>
+          <PreparationProgress
+            steps={journeySteps}
+            completedCount={journeyCompletedCount}
+            lifecycleLabel={lifecycleLabel}
+            persistenceKey={`card-preparation:${manageToken}`}
           />
-
-          <section className={styles.contentTipsCard}>
-            <button
-              type="button"
-              className={styles.contentTipsToggle}
-              onClick={() => setIsTipsOpen((current) => !current)}
-              aria-expanded={isTipsOpen}
-            >
-              <h2 className={styles.contentRailTitle}>Подсказки по фото и поздравлениям</h2>
-              <span className={`${styles.contentTipsChevron} ${isTipsOpen ? styles.contentTipsChevronOpen : ""}`}>˅</span>
-            </button>
-            {isTipsOpen ? (
-              <ul className={styles.contentTipsList}>
-                <li>Тексты до {messageLimit} символов читаются лучше и выглядят аккуратнее.</li>
-                <li>Перетаскивайте карточки за левый значок, чтобы менять их порядок в открытке.</li>
-                <li>Не забудьте добавить фото — они делают открытку живой и теплой.</li>
-              </ul>
-            ) : null}
-          </section>
+          <ContentLifecycleCard
+            manageToken={manageToken}
+            contributionCount={allContributions.length}
+            lifecycle={lifecycle}
+            participantLink={participantLink}
+            collectionReady={collectionReady}
+            giftAccessible={giftAccessible}
+            stickyAction={stickyAction}
+          />
         </aside>
       </div>
+
+      <ContentStickyAction
+        manageToken={manageToken}
+        contributionCount={allContributions.length}
+        lifecycle={lifecycle}
+        participantLink={participantLink}
+        collectionReady={collectionReady}
+        stickyAction={stickyAction}
+      />
 
       <form
         ref={orderFormRef}
