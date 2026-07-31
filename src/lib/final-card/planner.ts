@@ -10,26 +10,11 @@ import type {
 } from "@/lib/final-card/types";
 
 const isBlockAvailable = (blockId: string, availability: FinalCardContentAvailability) => {
-  if (blockId === "summary") {
-    return availability.hasSummary;
-  }
-
-  if (blockId === "qualities") {
-    return availability.hasQualities;
-  }
-
-  if (blockId === "memories") {
-    return availability.hasMemories;
-  }
-
-  if (blockId === "quotes") {
-    return true;
-  }
-
-  if (blockId === "ai-summary") {
-    return availability.hasAiSummary;
-  }
-
+  if (blockId === "summary") return availability.hasSummary;
+  if (blockId === "qualities") return availability.hasQualities;
+  if (blockId === "memories") return availability.hasMemories;
+  if (blockId === "quotes") return true;
+  if (blockId === "ai-summary") return availability.hasAiSummary;
   return true;
 };
 
@@ -37,7 +22,8 @@ export const buildFinalCardLayout = (
   style: FinalCardStyleId,
   availability: FinalCardContentAvailability,
   settings?: FinalCardBlockSettings | null,
-  order?: FinalCardBlockOrder | null
+  order?: FinalCardBlockOrder | null,
+  includeUnavailable = false
 ): FinalCardLayout => {
   const layout = finalCardLayouts[style];
   const visibleBlocks = layout.blocks.filter((block) => {
@@ -47,7 +33,7 @@ export const buildFinalCardLayout = (
 
     const optionalBlockId = block.id as FinalCardOptionalBlockId;
     const isEnabled = settings?.[optionalBlockId] ?? true;
-    return isEnabled && isBlockAvailable(block.id, availability);
+    return isEnabled && (includeUnavailable || isBlockAvailable(block.id, availability));
   });
 
   if (!order || order.length === 0) {

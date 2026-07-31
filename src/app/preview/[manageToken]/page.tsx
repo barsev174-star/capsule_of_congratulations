@@ -10,8 +10,14 @@ import {
 import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository";
 import { isGiftAccessible } from "@/lib/cards/lifecycle";
 import { getAiCardInsight } from "@/lib/ai/repository";
-import { BEST_QUOTE_COUNT, isValidBestQuoteText } from "@/lib/ai/card-insights";
+import {
+  BEST_QUOTE_COUNT,
+  buildContributionFingerprint,
+  isValidBestQuoteText
+} from "@/lib/ai/card-insights";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
+import { finalCardLayouts } from "@/lib/final-card/layouts";
+import { buildCardBlockReadiness } from "@/lib/manage/card-design-readiness";
 
 export const metadata = {
   robots: {
@@ -41,11 +47,30 @@ export default async function PreviewPage({ params }: Props) {
     getAiCardInsight(card.id, "qualities")
   ]);
 
-  const model = buildFinalCardViewModel(card, contributions, mediaAssets, {
-    quotes: (quotesInsight?.items.length ?? 0) >= BEST_QUOTE_COUNT && quotesInsight?.items.every((item) => isValidBestQuoteText(item.text))
+  const fingerprint = buildContributionFingerprint(contributions);
+  const quotesAreStale = Boolean(quotesInsight && quotesInsight.sourceFingerprint !== fingerprint);
+  const qualitiesAreStale = Boolean(qualitiesInsight && qualitiesInsight.sourceFingerprint !== fingerprint);
+  const quotes = !quotesAreStale && (quotesInsight?.items.length ?? 0) === BEST_QUOTE_COUNT && quotesInsight?.items.every((item) => isValidBestQuoteText(item.text))
       ? quotesInsight.items.slice(0, BEST_QUOTE_COUNT).map((item) => item.text)
-      : [],
-    qualities: qualitiesInsight?.items.map((item) => item.text)
+      : [];
+  const qualities = !qualitiesAreStale && qualitiesInsight?.items.length === 5
+    ? qualitiesInsight.items.map((item) => item.text)
+    : [];
+  const model = buildFinalCardViewModel(card, contributions, mediaAssets, {
+    quotes,
+    qualities
+  }, { includeIncompleteBlocks: true });
+  const blockReadiness = buildCardBlockReadiness({
+    card,
+    requiredBlockIds: finalCardLayouts[model.style].blocks
+      .filter((block) => block.required)
+      .map((block) => block.id),
+    visibleContributions: contributions,
+    mediaAssets,
+    qualities,
+    qualitiesAreStale,
+    bestQuotes: quotes,
+    bestQuotesAreStale: quotesAreStale
   });
 
   const published = isGiftAccessible(lifecycle);
@@ -54,7 +79,12 @@ export default async function PreviewPage({ params }: Props) {
     <>
       <PreviewBar manageToken={manageToken} finalSlug={card.finalSlug} published={published} />
       <PreviewWatermark />
-      <FinalCard model={model} mode="preview" manageToken={manageToken} />
+      <FinalCard
+        model={model}
+        mode="preview"
+        manageToken={manageToken}
+        blockReadiness={blockReadiness}
+      />
     </>
   );
 }

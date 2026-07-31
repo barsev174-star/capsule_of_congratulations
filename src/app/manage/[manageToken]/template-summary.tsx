@@ -1,13 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CardTemplate } from "@/lib/cards/templates";
-import type {
-  FinalCardBlockId,
-  FinalCardMessageLayoutMode,
-  FinalCardMessageMediaLayout,
-  FinalCardOptionalBlockId
-} from "@/lib/final-card/types";
 import { TemplateSettingsForm } from "./template-settings-form";
 import styles from "./manage-page.module.css";
 
@@ -15,67 +9,145 @@ type Props = {
   manageToken: string;
   templates: CardTemplate[];
   initialTemplateId: CardTemplate["id"];
-  initialLayoutMode: FinalCardMessageLayoutMode;
-  initialMediaLayout: FinalCardMessageMediaLayout;
-  initialBlockOrder: FinalCardBlockId[];
-  blockState: Record<FinalCardOptionalBlockId, boolean>;
 };
 
 export const TemplateSummary = ({
   manageToken,
   templates,
-  initialTemplateId,
-  initialLayoutMode,
-  initialMediaLayout,
-  initialBlockOrder,
-  blockState
+  initialTemplateId
 }: Props) => {
   const [templateId, setTemplateId] = useState(initialTemplateId);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const openerButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
   const selectedTemplate = templates.find((template) => template.id === templateId) ?? templates[0];
-  const templatePalette = ["#eaded2", "#f4c59e", selectedTemplate.accent, "#5a3927", "#a8b792"];
   const isPreviewTemplate = selectedTemplate.id === "paper-birthday" || selectedTemplate.id === "route-adventure";
+
+  useEffect(() => {
+    if (!isPickerOpen) {
+      return;
+    }
+
+    const openerButton = openerButtonRef.current;
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsPickerOpen(false);
+        return;
+      }
+
+      if (event.key === "Tab" && dialogRef.current) {
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+      openerButton?.focus({ preventScroll: true });
+    };
+  }, [isPickerOpen]);
 
   return (
     <div className={styles.templateSummary}>
-      {isPreviewTemplate ? (
-        <div className={styles.templatePreviewWrap}>
-          {/* Intentional fixed preview asset inside a CSS-sized template frame. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={selectedTemplate.id === "route-adventure" ? "/assets/landing/template-route-adventure-preview.png" : "/templates/warm-classic-preview.png"}
-            alt={selectedTemplate.name}
-            className={styles.templatePreviewImage}
-          />
-        </div>
-      ) : (
-        <div className={styles.templatePreviewPlaceholder}>
-          <span className={styles.templatePreviewPlaceholderIcon}>🎨</span>
-          <span className={styles.templatePreviewPlaceholderText}>Другие шаблоны появятся позже</span>
-        </div>
-      )}
+      <div className={styles.templateSummaryMain}>
+        {isPreviewTemplate ? (
+          <div className={styles.templatePreviewWrap}>
+            {/* Intentional fixed preview asset inside a CSS-sized template frame. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={selectedTemplate.id === "route-adventure" ? "/assets/landing/template-route-adventure-preview.png" : "/templates/warm-classic-preview.png"}
+              alt={selectedTemplate.name}
+              className={styles.templatePreviewImage}
+            />
+          </div>
+        ) : (
+          <div className={styles.templatePreviewPlaceholder}>
+            <span className={styles.templatePreviewPlaceholderIcon}>🎨</span>
+            <span className={styles.templatePreviewPlaceholderText}>Другие шаблоны появятся позже</span>
+          </div>
+        )}
 
-      <div className={styles.templateSummaryText}>
-        <div className={styles.templateNameRow}>
-          <strong>{selectedTemplate.name}</strong>
+        <div className={styles.templateSummaryText}>
+          <div className={styles.templateNameRow}>
+            <strong>{selectedTemplate.name}</strong>
+          </div>
+          <p>
+            <span className={styles.templateDescriptionDesktop}>{selectedTemplate.description}</span>
+            <span className={styles.templateDescriptionMobile}>
+              {selectedTemplate.id === "route-adventure"
+                ? "Приключенческий тёмный стиль"
+                : "Тёплый бумажный стиль"}
+            </span>
+          </p>
+          <button
+            ref={openerButtonRef}
+            type="button"
+            className={styles.templateChangeButton}
+            onClick={() => setIsPickerOpen(true)}
+          >
+            Выбрать другой шаблон
+          </button>
         </div>
-        <p>{selectedTemplate.description}</p>
-        <div className={styles.paletteRow} aria-label="Цветовая палитра">
-          {templatePalette.map((color) => (
-            <span key={color} style={{ backgroundColor: color }} />
-          ))}
-        </div>
-        <TemplateSettingsForm
-          manageToken={manageToken}
-          templates={templates}
-          initialTemplateId={initialTemplateId}
-          initialLayoutMode={initialLayoutMode}
-          initialMediaLayout={initialMediaLayout}
-          initialBlockOrder={initialBlockOrder}
-          blockState={blockState}
-          onTemplateSelectionChange={setTemplateId}
-          variant="hero"
-        />
       </div>
+
+      <div className={styles.templateAnimationInline}>
+        <div className={styles.envelopeIcon} aria-hidden="true">
+          <span />
+        </div>
+        <div>
+          <strong>Анимация: конверт с открыткой</strong>
+          <p>Получатель увидит открывающийся конверт после передачи.</p>
+        </div>
+      </div>
+
+      {isPickerOpen ? (
+        <div className={styles.templateDialogBackdrop} role="presentation" onMouseDown={() => setIsPickerOpen(false)}>
+          <section
+            ref={dialogRef}
+            className={styles.templateDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="template-dialog-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className={styles.templateDialogHeader}>
+              <div>
+                <span>Оформление открытки</span>
+                <h3 id="template-dialog-title">Выберите шаблон</h3>
+              </div>
+              <button ref={closeButtonRef} type="button" onClick={() => setIsPickerOpen(false)} aria-label="Закрыть выбор шаблона">×</button>
+            </div>
+            <TemplateSettingsForm
+              manageToken={manageToken}
+              templates={templates}
+              currentTemplateId={templateId}
+              onTemplateSelectionChange={setTemplateId}
+              onApplied={() => setIsPickerOpen(false)}
+            />
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 };

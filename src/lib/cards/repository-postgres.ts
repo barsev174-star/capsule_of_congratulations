@@ -421,6 +421,20 @@ export const updateCardFinalBlockSettings = async (
   return result.rows[0] ? mapCard(result.rows[0]) : null;
 };
 
+export const updateCardTemplate = async (cardId: string, templateId: CardTemplateId) => {
+  const result = await getPostgresPool().query<CardRow>(
+    `
+      UPDATE cards
+      SET template_id = $2,
+          updated_at = now()
+      WHERE id = $1
+      RETURNING *
+    `,
+    [cardId, templateId]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+
 export const updateCardFinalPresentationSettings = async (
   cardId: string,
   templateId: CardTemplateId,
@@ -550,6 +564,14 @@ export const listCardMediaAssetsByCardId = async (cardId: string) => {
     [cardId]
   );
   return result.rows.map(mapMedia);
+};
+
+export const listCardMediaAssetAssignmentsByCardId = async (cardId: string) => {
+  const result = await getPostgresPool().query<Pick<MediaRow, "id" | "slot">>(
+    "SELECT id, slot FROM card_media_assets WHERE card_id = $1 ORDER BY created_at ASC",
+    [cardId]
+  );
+  return result.rows;
 };
 
 export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {

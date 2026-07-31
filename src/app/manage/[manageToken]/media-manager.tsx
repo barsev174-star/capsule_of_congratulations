@@ -12,6 +12,10 @@ type Props = {
   manageToken: string;
   mediaAssets: CardMediaAsset[];
   mediaLayout: FinalCardMessageMediaLayout;
+  messageAssignedCount?: number;
+  messageRequiredCount?: number;
+  memoryAssignedCount?: number;
+  memoryRequiredCount?: number;
 };
 
 type MediaFilter = "all" | "horizontal" | "vertical";
@@ -580,7 +584,15 @@ const MediaLibraryGroup = ({
   );
 };
 
-export const MediaManager = ({ manageToken, mediaAssets, mediaLayout }: Props) => {
+export const MediaManager = ({
+  manageToken,
+  mediaAssets,
+  mediaLayout,
+  messageAssignedCount = 0,
+  messageRequiredCount = 0,
+  memoryAssignedCount = 0,
+  memoryRequiredCount = 3
+}: Props) => {
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [isUploadFormOpen, setIsUploadFormOpen] = useState(false);
   const addPhotoButtonRef = useRef<HTMLButtonElement>(null);
@@ -644,6 +656,18 @@ export const MediaManager = ({ manageToken, mediaAssets, mediaLayout }: Props) =
           <p className={`${styles.contentPhotoHint} ${styles.mediaLibraryHint}`}>
             Добавляйте фото и выбирайте, где они появятся в открытке.
           </p>
+        </div>
+
+        <div className={styles.mediaAssignmentSummary} aria-label="Размещение фотографий">
+          <section id="congratulations-photos" className={styles.mediaFocusTarget}>
+            <h3 data-focus-heading>Фотографии поздравлений</h3>
+            <span>Выбрано {messageAssignedCount} из {messageRequiredCount}</span>
+          </section>
+          <section id="moments-photos" className={styles.mediaFocusTarget}>
+            <h3 data-focus-heading>Моменты</h3>
+            <span>Выбрано {memoryAssignedCount} из {memoryRequiredCount}</span>
+          </section>
+          <span>Всего фотографий: {mediaAssets.length}</span>
         </div>
 
         {!isUploadFormOpen ? filters : null}

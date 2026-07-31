@@ -15,6 +15,7 @@ import {
   setContributionStatusAction,
   setMainGreetingAction
 } from "./actions";
+import { contentFocusSectionIds, type ContentFocus } from "./content-focus";
 import styles from "./manage-page.module.css";
 
 type Props = {
@@ -22,6 +23,10 @@ type Props = {
   allContributions: Contribution[];
   mediaAssets: CardMediaAsset[];
   mediaLayout: FinalCardMessageMediaLayout;
+  messageAssignedCount: number;
+  messageRequiredCount: number;
+  memoryAssignedCount: number;
+  memoryRequiredCount: number;
   messageLimit: number;
   recipientName: string;
   occasionText: string;
@@ -31,6 +36,7 @@ type Props = {
   previewMessage?: Contribution;
   cardId: string;
   mainGreetingContributionId: string | null;
+  focus: ContentFocus | null;
   greetingMode?: "classic" | "matrix" | "ladder";
 };
 
@@ -53,6 +59,10 @@ export const ContentStudio = ({
   allContributions,
   mediaAssets,
   mediaLayout,
+  messageAssignedCount,
+  messageRequiredCount,
+  memoryAssignedCount,
+  memoryRequiredCount,
   messageLimit,
   recipientName,
   occasionText,
@@ -62,6 +72,7 @@ export const ContentStudio = ({
   previewMessage,
   cardId,
   mainGreetingContributionId,
+  focus,
   greetingMode = "classic"
 }: Props) => {
   const router = useRouter();
@@ -319,6 +330,23 @@ export const ContentStudio = ({
     });
   };
 
+  useEffect(() => {
+    if (!focus) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      const section = document.getElementById(contentFocusSectionIds[focus]);
+      if (!section) return;
+
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      section.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      const heading = section.querySelector<HTMLElement>("[data-focus-heading], h2, h3") ?? section;
+      if (!heading.hasAttribute("tabindex")) heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [focus]);
+
   return (
     <div className={styles.contentStudio}>
       <section className={styles.contentStatusBar}>
@@ -341,8 +369,12 @@ export const ContentStudio = ({
       </section>
 
       <div className={styles.contentLayout}>
-        <section className={styles.contentPanel}>
+        <section className={styles.contentPanel} id="greetings-section">
           <div className={styles.contentPanelHeader}>
+            <div id="main-congratulation" className={styles.contentFocusTarget}>
+              <h3 data-focus-heading>Главное поздравление</h3>
+              <p>Выберите одно поздравление в списке ниже — оно будет выделено в открытке.</p>
+            </div>
             <div className={styles.contentPanelTopRow}>
               <div className={styles.contentPanelTitleWrap}>
                 <h2 className={styles.contentPanelTitle}>Поздравления</h2>
@@ -722,7 +754,15 @@ export const ContentStudio = ({
             </Link>
           </section>
 
-          <MediaManager manageToken={manageToken} mediaAssets={mediaAssets} mediaLayout={mediaLayout} />
+          <MediaManager
+            manageToken={manageToken}
+            mediaAssets={mediaAssets}
+            mediaLayout={mediaLayout}
+            messageAssignedCount={messageAssignedCount}
+            messageRequiredCount={messageRequiredCount}
+            memoryAssignedCount={memoryAssignedCount}
+            memoryRequiredCount={memoryRequiredCount}
+          />
 
           <section className={styles.contentTipsCard}>
             <button

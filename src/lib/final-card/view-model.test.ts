@@ -68,7 +68,8 @@ describe("buildFinalCardViewModel", () => {
     expect(viewModel.participantCount).toBe(1);
     expect(viewModel.blocks.length).toBeGreaterThan(0);
     expect(viewModel.summaryTitle).toBe("Самые важные слова");
-    expect(viewModel.mainGreetingContributionId).toBe("c1");
+    expect(viewModel.mainGreetingContributionId).toBeNull();
+    expect(viewModel.summaryText).toBe(card.description);
     expect(viewModel.occasionLabel).toBe("собираем открытку от команды Product & Design");
     expect(viewModel.finalSlug).toBe("final_1");
     expect(viewModel.messageLayoutMode).toBe("grid-2");
@@ -89,7 +90,7 @@ describe("buildFinalCardViewModel", () => {
       contributions
     );
 
-    expect(viewModel.blocks.map((block) => block.id)).toEqual(["hero", "qualities", "messages", "memories", "closing"]);
+    expect(viewModel.blocks.map((block) => block.id)).toEqual(["hero", "messages", "memories", "closing"]);
   });
 
     it("passes message presentation settings to the final screen", () => {
@@ -126,7 +127,20 @@ describe("buildFinalCardViewModel", () => {
   });
 
   it("keeps uploaded media assets in the final model", () => {
-    const viewModel = buildFinalCardViewModel(card, contributions, mediaAssets);
+    const viewModel = buildFinalCardViewModel(
+      {
+        ...card,
+        finalMessageSettings: {
+          layoutMode: "column-media",
+          mediaLayout: "portrait",
+          mediaSlots: [],
+          mediaAssetIds: ["media_1"],
+          showAllLink: false
+        }
+      },
+      contributions,
+      mediaAssets
+    );
 
     expect(viewModel.mediaAssets).toHaveLength(1);
     expect(viewModel.mediaAssets[0]?.slot).toBe("portrait");
@@ -134,6 +148,33 @@ describe("buildFinalCardViewModel", () => {
     expect(viewModel.messageMediaAssets[0]?.slot).toBe("portrait");
     expect(viewModel.mediaAssets[0]?.captionTitle).toBe("Командное фото");
     expect(viewModel.mediaAssets[0]?.captionSubtitle).toBe("Командное фото");
+  });
+
+  it("does not borrow a photo from another block or from a global slot", () => {
+    const viewModel = buildFinalCardViewModel(
+      {
+        ...card,
+        finalMessageSettings: {
+          layoutMode: "column-media",
+          mediaLayout: "portrait",
+          mediaSlots: ["portrait"],
+          mediaAssetIds: [],
+          showAllLink: false
+        },
+        finalMemorySettings: {
+          title: "Моменты",
+          description: "Фото",
+          mediaSlots: [],
+          mediaAssetIds: ["media_1"],
+          photoCount: 3
+        }
+      },
+      contributions,
+      mediaAssets
+    );
+
+    expect(viewModel.messageMediaAssets).toEqual([]);
+    expect(viewModel.memoryMediaAssets.map((asset) => asset.id)).toEqual(["media_1"]);
   });
 
   it("uses saved block order in the final model", () => {
@@ -149,7 +190,6 @@ describe("buildFinalCardViewModel", () => {
       "hero",
       "messages",
       "summary",
-      "qualities",
       "quotes",
       "closing",
       "memories"

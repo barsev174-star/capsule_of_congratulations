@@ -8482,3 +8482,25 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
     margin-top: 22px;
   }
 }
+.previewBlockPlaceholder {
+  margin: 24px;
+  padding: 32px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    0 16px 40px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.previewBlockPlaceholderBadge {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(169, 91, 56, 0.12);
+  color: #8b452b;
+  font-size: 0.82rem;
+  font-weight: 700;
+}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { FinalCardViewModel } from "@/lib/final-card/view-model";
+import type { CardBlockReadinessView } from "@/lib/manage/card-design-readiness";
 import { getGiftPath } from "@/lib/routes/card-links";
 import { FinalCardActions } from "@/components/final-card/final-card-actions";
 import { MessagesSection } from "@/components/final-card/messages-section";
@@ -18,6 +19,7 @@ type Props = {
   debugAssets?: boolean;
   mode?: "gift" | "preview" | "public" | "draft-preview";
   manageToken?: string;
+  blockReadiness?: CardBlockReadinessView[];
 };
 
 const styleClassMap = {
@@ -162,7 +164,7 @@ const getQuoteAssetId = (index: number) => {
   return cycle[index % cycle.length];
 };
 
-export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageToken }: Props) => {
+export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageToken, blockReadiness = [] }: Props) => {
   const isPreview = mode === "preview";
   const isPublic = mode === "public" || mode === "draft-preview";
   const isPaperBirthday = model.style === "paper-birthday";
@@ -213,6 +215,29 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
       {model.blocks.map((block) => {
         if (isPublic && ["summary", "messages", "ai-summary", "closing"].includes(block.id)) {
           return null;
+        }
+
+        const readiness = blockReadiness.find((item) => item.blockId === block.id);
+        if (isPreview && readiness && readiness.status !== "READY") {
+          return (
+            <section key={block.id} className={`${styles.section} ${styles.previewBlockPlaceholder}`}>
+              <span className={styles.previewBlockPlaceholderBadge}>Требует настройки</span>
+              <h2 className={styles.sectionTitle}>{readiness.title}</h2>
+              <p className={styles.sectionText}>{readiness.explanation}</p>
+              {readiness.action ? (
+                <Link
+                  href={
+                    readiness.action.kind === "tab"
+                      ? `/manage/${manageToken}?tab=${readiness.action.target}`
+                      : `/manage/${manageToken}#${readiness.action.target}`
+                  }
+                  className={styles.inlineLinkButton}
+                >
+                  {readiness.action.label}
+                </Link>
+              ) : null}
+            </section>
+          );
         }
 
         if (block.id === "hero") {

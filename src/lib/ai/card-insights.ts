@@ -6,7 +6,9 @@ import { containsTechnicalText, countCharacters } from "@/lib/ai/validation";
 
 export const BEST_QUOTE_COUNT = 3;
 export const BEST_QUOTE_CANDIDATE_COUNT = 6;
-export const BEST_QUOTE_MIN_CONTRIBUTION_COUNT = 6;
+export const BEST_QUOTE_MIN_CONTRIBUTION_COUNT = 3;
+export const BEST_QUOTE_MIN_MEANINGFUL_PHRASE_COUNT = 3;
+export const QUALITY_MIN_CONTRIBUTION_COUNT = 6;
 export const BEST_QUOTE_TARGET_MIN_LENGTH = 55;
 export const BEST_QUOTE_TARGET_MAX_LENGTH = 80;
 export const BEST_QUOTE_HARD_MAX_LENGTH = 100;
@@ -38,6 +40,39 @@ export const isValidBestQuoteText = (value: string) => {
     sentenceCount <= 2
   );
 };
+
+const genericQuoteSourcePattern =
+  /^(?:поздравляю|присоединяюсь|с\s+дн[её]м\s+рождения|желаю|хочу\s+пожелать|всего\s+самого|счастья|здоровья|успехов)[!,. ]*$/iu;
+
+const genericWishPattern =
+  /^(?:поздравляю|присоединяюсь|с\s+дн[её]м\s+рождения|желаю|пусть\s+будет|всего\s+самого)\b/iu;
+
+export const getMeaningfulQuoteSourcePhrases = (
+  contributions: Pick<Contribution, "id" | "message">[]
+) => {
+  const phrases: Array<{ sourceContributionId: string; text: string }> = [];
+
+  for (const contribution of contributions) {
+    const candidates = contribution.message
+      .split(/(?<=[.!?])\s+|\n+/u)
+      .map(normalizeBestQuote)
+      .filter((text) => countCharacters(text) >= 24)
+      .filter((text) => !genericQuoteSourcePattern.test(text))
+      .filter((text) => !(genericWishPattern.test(text) && countCharacters(text) < 55))
+      .filter((text) => !containsTechnicalText(text));
+
+    for (const text of candidates) {
+      if (phrases.some((phrase) => textSimilarity(phrase.text, text) >= 0.82)) continue;
+      phrases.push({ sourceContributionId: contribution.id, text });
+    }
+  }
+
+  return phrases;
+};
+
+export const hasEnoughMeaningfulQuoteSources = (
+  contributions: Pick<Contribution, "id" | "message">[]
+) => getMeaningfulQuoteSourcePhrases(contributions).length >= BEST_QUOTE_MIN_MEANINGFUL_PHRASE_COUNT;
 
 export const validateBestQuoteCandidates = (
   value: unknown,

@@ -16,6 +16,7 @@ import {
   updateCardDraftBasics,
   updateCardFinalPresentationSettings,
   updateCardMainGreetingSettings,
+  updateCardTemplate,
   updateCardMediaAssetCaption,
   updateContributionMessage,
   updateContributionStatus,
@@ -30,7 +31,8 @@ import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository"
 import { assertCardContentEditable } from "@/lib/cards/lifecycle";
 import { validateContributionFormData, validateContributionMessage } from "@/lib/contributions/validation";
 import { generateBestQuotes, generateQualities } from "@/lib/ai/service";
-import { BEST_QUOTE_MIN_CONTRIBUTION_COUNT } from "@/lib/ai/card-insights";
+import { buildContributionFingerprint, hasEnoughMeaningfulQuoteSources } from "@/lib/ai/card-insights";
+import { AiError } from "@/lib/ai/types";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type {
   FinalCardBlockId,
@@ -49,7 +51,7 @@ import { importGiftOptionImage } from "@/lib/gift-polls/image-storage";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
 import { getGiftPath, getJoinPath, getManagePath } from "@/lib/routes/card-links";
 import { reportCriticalError } from "@/lib/telemetry";
-import { getAiCardInsight, saveAiCardInsight } from "@/lib/ai/repository";
+import { getAiCardInsight, getAiUsageSummary, saveAiCardInsight } from "@/lib/ai/repository";
 import { ContributionLimitReachedError } from "@/lib/contributions/limits";
 import {
   closeGiftPoll,
@@ -61,6 +63,8 @@ import {
   selectGiftPollOption
 } from "@/lib/gift-polls/repository";
 import { GIFT_POLL_MAX_OPTIONS, isSafeProductUrl, normalizeBudgetAmount, normalizeGiftPollMode } from "@/lib/gift-polls/validation";
+import { finalCardLayouts } from "@/lib/final-card/layouts";
+import { buildCardBlockReadiness } from "@/lib/manage/card-design-readiness";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
@@ -97,6 +101,10 @@ export type CardBasicsFormState = {
   ok: boolean;
   message: string;
   fields?: CardBasicsFields;
+  accessEmail?: {
+    status: "sent" | "failed";
+    message: string;
+  };
 };
 
 export type GiftPollFormState = { ok: boolean; message: string };
@@ -525,13 +533,19 @@ export async function updateCardBasicsAction(
 
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 
-  const message = organizerEmailChanged && accessEmailSent
-    ? `Изменения сохранены. Мы отправили письмо со ссылкой для входа на ${fields.organizerEmail}.`
-    : organizerEmailChanged
-      ? "Изменения сохранены, но письмо со ссылкой отправить не удалось. Попробуйте отправить его ещё раз."
-      : "Изменения сохранены.";
+  const accessEmail = organizerEmailChanged
+    ? accessEmailSent
+      ? {
+          status: "sent" as const,
+          message: `Письмо со ссылкой для входа отправлено на ${fields.organizerEmail}.`
+        }
+      : {
+          status: "failed" as const,
+          message: "Не удалось отправить письмо со ссылкой."
+        }
+    : undefined;
 
-  return { ok: true, message, fields };
+  return { ok: true, message: "Изменения сохранены.", fields, accessEmail };
 }
 
 export async function resendOrganizerAccessAction(
@@ -573,6 +587,39 @@ export async function closeCollectionAction(formData: FormData) {
 }
 
 export async function deliverCardAction(formData: FormData) {
+  const manageToken = String(formData.get("manageToken") ?? "");
+  const card = manageToken ? await getCardDraftByManageToken(manageToken) : null;
+  if (!card) return;
+  const [contributions, assets, quotesInsight, qualitiesInsight] = await Promise.all([
+    listContributionsByCardId(card.id),
+    listCardMediaAssetsByCardId(card.id),
+    getAiCardInsight(card.id, "quotes"),
+    getAiCardInsight(card.id, "qualities")
+  ]);
+  const fingerprint = buildContributionFingerprint(contributions);
+  const quotesAreStale = Boolean(quotesInsight && quotesInsight.sourceFingerprint !== fingerprint);
+  const qualitiesAreStale = Boolean(qualitiesInsight && qualitiesInsight.sourceFingerprint !== fingerprint);
+  const readiness = buildCardBlockReadiness({
+    card,
+    requiredBlockIds: finalCardLayouts[card.templateId].blocks
+      .filter((block) => block.required)
+      .map((block) => block.id),
+    visibleContributions: contributions,
+    mediaAssets: assets,
+    qualities: qualitiesAreStale ? [] : qualitiesInsight?.items.map((item) => item.text) ?? [],
+    qualitiesAreStale,
+    bestQuotes: quotesAreStale ? [] : quotesInsight?.items.map((item) => item.text) ?? [],
+    bestQuotesAreStale: quotesAreStale
+  });
+  if (readiness.some((block) => block.enabled && block.status !== "READY")) {
+    logger.warn("manage.delivery_blocked_by_readiness", "Card delivery blocked by incomplete blocks", {
+      cardId: card.id,
+      incompleteBlocks: readiness
+        .filter((block) => block.enabled && block.status !== "READY")
+        .map((block) => block.blockId)
+    });
+    return;
+  }
   await runLifecycleAction(formData, deliverCard);
 }
 
@@ -803,6 +850,35 @@ export async function updateFinalPresentationSettingsAction(
   return { ok: true, message: "Настройки финального экрана обновлены." };
 }
 
+export async function updateCardTemplateAction(
+  _previousState: { ok: boolean; message: string },
+  formData: FormData
+) {
+  const manageToken = String(formData.get("manageToken") ?? "");
+  const templateIdValue = String(formData.get("templateId") ?? "");
+  if (!manageToken || !isTemplateId(templateIdValue)) {
+    return { ok: false, message: "Не удалось выбрать шаблон." };
+  }
+
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования." };
+  }
+
+  const updated = await updateCardTemplate(card.id, templateIdValue);
+  if (!updated) return { ok: false, message: "Не удалось применить шаблон." };
+
+  logger.info("manage.card_template_updated", "Card template updated by organizer", {
+    cardId: card.id,
+    templateId: templateIdValue
+  });
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+  return { ok: true, message: "Шаблон применён." };
+}
+
 export async function setMainGreetingAction(formData: FormData) {
   const contributionId = String(formData.get("contributionId") ?? "");
   const manageToken = String(formData.get("manageToken") ?? "");
@@ -1018,6 +1094,36 @@ export async function deleteCardMediaAction(
     return { ok: false, message: "Фото не найдено." };
   }
 
+  const finalMessageSettings = {
+    ...(card.finalMessageSettings ?? {
+      layoutMode: "grid-2" as const,
+      mediaLayout: "portrait" as const,
+      mediaSlots: [],
+      mediaAssetIds: [],
+      showAllLink: true
+    }),
+    mediaAssetIds: (card.finalMessageSettings?.mediaAssetIds ?? []).filter((id) => id !== assetId)
+  };
+  const finalMemorySettings = {
+    ...(card.finalMemorySettings ?? {
+      title: "Моменты",
+      description: "Фото, которые хочется сохранить",
+      mediaSlots: [],
+      mediaAssetIds: [],
+      photoCount: 3 as const
+    }),
+    mediaAssetIds: (card.finalMemorySettings?.mediaAssetIds ?? []).filter((id) => id !== assetId)
+  };
+  await updateCardFinalPresentationSettings(
+    card.id,
+    card.templateId,
+    card.finalBlockSettings ?? {},
+    card.finalBlockOrder ?? managedBlockIds,
+    finalMessageSettings,
+    card.finalMainGreetingSettings ?? { contributionId: null },
+    finalMemorySettings
+  );
+
   logger.info("manage.card_media_deleted", "Card media deleted by organizer", {
     cardId: card.id,
     assetId: deleted.id,
@@ -1053,11 +1159,9 @@ export async function saveBestQuoteSelectionAction(
   }
 
   const selectedItems = selected.map((quote) => candidateByText.get(quote)!);
-  const remainingItems = insight.items.filter((item) => !selected.includes(item.text));
-  const items = [...selectedItems, ...remainingItems];
-  await saveAiCardInsight({ ...insight, items, updatedAt: new Date().toISOString() });
+  await saveAiCardInsight({ ...insight, items: selectedItems, updatedAt: new Date().toISOString() });
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
-  return { ok: true, message: "Выбранные фразы сохранены для финальной открытки.", quotes: items.map((item) => item.text) };
+  return { ok: true, message: "Выбранные фразы сохранены для финальной открытки.", quotes: selectedItems.map((item) => item.text) };
 }
 
 export async function generateBestQuotesAction(
@@ -1075,12 +1179,16 @@ export async function generateBestQuotesAction(
   }
 
   const contributions = await listContributionsByCardId(card.id);
-  if (contributions.length < BEST_QUOTE_MIN_CONTRIBUTION_COUNT) {
+  if (!hasEnoughMeaningfulQuoteSources(contributions)) {
+    logger.info("ai.best_quotes_skipped", "Best quote generation skipped before provider call", {
+      cardId: card.id,
+      classification: "content_insufficient"
+    });
     return {
       ok: false,
-      message: `Лучшие фразы появятся, когда соберётся минимум ${BEST_QUOTE_MIN_CONTRIBUTION_COUNT} поздравлений — так мы сможем выбрать действительно разные и тёплые строки.`,
+      message: "В поздравлениях пока недостаточно содержательных самостоятельных фраз. Добавьте более личные воспоминания, благодарности или конкретные тёплые слова — тогда мы сможем выбрать три сильные цитаты.",
       quotes: [],
-      usage: { used: 0, limit: 0, remaining: 0 }
+      usage: await getAiUsageSummary(card.id)
     };
   }
   let result: Awaited<ReturnType<typeof generateBestQuotes>>;
@@ -1092,12 +1200,32 @@ export async function generateBestQuotesAction(
       contributions
     });
   } catch (error) {
-    const errorId = await reportCriticalError("ai", error, { cardId: card.id, operation: "best_quotes" });
+    const classification =
+      error instanceof AiError && error.code === "LIMIT_REACHED"
+        ? "limit_reached"
+        : error instanceof AiError && ["PROVIDER_CONFIG", "PROVIDER_UNAVAILABLE"].includes(error.code)
+          ? "provider_unavailable"
+          : error instanceof AiError && ["AI_VALIDATION_FAILED", "INVALID_PROVIDER_RESPONSE"].includes(error.code)
+            ? "invalid_result"
+            : "internal_error";
+    await reportCriticalError("ai", error, {
+      cardId: card.id,
+      operation: "best_quotes",
+      classification
+    });
+    const usage = await getAiUsageSummary(card.id);
     return {
       ok: false,
-      message: `Пока не удалось подобрать три короткие самостоятельные фразы. Попробуйте ещё раз. Если ошибка повторится, сообщите код: ${errorId}.`,
+      message:
+        classification === "provider_unavailable"
+          ? "Не удалось связаться с AI. Попробуйте ещё раз немного позже."
+          : classification === "limit_reached"
+            ? "Лимит AI исчерпан. Проверьте количество оставшихся попыток."
+            : classification === "invalid_result"
+              ? "Из этих поздравлений пока не удалось выбрать три самостоятельные фразы. Попробуйте после добавления более содержательных текстов."
+              : "Не удалось подготовить фразы. Попробуйте ещё раз немного позже.",
       quotes: [],
-      usage: { used: 0, limit: 0, remaining: 0 }
+      usage
     };
   }
 

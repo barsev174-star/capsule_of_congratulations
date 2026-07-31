@@ -1,26 +1,16 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useState } from "react";
 import type { CardTemplate } from "@/lib/cards/templates";
-import type {
-  FinalCardBlockId,
-  FinalCardMessageLayoutMode,
-  FinalCardMessageMediaLayout,
-  FinalCardOptionalBlockId
-} from "@/lib/final-card/types";
-import { updateFinalPresentationSettingsAction } from "./actions";
+import { updateCardTemplateAction } from "./actions";
 import styles from "./manage-page.module.css";
 
 type Props = {
   manageToken: string;
   templates: CardTemplate[];
-  initialTemplateId: CardTemplate["id"];
-  initialLayoutMode: FinalCardMessageLayoutMode;
-  initialMediaLayout: FinalCardMessageMediaLayout;
-  initialBlockOrder: FinalCardBlockId[];
-  blockState: Record<FinalCardOptionalBlockId, boolean>;
+  currentTemplateId: CardTemplate["id"];
   onTemplateSelectionChange?: (templateId: CardTemplate["id"]) => void;
-  variant?: "grid" | "hero";
+  onApplied?: () => void;
 };
 
 const initialState = {
@@ -31,106 +21,81 @@ const initialState = {
 export const TemplateSettingsForm = ({
   manageToken,
   templates,
-  initialTemplateId,
-  initialLayoutMode,
-  initialMediaLayout,
-  initialBlockOrder,
-  blockState,
+  currentTemplateId,
   onTemplateSelectionChange,
-  variant = "grid"
+  onApplied
 }: Props) => {
-  const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId);
-  const [showApplied, setShowApplied] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(currentTemplateId);
   const handleTemplateAction = async (previousState: typeof initialState, formData: FormData) => {
-    const result = await updateFinalPresentationSettingsAction(previousState, formData);
+    const result = await updateCardTemplateAction(previousState, formData);
     if (result.ok) {
-      setShowApplied(true);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setShowApplied(false), 2000);
+      onTemplateSelectionChange?.(selectedTemplateId);
+      onApplied?.();
     }
     return result;
   };
-  const [, formAction, isPending] = useActionState(handleTemplateAction, initialState);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
+  const [state, formAction, isPending] = useActionState(handleTemplateAction, initialState);
 
   const selectTemplate = (templateId: CardTemplate["id"]) => {
     setSelectedTemplateId(templateId);
-    onTemplateSelectionChange?.(templateId);
   };
+  const selectedTemplate =
+    templates.find((template) => template.id === selectedTemplateId) ?? templates[0];
+  const isCurrentTemplateSelected = selectedTemplateId === currentTemplateId;
 
   return (
-    <form action={formAction} className={variant === "hero" ? styles.templateHeroForm : styles.templateForm}>
+    <form action={formAction} className={styles.templatePickerForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
-      <input type="hidden" name="layoutMode" value={initialLayoutMode} />
-      <input type="hidden" name="mediaLayout" value={initialMediaLayout} />
-
-      {initialBlockOrder.map((blockId) => (
-        <input key={blockId} type="hidden" name="blockOrder" value={blockId} />
-      ))}
-
-      {Object.entries(blockState).map(([blockId, enabled]) => (
-        <input key={blockId} type="hidden" name={blockId} value={enabled ? "on" : ""} />
-      ))}
-
-      {variant === "hero" ? (
-        <>
-          <label className={styles.templateHeroPicker}>
-            <span className={styles.templateHeroPickerLabel}>Выбрать другой</span>
-            <select
-              name="templateId"
-              value={selectedTemplateId}
-              onChange={(event) => selectTemplate(event.target.value as CardTemplate["id"])}
-              className={styles.templateHeroSelect}
+      <div className={styles.templatePickerGrid} role="radiogroup" aria-label="Шаблоны открытки">
+        {templates.map((template) => {
+          const selected = selectedTemplateId === template.id;
+          const isCurrent = currentTemplateId === template.id;
+          const isNewSelection = selected && !isCurrent;
+          const previewSrc = template.id === "route-adventure"
+            ? "/assets/landing/template-route-adventure-preview.png"
+            : "/templates/warm-classic-preview.png";
+          return (
+            <label
+              key={template.id}
+              className={`${styles.templatePickerCard} ${
+                isCurrent ? styles.templatePickerCardCurrent : ""
+              } ${isNewSelection ? styles.templatePickerCardActive : ""}`}
+              aria-selected={selected}
             >
-              {templates.map((template) => (
-                <option key={template.id} value={template.id}>
-                  {template.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className={styles.templateHeroActions}>
-            <button type="submit" className={styles.secondaryButton} disabled={isPending}>
-              {isPending ? "Применяем..." : showApplied ? "Шаблон применен ✓" : "Применить"}
-            </button>
-          </div>
-        </>
-      ) : (
-        <>
-          <div className={styles.templateGrid}>
-            {templates.map((template) => (
-              <label
-                key={template.id}
-                className={`${styles.templateCard} ${selectedTemplateId === template.id ? styles.templateCardActive : ""}`}
-              >
-                <input
-                  type="radio"
-                  name="templateId"
-                  value={template.id}
-                  defaultChecked={template.id === initialTemplateId}
-                  onChange={() => selectTemplate(template.id)}
-                />
-                <span className={styles.templateSwatch} style={{ background: template.accent }} />
-                <span className={styles.templateName}>{template.name}</span>
-                <span className={styles.templateDescription}>{template.description}</span>
-              </label>
-            ))}
-          </div>
-
-          <div className={styles.editorFooter}>
-            <button type="submit" className={styles.secondaryButton} disabled={isPending}>
-              {isPending ? "Применяем..." : showApplied ? "Шаблон применен ✓" : "Применить"}
-            </button>
-          </div>
-        </>
-      )}
+              <input
+                type="radio"
+                name="templateId"
+                value={template.id}
+                checked={selected}
+                onChange={() => selectTemplate(template.id)}
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={previewSrc} alt="" />
+              <span className={styles.templatePickerCardCopy}>
+                <strong>{template.name}</strong>
+                <span>{template.description}</span>
+              </span>
+              {isCurrent ? (
+                <span className={styles.templatePickerUsedBadge}>Используется</span>
+              ) : null}
+              {isNewSelection ? (
+                <span className={styles.templatePickerCheck} aria-hidden="true">✓</span>
+              ) : null}
+            </label>
+          );
+        })}
+      </div>
+      <div className={styles.templatePickerFooter}>
+        <span id="template-picker-status" role="status" aria-live="polite">
+          {state.message ||
+            (isCurrentTemplateSelected
+              ? `Шаблон «${selectedTemplate.name}» используется сейчас`
+              : `Будет применён шаблон «${selectedTemplate.name}»`)}
+        </span>
+        <button type="submit" className={styles.contentPrimaryButton} disabled={isPending || isCurrentTemplateSelected}>
+          {isPending ? "Применяем…" : isCurrentTemplateSelected ? "Этот шаблон уже используется" : "Применить шаблон"}
+        </button>
+      </div>
     </form>
   );
 };

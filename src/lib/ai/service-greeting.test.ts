@@ -131,6 +131,24 @@ describe("AI greeting service validation flow", () => {
     expect(mocks.completeAiGeneration).toHaveBeenCalledOnce();
   });
 
+  it("requires at least six greetings before generating qualities", async () => {
+    const contributions = Array.from({ length: 5 }, (_, index) => ({
+      id: `quality-${index + 1}`,
+      message: `Поздравление ${index + 1} с достаточно подробным текстом о качествах человека.`,
+      updatedAt: `2026-01-0${index + 1}`
+    })) as never;
+
+    await expect(
+      generateQualities({
+        cardId: "card-1",
+        recipientName: "Анна",
+        occasionText: "С днём рождения!",
+        contributions
+      })
+    ).rejects.toThrow("нужно хотя бы 6 поздравлений");
+    expect(mocks.generateQualitiesWithOpenAi).not.toHaveBeenCalled();
+  });
+
   it("routes best quotes and qualities to OpenAI", async () => {
     process.env.AI_INSIGHTS_PROVIDER = "openai";
     const contributions = [

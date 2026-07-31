@@ -124,7 +124,7 @@ const resolveMainGreeting = (card: CardDraft, contributions: Contribution[]) => 
     ? contributions.find((contribution) => contribution.id === selectedContributionId)
     : null;
 
-  return selectedContribution ?? contributions[0] ?? null;
+  return selectedContribution ?? null;
 };
 
 const buildAiSummaryText = (card: CardDraft, contributions: Contribution[]) => {
@@ -167,12 +167,10 @@ const resolveStyle = (templateId: CardDraft["templateId"]): FinalCardStyleId =>
 const resolveOrderedMediaAssets = (
   mediaAssets: CardMediaAsset[],
   assetIds: string[],
-  slots: string[],
-  fallbackSlots: string[]
+  limit: number
 ) => {
   const selected: CardMediaAsset[] = [];
   const selectedIds = new Set<string>();
-  const selectedSlots = [...slots, ...fallbackSlots.filter((slot) => !slots.includes(slot))].slice(0, fallbackSlots.length);
   const addAsset = (asset: CardMediaAsset | undefined) => {
     if (!asset || selectedIds.has(asset.id)) {
       return;
@@ -182,17 +180,17 @@ const resolveOrderedMediaAssets = (
     selectedIds.add(asset.id);
   };
 
-  selectedSlots.forEach((slot) => addAsset(mediaAssets.find((asset) => asset.slot === slot)));
   assetIds.forEach((id) => addAsset(mediaAssets.find((asset) => asset.id === id)));
 
-  return selected.slice(0, selectedSlots.length);
+  return selected.slice(0, limit);
 };
 
 export const buildFinalCardViewModel = (
   card: CardDraft,
   contributions: Contribution[],
   mediaAssets: CardMediaAsset[] = [],
-  aiContent: FinalCardAiContent = {}
+  aiContent: FinalCardAiContent = {},
+  options: { includeIncompleteBlocks?: boolean } = {}
 ): FinalCardViewModel => {
   const normalizedMediaAssets = mediaAssets.map((asset) => ({
     ...asset,
@@ -202,10 +200,8 @@ export const buildFinalCardViewModel = (
   const messageLayoutMode = card.finalMessageSettings?.layoutMode ?? "grid-2";
   const messageMediaLayout = card.finalMessageSettings?.mediaLayout ?? "portrait";
   const layoutProfile = getFinalCardMessageLayoutProfile(messageLayoutMode, messageMediaLayout);
-  const qualities = aiContent.qualities?.length ? aiContent.qualities.slice(0, 5) : extractQualities(contributions);
-  const quotes = aiContent.quotes === undefined
-    ? extractQuotes(contributions)
-    : aiContent.quotes.length === BEST_QUOTE_COUNT && aiContent.quotes.every(isValidBestQuoteText)
+  const qualities = aiContent.qualities?.length === 5 ? aiContent.qualities.slice(0, 5) : [];
+  const quotes = aiContent.quotes?.length === BEST_QUOTE_COUNT && aiContent.quotes.every(isValidBestQuoteText)
       ? aiContent.quotes
       : [];
   const memories = buildMemories(contributions);
@@ -243,18 +239,12 @@ export const buildFinalCardViewModel = (
     messageMediaAssets: resolveOrderedMediaAssets(
       normalizedMediaAssets,
       card.finalMessageSettings?.mediaAssetIds ?? [],
-      card.finalMessageSettings?.mediaSlots ?? [],
-      messageMediaLayout === "portrait"
-        ? ["portrait"]
-        : messageMediaLayout === "landscape-pair"
-          ? ["landscape-a", "landscape-b"]
-          : ["landscape-a", "landscape-b", "landscape-c"]
+      messageMediaLayout === "portrait" ? 1 : messageMediaLayout === "landscape-pair" ? 2 : 3
     ),
     memoryMediaAssets: resolveOrderedMediaAssets(
       normalizedMediaAssets,
       card.finalMemorySettings?.mediaAssetIds ?? [],
-      card.finalMemorySettings?.mediaSlots ?? [],
-      ["memory-a", "memory-b", "memory-c"]
+      card.finalMemorySettings?.photoCount ?? 3
     ).slice(0, card.finalMemorySettings?.photoCount ?? 3),
     memoryTitle: normalizeMemoryTitle(card.finalMemorySettings?.title),
     memoryDescription: normalizeMemoryDescription(card.finalMemorySettings?.description),
@@ -264,6 +254,12 @@ export const buildFinalCardViewModel = (
     showAllMessagesLink: visibleMessageContributions.length > layoutProfile.cardsPerPage,
     footerSignature:
       !card.signature || card.signature === `С любовью, ${card.fromLabel}` ? "От тех, кто тебя ценит" : card.signature,
-    blocks: buildFinalCardLayout(style, availability, card.finalBlockSettings, card.finalBlockOrder).blocks
+    blocks: buildFinalCardLayout(
+      style,
+      availability,
+      card.finalBlockSettings,
+      card.finalBlockOrder,
+      options.includeIncompleteBlocks ?? false
+    ).blocks
   };
 };

@@ -1,9 +1,18 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState, useTransition, type DragEvent as ReactDragEvent } from "react";
+import {
+  useActionState,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type PointerEvent as ReactPointerEvent
+} from "react";
 import { useRouter } from "next/navigation";
-import type { CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
 import type { AiUsage } from "@/lib/ai/types";
+import type { CardBlockReadinessView } from "@/lib/manage/card-design-readiness";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type {
   FinalCardBlockId,
@@ -12,8 +21,15 @@ import type {
   FinalCardMessageMediaLayout,
   FinalCardOptionalBlockId
 } from "@/lib/final-card/types";
-import { getManagePath } from "@/lib/routes/card-links";
-import { generateBestQuotesAction, generateQualitiesAction, saveBestQuoteSelectionAction, updateFinalPresentationSettingsAction } from "./actions";
+import {
+  generateBestQuotesAction,
+  generateQualitiesAction,
+  saveBestQuoteSelectionAction,
+  updateFinalPresentationSettingsAction
+} from "./actions";
+import { getContentTabHref } from "./content-focus";
+import { DesignPhotoSummary } from "./design-photo-summary";
+import { reorderCompositionBlocks, type CompositionDropPosition } from "./composition-order";
 import styles from "./manage-page.module.css";
 
 type BlockOption = {
@@ -30,11 +46,12 @@ type Props = {
   initialLayoutMode: FinalCardMessageLayoutMode;
   initialMediaLayout: FinalCardMessageMediaLayout;
   initialBlockOrder: FinalCardBlockId[];
-  mediaAssets: CardMediaAsset[];
   initialMessageMediaSlots: FinalCardMediaSlot[];
   initialMemoryMediaSlots: FinalCardMediaSlot[];
   initialMessageMediaAssetIds: string[];
   initialMemoryMediaAssetIds: string[];
+  messageAssignedPhotoCount: number;
+  memoryAssignedPhotoCount: number;
   initialMemoryPhotoCount: 2 | 3;
   initialMemoryTitle: string;
   initialMemoryDescription: string;
@@ -50,6 +67,8 @@ type Props = {
   canGenerateQualities: boolean;
   initialAiUsage: AiUsage;
   isContentEditable: boolean;
+  readiness: CardBlockReadinessView[];
+  visibleContributions: Array<{ id: string; authorName: string; message: string }>;
 };
 
 type RenderedBlock = {
@@ -61,10 +80,19 @@ type RenderedBlock = {
 
 type DropTarget = {
   blockId: FinalCardBlockId;
-  position: "before" | "after";
+  position: CompositionDropPosition;
 };
 
 type ExpandedState = Partial<Record<FinalCardBlockId, boolean>>;
+
+type ActivePointerDrag = {
+  pointerId: number;
+  offsetX: number;
+  offsetY: number;
+  startX: number;
+  startY: number;
+  hasMoved: boolean;
+};
 
 const initialState = {
   ok: false,
@@ -92,31 +120,25 @@ const mediaLayoutOptions: Array<{
   { id: "landscape-trio", label: "+ 3 горизонтальных фото", description: "До 280 символов" }
 ];
 
-const mediaSlotsByLayout: Record<FinalCardMessageMediaLayout, CardMediaSlot[]> = {
+const getMessageLayoutSummary = (
+  layoutMode: FinalCardMessageLayoutMode,
+  mediaLayout: FinalCardMessageMediaLayout
+) => {
+  if (layoutMode === "column-media") {
+    if (mediaLayout === "portrait") return "С фото · 1 вертикальная фотография";
+    if (mediaLayout === "landscape-pair") return "С фото · 2 горизонтальные фотографии";
+    return "С фото · 3 горизонтальные фотографии";
+  }
+
+  if (layoutMode === "grid-2") return "Без фото · сетка 2×2";
+  if (layoutMode === "carousel-2") return "Без фото · в два ряда";
+  return "Без фото · в один ряд";
+};
+
+const mediaSlotsByLayout: Record<FinalCardMessageMediaLayout, FinalCardMediaSlot[]> = {
   portrait: ["portrait"],
   "landscape-pair": ["landscape-a", "landscape-b"],
   "landscape-trio": ["landscape-a", "landscape-b", "landscape-c"]
-};
-
-const horizontalMediaSlots: CardMediaSlot[] = [
-  "landscape-a",
-  "landscape-b",
-  "landscape-c",
-  "memory-a",
-  "memory-b",
-  "memory-c"
-];
-
-const memorySlotCount = 3;
-
-const slotLabelMap: Record<CardMediaSlot, string> = {
-  portrait: "Вертикальное фото",
-  "landscape-a": "Фото поздравлений 1",
-  "landscape-b": "Фото поздравлений 2",
-  "landscape-c": "Фото поздравлений 3",
-  "memory-a": "Воспоминание 1",
-  "memory-b": "Воспоминание 2",
-  "memory-c": "Воспоминание 3"
 };
 
 const blockMeta: Record<
@@ -129,33 +151,33 @@ const blockMeta: Record<
 > = {
   hero: {
     label: "Обложка",
-    summary: "Первый экран с именем получателя и настроением открытки.",
-    details: "Первый экран: имя получателя и настроение открытки."
+    summary: "Имя получателя, повод и настроение первого экрана.",
+    details: "Имя получателя, повод и настроение первого экрана."
   },
   summary: {
     label: "Главное поздравление",
-    summary: "Выбранное поздравление, которое станет большим личным блоком в открытке.",
-    details: "Выбранное поздравление станет большим личным блоком."
+    summary: "Одно поздравление, которое будет выделено в открытке.",
+    details: "Одно поздравление, которое будет выделено в открытке."
   },
   qualities: {
     label: "Качества",
-    summary: "Показывает, за что именно любят и ценят человека.",
-    details: "Показывает, за что любят и ценят человека."
+    summary: "Пять качеств, которые чаще всего отмечают участники.",
+    details: "Пять качеств, которые чаще всего отмечают участники."
   },
   messages: {
     label: "Поздравления",
-    summary: "Главный блок с карточками поздравлений от участников.",
-    details: "Здесь настраивается сетка поздравлений и фото рядом с ними."
+    summary: "Поздравления участников в выбранной компоновке.",
+    details: "Поздравления участников в выбранной компоновке."
   },
   memories: {
     label: "Моменты",
-    summary: "Секция для ярких фото, коротких подписей и общей визуальной истории.",
-    details: "До трёх фото с короткими подписями."
+    summary: "Отдельная подборка из трёх фотографий с короткими подписями.",
+    details: "Отдельная подборка из трёх фотографий с короткими подписями."
   },
   quotes: {
     label: "Лучшие фразы",
-    summary: "Сильные и тёплые строки из поздравлений участников.",
-    details: "Самые сильные короткие строки из поздравлений."
+    summary: "Три короткие фразы, выбранные из поздравлений.",
+    details: "Три короткие фразы, выбранные из поздравлений."
   },
   "ai-summary": {
     label: "Общее поздравление",
@@ -164,8 +186,8 @@ const blockMeta: Record<
   },
   closing: {
     label: "Финал",
-    summary: "Завершение открытки и общее тёплое пожелание.",
-    details: "Финальное пожелание в конце открытки."
+    summary: "Завершающий текст и подпись открытки.",
+    details: "Завершающий текст и подпись открытки."
   }
 };
 
@@ -180,7 +202,6 @@ const buildRequiredCanvasBlock = (blockId: FinalCardBlockId): RenderedBlock => (
 
 const buildCanvasBlocks = (
   options: BlockOption[],
-  blockState: Record<string, boolean>,
   requiredBlockIds: FinalCardBlockId[]
 ): RenderedBlock[] => [
   {
@@ -193,7 +214,7 @@ const buildCanvasBlocks = (
     .filter((blockId) => !["hero", "messages", "closing"].includes(blockId))
     .map((blockId) => buildRequiredCanvasBlock(blockId)),
   ...options
-    .filter((option) => !option.disabled && blockState[option.id])
+    .filter((option) => !option.disabled)
     .map((option) => ({
       id: option.id as FinalCardBlockId,
       label: option.label,
@@ -387,116 +408,15 @@ const MediaLayoutDiagram = ({ mode }: { mode: FinalCardMessageMediaLayout }) => 
   );
 };
 
-const getAssetLabel = (asset: CardMediaAsset) =>
-  asset.captionTitle || asset.captionSubtitle || slotLabelMap[asset.slot] || "Фото";
-
 const normalizeSelectedSlots = (
   selectedSlots: FinalCardMediaSlot[],
-  allowedSlots: CardMediaSlot[],
+  allowedSlots: FinalCardMediaSlot[],
   fallbackCount: number
 ) => {
   const allowed = new Set(allowedSlots);
-  const filtered = selectedSlots.filter((slot): slot is CardMediaSlot => allowed.has(slot as CardMediaSlot));
+  const filtered = selectedSlots.filter((slot) => allowed.has(slot));
   const fallback = allowedSlots.slice(0, fallbackCount);
   return [...filtered, ...fallback.filter((slot) => !filtered.includes(slot))].slice(0, fallbackCount);
-};
-
-const normalizeSelectedAssetIds = (
-  assets: CardMediaAsset[],
-  selectedAssetIds: string[],
-  legacySelectedSlots: FinalCardMediaSlot[],
-  allowedSlots: CardMediaSlot[],
-  fallbackCount: number
-) => {
-  const allowed = new Set(allowedSlots);
-  const allowedAssets = assets.filter((asset) => allowed.has(asset.slot));
-  const selected = selectedAssetIds.filter((id) => allowedAssets.some((asset) => asset.id === id));
-  const legacySlots = normalizeSelectedSlots(legacySelectedSlots, allowedSlots, fallbackCount);
-  const legacyIds = legacySlots
-    .map((slot) => allowedAssets.find((asset) => asset.slot === slot)?.id)
-    .filter((id): id is string => Boolean(id));
-  const fallbackIds = allowedAssets.map((asset) => asset.id);
-
-  return [...selected, ...legacyIds, ...fallbackIds]
-    .filter((id, index, list) => list.indexOf(id) === index)
-    .slice(0, fallbackCount);
-};
-
-const PhotoSequencePicker = ({
-  title,
-  description,
-  assets,
-  allowedSlots,
-  slotCount,
-  selectedAssetIds,
-  legacySelectedSlots,
-  onChange
-}: {
-  title: string;
-  description: string;
-  assets: CardMediaAsset[];
-  allowedSlots: CardMediaSlot[];
-  slotCount: number;
-  selectedAssetIds: string[];
-  legacySelectedSlots: FinalCardMediaSlot[];
-  onChange: (assetIds: string[]) => void;
-}) => {
-  const allowed = new Set(allowedSlots);
-  const availableAssets = assets.filter((asset) => allowed.has(asset.slot));
-  const normalizedAssetIds = normalizeSelectedAssetIds(
-    assets,
-    selectedAssetIds,
-    legacySelectedSlots,
-    allowedSlots,
-    slotCount
-  );
-
-  const updateAsset = (index: number, nextAssetId: string) => {
-    const next = [...normalizedAssetIds];
-    next[index] = nextAssetId;
-    onChange(next);
-  };
-
-  return (
-    <section className={styles.photoSequencePanel}>
-      <div className={styles.photoSequenceHeader}>
-        <div>
-          <h4 className={styles.messageSettingsTitle}>{title}</h4>
-          <p>{description}</p>
-        </div>
-        <span>{availableAssets.length} фото доступно</span>
-      </div>
-
-      {availableAssets.length === 0 ? (
-        <p className={styles.photoSequenceEmpty}>Сначала загрузите фото во вкладке «Поздравления и фото».</p>
-      ) : (
-        <div className={styles.photoSequenceList}>
-          {normalizedAssetIds.map((assetId, index) => {
-            const selectedAsset = assets.find((asset) => asset.id === assetId);
-
-            return (
-              <label key={`${assetId}-${index}`} className={styles.photoSequenceRow}>
-                <span>Позиция {index + 1}</span>
-                <select value={assetId} onChange={(event) => updateAsset(index, event.target.value)}>
-                  {availableAssets.map((asset) => (
-                    <option key={asset.id} value={asset.id}>
-                      {getAssetLabel(asset)}
-                    </option>
-                  ))}
-                </select>
-                {selectedAsset ? (
-                  <span className={styles.photoSequencePreview}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={selectedAsset.publicUrl} alt={getAssetLabel(selectedAsset)} />
-                  </span>
-                ) : null}
-              </label>
-            );
-          })}
-        </div>
-      )}
-    </section>
-  );
 };
 
 export const BlockSettingsForm = ({
@@ -505,11 +425,12 @@ export const BlockSettingsForm = ({
   initialLayoutMode,
   initialMediaLayout,
   initialBlockOrder,
-  mediaAssets,
   initialMessageMediaSlots,
   initialMemoryMediaSlots,
   initialMessageMediaAssetIds,
   initialMemoryMediaAssetIds,
+  messageAssignedPhotoCount,
+  memoryAssignedPhotoCount,
   initialMemoryPhotoCount,
   initialMemoryTitle,
   initialMemoryDescription,
@@ -524,7 +445,9 @@ export const BlockSettingsForm = ({
   qualitiesAreStale,
   canGenerateQualities,
   initialAiUsage,
-  isContentEditable
+  isContentEditable,
+  readiness,
+  visibleContributions
 }: Props) => {
   const router = useRouter();
   const [layoutMode, setLayoutMode] = useState<FinalCardMessageLayoutMode>(initialLayoutMode);
@@ -535,14 +458,17 @@ export const BlockSettingsForm = ({
   const [blockOrder, setBlockOrder] = useState<FinalCardBlockId[]>(initialBlockOrder);
   const [messageMediaSlots] = useState<FinalCardMediaSlot[]>(initialMessageMediaSlots);
   const [memoryMediaSlots] = useState<FinalCardMediaSlot[]>(initialMemoryMediaSlots);
-  const [messageMediaAssetIds, setMessageMediaAssetIds] = useState<string[]>(initialMessageMediaAssetIds);
-  const [memoryMediaAssetIds] = useState<string[]>(initialMemoryMediaAssetIds);
-  const memoryPhotoCount = 3;
+  const messageMediaAssetIds = initialMessageMediaAssetIds;
+  const memoryMediaAssetIds = initialMemoryMediaAssetIds;
+  const memoryPhotoCount = initialMemoryPhotoCount;
   const [memoryTitle, setMemoryTitle] = useState(initialMemoryTitle);
   const [memoryDescription, setMemoryDescription] = useState(initialMemoryDescription);
+  const [isMessageLayoutEditing, setIsMessageLayoutEditing] = useState(false);
+  const [isMemoryTextEditing, setIsMemoryTextEditing] = useState(false);
   const [draggedBlockId, setDraggedBlockId] = useState<FinalCardBlockId | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [expandedBlocks, setExpandedBlocks] = useState<ExpandedState>(initialExpandedState);
+  const [isReorderMode, setIsReorderMode] = useState(false);
   const [savedCompositionKey, setSavedCompositionKey] = useState(() =>
     JSON.stringify({
       blockOrder: initialBlockOrder,
@@ -551,13 +477,20 @@ export const BlockSettingsForm = ({
       mediaLayout: initialMediaLayout,
       memoryTitle: initialMemoryTitle,
       memoryDescription: initialMemoryDescription,
-      memoryPhotoCount: 3
+      memoryPhotoCount: initialMemoryPhotoCount
     })
   );
 
   const activeBlocks = useMemo(
-    () => buildCanvasBlocks(options, blockState, requiredBlockIds),
-    [blockState, options, requiredBlockIds]
+    () => buildCanvasBlocks(options, requiredBlockIds).map((block) =>
+      block.id === "memories"
+        ? {
+            ...block,
+            description: `Отдельная подборка из ${memoryPhotoCount} фотографий с короткими подписями.`
+          }
+        : block
+    ),
+    [memoryPhotoCount, options, requiredBlockIds]
   );
 
   const canvasBlocks = useMemo(() => {
@@ -566,11 +499,17 @@ export const BlockSettingsForm = ({
       .map((blockId) => activeMap.get(blockId))
       .filter((block): block is RenderedBlock => Boolean(block));
   }, [activeBlocks, blockOrder]);
+  const readinessById = useMemo(
+    () => new Map(readiness.map((block) => [block.blockId, block])),
+    [readiness]
+  );
+  const contextualActions = readiness.filter(
+    (block) => block.enabled && block.status === "ACTION_REQUIRED" && block.action
+  );
+  const allEnabledBlocksReady = readiness
+    .filter((block) => block.enabled)
+    .every((block) => block.status === "READY");
 
-  const removedOptionalBlocks = blockOrder
-    .filter((blockId) => !requiredBlockIds.includes(blockId) && !blockState[blockId])
-    .map((blockId) => options.find((option) => option.id === blockId))
-    .filter((option): option is BlockOption => Boolean(option));
   const currentCompositionKey = JSON.stringify({
     blockOrder,
     blockState,
@@ -582,9 +521,18 @@ export const BlockSettingsForm = ({
   });
   const isCompositionDirty = savedCompositionKey !== currentCompositionKey;
   const activeMessageMediaSlots = mediaSlotsByLayout[mediaLayout];
-  const activeMessagePickerSlots = mediaLayout === "portrait" ? activeMessageMediaSlots : horizontalMediaSlots;
+  const messageRequiredPhotoCount = layoutMode === "column-media" ? activeMessageMediaSlots.length : 0;
+  const selectedMainGreeting = visibleContributions[0] ?? null;
 
   const formRef = useRef<HTMLFormElement>(null);
+  const draggedBlockIdRef = useRef<FinalCardBlockId | null>(null);
+  const dropTargetRef = useRef<DropTarget | null>(null);
+  const activePointerDragRef = useRef<ActivePointerDrag | null>(null);
+  const dragPreviewRef = useRef<HTMLElement | null>(null);
+  const removePointerListenersRef = useRef<(() => void) | null>(null);
+  const suppressHeaderClickRef = useRef(false);
+  const suppressHeaderClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const positionsBeforeReorderRef = useRef<Map<FinalCardBlockId, DOMRect> | null>(null);
   const submittedCompositionKeyRef = useRef<string | null>(null);
   const autoSaveReadyRef = useRef(false);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -594,6 +542,7 @@ export const BlockSettingsForm = ({
     if (result.ok) {
       setSavedCompositionKey(submittedCompositionKeyRef.current ?? currentCompositionKey);
       setSaveStatus("saved");
+      router.refresh();
     } else {
       setSaveStatus("idle");
     }
@@ -666,7 +615,7 @@ export const BlockSettingsForm = ({
       autoSaveReadyRef.current = true;
       return;
     }
-    if (!isContentEditable || !isCompositionDirty || !formRef.current || isPending) return;
+    if (!isContentEditable || !isCompositionDirty || !formRef.current || isPending || draggedBlockId) return;
     if (submittedCompositionKeyRef.current === currentCompositionKey) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
@@ -679,12 +628,62 @@ export const BlockSettingsForm = ({
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [currentCompositionKey, formAction, isCompositionDirty, isContentEditable, isPending, startSettingsSaveTransition]);
+  }, [
+    currentCompositionKey,
+    draggedBlockId,
+    formAction,
+    isCompositionDirty,
+    isContentEditable,
+    isPending,
+    startSettingsSaveTransition
+  ]);
+
+  useLayoutEffect(() => {
+    const previousPositions = positionsBeforeReorderRef.current;
+    positionsBeforeReorderRef.current = null;
+
+    if (!draggedBlockId || !previousPositions || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    for (const [blockId, previousRect] of previousPositions) {
+      if (blockId === draggedBlockId) continue;
+
+      const element = document.querySelector<HTMLElement>(`[data-composition-block-id="${blockId}"]`);
+      if (!element) continue;
+
+      const nextRect = element.getBoundingClientRect();
+      const deltaY = previousRect.top - nextRect.top;
+
+      if (Math.abs(deltaY) < 1) continue;
+
+      element.animate(
+        [
+          { transform: `translate3d(0, ${deltaY}px, 0)` },
+          { transform: "translate3d(0, 0, 0)" }
+        ],
+        {
+          duration: 180,
+          easing: "cubic-bezier(0.2, 0, 0, 1)"
+        }
+      );
+    }
+  }, [blockOrder, draggedBlockId]);
+
+  useEffect(
+    () => () => {
+      removePointerListenersRef.current?.();
+      if (suppressHeaderClickTimerRef.current) clearTimeout(suppressHeaderClickTimerRef.current);
+      dragPreviewRef.current?.remove();
+      document.body.classList.remove(styles.compositionDragInProgress);
+    },
+    []
+  );
 
   const resolveDropPosition = (
     targetBlockId: FinalCardBlockId,
-    pointerPosition: "before" | "after"
-  ): "before" | "after" => {
+    pointerPosition: CompositionDropPosition
+  ): CompositionDropPosition => {
     if (targetBlockId === "hero") {
       return "after";
     }
@@ -696,29 +695,38 @@ export const BlockSettingsForm = ({
     return pointerPosition;
   };
 
-  const moveBlock = (targetBlockId: FinalCardBlockId, pointerPosition: "before" | "after") => {
-    if (!draggedBlockId || draggedBlockId === targetBlockId) {
+  const snapshotBlockPositions = () => {
+    positionsBeforeReorderRef.current = new Map(
+      canvasBlocks.flatMap((block) => {
+        const element = document.querySelector<HTMLElement>(`[data-composition-block-id="${block.id}"]`);
+        return element ? [[block.id, element.getBoundingClientRect()] as const] : [];
+      })
+    );
+  };
+
+  const moveBlockDuringDrag = (
+    targetBlockId: FinalCardBlockId,
+    pointerPosition: CompositionDropPosition
+  ) => {
+    const activeDraggedBlockId = draggedBlockIdRef.current;
+    if (!activeDraggedBlockId || activeDraggedBlockId === targetBlockId) {
       return;
     }
 
     const targetPosition = resolveDropPosition(targetBlockId, pointerPosition);
 
+    snapshotBlockPositions();
     setBlockOrder((current) => {
-      const withoutDragged = current.filter((blockId) => blockId !== draggedBlockId);
-      const targetIndex = withoutDragged.indexOf(targetBlockId);
-
-      if (targetIndex === -1) {
-        return current;
+      const next = reorderCompositionBlocks(current, activeDraggedBlockId, targetBlockId, targetPosition);
+      if (next === current) {
+        positionsBeforeReorderRef.current = null;
       }
-
-      const next = [...withoutDragged];
-      const insertIndex = targetPosition === "after" ? targetIndex + 1 : targetIndex;
-      next.splice(insertIndex, 0, draggedBlockId);
       return next;
     });
 
-    setDraggedBlockId(null);
-    setDropTarget(null);
+    const nextDropTarget = { blockId: targetBlockId, position: targetPosition };
+    dropTargetRef.current = nextDropTarget;
+    setDropTarget(nextDropTarget);
   };
 
   const moveBlockByStep = (blockId: FinalCardBlockId, direction: "up" | "down") => {
@@ -755,65 +763,171 @@ export const BlockSettingsForm = ({
     setDropTarget(null);
   };
 
-  const handleDragStart = (event: ReactDragEvent<HTMLButtonElement>, blockId: FinalCardBlockId) => {
-    setDraggedBlockId(blockId);
-    setDropTarget(null);
-    event.dataTransfer.effectAllowed = "move";
+  const positionDragPreview = (clientX: number, clientY: number) => {
+    const preview = dragPreviewRef.current;
+    const activePointerDrag = activePointerDragRef.current;
+    if (!preview || !activePointerDrag) return;
 
-    const card = event.currentTarget.closest("article");
-
-    if (card instanceof HTMLElement) {
-      const rect = card.getBoundingClientRect();
-      event.dataTransfer.setDragImage(card, event.clientX - rect.left, event.clientY - rect.top);
-    }
+    preview.style.transform = `translate3d(${clientX - activePointerDrag.offsetX}px, ${
+      clientY - activePointerDrag.offsetY
+    }px, 0) scale(1.01)`;
   };
 
-  const handleDragOver = (event: ReactDragEvent<HTMLElement>, blockId: FinalCardBlockId) => {
-    if (!draggedBlockId || draggedBlockId === blockId) {
-      return;
-    }
+  const updatePointerDrag = (event: PointerEvent) => {
+    const activePointerDrag = activePointerDragRef.current;
+    const activeDraggedBlockId = draggedBlockIdRef.current;
+    if (!activePointerDrag || activePointerDrag.pointerId !== event.pointerId || !activeDraggedBlockId) return;
 
     event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
+    if (
+      !activePointerDrag.hasMoved &&
+      Math.hypot(event.clientX - activePointerDrag.startX, event.clientY - activePointerDrag.startY) >= 4
+    ) {
+      activePointerDrag.hasMoved = true;
+    }
+    positionDragPreview(event.clientX, event.clientY);
 
-    const rect = event.currentTarget.getBoundingClientRect();
+    const target = document
+      .elementsFromPoint(event.clientX, event.clientY)
+      .map((element) => element.closest<HTMLElement>("[data-composition-block-id]"))
+      .find((element) => element && element.dataset.compositionBlockId !== activeDraggedBlockId);
+
+    if (!target) return;
+
+    const blockId = target.dataset.compositionBlockId as FinalCardBlockId;
+    const rect = target.getBoundingClientRect();
     const midpoint = rect.top + rect.height / 2;
     const pointerPosition = event.clientY < midpoint ? "before" : "after";
     const targetPosition = resolveDropPosition(blockId, pointerPosition);
 
-    setDropTarget((current) => {
-      if (current?.blockId === blockId && current.position === targetPosition) {
-        return current;
-      }
+    const activeDropTarget = dropTargetRef.current;
+    if (activeDropTarget?.blockId !== blockId || activeDropTarget.position !== targetPosition) {
+      moveBlockDuringDrag(blockId, targetPosition);
+    }
 
-      return { blockId, position: targetPosition };
-    });
+    const scrollThreshold = 72;
+    if (event.clientY < scrollThreshold) {
+      window.scrollBy({ top: -12 });
+    } else if (event.clientY > window.innerHeight - scrollThreshold) {
+      window.scrollBy({ top: 12 });
+    }
   };
 
-  const handleDragLeave = (event: ReactDragEvent<HTMLElement>, blockId: FinalCardBlockId) => {
-    if (event.currentTarget.contains(event.relatedTarget as Node | null)) {
+  const finishDragging = () => {
+    const shouldSuppressHeaderClick = Boolean(activePointerDragRef.current?.hasMoved);
+    removePointerListenersRef.current?.();
+    dragPreviewRef.current?.remove();
+    dragPreviewRef.current = null;
+    activePointerDragRef.current = null;
+    draggedBlockIdRef.current = null;
+    dropTargetRef.current = null;
+    positionsBeforeReorderRef.current = null;
+    document.body.classList.remove(styles.compositionDragInProgress);
+    setDraggedBlockId(null);
+    setDropTarget(null);
+
+    if (shouldSuppressHeaderClick) {
+      suppressHeaderClickRef.current = true;
+      if (suppressHeaderClickTimerRef.current) clearTimeout(suppressHeaderClickTimerRef.current);
+      suppressHeaderClickTimerRef.current = setTimeout(() => {
+        suppressHeaderClickRef.current = false;
+        suppressHeaderClickTimerRef.current = null;
+      }, 400);
+    }
+  };
+
+  const handlePointerDown = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    blockId: FinalCardBlockId
+  ) => {
+    if (
+      event.button !== 0 ||
+      fixedBlockIds.includes(blockId) ||
+      window.matchMedia("(max-width: 899px)").matches
+    ) {
       return;
     }
 
-    setDropTarget((current) => (current?.blockId === blockId ? null : current));
-  };
+    const card = event.currentTarget.closest("article");
+    if (!(card instanceof HTMLElement)) return;
 
-  const handleDrop = (event: ReactDragEvent<HTMLElement>, blockId: FinalCardBlockId) => {
     event.preventDefault();
 
-    if (!draggedBlockId || draggedBlockId === blockId || !dropTarget || dropTarget.blockId !== blockId) {
-      setDropTarget(null);
-      return;
-    }
+    const rect = card.getBoundingClientRect();
+    const preview = card.cloneNode(true) as HTMLElement;
+    preview.removeAttribute("id");
+    preview.removeAttribute("data-composition-block-id");
+    preview.setAttribute("aria-hidden", "true");
+    preview.classList.add(styles.compositionDragPreview);
+    preview.style.width = `${rect.width}px`;
+    preview.style.height = `${rect.height}px`;
+    document.body.appendChild(preview);
+    document.body.classList.add(styles.compositionDragInProgress);
 
-    moveBlock(blockId, dropTarget.position);
+    activePointerDragRef.current = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+      startX: event.clientX,
+      startY: event.clientY,
+      hasMoved: false
+    };
+    draggedBlockIdRef.current = blockId;
+    dropTargetRef.current = null;
+    dragPreviewRef.current = preview;
+    setDraggedBlockId(blockId);
+    setDropTarget(null);
+    positionDragPreview(event.clientX, event.clientY);
+
+    const handleWindowPointerMove = (pointerEvent: PointerEvent) => updatePointerDrag(pointerEvent);
+    const handleWindowPointerEnd = (pointerEvent: PointerEvent) => {
+      if (activePointerDragRef.current?.pointerId !== pointerEvent.pointerId) return;
+      pointerEvent.preventDefault();
+      finishDragging();
+    };
+    const handleWindowKeyDown = (keyboardEvent: KeyboardEvent) => {
+      if (keyboardEvent.key === "Escape") finishDragging();
+    };
+
+    window.addEventListener("pointermove", handleWindowPointerMove, { capture: true, passive: false });
+    window.addEventListener("pointerup", handleWindowPointerEnd, { capture: true });
+    window.addEventListener("pointercancel", handleWindowPointerEnd, { capture: true });
+    window.addEventListener("keydown", handleWindowKeyDown, { capture: true });
+    removePointerListenersRef.current = () => {
+      window.removeEventListener("pointermove", handleWindowPointerMove, { capture: true });
+      window.removeEventListener("pointerup", handleWindowPointerEnd, { capture: true });
+      window.removeEventListener("pointercancel", handleWindowPointerEnd, { capture: true });
+      window.removeEventListener("keydown", handleWindowKeyDown, { capture: true });
+      removePointerListenersRef.current = null;
+    };
   };
 
   const toggleExpanded = (blockId: FinalCardBlockId) => {
-    setExpandedBlocks((current) => ({
-      ...current,
-      [blockId]: !current[blockId]
-    }));
+    setExpandedBlocks((current) => {
+      const nextValue = !current[blockId];
+      if (typeof window !== "undefined" && window.matchMedia("(max-width: 899px)").matches) {
+        return nextValue ? { [blockId]: true } : {};
+      }
+      return { ...current, [blockId]: nextValue };
+    });
+  };
+
+  const collapseBlock = (blockId: FinalCardBlockId) => {
+    setExpandedBlocks((current) => ({ ...current, [blockId]: false }));
+    if (blockId === "messages") {
+      setIsMessageLayoutEditing(false);
+    }
+  };
+
+  const openBlock = (blockId: FinalCardBlockId) => {
+    setExpandedBlocks(
+      typeof window !== "undefined" && window.matchMedia("(max-width: 899px)").matches
+        ? { [blockId]: true }
+        : (current) => ({ ...current, [blockId]: true })
+    );
+    window.requestAnimationFrame(() => {
+      document.getElementById(`block-${blockId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   };
 
   const toggleBlock = (blockId: FinalCardBlockId, nextValue: boolean) => {
@@ -837,27 +951,15 @@ export const BlockSettingsForm = ({
         <input key={`message-media-${slot}-${index}`} type="hidden" name="messageMediaSlots" value={slot} />
       ))}
 
-      {normalizeSelectedAssetIds(
-        mediaAssets,
-        messageMediaAssetIds,
-        messageMediaSlots,
-        activeMessagePickerSlots,
-        activeMessageMediaSlots.length
-      ).map((assetId, index) => (
+      {messageMediaAssetIds.map((assetId, index) => (
         <input key={`message-media-asset-${assetId}-${index}`} type="hidden" name="messageMediaAssetIds" value={assetId} />
       ))}
 
-      {normalizeSelectedSlots(memoryMediaSlots, ["memory-a", "memory-b", "memory-c"], memorySlotCount).map((slot, index) => (
+      {normalizeSelectedSlots(memoryMediaSlots, ["memory-a", "memory-b", "memory-c"], memoryPhotoCount).map((slot, index) => (
         <input key={`memory-media-${slot}-${index}`} type="hidden" name="memoryMediaSlots" value={slot} />
       ))}
 
-      {normalizeSelectedAssetIds(
-        mediaAssets,
-        memoryMediaAssetIds,
-        memoryMediaSlots,
-        horizontalMediaSlots,
-        memoryPhotoCount
-      ).map((assetId, index) => (
+      {memoryMediaAssetIds.map((assetId, index) => (
         <input key={`memory-media-asset-${assetId}-${index}`} type="hidden" name="memoryMediaAssetIds" value={assetId} />
       ))}
 
@@ -870,29 +972,60 @@ export const BlockSettingsForm = ({
       ))}
 
       {!isContentEditable ? <p className={styles.compositionLockedNotice} role="status">Открытка уже передана получателю. Её приватное содержание и оформление зафиксированы.</p> : null}
+      {allEnabledBlocksReady ? (
+        <div className={`${styles.readinessBanner} ${styles.readinessBannerReady}`} role="status">
+          <div>
+            <strong>Оформление готово</strong>
+            <span>Все включённые и обязательные блоки настроены. Проверьте открытку перед передачей.</span>
+          </div>
+        </div>
+      ) : contextualActions.length > 0 ? (
+        <div className={styles.readinessBanner} role="status">
+          <div>
+            <strong>Открытку можно дополнить</strong>
+            <span>Собрано достаточно материалов для следующих настроек.</span>
+          </div>
+          <div className={styles.readinessBannerActions}>
+            {contextualActions.slice(0, 2).map((block) => (
+              <button key={block.blockId} type="button" onClick={() => openBlock(block.blockId)}>
+                {block.action!.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <fieldset className={styles.compositionSettingsFieldset} disabled={!isContentEditable}>
       <section className={styles.studioCanvasCard}>
         <div className={styles.compositionToolbar}>
           <p className={styles.compositionToolbarText}>
-            На компьютере перетаскивайте блоки. На телефоне используйте кнопки выше/ниже. Обязательные блоки отключить нельзя.
+            Выберите, какие разделы будут в открытке. Обязательные блоки отключить нельзя.
           </p>
-          <button type="button" className={styles.compositionHelpLink}>
-            Как это работает?
+          <button
+            type="button"
+            className={`${styles.compositionHelpLink} ${isReorderMode ? styles.compositionHelpLinkActive : ""}`}
+            onClick={() => setIsReorderMode((current) => !current)}
+            aria-pressed={isReorderMode}
+          >
+            {isReorderMode ? "Готово" : "Изменить порядок блоков"}
           </button>
         </div>
 
-        <div className={styles.compositionList}>
+        <div className={`${styles.compositionList} ${isReorderMode ? styles.compositionListReordering : ""}`}>
           {canvasBlocks.map((block, index) => {
             const isExpanded = Boolean(expandedBlocks[block.id]);
             const isRequired = requiredBlockIds.includes(block.id);
             const isFixed = fixedBlockIds.includes(block.id);
             const isEnabled = isRequired || blockState[block.id];
+            const blockReadiness = readinessById.get(block.id);
+            const canExpand = block.id !== "closing";
             const canMoveUp = !isFixed && index > 1;
             const canMoveDown = !isFixed && index < canvasBlocks.length - 2;
 
             return (
               <article
                 key={block.id}
+                id={`block-${block.id}`}
+                data-composition-block-id={block.id}
                 className={[
                   styles.compositionRow,
                   draggedBlockId === block.id ? styles.compositionRowDragging : "",
@@ -903,28 +1036,45 @@ export const BlockSettingsForm = ({
                 ]
                   .filter(Boolean)
                   .join(" ")}
-                onDragOver={(event) => handleDragOver(event, block.id)}
-                onDragLeave={(event) => handleDragLeave(event, block.id)}
-                onDrop={(event) => handleDrop(event, block.id)}
               >
-                <div className={styles.compositionRowHeader}>
+                <div
+                  className={styles.compositionRowHeader}
+                  onClick={(event) => {
+                    if (suppressHeaderClickRef.current) {
+                      suppressHeaderClickRef.current = false;
+                      if (suppressHeaderClickTimerRef.current) {
+                        clearTimeout(suppressHeaderClickTimerRef.current);
+                        suppressHeaderClickTimerRef.current = null;
+                      }
+                      event.preventDefault();
+                      event.stopPropagation();
+                      return;
+                    }
+                    if ((event.target as HTMLElement).closest("button, input, a, label")) return;
+                    if (!isReorderMode && canExpand) toggleExpanded(block.id);
+                  }}
+                >
                   <div className={styles.compositionRowLead}>
                     <button
                       type="button"
                       className={styles.compositionGrip}
-                      draggable={!isFixed}
                       disabled={isFixed}
-                      onDragStart={(event) => handleDragStart(event, block.id)}
-                      onDragEnd={() => {
-                        setDraggedBlockId(null);
-                        setDropTarget(null);
+                      onPointerDown={(event) => handlePointerDown(event, block.id)}
+                      onKeyDown={(event) => {
+                        if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+                        event.preventDefault();
+                        moveBlockByStep(block.id, event.key === "ArrowUp" ? "up" : "down");
                       }}
-                      aria-label={isFixed ? `${block.label} зафиксирован` : `Перетащить блок ${block.label}`}
+                      aria-label={
+                        isFixed
+                          ? `${block.label} зафиксирован`
+                          : `Изменить порядок блока ${block.label}. Перетащите мышью или используйте стрелки вверх и вниз`
+                      }
                     >
                       <GripIcon />
                     </button>
 
-                    {!isFixed ? (
+                    {!isFixed && isReorderMode ? (
                       <div className={styles.compositionMoveButtons} aria-label={`Порядок блока ${block.label}`}>
                         <button
                           type="button"
@@ -958,7 +1108,17 @@ export const BlockSettingsForm = ({
                   </div>
 
                   <div className={styles.compositionControls}>
-                    {isRequired ? (
+                    {blockReadiness ? (
+                      <span
+                        className={`${styles.blockStatusBadge} ${styles[`blockStatus${blockReadiness.status}`]}`}
+                        aria-label={`Статус блока: ${blockReadiness.statusLabel}`}
+                      >
+                        <span aria-hidden="true">{blockReadiness.status === "READY" ? "✓" : blockReadiness.status === "ACTION_REQUIRED" ? "!" : "•"}</span>
+                        <span className={styles.blockStatusLabelDesktop}>{blockReadiness.statusLabel}</span>
+                        <span className={styles.blockStatusLabelMobile}>{blockReadiness.statusLabel}</span>
+                      </span>
+                    ) : null}
+                    {isReorderMode ? null : isRequired ? (
                       <>
                         <span className={styles.requiredBadge}>Обязательный</span>
                         <span className={styles.lockIconWrap}>
@@ -977,7 +1137,7 @@ export const BlockSettingsForm = ({
                       </button>
                     )}
 
-                    <button
+                    {!isReorderMode && canExpand ? <button
                       type="button"
                       className={styles.chevronButton}
                       onClick={() => toggleExpanded(block.id)}
@@ -985,21 +1145,38 @@ export const BlockSettingsForm = ({
                       aria-label={isExpanded ? `Свернуть ${block.label}` : `Развернуть ${block.label}`}
                     >
                       <ChevronIcon expanded={isExpanded} />
-                    </button>
+                    </button> : null}
                   </div>
                 </div>
 
-                <div className={`${styles.compositionAccordion} ${isExpanded ? styles.compositionAccordionOpen : ""}`}>
+                {canExpand ? <div className={`${styles.compositionAccordion} ${isExpanded && !isReorderMode ? styles.compositionAccordionOpen : ""}`}>
                   <div className={styles.compositionAccordionInner}>
-                    <p className={styles.compositionDetails}>{blockMeta[block.id].details}</p>
+                    {blockReadiness && blockReadiness.status !== "READY" ? (
+                      <p className={styles.compositionReadinessExplanation}>{blockReadiness.explanation}</p>
+                    ) : null}
 
                     {block.id === "summary" ? (
                       <div className={styles.messageSettings}>
                         <div className={styles.messageSettingsGroup}>
-                          <h4 className={styles.messageSettingsTitle}>Главное поздравление</h4>
-                          <p>{mainGreetingStatusText}</p>
-                          <a className={styles.previewSecondaryLink} href={`${getManagePath(manageToken)}?tab=content`}>
-                            Выбрать поздравление
+                          <h4 className={styles.messageSettingsTitle}>Текущий выбор</h4>
+                          {selectedMainGreeting ? (
+                            <div className={styles.compactMainGreeting}>
+                              <strong>Выбрано поздравление от {selectedMainGreeting.authorName}</strong>
+                              <blockquote>
+                                «{selectedMainGreeting.message.length > 150
+                                  ? `${selectedMainGreeting.message.slice(0, 149).trimEnd()}…`
+                                  : selectedMainGreeting.message}»
+                              </blockquote>
+                              <small>В открытке оно появится в разделе «Самые важные слова».</small>
+                            </div>
+                          ) : (
+                            <p>{mainGreetingStatusText}</p>
+                          )}
+                          <a
+                            className={styles.previewSecondaryLink}
+                            href={getContentTabHref(manageToken, "main-congratulation")}
+                          >
+                            {selectedMainGreeting ? "Изменить выбор" : "Выбрать главное"}
                           </a>
                         </div>
                       </div>
@@ -1009,8 +1186,7 @@ export const BlockSettingsForm = ({
                       <div className={styles.aiInsightPanel}>
                         <div className={styles.aiInsightHeader}>
                           <div>
-                            <h4 className={styles.messageSettingsTitle}>За что тебя ценят</h4>
-                            <p>AI найдёт в активных поздравлениях пять качеств, которые особенно отмечают участники.</p>
+                            <h4 className={styles.messageSettingsTitle}>Выбранные качества</h4>
                           </div>
                           <span className={styles.aiInsightUsage}>
                             AI: {aiUsage.remaining} из {aiUsage.limit}
@@ -1047,7 +1223,7 @@ export const BlockSettingsForm = ({
                                 ? "Обновить качества"
                                 : "Определить 5 качеств"}
                           </button>
-                          {!canGenerateQualities ? <span>Нужно хотя бы два активных поздравления.</span> : null}
+                          {!canGenerateQualities ? <span>Нужно хотя бы 6 активных поздравлений.</span> : null}
                           {qualitiesMessage ? (
                             <span className={qualitiesMessage.includes("готовы") ? styles.contentEditorSuccess : styles.contentEditorError}>
                               {qualitiesMessage}
@@ -1062,9 +1238,7 @@ export const BlockSettingsForm = ({
                         <div className={styles.aiInsightHeader}>
                           <div>
                             <h4 className={styles.messageSettingsTitle}>Лучшие фразы</h4>
-                            <p>
-                              AI подготовит от трёх до шести сильных строк из активных поздравлений. Выберите ровно три — они попадут в финальную открытку.
-                            </p>
+                            <p>AI подготовит несколько коротких вариантов. Выберите три фразы для открытки.</p>
                           </div>
                           <span className={styles.aiInsightUsage}>
                             AI: {aiUsage.remaining} из {aiUsage.limit}
@@ -1121,185 +1295,179 @@ export const BlockSettingsForm = ({
                     {block.id === "messages" ? (
                       <div className={styles.messageSettings}>
                         <div className={styles.messageSettingsGroup}>
-                          <h4 className={styles.messageSettingsTitle}>Как показывать поздравления</h4>
-                          <div className={styles.mediaVariantTabs}>
-                            <button
-                              type="button"
-                              className={`${styles.mediaVariantTab} ${layoutMode !== "column-media" ? styles.mediaVariantTabActive : ""}`}
-                              onClick={() => setLayoutMode(layoutMode === "column-media" ? "carousel-1" : layoutMode)}
-                            >
-                              Без фото
-                            </button>
-                            <button
-                              type="button"
-                              className={`${styles.mediaVariantTab} ${layoutMode === "column-media" ? styles.mediaVariantTabActive : ""}`}
-                              onClick={() => setLayoutMode("column-media")}
-                            >
-                              С фото
-                            </button>
+                          <div className={styles.compactSettingHeader}>
+                            <h4 className={styles.messageSettingsTitle}>Вид поздравлений</h4>
+                            {!isMessageLayoutEditing ? (
+                              <button type="button" onClick={() => setIsMessageLayoutEditing(true)}>
+                                Изменить вид
+                              </button>
+                            ) : null}
                           </div>
 
-                          {layoutMode === "column-media" ? (
-                            <div className={styles.layoutCardGrid}>
-                              {mediaLayoutOptions.map((option) => {
-                                const selected = mediaLayout === option.id;
-
-                                return (
-                                  <button
-                                    key={option.id}
-                                    type="button"
-                                    className={`${styles.layoutCard} ${selected ? styles.layoutCardActive : ""}`}
-                                    onClick={() => setMediaLayout(option.id)}
-                                  >
-                                    <span className={styles.layoutCardCheck}>{selected ? <CheckIcon /> : null}</span>
-                                    <span className={styles.layoutCardDiagram}>
-                                      <MediaLayoutDiagram mode={option.id} />
-                                    </span>
-                                    <span className={styles.layoutCardTitle}>{option.label}</span>
-                                    <span className={styles.layoutCardMeta}>{option.description}</span>
-                                  </button>
-                                );
-                              })}
+                          {!isMessageLayoutEditing ? (
+                            <div className={styles.compactSettingSummary}>
+                              <strong>{getMessageLayoutSummary(layoutMode, mediaLayout)}</strong>
+                              <span>До {getFinalCardMessageLayoutProfile(layoutMode, mediaLayout).maxChars} символов в поздравлении</span>
                             </div>
                           ) : (
-                            <div className={styles.layoutCardGrid}>
-                              {layoutOptions
-                                .filter((option) => option.id !== "column-media")
-                                .map((option) => {
-                                  const profile = getFinalCardMessageLayoutProfile(option.id);
-                                  const selected = layoutMode === option.id;
+                            <div className={styles.layoutEditor}>
+                              <div className={styles.mediaVariantTabs}>
+                                <button
+                                  type="button"
+                                  className={`${styles.mediaVariantTab} ${layoutMode !== "column-media" ? styles.mediaVariantTabActive : ""}`}
+                                  onClick={() => setLayoutMode(layoutMode === "column-media" ? "carousel-1" : layoutMode)}
+                                >
+                                  Без фото
+                                </button>
+                                <button
+                                  type="button"
+                                  className={`${styles.mediaVariantTab} ${layoutMode === "column-media" ? styles.mediaVariantTabActive : ""}`}
+                                  onClick={() => setLayoutMode("column-media")}
+                                >
+                                  С фото
+                                </button>
+                              </div>
 
-                                  return (
-                                    <button
-                                      key={option.id}
-                                      type="button"
-                                      className={`${styles.layoutCard} ${selected ? styles.layoutCardActive : ""}`}
-                                      onClick={() => setLayoutMode(option.id)}
-                                    >
-                                      <span className={styles.layoutCardCheck}>{selected ? <CheckIcon /> : null}</span>
-                                      <span className={styles.layoutCardDiagram}>
-                                        <LayoutDiagram mode={option.id} />
-                                      </span>
-                                      <span className={styles.layoutCardTitle}>{option.label}</span>
-                                      <span className={styles.layoutCardMeta}>До {profile.maxChars} символов</span>
-                                    </button>
-                                  );
-                                })}
+                              {layoutMode === "column-media" ? (
+                                <div className={styles.layoutCardGrid}>
+                                  {mediaLayoutOptions.map((option) => {
+                                    const selected = mediaLayout === option.id;
+                                    return (
+                                      <button
+                                        key={option.id}
+                                        type="button"
+                                        className={`${styles.layoutCard} ${selected ? styles.layoutCardActive : ""}`}
+                                        onClick={() => {
+                                          setMediaLayout(option.id);
+                                          setIsMessageLayoutEditing(false);
+                                        }}
+                                      >
+                                        <span className={styles.layoutCardCheck}>{selected ? <CheckIcon /> : null}</span>
+                                        <span className={styles.layoutCardDiagram}>
+                                          <MediaLayoutDiagram mode={option.id} />
+                                        </span>
+                                        <span className={styles.layoutCardTitle}>{option.label}</span>
+                                        <span className={styles.layoutCardMeta}>{option.description}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className={styles.layoutCardGrid}>
+                                  {layoutOptions
+                                    .filter((option) => option.id !== "column-media")
+                                    .map((option) => {
+                                      const profile = getFinalCardMessageLayoutProfile(option.id);
+                                      const selected = layoutMode === option.id;
+                                      return (
+                                        <button
+                                          key={option.id}
+                                          type="button"
+                                          className={`${styles.layoutCard} ${selected ? styles.layoutCardActive : ""}`}
+                                          onClick={() => {
+                                            setLayoutMode(option.id);
+                                            setIsMessageLayoutEditing(false);
+                                          }}
+                                        >
+                                          <span className={styles.layoutCardCheck}>{selected ? <CheckIcon /> : null}</span>
+                                          <span className={styles.layoutCardDiagram}>
+                                            <LayoutDiagram mode={option.id} />
+                                          </span>
+                                          <span className={styles.layoutCardTitle}>{option.label}</span>
+                                          <span className={styles.layoutCardMeta}>До {profile.maxChars} символов</span>
+                                        </button>
+                                      );
+                                    })}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
 
-                        {layoutMode === "column-media" ? (
-                          <div className={styles.messageSettingsGroup}>
-                            <div className={styles.photoReadinessPanel}>
-                              <div>
-                                <strong>Фото для выбранного вида</strong>
-                                <p>
-                                  Для этого варианта нужно {activeMessageMediaSlots.length}{" "}
-                                  {mediaLayout === "portrait" ? "вертикальное фото" : "горизонтальных фото"}.
-                                </p>
-                              </div>
-                              <span>
-                                Для блока нужно {activeMessageMediaSlots.length} фото · доступно{" "}
-                                {
-                                  mediaAssets.filter((asset) =>
-                                    activeMessagePickerSlots.includes(asset.slot as CardMediaSlot)
-                                  ).length
-                                }
-                              </span>
-                              <a href={`${getManagePath(manageToken)}?tab=content`} className={styles.previewSecondaryLink}>
-                                Перейти к фото
-                              </a>
-                            </div>
-                          </div>
-                        ) : null}
+                        <DesignPhotoSummary
+                          assignedCount={messageAssignedPhotoCount}
+                          requiredCount={messageRequiredPhotoCount}
+                          context="messages"
+                          href={messageRequiredPhotoCount > 0
+                            ? getContentTabHref(manageToken, "congratulations-photos")
+                            : undefined}
+                        />
                       </div>
                     ) : null}
 
                     {block.id === "memories" ? (
                       <div className={styles.messageSettings}>
                         <div className={styles.messageSettingsGroup}>
-                          <h4 className={styles.messageSettingsTitle}>Общая подпись блока</h4>
-                          <div className={styles.memoryCaptionFields}>
-                            <label>
-                              <span>Заголовок</span>
-                              <input
-                                value={memoryTitle}
-                                onChange={(event) => setMemoryTitle(event.target.value)}
-                                maxLength={80}
-                                className={styles.memoryCaptionInput}
-                              />
-                            </label>
-                            <label>
-                              <span>Описание</span>
-                              <textarea
-                                value={memoryDescription}
-                                onChange={(event) => setMemoryDescription(event.target.value)}
-                                maxLength={180}
-                                className={styles.memoryCaptionTextarea}
-                              />
-                            </label>
+                          <div className={styles.compactSettingHeader}>
+                            <h4 className={styles.messageSettingsTitle}>Текст блока</h4>
+                            {!isMemoryTextEditing ? (
+                              <button type="button" onClick={() => setIsMemoryTextEditing(true)}>
+                                Изменить текст
+                              </button>
+                            ) : null}
                           </div>
+
+                          {isMemoryTextEditing ? (
+                            <div className={styles.memoryTextEditor}>
+                              <div className={styles.memoryCaptionFields}>
+                                <label>
+                                  <span>Заголовок</span>
+                                  <input
+                                    value={memoryTitle}
+                                    onChange={(event) => setMemoryTitle(event.target.value)}
+                                    maxLength={80}
+                                    className={styles.memoryCaptionInput}
+                                  />
+                                </label>
+                                <label>
+                                  <span>Описание</span>
+                                  <textarea
+                                    value={memoryDescription}
+                                    onChange={(event) => setMemoryDescription(event.target.value)}
+                                    maxLength={180}
+                                    className={styles.memoryCaptionTextarea}
+                                  />
+                                </label>
+                              </div>
+                              <button type="button" onClick={() => setIsMemoryTextEditing(false)}>
+                                Готово
+                              </button>
+                            </div>
+                          ) : (
+                            <div className={styles.compactSettingSummary}>
+                              <strong>{memoryTitle || "Моменты"}</strong>
+                              <span>{memoryDescription || "Без дополнительного описания"}</span>
+                            </div>
+                          )}
                         </div>
-                        <div className={styles.photoReadinessPanel}>
-                          <div>
-                            <strong>Фото для блока “Моменты”</strong>
-                            <p>Для блока используются 3 горизонтальных фото.</p>
-                          </div>
-                          <span>
-                            Для блока нужно 3 фото · доступно{" "}
-                            {mediaAssets.filter((asset) => horizontalMediaSlots.includes(asset.slot as CardMediaSlot)).length}
-                          </span>
-                          <a href={`${getManagePath(manageToken)}?tab=content`} className={styles.previewSecondaryLink}>
-                            Перейти к фото
-                          </a>
-                        </div>
+
+                        <DesignPhotoSummary
+                          assignedCount={memoryAssignedPhotoCount}
+                          requiredCount={memoryPhotoCount}
+                          context="memories"
+                          href={getContentTabHref(manageToken, "moments-photos")}
+                        />
+                      </div>
+                    ) : null}
+
+                    {block.id === "messages" &&
+                    isExpanded &&
+                    blockReadiness?.status === "READY" &&
+                    messageAssignedPhotoCount >= messageRequiredPhotoCount ? (
+                      <div className={styles.readyBlockCollapseAction}>
+                        <button type="button" onClick={() => collapseBlock("messages")}>
+                          <CheckIcon />
+                          <span>Готово — свернуть блок</span>
+                        </button>
                       </div>
                     ) : null}
                   </div>
-                </div>
+                </div> : null}
               </article>
             );
           })}
         </div>
 
-        <div className={styles.restoreZone}>
-          <div className={styles.restoreZoneHeader}>
-            <h4 className={styles.restoreZoneTitle}>Добавить необязательный блок</h4>
-          </div>
-
-          {removedOptionalBlocks.length === 0 ? (
-            <p className={styles.restoreEmptyText}>Сейчас все доступные дополнительные блоки уже включены в открытку.</p>
-          ) : (
-            <>
-              <div className={styles.restoreAddButton}>
-                <span>+</span>
-                <span>Добавить необязательный блок</span>
-              </div>
-              <div className={styles.restoreChipList}>
-                {removedOptionalBlocks.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    className={`${styles.restoreChip} ${option.disabled ? styles.restoreChipDisabled : ""}`}
-                    onClick={() => toggleBlock(option.id, true)}
-                    disabled={option.disabled}
-                  >
-                    <span className={styles.restoreChipIcon}>
-                      <BlockIcon blockId={option.id} />
-                    </span>
-                    <span className={styles.restoreChipText}>
-                      <span className={styles.restoreChipLabel}>{option.label}</span>
-                      <span className={styles.restoreChipDescription}>
-                        {option.disabled ? "Сначала нужен контент для этого блока." : option.description}
-                      </span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
       </section>
       </fieldset>
 

@@ -3,6 +3,8 @@ import {
   buildContributionFingerprint,
   buildMockBestQuotes,
   buildMockQualities,
+  getMeaningfulQuoteSourcePhrases,
+  hasEnoughMeaningfulQuoteSources,
   isValidBestQuoteText,
   validateBestQuoteCandidates,
   validateQualityCandidates
@@ -181,5 +183,20 @@ describe("AI card insights", () => {
 
     expect(result.map((item) => item.text)).toEqual(expect.arrayContaining(["доброта", "поддержка", "тепло"]));
     expect(result.every((item) => contributions.some((source) => source.id === item.sourceContributionId))).toBe(true);
+  });
+
+  it("rejects a large set of short formal greetings before an AI request", () => {
+    const formal = Array.from({ length: 6 }, (_, index) => ({
+      ...contributions[0],
+      id: `formal-${index}`,
+      message: index % 2 === 0 ? "Поздравляю!" : "С днём рождения!"
+    }));
+
+    expect(getMeaningfulQuoteSourcePhrases(formal)).toEqual([]);
+    expect(hasEnoughMeaningfulQuoteSources(formal)).toBe(false);
+  });
+
+  it("accepts three distinct personal source phrases", () => {
+    expect(hasEnoughMeaningfulQuoteSources(contributions)).toBe(true);
   });
 });

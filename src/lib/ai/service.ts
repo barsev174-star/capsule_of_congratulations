@@ -47,6 +47,8 @@ import {
   buildContributionFingerprint,
   buildMockBestQuotes,
   buildMockQualities,
+  hasEnoughMeaningfulQuoteSources,
+  QUALITY_MIN_CONTRIBUTION_COUNT,
   validateBestQuoteCandidates,
   validateQualityCandidates
 } from "@/lib/ai/card-insights";
@@ -1091,8 +1093,11 @@ export const generateBestQuotes = async (input: {
   occasionText: string;
   contributions: Array<import("@/lib/cards/types").Contribution>;
 }): Promise<AiBestQuotesResult> => {
-  if (input.contributions.length < BEST_QUOTE_MIN_CONTRIBUTION_COUNT) {
-    throw new AiError("VALIDATION", "Для выбора лучших фраз нужно хотя бы два поздравления.");
+  if (!hasEnoughMeaningfulQuoteSources(input.contributions)) {
+    throw new AiError(
+      "VALIDATION",
+      "В поздравлениях пока недостаточно содержательных самостоятельных фраз."
+    );
   }
 
   const providerName = getInsightsProviderName();
@@ -1122,11 +1127,6 @@ export const generateBestQuotes = async (input: {
       model = providerResult.model;
       selectedItems = validateBestQuoteCandidates(providerResult.quotes, input.contributions);
       if (selectedItems) break;
-    }
-
-    if (!selectedItems) {
-      selectedItems = validateBestQuoteCandidates(buildMockBestQuotes(input.contributions), input.contributions);
-      model = `${model}-source-fallback`;
     }
 
     if (!selectedItems) {
@@ -1164,8 +1164,11 @@ export const generateQualities = async (input: {
   occasionText: string;
   contributions: Array<import("@/lib/cards/types").Contribution>;
 }): Promise<AiQualitiesResult> => {
-  if (input.contributions.length < 2) {
-    throw new AiError("VALIDATION", "Для определения качеств нужно хотя бы два поздравления.");
+  if (input.contributions.length < QUALITY_MIN_CONTRIBUTION_COUNT) {
+    throw new AiError(
+      "VALIDATION",
+      `Для определения качеств нужно хотя бы ${QUALITY_MIN_CONTRIBUTION_COUNT} поздравлений.`
+    );
   }
 
   const providerName = getInsightsProviderName();
@@ -1195,11 +1198,6 @@ export const generateQualities = async (input: {
       model = providerResult.model;
       selectedItems = validateQualityCandidates(providerResult.qualities, input.contributions);
       if (selectedItems) break;
-    }
-
-    if (!selectedItems) {
-      selectedItems = validateQualityCandidates(buildMockQualities(input.contributions), input.contributions);
-      model = `${model}-source-fallback`;
     }
 
     if (!selectedItems) {

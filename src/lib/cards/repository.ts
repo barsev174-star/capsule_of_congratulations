@@ -331,6 +331,25 @@ export const updateCardFinalBlockSettings = async (
   return updated;
 };
 
+export const updateCardTemplate = async (cardId: string, templateId: CardTemplateId) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.updateCardTemplate(cardId, templateId);
+  }
+
+  const cards = await readCards();
+  const index = cards.findIndex((card) => card.id === cardId);
+  if (index === -1) return null;
+
+  const updated = {
+    ...cards[index],
+    templateId,
+    updatedAt: new Date().toISOString()
+  };
+  cards[index] = updated;
+  await writeFile(cardsFilePath, JSON.stringify(cards, null, 2), "utf8");
+  return updated;
+};
+
 export const updateCardFinalPresentationSettings = async (
   cardId: string,
   templateId: CardTemplateId,
@@ -493,6 +512,18 @@ export const listCardMediaAssetsByCardId = async (cardId: string) => {
   return assets
     .filter((item) => item.cardId === cardId)
     .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+};
+
+export const listCardMediaAssetAssignmentsByCardId = async (cardId: string) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.listCardMediaAssetAssignmentsByCardId(cardId);
+  }
+
+  const assets = await readMediaAssets();
+  return assets
+    .filter((item) => item.cardId === cardId)
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt))
+    .map(({ id, slot }) => ({ id, slot }));
 };
 
 export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {

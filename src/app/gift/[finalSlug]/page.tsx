@@ -6,7 +6,11 @@ import { FinalCard } from "@/components/final-card/final-card";
 import { GiftIntro } from "@/components/gift-intro/gift-intro";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { getAiCardInsight } from "@/lib/ai/repository";
-import { BEST_QUOTE_COUNT, isValidBestQuoteText } from "@/lib/ai/card-insights";
+import {
+  BEST_QUOTE_COUNT,
+  buildContributionFingerprint,
+  isValidBestQuoteText
+} from "@/lib/ai/card-insights";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
 import { getPublicShareEditor } from "@/lib/public-shares/service";
 import Link from "next/link";
@@ -44,12 +48,18 @@ export default async function GiftPage({ params, searchParams }: Props) {
     getAiCardInsight(card.id, "qualities"),
     getPublicShareEditor(finalSlug)
   ]);
+  const contributionFingerprint = buildContributionFingerprint(contributions);
   const template = cardTemplates.find((item) => item.id === card.templateId);
   const model = buildFinalCardViewModel(card, contributions, mediaAssets, {
-    quotes: (quotesInsight?.items.length ?? 0) >= BEST_QUOTE_COUNT && quotesInsight?.items.every((item) => isValidBestQuoteText(item.text))
+    quotes: quotesInsight?.sourceFingerprint === contributionFingerprint &&
+      (quotesInsight?.items.length ?? 0) === BEST_QUOTE_COUNT &&
+      quotesInsight?.items.every((item) => isValidBestQuoteText(item.text))
       ? quotesInsight.items.slice(0, BEST_QUOTE_COUNT).map((item) => item.text)
       : [],
-    qualities: qualitiesInsight?.items.map((item) => item.text)
+    qualities: qualitiesInsight?.sourceFingerprint === contributionFingerprint &&
+      qualitiesInsight.items.length === 5
+      ? qualitiesInsight.items.map((item) => item.text)
+      : []
   });
   const isAssetDebugEnabled = process.env.NODE_ENV === "development" && debugAssets === "1";
   const isForceIntroEnabled = process.env.NODE_ENV === "development" && forceIntro === "1";
