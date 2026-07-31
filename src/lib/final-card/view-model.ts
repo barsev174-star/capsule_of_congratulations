@@ -1,6 +1,12 @@
 import { isTemplateId } from "@/lib/cards/templates";
 import { BEST_QUOTE_COUNT, isValidBestQuoteText } from "@/lib/ai/card-insights";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
+import { resolveMainGreetingContribution } from "@/lib/final-card/main-greeting";
+import {
+  getMemoryMediaSlots,
+  getMessageMediaSlots,
+  resolveAssignedMediaAssets
+} from "@/lib/final-card/media-assignments";
 import type { CardDraft, CardMediaAsset, Contribution } from "@/lib/cards/types";
 import { buildFinalCardLayout } from "@/lib/final-card/planner";
 import type {
@@ -118,15 +124,6 @@ const trimMainGreetingText = (value: string) => {
   return `${normalized.slice(0, 499).trimEnd()}…`;
 };
 
-const resolveMainGreeting = (card: CardDraft, contributions: Contribution[]) => {
-  const selectedContributionId = card.finalMainGreetingSettings?.contributionId;
-  const selectedContribution = selectedContributionId
-    ? contributions.find((contribution) => contribution.id === selectedContributionId)
-    : null;
-
-  return selectedContribution ?? null;
-};
-
 const buildAiSummaryText = (card: CardDraft, contributions: Contribution[]) => {
   if (contributions.length === 0) {
     return "Когда поздравления будут собраны, здесь появится общее теплое резюме от лица всей группы. Пока это заглушка под будущий AI-блок.";
@@ -164,27 +161,6 @@ const buildMemories = (contributions: Contribution[]) => {
 const resolveStyle = (templateId: CardDraft["templateId"]): FinalCardStyleId =>
   isTemplateId(templateId) ? templateId : "warm-classic";
 
-const resolveOrderedMediaAssets = (
-  mediaAssets: CardMediaAsset[],
-  assetIds: string[],
-  limit: number
-) => {
-  const selected: CardMediaAsset[] = [];
-  const selectedIds = new Set<string>();
-  const addAsset = (asset: CardMediaAsset | undefined) => {
-    if (!asset || selectedIds.has(asset.id)) {
-      return;
-    }
-
-    selected.push(asset);
-    selectedIds.add(asset.id);
-  };
-
-  assetIds.forEach((id) => addAsset(mediaAssets.find((asset) => asset.id === id)));
-
-  return selected.slice(0, limit);
-};
-
 export const buildFinalCardViewModel = (
   card: CardDraft,
   contributions: Contribution[],
@@ -205,7 +181,7 @@ export const buildFinalCardViewModel = (
       ? aiContent.quotes
       : [];
   const memories = buildMemories(contributions);
-  const mainGreeting = resolveMainGreeting(card, contributions);
+  const mainGreeting = resolveMainGreetingContribution(card, contributions);
   const visibleMessageContributions = mainGreeting
     ? contributions.filter((contribution) => contribution.id !== mainGreeting.id)
     : contributions;
@@ -236,15 +212,23 @@ export const buildFinalCardViewModel = (
     contributions: visibleMessageContributions,
     memories,
     mediaAssets: normalizedMediaAssets,
-    messageMediaAssets: resolveOrderedMediaAssets(
+    messageMediaAssets: resolveAssignedMediaAssets(
       normalizedMediaAssets,
       card.finalMessageSettings?.mediaAssetIds ?? [],
-      messageMediaLayout === "portrait" ? 1 : messageMediaLayout === "landscape-pair" ? 2 : 3
-    ),
-    memoryMediaAssets: resolveOrderedMediaAssets(
+      card.deliveryStatus === "DELIVERED"
+        ? (card.finalMessageSettings?.mediaSlots.length
+            ? card.finalMessageSettings.mediaSlots
+            : getMessageMediaSlots(messageMediaLayout))
+        : []
+    ).slice(0, messageMediaLayout === "portrait" ? 1 : messageMediaLayout === "landscape-pair" ? 2 : 3),
+    memoryMediaAssets: resolveAssignedMediaAssets(
       normalizedMediaAssets,
       card.finalMemorySettings?.mediaAssetIds ?? [],
-      card.finalMemorySettings?.photoCount ?? 3
+      card.deliveryStatus === "DELIVERED"
+        ? (card.finalMemorySettings?.mediaSlots.length
+            ? card.finalMemorySettings.mediaSlots
+            : getMemoryMediaSlots())
+        : []
     ).slice(0, card.finalMemorySettings?.photoCount ?? 3),
     memoryTitle: normalizeMemoryTitle(card.finalMemorySettings?.title),
     memoryDescription: normalizeMemoryDescription(card.finalMemorySettings?.description),

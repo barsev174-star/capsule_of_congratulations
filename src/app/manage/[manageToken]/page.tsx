@@ -5,7 +5,6 @@ import type { CSSProperties } from "react";
 import {
   getCardDraftByManageToken,
   listAllContributionsByCardId,
-  listCardMediaAssetAssignmentsByCardId,
   listCardMediaAssetsByCardId,
   listContributionsByCardId
 } from "@/lib/cards/repository";
@@ -38,6 +37,13 @@ import { getGiftPollForManage } from "@/lib/gift-polls/repository";
 import { GiftPollSettingsForm } from "./gift-poll-settings-form";
 import { PaymentCheckoutButton } from "./payment-checkout-button";
 import { buildCardBlockReadiness, buildOrganizerJourney } from "@/lib/manage/card-design-readiness";
+import {
+  getMemoryMediaSlots,
+  getMessageMediaSlots,
+  resolveAssignedMediaAssets
+} from "@/lib/final-card/media-assignments";
+import { resolveMainGreetingContribution } from "@/lib/final-card/main-greeting";
+import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
 import { ManageMobileMenu } from "./manage-mobile-menu";
 import { DesignStickyActions } from "./design-sticky-actions";
 import { DesignRail } from "./design-rail";
@@ -125,12 +131,11 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const isDesignTab = activeTab === "design";
   const isMaterialTab = activeTab === "congratulations" || activeTab === "photos";
   const isGiftTab = activeTab === "gift";
-  const [allContributions, cardTemplates, visibleContributions, mediaAssets, mediaAssignments, aiUsage, quotesInsight, qualitiesInsight, giftPoll] = await Promise.all([
+  const [allContributions, cardTemplates, visibleContributions, mediaAssets, aiUsage, quotesInsight, qualitiesInsight, giftPoll] = await Promise.all([
     listAllContributionsByCardId(card.id),
     isDesignTab ? getCardTemplates() : Promise.resolve([]),
     listContributionsByCardId(card.id),
     listCardMediaAssetsByCardId(card.id),
-    isDesignTab ? listCardMediaAssetAssignmentsByCardId(card.id) : Promise.resolve([]),
     isDesignTab || isMaterialTab ? getAiUsageSummary(card.id) : Promise.resolve({ used: 0, limit: 0, remaining: 0 }),
     isDesignTab || isMaterialTab ? getAiCardInsight(card.id, "quotes") : Promise.resolve(null),
     isDesignTab || isMaterialTab ? getAiCardInsight(card.id, "qualities") : Promise.resolve(null),
@@ -141,7 +146,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
     quotesInsight.items.length >= BEST_QUOTE_COUNT &&
     quotesInsight.items.every((item) => isValidBestQuoteText(item.text))
   );
-  const generatedQuotes = hasValidGeneratedQuotes ? quotesInsight!.items.map((item) => item.text) : [];
+  const generatedQuoteCandidates = hasValidGeneratedQuotes ? quotesInsight!.items.map((item) => item.text) : [];
   const generatedQualities = qualitiesInsight?.items.map((item) => item.text) ?? [];
   const contributionFingerprint = buildContributionFingerprint(visibleContributions);
   const eligibleGiftPollVoterCount = new Set(
@@ -154,6 +159,9 @@ export default async function ManagePage({ params, searchParams }: Props) {
     quotesInsight &&
     (!hasValidGeneratedQuotes || quotesInsight.sourceFingerprint !== contributionFingerprint)
   );
+  const quoteSelection = resolveFinalBestQuotes(card, generatedQuoteCandidates, quotesAreStale);
+  const generatedQuotes = quoteSelection.quotes;
+  const effectiveQuotesAreStale = quotesAreStale && !quoteSelection.usesLegacyDefault;
   const qualitiesAreStale = Boolean(qualitiesInsight && qualitiesInsight.sourceFingerprint !== contributionFingerprint);
   const aiContent = { quotes: generatedQuotes, qualities: generatedQualities };
   const model = isMaterialTab ? buildFinalCardViewModel(card, visibleContributions, mediaAssets, aiContent) : null;
@@ -166,16 +174,29 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const messageMediaAssetIds = card.finalMessageSettings?.mediaAssetIds ?? [];
   const memoryMediaAssetIds = card.finalMemorySettings?.mediaAssetIds ?? [];
   const memoryPhotoCount = card.finalMemorySettings?.photoCount ?? 3;
-  const availableMediaIds = new Set(mediaAssignments.map((asset) => asset.id));
+  const messageAssignedMedia = resolveAssignedMediaAssets(
+    mediaAssets,
+    messageMediaAssetIds,
+    card.deliveryStatus === "DELIVERED"
+      ? (messageMediaSlots.length ? messageMediaSlots : getMessageMediaSlots(mediaLayout))
+      : []
+  );
+  const memoryAssignedMedia = resolveAssignedMediaAssets(
+    mediaAssets,
+    memoryMediaAssetIds,
+    card.deliveryStatus === "DELIVERED"
+      ? (memoryMediaSlots.length ? memoryMediaSlots : getMemoryMediaSlots())
+      : []
+  );
   const messageRequiredPhotoCount = layoutMode === "column-media"
     ? (mediaLayout === "portrait" ? 1 : mediaLayout === "landscape-pair" ? 2 : 3)
     : 0;
   const messageAssignedPhotoCount = Math.min(
-    new Set(messageMediaAssetIds.filter((id) => availableMediaIds.has(id))).size,
+    messageAssignedMedia.length,
     messageRequiredPhotoCount
   );
   const memoryAssignedPhotoCount = Math.min(
-    new Set(memoryMediaAssetIds.filter((id) => availableMediaIds.has(id))).size,
+    memoryAssignedMedia.length,
     memoryPhotoCount
   );
   const savedMemoryTitle = card.finalMemorySettings?.title?.trim();
@@ -192,8 +213,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const optionalLayoutBlocks = finalCardLayouts[style].blocks.filter(
     (block) => !block.required && managedBlockIds.includes(block.id)
   );
-  const mainGreetingContributionId = card.finalMainGreetingSettings?.contributionId ?? null;
-  const mainGreetingContribution = visibleContributions.find((contribution) => contribution.id === mainGreetingContributionId);
+  const mainGreetingContribution = resolveMainGreetingContribution(card, visibleContributions);
+  const mainGreetingContributionId = mainGreetingContribution?.id ?? null;
   const mainGreetingStatusText = mainGreetingContribution
     ? `Выбрано поздравление от ${mainGreetingContribution.authorName}. В открытке оно будет показано как «Самые важные слова».`
     : "Главное поздравление пока не выбрано. Откройте вкладку «Поздравления» и отметьте одно активное поздравление.";
@@ -244,11 +265,11 @@ export default async function ManagePage({ params, searchParams }: Props) {
     card,
     requiredBlockIds: requiredLayoutBlockIds,
     visibleContributions,
-    mediaAssets: isDesignTab ? mediaAssignments : mediaAssets,
+    mediaAssets,
     qualities: generatedQualities,
     qualitiesAreStale,
     bestQuotes: generatedQuotes,
-    bestQuotesAreStale: quotesAreStale
+    bestQuotesAreStale: effectiveQuotesAreStale
   });
   const organizerJourney = buildOrganizerJourney({
     card,
@@ -461,7 +482,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   initialMainGreetingContributionId={mainGreetingContributionId}
                   mainGreetingStatusText={mainGreetingStatusText}
                   initialBestQuotes={generatedQuotes}
-                  bestQuotesAreStale={quotesAreStale}
+                  bestQuotesAreStale={effectiveQuotesAreStale}
                   canGenerateBestQuotes={hasEnoughMeaningfulQuoteSources(visibleContributions)}
                   bestQuotesMinimumContributionCount={BEST_QUOTE_MIN_CONTRIBUTION_COUNT}
                   initialQualities={generatedQualities}

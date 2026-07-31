@@ -16,6 +16,7 @@ import {
   isValidBestQuoteText
 } from "@/lib/ai/card-insights";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
+import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { buildCardBlockReadiness } from "@/lib/manage/card-design-readiness";
 
@@ -50,9 +51,13 @@ export default async function PreviewPage({ params }: Props) {
   const fingerprint = buildContributionFingerprint(contributions);
   const quotesAreStale = Boolean(quotesInsight && quotesInsight.sourceFingerprint !== fingerprint);
   const qualitiesAreStale = Boolean(qualitiesInsight && qualitiesInsight.sourceFingerprint !== fingerprint);
-  const quotes = !quotesAreStale && (quotesInsight?.items.length ?? 0) === BEST_QUOTE_COUNT && quotesInsight?.items.every((item) => isValidBestQuoteText(item.text))
-      ? quotesInsight.items.slice(0, BEST_QUOTE_COUNT).map((item) => item.text)
-      : [];
+  const quoteSelection = resolveFinalBestQuotes(
+    card,
+    quotesInsight?.items.map((item) => item.text) ?? [],
+    quotesAreStale
+  );
+  const quotes = quoteSelection.quotes;
+  const effectiveQuotesAreStale = quotesAreStale && !quoteSelection.usesLegacyDefault;
   const qualities = !qualitiesAreStale && qualitiesInsight?.items.length === 5
     ? qualitiesInsight.items.map((item) => item.text)
     : [];
@@ -70,7 +75,7 @@ export default async function PreviewPage({ params }: Props) {
     qualities,
     qualitiesAreStale,
     bestQuotes: quotes,
-    bestQuotesAreStale: quotesAreStale
+    bestQuotesAreStale: effectiveQuotesAreStale
   });
 
   const published = isGiftAccessible(lifecycle);

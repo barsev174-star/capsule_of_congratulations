@@ -150,6 +150,16 @@ describe("buildFinalCardViewModel", () => {
     expect(viewModel.mediaAssets[0]?.captionSubtitle).toBe("Командное фото");
   });
 
+  it("uses the first visible greeting for delivered cards without a saved selection", () => {
+    const viewModel = buildFinalCardViewModel(
+      { ...card, deliveryStatus: "DELIVERED" },
+      contributions
+    );
+
+    expect(viewModel.mainGreetingContributionId).toBe("c1");
+    expect(viewModel.summaryText).toBe(contributions[0]!.message);
+  });
+
   it("does not borrow a photo from another block or from a global slot", () => {
     const viewModel = buildFinalCardViewModel(
       {
@@ -175,6 +185,32 @@ describe("buildFinalCardViewModel", () => {
 
     expect(viewModel.messageMediaAssets).toEqual([]);
     expect(viewModel.memoryMediaAssets.map((asset) => asset.id)).toEqual(["media_1"]);
+  });
+
+  it("keeps slot-based photo blocks visible for cards delivered before photo ids were saved", () => {
+    const legacyMedia: CardMediaAsset[] = [
+      ...mediaAssets,
+      { ...mediaAssets[0]!, id: "memory_1", slot: "memory-a" },
+      { ...mediaAssets[0]!, id: "memory_2", slot: "memory-b" },
+      { ...mediaAssets[0]!, id: "memory_3", slot: "memory-c" }
+    ];
+    const viewModel = buildFinalCardViewModel(
+      {
+        ...card,
+        deliveryStatus: "DELIVERED",
+        finalMemorySettings: {
+          title: "Моменты",
+          description: "Фото",
+          mediaSlots: [],
+          mediaAssetIds: [],
+          photoCount: 3
+        }
+      },
+      contributions,
+      legacyMedia
+    );
+
+    expect(viewModel.memoryMediaAssets.map((asset) => asset.id)).toEqual(["memory_1", "memory_2", "memory_3"]);
   });
 
   it("uses saved block order in the final model", () => {

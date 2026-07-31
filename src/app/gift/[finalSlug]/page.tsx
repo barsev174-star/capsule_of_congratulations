@@ -5,6 +5,7 @@ import { getGiftLifecycleByFinalSlug, markRecipientFirstOpened } from "@/lib/car
 import { FinalCard } from "@/components/final-card/final-card";
 import { GiftIntro } from "@/components/gift-intro/gift-intro";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
+import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
 import { getAiCardInsight } from "@/lib/ai/repository";
 import {
   BEST_QUOTE_COUNT,
@@ -50,12 +51,13 @@ export default async function GiftPage({ params, searchParams }: Props) {
   ]);
   const contributionFingerprint = buildContributionFingerprint(contributions);
   const template = cardTemplates.find((item) => item.id === card.templateId);
+  const quoteSelection = resolveFinalBestQuotes(
+    card,
+    quotesInsight?.items.map((item) => item.text) ?? [],
+    quotesInsight?.sourceFingerprint !== contributionFingerprint
+  );
   const model = buildFinalCardViewModel(card, contributions, mediaAssets, {
-    quotes: quotesInsight?.sourceFingerprint === contributionFingerprint &&
-      (quotesInsight?.items.length ?? 0) === BEST_QUOTE_COUNT &&
-      quotesInsight?.items.every((item) => isValidBestQuoteText(item.text))
-      ? quotesInsight.items.slice(0, BEST_QUOTE_COUNT).map((item) => item.text)
-      : [],
+    quotes: quoteSelection.quotes,
     qualities: qualitiesInsight?.sourceFingerprint === contributionFingerprint &&
       qualitiesInsight.items.length === 5
       ? qualitiesInsight.items.map((item) => item.text)

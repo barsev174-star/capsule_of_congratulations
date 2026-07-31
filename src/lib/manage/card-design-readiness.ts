@@ -7,6 +7,12 @@ import type { CardLifecycle } from "@/lib/cards/lifecycle";
 import { isTemplateId } from "@/lib/cards/templates";
 import type { CardDraft, CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type { FinalCardBlockId, FinalCardOptionalBlockId } from "@/lib/final-card/types";
+import {
+  getMemoryMediaSlots,
+  getMessageMediaSlots,
+  resolveAssignedMediaAssets
+} from "@/lib/final-card/media-assignments";
+import { resolveMainGreetingContribution } from "@/lib/final-card/main-greeting";
 
 export type CardBlockReadinessStatus =
   | "READY"
@@ -40,6 +46,7 @@ export type CardDesignReadinessInput = {
     | "occasionText"
     | "fromLabel"
     | "templateId"
+    | "deliveryStatus"
     | "finalBlockSettings"
     | "finalMessageSettings"
     | "finalMainGreetingSettings"
@@ -180,12 +187,17 @@ const messagePhotoRequirement = (input: CardDesignReadinessInput) => {
   if ((settings?.layoutMode ?? "grid-2") !== "column-media") return null;
 
   const mediaLayout = settings?.mediaLayout ?? "portrait";
+  const assignedPhotoCount = resolveAssignedMediaAssets(
+    input.mediaAssets,
+    settings?.mediaAssetIds,
+    input.card.deliveryStatus === "DELIVERED"
+      ? (settings?.mediaSlots.length ? settings.mediaSlots : getMessageMediaSlots(mediaLayout))
+      : []
+  ).length;
   if (mediaLayout === "portrait") {
     return {
       required: 1,
-      available: input.card.finalMessageSettings?.mediaAssetIds.filter((id) =>
-        input.mediaAssets.some((asset) => asset.id === id)
-      ).length ?? 0,
+      available: assignedPhotoCount,
       label: "вертикальное фото"
     };
   }
@@ -193,9 +205,7 @@ const messagePhotoRequirement = (input: CardDesignReadinessInput) => {
   const required = mediaLayout === "landscape-pair" ? 2 : 3;
   return {
     required,
-    available: input.card.finalMessageSettings?.mediaAssetIds.filter((id) =>
-      input.mediaAssets.some((asset) => asset.id === id)
-    ).length ?? 0,
+    available: assignedPhotoCount,
     label: required === 2 ? "горизонтальных фото" : "горизонтальных фото"
   };
 };
@@ -210,14 +220,16 @@ export const buildCardBlockReadiness = (
       input.card.fromLabel.trim() &&
       isTemplateId(input.card.templateId)
   );
-  const explicitMainGreetingId = input.card.finalMainGreetingSettings?.contributionId;
-  const mainGreetingReady = Boolean(
-    explicitMainGreetingId &&
-      input.visibleContributions.some((contribution) => contribution.id === explicitMainGreetingId)
-  );
-  const horizontalPhotoCount = input.card.finalMemorySettings?.mediaAssetIds.filter((id) =>
-    input.mediaAssets.some((asset) => asset.id === id)
-  ).length ?? 0;
+  const mainGreetingReady = Boolean(resolveMainGreetingContribution(input.card, input.visibleContributions));
+  const horizontalPhotoCount = resolveAssignedMediaAssets(
+    input.mediaAssets,
+    input.card.finalMemorySettings?.mediaAssetIds,
+    input.card.deliveryStatus === "DELIVERED"
+      ? (input.card.finalMemorySettings?.mediaSlots.length
+          ? input.card.finalMemorySettings.mediaSlots
+          : getMemoryMediaSlots())
+      : []
+  ).length;
   const memoryPhotoCount = input.card.finalMemorySettings?.photoCount ?? 3;
 
   return managedBlocks.map((blockId) => {
@@ -312,9 +324,11 @@ export const buildCardBlockReadiness = (
           { label: "Перейти к фото", target: "content", kind: "tab" }
         );
       }
+      const hasUsableDeliveredMemoryCopy = input.card.deliveryStatus === "DELIVERED";
       if (
-        !input.card.finalMemorySettings?.title?.trim() ||
-        !input.card.finalMemorySettings?.description?.trim()
+        !hasUsableDeliveredMemoryCopy &&
+        (!input.card.finalMemorySettings?.title?.trim() ||
+          !input.card.finalMemorySettings?.description?.trim())
       ) {
         return withStatusLabel(makeBlock(
           input,

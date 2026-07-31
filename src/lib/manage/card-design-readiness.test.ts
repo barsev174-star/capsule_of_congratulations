@@ -64,6 +64,16 @@ describe("buildCardBlockReadiness", () => {
     expect(byId(ready, "summary").status).toBe("READY");
   });
 
+  it("keeps the first visible greeting as the legacy default after delivery", () => {
+    const contribution = { id: "greeting-1" };
+    const result = buildCardBlockReadiness(input({
+      card: { ...input().card, deliveryStatus: "DELIVERED" },
+      visibleContributions: [contribution]
+    }));
+
+    expect(byId(result, "summary").status).toBe("READY");
+  });
+
   it("uses content-specific waiting labels", () => {
     const result = buildCardBlockReadiness(input());
     expect(byId(result, "summary").statusLabel).toBe("Ждёт поздравлений");
@@ -140,6 +150,28 @@ describe("buildCardBlockReadiness", () => {
         { id: "1", slot: "memory-a" },
         { id: "2", slot: "memory-b" },
         { id: "3", slot: "memory-c" }
+      ]
+    })), "memories").status).toBe("READY");
+  });
+
+  it("keeps legacy slot-based photo assignments ready after delivery", () => {
+    const legacyCard = {
+      ...input().card,
+      finalMemorySettings: {
+        ...input().card.finalMemorySettings!,
+        title: "Наши воспоминания",
+        description: "Столько ярких моментов, с которыми мы идём рядом с тобой.",
+        mediaSlots: ["memory-a", "memory-b", "memory-c"],
+        mediaAssetIds: []
+      }
+    };
+
+    expect(byId(buildCardBlockReadiness(input({
+      card: { ...legacyCard, deliveryStatus: "DELIVERED" },
+      mediaAssets: [
+        { id: "legacy-1", slot: "memory-a" },
+        { id: "legacy-2", slot: "memory-b" },
+        { id: "legacy-3", slot: "memory-c" }
       ]
     })), "memories").status).toBe("READY");
   });
