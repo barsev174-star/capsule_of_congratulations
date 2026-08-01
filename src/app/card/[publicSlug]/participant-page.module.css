@@ -770,12 +770,6 @@
   width: 100%;
 }
 
-.aiButton:hover,
-.useButton:hover {
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 18px rgba(72, 49, 37, 0.08);
-}
-
 .submitButton:focus-visible,
 .aiButton:focus-visible,
 .useButton:focus-visible {
@@ -824,6 +818,18 @@
   background: currentColor;
   border-radius: 999px;
 }
+
+.aiSpinner {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border: 2px solid rgba(101,91,85,.28);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: aiSpinnerTurn .7s linear infinite;
+}
+
+@keyframes aiSpinnerTurn { to { rotate: 360deg; } }
 
 .wandIcon::before,
 .aiButtonIcon::before {
@@ -963,7 +969,7 @@
 }
 
 .variantTabActive {
-  color: #33231d;
+  color: var(--accent, #e9652f);
   background: #fffcf8;
   box-shadow: 0 6px 14px rgba(83, 49, 28, 0.08);
 }
@@ -989,9 +995,10 @@
   border: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.7);
+  color: var(--accent, #e9652f);
   cursor: pointer;
   font-weight: 700;
-  box-shadow: 0 0 0 1px rgba(92, 67, 51, 0.14);
+  box-shadow: 0 0 0 1px rgba(233,101,47,.34);
   transition:
     transform 150ms ease,
     box-shadow 160ms ease,
@@ -1018,23 +1025,41 @@
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: #8e4f34;
+  color: var(--accent, #e9652f);
   cursor: pointer;
   font-weight: 800;
-  box-shadow: 0 0 0 1px rgba(92, 64, 48, 0.12);
+  box-shadow: 0 0 0 1px rgba(233,101,47,.28);
   transition:
     transform 150ms ease,
     background-color 160ms ease,
     box-shadow 160ms ease;
 }
 
-.retryButton:hover {
-  background: rgba(255, 252, 248, 0.72);
-  box-shadow: 0 0 0 1px rgba(92, 64, 48, 0.16);
-}
-
 .retryButton:active {
   transform: scale(0.96);
+}
+
+.aiButton:disabled,
+.retryButton:disabled {
+  color: #766b65;
+  background: #e8e3df;
+  box-shadow: none;
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .aiButton:hover:not(:disabled),
+  .useButton:hover,
+  .retryButton:hover:not(:disabled) {
+    color: #d95728;
+    background: #fff0e7;
+    box-shadow: 0 0 0 1px rgba(233,101,47,.44), 0 8px 18px rgba(72,49,37,.08);
+  }
+  .variantTab:hover { color: var(--accent, #e9652f); background: rgba(255,255,255,.72); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aiSpinner { animation-duration: 1.4s; }
 }
 
 .listItem {

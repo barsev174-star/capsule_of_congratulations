@@ -1,229 +1,417 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
-import type { AiVariant } from "@/lib/ai/types";
-import { updateContributionMessageAction } from "./actions";
+import { useMemo, useRef, useState, useTransition, type FormEvent, type MouseEvent } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
+import type { Contribution } from "@/lib/cards/types";
+import {
+  CONTRIBUTION_MESSAGE_MAX_LENGTH,
+  CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH
+} from "@/lib/contributions/limits";
+import { AiHelper } from "@/app/card/[publicSlug]/ai-helper";
+import {
+  deleteContributionAction,
+  saveOrganizerContributionAction
+} from "./actions";
+import { ConfirmationDialog } from "./confirmation-dialog";
 import styles from "./manage-page.module.css";
+import { useModalFocus } from "./use-modal-focus";
 
 type Props = {
   cardId: string;
-  contributionId: string;
   manageToken: string;
-  initialMessage: string;
-  messageLimit: number;
+  occasionText: string;
+  contribution?: Contribution;
+  isMainGreeting: boolean;
+  greetingMode?: "classic" | "matrix" | "ladder";
+  initialMode?: "manual" | "ai";
+  onClose: () => void;
+  onSaved: (contributionId: string, feedback?: string) => void;
+  onDeleted: () => void;
 };
 
-const initialState = {
-  ok: false,
-  message: ""
-};
+type RequiredField = "authorName" | "authorRole" | "message";
+type FieldFlags = Record<RequiredField, boolean>;
 
-type AiEditTask = "improve" | "shorten";
+const emptyFieldFlags: FieldFlags = { authorName: false, authorRole: false, message: false };
 
-const variantLabels: Record<AiEditTask, Record<AiVariant["id"], string>> = {
-  improve: { short: "Бережно", warm: "Теплее", style: "Яснее" },
-  shorten: { short: "Бережно", warm: "Короче", style: "Самое короткое" }
-};
+const initialState = { ok: false, message: "" };
 
-export const ContributionEditor = ({ cardId, contributionId, manageToken, initialMessage, messageLimit }: Props) => {
-  const [state, formAction, isPending] = useActionState(updateContributionMessageAction, initialState);
-  const [message, setMessage] = useState(initialMessage);
-  const [lastSubmitted, setLastSubmitted] = useState(initialMessage);
-  const [aiVariants, setAiVariants] = useState<AiVariant[]>([]);
-  const [activeVariantIndex, setActiveVariantIndex] = useState(0);
-  const [aiGenerationId, setAiGenerationId] = useState("");
-  const [aiError, setAiError] = useState("");
-  const [aiRemaining, setAiRemaining] = useState<number | null>(null);
-  const [isAiPending, setIsAiPending] = useState(false);
-  const [aiTask, setAiTask] = useState<AiEditTask>("improve");
+const normalizeSnapshot = (snapshot: {
+  authorName: string;
+  authorRole: string;
+  message: string;
+  isVisible: boolean;
+  isMain: boolean;
+  aiDraft: string;
+  aiGenerationIds: string[];
+}) => JSON.stringify({
+  ...snapshot,
+  authorName: snapshot.authorName.trim(),
+  authorRole: snapshot.authorRole.trim(),
+  message: snapshot.message.trim(),
+  aiDraft: snapshot.aiDraft.trim(),
+  aiGenerationIds: [...snapshot.aiGenerationIds].sort()
+});
+
+export const ContributionEditor = ({
+  cardId,
+  manageToken,
+  occasionText,
+  contribution,
+  isMainGreeting,
+  greetingMode = "classic",
+  initialMode = "manual",
+  onClose,
+  onSaved,
+  onDeleted
+}: Props) => {
+  const router = useRouter();
+  const dialogRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const pendingRequestId = useRef<string | null>(null);
-  const remaining = messageLimit - message.length;
-  const activeVariant = aiVariants[activeVariantIndex] ?? aiVariants[0];
+  const [authorName, setAuthorName] = useState(contribution?.authorName ?? "");
+  const [authorRole, setAuthorRole] = useState(contribution?.authorRole ?? "");
+  const [message, setMessage] = useState(contribution?.message ?? "");
+  const [mode, setMode] = useState<"manual" | "ai">(initialMode);
+  const [aiGenerationIds, setAiGenerationIds] = useState<string[]>([]);
+  const [aiDraft, setAiDraft] = useState("");
+  const [isVisible, setIsVisible] = useState(contribution?.status !== "hidden");
+  const [isMain, setIsMain] = useState(isMainGreeting);
+  const [confirmation, setConfirmation] = useState<"close" | "delete" | null>(null);
+  const [error, setError] = useState("");
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [editedFields, setEditedFields] = useState<FieldFlags>(emptyFieldFlags);
+  const [blurredFields, setBlurredFields] = useState<FieldFlags>(emptyFieldFlags);
+  const [isPending, startTransition] = useTransition();
+  const initialSnapshot = useMemo(() => normalizeSnapshot({
+    authorName: contribution?.authorName ?? "",
+    authorRole: contribution?.authorRole ?? "",
+    message: contribution?.message ?? "",
+    isVisible: contribution?.status !== "hidden",
+    isMain: isMainGreeting,
+    aiDraft: "",
+    aiGenerationIds: []
+  }), [contribution, isMainGreeting]);
+  const currentSnapshot = normalizeSnapshot({
+    authorName,
+    authorRole,
+    message,
+    isVisible,
+    isMain,
+    aiDraft,
+    aiGenerationIds
+  });
+  const isDirty = currentSnapshot !== initialSnapshot;
+  const fieldValidity: FieldFlags = {
+    authorName: authorName.trim().length >= 2,
+    authorRole: authorRole.trim().length > 0,
+    message: message.trim().length >= 20
+  };
+  const canSubmit = fieldValidity.authorName && fieldValidity.authorRole && fieldValidity.message;
+  const shouldShowFieldError = (field: RequiredField, value: string) => (
+    !fieldValidity[field]
+    && (submitAttempted || blurredFields[field] || (editedFields[field] && value.trim().length === 0))
+  );
+  const authorNameError = shouldShowFieldError("authorName", authorName);
+  const authorRoleError = shouldShowFieldError("authorRole", authorRole);
+  const messageError = shouldShowFieldError("message", message);
+  const title = contribution ? "Редактировать поздравление" : "Добавить поздравление";
 
-  useEffect(() => {
-    if (message === lastSubmitted) return;
-    const timer = window.setTimeout(() => {
-      if (!formRef.current) return;
-      setLastSubmitted(message);
-      formRef.current.requestSubmit();
-    }, 800);
-    return () => window.clearTimeout(timer);
-  }, [message, lastSubmitted]);
+  const markEdited = (field: RequiredField) => {
+    setEditedFields((current) => current[field] ? current : { ...current, [field]: true });
+  };
 
-  const requestAiEdit = async (task: AiEditTask) => {
-    const requestId = pendingRequestId.current ?? crypto.randomUUID();
-    pendingRequestId.current = requestId;
-    setIsAiPending(true);
-    setAiError("");
-    setAiTask(task);
+  const markBlurredAfterEdit = (field: RequiredField) => {
+    if (!editedFields[field]) return;
+    setBlurredFields((current) => current[field] ? current : { ...current, [field]: true });
+  };
 
-    try {
-      const response = await fetch("/api/ai/generate-greeting", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          requestId,
-          cardId,
-          contributionId,
-          manageToken,
-          draftNotes: message,
-          style: task === "shorten" ? "short-no-pathos" : "warm-simple",
-          mode: task
-        })
-      });
-      const payload = await response.json();
+  const requestClose = () => {
+    if (confirmation) return;
+    if (isDirty) setConfirmation("close");
+    else onClose();
+  };
 
-      if (!response.ok) {
-        setAiError(
-          payload.issues?.map((issue: { message: string }) => issue.message).join(" ") ||
-            payload.message ||
-            "Не удалось подготовить варианты. Попробуйте ещё раз."
-        );
+  useModalFocus(dialogRef, requestClose);
+
+  const save = (form: HTMLFormElement) => {
+    setError("");
+    const formData = new FormData(form);
+    startTransition(async () => {
+      const result = await saveOrganizerContributionAction(initialState, formData);
+      if (!result.ok || !result.contributionId) {
+        setError(result.message || "Не удалось сохранить поздравление.");
         return;
       }
+      router.refresh();
+      const feedback = !contribution
+        ? "Поздравление добавлено"
+        : !isMainGreeting && isMain
+          ? "Поздравление назначено главным"
+          : contribution.status === "visible" && !isVisible
+            ? "Поздравление скрыто"
+            : "Изменения сохранены";
+      onSaved(result.contributionId, feedback);
+    });
+  };
 
-      setAiVariants(payload.result.variants);
-      setActiveVariantIndex(0);
-      setAiGenerationId(payload.result.generationId);
-      setAiRemaining(payload.result.usage.remaining);
-    } catch {
-      setAiError("Не удалось связаться с AI-помощником. Проверьте соединение и попробуйте ещё раз.");
-    } finally {
-      pendingRequestId.current = null;
-      setIsAiPending(false);
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!canSubmit) {
+      setSubmitAttempted(true);
+      return;
     }
+    save(event.currentTarget);
   };
 
-  const applyAiVariant = () => {
-    if (!activeVariant) return;
-    setMessage(activeVariant.text);
-    setAiVariants([]);
-    setAiError("");
+  const saveFromConfirmation = () => {
+    const form = formRef.current;
+    if (!form) return;
+    setConfirmation(null);
+    if (!canSubmit) {
+      setSubmitAttempted(true);
+      return;
+    }
+    save(form);
   };
 
-  const saveStatus = isPending ? "saving" : state.ok && lastSubmitted === message ? "saved" : "idle";
+  const removeContribution = () => {
+    if (!contribution) return;
+    setError("");
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set("manageToken", manageToken);
+      formData.set("contributionId", contribution.id);
+      await deleteContributionAction(formData);
+      router.refresh();
+      onDeleted();
+    });
+  };
 
-  return (
-    <form ref={formRef} action={formAction} className={styles.contentEditorForm}>
-      <input type="hidden" name="manageToken" value={manageToken} />
-      <input type="hidden" name="contributionId" value={contributionId} />
-      <input type="hidden" name="aiGenerationId" value={aiGenerationId} />
+  const handleBackdrop = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) requestClose();
+  };
 
-      <div className={styles.contentEditorHeader}>
-        <label className={styles.contentEditorLabel} htmlFor={`message-${contributionId}`}>
-          Текст поздравления
-        </label>
-        <span className={`${styles.contentEditorCounter} ${remaining < 0 ? styles.contentEditorCounterWarning : ""}`}>
-          {message.length} / {messageLimit}
-        </span>
-      </div>
-
-      <textarea
-        id={`message-${contributionId}`}
-        name="message"
-        value={message}
-        onChange={(event) => {
-          setMessage(event.target.value);
-          if (aiVariants.length) setAiVariants([]);
-          if (aiError) setAiError("");
-        }}
-        className={styles.contentEditorTextarea}
-        maxLength={1500}
-      />
-
-      {remaining < 0 ? (
-        <p className={styles.contentEditorHint}>
-          Текст длиннее рекомендации. AI может бережно сократить его до {messageLimit} символов.
-        </p>
-      ) : null}
-
-      {activeVariant ? (
-        <section
-          className={styles.contentAiPreview}
-          aria-label={aiTask === "shorten" ? "Вариант сокращения" : "Вариант улучшенного текста"}
-        >
-          <div className={styles.contentAiPreviewHeader}>
-            <div>
-              <strong>{aiTask === "shorten" ? "AI-сокращение" : "AI-редактура"}</strong>
-              <span>{activeVariant.text.length} из {messageLimit} символов</span>
-            </div>
-            {aiRemaining !== null ? <span>Ещё {aiRemaining}</span> : null}
+  return createPortal(
+    <div className={styles.contributionEditorBackdrop} onMouseDown={handleBackdrop}>
+      <div
+        ref={dialogRef}
+        className={styles.contributionEditorDialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="contribution-editor-title"
+        aria-hidden={confirmation ? "true" : undefined}
+        tabIndex={-1}
+      >
+        <header className={styles.contributionEditorHeader}>
+          <div>
+            <span className={styles.contributionEditorEyebrow}>Поздравление для открытки</span>
+            <h2 id="contribution-editor-title">{title}</h2>
           </div>
-          <div
-            className={styles.contentAiVariantTabs}
-            role="tablist"
-            aria-label={aiTask === "shorten" ? "Степень сокращения" : "Вариант редактуры"}
-          >
-            {aiVariants.map((variant, index) => (
+          <button type="button" className={styles.contributionEditorClose} onClick={requestClose} aria-label="Закрыть редактор">
+            ×
+          </button>
+        </header>
+
+        <form ref={formRef} className={styles.contributionEditorForm} onSubmit={submit} noValidate>
+          <input type="hidden" name="manageToken" value={manageToken} />
+          <input type="hidden" name="contributionId" value={contribution?.id ?? ""} />
+          <input type="hidden" name="aiGenerationIds" value={aiGenerationIds.join(",")} />
+          <input type="hidden" name="message" value={message} />
+          <input type="hidden" name="status" value={isVisible ? "visible" : "hidden"} />
+          <input type="hidden" name="isMainGreeting" value={isMain ? "true" : "false"} />
+
+          <div className={styles.contributionEditorScroll}>
+            <div className={styles.contributionEditorIdentity}>
+              <label className={authorNameError ? styles.contributionEditorFieldInvalid : undefined}>
+                <span>Имя автора</span>
+                <input
+                  name="authorName"
+                  value={authorName}
+                  onChange={(event) => { setAuthorName(event.target.value); markEdited("authorName"); }}
+                  onBlur={() => markBlurredAfterEdit("authorName")}
+                  aria-invalid={authorNameError}
+                  aria-describedby={authorNameError ? "contribution-author-name-error" : undefined}
+                  placeholder="Например, Мария"
+                  minLength={2}
+                  maxLength={80}
+                  required
+                />
+                {authorNameError ? <span id="contribution-author-name-error" className={styles.contributionEditorFieldError} role="alert">Укажите имя автора.</span> : null}
+              </label>
+              <label className={authorRoleError ? styles.contributionEditorFieldInvalid : undefined}>
+                <span>Роль или подпись</span>
+                <input
+                  name="authorRole"
+                  value={authorRole}
+                  onChange={(event) => { setAuthorRole(event.target.value); markEdited("authorRole"); }}
+                  onBlur={() => markBlurredAfterEdit("authorRole")}
+                  aria-invalid={authorRoleError}
+                  aria-describedby={authorRoleError ? "contribution-author-role-error" : undefined}
+                  placeholder="Например, коллега"
+                  required
+                  maxLength={80}
+                />
+                {authorRoleError ? <span id="contribution-author-role-error" className={styles.contributionEditorFieldError} role="alert">Укажите роль или подпись.</span> : null}
+              </label>
+            </div>
+
+            <div className={styles.contributionEditorMode} role="tablist" aria-label="Способ подготовки текста">
               <button
-                key={variant.id}
                 type="button"
                 role="tab"
-                aria-selected={index === activeVariantIndex}
-                className={`${styles.contentAiVariantTab} ${index === activeVariantIndex ? styles.contentAiVariantTabActive : ""}`}
-                onClick={() => setActiveVariantIndex(index)}
+                aria-selected={mode === "manual"}
+                className={mode === "manual" ? styles.contributionEditorModeActive : ""}
+                onClick={() => setMode("manual")}
               >
-                {variantLabels[aiTask][variant.id]}
+                Написать самому
               </button>
-            ))}
-          </div>
-          <p className={styles.contentAiPreviewText}>{activeVariant.text}</p>
-          <div className={styles.contentAiPreviewActions}>
-            <button type="button" className={styles.contentPrimaryButton} onClick={applyAiVariant}>
-              Применить
-            </button>
-            <button
-              type="button"
-              className={styles.contentSoftButton}
-              onClick={() => requestAiEdit(aiTask)}
-              disabled={isAiPending}
-            >
-              {isAiPending ? "Готовим..." : "Попробовать ещё"}
-            </button>
-            <button type="button" className={styles.contentAiCancelButton} onClick={() => setAiVariants([])}>
-              Отмена
-            </button>
-          </div>
-        </section>
-      ) : null}
-
-      <div className={styles.contentEditorFooter}>
-        {!activeVariant ? (
-          <div className={styles.contentAiEditActions}>
-            <button
-              type="button"
-              className={styles.contentAiButton}
-              onClick={() => requestAiEdit("improve")}
-              disabled={isAiPending}
-            >
-              <span aria-hidden="true">✦</span>
-              {isAiPending && aiTask === "improve" ? "Улучшаем..." : "Улучшить с AI"}
-            </button>
-            {remaining < 0 ? (
               <button
                 type="button"
-                className={`${styles.contentAiButton} ${styles.contentAiButtonSecondary}`}
-                onClick={() => requestAiEdit("shorten")}
-                disabled={isAiPending}
+                role="tab"
+                aria-selected={mode === "ai"}
+                className={mode === "ai" ? styles.contributionEditorModeActive : ""}
+                onClick={() => setMode("ai")}
               >
-                {isAiPending && aiTask === "shorten" ? "Сокращаем..." : "Сократить с AI"}
+                ✨ Помочь с текстом
               </button>
+            </div>
+
+            {mode === "manual" ? (
+              <label className={`${styles.contributionEditorMessage} ${messageError ? styles.contributionEditorFieldInvalid : ""}`}>
+                <span className={styles.contributionEditorLabelRow}>
+                  <span>Текст поздравления</span>
+                  <span className={styles.contributionEditorCounter}>
+                    {message.length} / {CONTRIBUTION_MESSAGE_MAX_LENGTH}
+                  </span>
+                </span>
+                <textarea
+                  value={message}
+                  onChange={(event) => { setMessage(event.target.value); markEdited("message"); }}
+                  onBlur={() => markBlurredAfterEdit("message")}
+                  aria-invalid={messageError}
+                  aria-describedby={messageError ? "contribution-message-error" : undefined}
+                  placeholder="Напишите тёплые слова…"
+                  minLength={20}
+                  maxLength={CONTRIBUTION_MESSAGE_MAX_LENGTH}
+                  rows={8}
+                  required
+                />
+                {messageError ? <span id="contribution-message-error" className={styles.contributionEditorFieldError} role="alert">Напишите текст поздравления.</span> : null}
+                <span className={message.length > CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH ? styles.contributionEditorWarning : styles.contributionEditorHint}>
+                  {message.length > CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH
+                    ? "Поздравление можно сохранить, но для некоторых вариантов оформления его потребуется сократить."
+                    : `Лучше всего смотрятся поздравления до ${CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH} символов.`}
+                </span>
+              </label>
+            ) : (
+              <div className={styles.contributionEditorAiMode}>
+                <AiHelper
+                  cardId={cardId}
+                  manageToken={manageToken}
+                  occasionText={occasionText}
+                  messageLimit={CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH}
+                  onUseText={(text, generationId) => {
+                    setMessage(text);
+                    markEdited("message");
+                    setMode("manual");
+                    setAiGenerationIds((currentIds) =>
+                      currentIds.includes(generationId) ? currentIds : [...currentIds, generationId]
+                    );
+                  }}
+                  onGeneration={(generationId) =>
+                    setAiGenerationIds((currentIds) =>
+                      currentIds.includes(generationId) ? currentIds : [...currentIds, generationId]
+                    )
+                  }
+                  onDraftChange={setAiDraft}
+                  variant="join"
+                  greetingMode={greetingMode}
+                />
+              </div>
+            )}
+
+            {contribution ? (
+              <section className={styles.contributionEditorOptions} aria-label="Настройки поздравления">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isVisible}
+                  aria-disabled={isPending || isMainGreeting}
+                  className={styles.contributionEditorOptionRow}
+                  disabled={isPending || isMainGreeting}
+                  onClick={() => setIsVisible((current) => !current)}
+                >
+                  <span><strong>Показывать в открытке</strong><small>{isVisible ? "Видно получателю" : "Скрыто из открытки"}</small></span>
+                  <span className={styles.contributionEditorSwitch} aria-hidden="true"><span /></span>
+                </button>
+                {isMainGreeting ? <p>Сначала выберите другое главное поздравление.</p> : null}
+
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isMain}
+                  aria-disabled={isPending || !isVisible || isMainGreeting}
+                  className={styles.contributionEditorOptionRow}
+                  disabled={isPending || !isVisible || isMainGreeting}
+                  onClick={() => setIsMain((current) => !current)}
+                >
+                  <span><strong>Главное поздравление</strong><small>Отдельный акцентный блок</small></span>
+                  <span className={styles.contributionEditorSwitch} aria-hidden="true"><span /></span>
+                </button>
+              </section>
             ) : null}
           </div>
-        ) : null}
-        <span className={styles.autoSaveStatus} aria-live="polite">
-          {saveStatus === "saving"
-            ? "Сохраняем..."
-            : saveStatus === "saved"
-              ? "Изменения сохранены"
-              : null}
-        </span>
-        {aiError ? <span className={styles.contentEditorError} role="alert">{aiError}</span> : null}
-        {state.message ? (
-          <span className={state.ok ? styles.contentEditorSuccess : styles.contentEditorError}>{state.message}</span>
-        ) : null}
+
+          <footer className={styles.contributionEditorFooter}>
+            <div className={styles.contributionEditorFooterSide}>
+              {contribution ? (
+                <button
+                  type="button"
+                  className={styles.contributionEditorDelete}
+                  disabled={isPending || isMainGreeting}
+                  onClick={() => setConfirmation("delete")}
+                >
+                  Удалить поздравление
+                </button>
+              ) : null}
+            </div>
+            <div className={styles.contributionEditorSubmitGroup}>
+              {error ? <span className={styles.contributionEditorError} role="alert">{error}</span> : null}
+              <button type="button" className={styles.contributionEditorCancel} onClick={requestClose} disabled={isPending}>
+                Отмена
+              </button>
+              <button type="submit" className={styles.contributionEditorSubmit} disabled={isPending} data-inactive={!canSubmit || undefined} aria-busy={isPending}>
+                {isPending ? "Сохраняем…" : contribution ? "Сохранить изменения" : "Добавить поздравление"}
+              </button>
+            </div>
+          </footer>
+        </form>
       </div>
-    </form>
+      {confirmation === "close" ? (
+        <ConfirmationDialog
+          title="Изменения не сохранены"
+          description="Закрыть редактор и потерять внесённые изменения?"
+          onDismiss={() => setConfirmation(null)}
+          actions={[
+            ...(canSubmit ? [{ label: "Сохранить и выйти", onClick: saveFromConfirmation, disabled: isPending }] : []),
+            { label: "Продолжить редактирование", tone: "secondary" as const, onClick: () => setConfirmation(null) },
+            { label: "Выйти без сохранения", tone: "danger", onClick: onClose }
+          ]}
+        />
+      ) : null}
+      {confirmation === "delete" && contribution ? (
+        <ConfirmationDialog
+          title={`Удалить поздравление от «${contribution.authorName}»?`}
+          description="Восстановить его будет невозможно."
+          onDismiss={() => setConfirmation(null)}
+          actions={[
+            { label: "Отмена", tone: "secondary", onClick: () => setConfirmation(null) },
+            { label: "Удалить поздравление", tone: "danger", disabled: isPending, onClick: removeContribution }
+          ]}
+        />
+      ) : null}
+    </div>,
+    document.body
   );
 };

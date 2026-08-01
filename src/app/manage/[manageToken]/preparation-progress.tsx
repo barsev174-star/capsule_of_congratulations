@@ -39,6 +39,7 @@ export const PreparationProgress = ({
     ].map((step) => step.id)
   );
   const compactSteps = steps.filter((step) => compactIds.has(step.id));
+  const currentStepIndex = steps.findIndex((step) => step.id === compact.currentStep.id);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -83,6 +84,12 @@ export const PreparationProgress = ({
         >
           {(isExpanded ? steps : compactSteps).map((step, renderedIndex) => {
             const sourceIndex = steps.findIndex((candidate) => candidate.id === step.id);
+            const progressRelation =
+              sourceIndex < currentStepIndex
+                ? "before"
+                : sourceIndex > currentStepIndex
+                  ? "after"
+                  : "current";
             const relation =
               step.id === compact.currentStep.id
                 ? "current"
@@ -95,6 +102,7 @@ export const PreparationProgress = ({
                 key={step.id}
                 data-status={step.status}
                 data-relation={relation}
+                data-progress={progressRelation}
               >
                 <span>{stepMarker(step, isExpanded ? renderedIndex : sourceIndex)}</span>
                 <div>

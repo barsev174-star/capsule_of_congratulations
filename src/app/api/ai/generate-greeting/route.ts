@@ -63,7 +63,9 @@ export async function POST(request: Request) {
     ? await getCardLifecycleByManageToken(input.manageToken)
     : input.publicSlug
       ? await getCardLifecycleByPublicSlug(input.publicSlug)
-      : null;
+      : input.manageToken
+        ? await getCardLifecycleByManageToken(input.manageToken)
+        : null;
 
   if (!lifecycle || lifecycle.purgedAt !== null) {
     return NextResponse.json({ ok: false, message: "Открытка не найдена или ссылка больше не актуальна." }, { status: 404 });
@@ -176,7 +178,7 @@ export async function POST(request: Request) {
 
     const errorId = await reportCriticalError("ai", error, { cardId: card.id, operation: "participant_generation" });
     return NextResponse.json(
-      { ok: false, message: "Не удалось подготовить варианты текста. Попробуйте ещё раз.", errorId },
+      { ok: false, message: "Не удалось подготовить варианты. Попробуйте ещё раз через несколько секунд.", errorId },
       { status: 503 }
     );
   }

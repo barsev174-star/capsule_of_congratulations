@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { isPostgresConfigured } from "@/lib/db/postgres";
 import * as postgresRepository from "@/lib/cards/repository-postgres";
-import type { CardDraft, CardMediaAsset, CardStatus, Contribution } from "@/lib/cards/types";
+import type { CardDraft, CardMediaAsset, CardStatus, Contribution, ContributionDetailsUpdate } from "@/lib/cards/types";
 import type { CardTemplateId } from "@/lib/cards/templates";
 import { deleteStoredCardMediaFile } from "@/lib/media/local-card-media-storage";
 import { CARD_CONTRIBUTION_LIMIT, ContributionLimitReachedError } from "@/lib/contributions/limits";
@@ -810,6 +810,32 @@ export const updateContributionMessage = async (
   const updated = {
     ...contributions[index],
     message,
+    updatedAt: new Date().toISOString()
+  };
+
+  contributions[index] = updated;
+  await writeFile(contributionsFilePath, JSON.stringify(contributions, null, 2), "utf8");
+  return updated;
+};
+
+export const updateContributionDetails = async (
+  contributionId: string,
+  input: ContributionDetailsUpdate
+) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.updateContributionDetails(contributionId, input);
+  }
+
+  const contributions = await readContributions();
+  const index = contributions.findIndex((item) => item.id === contributionId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const updated = {
+    ...contributions[index],
+    ...input,
     updatedAt: new Date().toISOString()
   };
 

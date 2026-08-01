@@ -19,6 +19,7 @@ import {
   updateCardTemplate,
   updateCardMediaAssetCaption,
   updateContributionMessage,
+  updateContributionDetails,
   updateContributionStatus,
   upsertCardMediaAsset
 } from "@/lib/cards/repository";
@@ -548,6 +549,110 @@ export async function updateCardBasicsAction(
   return { ok: true, message: "Изменения сохранены.", fields, accessEmail };
 }
 
+export async function saveOrganizerContributionAction(
+  _prevState: { ok: boolean; message: string; contributionId?: string },
+  formData: FormData
+) {
+  const manageToken = String(formData.get("manageToken") ?? "");
+  const contributionId = String(formData.get("contributionId") ?? "");
+  const requestedStatus = formData.get("status") === "hidden" ? "hidden" : "visible";
+  const requestedMainGreeting = formData.get("isMainGreeting") === "true";
+
+  if (!manageToken) {
+    return { ok: false, message: "Не удалось определить страницу управления." };
+  }
+
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) {
+    return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+  }
+  await assertManageContentEditable(manageToken);
+
+  const contributionFormData = new FormData();
+  contributionFormData.set("cardId", card.id);
+  contributionFormData.set("authorName", String(formData.get("authorName") ?? ""));
+  contributionFormData.set("authorRole", String(formData.get("authorRole") ?? ""));
+  contributionFormData.set("message", String(formData.get("message") ?? ""));
+  const validation = validateContributionFormData(contributionFormData, {
+    layoutMode: card.finalMessageSettings?.layoutMode ?? "grid-2"
+  });
+
+  if (!validation.success) {
+    return { ok: false, message: validation.issues[0]?.message ?? "Проверьте заполненные поля." };
+  }
+
+  if (contributionId) {
+    const existing = (await listAllContributionsByCardId(card.id)).find((item) => item.id === contributionId);
+    if (!existing) return { ok: false, message: "Поздравление не найдено." };
+    const isCurrentMainGreeting = card.finalMainGreetingSettings?.contributionId === contributionId;
+    if (isCurrentMainGreeting && (!requestedMainGreeting || requestedStatus === "hidden")) {
+      return { ok: false, message: "Сначала выберите другое главное поздравление." };
+    }
+    if (requestedMainGreeting && requestedStatus === "hidden") {
+      return { ok: false, message: "Главное поздравление должно быть видно в открытке." };
+    }
+    const updated = await updateContributionDetails(contributionId, {
+      authorName: validation.data.authorName,
+      authorRole: validation.data.authorRole?.trim() || null,
+      message: validation.data.message
+    });
+    if (!updated) return { ok: false, message: "Не удалось сохранить поздравление." };
+
+    if (existing.status !== requestedStatus) {
+      await updateContributionStatus(contributionId, requestedStatus);
+      const siblings = await listAllContributionsByCardId(card.id);
+      const nextOrder = siblings.map((item) => item.id).filter((id) => id !== contributionId);
+      if (requestedStatus === "hidden") {
+        nextOrder.push(contributionId);
+      } else {
+        const firstHiddenIndex = nextOrder.findIndex((id) =>
+          siblings.find((item) => item.id === id)?.status === "hidden"
+        );
+        if (firstHiddenIndex === -1) nextOrder.push(contributionId);
+        else nextOrder.splice(firstHiddenIndex, 0, contributionId);
+      }
+      await reorderContributions(card.id, nextOrder);
+    }
+
+    if (requestedMainGreeting && !isCurrentMainGreeting) {
+      await updateCardMainGreetingSettings(card.id, { contributionId });
+    }
+    logger.info("manage.contribution_details_updated", "Contribution details updated by organizer", {
+      cardId: card.id,
+      contributionId
+    });
+    revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+    return { ok: true, message: "Изменения сохранены.", contributionId };
+  }
+
+  let contribution;
+  try {
+    contribution = await createContribution(validation.data);
+  } catch (error) {
+    if (error instanceof ContributionLimitReachedError) {
+      return { ok: false, message: error.message };
+    }
+    throw error;
+  }
+  const siblings = await listAllContributionsByCardId(card.id);
+  const nextOrder = siblings.map((item) => item.id).filter((id) => id !== contribution.id);
+  const firstHiddenIndex = nextOrder.findIndex((id) =>
+    siblings.find((item) => item.id === id)?.status === "hidden"
+  );
+  if (firstHiddenIndex === -1) nextOrder.push(contribution.id);
+  else nextOrder.splice(firstHiddenIndex, 0, contribution.id);
+  await reorderContributions(card.id, nextOrder);
+  if (requestedMainGreeting) {
+    await updateCardMainGreetingSettings(card.id, { contributionId: contribution.id });
+  }
+  logger.info("manage.manual_contribution_created", "Manual contribution created by organizer", {
+    cardId: card.id,
+    contributionId: contribution.id
+  });
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+  return { ok: true, message: "Поздравление добавлено.", contributionId: contribution.id };
+}
+
 export async function resendOrganizerAccessAction(
   manageToken: string
 ): Promise<{ ok: boolean; message: string }> {
@@ -705,6 +810,10 @@ export async function reorderContributionsAction(
     .getAll("orderedContributionIds")
     .map((value) => String(value))
     .filter(Boolean);
+  const baseContributionIds = formData
+    .getAll("baseContributionIds")
+    .map((value) => String(value))
+    .filter(Boolean);
 
   if (!manageToken || orderedContributionIds.length === 0) {
     return { ok: false, message: "Не удалось сохранить новый порядок поздравлений." };
@@ -720,7 +829,36 @@ export async function reorderContributionsAction(
     return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования." };
   }
 
-  const updated = await reorderContributions(card.id, orderedContributionIds);
+  const siblings = await listAllContributionsByCardId(card.id);
+  const mainGreetingContributionId = card.finalMainGreetingSettings?.contributionId ?? null;
+  const reorderableIds = siblings
+    .filter((item) => item.status === "visible" && item.id !== mainGreetingContributionId)
+    .map((item) => item.id);
+  const hasUniqueIds = new Set(orderedContributionIds).size === orderedContributionIds.length;
+  const hasCurrentSet = orderedContributionIds.length === reorderableIds.length
+    && orderedContributionIds.every((id) => reorderableIds.includes(id));
+  const baseStillCurrent = baseContributionIds.length === reorderableIds.length
+    && baseContributionIds.every((id, index) => id === reorderableIds[index]);
+
+  if (!hasUniqueIds || !hasCurrentSet || !baseStillCurrent) {
+    return { ok: false, message: "Список поздравлений изменился. Обновите данные и повторите настройку порядка." };
+  }
+
+  let nextVisibleIndex = 0;
+  const mergedOrder = siblings.map((item) => {
+    if (item.status !== "visible" || item.id === mainGreetingContributionId) return item.id;
+    return orderedContributionIds[nextVisibleIndex++] ?? item.id;
+  });
+  let updated;
+  try {
+    updated = await reorderContributions(card.id, mergedOrder);
+  } catch (error) {
+    logger.error("manage.contributions_reorder_failed", "Contribution order could not be saved", {
+      cardId: card.id,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return { ok: false, message: "Не удалось сохранить порядок. Проверьте соединение и попробуйте ещё раз." };
+  }
 
   logger.info("manage.contributions_reordered", "Contribution list reordered by organizer", {
     cardId: card.id,

@@ -11,7 +11,6 @@ import {
 import { getCardTemplates } from "@/lib/cards/templates-server";
 import { isTemplateId } from "@/lib/cards/templates";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
-import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import { getGiftPath, getJoinUrl, getManagePath, getPreviewPath } from "@/lib/routes/card-links";
 import type { FinalCardBlockId, FinalCardOptionalBlockId } from "@/lib/final-card/types";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
@@ -206,7 +205,6 @@ export default async function ManagePage({ params, searchParams }: Props) {
     !savedMemoryDescription || savedMemoryDescription === "Столько ярких моментов, с которыми мы идём рядом с тобой."
       ? "Фото, которые хочется сохранить"
       : savedMemoryDescription;
-  const layoutProfile = getFinalCardMessageLayoutProfile(layoutMode, mediaLayout);
   const requiredLayoutBlockIds = finalCardLayouts[style].blocks
     .filter((block) => block.required)
     .map((block) => block.id);
@@ -649,7 +647,6 @@ export default async function ManagePage({ params, searchParams }: Props) {
             messageRequiredCount={messageRequiredPhotoCount}
             memoryAssignedCount={model?.memoryMediaAssets.length ?? 0}
             memoryRequiredCount={memoryPhotoCount}
-            messageLimit={layoutProfile.maxChars}
             occasionText={occasionText}
             cardId={card.id}
             mainGreetingContributionId={mainGreetingContributionId}

@@ -1,6 +1,6 @@
 import { getPostgresPool } from "@/lib/db/postgres";
 import type { CardTemplateId } from "@/lib/cards/templates";
-import type { CardDraft, CardMediaAsset, CardStatus, Contribution } from "@/lib/cards/types";
+import type { CardDraft, CardMediaAsset, CardStatus, Contribution, ContributionDetailsUpdate } from "@/lib/cards/types";
 import { deleteStoredCardMediaFile } from "@/lib/media/local-card-media-storage";
 import { CARD_CONTRIBUTION_LIMIT, ContributionLimitReachedError } from "@/lib/contributions/limits";
 import type {
@@ -895,6 +895,20 @@ export const updateContributionMessage = async (
   const result = await getPostgresPool().query<ContributionRow>(
     "UPDATE contributions SET message = $2, updated_at = now() WHERE id = $1 RETURNING *",
     [contributionId, message]
+  );
+  return result.rows[0] ? mapContribution(result.rows[0]) : null;
+};
+
+export const updateContributionDetails = async (
+  contributionId: string,
+  input: ContributionDetailsUpdate
+) => {
+  const result = await getPostgresPool().query<ContributionRow>(
+    `UPDATE contributions
+     SET author_name = $2, author_role = $3, message = $4, updated_at = now()
+     WHERE id = $1
+     RETURNING *`,
+    [contributionId, input.authorName, input.authorRole, input.message]
   );
   return result.rows[0] ? mapContribution(result.rows[0]) : null;
 };

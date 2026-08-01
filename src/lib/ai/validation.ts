@@ -86,7 +86,7 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
   } else if (draftLength < AI_DRAFT_MIN_LENGTH) {
     issues.push({
       field: "draftNotes",
-      message: "Добавьте пару деталей — так AI сможет написать более личное поздравление."
+      message: "Добавьте немного больше деталей: что вы цените в человеке и что хотите ему пожелать."
     });
   } else if (draftLength > draftLimit) {
     issues.push({ field: "draftNotes", message: `Текст должен быть не длиннее ${draftLimit} символов.` });

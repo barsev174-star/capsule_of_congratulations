@@ -14,6 +14,7 @@ type Props = {
   messageLimit: number;
   onUseText: (text: string, generationId: string) => void;
   onGeneration?: (generationId: string) => void;
+  onDraftChange?: (draft: string) => void;
   variant?: "default" | "join";
   greetingMode?: "classic" | "matrix" | "ladder";
 };
@@ -27,6 +28,7 @@ export const AiHelper = ({
   messageLimit,
   onUseText,
   onGeneration,
+  onDraftChange,
   variant = "default",
   greetingMode = "classic"
 }: Props) => {
@@ -57,7 +59,7 @@ export const AiHelper = ({
         body: JSON.stringify({ requestId, cardId, publicSlug, manageToken, draftNotes, style, relationshipContext })
       });
     } catch {
-      setIssues(["Не удалось связаться с AI-помощником. Проверьте соединение и попробуйте ещё раз."]);
+      setIssues(["Не удалось подготовить варианты. Попробуйте ещё раз через несколько секунд."]);
       return;
     } finally {
       pendingRequestId.current = null;
@@ -66,6 +68,10 @@ export const AiHelper = ({
     const payload = await response.json();
     if (!response.ok) {
       setLimitReached(response.status === 429);
+      if (response.status >= 500) {
+        setIssues(["Не удалось подготовить варианты. Попробуйте ещё раз через несколько секунд."]);
+        return;
+      }
       setIssues(
         payload.issues
           ? payload.issues.map((issue: { message: string }) => issue.message)
@@ -124,6 +130,7 @@ export const AiHelper = ({
             value={draftNotes}
             onChange={(event) => {
               setDraftNotes(event.target.value);
+              onDraftChange?.(event.target.value);
               if (issues.length) setIssues([]);
             }}
             placeholder="Например: она всегда поддерживает, умеет поднять настроение, хочу пожелать ей больше отдыха и радости."
@@ -164,8 +171,10 @@ export const AiHelper = ({
             disabled={isPending || limitReached}
             onClick={generateSelectedVariant}
           >
-            {isJoinVariant ? <span className={styles.aiButtonIcon} aria-hidden="true" /> : null}
-            {isPending ? "Готовим варианты..." : "Получить 3 варианта"}
+            {isPending
+              ? <span className={styles.aiSpinner} aria-hidden="true" />
+              : isJoinVariant ? <span className={styles.aiButtonIcon} aria-hidden="true" /> : null}
+            {isPending ? "Готовим варианты…" : "Получить 3 варианта"}
           </button>
           {remaining !== null ? (
             <span className={styles.note}>

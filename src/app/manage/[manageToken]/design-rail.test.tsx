@@ -50,7 +50,11 @@ describe("DesignRail", () => {
     expect(toggle).toHaveTextContent("Свернуть этапы");
     const fullJourney = document.getElementById(toggle.getAttribute("aria-controls") ?? "");
     expect(fullJourney).not.toBeNull();
-    expect(within(fullJourney!).getAllByRole("listitem")).toHaveLength(6);
+    const journeyItems = within(fullJourney!).getAllByRole("listitem");
+    expect(journeyItems).toHaveLength(6);
+    expect(journeyItems.slice(0, 2).every((item) => item.dataset.progress === "before")).toBe(true);
+    expect(journeyItems[2]).toHaveAttribute("data-progress", "current");
+    expect(journeyItems.slice(3).every((item) => item.dataset.progress === "after")).toBe(true);
 
     await user.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "false");

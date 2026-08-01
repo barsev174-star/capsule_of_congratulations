@@ -132,6 +132,12 @@ export type ContributionMessageUpdate = {
   message: string;
 };
 
+export type ContributionDetailsUpdate = {
+  authorName: string;
+  authorRole: string | null;
+  message: string;
+};
+
 export type CardMediaAsset = {
   id: string;
   cardId: string;

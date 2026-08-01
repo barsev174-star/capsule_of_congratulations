@@ -1,5 +1,6 @@
 import type { CreateContributionInput } from "@/lib/cards/types";
 import type { FinalCardMessageLayoutMode } from "@/lib/final-card/types";
+import { CONTRIBUTION_MESSAGE_MAX_LENGTH } from "@/lib/contributions/limits";
 
 export type ContributionValidationIssue = {
   field: string;
@@ -34,8 +35,12 @@ const validateMessageAgainstRules = (
   message: string,
   _options?: ContributionValidationOptions
 ) => {
-  if (message.length < 20 || message.length > 1500) {
-    pushIssue(issues, "message", "Текст поздравления должен быть от 20 до 1500 символов.");
+  if (message.length < 20 || message.length > CONTRIBUTION_MESSAGE_MAX_LENGTH) {
+    pushIssue(
+      issues,
+      "message",
+      `Текст поздравления должен быть от 20 до ${CONTRIBUTION_MESSAGE_MAX_LENGTH} символов.`
+    );
   }
 };
 
@@ -58,8 +63,8 @@ export const validateContributionFormData = (
     pushIssue(issues, "authorName", "Имя автора должно быть от 2 до 80 символов.");
   }
 
-  if (authorRole && authorRole.length > 80) {
-    pushIssue(issues, "authorRole", "Подпись или роль должна быть не длиннее 80 символов.");
+  if (!authorRole || authorRole.length > 80) {
+    pushIssue(issues, "authorRole", "Укажите роль или подпись длиной до 80 символов.");
   }
 
   validateMessageAgainstRules(issues, message, options);
