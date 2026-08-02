@@ -15,11 +15,13 @@ type PrimaryAction =
 type Props = {
   manageToken: string;
   primaryAction: PrimaryAction;
+  mobileOnly?: boolean;
 };
 
 export const DesignStickyActions = ({
   manageToken,
-  primaryAction
+  primaryAction,
+  mobileOnly = false
 }: Props) => {
   const [basicsState, setBasicsState] = useState({ isDirty: false, isPending: false });
   const isInputActive = useMobileInputActivity();
@@ -79,7 +81,7 @@ export const DesignStickyActions = ({
 
   return (
     <div
-      className={`${styles.designStickyActions} ${
+      className={`${styles.designStickyActions} ${mobileOnly ? styles.designStickyActionsMobileOnly : ""} ${
         isInputActive ? styles.mobileStickySuppressed : ""
       }`}
       aria-hidden={isInputActive}

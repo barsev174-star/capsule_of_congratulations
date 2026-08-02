@@ -55,6 +55,7 @@ import type {
 import { logger } from "@/lib/logger";
 import { deleteStoredCardMediaFile, saveCardMediaFile } from "@/lib/media/local-card-media-storage";
 import { importGiftOptionImage } from "@/lib/gift-polls/image-storage";
+import { ensureGiftPollEnabled } from "@/lib/gift-polls/activation";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
 import { getGiftPath, getJoinPath, getManagePath } from "@/lib/routes/card-links";
 import { reportCriticalError } from "@/lib/telemetry";
@@ -159,6 +160,28 @@ export type CardBasicsFormState = {
 export type GiftPollFormState = { ok: boolean; message: string };
 
 const giftPollState = (ok: boolean, message: string): GiftPollFormState => ({ ok, message });
+
+export async function enableGiftPollAction(_previous: GiftPollFormState, formData: FormData): Promise<GiftPollFormState> {
+  const manageToken = String(formData.get("manageToken") ?? "");
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) return giftPollState(false, "Секретная ссылка управления больше не актуальна.");
+
+  try {
+    await assertManageContentEditable(manageToken);
+    const activation = await ensureGiftPollEnabled(card.id);
+    if (activation.created) {
+      logger.info("manage.gift_poll_enabled", "Gift poll enabled by organizer", { cardId: card.id });
+    }
+    revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+    return giftPollState(true, "Голосование включено. Добавьте варианты подарка или бюджета.");
+  } catch (error) {
+    logger.error("manage.gift_poll_enable_failed", "Gift poll could not be enabled", {
+      cardId: card.id,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return giftPollState(false, "Не удалось включить голосование. Попробуйте ещё раз.");
+  }
+}
 
 export async function saveGiftPollAction(_previous: GiftPollFormState, formData: FormData): Promise<GiftPollFormState> {
   const manageToken = String(formData.get("manageToken") ?? "");

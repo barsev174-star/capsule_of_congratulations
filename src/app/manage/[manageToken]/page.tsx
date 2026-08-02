@@ -344,6 +344,13 @@ export default async function ManagePage({ params, searchParams }: Props) {
             ? primaryPreviewHref
             : resolveDesignActionHref(organizerJourney.nextAction)
       };
+  const giftStickyAction = {
+    kind: "link" as const,
+    label: "Продолжить настройку",
+    href: firstIncompleteBlock
+      ? `${getManagePath(manageToken)}?tab=design#block-${firstIncompleteBlock.blockId}`
+      : `${getManagePath(manageToken)}?tab=design`
+  };
 
   return (
     <main className={styles.page}>
@@ -575,6 +582,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
           />
           </>
         ) : activeTab === "gift" ? (
+          <>
           <div className={`${styles.editorWorkspace} ${styles.giftEditorWorkspace}`}>
             <div className={`${styles.editorMain} ${styles.giftPollTabShell}`}>
               <GiftPollSettingsForm
@@ -597,18 +605,17 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 persistenceKey={`card-preparation:${manageToken}`}
               />
               <EditorSidebarCard className={styles.giftStateCard}>
-                <div className={styles.editorSidebarCardHeading}>
+                <div className={styles.giftStateHeader}>
                   <h2>Состояние подарка</h2>
-                  <p>
-                    {!giftPoll
-                      ? "Выбор подарка пока не настроен."
-                      : giftPoll.status === "open"
-                        ? `Голосование открыто · голосов: ${giftPoll.totalVotes}`
-                        : giftPoll.status === "closed"
-                          ? "Голосование завершено."
-                          : "Настройки сохранены в черновике."}
-                  </p>
+                  <span>{giftPoll ? giftPoll.status === "open" ? "Открыто" : giftPoll.status === "closed" ? "Завершено" : "Черновик" : "Не настроено"}</span>
                 </div>
+                {!giftPoll ? (
+                  <ul className={styles.giftStateSummary}>
+                    <li><span aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="5" /><circle cx="9" cy="12" r="3" /></svg></span>Голосование не включено</li>
+                    <li><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 10.5h17v10h-17zM2.5 6.5h19v4h-19zM12 6.5v14" /></svg></span>Варианты подарка не добавлены</li>
+                    <li><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" /><circle cx="17" cy="10" r="2.3" /><path d="M3.5 20c.6-3.2 2.5-5 5.5-5s4.9 1.8 5.5 5M15 16.2c2.7-.4 4.6.8 5.2 3.8" /></svg></span>Голосование пока недоступно участникам</li>
+                  </ul>
+                ) : <p className={styles.giftStateActiveSummary}>{giftPoll.status === "open" ? `Голосование открыто · голосов: ${giftPoll.totalVotes}` : giftPoll.status === "closed" ? "Голосование завершено." : "Настройки сохранены в черновике."}</p>}
               </EditorSidebarCard>
               {lifecycle.collectionStatus === "OPEN" ? (
                 <ParticipantLinkCard
@@ -620,6 +627,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
               ) : null}
             </aside>
           </div>
+          <DesignStickyActions manageToken={manageToken} primaryAction={giftStickyAction} mobileOnly />
+          </>
         ) : (
           <ContentStudio
             key={allContributions.map((contribution) => contribution.id).join(":")}

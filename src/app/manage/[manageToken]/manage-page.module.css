@@ -13918,3 +13918,542 @@ button.contentStatusItemButton:active {
   .orderEditorRowHighlighted { animation: none; box-shadow: 0 0 0 2px rgba(233,101,47,.38); }
   .orderEditorToast { animation: none; }
 }
+
+/* Gift poll onboarding: inactive state. */
+.giftPollOnboarding {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.giftPollEmptyState {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  width: 100%;
+  max-width: none;
+  padding: 28px;
+  border: 0;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 0 0, rgba(255,255,255,.92), transparent 32%),
+    rgba(255,252,249,.96);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.055),
+    0 1px 2px -1px rgba(0,0,0,.06),
+    0 18px 44px rgba(70,42,29,.07);
+}
+
+.giftPollOnboardingHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.giftPollEmptyIcon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 16px;
+  background: #fff0e8;
+  color: #ec622c;
+  font-size: 1.4rem;
+  box-shadow: inset 0 0 0 1px rgba(236,98,44,.08);
+}
+
+.giftPollOnboardingHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px 14px;
+  min-width: 0;
+}
+
+.giftPollOnboardingHeading h2,
+.giftPollBenefitsDesktop h2 {
+  margin: 0;
+  color: #35231d;
+  font-family: var(--font-serif, Georgia, serif);
+  text-wrap: balance;
+}
+
+.giftPollOnboardingHeading h2 {
+  font-size: clamp(1.8rem, 3vw, 2.2rem);
+  line-height: 1.08;
+}
+
+.giftPollOnboardingHeading > span,
+.giftStateHeader > span {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #e9e3dd;
+  color: #554e49;
+  font-size: .78rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: inset 0 0 0 1px rgba(78,65,57,.08);
+}
+
+.giftPollOnboardingIntro {
+  max-width: 760px !important;
+  margin: -4px 0 0 !important;
+  color: #756157 !important;
+  font-size: .94rem;
+  line-height: 1.58 !important;
+  text-wrap: pretty;
+}
+
+.giftPollOnboardingScenario {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  border-radius: 22px;
+  background: rgba(255,255,255,.5);
+  box-shadow:
+    inset 0 0 0 1px rgba(84,55,40,.09),
+    0 10px 28px rgba(70,42,29,.035);
+}
+
+.giftPollOnboardingStep {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: start;
+  gap: 11px;
+  min-width: 0;
+  min-height: 170px;
+  padding: 16px 22px 17px;
+}
+
+.giftPollOnboardingStep:not(:last-child)::after {
+  position: absolute;
+  top: 18px;
+  right: 0;
+  bottom: 18px;
+  width: 1px;
+  background: rgba(236,98,44,.16);
+  content: "";
+}
+
+.giftPollStepNumber {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 999px;
+  background: #ffede3;
+  color: #e85822;
+  font-size: .86rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.giftPollStepIcon,
+.giftPollBenefitGrid article > span,
+.giftPollBenefitList article > span {
+  display: grid;
+  color: #ed602a;
+}
+
+.giftPollStepIcon {
+  width: 38px;
+  height: 34px;
+  place-items: center;
+}
+
+.giftPollStepIcon svg,
+.giftPollBenefitGrid svg,
+.giftPollBenefitList svg,
+.giftPollHowButton svg,
+.giftPollInfoHeader svg,
+.giftStateSummary svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.giftPollStepMeta {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 10px;
+}
+
+.giftPollStepCopy {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.giftPollOnboardingStep h3,
+.giftPollBenefitGrid h3,
+.giftPollBenefitList h3 {
+  margin: 0;
+  color: #3f2d25;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.giftPollOnboardingStep h3 { font-size: .94rem; }
+.giftPollOnboardingStep p,
+.giftPollBenefitGrid p,
+.giftPollBenefitList p {
+  margin: 0;
+  color: #7a665b;
+  font-size: .83rem;
+  line-height: 1.52;
+  text-wrap: pretty;
+}
+
+.giftPollEmptyState .giftPollOnboardingStep p {
+  max-width: none;
+  margin: 0;
+  color: #7a665b;
+  line-height: 1.52;
+}
+
+.giftPollOnboardingActions {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, .78fr);
+  gap: 12px;
+  max-width: 650px;
+  margin-inline: auto;
+}
+
+.giftPollOnboardingActions form { display: flex; }
+
+.giftPollEnableButton,
+.giftPollHowButton,
+.giftPollInfoDone {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 13px;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+  transition-property: background-color, color, box-shadow, scale;
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
+}
+
+.giftPollEnableButton {
+  grid-column: auto;
+  width: 100%;
+  padding: 0 20px;
+  border: 0;
+  background: linear-gradient(180deg,#f36d37,#e65720);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(224,81,27,.2);
+}
+
+.giftPollEnableButton:hover:not(:disabled) { background: linear-gradient(180deg,#f57642,#df541c); box-shadow: 0 13px 26px rgba(224,81,27,.25); }
+.giftPollEnableButton:active:not(:disabled),
+.giftPollHowButton:active,
+.giftPollInfoDone:active { scale: .96; }
+.giftPollEnableButton:disabled { cursor: default; opacity: .68; box-shadow: none; }
+
+.giftPollEnableButton > .giftPollEnableSpinner {
+  display: block;
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  border: 2px solid rgba(255,255,255,.45);
+  border-radius: 999px;
+  border-top-color: #fff;
+  background: transparent;
+  animation: giftPollSpin .7s linear infinite;
+}
+
+.giftPollEnableButton > .giftPollEnableSpinner::after { display: none; }
+
+@keyframes giftPollSpin { to { rotate: 360deg; } }
+
+.giftPollHowButton {
+  width: 100%;
+  min-width: 220px;
+  padding: 0 18px;
+  border: 0;
+  background: #fff;
+  color: #e45b27;
+  box-shadow: inset 0 0 0 1px rgba(233,101,47,.3);
+  white-space: nowrap;
+}
+
+.giftPollHowButton:hover { background: #fff3ec; color: #d94f1d; box-shadow: inset 0 0 0 1px rgba(233,101,47,.48), 0 7px 16px rgba(224,81,27,.07); }
+.giftPollHowButton svg { width: 21px; height: 21px; }
+.giftPollEnableButton:focus-visible,
+.giftPollHowButton:focus-visible,
+.giftPollInfoDone:focus-visible,
+.giftPollInfoHeader button:focus-visible,
+.giftPollBenefitsTrigger:focus-visible { outline: 3px solid rgba(233,101,47,.26); outline-offset: 3px; }
+
+.giftPollEnableError,
+.giftPollActivationNotice {
+  margin: -10px 0 0;
+  font-size: .86rem;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.giftPollEnableError { color: #a53d2d; }
+.giftPollActivationNotice { padding: 11px 13px; border-radius: 12px; background: #e9f5e6; color: #2f6a3c; text-align: left; }
+
+.giftPollBenefitsAccordion {
+  overflow: hidden;
+  border-radius: 22px;
+  background: rgba(255,252,249,.94);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.055),
+    0 10px 26px rgba(70,42,29,.045);
+  transition-property: box-shadow, background-color;
+  transition-duration: 180ms;
+  transition-timing-function: ease-out;
+}
+
+.giftPollBenefitsAccordion:hover {
+  background: #fffdfb;
+  box-shadow:
+    0 0 0 1px rgba(233,101,47,.16),
+    0 12px 28px rgba(70,42,29,.055);
+}
+
+.giftPollBenefitsTrigger {
+  display: flex;
+  width: 100%;
+  min-height: 60px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 22px;
+  border: 0;
+  background: transparent;
+  color: #e45b27;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition-property: background-color, color;
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
+}
+
+.giftPollBenefitsTrigger:hover { background: rgba(255,240,232,.62); color: #d94f1d; }
+.giftPollBenefitsTrigger:active { background: rgba(255,232,220,.72); }
+
+.giftPollBenefitsTriggerCopy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.giftPollBenefitsTriggerCopy strong {
+  font-family: var(--font-serif,Georgia,serif);
+  font-size: 1.18rem;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.giftPollBenefitsTriggerCopy small {
+  overflow: hidden;
+  color: #756157;
+  font-size: .78rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.giftPollBenefitsTrigger svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  transition-property: rotate;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(.2,0,0,1);
+}
+
+.giftPollBenefitsAccordionOpen .giftPollBenefitsTrigger svg { rotate: 180deg; }
+
+.giftPollBenefitsContent {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition-property: grid-template-rows, visibility;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(.2,0,0,1);
+}
+
+.giftPollBenefitsAccordionOpen .giftPollBenefitsContent {
+  grid-template-rows: 1fr;
+  visibility: visible;
+}
+
+.giftPollBenefitsContent > .giftPollBenefitList {
+  overflow: hidden;
+}
+
+.giftPollBenefitList {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 18px;
+  padding: 0 22px 20px;
+}
+
+.giftPollBenefitList article {
+  padding: 4px 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.giftPollBenefitsDesktop,
+.giftPollBenefitsMobile {
+  border-radius: 24px;
+  background: rgba(255,252,249,.94);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.05),
+    0 12px 30px rgba(70,42,29,.05);
+}
+
+.giftPollBenefitsDesktop { display: grid; gap: 16px; padding: 24px 28px 26px; }
+.giftPollBenefitsDesktop h2 { font-size: 1.32rem; }
+.giftPollBenefitGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.giftPollBenefitGrid article,
+.giftPollBenefitList article { display: grid; grid-template-columns: 38px minmax(0,1fr); gap: 12px; min-width: 0; }
+.giftPollBenefitGrid article { padding: 17px; border-radius: 17px; background: rgba(255,255,255,.56); box-shadow: inset 0 0 0 1px rgba(84,55,40,.075); }
+.giftPollBenefitGrid article > span,
+.giftPollBenefitList article > span { width: 38px; height: 38px; place-items: center; color: #32964d; }
+.giftPollBenefitGrid h3,
+.giftPollBenefitList h3 { font-size: .92rem; }
+.giftPollBenefitsMobile { display: none; }
+
+.giftPollInfoBackdrop {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(43,29,23,.42);
+  backdrop-filter: blur(3px);
+}
+
+.giftPollInfoDialog {
+  display: grid;
+  grid-template-rows: auto minmax(0,1fr) auto;
+  gap: 20px;
+  width: min(100%,560px);
+  max-height: min(720px,calc(100dvh - 40px));
+  overflow: hidden;
+  padding: 26px;
+  border-radius: 26px;
+  background: #fffaf6;
+  box-shadow: 0 26px 70px rgba(43,29,23,.24);
+}
+
+.giftPollInfoDialog:focus { outline: none; }
+
+.giftPollInfoHeader { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+.giftPollInfoHeader > div { display: grid; gap: 5px; }
+.giftPollInfoHeader span { color: #e45b27; font-size: .75rem; font-weight: 850; }
+.giftPollInfoHeader h2 { margin: 0; color: #35231d; font-family: var(--font-serif,Georgia,serif); font-size: 1.65rem; text-wrap: balance; }
+.giftPollInfoHeader button { display: grid; width: 44px; height: 44px; flex: 0 0 auto; place-items: center; padding: 0; border: 0; border-radius: 999px; background: #fff0e8; color: #e45b27; cursor: pointer; transition-property: background-color,color,scale; transition-duration: 170ms; }
+.giftPollInfoHeader button:hover { background: #ffece2; color: #df5725; }
+.giftPollInfoHeader button:active { scale: .96; }
+.giftPollInfoHeader svg { width: 20px; height: 20px; }
+.giftPollInfoList { display: grid; gap: 10px; min-height: 0; margin: 0; padding: 0 3px 0 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
+.giftPollInfoList li { display: grid; grid-template-columns: 32px minmax(0,1fr); align-items: start; gap: 11px; padding: 12px; border-radius: 14px; background: rgba(255,255,255,.64); box-shadow: inset 0 0 0 1px rgba(84,55,40,.07); }
+.giftPollInfoList li > span { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 999px; background: #ffede3; color: #e85822; font-size: .78rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.giftPollInfoList p { margin: 5px 0 0; color: #69584f; font-size: .9rem; line-height: 1.5; text-wrap: pretty; }
+.giftPollInfoDone { width: 100%; padding: 0 18px; border: 0; background: #ec622c; color: #fff; }
+.giftPollInfoDone:hover { background: #df541c; box-shadow: 0 9px 20px rgba(224,81,27,.2); }
+
+.giftStateHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.giftStateHeader h2 { margin: 0; }
+.giftStateHeader > span { min-height: 26px; padding-inline: 10px; font-size: .7rem; }
+.giftStateSummary { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.giftStateSummary li { display: grid; grid-template-columns: 32px minmax(0,1fr); align-items: center; gap: 10px; color: #625750; font-size: .84rem; font-weight: 600; line-height: 1.4; text-wrap: pretty; }
+.giftStateSummary li > span { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 999px; background: #e9e3de; color: #71655d; }
+.giftStateSummary svg { width: 18px; height: 18px; stroke-width: 1.85; }
+.giftStateActiveSummary { margin: 0; color: #755f53; font-size: .86rem; line-height: 1.45; }
+
+@media (min-width: 900px) {
+  .designStickyActionsMobileOnly { display: none; }
+}
+
+@media (max-width: 899px) {
+  :global(body.manage-modal-open) .designStickyActionsMobileOnly { display: none; }
+}
+
+@media (max-width: 767px) {
+  .giftPollOnboarding { gap: 12px; }
+  .giftPollEmptyState { gap: 13px; padding: 20px; border-radius: 24px; }
+  .giftPollOnboardingHeader { align-items: start; }
+  .giftPollOnboardingHeading { display: grid; gap: 8px; }
+  .giftPollOnboardingHeading h2 { font-size: 1.85rem; }
+  .giftPollOnboardingHeading > span { width: fit-content; max-width: 100%; white-space: normal; }
+  .giftPollOnboardingScenario { grid-template-columns: minmax(0,1fr); border-radius: 18px; }
+  .giftPollOnboardingStep { grid-template-columns: 80px minmax(0,1fr); grid-template-rows: auto; align-items: start; gap: 11px; min-height: 0; padding: 13px 16px; }
+  .giftPollOnboardingStep:not(:last-child)::after { top: auto; right: 16px; bottom: 0; left: 16px; width: auto; height: 1px; }
+  .giftPollStepMeta { min-height: 36px; gap: 7px; }
+  .giftPollStepNumber { width: 32px; height: 32px; }
+  .giftPollStepIcon { width: 38px; height: 34px; }
+  .giftPollStepCopy { padding-top: 1px; }
+  .giftPollOnboardingStep h3 { font-size: .95rem; }
+  .giftPollOnboardingActions { grid-template-columns: minmax(0,1fr); gap: 10px; width: 100%; max-width: none; }
+  .giftPollHowButton { min-width: 0; }
+  .giftPollBenefitsTrigger { min-height: 64px; padding-inline: 18px; }
+  .giftPollBenefitsTriggerCopy strong { font-size: 1.1rem; }
+  .giftPollBenefitList { grid-template-columns: minmax(0,1fr); gap: 16px; padding: 0 18px 18px; }
+  .giftPollInfoBackdrop { align-items: end; padding: 0; }
+  .giftPollInfoDialog { width: 100%; max-height: min(90dvh,760px); padding: 22px 18px max(20px,env(safe-area-inset-bottom)); border-radius: 26px 26px 0 0; }
+  .giftPollInfoHeader h2 { font-size: 1.5rem; }
+}
+
+@media (max-width: 390px) {
+  .giftPollEmptyState { padding: 18px; }
+  .giftPollEmptyIcon { width: 44px; height: 44px; border-radius: 14px; }
+  .giftPollOnboardingHeader { gap: 12px; }
+  .giftPollOnboardingHeading h2 { font-size: 1.65rem; }
+  .giftPollOnboardingStep { grid-template-columns: 75px minmax(0,1fr); gap: 9px; padding-inline: 13px; }
+  .giftPollOnboardingStep p { font-size: .8rem; }
+}
+
+@media (max-width: 340px) {
+  .giftPollEmptyState { padding: 16px; }
+  .giftPollOnboardingHeading h2 { font-size: 1.52rem; }
+  .giftPollOnboardingHeading > span { font-size: .73rem; }
+  .giftPollOnboardingStep { grid-template-columns: 70px minmax(0,1fr); padding-inline: 11px; }
+  .giftPollStepMeta { gap: 4px; }
+  .giftPollStepIcon { width: 34px; }
+  .giftPollBenefitsTrigger { padding-inline: 16px; }
+  .giftPollBenefitsTriggerCopy strong { font-size: 1.04rem; }
+  .giftPollBenefitsTriggerCopy small { max-width: 205px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giftPollEnableButton,
+  .giftPollHowButton,
+  .giftPollInfoDone,
+  .giftPollBenefitsTrigger,
+  .giftPollBenefitsTrigger svg,
+  .giftPollBenefitsContent { transition-duration: .01ms; }
+  .giftPollEnableButton > .giftPollEnableSpinner { animation-duration: 1.4s; }
+}

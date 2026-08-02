@@ -3,10 +3,13 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import type { GiftPollWithOptions } from "@/lib/gift-polls/types";
 import { defaultGiftPollCopy, isSystemDefaultPollQuestion, isSystemDefaultPollTitle } from "@/lib/gift-polls/validation";
 import { compressImageFile } from "@/lib/media/image-compression";
-import { closeGiftPollAction, openGiftPollAction, reopenGiftPollAction, saveGiftPollAction, selectGiftPollOptionAction, type GiftPollFormState } from "./actions";
+import { closeGiftPollAction, enableGiftPollAction, openGiftPollAction, reopenGiftPollAction, saveGiftPollAction, selectGiftPollOptionAction, type GiftPollFormState } from "./actions";
+import { useModalFocus } from "./use-modal-focus";
 import styles from "./manage-page.module.css";
 
 type Mode = "gift" | "budget";
@@ -33,6 +36,36 @@ const EyeIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 
 const PencilIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5l-3.5-3.5L4 16.5ZM13.8 6.7l3.5 3.5" /></svg>;
 const ChevronUpIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 14.5 5.5-5.5 5.5 5.5" /></svg>;
 const TrashIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7.5h15M9 4h6M7 7.5l.7 12h8.6l.7-12M10 11v5M14 11v5" /></svg>;
+const SwitchIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="5" /><circle cx="9" cy="12" r="3" /></svg>;
+const ShieldIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8 20 6v5.2c0 5-3.3 8.5-8 10-4.7-1.5-8-5-8-10V6l8-3.2Z" /><path d="M12 8v6M9.8 11.8 12 14l2.2-2.2" /></svg>;
+const HelpIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M9.8 9.4a2.4 2.4 0 1 1 3.4 2.2c-.8.4-1.2.9-1.2 1.8M12 17h.01" /></svg>;
+const CloseIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>;
+const ChevronDownIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 9.5 5.5 5 5.5-5" /></svg>;
+
+const GiftPollHowDialog = ({ onClose }: { onClose: () => void }) => {
+  const dialogRef = useRef<HTMLElement>(null);
+  useModalFocus(dialogRef, onClose);
+
+  return createPortal(
+    <div className={styles.giftPollInfoBackdrop} role="presentation" onPointerDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section ref={dialogRef} className={styles.giftPollInfoDialog} role="dialog" aria-modal="true" aria-labelledby="gift-poll-info-title" tabIndex={-1}>
+        <header className={styles.giftPollInfoHeader}>
+          <div><span>Выбор подарка</span><h2 id="gift-poll-info-title">Как работает голосование</h2></div>
+          <button type="button" onClick={onClose} aria-label="Закрыть информацию"><CloseIcon /></button>
+        </header>
+        <ul className={styles.giftPollInfoList}>
+          <li><span>1</span><p>Голосование появится у участника только после отправки поздравления.</p></li>
+          <li><span>2</span><p>Участник выбирает один вариант подарка или ориентировочного бюджета.</p></li>
+          <li><span>3</span><p>Результаты доступны только организатору открытки.</p></li>
+          <li><span>4</span><p>Получатель не увидит голосование и его результаты в финальной открытке.</p></li>
+          <li><span>5</span><p>До передачи открытки голосование можно изменить, закрыть или снова открыть.</p></li>
+        </ul>
+        <button type="button" className={styles.giftPollInfoDone} onClick={onClose}>Понятно</button>
+      </section>
+    </div>,
+    document.body
+  );
+};
 
 const GiftOptionImporter = ({ manageToken, disabled, onAdd, onManualAdd }: { manageToken: string; disabled: boolean; onAdd: (option: EditableOption) => void; onManualAdd: () => void }) => {
   const [rawInput, setRawInput] = useState("");
@@ -58,7 +91,10 @@ const GiftOptionImporter = ({ manageToken, disabled, onAdd, onManualAdd }: { man
 };
 
 export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, poll, eligibleVoterCount, collectionIsOpen }: { manageToken: string; recipientName: string; publicSlug: string; poll: GiftPollWithOptions | null; eligibleVoterCount: number; collectionIsOpen: boolean }) => {
-  const [enabled, setEnabled] = useState(Boolean(poll));
+  const router = useRouter();
+  const [howDialogOpen, setHowDialogOpen] = useState(false);
+  const [benefitsOpen, setBenefitsOpen] = useState(false);
+  const dialogHistoryActive = useRef(false);
   const [mode, setMode] = useState<Mode>(poll?.mode ?? "gift");
   const [title, setTitle] = useState(poll?.title?.trim() || defaultGiftPollCopy(poll?.mode ?? "gift").title);
   const [question, setQuestion] = useState(poll?.question?.trim() || defaultGiftPollCopy(poll?.mode ?? "gift").question);
@@ -79,7 +115,21 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
   const [options, setOptions] = useState<EditableOption[]>(poll?.options.map((option) => ({
     id: option.id, title: option.title, description: option.description ?? "", imageUrl: option.imageUrl ?? "", priceLabel: option.priceLabel ?? "", productUrl: option.productUrl ?? ""
   })) ?? []);
+  const [enableState, enableAction, enabling] = useActionState(enableGiftPollAction, initialState);
   const [state, formAction, pending] = useActionState(saveGiftPollAction, initialState);
+  const openHowDialog = useCallback(() => {
+    if (howDialogOpen) return;
+    window.history.pushState({ ...window.history.state, giftPollHowDialog: true }, "");
+    dialogHistoryActive.current = true;
+    setHowDialogOpen(true);
+  }, [howDialogOpen]);
+  const closeHowDialog = useCallback(() => {
+    if (dialogHistoryActive.current) {
+      dialogHistoryActive.current = false;
+      window.history.back();
+    }
+    setHowDialogOpen(false);
+  }, []);
   const markForAutoSave = () => setAutoSaveVersion((version) => version + 1);
   const patchOption = (index: number, key: keyof EditableOption, value: string) => { setOptions((current) => current.map((option, itemIndex) => itemIndex === index ? { ...option, [key]: value } : option)); if (mode === "budget") markForAutoSave(); };
   const submitAutoSave = useCallback((optionsSnapshot = options) => {
@@ -191,6 +241,30 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
   };
 
   useEffect(() => {
+    if (enableState.ok && !poll) router.refresh();
+  }, [enableState.ok, poll, router]);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const mobileLayout = window.matchMedia("(max-width: 767px)");
+    const syncDefault = (matches: boolean) => setBenefitsOpen(!matches);
+    syncDefault(mobileLayout.matches);
+    const onChange = (event: MediaQueryListEvent) => syncDefault(event.matches);
+    mobileLayout.addEventListener("change", onChange);
+    return () => mobileLayout.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const onPopState = () => {
+      if (!dialogHistoryActive.current) return;
+      dialogHistoryActive.current = false;
+      setHowDialogOpen(false);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  useEffect(() => {
     if (!autoSaveVersion || pending || lastSubmittedAutoSaveVersion.current === autoSaveVersion) return;
     const timeout = window.setTimeout(() => {
       submitAutoSave();
@@ -233,12 +307,60 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
     }
   }, [pending, pendingPhotoChanges, savingOptionId, state]);
 
-  if (!enabled) {
-    return <section className={styles.giftPollEmptyState}>
-      <div className={styles.giftPollEmptyIcon} aria-hidden="true">✦</div>
-      <div><h2 className={styles.sectionTitle}>Выбор подарка</h2><p>Участники смогут проголосовать за подарок или бюджет после отправки поздравления. Результаты увидите только вы — получатель не увидит голосование в финальной открытке.</p></div>
-      <button type="button" className={styles.giftPollEnableButton} onClick={() => setEnabled(true)}><span aria-hidden="true" />Включить голосование</button>
-    </section>;
+  if (!poll) {
+    return <div className={styles.giftPollOnboarding}>
+      <section className={styles.giftPollEmptyState} aria-labelledby="gift-poll-onboarding-title">
+        <header className={styles.giftPollOnboardingHeader}>
+          <div className={styles.giftPollEmptyIcon} aria-hidden="true">✦</div>
+          <div className={styles.giftPollOnboardingHeading}>
+            <h2 id="gift-poll-onboarding-title">Выбор подарка</h2>
+            <span>Голосование не включено</span>
+          </div>
+        </header>
+        <p className={styles.giftPollOnboardingIntro}>Участники смогут проголосовать за подарок или бюджет после отправки поздравления. Результаты увидите только вы — получатель не увидит голосование в финальной открытке.</p>
+
+        <div className={styles.giftPollOnboardingScenario} aria-label="Как настроить голосование">
+          <article className={styles.giftPollOnboardingStep}>
+            <div className={styles.giftPollStepMeta}><span className={styles.giftPollStepNumber}>1</span><span className={styles.giftPollStepIcon}><SwitchIcon /></span></div>
+            <div className={styles.giftPollStepCopy}><h3>Включите голосование</h3><p>Участники смогут выбрать подарок или бюджет.</p></div>
+          </article>
+          <article className={styles.giftPollOnboardingStep}>
+            <div className={styles.giftPollStepMeta}><span className={styles.giftPollStepNumber}>2</span><span className={styles.giftPollStepIcon}><GiftIcon /></span></div>
+            <div className={styles.giftPollStepCopy}><h3>Добавьте варианты</h3><p>Укажите подарки или ориентировочные суммы.</p></div>
+          </article>
+          <article className={styles.giftPollOnboardingStep}>
+            <div className={styles.giftPollStepMeta}><span className={styles.giftPollStepNumber}>3</span><span className={styles.giftPollStepIcon}><PeopleIcon /></span></div>
+            <div className={styles.giftPollStepCopy}><h3>Участники проголосуют после отправки</h3><p>Каждый выберет один вариант. Результаты увидите только вы.</p></div>
+          </article>
+        </div>
+
+        <div className={styles.giftPollOnboardingActions}>
+          <form action={enableAction} aria-busy={enabling}>
+            <input type="hidden" name="manageToken" value={manageToken} />
+            <button type="submit" className={styles.giftPollEnableButton} disabled={enabling}>
+              {enabling ? <span className={styles.giftPollEnableSpinner} aria-hidden="true" /> : null}
+              {enabling ? "Включаем голосование…" : "Включить голосование"}
+            </button>
+          </form>
+          <button type="button" className={styles.giftPollHowButton} onClick={openHowDialog}><HelpIcon />Как это работает</button>
+        </div>
+        {enableState.message && !enableState.ok ? <p className={styles.giftPollEnableError} role="alert">{enableState.message}</p> : null}
+      </section>
+
+      <section className={`${styles.giftPollBenefitsAccordion} ${benefitsOpen ? styles.giftPollBenefitsAccordionOpen : ""}`}>
+        <button type="button" className={styles.giftPollBenefitsTrigger} aria-label="Что станет доступно" aria-expanded={benefitsOpen} aria-controls="gift-poll-benefits-content" onClick={() => setBenefitsOpen((current) => !current)}>
+          <span className={styles.giftPollBenefitsTriggerCopy}><strong>Что станет доступно</strong><small>Варианты подарка, ориентиры бюджета и приватные результаты.</small></span><ChevronDownIcon />
+        </button>
+        <div id="gift-poll-benefits-content" className={styles.giftPollBenefitsContent} aria-hidden={!benefitsOpen}>
+          <div className={styles.giftPollBenefitList}>
+            <article><span><GiftIcon /></span><div><h3>Варианты подарка</h3><p>Несколько подарков на выбор или вариант «Другое».</p></div></article>
+            <article><span><WalletIcon /></span><div><h3>Ориентир бюджета</h3><p>Несколько сумм для выбора общего ориентира.</p></div></article>
+            <article><span><ShieldIcon /></span><div><h3>Результаты только для вас</h3><p>Голоса не попадут в финальную открытку.</p></div></article>
+          </div>
+        </div>
+      </section>
+      {howDialogOpen ? <GiftPollHowDialog onClose={closeHowDialog} /> : null}
+    </div>;
   }
 
   const isBudget = mode === "budget";
@@ -262,6 +384,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
           <p>Участники голосуют после отправки поздравления.<br />Результаты видите только вы. Получатель не увидит голосование в финальной открытке.</p>
         </div>
       </header>
+      {enableState.ok ? <p className={styles.giftPollActivationNotice} role="status">{enableState.message}</p> : null}
 
       <form id="gift-poll-settings" ref={formRef} action={formAction} className={styles.giftPollManagerForm}>
         <input type="hidden" name="manageToken" value={manageToken} />
