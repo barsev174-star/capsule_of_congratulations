@@ -12,6 +12,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import type { AiUsage } from "@/lib/ai/types";
+import { sendClientTelemetry } from "@/lib/client-telemetry";
 import type { CardBlockReadinessView } from "@/lib/manage/card-design-readiness";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type {
@@ -28,6 +29,7 @@ import {
   updateFinalPresentationSettingsAction
 } from "./actions";
 import { getContentTabHref } from "./content-focus";
+import { ConfirmationDialog } from "./confirmation-dialog";
 import { DesignPhotoSummary } from "./design-photo-summary";
 import { reorderCompositionBlocks, type CompositionDropPosition } from "./composition-order";
 import styles from "./manage-page.module.css";
@@ -41,15 +43,12 @@ type BlockOption = {
 };
 
 type Props = {
+  cardId: string;
   manageToken: string;
   options: BlockOption[];
   initialLayoutMode: FinalCardMessageLayoutMode;
   initialMediaLayout: FinalCardMessageMediaLayout;
   initialBlockOrder: FinalCardBlockId[];
-  initialMessageMediaSlots: FinalCardMediaSlot[];
-  initialMemoryMediaSlots: FinalCardMediaSlot[];
-  initialMessageMediaAssetIds: string[];
-  initialMemoryMediaAssetIds: string[];
   messageAssignedPhotoCount: number;
   memoryAssignedPhotoCount: number;
   initialMemoryPhotoCount: 2 | 3;
@@ -419,27 +418,13 @@ const MediaLayoutDiagram = ({ mode }: { mode: FinalCardMessageMediaLayout }) => 
   );
 };
 
-const normalizeSelectedSlots = (
-  selectedSlots: FinalCardMediaSlot[],
-  allowedSlots: FinalCardMediaSlot[],
-  fallbackCount: number
-) => {
-  const allowed = new Set(allowedSlots);
-  const filtered = selectedSlots.filter((slot) => allowed.has(slot));
-  const fallback = allowedSlots.slice(0, fallbackCount);
-  return [...filtered, ...fallback.filter((slot) => !filtered.includes(slot))].slice(0, fallbackCount);
-};
-
 export const BlockSettingsForm = ({
+  cardId,
   manageToken,
   options,
   initialLayoutMode,
   initialMediaLayout,
   initialBlockOrder,
-  initialMessageMediaSlots,
-  initialMemoryMediaSlots,
-  initialMessageMediaAssetIds,
-  initialMemoryMediaAssetIds,
   messageAssignedPhotoCount,
   memoryAssignedPhotoCount,
   initialMemoryPhotoCount,
@@ -467,15 +452,12 @@ export const BlockSettingsForm = ({
     Object.fromEntries(options.map((option) => [option.id, option.checked]))
   );
   const [blockOrder, setBlockOrder] = useState<FinalCardBlockId[]>(initialBlockOrder);
-  const [messageMediaSlots] = useState<FinalCardMediaSlot[]>(initialMessageMediaSlots);
-  const [memoryMediaSlots] = useState<FinalCardMediaSlot[]>(initialMemoryMediaSlots);
-  const messageMediaAssetIds = initialMessageMediaAssetIds;
-  const memoryMediaAssetIds = initialMemoryMediaAssetIds;
   const memoryPhotoCount = initialMemoryPhotoCount;
   const [memoryTitle, setMemoryTitle] = useState(initialMemoryTitle);
   const [memoryDescription, setMemoryDescription] = useState(initialMemoryDescription);
   const [isMessageLayoutEditing, setIsMessageLayoutEditing] = useState(false);
   const [isMemoryTextEditing, setIsMemoryTextEditing] = useState(false);
+  const [confirmMomentsDisable, setConfirmMomentsDisable] = useState(false);
   const [draggedBlockId, setDraggedBlockId] = useState<FinalCardBlockId | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [expandedBlocks, setExpandedBlocks] = useState<ExpandedState>(initialExpandedState);
@@ -551,10 +533,43 @@ export const BlockSettingsForm = ({
   const handleSettingsAction = async (previousState: typeof initialState, formData: FormData) => {
     const result = await updateFinalPresentationSettingsAction(previousState, formData);
     if (result.ok) {
+      try {
+        const previousComposition = JSON.parse(savedCompositionKey) as { blockState?: Record<string, boolean> };
+        const submittedComposition = submittedCompositionKeyRef.current
+          ? JSON.parse(submittedCompositionKeyRef.current) as { blockState?: Record<string, boolean> }
+          : null;
+        if (previousComposition.blockState?.memories && submittedComposition?.blockState?.memories === false) {
+          sendClientTelemetry("moments_disabled", {
+            cardId,
+            block: "moments",
+            deviceType: window.matchMedia("(max-width: 760px)").matches ? "mobile" : "desktop"
+          });
+        }
+      } catch {
+        // Analytics must never block composition saving.
+      }
       setSavedCompositionKey(submittedCompositionKeyRef.current ?? currentCompositionKey);
       setSaveStatus("saved");
       router.refresh();
     } else {
+      try {
+        const confirmed = JSON.parse(savedCompositionKey) as {
+          blockOrder: FinalCardBlockId[];
+          blockState: Record<string, boolean>;
+          layoutMode: FinalCardMessageLayoutMode;
+          mediaLayout: FinalCardMessageMediaLayout;
+          memoryTitle: string;
+          memoryDescription: string;
+        };
+        setBlockOrder(confirmed.blockOrder);
+        setBlockState(confirmed.blockState);
+        setLayoutMode(confirmed.layoutMode);
+        setMediaLayout(confirmed.mediaLayout);
+        setMemoryTitle(confirmed.memoryTitle);
+        setMemoryDescription(confirmed.memoryDescription);
+      } catch {
+        router.refresh();
+      }
       setSaveStatus("idle");
     }
     submittedCompositionKeyRef.current = null;
@@ -942,6 +957,26 @@ export const BlockSettingsForm = ({
   };
 
   useEffect(() => {
+    if (window.location.hash === "#congratulations-layout") {
+      const frame = window.requestAnimationFrame(() => {
+        setExpandedBlocks((current) =>
+          window.matchMedia("(max-width: 899px)").matches
+            ? { messages: true }
+            : { ...current, messages: true }
+        );
+        setIsMessageLayoutEditing(true);
+        window.requestAnimationFrame(() => {
+          const target = document.getElementById("congratulations-layout");
+          target?.scrollIntoView({
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+            block: "center"
+          });
+          target?.focus({ preventScroll: true });
+        });
+      });
+      return () => window.cancelAnimationFrame(frame);
+    }
+
     const blockId = window.location.hash.replace("#block-", "") as FinalCardBlockId;
     if (!allFinalCardBlockIds.includes(blockId)) return;
 
@@ -970,7 +1005,16 @@ export const BlockSettingsForm = ({
     }));
   };
 
+  const requestBlockToggle = (blockId: FinalCardBlockId, nextValue: boolean) => {
+    if (blockId === "memories" && !nextValue && memoryAssignedPhotoCount > 0) {
+      setConfirmMomentsDisable(true);
+      return;
+    }
+    toggleBlock(blockId, nextValue);
+  };
+
   return (
+    <>
     <form ref={formRef} action={formAction} className={styles.studioForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
       <input type="hidden" name="layoutMode" value={layoutMode} />
@@ -979,22 +1023,6 @@ export const BlockSettingsForm = ({
       <input type="hidden" name="memoryDescription" value={memoryDescription} />
       <input type="hidden" name="memoryPhotoCount" value={memoryPhotoCount} />
       <input type="hidden" name="mainGreetingContributionId" value={initialMainGreetingContributionId ?? ""} />
-
-      {normalizeSelectedSlots(messageMediaSlots, activeMessageMediaSlots, activeMessageMediaSlots.length).map((slot, index) => (
-        <input key={`message-media-${slot}-${index}`} type="hidden" name="messageMediaSlots" value={slot} />
-      ))}
-
-      {messageMediaAssetIds.map((assetId, index) => (
-        <input key={`message-media-asset-${assetId}-${index}`} type="hidden" name="messageMediaAssetIds" value={assetId} />
-      ))}
-
-      {normalizeSelectedSlots(memoryMediaSlots, ["memory-a", "memory-b", "memory-c"], memoryPhotoCount).map((slot, index) => (
-        <input key={`memory-media-${slot}-${index}`} type="hidden" name="memoryMediaSlots" value={slot} />
-      ))}
-
-      {memoryMediaAssetIds.map((assetId, index) => (
-        <input key={`memory-media-asset-${assetId}-${index}`} type="hidden" name="memoryMediaAssetIds" value={assetId} />
-      ))}
 
       {blockOrder.map((blockId) => (
         <input key={blockId} type="hidden" name="blockOrder" value={blockId} />
@@ -1162,7 +1190,7 @@ export const BlockSettingsForm = ({
                       <button
                         type="button"
                         className={`${styles.modernToggle} ${isEnabled ? styles.modernToggleActive : ""}`}
-                        onClick={() => toggleBlock(block.id, !isEnabled)}
+                        onClick={() => requestBlockToggle(block.id, !isEnabled)}
                         aria-pressed={isEnabled}
                         aria-label={isEnabled ? `Отключить блок ${block.label}` : `Включить блок ${block.label}`}
                       >
@@ -1190,7 +1218,7 @@ export const BlockSettingsForm = ({
 
                     {block.id === "summary" ? (
                       <div className={styles.messageSettings}>
-                        <div className={styles.messageSettingsGroup}>
+                        <div id="congratulations-layout" tabIndex={-1} className={styles.messageSettingsGroup}>
                           <h4 className={styles.messageSettingsTitle}>Текущий выбор</h4>
                           {selectedMainGreeting ? (
                             <div className={styles.compactMainGreeting}>
@@ -1413,6 +1441,9 @@ export const BlockSettingsForm = ({
                                     })}
                                 </div>
                               )}
+                              <p className={styles.mediaLayoutPersistenceNote}>
+                                Фотографии других вариантов сохранятся и вернутся, если вы снова выберете этот вариант.
+                              </p>
                             </div>
                           )}
                         </div>
@@ -1514,5 +1545,24 @@ export const BlockSettingsForm = ({
             : null}
       </div>
     </form>
+    {confirmMomentsDisable ? (
+      <ConfirmationDialog
+        title="Отключить блок «Моменты»?"
+        description="Фотографии сохранятся и вернутся, если вы снова включите блок."
+        onDismiss={() => setConfirmMomentsDisable(false)}
+        actions={[
+          { label: "Отмена", tone: "secondary", onClick: () => setConfirmMomentsDisable(false) },
+          {
+            label: "Отключить блок",
+            tone: "danger",
+            onClick: () => {
+              setConfirmMomentsDisable(false);
+              toggleBlock("memories", false);
+            }
+          }
+        ]}
+      />
+    ) : null}
+    </>
   );
 };

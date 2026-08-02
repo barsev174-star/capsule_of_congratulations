@@ -1,722 +1,1156 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition, type PointerEvent as ReactPointerEvent } from "react";
+import { createPortal } from "react-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
-import { CARD_MEDIA_MAX_COUNT } from "@/lib/cards/media";
+import {
+  canStartPhotoPointerDrag,
+  getActivePhotoSlots,
+  getCropStyle,
+  getSlotBlock,
+  getSlotLabel,
+  getSlotOrientation,
+  getSlotPosition,
+  moveAssetsBetweenSlots,
+  moveCropByPointer,
+  normalizeCrop
+} from "@/lib/cards/media-slots";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
+import { sendClientTelemetry } from "@/lib/client-telemetry";
 import { compressImageFile } from "@/lib/media/image-compression";
-import { deleteCardMediaAction, saveCardMediaAction } from "./actions";
+import { deleteCardMediaAction, saveCardMediaAction, updateCardMomentsEnabledAction } from "./actions";
+import { ConfirmationDialog } from "./confirmation-dialog";
+import { useModalFocus } from "./use-modal-focus";
 import styles from "./manage-page.module.css";
 
 type Props = {
+  cardId: string;
   manageToken: string;
   mediaAssets: CardMediaAsset[];
   mediaLayout: FinalCardMessageMediaLayout;
-  messageAssignedCount?: number;
-  messageRequiredCount?: number;
-  memoryAssignedCount?: number;
-  memoryRequiredCount?: number;
+  messagePhotosEnabled: boolean;
+  initialMomentsEnabled: boolean;
 };
 
-type MediaFilter = "all" | "horizontal" | "vertical";
-
-const initialState = {
-  ok: false,
-  message: ""
-};
-
-const messageSlotMap: Record<FinalCardMessageMediaLayout, CardMediaSlot[]> = {
-  portrait: ["portrait"],
-  "landscape-pair": ["landscape-a", "landscape-b"],
-  "landscape-trio": ["landscape-a", "landscape-b", "landscape-c"]
-};
-
-const verticalSlots: CardMediaSlot[] = ["portrait"];
-const memorySlots: CardMediaSlot[] = ["memory-a", "memory-b", "memory-c"];
-const messageLandscapeSlots: CardMediaSlot[] = ["landscape-a", "landscape-b", "landscape-c"];
-const horizontalSlots: CardMediaSlot[] = [...messageLandscapeSlots, ...memorySlots];
-const allSlots: CardMediaSlot[] = [...messageLandscapeSlots, ...memorySlots, ...verticalSlots];
-
-const slotBaseLabels: Record<CardMediaSlot, string> = {
-  portrait: "Вертикальное фото",
-  "landscape-a": "Поздравления (1)",
-  "landscape-b": "Поздравления (2)",
-  "landscape-c": "Поздравления (3)",
-  "memory-a": "Моменты (1)",
-  "memory-b": "Моменты (2)",
-  "memory-c": "Моменты (3)"
-};
-
-const groupAssets = (assets: CardMediaAsset[], slots: CardMediaSlot[]) =>
-  slots.map((slot) => assets.find((asset) => asset.slot === slot)).filter((asset): asset is CardMediaAsset => Boolean(asset));
-
-const getFirstAvailableSlot = (assets: CardMediaAsset[], slots: CardMediaSlot[]) =>
-  slots.find((slot) => !assets.some((asset) => asset.slot === slot));
-
-const getSlotTypeLabel = (slot: CardMediaSlot) => (verticalSlots.includes(slot) ? "Вертикальное" : "Горизонтальное");
-
-const formatFileSize = (sizeBytes: number) => `${(sizeBytes / 1024 / 1024).toFixed(1).replace(".", ",")} МБ`;
-
-const getFileNameParts = (fileName: string) => {
-  const lastDotIndex = fileName.lastIndexOf(".");
-  if (lastDotIndex <= 0 || lastDotIndex === fileName.length - 1) return { base: fileName, extension: "" };
-  return { base: fileName.slice(0, lastDotIndex), extension: fileName.slice(lastDotIndex) };
-};
-
-type SlotOption = {
+type EditorMode = "add" | "edit" | "replace" | "move";
+type EditorState = {
+  mode: EditorMode;
   slot: CardMediaSlot;
-  isOccupied: boolean;
+  asset?: CardMediaAsset;
+  file?: File;
+  previewUrl: string;
+  imageWidth: number | null;
+  imageHeight: number | null;
+  sourceSlot?: CardMediaSlot;
+  targetWasOccupied?: boolean;
 };
 
-const SlotDropdown = ({
-  options,
-  value,
-  assets,
-  hideOccupied = false,
-  onChange,
-  name,
-  label = "Использовать в блоке"
+type PhotoMoveUndo = {
+  assetBefore: CardMediaAsset;
+  targetSlot: CardMediaSlot;
+};
+
+type PhotoPointerDrag = {
+  pointerId: number;
+  asset: CardMediaAsset;
+  sourceSlot: CardMediaSlot;
+  targetSlot: CardMediaSlot | null;
+  offsetX: number;
+  offsetY: number;
+  startX: number;
+  startY: number;
+  activated: boolean;
+};
+
+const getLayoutLabel = (layout: FinalCardMessageMediaLayout) => {
+  if (layout === "portrait") return "1 вертикальное фото";
+  if (layout === "landscape-pair") return "2 горизонтальных фото";
+  return "3 горизонтальных фото";
+};
+
+const getDeviceType = () => typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches ? "mobile" : "desktop";
+
+const formatFileSize = (size: number) => `${(size / 1024 / 1024).toFixed(1).replace(".", ",")} МБ`;
+
+const replaceOrAddPhoto = (assets: CardMediaAsset[], next: CardMediaAsset) => [
+  ...assets.filter((asset) => asset.id !== next.id && asset.slot !== next.slot),
+  next
+];
+
+const PhotoPreview = ({ asset, alt }: { asset: CardMediaAsset; alt: string }) => (
+  // eslint-disable-next-line @next/next/no-img-element
+  <img
+    src={asset.publicUrl}
+    alt={alt}
+    draggable={false}
+    onDragStart={(event) => event.preventDefault()}
+    style={getCropStyle(asset)}
+  />
+);
+
+const PhotoSlotCard = ({
+  slot,
+  asset,
+  onAdd,
+  onEdit,
+  onReplace,
+  onMove,
+  onDelete,
+  onPointerDragStart,
+  isDragging,
+  isDisplacedTarget,
+  isDropTarget,
+  isRecentlyUpdated
 }: {
-  options: SlotOption[];
-  value: CardMediaSlot;
-  assets: CardMediaAsset[];
-  hideOccupied?: boolean;
-  onChange?: (slot: CardMediaSlot) => void;
-  name?: string;
-  label?: string;
+  slot: CardMediaSlot;
+  asset?: CardMediaAsset;
+  onAdd: (slot: CardMediaSlot) => void;
+  onEdit: (asset: CardMediaAsset) => void;
+  onReplace: (asset: CardMediaAsset) => void;
+  onMove: (asset: CardMediaAsset) => void;
+  onDelete: (asset: CardMediaAsset) => void;
+  onPointerDragStart: (event: ReactPointerEvent<HTMLButtonElement>, asset: CardMediaAsset, slot: CardMediaSlot) => void;
+  isDragging: boolean;
+  isDisplacedTarget: boolean;
+  isDropTarget: boolean;
+  isRecentlyUpdated: boolean;
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const isSelectedOccupied = assets.some((asset) => asset.slot === value);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+    if (!menuOpen) return;
+
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (event.target instanceof Node && !menuRef.current?.contains(event.target)) {
+        setMenuOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen]);
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
 
-  const handleSelect = (slot: CardMediaSlot) => {
-    setIsOpen(false);
-    if (slot !== value) {
-      onChange?.(slot);
-    }
-  };
+    document.addEventListener("pointerdown", closeOnOutsidePointer, true);
+    document.addEventListener("keydown", closeOnEscape, true);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer, true);
+      document.removeEventListener("keydown", closeOnEscape, true);
+    };
+  }, [menuOpen]);
 
-  const getOptionLabel = (slot: CardMediaSlot, isOccupied: boolean) =>
-    isOccupied ? `${slotBaseLabels[slot]} — поменять местами` : slotBaseLabels[slot];
+  if (!asset) {
+    return (
+      <button
+        type="button"
+        data-photo-slot={slot}
+        className={`${styles.photoSlotCard} ${styles.photoSlotEmpty} ${getSlotOrientation(slot) === "vertical" ? styles.photoSlotVertical : ""} ${isDropTarget ? styles.photoSlotDropTarget : ""} ${isRecentlyUpdated ? styles.photoSlotRecentlyUpdated : ""}`}
+        onClick={() => onAdd(slot)}
+        aria-label={`Добавить фото, позиция ${getSlotPosition(slot)}`}
+      >
+        <span className={styles.photoSlotPlus} aria-hidden="true">+</span>
+        <span className={styles.photoEmptyCopy}>
+          <strong>Добавить фото</strong>
+          <span>Позиция {getSlotPosition(slot)}</span>
+          <small>{getSlotOrientation(slot) === "vertical" ? "Вертикальное фото" : "Горизонтальное фото"}</small>
+        </span>
+      </button>
+    );
+  }
 
   return (
-    <div ref={wrapperRef} className={`${styles.mediaLibrarySlotSelect} ${isOpen ? styles.mediaLibrarySlotSelectOpen : ""}`}>
-      <span>{label}</span>
-      <input type="hidden" name={name} value={value} />
-      <div className={styles.mediaLibrarySlotTriggerWrap}>
+    <article
+      data-photo-slot={slot}
+      className={`${styles.photoSlotCard} ${styles.photoSlotFilled} ${menuOpen ? styles.photoSlotMenuOpen : ""} ${getSlotOrientation(slot) === "vertical" ? styles.photoSlotVertical : ""} ${isDragging ? styles.photoSlotPointerDragging : ""} ${isDisplacedTarget ? styles.photoSlotDisplacedTarget : ""} ${isDropTarget ? styles.photoSlotDropTarget : ""} ${isRecentlyUpdated ? styles.photoSlotRecentlyUpdated : ""}`}
+      aria-label={getSlotLabel(slot)}
+    >
+      <button
+        type="button"
+        className={styles.photoSlotImageButton}
+        aria-label={`${getSlotLabel(slot)}. ${asset.captionTitle || "Без подписи"}. Настроить фото.`}
+        onPointerDown={(event) => onPointerDragStart(event, asset, slot)}
+        onDragStart={(event) => event.preventDefault()}
+        onClick={() => onEdit(asset)}
+      >
+        <span className={styles.photoSlotImageFrame}>
+          <PhotoPreview asset={asset} alt={asset.captionTitle || `Фото, позиция ${getSlotPosition(slot)}`} />
+        </span>
+        <span className={styles.photoSlotPosition}>Позиция {getSlotPosition(slot)}</span>
+        <span className={styles.photoSlotText}>
+          <span className={styles.photoSlotCaption}>{asset.captionTitle || "Без подписи"}</span>
+          {getSlotOrientation(slot) === "vertical" ? <small>Вертикальное фото</small> : null}
+        </span>
+      </button>
+      <div ref={menuRef} className={styles.photoSlotMenuWrap}>
         <button
           type="button"
-          className={`${styles.mediaLibrarySlotTrigger} ${isOpen ? styles.mediaLibrarySlotTriggerOpen : ""}`}
-          onClick={() => setIsOpen((current) => !current)}
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
+          className={styles.photoSlotMenuButton}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => { event.stopPropagation(); setMenuOpen((value) => !value); }}
+          aria-label={`Действия с фото, ${getSlotLabel(slot)}`}
+          aria-expanded={menuOpen}
         >
-          <span>{slotBaseLabels[value]}</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="m6 9 6 6 6-6" />
-          </svg>
+          ⋮
         </button>
-        {isOpen ? (
-          <ul className={styles.mediaLibrarySlotDropdown} role="listbox">
-            {options
-              .filter((option) => !(option.isOccupied && hideOccupied))
-              .map((option) => (
-                <li key={option.slot} role="option" aria-selected={option.slot === value}>
-                  <button
-                    type="button"
-                    className={`${styles.mediaLibrarySlotOption} ${option.slot === value ? styles.mediaLibrarySlotOptionSelected : ""}`}
-                    onClick={() => handleSelect(option.slot)}
-                  >
-                    <span className={styles.mediaLibrarySlotOptionLabel}>{getOptionLabel(option.slot, option.isOccupied)}</span>
-                  </button>
-                </li>
-              ))}
-          </ul>
-        ) : null}
-      </div>
-      {isSelectedOccupied && !isOpen ? (
-        <small className={styles.mediaLibrarySlotSwapHint}>Фото поменяются местами</small>
-      ) : null}
-    </div>
-  );
-};
-
-const MediaAssetRow = ({
-  asset,
-  manageToken,
-  availableSlots,
-  assets,
-  onDeleted
-}: {
-  asset: CardMediaAsset;
-  manageToken: string;
-  availableSlots: CardMediaSlot[];
-  assets: CardMediaAsset[];
-  onDeleted?: () => void;
-}) => {
-  const [deleteState, deleteAction, deletePending] = useActionState(deleteCardMediaAction, initialState);
-  const [, startDeleteTransition] = useTransition();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [caption, setCaption] = useState(asset.captionTitle);
-  const [slot, setSlot] = useState(asset.slot);
-  const [isDirty, setIsDirty] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
-  const formRef = useRef<HTMLFormElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const menuTriggerRef = useRef<HTMLButtonElement>(null);
-  const submittedMediaKeyRef = useRef<string | null>(null);
-  const mediaAutoSaveReadyRef = useRef(false);
-  const saveFormId = `media-save-${asset.id}`;
-  const currentMediaKey = `${caption}:${slot}`;
-  const handleSaveAction = async (previousState: typeof initialState, formData: FormData) => {
-    const result = await saveCardMediaAction(previousState, formData);
-    if (result.ok) {
-      setSaveStatus("saved");
-      setIsDirty(false);
-    } else {
-      setSaveStatus("idle");
-    }
-    submittedMediaKeyRef.current = null;
-    return result;
-  };
-  const [saveState, saveAction, savePending] = useActionState(handleSaveAction, initialState);
-
-  useEffect(() => {
-    if (!mediaAutoSaveReadyRef.current) {
-      mediaAutoSaveReadyRef.current = true;
-      return;
-    }
-    if (!isDirty || !formRef.current || savePending) return;
-    if (submittedMediaKeyRef.current === currentMediaKey) return;
-
-    const timeoutId = window.setTimeout(() => {
-      if (!formRef.current || submittedMediaKeyRef.current === currentMediaKey) return;
-      submittedMediaKeyRef.current = currentMediaKey;
-      setSaveStatus("saving");
-      formRef.current.requestSubmit();
-    }, 600);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [currentMediaKey, isDirty, savePending]);
-
-  useEffect(() => {
-    if (!isMenuOpen) return;
-
-    const closeMenuOnOutsidePress = (event: PointerEvent) => {
-      if (event.target instanceof Node && !menuRef.current?.contains(event.target)) {
-        setIsMenuOpen(false);
-      }
-    };
-    const closeMenuOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsMenuOpen(false);
-        menuTriggerRef.current?.focus();
-      }
-    };
-
-    document.addEventListener("pointerdown", closeMenuOnOutsidePress);
-    document.addEventListener("keydown", closeMenuOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeMenuOnOutsidePress);
-      document.removeEventListener("keydown", closeMenuOnEscape);
-    };
-  }, [isMenuOpen]);
-
-  useEffect(() => {
-    if (deleteState.ok) onDeleted?.();
-  }, [deleteState.ok, onDeleted]);
-
-  const handleCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCaption(e.target.value);
-    setIsDirty(true);
-  };
-
-  const handleSlotChange = (nextSlot: CardMediaSlot) => {
-    setSlot(nextSlot);
-    setIsDirty(true);
-  };
-
-  const handleDelete = () => {
-    const formData = new FormData();
-    formData.set("manageToken", manageToken);
-    formData.set("assetId", asset.id);
-    setIsMenuOpen(false);
-    startDeleteTransition(() => deleteAction(formData));
-  };
-
-  return (
-    <article id={`media-asset-${asset.id}`} tabIndex={-1} className={styles.mediaLibraryItem}>
-      <div className={`${styles.mediaLibraryThumb} ${verticalSlots.includes(asset.slot) ? styles.mediaLibraryThumbVertical : ""}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={asset.publicUrl} alt={caption || asset.captionSubtitle || slotBaseLabels[asset.slot]} />
-      </div>
-
-      <div className={styles.mediaLibraryItemBody}>
-        <form ref={formRef} id={saveFormId} action={saveAction} className={styles.mediaLibraryInlineForm}>
-          <input type="hidden" name="manageToken" value={manageToken} />
-          <input type="hidden" name="assetId" value={asset.id} />
-          <input type="hidden" name="captionSubtitle" value="" />
-          <div className={styles.mediaLibraryItemFields}>
-            <label className={styles.mediaLibraryCaptionField}>
-              <span>Подпись</span>
-              <input
-                name="captionTitle"
-                value={caption}
-                onChange={handleCaptionChange}
-                className={styles.contentPhotoInput}
-                placeholder="Например, Закат на море"
-                maxLength={45}
-              />
-              <span className={styles.mediaLibraryCaptionHint}>
-                <span>Для полароида лучше до двух строк</span>
-                <strong>{caption.length} / 45</strong>
-              </span>
-            </label>
-            <div className={styles.mediaLibrarySlotField}>
-            <SlotDropdown
-              options={availableSlots.map((slotItem) => {
-                const usedAsset = assets.find((item) => item.slot === slotItem);
-                return { slot: slotItem, isOccupied: Boolean(usedAsset) };
-              })}
-              value={slot}
-              assets={assets.filter((item) => item.id !== asset.id)}
-              onChange={handleSlotChange}
-              name="slot"
-              label="Разместить в блоке"
-            />
-              <span className={styles.mediaLibraryTypeBadge}>{getSlotTypeLabel(slot)}</span>
-            </div>
-            <div ref={menuRef} className={styles.mediaLibraryMenuWrap}>
-              <button
-                ref={menuTriggerRef}
-                type="button"
-                className={styles.contentIconButton}
-                onClick={() => setIsMenuOpen((current) => !current)}
-                aria-expanded={isMenuOpen}
-                aria-controls={`media-menu-${asset.id}`}
-                aria-label="Действия с фото"
-              >
-                ⋮
-              </button>
-              {isMenuOpen ? (
-                <div id={`media-menu-${asset.id}`} className={styles.mediaLibraryMenu}>
-                  <button type="button" className={styles.mediaLibraryMenuItem} onClick={handleDelete} disabled={deletePending}>
-                    {deletePending ? "Удаляем..." : "Удалить фото"}
-                  </button>
-                </div>
-              ) : null}
-            </div>
+        {menuOpen ? (
+          <div className={styles.photoSlotMenu} role="menu">
+            <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onEdit(asset); }}>Настроить фото</button>
+            <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onReplace(asset); }}>Заменить изображение</button>
+            <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onMove(asset); }}>Переместить в другой слот</button>
+            <button type="button" role="menuitem" className={styles.photoSlotMenuDanger} onClick={() => { setMenuOpen(false); onDelete(asset); }}>Удалить фото</button>
           </div>
-          {saveState.message ? (
-            <span className={saveState.ok ? styles.contentEditorSuccess : styles.contentEditorError}>{saveState.message}</span>
-          ) : null}
-          <span className={styles.mediaAutoSaveStatus}>
-            {savePending || saveStatus === "saving"
-              ? "Сохраняем..."
-              : saveStatus === "saved"
-                ? "Изменения сохранены"
-                : null}
-          </span>
-        </form>
-        {deleteState.message ? (
-          <span className={deleteState.ok ? styles.contentEditorSuccess : styles.contentEditorError}>{deleteState.message}</span>
         ) : null}
       </div>
     </article>
   );
 };
 
-const MediaUploadForm = ({
-  manageToken,
-  defaultSlot,
-  onSuccess
-}: {
-  manageToken: string;
-  defaultSlot?: CardMediaSlot;
-  onSuccess: () => void;
+const MoveDialog = ({ asset, assets, availableSlots, onClose, onSelect }: {
+  asset: CardMediaAsset;
+  assets: CardMediaAsset[];
+  availableSlots: CardMediaSlot[];
+  onClose: () => void;
+  onSelect: (slot: CardMediaSlot) => void;
 }) => {
-  const [saveState, saveAction, savePending] = useActionState(saveCardMediaAction, initialState);
-  const [, startTransition] = useTransition();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const successHandledRef = useRef(false);
-  const previewUrlRef = useRef<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [rightsConfirmed, setRightsConfirmed] = useState(false);
-  const [caption, setCaption] = useState("");
+  const dialogRef = useRef<HTMLElement>(null);
+  useModalFocus(dialogRef, onClose);
 
-  useEffect(() => {
-    return () => {
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!saveState.ok || successHandledRef.current) return;
-    successHandledRef.current = true;
-    onSuccess();
-  }, [onSuccess, saveState.ok]);
-
-  if (!defaultSlot) {
-    return <p className={styles.mediaLibraryFull}>Все доступные места заполнены. Можно заменить или удалить фото ниже.</p>;
-  }
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-    const nextPreviewUrl = file ? URL.createObjectURL(file) : null;
-    previewUrlRef.current = nextPreviewUrl;
-    setPreviewUrl(nextPreviewUrl);
-    setSelectedFile(file ?? null);
-  };
-
-  const handleRemoveFile = () => {
-    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-    previewUrlRef.current = null;
-    setPreviewUrl(null);
-    setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const file = formData.get("file");
-
-    if (file instanceof File && file.size > 0) {
-      try {
-        const compressed = await compressImageFile(file);
-        formData.set("file", compressed);
-      } catch {
-        // Leave original file if compression fails.
-      }
-    }
-
-    startTransition(() => {
-      saveAction(formData);
-    });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className={styles.mediaLibraryUploadForm}>
-      <input type="hidden" name="manageToken" value={manageToken} />
-      <input type="hidden" name="assetId" value="" />
-      <input type="hidden" name="captionSubtitle" value="" />
-      <p className={styles.mediaLibraryUploadTarget}>
-        Фото будет добавлено в блок «Поздравления». Место можно изменить после загрузки.
-      </p>
-      <div className={styles.mediaLibraryFilePicker}>
-        <input
-          ref={fileInputRef}
-          id="media-upload-file"
-          name="file"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className={styles.mediaLibraryUploadFileInput}
-          onChange={handleFileChange}
-        />
-        {!selectedFile ? <label htmlFor="media-upload-file" className={styles.mediaLibraryUploadFileButton}>Выбрать фото</label> : null}
-        <span className={styles.mediaLibraryUploadFileHelp}>JPG, PNG или WebP · до 6 МБ</span>
+  return createPortal(
+  <div className={styles.photoDialogBackdrop} role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+    <section ref={dialogRef} className={styles.photoMoveDialog} role="dialog" aria-modal="true" aria-labelledby="photo-move-title" tabIndex={-1}>
+      <div className={styles.photoDialogHeader}>
+        <div>
+          <h2 id="photo-move-title">Переместить фото</h2>
+        </div>
+        <button type="button" onClick={onClose} aria-label="Закрыть">×</button>
       </div>
-      {selectedFile ? (
-        <div className={styles.mediaLibraryUploadContent}>
-          <div className={styles.mediaLibrarySelectedFile}>
-            {previewUrl ? (
-              <div className={styles.mediaLibraryUploadPreview}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={previewUrl} alt="Предварительный просмотр выбранного фото" />
-              </div>
-            ) : null}
-            <p className={styles.mediaLibraryUploadFileStatus} title={selectedFile.name}>
-              <span className={styles.mediaLibraryFileName} title={selectedFile.name}><span>{getFileNameParts(selectedFile.name).base}</span><b>{getFileNameParts(selectedFile.name).extension}</b></span> · {formatFileSize(selectedFile.size)}
-            </p>
-            <div className={styles.mediaLibraryFileActions}>
-              <label htmlFor="media-upload-file" className={styles.mediaLibraryUploadFileButton}>Заменить</label>
-              <button type="button" className={styles.mediaLibraryRemoveFileButton} onClick={handleRemoveFile}>Удалить</button>
+      <div className={styles.photoMoveBody}>
+        <div className={styles.photoMoveAssetSummary}>
+          <span className={styles.photoMoveAssetThumb}><PhotoPreview asset={asset} alt="" /></span>
+          <span>
+            <small>Перемещаемое фото</small>
+            <strong>{getSlotLabel(asset.slot)}</strong>
+            <span>{asset.captionTitle || "Без подписи"}</span>
+          </span>
+        </div>
+        <p className={styles.photoMoveDescription}>Выберите новое место. Если оно занято, фотографии поменяются местами.</p>
+        {(["greetings", "moments"] as const).map((block) => (
+          <div key={block} className={styles.photoMoveGroup}>
+            <h3>{block === "greetings" ? "Поздравления" : "Моменты"}</h3>
+            <div className={styles.photoMoveGrid}>
+              {availableSlots.filter((slot) => getSlotBlock(slot) === block).map((slot) => {
+                const occupied = assets.find((item) => item.slot === slot);
+                const needsCrop = getSlotOrientation(slot) !== getSlotOrientation(asset.slot);
+                const stateLabel = slot === asset.slot
+                  ? "Текущее место"
+                  : needsCrop
+                    ? "Переместить и настроить"
+                    : occupied
+                      ? "Поменять местами"
+                      : "Переместить сюда";
+                return (
+                  <button
+                    type="button"
+                    key={slot}
+                    className={slot === asset.slot ? styles.photoMoveTargetActive : ""}
+                    disabled={slot === asset.slot}
+                    onClick={() => onSelect(slot)}
+                    aria-label={`${getSlotLabel(slot)}. ${stateLabel}`}
+                  >
+                    <span className={styles.photoMoveThumb}>
+                      {occupied ? <PhotoPreview asset={occupied} alt="" /> : <span aria-hidden="true">+</span>}
+                    </span>
+                    <span className={styles.photoMoveCopy}>
+                      <span>{block === "greetings" ? "Поздравления" : "Моменты"}</span>
+                      <strong>Позиция {getSlotPosition(slot)}</strong>
+                      <small>{occupied?.captionTitle || "Без подписи"}</small>
+                    </span>
+                    <em>{stateLabel}</em>
+                  </button>
+                );
+              })}
             </div>
           </div>
-          <div className={styles.mediaLibraryUploadFields}>
-            <label className={styles.mediaLibraryUploadCaptionLabel}>
-              <span>Подпись</span>
-              <textarea name="captionTitle" value={caption} onChange={(event) => setCaption(event.target.value)} aria-describedby="media-upload-caption-counter" className={`${styles.contentPhotoInput} ${styles.mediaLibraryCaptionTextarea}`} placeholder="Например, Закат на море" rows={2} />
-              <small>Подпись необязательна</small>
-              <span id="media-upload-caption-counter" className={`${styles.mediaLibraryCaptionCounter} ${caption.length >= 40 ? styles.mediaLibraryCaptionCounterNearLimit : ""} ${caption.length > 45 ? styles.mediaLibraryCaptionCounterError : ""}`}>{caption.length} / 45</span>
-            </label>
-            {caption.length > 45 ? <span className={styles.contentEditorError}>Подпись длиннее 45 символов.</span> : null}
-            <label className={styles.mediaRightsConsent}><input name="rightsConfirmed" type="checkbox" required checked={rightsConfirmed} onChange={(event) => setRightsConfirmed(event.target.checked)} /> <span>Подтверждаю, что имею право использовать загружаемые материалы и при необходимости получил согласие изображённых лиц.</span></label>
-            <button type="submit" className={`${styles.contentPrimaryButton} ${styles.mediaLibraryUploadSubmit}`} disabled={!rightsConfirmed || caption.length > 45 || savePending}>
-              {savePending ? "Добавляем фото…" : "Добавить фото"}
-            </button>
-          </div>
-        </div>
-      ) : null}
-      {saveState.message ? (
-        <span className={saveState.ok ? styles.contentEditorSuccess : styles.contentEditorError}>{saveState.message}</span>
-      ) : null}
-    </form>
-  );
-};
-
-const MediaLibraryGroup = ({
-  title,
-  hint,
-  manageToken,
-  assets,
-  slots,
-  requiredCount
-}: {
-  title: string;
-  hint: string;
-  manageToken: string;
-  assets: CardMediaAsset[];
-  slots: CardMediaSlot[];
-  requiredCount: number;
-}) => {
-  const [saveState, saveAction, savePending] = useActionState(saveCardMediaAction, initialState);
-  const [, startTransition] = useTransition();
-  const addedAssets = groupAssets(assets, slots);
-  const defaultUploadSlot = getFirstAvailableSlot(assets, slots);
-  const missingCount = Math.max(requiredCount - addedAssets.length, 0);
-  const counterText =
-    requiredCount > 0
-      ? `${missingCount > 0 ? "Нужно" : "Готово"} ${Math.min(addedAssets.length, requiredCount)} из ${requiredCount}`
-      : addedAssets.length > 0
-        ? `${addedAssets.length} добавлено`
-        : "Не требуется сейчас";
-
-  return (
-    <section
-      className={`${styles.contentPhotoCard} ${requiredCount === 0 ? styles.contentPhotoCardOptional : ""} ${
-        requiredCount > 0 && missingCount === 0 ? styles.contentPhotoCardComplete : ""
-      }`}
-    >
-      <div className={styles.mediaLibraryHeader}>
-        <div>
-          <h2 className={styles.contentRailTitle}>{title}</h2>
-          <p className={styles.contentPhotoHint}>{hint}</p>
-        </div>
-        <span
-          className={`${styles.mediaLibraryCounter} ${missingCount > 0 ? styles.mediaLibraryCounterWarning : ""} ${
-            requiredCount === 0 ? styles.mediaLibraryCounterOptional : ""
-          }`}
-        >
-          {counterText}
-        </span>
+        ))}
       </div>
-
-      {defaultUploadSlot ? (
-        <form
-          onSubmit={async (event) => {
-            event.preventDefault();
-            const formData = new FormData(event.currentTarget);
-            const file = formData.get("file");
-
-            if (file instanceof File && file.size > 0) {
-              try {
-                const compressed = await compressImageFile(file);
-                formData.set("file", compressed);
-              } catch {
-                // Leave original file if compression fails.
-              }
-            }
-
-            startTransition(() => {
-              saveAction(formData);
-            });
-          }}
-          className={styles.mediaLibraryUploadForm}
-        >
-          <input type="hidden" name="manageToken" value={manageToken} />
-          <input type="hidden" name="assetId" value="" />
-          <SlotDropdown
-            options={slots.map((slotItem) => {
-              const usedAsset = assets.find((item) => item.slot === slotItem);
-              return { slot: slotItem, isOccupied: Boolean(usedAsset) };
-            })}
-            value={defaultUploadSlot}
-            assets={assets}
-            hideOccupied
-            name="slot"
-          />
-          <input name="captionTitle" className={styles.contentPhotoInput} placeholder="Название фото" maxLength={45} />
-          <input name="captionSubtitle" className={styles.contentPhotoInput} placeholder="Короткое описание" maxLength={45} />
-          <div className={styles.mediaLibraryActions}>
-            <input
-              name="file"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className={styles.contentPhotoFileInput}
-            />
-            <button type="submit" className={styles.contentOutlineButton} disabled={savePending}>
-              {savePending ? "Загружаем..." : "Добавить фото"}
-            </button>
-          </div>
-          <label className={styles.mediaRightsConsent}><input name="rightsConfirmed" type="checkbox" required /> <span>Подтверждаю право использовать загружаемые материалы и наличие необходимых согласий.</span></label>
-          {saveState.message ? (
-            <span className={saveState.ok ? styles.contentEditorSuccess : styles.contentEditorError}>{saveState.message}</span>
-          ) : null}
-        </form>
-      ) : (
-        <p className={styles.mediaLibraryFull}>Все доступные места заполнены. Можно заменить любое фото ниже.</p>
-      )}
-
-      {addedAssets.length > 0 ? (
-        <div className={styles.mediaLibraryList}>
-          {addedAssets.map((asset) => (
-            <MediaAssetRow key={`${asset.id}-${asset.slot}`} asset={asset} manageToken={manageToken} availableSlots={allSlots} assets={assets} />
-          ))}
-        </div>
-      ) : (
-        <p className={styles.mediaLibraryEmpty}>Фото пока не добавлены.</p>
-      )}
     </section>
+  </div>,
+  document.body
   );
 };
 
-export const MediaManager = ({
-  manageToken,
-  mediaAssets,
-  mediaLayout,
-  messageAssignedCount = 0,
-  messageRequiredCount = 0,
-  memoryAssignedCount = 0,
-  memoryRequiredCount = 3
-}: Props) => {
-  const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
-  const [isUploadFormOpen, setIsUploadFormOpen] = useState(false);
-  const addPhotoButtonRef = useRef<HTMLButtonElement>(null);
-  const messageSlots = messageSlotMap[mediaLayout];
-  const requiredVertical = messageSlots.filter((slot) => verticalSlots.includes(slot)).length;
-  const requiredHorizontal = messageSlots.filter((slot) => messageLandscapeSlots.includes(slot)).length + memorySlots.length;
-  const defaultUploadSlot = getFirstAvailableSlot(mediaAssets, allSlots);
-  const sortedMediaAssets = [...mediaAssets].sort((left, right) => {
-    const slotDiff = allSlots.indexOf(left.slot) - allSlots.indexOf(right.slot);
-    return slotDiff || left.createdAt.localeCompare(right.createdAt);
+const PhotoEditor = ({ manageToken, state, onClose, onSaved, onFailed, onReplace, onDelete }: {
+  manageToken: string;
+  state: EditorState;
+  onClose: () => void;
+  onSaved: (message: string, asset?: CardMediaAsset, moved?: boolean) => void;
+  onFailed: () => void;
+  onReplace: (asset: CardMediaAsset) => void;
+  onDelete: (asset: CardMediaAsset) => void;
+}) => {
+  const initialCrop = normalizeCrop(state.mode === "move" ? {
+    x: 50,
+    y: 50,
+    zoom: 1
+  } : {
+    x: state.asset?.cropX ?? 50,
+    y: state.asset?.cropY ?? 50,
+    zoom: state.asset?.cropZoom ?? 1
   });
-  const horizontalMediaCount = mediaAssets.filter((asset) => horizontalSlots.includes(asset.slot)).length;
-  const verticalMediaCount = mediaAssets.filter((asset) => verticalSlots.includes(asset.slot)).length;
-  const visibleMediaAssets = sortedMediaAssets.filter((asset) => {
-    if (mediaFilter === "horizontal") {
-      return horizontalSlots.includes(asset.slot);
+  const initialCaption = state.asset?.captionTitle ?? "";
+  const [caption, setCaption] = useState(state.asset?.captionTitle ?? "");
+  const [rightsConfirmed, setRightsConfirmed] = useState(!state.file);
+  const [crop, setCrop] = useState(initialCrop);
+  const [error, setError] = useState("");
+  const [cropDragging, setCropDragging] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const historyGuardId = useId();
+  const dirtyRef = useRef(false);
+  const closeRef = useRef(onClose);
+  const historyCleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    viewportWidth: number;
+    viewportHeight: number;
+    crop: { x: number; y: number; zoom: number };
+  } | null>(null);
+  const removeCropListenersRef = useRef<(() => void) | null>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const isDirty = Boolean(state.file)
+    || state.mode === "move"
+    || caption !== initialCaption
+    || crop.x !== initialCrop.x
+    || crop.y !== initialCrop.y
+    || crop.zoom !== initialCrop.zoom
+    || Boolean(state.file && rightsConfirmed);
+  const captionTooLong = caption.length > 45;
+  const cropValid = Number.isFinite(crop.x) && Number.isFinite(crop.y) && Number.isFinite(crop.zoom);
+  const disabledReason = !state.previewUrl
+    ? "Выберите изображение."
+    : state.file && !rightsConfirmed
+      ? "Подтвердите права на изображение."
+      : captionTooLong
+        ? "Сделайте подпись короче — не более 45 символов."
+        : !cropValid
+          ? "Настройте кадрирование фотографии."
+          : "";
+  const submitDisabled = pending || Boolean(disabledReason);
+  const requestClose = () => {
+    if (pending) return;
+    if (isDirty) {
+      setConfirmClose(true);
+      return;
     }
-
-    if (mediaFilter === "vertical") {
-      return verticalSlots.includes(asset.slot);
-    }
-
-    return true;
-  });
-  const selectFilter = (nextFilter: MediaFilter, button: HTMLButtonElement) => {
-    setMediaFilter(nextFilter);
-    button.scrollIntoView({ block: "nearest", inline: "nearest" });
+    onClose();
   };
-  const focusAfterDelete = (nextAssetId?: string) => {
-    window.requestAnimationFrame(() => {
-      const nextCard = nextAssetId ? document.getElementById(`media-asset-${nextAssetId}`) : null;
-      (nextCard ?? addPhotoButtonRef.current)?.focus();
+
+  useModalFocus(dialogRef, requestClose);
+
+  useEffect(() => {
+    dirtyRef.current = isDirty;
+    closeRef.current = onClose;
+  }, [isDirty, onClose]);
+
+  useEffect(() => {
+    const guardId = historyGuardId;
+    if (historyCleanupTimerRef.current) {
+      clearTimeout(historyCleanupTimerRef.current);
+      historyCleanupTimerRef.current = null;
+    }
+    if (window.history.state?.photoEditorGuard !== guardId) {
+      window.history.pushState({ ...window.history.state, photoEditorGuard: guardId }, "", window.location.href);
+    }
+    const handleBack = () => {
+      if (dirtyRef.current) {
+        window.history.pushState({ ...window.history.state, photoEditorGuard: guardId }, "", window.location.href);
+        setConfirmClose(true);
+        return;
+      }
+      closeRef.current();
+    };
+    window.addEventListener("popstate", handleBack);
+    return () => {
+      window.removeEventListener("popstate", handleBack);
+      historyCleanupTimerRef.current = setTimeout(() => {
+        if (window.history.state?.photoEditorGuard === guardId) window.history.back();
+        historyCleanupTimerRef.current = null;
+      }, 0);
+    };
+  }, [historyGuardId]);
+
+  const stopCropDrag = () => {
+    removeCropListenersRef.current?.();
+    removeCropListenersRef.current = null;
+    dragRef.current = null;
+    setCropDragging(false);
+  };
+
+  useEffect(() => () => {
+    removeCropListenersRef.current?.();
+    removeCropListenersRef.current = null;
+    dragRef.current = null;
+  }, []);
+
+  const startCropDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const rect = event.currentTarget.getBoundingClientRect();
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      viewportWidth: rect.width,
+      viewportHeight: rect.height,
+      crop
+    };
+    setCropDragging(true);
+
+    const handleMove = (pointerEvent: PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== pointerEvent.pointerId) return;
+      pointerEvent.preventDefault();
+      setCrop(moveCropByPointer(
+        drag.crop,
+        pointerEvent.clientX - drag.startX,
+        pointerEvent.clientY - drag.startY,
+        drag.viewportWidth,
+        drag.viewportHeight
+      ));
+    };
+    const handleEnd = (pointerEvent: PointerEvent) => {
+      if (dragRef.current?.pointerId !== pointerEvent.pointerId) return;
+      pointerEvent.preventDefault();
+      stopCropDrag();
+    };
+    const handleBlur = () => stopCropDrag();
+
+    window.addEventListener("pointermove", handleMove, { capture: true, passive: false });
+    window.addEventListener("pointerup", handleEnd, { capture: true });
+    window.addEventListener("pointercancel", handleEnd, { capture: true });
+    window.addEventListener("blur", handleBlur);
+    removeCropListenersRef.current = () => {
+      window.removeEventListener("pointermove", handleMove, { capture: true });
+      window.removeEventListener("pointerup", handleEnd, { capture: true });
+      window.removeEventListener("pointercancel", handleEnd, { capture: true });
+      window.removeEventListener("blur", handleBlur);
+    };
+  };
+
+  const submit = () => {
+    if (submitDisabled) return;
+    setError("");
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set("manageToken", manageToken);
+      formData.set("slot", state.slot);
+      formData.set("assetId", state.asset?.id ?? "");
+      formData.set("captionTitle", caption);
+      formData.set("captionSubtitle", "");
+      formData.set("cropX", String(crop.x));
+      formData.set("cropY", String(crop.y));
+      formData.set("cropZoom", String(crop.zoom));
+      formData.set("imageWidth", String(state.imageWidth ?? state.asset?.imageWidth ?? 0));
+      formData.set("imageHeight", String(state.imageHeight ?? state.asset?.imageHeight ?? 0));
+      if (state.file) {
+        let uploadFile = state.file;
+        try { uploadFile = await compressImageFile(state.file); } catch { /* keep original */ }
+        formData.set("file", uploadFile);
+        if (rightsConfirmed) formData.set("rightsConfirmed", "on");
+      }
+      const result = await saveCardMediaAction({ ok: false, message: "" }, formData);
+      if (!result.ok) {
+        setError("Не удалось сохранить изменения. Попробуйте ещё раз.");
+        onFailed();
+        return;
+      }
+      const returnedAsset = "asset" in result ? result.asset : undefined;
+      const nextAsset = returnedAsset ?? (state.asset ? {
+        ...state.asset,
+        slot: state.slot,
+        captionTitle: caption,
+        cropX: crop.x,
+        cropY: crop.y,
+        cropZoom: crop.zoom
+      } : undefined);
+      onSaved(result.message, nextAsset, state.mode === "move");
     });
   };
-  const filters = (
-    <div className={`${styles.contentFilterRow} ${styles.mediaLibraryFilterRow}`}>
-      <button type="button" aria-pressed={mediaFilter === "all"} className={`${styles.contentFilterPill} ${mediaFilter === "all" ? styles.contentFilterPillActive : ""}`} onClick={(event) => selectFilter("all", event.currentTarget)}>Все {mediaAssets.length}</button>
-      <button type="button" aria-pressed={mediaFilter === "horizontal"} className={`${styles.contentFilterPill} ${mediaFilter === "horizontal" ? styles.contentFilterPillActive : ""}`} onClick={(event) => selectFilter("horizontal", event.currentTarget)}>Горизонтальные {horizontalMediaCount}</button>
-      <button type="button" aria-pressed={mediaFilter === "vertical"} className={`${styles.contentFilterPill} ${mediaFilter === "vertical" ? styles.contentFilterPillActive : ""}`} onClick={(event) => selectFilter("vertical", event.currentTarget)}>Вертикальные {verticalMediaCount}</button>
+
+  const editorPortal = createPortal(
+    <div className={styles.photoDialogBackdrop} role="presentation" onPointerDown={(event) => event.target === event.currentTarget && requestClose()}>
+      <section ref={dialogRef} className={styles.photoEditorDialog} role="dialog" aria-modal="true" aria-labelledby="photo-editor-title" tabIndex={-1}>
+        <div className={styles.photoDialogHeader}>
+          <div>
+            <h2 id="photo-editor-title">{state.mode === "add" ? "Добавить фото" : state.mode === "replace" ? "Заменить изображение" : state.mode === "move" ? "Переместить и настроить" : "Настроить фото"}</h2>
+            <p>{getSlotLabel(state.slot)} · {getSlotOrientation(state.slot) === "horizontal" ? "горизонтальная рамка" : "вертикальная рамка"}</p>
+          </div>
+          <button type="button" onClick={requestClose} aria-label="Закрыть">×</button>
+        </div>
+
+        <div className={styles.photoEditorBody}>
+          <div className={styles.photoCropPanel}>
+            <div
+              className={`${styles.photoCropViewport} ${getSlotOrientation(state.slot) === "vertical" ? styles.photoCropVertical : ""} ${cropDragging ? styles.photoCropDragging : ""}`}
+              onPointerDown={startCropDrag}
+              aria-label="Удерживайте фото и перемещайте его внутри рамки"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img onDragStart={(event) => event.preventDefault()} src={state.previewUrl} alt="Предварительный просмотр" style={{ objectPosition: `${crop.x}% ${crop.y}%`, transform: `scale(${crop.zoom})`, transformOrigin: `${crop.x}% ${crop.y}%` }} />
+            </div>
+            <p>Сначала настройте масштаб. Затем переместите фото внутри рамки. Сохранится выбранная композиция.</p>
+            <label className={styles.photoZoomControl}>
+              <span>Масштаб</span>
+              <input
+                type="range"
+                min="1"
+                max="3"
+                step="0.05"
+                value={crop.zoom}
+                onInput={(event) => {
+                  const nextZoom = Number(event.currentTarget.value);
+                  setCrop((value) => ({ ...value, zoom: nextZoom }));
+                }}
+              />
+              <strong>{Math.round(crop.zoom * 100)}%</strong>
+            </label>
+            <p className={styles.photoFileMeta}>{state.file ? state.file.name : state.asset?.fileName} · {formatFileSize(state.file?.size ?? state.asset?.sizeBytes ?? 0)}</p>
+            {state.asset ? (
+              <div className={styles.photoEditorSecondaryActions}>
+                <button type="button" onClick={() => onReplace(state.asset!)}>Заменить изображение</button>
+                <button type="button" className={styles.photoEditorDeleteAction} onClick={() => onDelete(state.asset!)}>Удалить фото</button>
+              </div>
+            ) : null}
+          </div>
+
+          <div className={styles.photoEditorFields}>
+            <label>
+              <span>Подпись</span>
+              <textarea value={caption} onChange={(event) => setCaption(event.target.value)} aria-invalid={captionTooLong} aria-describedby={captionTooLong ? "photo-caption-error" : undefined} rows={3} placeholder="Например, Закат у моря" />
+              <small className={captionTooLong ? styles.photoCaptionCountError : ""}><span>Подпись необязательна</span><strong>{caption.length} / 45</strong></small>
+              {captionTooLong ? <span id="photo-caption-error" className={styles.photoFieldError}>Сократите подпись до 45 символов.</span> : null}
+            </label>
+            {state.file ? (
+              <label className={styles.photoRightsConsent}>
+                <input type="checkbox" checked={rightsConfirmed} onChange={(event) => setRightsConfirmed(event.target.checked)} />
+                <span>Подтверждаю, что имею право использовать загружаемые материалы и при необходимости получил согласие изображённых лиц.</span>
+              </label>
+            ) : null}
+            {error ? <p className={styles.photoEditorError} role="alert">{error}</p> : null}
+          </div>
+        </div>
+        <div className={styles.photoEditorActions}>
+          {disabledReason ? <p className={styles.photoEditorDisabledReason} role="status">{disabledReason}</p> : null}
+          <button type="button" className={styles.photoSecondaryButton} onClick={requestClose}>Отмена</button>
+          <button type="button" className={styles.photoPrimaryButton} disabled={submitDisabled} onClick={submit}>
+            {pending ? "Сохраняем…" : state.mode === "add" ? "Добавить фото" : "Сохранить"}
+          </button>
+        </div>
+      </section>
+    </div>,
+    document.body
+  );
+
+  return (
+    <>
+      {editorPortal}
+      {confirmClose ? (
+        <ConfirmationDialog
+          title="Изменения не сохранены"
+          description="Закрыть редактор и отменить изменения?"
+          onDismiss={() => setConfirmClose(false)}
+          actions={[
+            { label: "Продолжить редактирование", tone: "secondary", onClick: () => setConfirmClose(false) },
+            { label: "Закрыть без сохранения", tone: "danger", onClick: onClose }
+          ]}
+        />
+      ) : null}
+    </>
+  );
+};
+
+export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, messagePhotosEnabled, initialMomentsEnabled }: Props) => {
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileRequestRef = useRef<{ slot: CardMediaSlot; mode: "add" | "replace"; asset?: CardMediaAsset } | null>(null);
+  const activePhotoDragRef = useRef<PhotoPointerDrag | null>(null);
+  const photoDragPreviewRef = useRef<HTMLElement | null>(null);
+  const displacedPhotoPreviewRef = useRef<HTMLElement | null>(null);
+  const removePhotoDragListenersRef = useRef<(() => void) | null>(null);
+  const suppressPhotoClickRef = useRef(false);
+  const suppressPhotoClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recentSlotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [assets, setAssets] = useState(mediaAssets);
+  const [momentsEnabled, setMomentsEnabled] = useState(initialMomentsEnabled);
+  const [editor, setEditor] = useState<EditorState | null>(null);
+  const [movingAsset, setMovingAsset] = useState<CardMediaAsset | null>(null);
+  const [deleteAsset, setDeleteAsset] = useState<CardMediaAsset | null>(null);
+  const [toast, setToast] = useState("");
+  const [lastMove, setLastMove] = useState<PhotoMoveUndo | null>(null);
+  const [draggedAssetId, setDraggedAssetId] = useState<string | null>(null);
+  const [photoDropTarget, setPhotoDropTarget] = useState<CardMediaSlot | null>(null);
+  const [recentlyUpdatedSlots, setRecentlyUpdatedSlots] = useState<CardMediaSlot[]>([]);
+  const [momentsPending, startMomentsTransition] = useTransition();
+  const [movePending, startMoveTransition] = useTransition();
+  const [deletePending, startDeleteTransition] = useTransition();
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => {
+      setToast("");
+      setLastMove(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const highlightSlots = (...slots: CardMediaSlot[]) => {
+    if (recentSlotTimerRef.current) clearTimeout(recentSlotTimerRef.current);
+    setRecentlyUpdatedSlots(Array.from(new Set(slots)));
+    recentSlotTimerRef.current = setTimeout(() => {
+      setRecentlyUpdatedSlots([]);
+      recentSlotTimerRef.current = null;
+    }, 1400);
+  };
+
+  const { messageSlots: activeMessageSlots, memorySlots: activeMemorySlots } = getActivePhotoSlots({
+    mediaLayout,
+    messagePhotosEnabled,
+    momentsEnabled
+  });
+  const messageFilled = activeMessageSlots.filter((slot) => assets.some((asset) => asset.slot === slot)).length;
+  const memoryFilled = activeMemorySlots.filter((slot) => assets.some((asset) => asset.slot === slot)).length;
+  const totalRequiredCount = activeMessageSlots.length + activeMemorySlots.length;
+  const usedPhotoCount = messageFilled + memoryFilled;
+  const allRequiredFilled = totalRequiredCount > 0 && usedPhotoCount === totalRequiredCount;
+  const missingRequiredCount = totalRequiredCount - usedPhotoCount;
+  const activeMessageSlotSet = new Set(activeMessageSlots);
+  const inactivePhotoCount = assets.filter((asset) =>
+    getSlotBlock(asset.slot) === "greetings" && !activeMessageSlotSet.has(asset.slot)
+  ).length;
+
+  const trackPhotoEvent = (event: Parameters<typeof sendClientTelemetry>[0], slot?: CardMediaSlot) => {
+    sendClientTelemetry(event, {
+      cardId,
+      block: slot ? getSlotBlock(slot) : "moments",
+      slot: slot ?? "",
+      layout: messagePhotosEnabled ? mediaLayout : "none",
+      deviceType: getDeviceType()
+    });
+  };
+
+  const requestFile = (slot: CardMediaSlot, mode: "add" | "replace", asset?: CardMediaAsset) => {
+    fileRequestRef.current = { slot, mode, asset };
+    if (mode === "add") trackPhotoEvent("photo_slot_opened", slot);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }
+  };
+
+  const openSelectedFile = (file: File) => {
+    const request = fileRequestRef.current;
+    if (!request) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      trackPhotoEvent("photo_upload_failed", request.slot);
+      setToast("Неподдерживаемый формат. Поддерживаются JPG, PNG и WebP.");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      trackPhotoEvent("photo_upload_failed", request.slot);
+      setToast("Файл слишком большой. Размер файла превышает 6 МБ. Выберите другое фото.");
+      return;
+    }
+    trackPhotoEvent("photo_upload_started", request.slot);
+    const previewUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => setEditor({
+      mode: request.mode,
+      slot: request.slot,
+      asset: request.asset,
+      file,
+      previewUrl,
+      imageWidth: image.naturalWidth,
+      imageHeight: image.naturalHeight
+    });
+    image.onerror = () => {
+      URL.revokeObjectURL(previewUrl);
+      trackPhotoEvent("photo_upload_failed", request.slot);
+      setToast("Не удалось загрузить фото. Попробуйте ещё раз.");
+    };
+    image.src = previewUrl;
+  };
+
+  const closeEditor = () => {
+    if (editor?.file && editor.previewUrl.startsWith("blob:")) URL.revokeObjectURL(editor.previewUrl);
+    setEditor(null);
+  };
+
+  const finishEditor = (_message: string, savedAsset?: CardMediaAsset, moved?: boolean) => {
+    const completedEditor = editor;
+    if (savedAsset) {
+      setAssets((items) => {
+        const positioned = moved ? moveAssetsBetweenSlots(items, savedAsset.id, savedAsset.slot) : items;
+        return replaceOrAddPhoto(positioned, savedAsset);
+      });
+    }
+    if (moved && completedEditor?.asset && completedEditor.sourceSlot) {
+      setLastMove({ assetBefore: { ...completedEditor.asset, slot: completedEditor.sourceSlot }, targetSlot: completedEditor.slot });
+    }
+    if (completedEditor) {
+      if (completedEditor.mode === "add") trackPhotoEvent("photo_upload_completed", completedEditor.slot);
+      if (completedEditor.mode === "replace") {
+        trackPhotoEvent("photo_upload_completed", completedEditor.slot);
+        trackPhotoEvent("photo_replaced", completedEditor.slot);
+      }
+      if (completedEditor.mode === "move") trackPhotoEvent("photo_moved", completedEditor.slot);
+      if (completedEditor.mode === "edit" && savedAsset && savedAsset.captionTitle !== completedEditor.asset?.captionTitle) {
+        trackPhotoEvent("photo_caption_updated", completedEditor.slot);
+      }
+      highlightSlots(...(completedEditor.sourceSlot ? [completedEditor.sourceSlot, completedEditor.slot] : [completedEditor.slot]));
+    }
+    closeEditor();
+    setToast(completedEditor?.mode === "add"
+      ? "Фото добавлено"
+      : completedEditor?.mode === "move"
+        ? completedEditor.targetWasOccupied ? "Фотографии поменяны местами" : "Фото перемещено"
+        : "Изменения сохранены");
+    router.refresh();
+  };
+
+  const moveAsset = (asset: CardMediaAsset, targetSlot: CardMediaSlot) => {
+    setMovingAsset(null);
+    const targetWasOccupied = assets.some((item) => item.slot === targetSlot && item.id !== asset.id);
+    if (getSlotOrientation(asset.slot) !== getSlotOrientation(targetSlot)) {
+      setEditor({ mode: "move", slot: targetSlot, sourceSlot: asset.slot, targetWasOccupied, asset, previewUrl: asset.publicUrl, imageWidth: asset.imageWidth ?? null, imageHeight: asset.imageHeight ?? null });
+      return;
+    }
+    const previous = assets;
+    setAssets(moveAssetsBetweenSlots(assets, asset.id, targetSlot));
+    startMoveTransition(async () => {
+      const formData = new FormData();
+      formData.set("manageToken", manageToken);
+      formData.set("assetId", asset.id);
+      formData.set("slot", targetSlot);
+      formData.set("captionTitle", asset.captionTitle);
+      formData.set("captionSubtitle", asset.captionSubtitle);
+      formData.set("cropX", String(asset.cropX ?? 50));
+      formData.set("cropY", String(asset.cropY ?? 50));
+      formData.set("cropZoom", String(asset.cropZoom ?? 1));
+      const result = await saveCardMediaAction({ ok: false, message: "" }, formData);
+      if (!result.ok) {
+        setAssets(previous);
+        setToast("Не удалось сохранить изменения. Попробуйте ещё раз.");
+        return;
+      }
+      setLastMove({ assetBefore: asset, targetSlot });
+      trackPhotoEvent("photo_moved", targetSlot);
+      highlightSlots(asset.slot, targetSlot);
+      setToast(targetWasOccupied ? "Фотографии поменяны местами" : "Фото перемещено");
+      router.refresh();
+    });
+  };
+
+  const undoLastMove = () => {
+    if (!lastMove || movePending) return;
+    const currentAsset = assets.find((asset) => asset.id === lastMove.assetBefore.id);
+    if (!currentAsset) return;
+    const previous = assets;
+    const restored = moveAssetsBetweenSlots(assets, currentAsset.id, lastMove.assetBefore.slot)
+      .map((asset) => asset.id === currentAsset.id ? { ...asset, ...lastMove.assetBefore } : asset);
+    setAssets(restored);
+    setLastMove(null);
+    startMoveTransition(async () => {
+      const formData = new FormData();
+      formData.set("manageToken", manageToken);
+      formData.set("assetId", currentAsset.id);
+      formData.set("slot", lastMove.assetBefore.slot);
+      formData.set("captionTitle", lastMove.assetBefore.captionTitle);
+      formData.set("captionSubtitle", lastMove.assetBefore.captionSubtitle);
+      formData.set("cropX", String(lastMove.assetBefore.cropX ?? 50));
+      formData.set("cropY", String(lastMove.assetBefore.cropY ?? 50));
+      formData.set("cropZoom", String(lastMove.assetBefore.cropZoom ?? 1));
+      const result = await saveCardMediaAction({ ok: false, message: "" }, formData);
+      if (!result.ok) {
+        setAssets(previous);
+        setToast("Не удалось отменить перемещение. Текущее расположение сохранено.");
+        return;
+      }
+      setToast("Перемещение отменено");
+      router.refresh();
+    });
+  };
+
+  const positionPhotoDragPreview = (clientX: number, clientY: number) => {
+    const preview = photoDragPreviewRef.current;
+    const drag = activePhotoDragRef.current;
+    if (!preview || !drag) return;
+    preview.style.transform = `translate3d(${clientX - drag.offsetX}px, ${clientY - drag.offsetY}px, 0) scale(1.01)`;
+  };
+
+  const suppressNextPhotoClick = () => {
+    suppressPhotoClickRef.current = true;
+    if (suppressPhotoClickTimerRef.current) clearTimeout(suppressPhotoClickTimerRef.current);
+    if (recentSlotTimerRef.current) clearTimeout(recentSlotTimerRef.current);
+    suppressPhotoClickTimerRef.current = setTimeout(() => {
+      suppressPhotoClickRef.current = false;
+      suppressPhotoClickTimerRef.current = null;
+    }, 400);
+  };
+
+  const activatePhotoDrag = (drag: PhotoPointerDrag, clientX: number, clientY: number) => {
+    if (activePhotoDragRef.current !== drag || drag.activated) return;
+    drag.activated = true;
+    photoDragPreviewRef.current?.classList.add(styles.photoDragPreviewActive);
+    document.body.classList.add(styles.photoDragInProgress);
+    setDraggedAssetId(drag.asset.id);
+    positionPhotoDragPreview(clientX, clientY);
+  };
+
+  const removeDisplacedPreview = () => {
+    displacedPhotoPreviewRef.current?.remove();
+    displacedPhotoPreviewRef.current = null;
+  };
+
+  const animateOccupiedPhotoToSource = (targetSlot: CardMediaSlot | null, sourceSlot: CardMediaSlot) => {
+    removeDisplacedPreview();
+    if (!targetSlot || !assets.some((asset) => asset.slot === targetSlot)) return;
+    const source = document.querySelector<HTMLElement>(`[data-photo-slot="${sourceSlot}"]`);
+    const target = document.querySelector<HTMLElement>(`[data-photo-slot="${targetSlot}"]`);
+    if (!source || !target) return;
+
+    const sourceRect = source.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const preview = target.cloneNode(true) as HTMLElement;
+    preview.removeAttribute("data-photo-slot");
+    preview.setAttribute("aria-hidden", "true");
+    preview.classList.remove(styles.photoSlotDropTarget, styles.photoSlotDisplacedTarget);
+    preview.classList.add(styles.photoDisplacedPreview);
+    preview.style.width = `${targetRect.width}px`;
+    preview.style.height = `${targetRect.height}px`;
+    preview.style.transform = `translate3d(${targetRect.left}px, ${targetRect.top}px, 0)`;
+    preview.style.setProperty("--photo-displaced-scale-x", String(sourceRect.width / Math.max(1, targetRect.width)));
+    preview.style.setProperty("--photo-displaced-scale-y", String(sourceRect.height / Math.max(1, targetRect.height)));
+    document.body.appendChild(preview);
+    displacedPhotoPreviewRef.current = preview;
+    window.requestAnimationFrame(() => {
+      if (displacedPhotoPreviewRef.current !== preview) return;
+      preview.style.transform = `translate3d(${sourceRect.left}px, ${sourceRect.top}px, 0) scale(var(--photo-displaced-scale-x), var(--photo-displaced-scale-y))`;
+    });
+  };
+
+  const removePhotoDragArtifacts = () => {
+    removePhotoDragListenersRef.current?.();
+    removePhotoDragListenersRef.current = null;
+    photoDragPreviewRef.current?.remove();
+    photoDragPreviewRef.current = null;
+    removeDisplacedPreview();
+    activePhotoDragRef.current = null;
+    document.body.classList.remove(styles.photoDragInProgress);
+    setDraggedAssetId(null);
+    setPhotoDropTarget(null);
+  };
+
+  const finishPhotoDrag = (cancelled = false) => {
+    const drag = activePhotoDragRef.current;
+    if (!drag) return;
+    const targetSlot = !cancelled && drag.activated ? drag.targetSlot : null;
+    if (drag.activated) suppressNextPhotoClick();
+    removePhotoDragArtifacts();
+    if (targetSlot && targetSlot !== drag.sourceSlot) moveAsset(drag.asset, targetSlot);
+  };
+
+  const updatePhotoPointerDrag = (event: PointerEvent) => {
+    const drag = activePhotoDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+
+    if (!drag.activated) {
+      if (distance < 6) return;
+      activatePhotoDrag(drag, event.clientX, event.clientY);
+    }
+
+    event.preventDefault();
+    positionPhotoDragPreview(event.clientX, event.clientY);
+    const target = document
+      .elementsFromPoint(event.clientX, event.clientY)
+      .map((element) => element.closest<HTMLElement>("[data-photo-slot]"))
+      .find(Boolean);
+    const nextTarget = target?.dataset.photoSlot as CardMediaSlot | undefined;
+    const resolvedTarget = nextTarget && nextTarget !== drag.sourceSlot ? nextTarget : null;
+    if (drag.targetSlot !== resolvedTarget) {
+      animateOccupiedPhotoToSource(resolvedTarget, drag.sourceSlot);
+      drag.targetSlot = resolvedTarget;
+      setPhotoDropTarget(resolvedTarget);
+    }
+
+    const scrollThreshold = 84;
+    if (event.clientY < scrollThreshold) window.scrollBy({ top: -12 });
+    else if (event.clientY > window.innerHeight - scrollThreshold) window.scrollBy({ top: 12 });
+  };
+
+  const startPhotoPointerDrag = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    asset: CardMediaAsset,
+    slot: CardMediaSlot
+  ) => {
+    if (!canStartPhotoPointerDrag(event.pointerType, event.button, movePending)) return;
+    const card = event.currentTarget.closest<HTMLElement>("[data-photo-slot]");
+    if (!card) return;
+    removePhotoDragArtifacts();
+
+    const rect = card.getBoundingClientRect();
+    const preview = card.cloneNode(true) as HTMLElement;
+    preview.removeAttribute("data-photo-slot");
+    preview.setAttribute("aria-hidden", "true");
+    preview.classList.add(styles.photoDragPreview);
+    preview.style.width = `${rect.width}px`;
+    preview.style.height = `${rect.height}px`;
+    document.body.appendChild(preview);
+    photoDragPreviewRef.current = preview;
+
+    const drag: PhotoPointerDrag = {
+      pointerId: event.pointerId,
+      asset,
+      sourceSlot: slot,
+      targetSlot: null,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+      startX: event.clientX,
+      startY: event.clientY,
+      activated: false
+    };
+    activePhotoDragRef.current = drag;
+    positionPhotoDragPreview(event.clientX, event.clientY);
+
+    const handleMove = (pointerEvent: PointerEvent) => updatePhotoPointerDrag(pointerEvent);
+    const handleEnd = (pointerEvent: PointerEvent) => {
+      if (activePhotoDragRef.current?.pointerId !== pointerEvent.pointerId) return;
+      if (activePhotoDragRef.current.activated) pointerEvent.preventDefault();
+      finishPhotoDrag(pointerEvent.type === "pointercancel");
+    };
+    const handleKeyDown = (keyboardEvent: KeyboardEvent) => {
+      if (keyboardEvent.key === "Escape") finishPhotoDrag(true);
+    };
+    const handleNativeDragStart = (dragEvent: DragEvent) => dragEvent.preventDefault();
+    const handleWindowBlur = () => finishPhotoDrag(true);
+
+    window.addEventListener("pointermove", handleMove, { capture: true, passive: false });
+    window.addEventListener("pointerup", handleEnd, { capture: true });
+    window.addEventListener("pointercancel", handleEnd, { capture: true });
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+    window.addEventListener("dragstart", handleNativeDragStart, { capture: true });
+    window.addEventListener("blur", handleWindowBlur);
+    removePhotoDragListenersRef.current = () => {
+      window.removeEventListener("pointermove", handleMove, { capture: true });
+      window.removeEventListener("pointerup", handleEnd, { capture: true });
+      window.removeEventListener("pointercancel", handleEnd, { capture: true });
+      window.removeEventListener("keydown", handleKeyDown, { capture: true });
+      window.removeEventListener("dragstart", handleNativeDragStart, { capture: true });
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  };
+
+  useEffect(() => () => {
+    removePhotoDragListenersRef.current?.();
+    photoDragPreviewRef.current?.remove();
+    displacedPhotoPreviewRef.current?.remove();
+    if (suppressPhotoClickTimerRef.current) clearTimeout(suppressPhotoClickTimerRef.current);
+    document.body.classList.remove(styles.photoDragInProgress);
+  }, []);
+
+  const removeAsset = (asset: CardMediaAsset) => {
+    startDeleteTransition(async () => {
+      const formData = new FormData();
+      formData.set("manageToken", manageToken);
+      formData.set("assetId", asset.id);
+      const result = await deleteCardMediaAction({ ok: false, message: "" }, formData);
+      if (!result.ok) {
+        setToast("Не удалось сохранить изменения. Попробуйте ещё раз.");
+        return;
+      }
+      setAssets((items) => items.filter((item) => item.id !== asset.id));
+      setEditor((current) => current?.asset?.id === asset.id ? null : current);
+      setDeleteAsset(null);
+      trackPhotoEvent("photo_deleted", asset.slot);
+      highlightSlots(asset.slot);
+      setToast("Фото удалено");
+      router.refresh();
+    });
+  };
+
+  const enableMoments = () => {
+    if (momentsPending || momentsEnabled) return;
+    startMomentsTransition(async () => {
+      const result = await updateCardMomentsEnabledAction(manageToken, true);
+      if (!result.ok) {
+        setToast("Не удалось добавить блок «Моменты». Попробуйте ещё раз.");
+        return;
+      }
+      setMomentsEnabled(true);
+      trackPhotoEvent("moments_enabled_from_photos");
+      setToast("Блок «Моменты» добавлен в открытку.");
+      router.refresh();
+    });
+  };
+
+  const renderSlots = (slots: CardMediaSlot[]) => (
+    <div className={`${styles.photoSlotsGrid} ${slots.length === 1 ? styles.photoSlotsSingle : slots.length === 2 ? styles.photoSlotsPair : ""}`}>
+      {slots.map((slot) => (
+        <PhotoSlotCard
+          key={slot}
+          slot={slot}
+          asset={assets.find((asset) => asset.slot === slot)}
+          onAdd={(nextSlot) => {
+            // The ref is read only after the child dispatches a real click event.
+            // eslint-disable-next-line react-hooks/refs
+            if (!suppressPhotoClickRef.current) requestFile(nextSlot, "add");
+          }}
+          onEdit={(asset) => {
+            if (suppressPhotoClickRef.current) return;
+            setEditor({ mode: "edit", slot: asset.slot, asset, previewUrl: asset.publicUrl, imageWidth: asset.imageWidth ?? null, imageHeight: asset.imageHeight ?? null });
+          }}
+          onReplace={(asset) => {
+            requestFile(asset.slot, "replace", asset);
+            closeEditor();
+          }}
+          onMove={setMovingAsset}
+          onDelete={setDeleteAsset}
+          onPointerDragStart={startPhotoPointerDrag}
+          isDragging={Boolean(assets.find((asset) => asset.slot === slot)?.id === draggedAssetId)}
+          isDisplacedTarget={Boolean(photoDropTarget === slot && assets.some((asset) => asset.slot === slot))}
+          isDropTarget={photoDropTarget === slot}
+          isRecentlyUpdated={recentlyUpdatedSlots.includes(slot)}
+        />
+      ))}
     </div>
   );
 
   return (
-    <section className={styles.mediaManagerStack}>
-      <section className={`${styles.contentPhotoCard} ${styles.mediaLibraryUnifiedCard}`}>
-        <div className={`${styles.contentPanelHeader} ${styles.mediaLibraryHeader}`}>
-          <div className={styles.contentPanelTopRow}>
-            <h2 className={styles.contentPanelTitle}>Фото открытки</h2>
-            <div className={styles.contentToolbar}>
-              <button
-                ref={addPhotoButtonRef}
-                type="button"
-                className={`${styles.mediaLibraryUploadToggle} ${isUploadFormOpen ? styles.mediaLibraryUploadToggleActive : ""}`}
-                onClick={() => setIsUploadFormOpen((current) => !current)}
-                aria-expanded={isUploadFormOpen}
-              >
-                {isUploadFormOpen ? <><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m18 15-6-6-6 6" /></svg>Свернуть форму</> : "+ Добавить фото"}
-              </button>
+    <section className={styles.photoWorkspace} aria-busy={momentsPending || movePending || deletePending}>
+      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(event) => event.target.files?.[0] && openSelectedFile(event.target.files[0])} />
+
+      <header className={styles.photoWorkspaceHeader}>
+        <div>
+          <h2>Фото открытки</h2>
+          <p>Добавляйте фото сразу в нужные места открытки.</p>
+        </div>
+        <div className={styles.photoCounters} aria-label="Заполнение фотографий">
+          <span><strong>Поздравления</strong> {messagePhotosEnabled ? `${messageFilled} из ${activeMessageSlots.length}` : "Без фото"}</span>
+          <span><strong>Моменты</strong> {momentsEnabled ? `${memoryFilled} из 3` : "Выключены"}</span>
+          <span><strong>Используется</strong> {usedPhotoCount} фото</span>
+        </div>
+        {totalRequiredCount === 0
+          ? <p className={styles.photoNeutralStatus}>Фото не используются в текущем оформлении</p>
+          : allRequiredFilled
+          ? <p className={styles.photoCompleteStatus}>✓ Все необходимые фото добавлены</p>
+          : <p className={styles.photoIncompleteStatus}>Осталось добавить {missingRequiredCount} фото</p>}
+      </header>
+
+      <section id="congratulations-photos" className={styles.photoBlock}>
+        <div className={styles.photoBlockHeader}>
+          <div>
+            <div className={styles.photoBlockTitleRow}>
+              <h3 data-focus-heading>Поздравления</h3>
+              {messagePhotosEnabled ? <strong>{messageFilled} из {activeMessageSlots.length}</strong> : null}
             </div>
+            {messagePhotosEnabled ? (
+              <>
+                <p>Выбрано оформление: {getLayoutLabel(mediaLayout)}</p>
+                <Link
+                  href={`/manage/${manageToken}?tab=design#congratulations-layout`}
+                  className={styles.photoCompositionLink}
+                  onClick={() => trackPhotoEvent("photo_layout_edit_clicked")}
+                >
+                  Изменить оформление
+                </Link>
+              </>
+            ) : null}
           </div>
-          <p className={`${styles.contentPhotoHint} ${styles.mediaLibraryHint}`}>
-            Добавляйте фото и выбирайте, где они появятся в открытке.
-          </p>
         </div>
-
-        <div className={styles.mediaAssignmentSummary} aria-label="Размещение фотографий">
-          <section id="congratulations-photos" className={styles.mediaFocusTarget}>
-            <h3 data-focus-heading>Для поздравлений</h3>
-            <span>{messageAssignedCount} из {messageRequiredCount}</span>
-          </section>
-          <section id="moments-photos" className={styles.mediaFocusTarget}>
-            <h3 data-focus-heading>Для моментов</h3>
-            <span>{memoryAssignedCount} из {memoryRequiredCount}</span>
-          </section>
-          <span>Всего фотографий: {mediaAssets.length}</span>
-        </div>
-
-        {!isUploadFormOpen ? filters : null}
-
-        {isUploadFormOpen ? (
-          <div className={styles.mediaLibraryUploadCard}>
-            <MediaUploadForm
-              manageToken={manageToken}
-              defaultSlot={defaultUploadSlot}
-              onSuccess={() => {
-                setMediaFilter("all");
-                setIsUploadFormOpen(false);
-              }}
-            />
-          </div>
-        ) : null}
-
-        {isUploadFormOpen ? filters : null}
-
-        {visibleMediaAssets.length > 0 ? (
-          <div className={styles.mediaLibraryList}>
-            {visibleMediaAssets.map((asset, index) => (
-              <MediaAssetRow key={`${asset.id}-${asset.slot}`} asset={asset} manageToken={manageToken} availableSlots={allSlots} assets={mediaAssets} onDeleted={() => focusAfterDelete(visibleMediaAssets[index + 1]?.id)} />
-            ))}
-          </div>
+        {messagePhotosEnabled ? (
+          <>
+            {inactivePhotoCount > 0 ? <p className={styles.photoInactiveNotice}><span aria-hidden="true">ⓘ</span> Фото других вариантов сохранены и вернутся при обратном переключении.</p> : null}
+            {renderSlots(activeMessageSlots)}
+          </>
         ) : (
-          <p className={styles.mediaLibraryEmpty}>Фото пока не добавлены.</p>
+          <div className={styles.photoCompositionEmptyState}>
+            <p>В выбранном оформлении фотографии рядом с поздравлениями не используются.</p>
+            <Link
+              href={`/manage/${manageToken}?tab=design#congratulations-layout`}
+              className={styles.photoCompositionLink}
+              onClick={() => trackPhotoEvent("photo_layout_edit_clicked")}
+            >
+              Выбрать вид с фотографиями
+            </Link>
+          </div>
         )}
       </section>
 
-      {false ? (
-        <>
-          <MediaLibraryGroup
-        title="Горизонтальные фото"
-        hint={`Общая библиотека для блока «Колонка + фото» и «Моменты». Всего в открытке можно использовать до ${CARD_MEDIA_MAX_COUNT} фото.`}
-        manageToken={manageToken}
-        assets={mediaAssets}
-        slots={horizontalSlots}
-        requiredCount={requiredHorizontal}
-      />
-      <MediaLibraryGroup
-        title="Вертикальные фото"
-        hint="Нужны, если в поздравлениях выбран вариант с одним вертикальным фото."
-        manageToken={manageToken}
-        assets={mediaAssets}
-        slots={verticalSlots}
-        requiredCount={requiredVertical}
-      />
-        </>
+      <section id="moments-photos" className={styles.photoBlock}>
+        <div className={styles.photoBlockHeader}>
+          <div>
+            <div className={styles.photoBlockTitleRow}>
+              <h3 data-focus-heading>Моменты</h3>
+              {momentsEnabled ? <strong>{memoryFilled} из 3</strong> : null}
+            </div>
+            {momentsEnabled ? <p>Три атмосферных фото с короткими подписями.</p> : null}
+          </div>
+        </div>
+        {momentsEnabled ? renderSlots(activeMemorySlots) : (
+          <div className={styles.photoMomentsDisabled}>
+            <p>Раздел не включён в открытку. Для него используются три атмосферных фотографии.</p>
+            <button type="button" className={styles.photoCompositionButton} disabled={momentsPending} onClick={enableMoments}>
+              {momentsPending ? "Добавляем…" : "Включить «Моменты»"}
+            </button>
+          </div>
+        )}
+      </section>
+
+      <p className={styles.photoWorkspaceHint}>ⓘ Нажмите фото, чтобы настроить кадр. Заменить, переместить или удалить его можно через меню ⋯</p>
+      <p className={`${styles.photoWorkspaceHint} ${styles.photoDesktopHint}`}>На компьютере порядок также можно изменить перетаскиванием.</p>
+
+      {editor ? (
+        <PhotoEditor
+          manageToken={manageToken}
+          state={editor}
+          onClose={closeEditor}
+          onSaved={finishEditor}
+          onFailed={() => {
+            if (editor.file) trackPhotoEvent("photo_upload_failed", editor.slot);
+            if (editor.mode === "move") setToast("Не удалось сохранить изменения. Попробуйте ещё раз.");
+          }}
+          onReplace={(asset) => requestFile(asset.slot, "replace", asset)}
+          onDelete={setDeleteAsset}
+        />
+      ) : null}
+      {movingAsset ? (
+        <MoveDialog
+          asset={movingAsset}
+          assets={assets}
+          availableSlots={[...activeMessageSlots, ...activeMemorySlots]}
+          onClose={() => setMovingAsset(null)}
+          onSelect={(slot) => moveAsset(movingAsset, slot)}
+        />
+      ) : null}
+      {deleteAsset ? (
+        <ConfirmationDialog
+          title="Удалить фото?"
+          description="Фотография будет удалена из этого слота. Это действие нельзя отменить."
+          onDismiss={() => setDeleteAsset(null)}
+          actions={[
+            { label: "Отмена", tone: "secondary", onClick: () => setDeleteAsset(null) },
+            { label: deletePending ? "Удаляем…" : "Удалить фото", tone: "danger", disabled: deletePending, onClick: () => removeAsset(deleteAsset) }
+          ]}
+        />
+      ) : null}
+      {toast ? (
+        <div className={styles.photoToast} role="status">
+          <span>{toast}</span>
+          {lastMove ? <button type="button" onClick={undoLastMove} disabled={movePending}>Отменить</button> : null}
+        </div>
       ) : null}
     </section>
   );

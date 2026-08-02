@@ -31,14 +31,37 @@ export const clientEvents = [
   "PUBLIC_SHARE_POST_DOWNLOADED",
   "PUBLIC_SHARE_STORY_DOWNLOADED",
   "PUBLIC_SHARE_PRINT_DOWNLOADED",
-  "PUBLIC_SHARE_CREATE_CARD_CLICKED"
+  "PUBLIC_SHARE_CREATE_CARD_CLICKED",
+  "photo_slot_opened",
+  "photo_upload_started",
+  "photo_upload_completed",
+  "photo_upload_failed",
+  "photo_replaced",
+  "photo_deleted",
+  "photo_moved",
+  "photo_caption_updated",
+  "photo_layout_edit_clicked",
+  "moments_enabled_from_photos",
+  "moments_disabled"
 ] as const;
 
 export type ClientTelemetryEvent = (typeof clientEvents)[number];
 export type CriticalArea = "ai" | "database" | "email" | "media" | "publication" | "client";
 
 const clientEventSet = new Set<string>(clientEvents);
-const allowedClientContextKeys = new Set(["cardId", "source", "route", "component", "step", "template", "ctaPosition"]);
+const allowedClientContextKeys = new Set([
+  "cardId",
+  "source",
+  "route",
+  "component",
+  "step",
+  "template",
+  "ctaPosition",
+  "block",
+  "slot",
+  "layout",
+  "deviceType"
+]);
 
 export const parseClientTelemetry = (input: unknown): { event: ClientTelemetryEvent; context: LogContext } | null => {
   if (!input || typeof input !== "object") return null;

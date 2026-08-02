@@ -24,6 +24,7 @@ export const useModalFocus = (dialogRef: RefObject<HTMLElement | null>, onEscape
     }
     modalDepth += 1;
     document.body.style.overflow = "hidden";
+    document.body.classList.add("manage-modal-open");
     main?.setAttribute("aria-hidden", "true");
     main?.setAttribute("inert", "");
     const frame = window.requestAnimationFrame(() => dialogRef.current?.focus());
@@ -59,6 +60,7 @@ export const useModalFocus = (dialogRef: RefObject<HTMLElement | null>, onEscape
       modalDepth = Math.max(0, modalDepth - 1);
       if (modalDepth === 0) {
         document.body.style.overflow = rootOverflow;
+        document.body.classList.remove("manage-modal-open");
         if (main) {
           if (rootAriaHidden == null) main.removeAttribute("aria-hidden");
           else main.setAttribute("aria-hidden", rootAriaHidden);

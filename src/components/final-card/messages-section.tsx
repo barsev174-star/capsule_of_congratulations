@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
+import { getCropStyle } from "@/lib/cards/media-slots";
 import type {
   FinalCardMessageLayoutMode,
   FinalCardMessageMediaLayout
@@ -122,6 +123,7 @@ const renderMediaFigure = (
             src={asset.publicUrl}
             alt={asset.captionTitle || asset.captionSubtitle || title}
             className={finalCardStyles.memoryPhotoImage}
+            style={getCropStyle(asset)}
           />
           <div className={finalCardStyles.memoryPhotoCaptionWrap}>
             <p className={finalCardStyles.memoryPhotoCaption}>
@@ -147,6 +149,7 @@ const renderMediaFigure = (
                 src={asset.publicUrl}
                 alt={asset.captionTitle || asset.captionSubtitle || title}
                 className={finalCardStyles.mediaImage}
+                style={getCropStyle(asset)}
               />
             </span>
           ) : (
@@ -155,6 +158,7 @@ const renderMediaFigure = (
               src={asset.publicUrl}
               alt={asset.captionTitle || asset.captionSubtitle || title}
               className={finalCardStyles.mediaImage}
+              style={getCropStyle(asset)}
             />
           )}
           <figcaption className={finalCardStyles.mediaCaption}>

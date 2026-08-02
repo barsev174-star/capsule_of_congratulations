@@ -22,10 +22,8 @@ type Props = {
   allContributions: Contribution[];
   mediaAssets: CardMediaAsset[];
   mediaLayout: FinalCardMessageMediaLayout;
-  messageAssignedCount: number;
-  messageRequiredCount: number;
-  memoryAssignedCount: number;
-  memoryRequiredCount: number;
+  messagePhotosEnabled: boolean;
+  momentsEnabled: boolean;
   occasionText: string;
   cardId: string;
   mainGreetingContributionId: string | null;
@@ -132,10 +130,8 @@ export const ContentStudio = ({
   allContributions,
   mediaAssets,
   mediaLayout,
-  messageAssignedCount,
-  messageRequiredCount,
-  memoryAssignedCount,
-  memoryRequiredCount,
+  messagePhotosEnabled,
+  momentsEnabled,
   occasionText,
   cardId,
   mainGreetingContributionId,
@@ -179,13 +175,12 @@ export const ContentStudio = ({
           ) : (
             <section className={styles.contentPhotoSection} id="content-panel-photos">
               <MediaManager
+                cardId={cardId}
                 manageToken={manageToken}
                 mediaAssets={mediaAssets}
                 mediaLayout={mediaLayout}
-                messageAssignedCount={messageAssignedCount}
-                messageRequiredCount={messageRequiredCount}
-                memoryAssignedCount={memoryAssignedCount}
-                memoryRequiredCount={memoryRequiredCount}
+                messagePhotosEnabled={messagePhotosEnabled}
+                initialMomentsEnabled={momentsEnabled}
               />
             </section>
           )}

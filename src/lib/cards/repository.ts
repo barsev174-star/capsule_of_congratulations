@@ -138,6 +138,11 @@ const readMediaAssets = async (): Promise<CardMediaAsset[]> => {
           sizeBytes: item.sizeBytes ?? 0,
           captionTitle: item.captionTitle ?? "",
           captionSubtitle: item.captionSubtitle ?? (item as { caption?: string }).caption ?? "",
+          imageWidth: item.imageWidth ?? null,
+          imageHeight: item.imageHeight ?? null,
+          cropX: item.cropX ?? 50,
+          cropY: item.cropY ?? 50,
+          cropZoom: item.cropZoom ?? 1,
           createdAt: item.createdAt ?? new Date().toISOString(),
           updatedAt: item.updatedAt ?? new Date().toISOString()
         }))
@@ -535,12 +540,11 @@ export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
   const existing = assets.find((item) => item.cardId === asset.cardId && item.slot === asset.slot);
   const nextAssets = assets.filter((item) => item.id !== existing?.id);
 
+  nextAssets.push(asset);
+  await writeFile(mediaAssetsFilePath, JSON.stringify(nextAssets, null, 2), "utf8");
   if (existing && existing.storagePath !== asset.storagePath) {
     await deleteStoredCardMediaFile(existing.storagePath);
   }
-
-  nextAssets.push(asset);
-  await writeFile(mediaAssetsFilePath, JSON.stringify(nextAssets, null, 2), "utf8");
   return asset;
 };
 
@@ -548,10 +552,11 @@ export const updateCardMediaAssetCaption = async (
   assetId: string,
   captionTitle: string,
   captionSubtitle: string,
-  slot?: CardMediaAsset["slot"]
+  slot?: CardMediaAsset["slot"],
+  crop?: Pick<CardMediaAsset, "cropX" | "cropY" | "cropZoom">
 ) => {
   if (isPostgresConfigured()) {
-    return postgresRepository.updateCardMediaAssetCaption(assetId, captionTitle, captionSubtitle, slot);
+    return postgresRepository.updateCardMediaAssetCaption(assetId, captionTitle, captionSubtitle, slot, crop);
   }
 
   const assets = await readMediaAssets();
@@ -566,6 +571,9 @@ export const updateCardMediaAssetCaption = async (
     slot: slot ?? assets[index].slot,
     captionTitle,
     captionSubtitle,
+    cropX: crop?.cropX ?? assets[index].cropX,
+    cropY: crop?.cropY ?? assets[index].cropY,
+    cropZoom: crop?.cropZoom ?? assets[index].cropZoom,
     updatedAt: new Date().toISOString()
   };
 
@@ -609,8 +617,8 @@ export const deleteCardMediaAsset = async (assetId: string) => {
   }
 
   const nextAssets = assets.filter((item) => item.id !== assetId);
-  await deleteStoredCardMediaFile(current.storagePath);
   await writeFile(mediaAssetsFilePath, JSON.stringify(nextAssets, null, 2), "utf8");
+  await deleteStoredCardMediaFile(current.storagePath);
   return current;
 };
 

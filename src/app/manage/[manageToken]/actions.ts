@@ -24,6 +24,13 @@ import {
   upsertCardMediaAsset
 } from "@/lib/cards/repository";
 import { CARD_MEDIA_MAX_COUNT, validateCardMediaFile } from "@/lib/cards/media";
+import {
+  ALL_MEDIA_SLOTS,
+  getActiveMessageSlots,
+  getAssetsForSlots,
+  MEMORY_MEDIA_SLOTS,
+  normalizeCrop
+} from "@/lib/cards/media-slots";
 import { createContribution } from "@/lib/cards/service";
 import { isTemplateId } from "@/lib/cards/templates";
 import type { CardDraft, CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
@@ -39,7 +46,6 @@ import type {
   FinalCardBlockId,
   FinalCardBlockOrder,
   FinalCardBlockSettings,
-  FinalCardMediaSlot,
   FinalCardMemorySettings,
   FinalCardMessageLayoutMode,
   FinalCardMessageMediaLayout,
@@ -47,7 +53,7 @@ import type {
   FinalCardOptionalBlockId
 } from "@/lib/final-card/types";
 import { logger } from "@/lib/logger";
-import { saveCardMediaFile } from "@/lib/media/local-card-media-storage";
+import { deleteStoredCardMediaFile, saveCardMediaFile } from "@/lib/media/local-card-media-storage";
 import { importGiftOptionImage } from "@/lib/gift-polls/image-storage";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
 import { getGiftPath, getJoinPath, getManagePath } from "@/lib/routes/card-links";
@@ -71,9 +77,7 @@ const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "m
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
 const messageLayoutModes: FinalCardMessageLayoutMode[] = ["grid-2", "carousel-1", "carousel-2", "column-media"];
 const mediaLayouts: FinalCardMessageMediaLayout[] = ["portrait", "landscape-pair", "landscape-trio"];
-const mediaSlots: CardMediaSlot[] = ["portrait", "landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c"];
-const defaultMediaSlotOrder: CardMediaSlot[] = ["landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c", "portrait"];
-const finalMediaSlots: FinalCardMediaSlot[] = ["portrait", "landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c"];
+const mediaSlots: CardMediaSlot[] = ALL_MEDIA_SLOTS;
 
 const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 const validateLength = (value: string, min: number, max: number) => value.length >= min && value.length <= max;
@@ -85,6 +89,50 @@ const assertManageContentEditable = async (manageToken: string) => {
     throw new Error("Секретная ссылка управления больше не актуальна.");
   }
   assertCardContentEditable(lifecycle);
+};
+
+const syncCardPhotoSettings = async (card: CardDraft, assets: CardMediaAsset[]) => {
+  const currentMessageSettings = card.finalMessageSettings ?? {
+    layoutMode: "grid-2" as const,
+    mediaLayout: "portrait" as const,
+    mediaSlots: [],
+    mediaAssetIds: [],
+    showAllLink: true
+  };
+  const messageSlots = currentMessageSettings.layoutMode === "column-media"
+    ? getActiveMessageSlots(currentMessageSettings.mediaLayout)
+    : [];
+  const messageAssetIds = getAssetsForSlots(assets, messageSlots).map((asset) => asset.id);
+  const momentsEnabled = card.finalBlockSettings?.memories ?? true;
+  const memorySlots = momentsEnabled ? MEMORY_MEDIA_SLOTS : [];
+  const memoryAssetIds = getAssetsForSlots(assets, memorySlots).map((asset) => asset.id);
+  const finalMessageSettings: FinalCardMessageSettings = {
+    ...currentMessageSettings,
+    mediaSlots: messageSlots,
+    mediaAssetIds: messageAssetIds
+  };
+  const finalMemorySettings: FinalCardMemorySettings = {
+    ...(card.finalMemorySettings ?? {
+      title: "Моменты",
+      description: "Фото, которые хочется сохранить",
+      mediaSlots: [],
+      mediaAssetIds: [],
+      photoCount: 3
+    }),
+    mediaSlots: memorySlots,
+    mediaAssetIds: memoryAssetIds,
+    photoCount: 3
+  };
+
+  await updateCardFinalPresentationSettings(
+    card.id,
+    card.templateId,
+    card.finalBlockSettings ?? {},
+    card.finalBlockOrder ?? managedBlockIds,
+    finalMessageSettings,
+    card.finalMainGreetingSettings ?? { contributionId: null },
+    finalMemorySettings
+  );
 };
 
 type CardBasicsFields = {
@@ -906,24 +954,7 @@ export async function updateFinalPresentationSettingsAction(
   const templateId = isTemplateId(rawTemplateId) ? rawTemplateId : card.templateId;
   const visibleContributions = await listContributionsByCardId(card.id);
   const layoutProfile = getFinalCardMessageLayoutProfile(layoutMode, mediaLayout);
-  const messageMediaSlots = formData
-    .getAll("messageMediaSlots")
-    .map((value) => String(value))
-    .filter((value): value is FinalCardMediaSlot => finalMediaSlots.includes(value as FinalCardMediaSlot));
-  const memoryMediaSlots = formData
-    .getAll("memoryMediaSlots")
-    .map((value) => String(value))
-    .filter((value): value is FinalCardMediaSlot => finalMediaSlots.includes(value as FinalCardMediaSlot));
   const cardMediaAssets = await listCardMediaAssetsByCardId(card.id);
-  const cardMediaAssetIds = new Set(cardMediaAssets.map((asset) => asset.id));
-  const messageMediaAssetIds = formData
-    .getAll("messageMediaAssetIds")
-    .map((value) => String(value))
-    .filter((value) => cardMediaAssetIds.has(value));
-  const memoryMediaAssetIds = formData
-    .getAll("memoryMediaAssetIds")
-    .map((value) => String(value))
-    .filter((value) => cardMediaAssetIds.has(value));
   const memoryTitle = String(formData.get("memoryTitle") ?? "").trim().slice(0, 80) || "Моменты";
   const memoryDescription =
     String(formData.get("memoryDescription") ?? "").trim().slice(0, 180) ||
@@ -938,6 +969,11 @@ export async function updateFinalPresentationSettingsAction(
     acc[blockId] = formData.get(blockId) === "on";
     return acc;
   }, {});
+  const messageMediaSlots = layoutMode === "column-media" ? getActiveMessageSlots(mediaLayout) : [];
+  const messageMediaAssetIds = getAssetsForSlots(cardMediaAssets, messageMediaSlots).map((asset) => asset.id);
+  const momentsEnabled = finalBlockSettings.memories ?? true;
+  const memoryMediaSlots = momentsEnabled ? MEMORY_MEDIA_SLOTS : [];
+  const memoryMediaAssetIds = getAssetsForSlots(cardMediaAssets, memoryMediaSlots).map((asset) => asset.id);
 
   const finalMessageSettings: FinalCardMessageSettings = {
     layoutMode,
@@ -971,7 +1007,7 @@ export async function updateFinalPresentationSettingsAction(
     finalMemorySettings
   );
   if (!updated) {
-    return { ok: false, message: "Не удалось сохранить состав финального экрана." };
+    return { ok: false, message: "Не удалось изменить оформление. Попробуйте ещё раз." };
   }
 
   logger.info("manage.final_presentation_settings_updated", "Final presentation settings updated by organizer", {
@@ -1051,12 +1087,21 @@ export async function saveCardMediaAction(
   formData: FormData
 ) {
   const manageToken = String(formData.get("manageToken") ?? "");
-  let slot = String(formData.get("slot") ?? "") as CardMediaSlot;
+  const slot = String(formData.get("slot") ?? "") as CardMediaSlot;
   const captionTitle = String(formData.get("captionTitle") ?? "").trim();
   const captionSubtitle = String(formData.get("captionSubtitle") ?? "").trim();
   const existingAssetId = String(formData.get("assetId") ?? "");
   const file = formData.get("file");
   const rightsConfirmed = formData.get("rightsConfirmed") === "on";
+  const crop = normalizeCrop({
+    x: Number(formData.get("cropX") ?? 50),
+    y: Number(formData.get("cropY") ?? 50),
+    zoom: Number(formData.get("cropZoom") ?? 1)
+  });
+  const rawImageWidth = Number(formData.get("imageWidth") ?? 0);
+  const rawImageHeight = Number(formData.get("imageHeight") ?? 0);
+  const imageWidth = Number.isInteger(rawImageWidth) && rawImageWidth > 0 ? rawImageWidth : null;
+  const imageHeight = Number.isInteger(rawImageHeight) && rawImageHeight > 0 ? rawImageHeight : null;
 
   if (!manageToken) {
     return { ok: false, message: "Не удалось определить слот для фото." };
@@ -1086,21 +1131,19 @@ export async function saveCardMediaAction(
       return { ok: false, message: issue };
     }
 
-    const currentAssets = await listCardMediaAssetsByCardId(card.id);
-    // New uploads always take the first free greeting slot. The organizer can
-    // move the photo later from its card in the media list.
-    if (!existingAssetId) {
-      const resolvedSlot = defaultMediaSlotOrder.find((candidate) => !currentAssets.some((asset) => asset.slot === candidate));
-      if (!resolvedSlot) {
-        return { ok: false, message: "Все доступные места для фотографий заполнены." };
-      }
-      slot = resolvedSlot;
-    }
     if (!mediaSlots.includes(slot)) {
       return { ok: false, message: "Не удалось определить слот для фото." };
     }
+    const currentAssets = await listCardMediaAssetsByCardId(card.id);
+    const currentAsset = existingAssetId ? currentAssets.find((item) => item.id === existingAssetId) : null;
+    if (existingAssetId && !currentAsset) {
+      return { ok: false, message: "Фотография для замены не найдена." };
+    }
     const existingSlotAsset = currentAssets.find((item) => item.slot === slot);
-    const isReplacingExistingAsset = Boolean(existingAssetId || existingSlotAsset);
+    if (existingSlotAsset && existingSlotAsset.id !== existingAssetId) {
+      return { ok: false, message: "Эта позиция уже занята. Используйте перемещение или обмен местами." };
+    }
+    const isReplacingExistingAsset = Boolean(currentAsset);
 
     if (!isReplacingExistingAsset && currentAssets.length >= CARD_MEDIA_MAX_COUNT) {
       return {
@@ -1119,7 +1162,7 @@ export async function saveCardMediaAction(
     const now = new Date().toISOString();
 
     const asset: CardMediaAsset = {
-      id: existingAssetId || randomUUID(),
+      id: currentAsset?.id ?? randomUUID(),
       cardId: card.id,
       slot,
       publicUrl: savedFile.publicUrl,
@@ -1129,20 +1172,25 @@ export async function saveCardMediaAction(
       sizeBytes: file.size,
       captionTitle,
       captionSubtitle,
+      imageWidth,
+      imageHeight,
+      cropX: crop.x,
+      cropY: crop.y,
+      cropZoom: crop.zoom,
       rightsConsentVersion: LEGAL_VERSIONS.materialRights,
       rightsConfirmedAt: now,
       createdAt: now,
       updatedAt: now
     };
 
-    if (existingSlotAsset) {
-      asset.id = existingSlotAsset.id;
-      asset.createdAt = existingSlotAsset.createdAt;
+    if (currentAsset) {
+      asset.createdAt = currentAsset.createdAt;
     }
 
     try {
       await upsertCardMediaAsset(asset);
     } catch (error) {
+      await deleteStoredCardMediaFile(savedFile.storagePath);
       const errorId = await reportCriticalError("database", error, { cardId: card.id, operation: "save_media_record", slot });
       return { ok: false, message: `Фото загружено, но не добавлено в открытку. Код ошибки: ${errorId}` };
     }
@@ -1154,8 +1202,11 @@ export async function saveCardMediaAction(
       sizeBytes: file.size
     });
 
+    const nextAssets = [...currentAssets.filter((item) => item.id !== asset.id), asset];
+    await syncCardPhotoSettings(card, nextAssets);
     revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
-    return { ok: true, message: "Фото сохранено." };
+    const position = slot === "portrait" || slot.endsWith("-a") ? 1 : slot.endsWith("-b") ? 2 : 3;
+    return { ok: true, message: `Фото добавлено в позицию ${position}.`, asset };
   }
 
   if (!existingAssetId) {
@@ -1168,6 +1219,9 @@ export async function saveCardMediaAction(
 
   const currentAssets = await listCardMediaAssetsByCardId(card.id);
   const currentAsset = currentAssets.find((item) => item.id === existingAssetId);
+  if (!currentAsset) {
+    return { ok: false, message: "Фотография не найдена." };
+  }
   const targetSlotAsset = currentAssets.find((item) => item.slot === slot && item.id !== existingAssetId);
 
   const isSlotChanged = currentAsset && currentAsset.slot !== slot;
@@ -1181,7 +1235,8 @@ export async function saveCardMediaAction(
     existingAssetId,
     captionTitle,
     captionSubtitle,
-    targetSlotAsset ? undefined : slot
+    targetSlotAsset ? undefined : slot,
+    { cropX: crop.x, cropY: crop.y, cropZoom: crop.zoom }
   );
   if (!updated || updated.cardId !== card.id) {
     return { ok: false, message: "Не удалось обновить фото." };
@@ -1193,6 +1248,8 @@ export async function saveCardMediaAction(
     assetId: updated.id
   });
 
+  const nextAssets = await listCardMediaAssetsByCardId(card.id);
+  await syncCardPhotoSettings(card, nextAssets);
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 
   if (isSlotChanged) {
@@ -1204,6 +1261,62 @@ export async function saveCardMediaAction(
   }
 
   return { ok: true, message: "Изменения сохранены." };
+}
+
+export async function updateCardMomentsEnabledAction(manageToken: string, enabled: boolean) {
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования." };
+  }
+  const assets = await listCardMediaAssetsByCardId(card.id);
+  const finalBlockSettings: FinalCardBlockSettings = {
+    ...(card.finalBlockSettings ?? {}),
+    memories: enabled
+  };
+  const currentMessageSettings: FinalCardMessageSettings = card.finalMessageSettings ?? {
+    layoutMode: "grid-2",
+    mediaLayout: "portrait",
+    mediaSlots: [],
+    mediaAssetIds: [],
+    showAllLink: true
+  };
+  const messageSlots = currentMessageSettings.layoutMode === "column-media"
+    ? getActiveMessageSlots(currentMessageSettings.mediaLayout)
+    : [];
+  const finalMessageSettings: FinalCardMessageSettings = {
+    ...currentMessageSettings,
+    mediaSlots: messageSlots,
+    mediaAssetIds: getAssetsForSlots(assets, messageSlots).map((asset) => asset.id)
+  };
+  const memorySlots = enabled ? MEMORY_MEDIA_SLOTS : [];
+  const finalMemorySettings: FinalCardMemorySettings = {
+    ...(card.finalMemorySettings ?? {
+      title: "Моменты",
+      description: "Фото, которые хочется сохранить",
+      mediaSlots: [],
+      mediaAssetIds: [],
+      photoCount: 3
+    }),
+    mediaSlots: memorySlots,
+    mediaAssetIds: getAssetsForSlots(assets, memorySlots).map((asset) => asset.id),
+    photoCount: 3
+  };
+  const updated = await updateCardFinalPresentationSettings(
+    card.id,
+    card.templateId,
+    finalBlockSettings,
+    card.finalBlockOrder ?? managedBlockIds,
+    finalMessageSettings,
+    card.finalMainGreetingSettings ?? { contributionId: null },
+    finalMemorySettings
+  );
+  if (!updated) return { ok: false, message: enabled ? "Не удалось добавить блок «Моменты». Попробуйте ещё раз." : "Не удалось отключить блок «Моменты». Попробуйте ещё раз." };
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+  logger.info(enabled ? "manage.card_moments_enabled_from_photos" : "manage.card_moments_disabled", "Moments block visibility updated", { cardId: card.id, enabled });
+  return { ok: true, message: enabled ? "Блок «Моменты» добавлен в открытку." : "Блок «Моменты» отключён." };
 }
 
 export async function deleteCardMediaAction(
@@ -1227,40 +1340,16 @@ export async function deleteCardMediaAction(
     return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования." };
   }
 
-  const deleted = await deleteCardMediaAsset(assetId);
-  if (!deleted || deleted.cardId !== card.id) {
+  const currentAssets = await listCardMediaAssetsByCardId(card.id);
+  const currentAsset = currentAssets.find((item) => item.id === assetId);
+  if (!currentAsset) {
     return { ok: false, message: "Фото не найдено." };
   }
 
-  const finalMessageSettings = {
-    ...(card.finalMessageSettings ?? {
-      layoutMode: "grid-2" as const,
-      mediaLayout: "portrait" as const,
-      mediaSlots: [],
-      mediaAssetIds: [],
-      showAllLink: true
-    }),
-    mediaAssetIds: (card.finalMessageSettings?.mediaAssetIds ?? []).filter((id) => id !== assetId)
-  };
-  const finalMemorySettings = {
-    ...(card.finalMemorySettings ?? {
-      title: "Моменты",
-      description: "Фото, которые хочется сохранить",
-      mediaSlots: [],
-      mediaAssetIds: [],
-      photoCount: 3 as const
-    }),
-    mediaAssetIds: (card.finalMemorySettings?.mediaAssetIds ?? []).filter((id) => id !== assetId)
-  };
-  await updateCardFinalPresentationSettings(
-    card.id,
-    card.templateId,
-    card.finalBlockSettings ?? {},
-    card.finalBlockOrder ?? managedBlockIds,
-    finalMessageSettings,
-    card.finalMainGreetingSettings ?? { contributionId: null },
-    finalMemorySettings
-  );
+  const deleted = await deleteCardMediaAsset(assetId);
+  if (!deleted) return { ok: false, message: "Фото не найдено." };
+
+  await syncCardPhotoSettings(card, currentAssets.filter((item) => item.id !== assetId));
 
   logger.info("manage.card_media_deleted", "Card media deleted by organizer", {
     cardId: card.id,

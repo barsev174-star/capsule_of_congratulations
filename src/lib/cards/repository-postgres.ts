@@ -84,6 +84,11 @@ type MediaRow = {
   size_bytes: number;
   caption_title: string;
   caption_subtitle: string;
+  image_width: number | null;
+  image_height: number | null;
+  crop_x: number;
+  crop_y: number;
+  crop_zoom: number;
   rights_consent_version: string | null;
   rights_confirmed_at: Date | string | null;
   created_at: Date | string;
@@ -184,6 +189,11 @@ const mapMedia = (row: MediaRow): CardMediaAsset => ({
   sizeBytes: row.size_bytes,
   captionTitle: row.caption_title,
   captionSubtitle: row.caption_subtitle,
+  imageWidth: row.image_width,
+  imageHeight: row.image_height,
+  cropX: row.crop_x,
+  cropY: row.crop_y,
+  cropZoom: row.crop_zoom,
   rightsConsentVersion: row.rights_consent_version,
   rightsConfirmedAt: row.rights_confirmed_at ? toIso(row.rights_confirmed_at) : null,
   createdAt: toIso(row.created_at),
@@ -582,17 +592,14 @@ export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
   const existing = existingResult.rows[0] ? mapMedia(existingResult.rows[0]) : null;
   const nextAsset = existing ? { ...asset, id: existing.id, createdAt: existing.createdAt } : asset;
 
-  if (existing && existing.storagePath !== asset.storagePath) {
-    await deleteStoredCardMediaFile(existing.storagePath);
-  }
-
   await getPostgresPool().query(
     `
       INSERT INTO card_media_assets (
         id, card_id, slot, public_url, storage_path, file_name, mime_type,
-        size_bytes, caption_title, caption_subtitle, rights_consent_version, rights_confirmed_at, created_at, updated_at
+        size_bytes, caption_title, caption_subtitle, image_width, image_height, crop_x, crop_y, crop_zoom,
+        rights_consent_version, rights_confirmed_at, created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       ON CONFLICT (card_id, slot) DO UPDATE
       SET public_url = EXCLUDED.public_url,
           storage_path = EXCLUDED.storage_path,
@@ -601,6 +608,11 @@ export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
           size_bytes = EXCLUDED.size_bytes,
           caption_title = EXCLUDED.caption_title,
           caption_subtitle = EXCLUDED.caption_subtitle,
+          image_width = EXCLUDED.image_width,
+          image_height = EXCLUDED.image_height,
+          crop_x = EXCLUDED.crop_x,
+          crop_y = EXCLUDED.crop_y,
+          crop_zoom = EXCLUDED.crop_zoom,
           rights_consent_version = EXCLUDED.rights_consent_version,
           rights_confirmed_at = EXCLUDED.rights_confirmed_at,
           updated_at = EXCLUDED.updated_at
@@ -616,12 +628,20 @@ export const upsertCardMediaAsset = async (asset: CardMediaAsset) => {
       nextAsset.sizeBytes,
       nextAsset.captionTitle,
       nextAsset.captionSubtitle,
+      nextAsset.imageWidth ?? null,
+      nextAsset.imageHeight ?? null,
+      nextAsset.cropX ?? 50,
+      nextAsset.cropY ?? 50,
+      nextAsset.cropZoom ?? 1,
       nextAsset.rightsConsentVersion ?? null,
       nextAsset.rightsConfirmedAt ?? null,
       nextAsset.createdAt,
       nextAsset.updatedAt
     ]
   );
+  if (existing && existing.storagePath !== asset.storagePath) {
+    await deleteStoredCardMediaFile(existing.storagePath);
+  }
   return nextAsset;
 };
 
@@ -629,7 +649,8 @@ export const updateCardMediaAssetCaption = async (
   assetId: string,
   captionTitle: string,
   captionSubtitle: string,
-  slot?: CardMediaAsset["slot"]
+  slot?: CardMediaAsset["slot"],
+  crop?: Pick<CardMediaAsset, "cropX" | "cropY" | "cropZoom">
 ) => {
   const result = await getPostgresPool().query<MediaRow>(
     `
@@ -637,11 +658,14 @@ export const updateCardMediaAssetCaption = async (
       SET caption_title = $2,
           caption_subtitle = $3,
           slot = COALESCE($4, slot),
+          crop_x = COALESCE($5, crop_x),
+          crop_y = COALESCE($6, crop_y),
+          crop_zoom = COALESCE($7, crop_zoom),
           updated_at = now()
       WHERE id = $1
       RETURNING *
     `,
-    [assetId, captionTitle, captionSubtitle, slot ?? null]
+    [assetId, captionTitle, captionSubtitle, slot ?? null, crop?.cropX ?? null, crop?.cropY ?? null, crop?.cropZoom ?? null]
   );
   return result.rows[0] ? mapMedia(result.rows[0]) : null;
 };
@@ -673,9 +697,10 @@ export const swapCardMediaAssetSlots = async (cardId: string, leftAssetId: strin
       `
         INSERT INTO card_media_assets (
           id, card_id, slot, public_url, storage_path, file_name, mime_type,
-          size_bytes, caption_title, caption_subtitle, rights_consent_version, rights_confirmed_at, created_at, updated_at
+          size_bytes, caption_title, caption_subtitle, image_width, image_height, crop_x, crop_y, crop_zoom,
+          rights_consent_version, rights_confirmed_at, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, now())
         RETURNING *
       `,
       [
@@ -689,6 +714,11 @@ export const swapCardMediaAssetSlots = async (cardId: string, leftAssetId: strin
         right.size_bytes,
         right.caption_title,
         right.caption_subtitle,
+        right.image_width,
+        right.image_height,
+        right.crop_x,
+        right.crop_y,
+        right.crop_zoom,
         right.rights_consent_version,
         right.rights_confirmed_at,
         right.created_at

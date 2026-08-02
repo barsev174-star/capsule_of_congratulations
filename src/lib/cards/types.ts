@@ -149,6 +149,11 @@ export type CardMediaAsset = {
   sizeBytes: number;
   captionTitle: string;
   captionSubtitle: string;
+  imageWidth?: number | null;
+  imageHeight?: number | null;
+  cropX?: number;
+  cropY?: number;
+  cropZoom?: number;
   createdAt: string;
   updatedAt: string;
   rightsConsentVersion?: string | null;

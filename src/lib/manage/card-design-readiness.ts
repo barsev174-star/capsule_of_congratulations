@@ -6,12 +6,8 @@ import {
 import type { CardLifecycle } from "@/lib/cards/lifecycle";
 import { isTemplateId } from "@/lib/cards/templates";
 import type { CardDraft, CardMediaAsset, Contribution } from "@/lib/cards/types";
+import { getActiveMessageSlots, getAssetsForSlots, MEMORY_MEDIA_SLOTS } from "@/lib/cards/media-slots";
 import type { FinalCardBlockId, FinalCardOptionalBlockId } from "@/lib/final-card/types";
-import {
-  getMemoryMediaSlots,
-  getMessageMediaSlots,
-  resolveAssignedMediaAssets
-} from "@/lib/final-card/media-assignments";
 import { resolveMainGreetingContribution } from "@/lib/final-card/main-greeting";
 
 export type CardBlockReadinessStatus =
@@ -187,13 +183,7 @@ const messagePhotoRequirement = (input: CardDesignReadinessInput) => {
   if ((settings?.layoutMode ?? "grid-2") !== "column-media") return null;
 
   const mediaLayout = settings?.mediaLayout ?? "portrait";
-  const assignedPhotoCount = resolveAssignedMediaAssets(
-    input.mediaAssets,
-    settings?.mediaAssetIds,
-    input.card.deliveryStatus === "DELIVERED"
-      ? (settings?.mediaSlots.length ? settings.mediaSlots : getMessageMediaSlots(mediaLayout))
-      : []
-  ).length;
+  const assignedPhotoCount = getAssetsForSlots(input.mediaAssets, getActiveMessageSlots(mediaLayout)).length;
   if (mediaLayout === "portrait") {
     return {
       required: 1,
@@ -221,15 +211,7 @@ export const buildCardBlockReadiness = (
       isTemplateId(input.card.templateId)
   );
   const mainGreetingReady = Boolean(resolveMainGreetingContribution(input.card, input.visibleContributions));
-  const horizontalPhotoCount = resolveAssignedMediaAssets(
-    input.mediaAssets,
-    input.card.finalMemorySettings?.mediaAssetIds,
-    input.card.deliveryStatus === "DELIVERED"
-      ? (input.card.finalMemorySettings?.mediaSlots.length
-          ? input.card.finalMemorySettings.mediaSlots
-          : getMemoryMediaSlots())
-      : []
-  ).length;
+  const horizontalPhotoCount = getAssetsForSlots(input.mediaAssets, MEMORY_MEDIA_SLOTS).length;
   const memoryPhotoCount = input.card.finalMemorySettings?.photoCount ?? 3;
 
   return managedBlocks.map((blockId) => {
@@ -308,7 +290,7 @@ export const buildCardBlockReadiness = (
           blockId,
           "Нужно назначить фото",
           `Для выбранной схемы нужно ${photoRequirement.required} ${photoRequirement.label}; доступно ${photoRequirement.available}.`,
-          { label: "Перейти к фото", target: "content", kind: "tab" }
+          { label: "Перейти к фото", target: "photos", kind: "tab" }
         );
       }
       return makeBlock(input, blockId, "READY", "Схема выбрана, её требования к материалам выполнены.");
@@ -321,7 +303,7 @@ export const buildCardBlockReadiness = (
           blockId,
           "Нужно назначить фото",
           `Для блока нужно ${memoryPhotoCount} горизонтальных фото; доступно ${horizontalPhotoCount}.`,
-          { label: "Перейти к фото", target: "content", kind: "tab" }
+          { label: "Перейти к фото", target: "photos", kind: "tab" }
         );
       }
       const hasUsableDeliveredMemoryCopy = input.card.deliveryStatus === "DELIVERED";

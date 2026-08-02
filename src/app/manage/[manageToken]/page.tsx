@@ -31,16 +31,12 @@ import {
 } from "@/lib/ai/card-insights";
 import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository";
 import { getCardLifecycleLabel, isGiftAccessible } from "@/lib/cards/lifecycle";
+import { getActiveMessageSlots, getAssetsForSlots, MEMORY_MEDIA_SLOTS } from "@/lib/cards/media-slots";
 import { openCollectionAction } from "./actions";
 import { getGiftPollForManage } from "@/lib/gift-polls/repository";
 import { GiftPollSettingsForm } from "./gift-poll-settings-form";
 import { PaymentCheckoutButton } from "./payment-checkout-button";
 import { buildCardBlockReadiness, buildOrganizerJourney } from "@/lib/manage/card-design-readiness";
-import {
-  getMemoryMediaSlots,
-  getMessageMediaSlots,
-  resolveAssignedMediaAssets
-} from "@/lib/final-card/media-assignments";
 import { resolveMainGreetingContribution } from "@/lib/final-card/main-greeting";
 import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
 import { ManageMobileMenu } from "./manage-mobile-menu";
@@ -168,25 +164,15 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const selectedTemplate = cardTemplates.find((template) => template.id === card.templateId) ?? cardTemplates[0];
   const layoutMode = card.finalMessageSettings?.layoutMode ?? "grid-2";
   const mediaLayout = card.finalMessageSettings?.mediaLayout ?? "portrait";
-  const messageMediaSlots = card.finalMessageSettings?.mediaSlots ?? [];
-  const memoryMediaSlots = card.finalMemorySettings?.mediaSlots ?? [];
-  const messageMediaAssetIds = card.finalMessageSettings?.mediaAssetIds ?? [];
-  const memoryMediaAssetIds = card.finalMemorySettings?.mediaAssetIds ?? [];
+  const messagePhotosEnabled = layoutMode === "column-media";
+  const momentsEnabled = card.finalBlockSettings?.memories ?? true;
   const memoryPhotoCount = card.finalMemorySettings?.photoCount ?? 3;
-  const messageAssignedMedia = resolveAssignedMediaAssets(
-    mediaAssets,
-    messageMediaAssetIds,
-    card.deliveryStatus === "DELIVERED"
-      ? (messageMediaSlots.length ? messageMediaSlots : getMessageMediaSlots(mediaLayout))
-      : []
-  );
-  const memoryAssignedMedia = resolveAssignedMediaAssets(
-    mediaAssets,
-    memoryMediaAssetIds,
-    card.deliveryStatus === "DELIVERED"
-      ? (memoryMediaSlots.length ? memoryMediaSlots : getMemoryMediaSlots())
-      : []
-  );
+  const messageAssignedMedia = messagePhotosEnabled
+    ? getAssetsForSlots(mediaAssets, getActiveMessageSlots(mediaLayout))
+    : [];
+  const memoryAssignedMedia = momentsEnabled
+    ? getAssetsForSlots(mediaAssets, MEMORY_MEDIA_SLOTS)
+    : [];
   const messageRequiredPhotoCount = layoutMode === "column-media"
     ? (mediaLayout === "portrait" ? 1 : mediaLayout === "landscape-pair" ? 2 : 3)
     : 0;
@@ -198,6 +184,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
     memoryAssignedMedia.length,
     memoryPhotoCount
   );
+  const activePhotoCount = messageAssignedPhotoCount + (momentsEnabled ? memoryAssignedPhotoCount : 0);
   const savedMemoryTitle = card.finalMemorySettings?.title?.trim();
   const savedMemoryDescription = card.finalMemorySettings?.description?.trim();
   const memoryTitle = !savedMemoryTitle || savedMemoryTitle === "Наши воспоминания" ? "Моменты" : savedMemoryTitle;
@@ -379,7 +366,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
               <span className={styles.managerLifecycleMobile}>{mobileLifecycleLabel}</span>
               <span className={styles.managerFromChip}>{fromLabel}</span>
               <span className={styles.managerCountChip}>{allContributions.length} поздравлений</span>
-              <span className={styles.managerCountChip}>{mediaAssets.length} фото</span>
+              <span className={styles.managerCountChip}>{activePhotoCount} фото</span>
               <span className={styles.aiChip}>AI: осталось {aiLimitRemaining} из {aiLimitTotal}</span>
             </div>
           </div>
@@ -410,7 +397,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
               item.id === "congratulations"
                 ? allContributions.length
                 : item.id === "photos"
-                  ? mediaAssets.length
+                  ? activePhotoCount
                   : null;
             const ariaLabel = count === null ? item.label : `${item.label}, ${count}`;
 
@@ -462,15 +449,12 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 </div>
 
                 <BlockSettingsForm
+                  cardId={card.id}
                   manageToken={manageToken}
                   options={blockOptions}
                   initialLayoutMode={layoutMode}
                   initialMediaLayout={mediaLayout}
                   initialBlockOrder={initialBlockOrder}
-                  initialMessageMediaSlots={messageMediaSlots}
-                  initialMemoryMediaSlots={memoryMediaSlots}
-                  initialMessageMediaAssetIds={messageMediaAssetIds}
-                  initialMemoryMediaAssetIds={memoryMediaAssetIds}
                   messageAssignedPhotoCount={messageAssignedPhotoCount}
                   memoryAssignedPhotoCount={memoryAssignedPhotoCount}
                   initialMemoryPhotoCount={memoryPhotoCount}
@@ -643,10 +627,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
             allContributions={allContributions}
             mediaAssets={mediaAssets}
             mediaLayout={mediaLayout}
-            messageAssignedCount={model?.messageMediaAssets.length ?? 0}
-            messageRequiredCount={messageRequiredPhotoCount}
-            memoryAssignedCount={model?.memoryMediaAssets.length ?? 0}
-            memoryRequiredCount={memoryPhotoCount}
+            messagePhotosEnabled={messagePhotosEnabled}
+            momentsEnabled={momentsEnabled}
             occasionText={occasionText}
             cardId={card.id}
             mainGreetingContributionId={mainGreetingContributionId}

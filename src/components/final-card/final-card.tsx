@@ -13,6 +13,7 @@ import {
   ScrapbookDecorProvider
 } from "./scrapbook-decor-layer";
 import styles from "./final-card.module.css";
+import { getCropStyle } from "@/lib/cards/media-slots";
 
 type Props = {
   model: FinalCardViewModel;
@@ -490,6 +491,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                           src={asset.publicUrl}
                           alt={asset.captionTitle || asset.captionSubtitle || "Фото открытки"}
                           className={styles.memoryPhotoImage}
+                          style={getCropStyle(asset)}
                         />
                         <div className={styles.memoryPhotoCaptionWrap}>
                           <p className={styles.memoryPhotoCaption}>
