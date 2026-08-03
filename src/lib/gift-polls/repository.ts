@@ -54,6 +54,15 @@ export const createGiftPoll = async (input: Pick<GiftPoll, "cardId" | "mode" | "
   return mapPoll(result.rows[0]);
 };
 
+export const updateGiftPollSettings = async (pollId: string, input: Pick<GiftPoll, "mode" | "title" | "question" | "closesAt">) => {
+  if (!isPostgresConfigured()) return unavailable();
+  const result = await getPostgresPool().query<PollRow>(
+    `UPDATE gift_polls SET mode = $2, title = $3, question = $4, closes_at = $5, updated_at = now() WHERE id = $1 RETURNING *`,
+    [pollId, input.mode, input.title, input.question, input.closesAt]
+  );
+  return mapPoll(result.rows[0]);
+};
+
 export const saveGiftPollOption = async (input: Omit<GiftPollOption, "createdAt" | "updatedAt" | "deletedAt">) => {
   if (!isPostgresConfigured()) return unavailable();
   const result = await getPostgresPool().query<OptionRow>(

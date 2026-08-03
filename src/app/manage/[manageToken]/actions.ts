@@ -68,7 +68,8 @@ import {
   getGiftPollForManage,
   openGiftPoll,
   saveGiftPollOption,
-  selectGiftPollOption
+  selectGiftPollOption,
+  updateGiftPollSettings
 } from "@/lib/gift-polls/repository";
 import { GIFT_POLL_MAX_OPTIONS, isSafeProductUrl, normalizeBudgetAmount, normalizeGiftPollMode } from "@/lib/gift-polls/validation";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
@@ -293,18 +294,69 @@ export async function saveGiftPollAction(_previous: GiftPollFormState, formData:
   return giftPollState(true, "Варианты сохранены. Откройте голосование, когда будете готовы.");
 }
 
-export async function openGiftPollAction(formData: FormData) {
+export async function saveGiftPollSettingsAction(_previous: GiftPollFormState, formData: FormData): Promise<GiftPollFormState> {
   const manageToken = String(formData.get("manageToken") ?? "");
   const pollId = String(formData.get("pollId") ?? "");
   const card = await getCardDraftByManageToken(manageToken);
-  if (!card || !pollId) return;
-  await assertManageContentEditable(manageToken);
+  if (!card || !pollId) return giftPollState(false, "Секретная ссылка управления больше не актуальна.");
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return giftPollState(false, error instanceof Error ? error.message : "Открытка недоступна для редактирования.");
+  }
+
+  const existingPoll = await getGiftPollForManage(card.id);
+  if (!existingPoll || existingPoll.id !== pollId) return giftPollState(false, "Голосование не найдено. Обновите страницу.");
+
+  const mode = normalizeGiftPollMode(formData.get("mode"));
+  const title = String(formData.get("title") ?? "").trim().slice(0, 80);
+  const question = String(formData.get("question") ?? "").trim().slice(0, 180);
+  const closesAtValue = String(formData.get("closesAt") ?? "").trim();
+  const closesAt = closesAtValue ? new Date(closesAtValue) : null;
+
+  if (!title || !question) return giftPollState(false, "Заполните заголовок и вопрос для участников.");
+  if (closesAtValue && (!closesAt || Number.isNaN(closesAt.getTime()))) return giftPollState(false, "Укажите корректную дату завершения или оставьте поле пустым.");
+
+  if (existingPoll.totalVotes > 0) {
+    if (existingPoll.mode !== mode) return giftPollState(false, "Нельзя сменить режим после первого голоса: так результаты останутся корректными.");
+    if (existingPoll.title !== title || existingPoll.question !== question) {
+      return giftPollState(false, "После первого голоса нельзя менять заголовок и вопрос: участники должны голосовать при одинаковых условиях.");
+    }
+  }
+
+  await updateGiftPollSettings(pollId, { mode, title, question, closesAt: closesAt?.toISOString() ?? null });
+  if (mode !== existingPoll.mode) await deleteGiftPollOptionsExcept(pollId, []);
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+  return giftPollState(true, "Настройки голосования сохранены.");
+}
+
+const openGiftPollCore = async (formData: FormData): Promise<GiftPollFormState> => {
+  const manageToken = String(formData.get("manageToken") ?? "");
+  const pollId = String(formData.get("pollId") ?? "");
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card || !pollId) return giftPollState(false, "Секретная ссылка управления больше не актуальна.");
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return giftPollState(false, error instanceof Error ? error.message : "Открытка недоступна для редактирования.");
+  }
+  const poll = await getGiftPollForManage(card.id);
+  if (!poll || poll.id !== pollId) return giftPollState(false, "Голосование не найдено. Обновите страницу.");
+  if (!poll.title.trim() || !poll.question.trim()) return giftPollState(false, "Заполните заголовок и вопрос для участников.");
+  const namedOptions = poll.options.filter((option) => option.title.trim().length > 0);
+  if (namedOptions.length < 2) return giftPollState(false, "Добавьте минимум два варианта, чтобы открыть голосование.");
+  if (namedOptions.length > GIFT_POLL_MAX_OPTIONS) return giftPollState(false, `Можно добавить не более ${GIFT_POLL_MAX_OPTIONS} вариантов.`);
   await openGiftPoll(pollId);
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+  return giftPollState(true, "Голосование открыто");
+};
+
+export async function openGiftPollAction(_previous: GiftPollFormState, formData: FormData): Promise<GiftPollFormState> {
+  return openGiftPollCore(formData);
 }
 
 export async function reopenGiftPollAction(formData: FormData) {
-  await openGiftPollAction(formData);
+  await openGiftPollCore(formData);
 }
 
 export async function closeGiftPollAction(formData: FormData) {

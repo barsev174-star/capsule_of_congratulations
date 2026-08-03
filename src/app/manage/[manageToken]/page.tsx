@@ -35,6 +35,7 @@ import { getActiveMessageSlots, getAssetsForSlots, MEMORY_MEDIA_SLOTS } from "@/
 import { openCollectionAction } from "./actions";
 import { getGiftPollForManage } from "@/lib/gift-polls/repository";
 import { GiftPollSettingsForm } from "./gift-poll-settings-form";
+import { GiftPollManageCard } from "./gift-poll-manage-card";
 import { PaymentCheckoutButton } from "./payment-checkout-button";
 import { buildCardBlockReadiness, buildOrganizerJourney } from "@/lib/manage/card-design-readiness";
 import { resolveMainGreetingContribution } from "@/lib/final-card/main-greeting";
@@ -604,19 +605,25 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 lifecycleLabel={lifecycleLabel}
                 persistenceKey={`card-preparation:${manageToken}`}
               />
+              {giftPoll ? (
+                <GiftPollManageCard
+                  manageToken={manageToken}
+                  poll={giftPoll}
+                  eligibleVoterCount={eligibleGiftPollVoterCount}
+                />
+              ) : (
               <EditorSidebarCard className={styles.giftStateCard}>
                 <div className={styles.giftStateHeader}>
                   <h2>Состояние подарка</h2>
-                  <span>{giftPoll ? giftPoll.status === "open" ? "Открыто" : giftPoll.status === "closed" ? "Завершено" : "Черновик" : "Не настроено"}</span>
+                  <span>Не настроено</span>
                 </div>
-                {!giftPoll ? (
-                  <ul className={styles.giftStateSummary}>
-                    <li><span aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="5" /><circle cx="9" cy="12" r="3" /></svg></span>Голосование не включено</li>
-                    <li><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 10.5h17v10h-17zM2.5 6.5h19v4h-19zM12 6.5v14" /></svg></span>Варианты подарка не добавлены</li>
-                    <li><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" /><circle cx="17" cy="10" r="2.3" /><path d="M3.5 20c.6-3.2 2.5-5 5.5-5s4.9 1.8 5.5 5M15 16.2c2.7-.4 4.6.8 5.2 3.8" /></svg></span>Голосование пока недоступно участникам</li>
-                  </ul>
-                ) : <p className={styles.giftStateActiveSummary}>{giftPoll.status === "open" ? `Голосование открыто · голосов: ${giftPoll.totalVotes}` : giftPoll.status === "closed" ? "Голосование завершено." : "Настройки сохранены в черновике."}</p>}
+                <ul className={styles.giftStateSummary}>
+                  <li><span aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="5" /><circle cx="9" cy="12" r="3" /></svg></span>Голосование не включено</li>
+                  <li><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 10.5h17v10h-17zM2.5 6.5h19v4h-19zM12 6.5v14" /></svg></span>Варианты подарка не добавлены</li>
+                  <li><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" /><circle cx="17" cy="10" r="2.3" /><path d="M3.5 20c.6-3.2 2.5-5 5.5-5s4.9 1.8 5.5 5M15 16.2c2.7-.4 4.6.8 5.2 3.8" /></svg></span>Голосование пока недоступно участникам</li>
+                </ul>
               </EditorSidebarCard>
+              )}
               {lifecycle.collectionStatus === "OPEN" ? (
                 <ParticipantLinkCard
                   manageToken={manageToken}
