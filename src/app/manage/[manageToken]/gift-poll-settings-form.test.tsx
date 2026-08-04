@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GiftPollSettingsForm } from "./gift-poll-settings-form";
+import type { GiftPollWithOptions } from "@/lib/gift-polls/types";
 
 const { refresh, enableGiftPollAction } = vi.hoisted(() => ({
   refresh: vi.fn(),
@@ -21,8 +22,39 @@ vi.mock("./actions", () => ({
   openGiftPollAction: vi.fn(),
   reopenGiftPollAction: vi.fn(),
   saveGiftPollAction: vi.fn(async () => ({ ok: true, message: "Сохранено" })),
+  saveGiftPollSettingsAction: vi.fn(async () => ({ ok: true, message: "Сохранено" })),
+  reorderGiftPollOptionsAction: vi.fn(async () => ({ ok: true, message: "Порядок сохранён" })),
   selectGiftPollOptionAction: vi.fn()
 }));
+
+const activePoll: GiftPollWithOptions = {
+  id: "poll-id",
+  cardId: "card-id",
+  mode: "gift",
+  title: "Выберите подарок",
+  question: "Что подарить?",
+  status: "open",
+  closesAt: null,
+  closedAt: null,
+  selectedOptionId: null,
+  createdAt: "2026-08-03T00:00:00.000Z",
+  updatedAt: "2026-08-03T00:00:00.000Z",
+  totalVotes: 0,
+  votesByOptionId: {},
+  options: ["Первый вариант", "Второй вариант"].map((title, index) => ({
+    id: `option-${index + 1}`,
+    pollId: "poll-id",
+    title,
+    description: `Описание ${index + 1}`,
+    imageUrl: null,
+    priceLabel: `${1000 + index * 500}`,
+    productUrl: null,
+    sortOrder: index,
+    deletedAt: null,
+    createdAt: "2026-08-03T00:00:00.000Z",
+    updatedAt: "2026-08-03T00:00:00.000Z"
+  }))
+};
 
 const renderInactivePoll = () => render(
   <main>
@@ -132,5 +164,39 @@ describe("GiftPollSettingsForm inactive onboarding", () => {
 
     await waitFor(() => expect(enableGiftPollAction).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(refresh).toHaveBeenCalled());
+  });
+});
+
+describe("GiftPollSettingsForm active poll", () => {
+  beforeEach(() => {
+    refresh.mockReset();
+    setMobileMedia(false);
+  });
+
+  it("shows access and votes as separate server counters", () => {
+    render(<GiftPollSettingsForm manageToken="manage-token" recipientName="Наталья" publicSlug="public-slug" poll={activePoll} eligibleVoterCount={7} collectionIsOpen />);
+    expect(screen.getByText("Доступ: 7")).toBeInTheDocument();
+    expect(screen.getByText("Голосов: 0")).toBeInTheDocument();
+    expect(screen.queryByText("0 из 7")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Кто может голосовать" })).toHaveAttribute("title", expect.stringContaining("Поздравления, добавленные организатором, не учитываются"));
+  });
+
+  it("opens a dedicated order editor without reorder controls in the regular list", async () => {
+    const user = userEvent.setup();
+    render(<GiftPollSettingsForm manageToken="manage-token" recipientName="Наталья" publicSlug="public-slug" poll={activePoll} eligibleVoterCount={7} collectionIsOpen />);
+    expect(screen.queryByLabelText(/Перетащите, чтобы изменить порядок/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Переместить выше")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Изменить порядок" }));
+    expect(screen.getByRole("dialog", { name: "Порядок вариантов" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Сохранить порядок" })).toBeDisabled();
+  });
+
+  it("asks for confirmation before switching a populated scenario", async () => {
+    const user = userEvent.setup();
+    render(<GiftPollSettingsForm manageToken="manage-token" recipientName="Наталья" publicSlug="public-slug" poll={activePoll} eligibleVoterCount={7} collectionIsOpen />);
+    await user.click(screen.getByRole("button", { name: "Изменить настройки голосования" }));
+    await user.click(screen.getByRole("radio", { name: "БюджетПодходящий уровень общей суммы" }));
+    expect(screen.getByRole("alertdialog", { name: "Сменить сценарий голосования?" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "ПодарокОдин из конкретных вариантов" })).toBeChecked();
   });
 });

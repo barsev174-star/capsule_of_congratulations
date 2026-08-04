@@ -1,5 +1,6 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
+import { cleanImportedDescription, sanitizeGiftPollText } from "./text-sanitization";
 
 export type GiftLinkPreview = {
   extractedUrl: string;
@@ -74,7 +75,7 @@ const jsonLdProduct = (html: string) => {
       if (!String(product?.["@type"] ?? "").includes("Product")) continue;
       const offer = Array.isArray(product.offers) ? product.offers[0] : product.offers;
       const amount = Number(offer?.price ?? offer?.lowPrice);
-      return { title: typeof product.name === "string" ? product.name.trim() : null, image: typeof product.image === "string" ? product.image : Array.isArray(product.image) ? product.image[0] : null, price: Number.isFinite(amount) && amount > 0 ? { amount, currency: String(offer?.priceCurrency ?? "RUB") } : null };
+      return { title: typeof product.name === "string" ? sanitizeGiftPollText(product.name, 60) : null, image: typeof product.image === "string" ? product.image : Array.isArray(product.image) ? product.image[0] : null, price: Number.isFinite(amount) && amount > 0 ? { amount, currency: String(offer?.priceCurrency ?? "RUB") } : null };
     }
   } catch { /* Invalid structured data is non-fatal. */ }
   return { title: null, image: null, price: null };
@@ -87,7 +88,8 @@ const copiedTextFallback = (rawInput: string, url: string) => {
   const line = beforeUrl.split(/\r?\n/).map((value) => value.trim()).find(Boolean) ?? "";
   if (!line) return { title: null, description: null };
   const [first, ...rest] = line.split(",");
-  return { title: first.trim().slice(0, 60) || line.slice(0, 60), description: rest.join(",").trim().slice(0, 140) || null };
+  const title = sanitizeGiftPollText(first.trim() || line, 60);
+  return { title: title || null, description: cleanImportedDescription(rest.join(","), title) || null };
 };
 const partial = (extractedUrl: string, resolvedUrl: string, fallback: { title: string | null; description: string | null }, url: URL): GiftLinkPreview => ({
   extractedUrl, resolvedUrl, metadata: { ...fallback, imageUrl: null, price: null, storeName: storeName(url) },
@@ -117,13 +119,13 @@ export const previewGiftLink = async (rawInput: string): Promise<GiftLinkPreview
       if (!response.ok) throw new Error("PAGE_UNAVAILABLE");
       if (!response.headers.get("content-type")?.toLowerCase().includes("text/html")) throw new Error("UNSUPPORTED_CONTENT_TYPE");
       const html = await readLimitedText(response); const structured = jsonLdProduct(html);
-      const title = structured.title ?? meta(html, "og:title") ?? meta(html, "twitter:title") ?? titleTag(html) ?? copied.title;
+      const title = sanitizeGiftPollText(structured.title ?? meta(html, "og:title") ?? meta(html, "twitter:title") ?? titleTag(html) ?? copied.title, 60) || null;
       const imageUrl = absolute(structured.image ?? meta(html, "og:image") ?? meta(html, "twitter:image"), current.toString());
       const price = structured.price;
       const warnings: GiftLinkPreview["warnings"] = [];
       if (!title || !imageUrl || !price) warnings.push("METADATA_PARTIAL");
       if (!imageUrl) warnings.push("IMAGE_UNAVAILABLE"); if (!price) warnings.push("PRICE_UNAVAILABLE");
-      return { extractedUrl, resolvedUrl: current.toString(), metadata: { title, description: copied.description, imageUrl, price, storeName: storeName(current) }, warnings };
+      return { extractedUrl, resolvedUrl: current.toString(), metadata: { title, description: cleanImportedDescription(copied.description, title) || null, imageUrl, price, storeName: storeName(current) }, warnings };
     }
   } catch { /* Return a usable, safe-to-save link instead of leaking internals. */ }
   return partial(extractedUrl, extractedUrl, copied, current);

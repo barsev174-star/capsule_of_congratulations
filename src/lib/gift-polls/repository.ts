@@ -2,6 +2,9 @@ import { randomUUID } from "node:crypto";
 import { getPostgresPool, isPostgresConfigured } from "@/lib/db/postgres";
 import type { ClosedParticipantGiftPollState, GiftPoll, GiftPollOption, GiftPollWithOptions, ParticipantGiftPoll } from "./types";
 
+export type GiftPollOptionWrite = Pick<GiftPollOption, "id" | "title" | "description" | "imageUrl" | "priceLabel" | "productUrl" | "sortOrder">;
+export type GiftPollMutationResult = "ok" | "locked" | "stale" | "missing";
+
 type PollRow = {
   id: string; card_id: string; mode: GiftPoll["mode"]; title: string; question: string;
   status: GiftPoll["status"]; closes_at: Date | string | null; closed_at: Date | string | null; selected_option_id: string | null;
@@ -54,34 +57,137 @@ export const createGiftPoll = async (input: Pick<GiftPoll, "cardId" | "mode" | "
   return mapPoll(result.rows[0]);
 };
 
-export const updateGiftPollSettings = async (pollId: string, input: Pick<GiftPoll, "mode" | "title" | "question" | "closesAt">) => {
+export const updateGiftPollSettingsSafely = async (
+  pollId: string,
+  input: Pick<GiftPoll, "mode" | "title" | "question" | "closesAt">
+): Promise<GiftPollMutationResult> => {
   if (!isPostgresConfigured()) return unavailable();
-  const result = await getPostgresPool().query<PollRow>(
-    `UPDATE gift_polls SET mode = $2, title = $3, question = $4, closes_at = $5, updated_at = now() WHERE id = $1 RETURNING *`,
-    [pollId, input.mode, input.title, input.question, input.closesAt]
-  );
-  return mapPoll(result.rows[0]);
+  const client = await getPostgresPool().connect();
+  try {
+    await client.query("BEGIN");
+    const current = await client.query<PollRow>("SELECT * FROM gift_polls WHERE id = $1 FOR UPDATE", [pollId]);
+    const row = current.rows[0];
+    if (!row) {
+      await client.query("ROLLBACK");
+      return "missing";
+    }
+    const votes = await client.query<{ has_votes: boolean }>("SELECT EXISTS(SELECT 1 FROM gift_votes WHERE poll_id = $1) AS has_votes", [pollId]);
+    const lockedFieldsChanged = row.mode !== input.mode || row.title !== input.title || row.question !== input.question;
+    if (votes.rows[0]?.has_votes && lockedFieldsChanged) {
+      await client.query("ROLLBACK");
+      return "locked";
+    }
+    await client.query(
+      "UPDATE gift_polls SET selected_option_id = CASE WHEN mode <> $2 THEN NULL ELSE selected_option_id END, mode = $2, title = $3, question = $4, closes_at = $5, updated_at = now() WHERE id = $1",
+      [pollId, input.mode, input.title, input.question, input.closesAt]
+    );
+    if (row.mode !== input.mode) {
+      await client.query("UPDATE gift_poll_options SET deleted_at = now(), updated_at = now() WHERE poll_id = $1 AND deleted_at IS NULL", [pollId]);
+    }
+    await client.query("COMMIT");
+    return "ok";
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
-export const saveGiftPollOption = async (input: Omit<GiftPollOption, "createdAt" | "updatedAt" | "deletedAt">) => {
+export const replaceGiftPollOptionsSafely = async (
+  pollId: string,
+  settings: Pick<GiftPoll, "mode" | "title" | "question" | "closesAt">,
+  options: GiftPollOptionWrite[]
+): Promise<GiftPollMutationResult> => {
   if (!isPostgresConfigured()) return unavailable();
-  const result = await getPostgresPool().query<OptionRow>(
-    `INSERT INTO gift_poll_options (id, poll_id, title, description, image_url, price_label, product_url, sort_order)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-     ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description, image_url = EXCLUDED.image_url,
-       price_label = EXCLUDED.price_label, product_url = EXCLUDED.product_url, sort_order = EXCLUDED.sort_order, updated_at = now()
-     RETURNING *`, [input.id, input.pollId, input.title, input.description, input.imageUrl, input.priceLabel, input.productUrl, input.sortOrder]
-  );
-  return mapOption(result.rows[0]);
+  const client = await getPostgresPool().connect();
+  try {
+    await client.query("BEGIN");
+    const current = await client.query<PollRow>("SELECT * FROM gift_polls WHERE id = $1 FOR UPDATE", [pollId]);
+    if (!current.rows[0]) {
+      await client.query("ROLLBACK");
+      return "missing";
+    }
+    const votes = await client.query<{ has_votes: boolean }>("SELECT EXISTS(SELECT 1 FROM gift_votes WHERE poll_id = $1) AS has_votes", [pollId]);
+    if (votes.rows[0]?.has_votes) {
+      await client.query("ROLLBACK");
+      return "locked";
+    }
+    await client.query(
+      "UPDATE gift_polls SET mode = $2, title = $3, question = $4, closes_at = $5, updated_at = now() WHERE id = $1",
+      [pollId, settings.mode, settings.title, settings.question, settings.closesAt]
+    );
+    for (const option of options) {
+      await client.query(
+        `INSERT INTO gift_poll_options (id, poll_id, title, description, image_url, price_label, product_url, sort_order, deleted_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NULL)
+         ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description, image_url = EXCLUDED.image_url,
+           price_label = EXCLUDED.price_label, product_url = EXCLUDED.product_url, sort_order = EXCLUDED.sort_order,
+           deleted_at = NULL, updated_at = now()`,
+        [option.id, pollId, option.title, option.description, option.imageUrl, option.priceLabel, option.productUrl, option.sortOrder]
+      );
+    }
+    await client.query(
+      `UPDATE gift_poll_options SET deleted_at = now(), updated_at = now()
+       WHERE poll_id = $1 AND deleted_at IS NULL AND NOT (id = ANY($2::uuid[]))`,
+      [pollId, options.map((option) => option.id)]
+    );
+    await client.query("COMMIT");
+    return "ok";
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
-export const deleteGiftPollOptionsExcept = async (pollId: string, optionIds: string[]) => {
+export const reorderGiftPollOptionsSafely = async (
+  pollId: string,
+  orderedOptionIds: string[],
+  baseOptionIds: string[]
+): Promise<GiftPollMutationResult> => {
   if (!isPostgresConfigured()) return unavailable();
-  await getPostgresPool().query(
-    `UPDATE gift_poll_options SET deleted_at = now(), updated_at = now()
-     WHERE poll_id = $1 AND deleted_at IS NULL AND NOT (id = ANY($2::uuid[]))`,
-    [pollId, optionIds]
-  );
+  const client = await getPostgresPool().connect();
+  try {
+    await client.query("BEGIN");
+    const poll = await client.query<PollRow>("SELECT * FROM gift_polls WHERE id = $1 FOR UPDATE", [pollId]);
+    if (!poll.rows[0]) {
+      await client.query("ROLLBACK");
+      return "missing";
+    }
+    const votes = await client.query<{ has_votes: boolean }>("SELECT EXISTS(SELECT 1 FROM gift_votes WHERE poll_id = $1) AS has_votes", [pollId]);
+    if (votes.rows[0]?.has_votes) {
+      await client.query("ROLLBACK");
+      return "locked";
+    }
+    const current = await client.query<{ id: string }>(
+      "SELECT id FROM gift_poll_options WHERE poll_id = $1 AND deleted_at IS NULL ORDER BY sort_order, created_at FOR UPDATE",
+      [pollId]
+    );
+    const currentIds = current.rows.map((row) => row.id);
+    const validSet = new Set(orderedOptionIds).size === orderedOptionIds.length
+      && orderedOptionIds.length === currentIds.length
+      && orderedOptionIds.every((id) => currentIds.includes(id));
+    const baseMatches = baseOptionIds.length === currentIds.length && baseOptionIds.every((id, index) => id === currentIds[index]);
+    if (!validSet || !baseMatches) {
+      await client.query("ROLLBACK");
+      return "stale";
+    }
+    await client.query(
+      `UPDATE gift_poll_options AS option SET sort_order = next_order.position - 1, updated_at = now()
+       FROM unnest($2::uuid[]) WITH ORDINALITY AS next_order(id, position)
+       WHERE option.poll_id = $1 AND option.id = next_order.id`,
+      [pollId, orderedOptionIds]
+    );
+    await client.query("COMMIT");
+    return "ok";
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 export const openGiftPoll = async (pollId: string) => {
@@ -180,7 +286,7 @@ export const upsertGiftVote = async (cardId: string, optionId: string, participa
   const pool = getPostgresPool();
   const result = await pool.query<{ poll_id: string; greeting_id: string }>(
     `WITH active_poll AS (
-       SELECT id FROM gift_polls WHERE card_id = $1 AND status = 'open'
+       SELECT id FROM gift_polls WHERE card_id = $1 AND status = 'open' FOR SHARE
      ), participant_greeting AS (
        SELECT id FROM contributions WHERE card_id = $1 AND participant_token_hash = $3 AND status = 'visible' LIMIT 1
      ), valid_option AS (

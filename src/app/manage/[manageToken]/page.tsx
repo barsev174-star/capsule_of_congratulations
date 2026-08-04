@@ -35,7 +35,6 @@ import { getActiveMessageSlots, getAssetsForSlots, MEMORY_MEDIA_SLOTS } from "@/
 import { openCollectionAction } from "./actions";
 import { getGiftPollForManage } from "@/lib/gift-polls/repository";
 import { GiftPollSettingsForm } from "./gift-poll-settings-form";
-import { GiftPollManageCard } from "./gift-poll-manage-card";
 import { PaymentCheckoutButton } from "./payment-checkout-button";
 import { buildCardBlockReadiness, buildOrganizerJourney } from "@/lib/manage/card-design-readiness";
 import { resolveMainGreetingContribution } from "@/lib/final-card/main-greeting";
@@ -605,13 +604,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 lifecycleLabel={lifecycleLabel}
                 persistenceKey={`card-preparation:${manageToken}`}
               />
-              {giftPoll ? (
-                <GiftPollManageCard
-                  manageToken={manageToken}
-                  poll={giftPoll}
-                  eligibleVoterCount={eligibleGiftPollVoterCount}
-                />
-              ) : (
+              {!giftPoll ? (
               <EditorSidebarCard className={styles.giftStateCard}>
                 <div className={styles.giftStateHeader}>
                   <h2>Состояние подарка</h2>
@@ -623,7 +616,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   <li><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" /><circle cx="17" cy="10" r="2.3" /><path d="M3.5 20c.6-3.2 2.5-5 5.5-5s4.9 1.8 5.5 5M15 16.2c2.7-.4 4.6.8 5.2 3.8" /></svg></span>Голосование пока недоступно участникам</li>
                 </ul>
               </EditorSidebarCard>
-              )}
+              ) : null}
               {lifecycle.collectionStatus === "OPEN" ? (
                 <ParticipantLinkCard
                   manageToken={manageToken}

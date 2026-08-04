@@ -14566,27 +14566,6 @@ button.contentStatusItemButton:active {
 .giftPollOptionForm .giftPollField textarea { min-height: 84px; padding: 12px; }
 .giftPollPhotoActions { display: flex; flex-wrap: wrap; gap: 8px; }
 
-.giftManageCard { gap: 16px; }
-.giftManageTitle { margin: 0; color: #35231d; font-size: 1.06rem; }
-.giftManageStatusOpen, .giftManageStatus { display: grid; gap: 4px; padding: 14px 16px; border-radius: 14px; }
-.giftManageStatusOpen { background: #e8f5ea; color: #2e7d45; }
-.giftManageStatus { background: #f5f1ec; color: #6b5a4e; }
-.giftManageStatusOpen strong, .giftManageStatus strong { display: flex; align-items: center; gap: 8px; font-size: .92rem; }
-.giftManageStatusOpen span, .giftManageStatus span { font-size: .8rem; line-height: 1.4; opacity: .85; }
-.giftManageStatusOpen svg, .giftManageStatus svg { width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
-.giftManageRules { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.giftManageRules li { display: flex; align-items: center; gap: 10px; color: #604635; font-size: .86rem; font-weight: 600; }
-.giftManageRules svg { width: 17px; height: 17px; flex: 0 0 auto; color: #a66b4b; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
-.giftManageFinish { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 14px; border-top: 1px solid rgba(98,72,58,.1); }
-.giftManageFinish > div { display: grid; gap: 3px; min-width: 0; }
-.giftManageFinish strong { color: #4d3327; font-size: .9rem; }
-.giftManageFinish span { color: #806452; font-size: .8rem; }
-.giftManageEditButton { flex: 0 0 auto; padding: 6px 8px; border: 0; border-radius: 8px; background: transparent; color: #ec662f; font: inherit; font-size: .86rem; font-weight: 800; cursor: pointer; transition: background-color .16s ease, color .16s ease; }
-.giftManageEditButton:hover, .giftManageEditButton:focus-visible { background: #fff0e8; color: #d95728; outline: none; }
-.giftManageCloseButton { min-height: 46px; border: 1.5px solid rgba(236,102,47,.6); border-radius: 13px; background: #fff; color: #ec662f; font: inherit; font-weight: 800; cursor: pointer; transition: background-color .16s ease, border-color .16s ease, color .16s ease; }
-.giftManageCloseButton:hover, .giftManageCloseButton:focus-visible { border-color: #ec662f; background: #fff0e8; color: #d95728; outline: none; }
-.giftManageCloseButton:active { transform: scale(.98); }
-
 @media (max-width: 900px) {
   .giftPollSummary { grid-template-columns: repeat(2, minmax(0, 1fr)) auto; }
 }
@@ -14616,4 +14595,69 @@ button.contentStatusItemButton:active {
   .giftPollBudgetEditor .giftPollOptionResult { grid-area: result; }
   .giftPollBudgetEditor .giftPollProgress { grid-area: progress; }
   .giftMenuTrigger { width: 44px; height: 44px; }
+}
+
+/* Gift poll rework: focused ordering flow, separate voter counters and orange actions. */
+.confirmationActions:has(> button:nth-child(3)) { display: grid; width: min(100%,230px); justify-self: end; }
+.confirmationActions:has(> button:nth-child(3)) button { width: 100%; }
+.confirmationDanger { color: #c64d31; background: #fff; box-shadow: inset 0 0 0 1px rgba(225,101,47,.34); }
+.confirmationDanger:hover:not(:disabled) { color: #d95728; background: #fff3ef; box-shadow: inset 0 0 0 1px rgba(225,101,47,.58); }
+
+.giftPollSummary { grid-template-columns: repeat(4,minmax(0,1fr)) auto; }
+.giftPollAccessHint { display: inline-grid; width: 22px; height: 22px; place-items: center; margin: -4px -3px -4px 1px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: #ec662f; vertical-align: middle; cursor: help; transition-property: background-color,color,scale; transition-duration: 150ms; }
+.giftPollAccessHint:hover, .giftPollAccessHint:focus-visible { background: #fff0e8; color: #d95728; outline: 2px solid rgba(236,102,47,.26); outline-offset: 1px; }
+.giftPollAccessHint:active { scale: .96; }
+.giftPollAccessHint > span { display: grid; width: 14px; height: 14px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-weight: 900; line-height: 1; }
+.giftPollParticipantCounts { display: grid; gap: 1px; white-space: normal !important; }
+.giftPollParticipantCounts span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.giftPollParticipantCounts span:last-child { color: #806452; font-size: .72rem; font-weight: 700; }
+.giftMenuSeparator { height: 1px; margin: 5px 7px; background: rgba(98,72,58,.12); }
+
+.giftPollOptionsActions { display: flex; flex: 0 0 auto; align-items: center; gap: 9px; }
+.giftPollOrderButton { min-height: 44px; padding: 0 16px; border: 0; border-radius: 13px; background: #fff; color: #ec662f; box-shadow: 0 0 0 1px rgba(236,102,47,.36),0 5px 14px rgba(85,54,35,.05); font: inherit; font-weight: 800; cursor: pointer; transition-property: color,background-color,box-shadow,scale; transition-duration: 160ms; transition-timing-function: ease-out; }
+.giftPollOrderButton:hover:not(:disabled), .giftPollOrderButton:focus-visible { color: #d95728; background: #fff0e8; box-shadow: 0 0 0 1px rgba(236,102,47,.58),0 8px 18px rgba(233,101,47,.12); outline: none; }
+.giftPollOrderButton:active:not(:disabled), .giftPollAddButton:active:not(:disabled) { scale: .96; transform: none; }
+.giftPollOrderButton:disabled, .giftPollAddButton:disabled { color: #8d817a; background: #ebe7e3; box-shadow: none; opacity: 1; cursor: not-allowed; transform: none; }
+
+.giftPollModalCancel { border-color: rgba(98,72,58,.12); background: #eeeae7; color: #5f5b58; transition-property: background-color,border-color,scale; }
+.giftPollModalCancel:hover:not(:disabled) { border-color: rgba(236,102,47,.28); background: #fff0e8; color: #d95728; }
+.giftPollModalDelete { min-height: 44px; padding: 0 13px; border: 0; border-radius: 12px; background: #fff; color: #c64d31; box-shadow: inset 0 0 0 1px rgba(225,101,47,.32); font: inherit; font-weight: 800; cursor: pointer; transition-property: color,background-color,box-shadow,scale; transition-duration: 160ms; }
+.giftPollModalDelete:hover:not(:disabled), .giftPollModalDelete:focus-visible { color: #d95728; background: #fff3ef; box-shadow: inset 0 0 0 1px rgba(225,101,47,.58); outline: none; }
+.giftPollModalDelete:active, .giftPollModalCancel:active, .giftPollModalSubmit:active { scale: .96; }
+.giftPollModalDelete:disabled { opacity: .55; cursor: default; }
+.giftPollModalFooterSpacer { flex: 1 1 auto; }
+.giftPollImportWarning { margin: 0; padding: 11px 13px; border-radius: 12px; background: #fff4e2; color: #8a5a14; font-size: .84rem; line-height: 1.45; text-wrap: pretty; }
+
+.giftOrderEditorDialog { width: min(760px,100%); }
+.giftOrderEditorRow { grid-template-columns: auto 34px 54px minmax(0,1fr) auto; }
+.giftOrderEditorImage { width: 54px; height: 54px; border-radius: 11px; object-fit: cover; outline: 1px solid rgba(0,0,0,.1); outline-offset: -1px; }
+.giftOrderEditorRow .orderEditorGrip { touch-action: none; }
+
+@media (max-width: 900px) {
+  .giftPollSummary { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .giftPollSummaryEdit { justify-self: end; }
+}
+
+@media (max-width: 767px) {
+  .giftPollPage { padding-inline: 0; }
+  .giftPollOverviewTop { display: grid; grid-template-columns: 44px minmax(0,1fr); align-items: start; column-gap: 12px; row-gap: 14px; }
+  .giftPollOverviewIcon { grid-column: 1; grid-row: 1; }
+  .giftPollOverviewCopy { display: contents; }
+  .giftPollOverviewHeading { grid-column: 2; grid-row: 1; align-self: center; gap: 8px; }
+  .giftPollOverviewHeading h2 { font-size: 1.35rem; }
+  .giftPollOverviewCopy > p { grid-column: 1 / -1; grid-row: 2; }
+  .giftPollOverviewActions { grid-column: 1 / -1; grid-row: 3; }
+  .giftPollSummary { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .giftPollOptionsActions { display: grid; width: 100%; grid-template-columns: 1fr 1fr; }
+  .giftPollAddButton, .giftPollOrderButton { width: 100%; }
+  .giftOrderEditorRow { grid-template-columns: auto 30px 48px minmax(0,1fr); }
+  .giftOrderEditorImage { width: 48px; height: 48px; }
+  .giftOrderEditorRow .orderEditorMoveButton { grid-column: 1 / -1; }
+  .giftPollOptionModalFooter { flex-wrap: wrap; }
+  .giftPollOptionModalFooter .giftPollModalDelete { width: 100%; order: 3; }
+}
+
+@media (max-width: 480px) {
+  .giftPollOptionsActions { grid-template-columns: 1fr; }
+  .confirmationActions:has(> button:nth-child(3)) { width: 100%; }
 }
