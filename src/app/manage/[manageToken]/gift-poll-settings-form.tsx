@@ -54,6 +54,7 @@ const ChevronDownIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path 
 const DotsIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>;
 const InfoIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 10.5v5M12 7h.01" /></svg>;
 const ExternalIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4 11 13M9 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3" /></svg>;
+const ImageIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5" /><circle cx="9" cy="10" r="1.5" /><path d="m4.5 17 4.3-4.2 2.8 2.4 2.5-2.6 3.4 4.4" /></svg>;
 
 const GiftPollHowDialog = ({ onClose }: { onClose: () => void }) => {
   const dialogRef = useRef<HTMLElement>(null);
@@ -102,20 +103,114 @@ const GiftMenu = ({ label, buttonClassName, children }: { label: string; buttonC
   </div>;
 };
 
+const VoterInfoPopover = () => {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (!open) return;
+    const updatePosition = () => {
+      const triggerRect = triggerRef.current?.getBoundingClientRect();
+      const popoverRect = popoverRef.current?.getBoundingClientRect();
+      if (!triggerRect || !popoverRect) return;
+      const pad = 12;
+      let top = triggerRect.bottom + 8;
+      let left = triggerRect.left - 12;
+      if (left + popoverRect.width > window.innerWidth - pad) left = window.innerWidth - popoverRect.width - pad;
+      if (left < pad) left = pad;
+      if (top + popoverRect.height > window.innerHeight - pad) top = triggerRect.top - popoverRect.height - 8;
+      setPosition({ top, left });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    const focusTimer = window.setTimeout(() => popoverRef.current?.focus(), 0);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        setOpen(false);
+      }
+      if (event.key === "Tab" && popoverRef.current) {
+        event.preventDefault();
+        popoverRef.current.focus();
+      }
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      if (!popoverRef.current?.contains(event.target as Node) && !triggerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.clearTimeout(focusTimer);
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) triggerRef.current?.focus();
+  }, [open]);
+
+  return <span className={styles.giftPollVoterInfoWrap}>
+    <button
+      ref={triggerRef}
+      type="button"
+      className={styles.giftPollAccessHint}
+      aria-label="Кто может голосовать"
+      aria-expanded={open}
+      aria-haspopup="dialog"
+      onClick={() => setOpen((current) => !current)}
+    >
+      <span aria-hidden="true">i</span>
+    </button>
+    {open ? createPortal(
+      <div
+        ref={popoverRef}
+        className={styles.giftPollVoterInfoPopover}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="voter-info-title"
+        tabIndex={-1}
+        style={{ position: "fixed", top: position.top, left: position.left }}
+      >
+        <strong id="voter-info-title">Кто может голосовать</strong>
+        <p>Голосование доступно участникам, которые отправили поздравление через форму. Поздравления, добавленные организатором вручную, не увеличивают это число.</p>
+      </div>,
+      document.body
+    ) : null}
+  </span>;
+};
+
 const GiftPollSettingsDialog = ({ manageToken, poll, recipientName, onClose, onSaved }: { manageToken: string; poll: GiftPollWithOptions; recipientName: string; onClose: () => void; onSaved: (message: string) => void }) => {
   const dialogRef = useRef<HTMLElement>(null);
-  useModalFocus(dialogRef, onClose);
   const locked = poll.totalVotes > 0;
   const [mode, setMode] = useState<Mode>(poll.mode);
   const [title, setTitle] = useState(poll.title);
   const [question, setQuestion] = useState(poll.question);
   const [closesAt, setClosesAt] = useState(toDateTimeLocal(poll.closesAt));
   const [pendingMode, setPendingMode] = useState<Mode | null>(null);
+  const [showDiscardConfirmation, setShowDiscardConfirmation] = useState(false);
+  const [showLockedModeHint, setShowLockedModeHint] = useState(false);
   const [state, formAction, pending] = useActionState(saveGiftPollSettingsAction, initialState);
+
+  const currentScenarioLabel = mode === "budget" ? "Бюджет" : "Подарок";
+  const dirty = mode !== poll.mode || title !== poll.title || question !== poll.question || closesAt !== toDateTimeLocal(poll.closesAt);
 
   useEffect(() => {
     if (state.ok) onSaved(state.message || "Настройки голосования сохранены.");
   }, [state, onSaved]);
+
+  useEffect(() => {
+    if (!showLockedModeHint) return;
+    const timer = window.setTimeout(() => setShowLockedModeHint(false), 4000);
+    return () => window.clearTimeout(timer);
+  }, [showLockedModeHint]);
 
   const applyMode = (nextMode: Mode) => {
     if (locked || nextMode === mode) return;
@@ -134,24 +229,37 @@ const GiftPollSettingsDialog = ({ manageToken, poll, recipientName, onClose, onS
     applyMode(nextMode);
   };
 
+  const requestClose = useCallback(() => {
+    if (pending) return;
+    if (dirty && !pendingMode) setShowDiscardConfirmation(true);
+    else onClose();
+  }, [pending, dirty, pendingMode, onClose]);
+
+  useModalFocus(dialogRef, requestClose);
+
   return createPortal(<>
-    <div className={styles.giftPollInfoBackdrop} role="presentation" onPointerDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section ref={dialogRef} className={styles.giftPollModal} role="dialog" aria-modal="true" aria-labelledby="gift-poll-settings-title" tabIndex={-1}>
+    <div className={styles.giftPollInfoBackdrop} role="presentation" onPointerDown={(event) => event.target === event.currentTarget && requestClose()}>
+      <section ref={dialogRef} className={styles.giftPollModal} role="dialog" aria-modal="true" aria-labelledby="gift-poll-settings-title" aria-hidden={showDiscardConfirmation || pendingMode ? "true" : undefined} tabIndex={-1}>
         <header className={styles.giftPollModalHeader}>
           <div><span>Выбор подарка</span><h2 id="gift-poll-settings-title">Настройки голосования</h2></div>
-          <button type="button" onClick={onClose} aria-label="Закрыть настройки"><CloseIcon /></button>
+          <button type="button" onClick={requestClose} aria-label="Закрыть настройки"><CloseIcon /></button>
         </header>
         <form action={formAction} className={styles.giftPollModalForm} aria-busy={pending}>
           <input type="hidden" name="manageToken" value={manageToken} />
           <input type="hidden" name="pollId" value={poll.id} />
           <input type="hidden" name="mode" value={mode} />
           <div className={styles.giftPollModalBody}>
-            <fieldset className={styles.giftPollModeFieldset}>
+            <fieldset
+              className={styles.giftPollModeFieldset}
+              title={locked ? "Сценарий нельзя изменить после получения первого голоса." : undefined}
+              onClick={() => { if (locked) setShowLockedModeHint(true); }}
+            >
               <legend>Сценарий</legend>
               <div className={styles.giftPollModeChoices}>
-                <label className={`${mode === "gift" ? styles.giftPollModeActive : ""} ${locked ? styles.giftPollModeDisabled : ""}`}><input type="radio" name="modeChoice" value="gift" checked={mode === "gift"} disabled={locked} onChange={() => changeMode("gift")} /><span className={styles.giftPollModeIcon}><GiftIcon /></span><span><strong>Подарок</strong><small>Один из конкретных вариантов</small></span></label>
-                <label className={`${mode === "budget" ? styles.giftPollModeActive : ""} ${locked ? styles.giftPollModeDisabled : ""}`}><input type="radio" name="modeChoice" value="budget" checked={mode === "budget"} disabled={locked} onChange={() => changeMode("budget")} /><span className={styles.giftPollModeIcon}><WalletIcon /></span><span><strong>Бюджет</strong><small>Подходящий уровень общей суммы</small></span></label>
+                <label className={`${mode === "gift" ? styles.giftPollModeActive : ""} ${locked ? styles.giftPollModeDisabled : ""}`} title={locked ? "Сценарий нельзя изменить после получения первого голоса." : undefined}><input type="radio" name="modeChoice" value="gift" checked={mode === "gift"} disabled={locked} onChange={() => changeMode("gift")} /><span className={styles.giftPollModeIcon}><GiftIcon /></span><span><strong>Подарок</strong><small>Один из конкретных вариантов</small></span></label>
+                <label className={`${mode === "budget" ? styles.giftPollModeActive : ""} ${locked ? styles.giftPollModeDisabled : ""}`} title={locked ? "Сценарий нельзя изменить после получения первого голоса." : undefined}><input type="radio" name="modeChoice" value="budget" checked={mode === "budget"} disabled={locked} onChange={() => changeMode("budget")} /><span className={styles.giftPollModeIcon}><WalletIcon /></span><span><strong>Бюджет</strong><small>Подходящий уровень общей суммы</small></span></label>
               </div>
+              {showLockedModeHint ? <p className={styles.giftPollModeLockedHint} role="status">Сценарий нельзя изменить после получения первого голоса.</p> : null}
               <p className={styles.giftPollModeHint}>Сценарий определяет, за что будут голосовать участники. При смене сценария добавленные варианты текущего сценария будут удалены.</p>
             </fieldset>
             <label className={styles.giftPollField}>Заголовок голосования<input name="title" value={title} readOnly={locked} maxLength={80} required onChange={(event) => setTitle(event.target.value)} /><small>{title.length} / 80</small></label>
@@ -161,7 +269,7 @@ const GiftPollSettingsDialog = ({ manageToken, poll, recipientName, onClose, onS
             {state.message && !state.ok ? <p className={styles.giftPollModalError} role="alert">{state.message}</p> : null}
           </div>
           <footer className={styles.giftPollModalFooter}>
-            <button type="button" className={styles.giftPollModalCancel} disabled={pending} onClick={onClose}>Отмена</button>
+            <button type="button" className={styles.giftPollModalCancel} disabled={pending} onClick={requestClose}>Отмена</button>
             <button type="submit" className={styles.giftPollModalSubmit} disabled={pending || !title.trim() || !question.trim()}>{pending ? "Сохраняем…" : "Сохранить настройки"}</button>
           </footer>
         </form>
@@ -169,11 +277,20 @@ const GiftPollSettingsDialog = ({ manageToken, poll, recipientName, onClose, onS
     </div>
     {pendingMode ? <ConfirmationDialog
       title="Сменить сценарий голосования?"
-      description="Добавленные варианты подарков будут удалены. Восстановить их после переключения не получится."
+      description={`Добавленные варианты сценария «${currentScenarioLabel}» будут удалены. Это действие нельзя отменить.`}
       onDismiss={() => setPendingMode(null)}
       actions={[
-        { label: "Остаться в текущем сценарии", tone: "secondary", onClick: () => setPendingMode(null) },
-        { label: "Сменить и удалить варианты", onClick: () => { const nextMode = pendingMode; setPendingMode(null); applyMode(nextMode); } }
+        { label: `Остаться в сценарии «${currentScenarioLabel}»`, tone: "secondary", onClick: () => setPendingMode(null) },
+        { label: "Сменить и удалить варианты", tone: "danger", onClick: () => { const nextMode = pendingMode; setPendingMode(null); applyMode(nextMode); } }
+      ]}
+    /> : null}
+    {showDiscardConfirmation ? <ConfirmationDialog
+      title="Закрыть без сохранения?"
+      description="Внесённые изменения будут потеряны."
+      onDismiss={() => setShowDiscardConfirmation(false)}
+      actions={[
+        { label: "Продолжить редактирование", tone: "secondary", onClick: () => setShowDiscardConfirmation(false) },
+        { label: "Выйти без сохранения", tone: "danger", onClick: onClose }
       ]}
     /> : null}
     </>,
@@ -181,11 +298,13 @@ const GiftPollSettingsDialog = ({ manageToken, poll, recipientName, onClose, onS
   );
 };
 
-const GiftOptionImportStep = ({ manageToken, onPrefill, onManual }: { manageToken: string; onPrefill: (option: EditableOption, partial: boolean) => void; onManual: () => void }) => {
+const ImportSpinner = () => <span className={styles.giftPollImportSpinner} aria-hidden="true" />;
+
+const GiftOptionImportStep = ({ manageToken, onPrefill, onManual }: { manageToken: string; onPrefill: (option: EditableOption, partial: boolean) => void; onManual: (rawInput: string) => void }) => {
   const [rawInput, setRawInput] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const importLink = async () => {
-    if (!rawInput.trim()) return;
+    if (!rawInput.trim() || status === "loading") return;
     setStatus("loading");
     try {
       const response = await fetch("/api/manage/gift-poll-preview", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ manageToken, rawInput }) });
@@ -198,23 +317,53 @@ const GiftOptionImportStep = ({ manageToken, onPrefill, onManual }: { manageToke
     } catch { setStatus("error"); }
   };
   return <div className={styles.giftPollImportStep}>
-    <label className={styles.giftPollField}>Ссылка или текст из магазина<textarea value={rawInput} disabled={status === "loading"} onChange={(event) => setRawInput(event.target.value)} placeholder="Вставьте ссылку или описание товара из магазина" /></label>
-    {status === "error" ? <p className={styles.giftPollModalError} role="alert">Не удалось автоматически заполнить карточку. Проверьте ссылку или добавьте вариант вручную.</p> : null}
+    <label className={styles.giftPollImportField}>
+      Ссылка или текст из магазина
+      <textarea value={rawInput} disabled={status === "loading"} onChange={(event) => setRawInput(event.target.value)} placeholder="Вставьте ссылку или описание товара из магазина" />
+    </label>
+    {!rawInput.trim() && status !== "error" ? <p className={styles.giftPollImportHelper}>Вставьте ссылку на товар или его описание.</p> : null}
+    {status === "error" ? <p className={styles.giftPollModalError} role="alert">Не удалось автоматически получить данные о товаре. Проверьте ссылку или заполните вариант вручную.</p> : null}
     <div className={styles.giftPollImportActions}>
-      <button type="button" className={styles.giftPollImportButton} disabled={status === "loading" || !rawInput.trim()} onClick={importLink}>{status === "loading" ? "Заполняем карточку…" : status === "error" ? "Попробовать ещё раз" : "Заполнить карточку"}</button>
-      <button type="button" className={styles.giftPollManualAddButton} disabled={status === "loading"} onClick={onManual}>Добавить вручную</button>
+      <button type="button" className={styles.giftPollImportButton} disabled={status === "loading" || !rawInput.trim()} onClick={importLink}>
+        {status === "loading" ? <><ImportSpinner />Получаем данные о товаре…</> : status === "error" ? "Попробовать ещё раз" : "Заполнить карточку"}
+      </button>
+      <button type="button" className={styles.giftPollManualAddButton} disabled={status === "loading"} onClick={() => onManual(rawInput)}>
+        {status === "error" ? "Заполнить вручную, сохранив ссылку" : "Добавить вручную"}
+      </button>
     </div>
   </div>;
 };
 
 type EditorState = { option: EditableOption; isNew: boolean; readOnly: boolean };
 
-const GiftOptionEditorDialog = ({ manageToken, mode, editor, saving, error, onSave, onDelete, onRequestClose }: { manageToken: string; mode: Mode; editor: EditorState; saving: boolean; error: string; onSave: (option: EditableOption, photoChange: PendingPhotoChange | undefined) => void; onDelete?: () => void; onRequestClose: (dirty: boolean) => void }) => {
+const GiftOptionImportDialog = ({ manageToken, onClose, onPrefill, onManual }: { manageToken: string; onClose: () => void; onPrefill: (option: EditableOption, partial: boolean) => void; onManual: (rawInput: string) => void }) => {
+  const dialogRef = useRef<HTMLElement>(null);
+  useModalFocus(dialogRef, onClose);
+
+  return createPortal(
+    <div className={styles.giftPollBottomSheetBackdrop} role="presentation" onPointerDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section ref={dialogRef} className={styles.giftPollBottomSheet} role="dialog" aria-modal="true" aria-labelledby="gift-option-import-title" tabIndex={-1}>
+        <header className={styles.giftPollBottomSheetHeader}>
+          <div><span>Вариант подарка</span><h2 id="gift-option-import-title">Добавить по ссылке или тексту</h2></div>
+          <button type="button" onClick={onClose} aria-label="Закрыть"><CloseIcon /></button>
+        </header>
+        <div className={styles.giftPollBottomSheetBody}>
+          <GiftOptionImportStep
+            manageToken={manageToken}
+            onPrefill={(option, partial) => { onPrefill(option, partial); onClose(); }}
+            onManual={(rawInput) => { onManual(rawInput); onClose(); }}
+          />
+        </div>
+      </section>
+    </div>,
+    document.body
+  );
+};
+
+const GiftOptionEditorDialog = ({ mode, editor, saving, error, prefillWarning, onSave, onDelete, onRequestClose }: { mode: Mode; editor: EditorState; saving: boolean; error: string; prefillWarning?: string; onSave: (option: EditableOption, photoChange: PendingPhotoChange | undefined) => void; onDelete?: () => void; onRequestClose: (dirty: boolean) => void }) => {
   const dialogRef = useRef<HTMLElement>(null);
   const [option, setOption] = useState<EditableOption>(editor.option);
   const [photoChange, setPhotoChange] = useState<PendingPhotoChange | undefined>(undefined);
-  const [view, setView] = useState<"import" | "form">(editor.isNew && mode === "gift" && !editor.readOnly ? "import" : "form");
-  const [prefillWarning, setPrefillWarning] = useState("");
   const isBudget = mode === "budget";
   const dirty = !sameOption(option, editor.option) || Boolean(photoChange);
   const canSave = option.title.trim().length > 0 && (editor.isNew ? true : dirty);
@@ -222,6 +371,10 @@ const GiftOptionEditorDialog = ({ manageToken, mode, editor, saving, error, onSa
   useModalFocus(dialogRef, requestClose);
 
   const patch = (key: keyof EditableOption, value: string) => setOption((current) => ({ ...current, [key]: value }));
+
+  const revokePreview = () => {
+    if (photoChange?.kind === "replace") URL.revokeObjectURL(photoChange.previewUrl);
+  };
 
   return createPortal(
     <div className={styles.giftPollInfoBackdrop} role="presentation" onPointerDown={(event) => event.target === event.currentTarget && requestClose()}>
@@ -231,39 +384,49 @@ const GiftOptionEditorDialog = ({ manageToken, mode, editor, saving, error, onSa
           <button type="button" onClick={requestClose} aria-label="Закрыть редактор"><CloseIcon /></button>
         </header>
         <div className={styles.giftPollModalBody}>
-          {view === "import" ? <GiftOptionImportStep manageToken={manageToken} onPrefill={(prefilled, partial) => { setOption({ ...editor.option, ...prefilled, id: editor.option.id }); setPrefillWarning(partial ? "Не удалось заполнить все поля автоматически. Проверьте данные перед добавлением." : ""); setView("form"); }} onManual={() => setView("form")} /> : (
-            <div className={styles.giftPollOptionForm}>
-              {prefillWarning ? <p className={styles.giftPollImportWarning} role="status">{prefillWarning}</p> : null}
-              {isBudget ? <>
-                <label className={styles.giftPollField}>Сумма, ₽<input readOnly={editor.readOnly} value={budgetInputValue(option.title)} type="number" inputMode="numeric" min="1" max="9999999" required onChange={(event) => patch("title", event.target.value)} placeholder="Например, 5000" /></label>
-                <label className={styles.giftPollField}>Пояснение <span>необязательно</span><input readOnly={editor.readOnly} value={option.description} maxLength={140} onChange={(event) => patch("description", event.target.value)} placeholder="Например, небольшой общий подарок" /></label>
-              </> : <>
-                <label className={styles.giftPollField}>Название<input readOnly={editor.readOnly} value={option.title} maxLength={60} required onChange={(event) => patch("title", event.target.value)} placeholder="Например, сертификат в SPA" /></label>
-                <label className={styles.giftPollField}>Примерная стоимость <span>необязательно</span><input readOnly={editor.readOnly} value={option.priceLabel} maxLength={30} onChange={(event) => patch("priceLabel", event.target.value)} placeholder="Например, около 5 000 ₽" /></label>
-                <label className={styles.giftPollField}>Короткое описание <span>необязательно</span><input readOnly={editor.readOnly} value={option.description} maxLength={140} onChange={(event) => patch("description", event.target.value)} placeholder="Например, можно выбрать удобный день и программу" /></label>
-                <label className={styles.giftPollField}>Ссылка на товар <span>необязательно</span><input readOnly={editor.readOnly} value={option.productUrl} inputMode="url" onChange={(event) => patch("productUrl", event.target.value)} placeholder="https://…" /></label>
-                {option.productUrl.startsWith("https://") ? <a className={styles.giftPollOpenProductLink} href={option.productUrl} target="_blank" rel="noopener noreferrer">Открыть ссылку ↗</a> : null}
-                <div className={styles.giftPollPhotoEditor}>
-                  <strong>Фото <span>необязательно</span></strong>
-                  {photoChange?.kind === "replace" ? <>
-                    <img src={photoChange.previewUrl} alt="Новое выбранное фото" className={styles.giftPollPhotoPreview} />
-                    <p>Файл будет загружен после сохранения изменений.</p>
-                    {!editor.readOnly ? <div className={styles.giftPollPhotoActions}><label htmlFor="gift-option-photo" className={styles.giftPollPhotoChoose}>Выбрать другое</label><button type="button" className={styles.giftPollPhotoRemove} onClick={() => { URL.revokeObjectURL(photoChange.previewUrl); setPhotoChange(undefined); }}>Отменить замену</button></div> : null}
-                  </> : photoChange?.kind === "remove" ? <>
-                    <p>Фото будет удалено после сохранения изменений.</p>
-                    {!editor.readOnly ? <button type="button" className={styles.giftPollPhotoRemove} onClick={() => setPhotoChange(undefined)}>Отменить удаление</button> : null}
-                  </> : option.imageUrl ? <>
-                    <img src={option.imageUrl} alt={`Текущее фото: ${option.title || "вариант подарка"}`} className={styles.giftPollPhotoPreview} />
-                    {!editor.readOnly ? <div className={styles.giftPollPhotoActions}><label htmlFor="gift-option-photo" className={styles.giftPollPhotoChoose}>Заменить фото</label><button type="button" className={styles.giftPollPhotoRemove} onClick={() => setPhotoChange({ kind: "remove" })}>Удалить фото</button></div> : null}
-                  </> : !editor.readOnly ? <label htmlFor="gift-option-photo" className={styles.giftPollPhotoChoose}>Выбрать фото</label> : <p>Фото не добавлено.</p>}
-                  {!editor.readOnly ? <input id="gift-option-photo" className={styles.giftPollPhotoInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; if (photoChange?.kind === "replace") URL.revokeObjectURL(photoChange.previewUrl); setPhotoChange({ kind: "replace", file, previewUrl: URL.createObjectURL(file) }); event.target.value = ""; }} /> : null}
-                </div>
-              </>}
-              {error ? <p className={styles.giftPollModalError} role="alert">{error}</p> : null}
-            </div>
-          )}
+          <div className={styles.giftPollOptionForm}>
+            {prefillWarning ? <p className={styles.giftPollImportWarning} role="status">{prefillWarning}</p> : null}
+            {isBudget ? <>
+              <label className={styles.giftPollField}>Сумма, ₽<input readOnly={editor.readOnly} value={budgetInputValue(option.title)} type="number" inputMode="numeric" min="1" max="9999999" required onChange={(event) => patch("title", event.target.value)} placeholder="Например, 5000" /></label>
+              <label className={styles.giftPollField}>Пояснение <span>необязательно</span><input readOnly={editor.readOnly} value={option.description} maxLength={140} onChange={(event) => patch("description", event.target.value)} placeholder="Например, небольшой общий подарок" /></label>
+            </> : <>
+              <label className={styles.giftPollField}>Название<input readOnly={editor.readOnly} value={option.title} maxLength={60} required onChange={(event) => patch("title", event.target.value)} placeholder="Например, сертификат в SPA" /></label>
+              <label className={styles.giftPollField}>Примерная стоимость <span>необязательно</span><input readOnly={editor.readOnly} value={option.priceLabel} maxLength={30} onChange={(event) => patch("priceLabel", event.target.value)} placeholder="Например, около 5 000 ₽" /></label>
+              <label className={styles.giftPollField}>Короткое описание <span>необязательно</span><input readOnly={editor.readOnly} value={option.description} maxLength={140} onChange={(event) => patch("description", event.target.value)} placeholder="Например, можно выбрать удобный день и программу" /></label>
+              <label className={styles.giftPollField}>Ссылка на товар <span>необязательно</span><input readOnly={editor.readOnly} value={option.productUrl} inputMode="url" onChange={(event) => patch("productUrl", event.target.value)} placeholder="https://…" /></label>
+              {option.productUrl.startsWith("https://") ? <a className={styles.giftPollOpenProductLink} href={option.productUrl} target="_blank" rel="noopener noreferrer">Открыть ссылку ↗</a> : null}
+              <div className={styles.giftPollPhotoBlock}>
+                <strong className={styles.giftPollPhotoBlockTitle}>Изображение <span>необязательно</span></strong>
+                {photoChange?.kind === "replace" ? <>
+                  <img src={photoChange.previewUrl} alt="Новое выбранное изображение" className={styles.giftPollPhotoBlockPreview} />
+                  {!editor.readOnly ? <div className={styles.giftPollPhotoBlockActions}>
+                    <label htmlFor="gift-option-photo" className={styles.giftPollPhotoBlockAction}>Заменить изображение</label>
+                    <button type="button" className={styles.giftPollPhotoBlockActionMuted} onClick={() => { revokePreview(); setPhotoChange(undefined); }}>Отменить замену</button>
+                  </div> : null}
+                  <p className={styles.giftPollPhotoBlockHint}>Изображение будет загружено после сохранения изменений.</p>
+                </> : photoChange?.kind === "remove" ? <>
+                  <div className={styles.giftPollPhotoBlockPreviewEmpty} aria-hidden="true"><ImageIcon /></div>
+                  {!editor.readOnly ? <div className={styles.giftPollPhotoBlockActions}>
+                    <button type="button" className={styles.giftPollPhotoBlockActionMuted} onClick={() => setPhotoChange(undefined)}>Отменить удаление</button>
+                  </div> : null}
+                  <p className={styles.giftPollPhotoBlockHint}>Изображение будет удалено после сохранения изменений.</p>
+                </> : option.imageUrl ? <>
+                  <img src={option.imageUrl} alt={`Изображение варианта: ${option.title || "подарок"}`} className={styles.giftPollPhotoBlockPreview} />
+                  {!editor.readOnly ? <div className={styles.giftPollPhotoBlockActions}>
+                    <label htmlFor="gift-option-photo" className={styles.giftPollPhotoBlockAction}>Заменить изображение</label>
+                    <button type="button" className={styles.giftPollPhotoBlockActionDanger} onClick={() => setPhotoChange({ kind: "remove" })}>Удалить изображение</button>
+                  </div> : null}
+                </> : !editor.readOnly ? <label htmlFor="gift-option-photo" className={styles.giftPollPhotoBlockUpload}>
+                  <ImageIcon />
+                  <span>Добавить изображение</span>
+                </label> : <p className={styles.giftPollPhotoBlockHint}>Изображение не добавлено.</p>}
+                {!editor.readOnly ? <input id="gift-option-photo" className={styles.giftPollPhotoInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; revokePreview(); setPhotoChange({ kind: "replace", file, previewUrl: URL.createObjectURL(file) }); event.target.value = ""; }} /> : null}
+              </div>
+            </>}
+            {error ? <p className={styles.giftPollModalError} role="alert">{error}</p> : null}
+          </div>
         </div>
-        {view === "form" && !editor.readOnly ? <footer className={`${styles.giftPollModalFooter} ${styles.giftPollOptionModalFooter}`}>
+        {!editor.readOnly ? <footer className={`${styles.giftPollModalFooter} ${styles.giftPollOptionModalFooter}`}>
           {!editor.isNew && onDelete ? <button type="button" className={styles.giftPollModalDelete} disabled={saving} onClick={onDelete}>Удалить вариант</button> : null}
           <span className={styles.giftPollModalFooterSpacer} />
           <button type="button" className={styles.giftPollModalCancel} disabled={saving} onClick={requestClose}>Отмена</button>
@@ -284,6 +447,8 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [editorSaving, setEditorSaving] = useState(false);
   const [editorError, setEditorError] = useState("");
+  const [prefillWarning, setPrefillWarning] = useState("");
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [confirmOpenPoll, setConfirmOpenPoll] = useState(false);
   const [openPollChecked, setOpenPollChecked] = useState(false);
@@ -338,6 +503,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
     setEditor(null);
     setEditorSaving(false);
     setEditorError("");
+    setPrefillWarning("");
     setConfirmDiscard(false);
   }, []);
 
@@ -345,6 +511,19 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
     if (!dirty) { closeEditor(); return; }
     setConfirmDiscard(true);
   }, [closeEditor]);
+
+  const openEditorFromImport = useCallback((option: EditableOption, partial: boolean) => {
+    setImportDialogOpen(false);
+    setEditor({ option, isNew: true, readOnly: false });
+    setPrefillWarning(partial ? "Не удалось заполнить все поля автоматически. Проверьте данные перед добавлением." : "");
+  }, []);
+
+  const openManualFromImport = useCallback((rawInput: string) => {
+    setImportDialogOpen(false);
+    const manualOption = emptyOption();
+    manualOption.productUrl = rawInput;
+    setEditor({ option: manualOption, isNew: true, readOnly: false });
+  }, []);
 
   useEffect(() => {
     if (enableState.ok && !poll) router.refresh();
@@ -566,7 +745,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
         <div className={styles.giftPollSummary} aria-label="Сводка голосования">
           <div className={styles.giftPollSummaryItem}><span className={styles.giftPollSummaryIcon}><SwitchIcon /></span><span><small>Сценарий</small><strong>{isBudget ? "Бюджет" : "Подарок"}</strong></span></div>
           <div className={styles.giftPollSummaryItem}><span className={styles.giftPollSummaryIcon}><GiftIcon /></span><span><small>Вариантов</small><strong>{options.length} из 6</strong></span></div>
-          <div className={styles.giftPollSummaryItem}><span className={styles.giftPollSummaryIcon}><PeopleIcon /></span><span><small>Участники <button type="button" className={styles.giftPollAccessHint} aria-label="Кто может голосовать" title="Голосовать могут участники, отправившие поздравление через форму. Поздравления, добавленные организатором, не учитываются."><span aria-hidden="true">i</span></button></small><strong className={styles.giftPollParticipantCounts}><span>Голосов: {totalVotes}</span><span>Доступ: {eligibleVoterCount}</span></strong></span></div>
+          <div className={styles.giftPollSummaryItem}><span className={styles.giftPollSummaryIcon}><PeopleIcon /></span><span><small>Участники <VoterInfoPopover /></small><strong className={styles.giftPollParticipantCounts}><span>Проголосовали: {totalVotes}</span><span>Могут голосовать: {eligibleVoterCount}</span></strong></span></div>
           <div className={styles.giftPollSummaryItem}><span className={styles.giftPollSummaryIcon}><CalendarIcon /></span><span><small>Завершение</small><strong>{formatCloseDate(poll.closesAt)}</strong></span></div>
           <button type="button" className={styles.giftPollSummaryEdit} aria-label="Изменить настройки голосования" title="Изменить настройки голосования" onClick={() => setSettingsOpen(true)}><PencilIcon /></button>
         </div>
@@ -579,8 +758,8 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
             <p>{optionsLocked ? "Варианты зафиксированы после первого голоса." : remainingOptionCount > 0 ? `Вы можете добавить ещё ${remainingOptionCount} ${pluralOptions(remainingOptionCount)}` : "Добавлено максимальное количество вариантов — 6."}</p>
           </div>
           <div className={styles.giftPollOptionsActions}>
-            <button type="button" className={styles.giftPollOrderButton} disabled={optionsLocked || options.length < 2 || poll.status === "closed"} title={optionsLocked ? "Порядок нельзя изменить после первого голоса" : undefined} onClick={() => setOrderEditorOpen(true)}>Изменить порядок</button>
-            <button type="button" className={styles.giftPollAddButton} disabled={!canAddOption} title={optionsLocked ? "Варианты нельзя добавлять после первого голоса" : remainingOptionCount <= 0 ? "Добавлено максимальное количество вариантов" : undefined} onClick={() => setEditor({ option: emptyOption(), isNew: true, readOnly: false })}>+ Добавить {isBudget ? "сумму" : "вариант"}</button>
+            <button type="button" className={styles.giftPollOrderButton} disabled={optionsLocked || options.length < 2 || poll.status === "closed"} title={optionsLocked ? "Порядок нельзя изменить после первого голоса" : options.length < 2 ? "Для изменения порядка нужно минимум два варианта" : undefined} onClick={() => setOrderEditorOpen(true)}>Изменить порядок</button>
+            <button type="button" className={styles.giftPollAddButton} disabled={!canAddOption} title={optionsLocked ? "Варианты нельзя добавлять после первого голоса" : remainingOptionCount <= 0 ? "Добавлено максимальное количество вариантов" : poll.status === "closed" ? "Нельзя добавлять варианты после завершения голосования" : undefined} onClick={() => isBudget ? setEditor({ option: emptyOption(), isNew: true, readOnly: false }) : setImportDialogOpen(true)}>+ Добавить {isBudget ? "сумму" : "вариант"}</button>
           </div>
         </div>
         {optionsLocked && poll.status === "open" ? <p className={styles.giftPollLockNote}><InfoIcon />Получен первый голос. Варианты и их порядок больше нельзя изменять.</p> : null}
@@ -592,8 +771,8 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
             return <article key={option.id} className={`${styles.giftPollOptionEditor} ${isBudget ? styles.giftPollBudgetEditor : ""}`}>
               <header className={styles.giftPollOptionCardHeader}>
                 {isBudget ? <div className={styles.giftPollBudgetPreview}><div className={styles.giftPollOptionTitleLine}><strong>{budgetInputValue(option.title) ? `${Number(budgetInputValue(option.title)).toLocaleString("ru-RU")} ₽` : "Сумма не указана"}</strong></div>{option.description ? <span>{option.description}</span> : null}</div> : <>{option.imageUrl ? <img src={option.imageUrl} alt="" className={styles.giftPollOptionThumbnail} /> : <div className={styles.giftPollOptionPlaceholder} aria-hidden="true"><GiftIcon /></div>}<div className={styles.giftPollOptionPreview}><div className={styles.giftPollOptionTitleLine}><strong>{option.title || `Вариант подарка ${index + 1}`}</strong></div>{option.description ? <span>{option.description}</span> : null}<div className={styles.giftPollOptionMeta}>{option.priceLabel ? <em>{priceWithCurrency(option.priceLabel)}</em> : null}{option.productUrl ? <a href={option.productUrl} target="_blank" rel="noreferrer">{productSource(option.productUrl)}</a> : null}</div></div></>}
-                <div className={styles.giftPollOptionResult}><strong>{votes}</strong><span>{pluralVotes(votes).split(" ").slice(1).join(" ")}</span></div>
-                <div className={styles.giftPollProgress}><strong>{percent}%</strong><span><i style={{ width: `${percent}%` }} /></span></div>
+                <div className={styles.giftPollOptionResult}>{totalVotes > 0 ? <><strong>{votes}</strong><span>{pluralVotes(votes).split(" ").slice(1).join(" ")}</span></> : null}</div>
+                <div className={styles.giftPollProgress}>{totalVotes > 0 ? <><strong>{percent}%</strong><span><i style={{ width: `${percent}%` }} /></span></> : null}</div>
                 <div className={styles.giftPollOptionCardActions}>
                   <GiftMenu label={`Действия с вариантом «${option.title || `Вариант ${index + 1}`}»`}>
                     {optionsLocked ? <>
@@ -666,8 +845,8 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
       /> : null}
 
       {optionToDelete ? <ConfirmationDialog
-        title="Удалить вариант?"
-        description={`Вариант «${optionToDelete.title}» будет удалён из голосования. Отменить это действие после сохранения не получится.`}
+        title={`Удалить вариант «${optionToDelete.title}»?`}
+        description="Вариант будет удалён из голосования. Это действие нельзя отменить."
         onDismiss={() => setOptionToDelete(null)}
         actions={[
           { label: "Оставить вариант", tone: "secondary", onClick: () => setOptionToDelete(null) },
@@ -676,14 +855,21 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
       /> : null}
 
       {editor ? <GiftOptionEditorDialog
-        manageToken={manageToken}
         mode={poll.mode}
         editor={editor}
         saving={editorSaving}
         error={editorError}
+        prefillWarning={prefillWarning}
         onSave={saveEditorOption}
         onDelete={!editor.isNew && !editor.readOnly ? () => setOptionToDelete(editor.option) : undefined}
         onRequestClose={requestCloseEditor}
+      /> : null}
+
+      {importDialogOpen ? <GiftOptionImportDialog
+        manageToken={manageToken}
+        onClose={() => setImportDialogOpen(false)}
+        onPrefill={openEditorFromImport}
+        onManual={openManualFromImport}
       /> : null}
 
       {orderEditorOpen ? <GiftPollOrderEditor
