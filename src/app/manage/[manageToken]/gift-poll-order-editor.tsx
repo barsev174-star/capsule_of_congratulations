@@ -275,9 +275,8 @@ export const GiftPollOrderEditor = ({ manageToken, poll, onClose, onSaved }: Pro
       </div>
       <footer className={styles.orderEditorFooter}>{error ? <span role="alert">{error}</span> : <span>{isDirty ? "Есть несохранённые изменения" : "Порядок не изменён"}</span>}<div><button type="button" className={styles.orderEditorCancel} onClick={requestClose} disabled={isPending}>Отмена</button><button type="button" className={styles.orderEditorSave} onClick={save} disabled={isPending || !isDirty} aria-busy={isPending}>{isPending ? "Сохраняем…" : "Сохранить порядок"}</button></div></footer>
     </div>
-    {showCloseConfirmation ? <ConfirmationDialog title="Порядок не сохранён" description="Сохранить новый порядок вариантов перед выходом?" onDismiss={() => setShowCloseConfirmation(false)} actions={[
-      { label: "Сохранить и выйти", onClick: save, disabled: isPending },
-      { label: "Продолжить изменение", tone: "secondary", onClick: () => setShowCloseConfirmation(false) },
+    {showCloseConfirmation ? <ConfirmationDialog title="Закрыть без сохранения?" description="Внесённые изменения будут потеряны." onDismiss={() => setShowCloseConfirmation(false)} actions={[
+      { label: "Продолжить редактирование", tone: "secondary", onClick: () => setShowCloseConfirmation(false) },
       { label: "Выйти без сохранения", tone: "danger", onClick: onClose }
     ]} /> : null}
     {activeMoveId && byId.get(activeMoveId) ? <GiftOptionPositionDialog title={byId.get(activeMoveId)!.title} count={order.length} position={position} error={positionError} onClose={() => { setActiveMoveId(null); window.requestAnimationFrame(() => moveOpenerRef.current?.focus()); }} onPositionChange={(value) => { setPosition(value); const next = Number(value); setPositionError(value && (next < 1 || next > order.length) ? `Укажите позицию от 1 до ${order.length}.` : ""); }} onMoveToStart={() => applyMove(activeMoveId, 0)} onMoveToEnd={() => applyMove(activeMoveId, order.length - 1)} onMove={() => { const next = Number(position); if (!position || next < 1 || next > order.length) { setPositionError(`Укажите позицию от 1 до ${order.length}.`); return; } applyMove(activeMoveId, next - 1); }} /> : null}

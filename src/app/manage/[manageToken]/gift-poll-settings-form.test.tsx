@@ -175,7 +175,7 @@ describe("GiftPollSettingsForm active poll", () => {
 
   it("shows access and votes as separate server counters", () => {
     render(<GiftPollSettingsForm manageToken="manage-token" recipientName="Наталья" publicSlug="public-slug" poll={activePoll} eligibleVoterCount={7} collectionIsOpen />);
-    expect(screen.getByText("Доступ: 7")).toBeInTheDocument();
+    expect(screen.getByText("Могут голосовать: 7")).toBeInTheDocument();
     expect(screen.getByText("Голосов: 0")).toBeInTheDocument();
     expect(screen.queryByText("0 из 7")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Кто может голосовать" })).toHaveAttribute("title", expect.stringContaining("Поздравления, добавленные организатором, не учитываются"));
@@ -197,6 +197,7 @@ describe("GiftPollSettingsForm active poll", () => {
     await user.click(screen.getByRole("button", { name: "Изменить настройки голосования" }));
     await user.click(screen.getByRole("radio", { name: "БюджетПодходящий уровень общей суммы" }));
     expect(screen.getByRole("alertdialog", { name: "Сменить сценарий голосования?" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Остаться в сценарии «Подарок»" }));
     expect(screen.getByRole("radio", { name: "ПодарокОдин из конкретных вариантов" })).toBeChecked();
   });
 });
