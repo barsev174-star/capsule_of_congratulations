@@ -9,6 +9,7 @@ import type {
 } from "@/lib/final-card/types";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import { pluralize } from "@/lib/i18n/pluralize";
+import { MemoryPhoto } from "./memory-photo";
 import { ScrapbookComponentFrame } from "./scrapbook-decor-layer";
 import finalCardStyles from "./final-card.module.css";
 import styles from "./messages-section.module.css";
@@ -118,13 +119,7 @@ const renderMediaFigure = (
     <>
       {asset ? (
         <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={asset.publicUrl}
-            alt={asset.captionTitle || asset.captionSubtitle || title}
-            className={finalCardStyles.memoryPhotoImage}
-            style={getCropStyle(asset)}
-          />
+          <MemoryPhoto asset={asset} />
           <div className={finalCardStyles.memoryPhotoCaptionWrap}>
             <p className={finalCardStyles.memoryPhotoCaption}>
               {asset.captionTitle || asset.captionSubtitle || title}

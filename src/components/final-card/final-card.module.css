@@ -6944,14 +6944,33 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
   -webkit-line-clamp: 2;
 }
 
-/* A single physical polaroid frame per memory.  The artwork lives on the card
-   itself; a second overlay used to leave a visible inner duplicate frame. */
+/* Keep the original square cream polaroid above the reversible crop.  The
+   photo fills its old area and may continue under the opaque frame edges. */
 .route-adventure .memoryPhotoCard {
-  background: url("/templates/route-adventure/polaroid-landscape-tape.png") center / 100% 100% no-repeat var(--route-paper-light);
+  background: var(--route-paper-light);
+}
+
+.route-adventure .memoryPhotoCard .memoryPhotoViewport {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+}
+
+.route-adventure .memoryPhotoCard .memoryPhotoImage {
+  inline-size: 100% !important;
+  block-size: 100% !important;
+  max-inline-size: none;
+  margin: 0 !important;
+}
+
+.route-adventure .memoryPhotoCard .memoryPhotoCaptionWrap {
+  background: transparent;
 }
 
 .route-adventure .memoryPhotoCard::after {
-  display: none;
+  display: block;
+  background-image: url("/templates/route-adventure/polaroid-narrow-cream-overlay.png");
 }
 
 /* The handwritten captions in the greeting rail sit lower in the frame. */
