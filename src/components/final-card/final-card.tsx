@@ -12,8 +12,8 @@ import {
   ScrapbookDecorLayer,
   ScrapbookDecorProvider
 } from "./scrapbook-decor-layer";
+import { MemoryPhoto } from "./memory-photo";
 import styles from "./final-card.module.css";
-import { getCropStyle } from "@/lib/cards/media-slots";
 
 type Props = {
   model: FinalCardViewModel;
@@ -486,18 +486,12 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                       }`;
                       const content = (
                         <>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={asset.publicUrl}
-                          alt={asset.captionTitle || asset.captionSubtitle || "Фото открытки"}
-                          className={styles.memoryPhotoImage}
-                          style={getCropStyle(asset)}
-                        />
-                        <div className={styles.memoryPhotoCaptionWrap}>
-                          <p className={styles.memoryPhotoCaption}>
-                            {asset.captionSubtitle || asset.captionTitle || "Фото для открытки"}
-                          </p>
-                        </div>
+                          <MemoryPhoto asset={asset} />
+                          <div className={styles.memoryPhotoCaptionWrap}>
+                            <p className={styles.memoryPhotoCaption}>
+                              {asset.captionSubtitle || asset.captionTitle || "Фото для открытки"}
+                            </p>
+                          </div>
                         </>
                       );
 

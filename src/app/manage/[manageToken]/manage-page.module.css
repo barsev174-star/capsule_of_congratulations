@@ -10895,9 +10895,9 @@ button.designStickyPrimary {
 .photoSlotPlus { display: grid; width: 52px; height: 52px; place-items: center; border-radius: 50%; background: var(--m-accent-light); font-size: 2rem; font-weight: 300; transition: transform 150ms cubic-bezier(.2,0,0,1); }
 .photoSlotFilled { display: block; }
 .photoSlotMenuOpen { z-index: 12; overflow: visible; }
-.photoSlotImageButton { display: grid; grid-template-rows: minmax(170px,1fr) auto; width: 100%; height: 100%; min-height: 210px; padding: 0; overflow: hidden; border: 0; background: transparent; color: inherit; text-align: left; cursor: grab; touch-action: none; transition: scale 120ms ease; }
+.photoSlotImageButton { display: grid; grid-template-rows: auto auto; width: 100%; height: 100%; min-height: 210px; align-content: start; padding: 0; overflow: hidden; border: 0; background: transparent; color: inherit; text-align: left; cursor: grab; touch-action: none; transition: scale 120ms ease; }
 .photoSlotImageButton:active { scale: .96; cursor: grabbing; }
-.photoSlotImageFrame { display: block; min-width: 0; min-height: 170px; overflow: hidden; background: #eee; }
+.photoSlotImageFrame { display: block; width: 100%; min-width: 0; min-height: 0; aspect-ratio: 4 / 3; overflow: hidden; background: #eee; }
 .photoSlotImageFrame img,
 .photoMoveGrid img,
 .photoCropViewport img { width: 100%; height: 100%; object-fit: cover; outline: 1px solid rgba(0,0,0,.1); outline-offset: -1px; }
@@ -10930,8 +10930,8 @@ button.designStickyPrimary {
 .photoDragInProgress,
 .photoDragInProgress * { cursor: grabbing !important; user-select: none !important; }
 .photoSlotVertical { max-width: 330px; }
-.photoSlotVertical .photoSlotImageButton { grid-template-rows: minmax(330px,1fr) auto; }
-.photoSlotVertical .photoSlotImageFrame { min-height: 330px; }
+.photoSlotVertical .photoSlotImageButton { grid-template-rows: auto auto; }
+.photoSlotVertical .photoSlotImageFrame { min-height: 0; aspect-ratio: 2 / 3; }
 .photoWorkspaceHint { margin: 0; color: var(--m-muted); font-size: .82rem; }
 .photoMobileHint { display: none; }
 
@@ -11034,7 +11034,7 @@ button.designStickyPrimary {
   .photoSlotImageButton,
   .photoSlotVertical .photoSlotImageButton { grid-template-columns: 112px minmax(0,1fr); grid-template-rows: auto 1fr; min-height: 112px; padding: 14px 50px 14px 12px; gap: 5px 12px; align-items: start; border-radius: 14px; cursor: pointer; touch-action: manipulation; }
   .photoSlotImageFrame,
-  .photoSlotVertical .photoSlotImageFrame { grid-column: 1; grid-row: 1 / 3; width: 112px; height: 84px; min-height: 84px; border-radius: 10px; }
+  .photoSlotVertical .photoSlotImageFrame { grid-column: 1; grid-row: 1 / 3; width: 112px; height: 84px; min-height: 84px; aspect-ratio: auto; border-radius: 10px; }
   .photoSlotPosition { position: static; grid-column: 2; grid-row: 1; justify-self: start; padding: 0; color: var(--m-muted); background: transparent; box-shadow: none; font-size: .75rem; }
   .photoSlotText { grid-column: 2; grid-row: 2; min-height: 0; align-content: start; padding: 0; }
   .photoSlotCaption { font-size: .86rem; }

@@ -2434,6 +2434,16 @@ body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
   padding: 0;
 }
 
+.memoryPhotoViewport {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #f3ede6;
+}
+
 .memoryPhotoImage {
   display: block;
   width: 100%;
@@ -2536,6 +2546,10 @@ body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
 }
 
 .paper-birthday .memoryPhotoImage {
+  border-radius: 4px;
+}
+
+.paper-birthday .memoryPhotoViewport {
   border-radius: 4px;
 }
 
@@ -3605,6 +3619,10 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
   object-fit: cover;
   border-radius: 8px;
   background: #f3ede6;
+}
+
+.paper-birthday .memoryPhotoViewport {
+  border-radius: 8px;
 }
 
 .paper-birthday .memoryPhotoCaptionWrap {
@@ -5500,6 +5518,11 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
     max-width: none;
     margin-inline: 0;
   }
+
+  .memoryPhotoViewport,
+  .paper-birthday .memoryPhotoViewport {
+    border-radius: 16px;
+  }
 }
 
 /* Route adventure: a shared landscape frame makes user photos feel like expedition keepsakes. */
@@ -6806,6 +6829,15 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
   display: grid;
   grid-template-rows: minmax(0, 1fr) 58px;
   overflow: hidden;
+}
+
+.route-adventure .memoryPhotoCard .memoryPhotoViewport {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  align-self: stretch;
+  justify-self: stretch;
+  border-radius: 3px;
 }
 
 .route-adventure .memoryPhotoCard .memoryPhotoImage {
