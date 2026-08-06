@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import type { GiftPollWithOptions } from "@/lib/gift-polls/types";
 import { defaultGiftPollCopy, isSystemDefaultPollQuestion, isSystemDefaultPollTitle } from "@/lib/gift-polls/validation";
 import { cleanImportedDescription, sanitizeGiftPollText } from "@/lib/gift-polls/text-sanitization";
+import { emptyImportedGiftFields, importWouldOverwriteUserEdits, isSafeHttpUrl, isUsableImportResult, mergeImportedDraft, type GiftFieldSources, type ImportedGiftFields } from "@/lib/gift-polls/import-draft";
 import { compressImageFile } from "@/lib/media/image-compression";
 import { closeGiftPollAction, enableGiftPollAction, openGiftPollAction, reopenGiftPollAction, saveGiftPollAction, saveGiftPollSettingsAction, selectGiftPollOptionAction, type GiftPollFormState } from "./actions";
 import { ConfirmationDialog } from "./confirmation-dialog";
@@ -301,46 +302,93 @@ const GiftPollSettingsDialog = ({ manageToken, poll, recipientName, onClose, onS
 
 const ImportSpinner = () => <span className={styles.giftPollImportSpinner} aria-hidden="true" />;
 
-const GiftOptionImportStep = ({ manageToken, onPrefill, onManual, onDirtyChange }: { manageToken: string; onPrefill: (option: EditableOption, partial: boolean) => void; onManual: (rawInput: string) => void; onDirtyChange?: (dirty: boolean) => void }) => {
-  const [rawInput, setRawInput] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+type PreviewResponse = { extractedUrl?: string; resolvedUrl?: string; warnings?: string[]; metadata?: { title: string | null; description: string | null; imageUrl: string | null; price: { amount: number; currency: string } | null } };
+
+type ImportStatus = "idle" | "loading" | "network-error" | "server-error" | "failed";
+
+const toImportedFields = (data: PreviewResponse): ImportedGiftFields => ({
+  title: sanitizeGiftPollText(data.metadata?.title, 60),
+  description: cleanImportedDescription(data.metadata?.description, data.metadata?.title),
+  productUrl: data.resolvedUrl ?? data.extractedUrl ?? "",
+  imageUrl: data.metadata?.imageUrl ?? "",
+  priceLabel: data.metadata?.price ? new Intl.NumberFormat("ru-RU").format(data.metadata.price.amount) : ""
+});
+
+const importStatusMessages: Record<Exclude<ImportStatus, "idle" | "loading">, string> = {
+  "network-error": "Не удалось загрузить данные. Проверьте соединение и попробуйте ещё раз.",
+  "server-error": "Не удалось автоматически заполнить карточку. Добавьте данные вручную или попробуйте ещё раз.",
+  failed: "Не удалось автоматически заполнить карточку. Добавьте данные вручную."
+};
+
+type ImportDraft = { rawInput: string; fields: ImportedGiftFields | null; sources: GiftFieldSources; partial: boolean };
+const emptyImportDraft = (): ImportDraft => ({ rawInput: "", fields: null, sources: {}, partial: false });
+
+const GiftOptionImportStep = ({ manageToken, draft, onRawInputChange, onApply, onManual, onDirtyChange }: { manageToken: string; draft: ImportDraft; onRawInputChange: (value: string) => void; onApply: (fields: ImportedGiftFields, sources: GiftFieldSources, partial: boolean) => void; onManual: () => void; onDirtyChange?: (dirty: boolean) => void }) => {
+  const [status, setStatus] = useState<ImportStatus>("idle");
+  const [pendingNext, setPendingNext] = useState<{ fields: ImportedGiftFields; partial: boolean } | null>(null);
+  const rawInput = draft.rawInput;
+
+  const applyResult = (fields: ImportedGiftFields, partial: boolean, keepUserEdits: boolean) => {
+    const merged = mergeImportedDraft(draft.fields ? { fields: draft.fields, sources: draft.sources } : null, fields, keepUserEdits);
+    onApply(merged.fields, merged.sources, partial);
+  };
+
   const importLink = async () => {
     if (!rawInput.trim() || status === "loading") return;
     setStatus("loading");
+    let data: PreviewResponse | null = null;
+    let response: Response;
     try {
-      const response = await fetch("/api/manage/gift-poll-preview", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ manageToken, rawInput }) });
-      const data = await response.json() as { extractedUrl?: string; resolvedUrl?: string; warnings?: string[]; metadata?: { title: string | null; description: string | null; imageUrl: string | null; price: { amount: number; currency: string } | null } };
-      if (!response.ok || !data.extractedUrl) { setStatus("error"); return; }
-      const title = sanitizeGiftPollText(data.metadata?.title, 60);
-      const description = cleanImportedDescription(data.metadata?.description, title);
-      const partial = !title || Boolean(data.warnings?.includes("METADATA_PARTIAL"));
-      onPrefill({ id: crypto.randomUUID(), title, description, productUrl: data.resolvedUrl ?? data.extractedUrl, imageUrl: data.metadata?.imageUrl ?? "", priceLabel: data.metadata?.price ? new Intl.NumberFormat("ru-RU").format(data.metadata.price.amount) : "" }, partial);
-    } catch { setStatus("error"); }
+      response = await fetch("/api/manage/gift-poll-preview", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ manageToken, rawInput }) });
+      data = await response.json().catch(() => null) as PreviewResponse | null;
+      if (!response.ok || !data) { setStatus("server-error"); return; }
+    } catch { setStatus("network-error"); return; }
+    if (!data.extractedUrl) { setStatus("failed"); return; }
+    const fields = toImportedFields(data);
+    if (!isUsableImportResult(fields)) { setStatus("failed"); return; }
+    const partial = !fields.title || Boolean(data.warnings?.includes("METADATA_PARTIAL"));
+    if (draft.fields && importWouldOverwriteUserEdits(draft.fields, draft.sources, fields)) {
+      setPendingNext({ fields, partial });
+      setStatus("idle");
+      return;
+    }
+    applyResult(fields, partial, true);
   };
+
   return <div className={styles.giftPollImportStep}>
     <label className={styles.giftPollImportField}>
       Ссылка или текст из магазина
-      <textarea value={rawInput} disabled={status === "loading"} onChange={(event) => { setRawInput(event.target.value); onDirtyChange?.(Boolean(event.target.value.trim())); }} placeholder="Вставьте ссылку или описание товара из магазина" />
+      <textarea value={rawInput} disabled={status === "loading"} onChange={(event) => { onRawInputChange(event.target.value); onDirtyChange?.(Boolean(event.target.value.trim())); }} placeholder="Вставьте ссылку или описание товара из магазина" />
     </label>
-    {!rawInput.trim() && status !== "error" ? <p className={styles.giftPollImportHelper}>Вставьте ссылку на товар или его описание.</p> : null}
-    {status === "error" ? <p className={styles.giftPollModalError} role="alert">Не удалось автоматически получить данные о товаре. Проверьте ссылку или заполните вариант вручную.</p> : null}
+    {!rawInput.trim() && status === "idle" ? <p className={styles.giftPollImportHelper}>Вставьте ссылку на товар или его описание.</p> : null}
+    {status !== "idle" && status !== "loading" ? <p className={styles.giftPollModalError} role="alert">{importStatusMessages[status]}</p> : null}
     <div className={styles.giftPollImportActions}>
       <button type="button" className={styles.giftPollImportButton} disabled={status === "loading" || !rawInput.trim()} onClick={importLink}>
-        {status === "loading" ? <><ImportSpinner />Получаем данные о товаре…</> : status === "error" ? "Попробовать ещё раз" : "Заполнить карточку"}
+        {status === "loading" ? <><ImportSpinner />Заполняем карточку…</> : status === "idle" ? "Заполнить карточку" : "Попробовать ещё раз"}
       </button>
-      <button type="button" className={styles.giftPollManualAddButton} disabled={status === "loading"} onClick={() => onManual(rawInput)}>
-        {status === "error" ? "Заполнить вручную, сохранив ссылку" : "Добавить вручную"}
+      <button type="button" className={styles.giftPollManualAddButton} disabled={status === "loading"} onClick={onManual}>
+        Добавить вручную
       </button>
     </div>
+    {pendingNext ? <ConfirmationDialog
+      title="Заменить данные в карточке?"
+      description="Новый импорт может заменить данные, которые вы изменили вручную."
+      onDismiss={() => setPendingNext(null)}
+      actions={[
+        { label: "Сохранить мои изменения", tone: "secondary", onClick: () => { const pending = pendingNext; setPendingNext(null); applyResult(pending.fields, pending.partial, true); } },
+        { label: "Заменить импортированными", tone: "primary", onClick: () => { const pending = pendingNext; setPendingNext(null); applyResult(pending.fields, pending.partial, false); } },
+        { label: "Отмена", tone: "secondary", onClick: () => setPendingNext(null) }
+      ]}
+    /> : null}
   </div>;
 };
 
-type EditorState = { option: EditableOption; isNew: boolean; readOnly: boolean; prefilled?: boolean };
+type EditorState = { option: EditableOption; isNew: boolean; readOnly: boolean; prefilled?: boolean; fromImport?: boolean };
 
 const IMAGE_MAX_BYTES = 6 * 1024 * 1024;
 const IMAGE_ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-const GiftOptionImportDialog = ({ manageToken, onClose, onPrefill, onManual }: { manageToken: string; onClose: () => void; onPrefill: (option: EditableOption, partial: boolean) => void; onManual: (rawInput: string) => void }) => {
+const GiftOptionImportDialog = ({ manageToken, draft, onRawInputChange, onClose, onApply, onManual }: { manageToken: string; draft: ImportDraft; onRawInputChange: (value: string) => void; onClose: () => void; onApply: (fields: ImportedGiftFields, sources: GiftFieldSources, partial: boolean) => void; onManual: () => void }) => {
   const dialogRef = useRef<HTMLElement>(null);
   const [dirty, setDirty] = useState(false);
   const [showDiscardConfirmation, setShowDiscardConfirmation] = useState(false);
@@ -360,8 +408,10 @@ const GiftOptionImportDialog = ({ manageToken, onClose, onPrefill, onManual }: {
         <div className={styles.giftPollBottomSheetBody}>
           <GiftOptionImportStep
             manageToken={manageToken}
-            onPrefill={(option, partial) => { onPrefill(option, partial); onClose(); }}
-            onManual={(rawInput) => { onManual(rawInput); onClose(); }}
+            draft={draft}
+            onRawInputChange={onRawInputChange}
+            onApply={(fields, sources, partial) => { onApply(fields, sources, partial); onClose(); }}
+            onManual={() => { onManual(); onClose(); }}
             onDirtyChange={setDirty}
           />
         </div>
@@ -381,7 +431,7 @@ const GiftOptionImportDialog = ({ manageToken, onClose, onPrefill, onManual }: {
   );
 };
 
-const GiftOptionEditorDialog = ({ mode, editor, saving, error, prefillWarning, onSave, onDelete, onRequestClose }: { mode: Mode; editor: EditorState; saving: boolean; error: string; prefillWarning?: string; onSave: (option: EditableOption, photoChange: PendingPhotoChange | undefined) => void; onDelete?: () => void; onRequestClose: (dirty: boolean) => void }) => {
+const GiftOptionEditorDialog = ({ mode, editor, saving, error, prefillWarning, onSave, onDelete, onRequestClose, onUserEdit }: { mode: Mode; editor: EditorState; saving: boolean; error: string; prefillWarning?: string; onSave: (option: EditableOption, photoChange: PendingPhotoChange | undefined) => void; onDelete?: () => void; onRequestClose: (dirty: boolean) => void; onUserEdit?: (fields: ImportedGiftFields, key: keyof ImportedGiftFields) => void }) => {
   const dialogRef = useRef<HTMLElement>(null);
   const [option, setOption] = useState<EditableOption>(editor.option);
   const [photoChange, setPhotoChange] = useState<PendingPhotoChange | undefined>(undefined);
@@ -392,7 +442,11 @@ const GiftOptionEditorDialog = ({ mode, editor, saving, error, prefillWarning, o
   const requestClose = useCallback(() => onRequestClose(editor.readOnly ? false : dirty), [onRequestClose, editor.readOnly, dirty]);
   useModalFocus(dialogRef, requestClose);
 
-  const patch = (key: keyof EditableOption, value: string) => setOption((current) => ({ ...current, [key]: value }));
+  const patch = (key: keyof EditableOption, value: string) => {
+    const next = { ...option, [key]: value };
+    setOption(next);
+    onUserEdit?.({ title: next.title, description: next.description, productUrl: next.productUrl, imageUrl: next.imageUrl, priceLabel: next.priceLabel }, key as keyof ImportedGiftFields);
+  };
 
   const revokePreview = () => {
     if (photoChange?.kind === "replace") URL.revokeObjectURL(photoChange.previewUrl);
@@ -490,6 +544,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
   const [editorError, setEditorError] = useState("");
   const [prefillWarning, setPrefillWarning] = useState("");
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importDraft, setImportDraft] = useState<ImportDraft>(emptyImportDraft);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [confirmOpenPoll, setConfirmOpenPoll] = useState(false);
   const [openPollChecked, setOpenPollChecked] = useState(false);
@@ -554,17 +609,28 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
     setConfirmDiscard(true);
   }, [closeEditor, editorSaving]);
 
-  const openEditorFromImport = useCallback((option: EditableOption, partial: boolean) => {
+  const openEditorFromImport = useCallback((fields: ImportedGiftFields, sources: GiftFieldSources, partial: boolean) => {
+    setImportDraft((current) => ({ ...current, fields, sources, partial }));
     setImportDialogOpen(false);
-    setEditor({ option, isNew: true, readOnly: false, prefilled: true });
-    setPrefillWarning(partial ? "Не удалось заполнить все поля автоматически. Проверьте данные перед добавлением." : "");
+    setEditor({ option: { id: crypto.randomUUID(), ...fields }, isNew: true, readOnly: false, prefilled: true, fromImport: true });
+    setPrefillWarning(partial ? "Не все данные удалось определить. Проверьте карточку перед добавлением." : "");
   }, []);
 
-  const openManualFromImport = useCallback((rawInput: string) => {
+  const openManualFromImport = useCallback(() => {
+    const fields = importDraft.fields ? { ...importDraft.fields } : emptyImportedGiftFields();
+    const sources: GiftFieldSources = importDraft.fields ? { ...importDraft.sources } : {};
+    if (!fields.productUrl && isSafeHttpUrl(importDraft.rawInput)) {
+      fields.productUrl = importDraft.rawInput.trim();
+      sources.productUrl = "auto";
+    }
+    setImportDraft((current) => ({ ...current, fields, sources }));
     setImportDialogOpen(false);
-    const manualOption = emptyOption();
-    manualOption.productUrl = rawInput;
-    setEditor({ option: manualOption, isNew: true, readOnly: false });
+    setEditor({ option: { id: crypto.randomUUID(), ...fields }, isNew: true, readOnly: false, prefilled: isUsableImportResult(fields), fromImport: true });
+    setPrefillWarning("");
+  }, [importDraft]);
+
+  const handleImportFieldEdit = useCallback((fields: ImportedGiftFields, key: keyof ImportedGiftFields) => {
+    setImportDraft((current) => current.fields ? { ...current, fields, sources: { ...current.sources, [key]: "user" as const } } : current);
   }, []);
 
   useEffect(() => {
@@ -615,6 +681,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
     const timeout = window.setTimeout(() => {
       if (state.ok) {
         closeEditor();
+        setImportDraft(emptyImportDraft());
         showToast("Вариант сохранён");
         return;
       }
@@ -906,12 +973,15 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
         onSave={saveEditorOption}
         onDelete={!editor.isNew && !editor.readOnly ? () => setOptionToDelete(editor.option) : undefined}
         onRequestClose={requestCloseEditor}
+        onUserEdit={editor.fromImport ? handleImportFieldEdit : undefined}
       /> : null}
 
       {importDialogOpen ? <GiftOptionImportDialog
         manageToken={manageToken}
+        draft={importDraft}
+        onRawInputChange={(value) => setImportDraft((current) => ({ ...current, rawInput: value }))}
         onClose={() => setImportDialogOpen(false)}
-        onPrefill={openEditorFromImport}
+        onApply={openEditorFromImport}
         onManual={openManualFromImport}
       /> : null}
 

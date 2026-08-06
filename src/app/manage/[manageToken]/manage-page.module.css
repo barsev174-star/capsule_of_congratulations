@@ -14751,7 +14751,7 @@ button.contentStatusItemButton:active {
 @keyframes giftPollSpin {
   to { transform: rotate(360deg); }
 }
-.giftPollImportButton { display: inline-flex; align-items: center; gap: 8px; }
+.giftPollImportButton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-align: center; }
 
 /* === TZ: photo block in option editor === */
 .giftPollPhotoBlock {
