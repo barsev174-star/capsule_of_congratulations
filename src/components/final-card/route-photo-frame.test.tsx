@@ -50,9 +50,12 @@ describe("route greeting photo frame", () => {
 
     const image = screen.getByRole("img", { name: "Route crop" });
     const viewport = image.closest("[data-memory-photo-viewport]");
+    const card = image.closest("[data-route-greeting-photo-card]");
 
     expect(viewport).toContainElement(image);
+    expect(card).toContainElement(viewport);
     expect(container.querySelectorAll("[data-memory-photo-viewport]")).toHaveLength(1);
+    expect(container.querySelectorAll("[data-route-greeting-photo-card]")).toHaveLength(2);
     expect(image).toHaveStyle({
       objectPosition: "62% 45%",
       transform: "scale(1.4)",

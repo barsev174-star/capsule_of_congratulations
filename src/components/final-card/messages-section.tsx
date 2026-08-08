@@ -172,7 +172,11 @@ const renderMediaFigure = (
   );
 
   if (usesRouteMomentFrame) {
-    return <figure className={finalCardStyles.memoryPhotoCard}>{content}</figure>;
+    return (
+      <figure className={finalCardStyles.memoryPhotoCard} data-route-greeting-photo-card>
+        {content}
+      </figure>
+    );
   }
 
   if (!isPaperBirthday) {
