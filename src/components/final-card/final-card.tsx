@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { FinalCardViewModel } from "@/lib/final-card/view-model";
 import type { CardBlockReadinessView } from "@/lib/manage/card-design-readiness";
 import { getGiftPath } from "@/lib/routes/card-links";
-import { FinalCardActions } from "@/components/final-card/final-card-actions";
+import { FinalCardActions, type PublicShareFooterAction } from "@/components/final-card/final-card-actions";
 import { MessagesSection } from "@/components/final-card/messages-section";
 import { RouteGreetingsCountButton } from "@/components/final-card/route-greetings-count-button";
 import type { ScrapbookDecorAnchor } from "./scrapbook-decor-config";
@@ -20,6 +20,7 @@ type Props = {
   debugAssets?: boolean;
   mode?: "gift" | "preview" | "public" | "draft-preview";
   manageToken?: string;
+  publicShare?: PublicShareFooterAction;
   blockReadiness?: CardBlockReadinessView[];
 };
 
@@ -165,7 +166,7 @@ const getQuoteAssetId = (index: number) => {
   return cycle[index % cycle.length];
 };
 
-export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageToken, blockReadiness = [] }: Props) => {
+export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageToken, publicShare, blockReadiness = [] }: Props) => {
   const isPreview = mode === "preview";
   const isPublic = mode === "public" || mode === "draft-preview";
   const isPaperBirthday = model.style === "paper-birthday";
@@ -639,7 +640,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                   <p className={styles.closingSignature}>{model.footerSignature}</p>
                 )}
               </div>
-              <FinalCardActions manageHref={manageToken ? `/manage/${manageToken}` : undefined} routeAdventure={isRouteAdventure} />
+              <FinalCardActions publicShare={publicShare} />
               {isRouteAdventure || isPaperBirthday ? (
                 <>
                   <span className={styles.routeFooterTagLabel}>На память</span>

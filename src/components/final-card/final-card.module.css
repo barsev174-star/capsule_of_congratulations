@@ -2633,10 +2633,40 @@ body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  justify-content: center;
 }
 
 .actions > form {
   display: inline-flex;
+}
+
+.recipientFooterActions {
+  display: grid;
+  width: min(100%, 760px);
+  margin-inline: auto;
+  gap: 10px;
+  justify-items: center;
+}
+
+.publicShareStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: color-mix(in srgb, var(--fc-accent) 76%, var(--fc-text));
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-wrap: pretty;
+}
+
+.publicShareStatus > span {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 12%, transparent);
 }
 
 .actionFeedback {
@@ -2675,6 +2705,16 @@ body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
   border: 0;
   cursor: pointer;
   font: inherit;
+  text-align: center;
+  text-decoration: none;
+  text-wrap: balance;
+  transition-property: scale, background-color, border-color, color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.button:active {
+  scale: 0.96;
 }
 
 .primaryButton,
@@ -2697,6 +2737,28 @@ body[data-scrapbook-mobile-preview] .assetDebugActive .shell {
   border: 1px solid var(--fc-line);
   background: rgba(255, 244, 224, 0.92);
   color: var(--fc-text);
+}
+
+@container final-card-shell (max-width: 640px) {
+  .recipientFooterActions,
+  .actions,
+  .actions > *,
+  .actions > form,
+  .actions .button {
+    width: 100%;
+  }
+
+  .actions {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+
+  .actions .button {
+    min-height: 50px;
+    padding: 9px 16px;
+    line-height: 1.2;
+  }
 }
 
 @container final-card-shell (max-width: 899px) {
@@ -7106,6 +7168,23 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
 .route-adventure .routeBranding a { font-family: var(--route-font-body); font-weight: 700; }
 .route-adventure .routeBranding span { color: rgba(61, 45, 30, 0.84); font-family: var(--route-font-body); }
 
+.route-adventure .publicShareStatus {
+  color: #7b3f45;
+  font-family: var(--route-font-body);
+}
+
+.route-adventure .publicShareButton {
+  border-color: rgba(20, 53, 39, 0.78) !important;
+  background: #183d2d !important;
+  color: #f3e8d0 !important;
+  box-shadow: 0 10px 18px rgba(20, 53, 39, 0.2);
+}
+
+.route-adventure .publicShareButton:hover,
+.route-adventure .publicShareButton:focus-visible {
+  background: #21513d !important;
+}
+
 .route-adventure .closing .actions > :nth-child(2) .button,
 .route-adventure .closing .actions > :nth-child(2) {
   border-color: rgba(20, 53, 39, 0.78);
@@ -7500,10 +7579,10 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
 
 @container final-card-shell (max-width: 900px) {
   .route-adventure .closing {
-    min-height: 740px;
-    padding-bottom: 178px;
-    background-position: center -74px;
-    background-size: 100% calc(100% + 74px);
+    min-height: 660px;
+    padding-bottom: 166px;
+    background-position: center -52px;
+    background-size: 100% calc(100% + 52px);
   }
 
   .route-adventure .closing::after {

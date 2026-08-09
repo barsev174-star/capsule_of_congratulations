@@ -14,8 +14,6 @@ import {
 } from "@/lib/ai/card-insights";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
 import { getPublicShareEditor } from "@/lib/public-shares/service";
-import Link from "next/link";
-import publicShareStyles from "./public-share-entry.module.css";
 
 type Props = {
   params: Promise<{
@@ -65,6 +63,12 @@ export default async function GiftPage({ params, searchParams }: Props) {
   });
   const isAssetDebugEnabled = process.env.NODE_ENV === "development" && debugAssets === "1";
   const isForceIntroEnabled = process.env.NODE_ENV === "development" && forceIntro === "1";
+  const hasPublicShareSettings = Boolean(publicShareEditor?.share || publicShareEditor?.wasRevoked);
+  const publicShare = publicShareEditor ? {
+    href: `/gift/${finalSlug}/share`,
+    label: hasPublicShareSettings ? "Настроить публичную версию" as const : "Создать публичную версию" as const,
+    active: publicShareEditor.share?.status === "ACTIVE"
+  } : undefined;
   await markRecipientFirstOpened(finalSlug);
 
   return (
@@ -76,7 +80,7 @@ export default async function GiftPage({ params, searchParams }: Props) {
       accent={template?.accent}
       forceIntro={isForceIntroEnabled}
     >
-      <FinalCard model={model} debugAssets={isAssetDebugEnabled} manageToken={card.manageToken} />
-    </GiftIntro>{publicShareEditor ? <section className={publicShareStyles.card}><div><p>{publicShareEditor.share?.status === "ACTIVE" ? "Публичная версия активна" : "Поделиться открыткой"}</p><h2>{publicShareEditor.share?.status === "ACTIVE" ? "Настройте или отключите публичную страницу" : "Создайте безопасную публичную версию"}</h2><span>Личные поздравления, авторы и оригиналы фотографий останутся приватными.</span></div><Link href={`/gift/${finalSlug}/share`}>{publicShareEditor.share?.status === "ACTIVE" ? "Настроить публичную версию" : "Настроить публичную версию"}</Link></section> : null}</>
+      <FinalCard model={model} debugAssets={isAssetDebugEnabled} publicShare={publicShare} />
+    </GiftIntro></>
   );
 }
