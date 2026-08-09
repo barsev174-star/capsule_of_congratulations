@@ -8,7 +8,7 @@ import styles from "./manage-page.module.css";
 type Props = {
   manageToken: string;
   templates: CardTemplate[];
-  initialTemplateId: CardTemplate["id"];
+  initialTemplateId: CardTemplate["id"] | null;
 };
 
 export const TemplateSummary = ({
@@ -21,8 +21,10 @@ export const TemplateSummary = ({
   const openerButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
-  const selectedTemplate = templates.find((template) => template.id === templateId) ?? templates[0];
-  const isPreviewTemplate = selectedTemplate.id === "paper-birthday" || selectedTemplate.id === "route-adventure";
+  const selectedTemplate = templates.find((template) => template.id === templateId) ?? null;
+  const isPreviewTemplate = selectedTemplate
+    ? selectedTemplate.id === "paper-birthday" || selectedTemplate.id === "route-adventure"
+    : false;
 
   useEffect(() => {
     if (!isPickerOpen) {
@@ -71,7 +73,7 @@ export const TemplateSummary = ({
   return (
     <div className={styles.templateSummary}>
       <div className={styles.templateSummaryMain}>
-        {isPreviewTemplate ? (
+        {isPreviewTemplate && selectedTemplate ? (
           <div className={styles.templatePreviewWrap}>
             {/* Intentional fixed preview asset inside a CSS-sized template frame. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -81,21 +83,30 @@ export const TemplateSummary = ({
               className={styles.templatePreviewImage}
             />
           </div>
-        ) : (
+        ) : selectedTemplate ? (
           <div className={styles.templatePreviewPlaceholder}>
             <span className={styles.templatePreviewPlaceholderIcon}>🎨</span>
             <span className={styles.templatePreviewPlaceholderText}>Другие шаблоны появятся позже</span>
+          </div>
+        ) : (
+          <div className={styles.templatePreviewPlaceholder}>
+            <span className={styles.templatePreviewPlaceholderIcon} aria-hidden="true">＋</span>
+            <span className={styles.templatePreviewPlaceholderText}>Выберите оформление открытки</span>
           </div>
         )}
 
         <div className={styles.templateSummaryText}>
           <div className={styles.templateNameRow}>
-            <strong>{selectedTemplate.name}</strong>
+            <strong>{selectedTemplate?.name ?? "Шаблон не выбран"}</strong>
           </div>
           <p>
-            <span className={styles.templateDescriptionDesktop}>{selectedTemplate.description}</span>
+            <span className={styles.templateDescriptionDesktop}>
+              {selectedTemplate?.description ?? "Это обязательный шаг перед открытием сбора."}
+            </span>
             <span className={styles.templateDescriptionMobile}>
-              {selectedTemplate.id === "route-adventure"
+              {!selectedTemplate
+                ? "Обязательный шаг"
+                : selectedTemplate.id === "route-adventure"
                 ? "Приключенческий тёмный стиль"
                 : "Тёплый бумажный стиль"}
             </span>
@@ -106,12 +117,12 @@ export const TemplateSummary = ({
             className={styles.templateChangeButton}
             onClick={() => setIsPickerOpen(true)}
           >
-            Выбрать другой шаблон
+            {selectedTemplate ? "Выбрать другой шаблон" : "Выбрать шаблон"}
           </button>
         </div>
       </div>
 
-      <div className={styles.templateAnimationInline}>
+      {selectedTemplate ? <div className={styles.templateAnimationInline}>
         <div className={styles.envelopeIcon} aria-hidden="true">
           <span />
         </div>
@@ -119,7 +130,7 @@ export const TemplateSummary = ({
           <strong>Анимация: конверт с открыткой</strong>
           <p>Получатель увидит открывающийся конверт после передачи.</p>
         </div>
-      </div>
+      </div> : null}
 
       {isPickerOpen ? (
         <div className={styles.templateDialogBackdrop} role="presentation" onMouseDown={() => setIsPickerOpen(false)}>

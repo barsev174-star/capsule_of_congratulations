@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ENV_FILE="${ENV_FILE:-$ROOT_DIR/.env.production}"
+PRODUCTION_URL="${PRODUCTION_URL:-https://slovesto.ru}"
+LOCK_FILE="${LOCK_FILE:-/tmp/slovesto-support-notifications.lock}"
+
+exec 9>"$LOCK_FILE"
+if ! flock --nonblock 9; then
+  echo "$(date --iso-8601=seconds) support notification batch is already running"
+  exit 0
+fi
+
+if [[ ! -f "$ENV_FILE" ]]; then
+  echo "Environment file not found: $ENV_FILE" >&2
+  exit 1
+fi
+
+CRON_SECRET="$(grep -E '^CRON_SECRET=' "$ENV_FILE" | tail -1 | cut -d= -f2-)"
+if [[ -z "$CRON_SECRET" ]]; then
+  echo "CRON_SECRET is missing" >&2
+  exit 1
+fi
+
+echo "$(date --iso-8601=seconds) starting support notification batch"
+
+curl --fail --silent --show-error \
+  --connect-timeout 10 \
+  --max-time 120 \
+  --retry 2 \
+  --retry-all-errors \
+  --request POST \
+  --header "Authorization: Bearer $CRON_SECRET" \
+  "$PRODUCTION_URL/api/internal/support-notifications/send"
+echo
+echo "$(date --iso-8601=seconds) support notification batch completed"

@@ -21,6 +21,25 @@ const templates = [
 ];
 
 describe("TemplateSettingsForm", () => {
+  it("requires an explicit first selection", async () => {
+    const user = userEvent.setup();
+    render(
+      <TemplateSettingsForm
+        manageToken="manage-token"
+        templates={templates}
+        currentTemplateId={null}
+      />
+    );
+
+    expect(screen.getByText("Сначала выберите шаблон")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Выберите шаблон" })).toBeDisabled();
+    expect(screen.getAllByRole("radio").every((radio) => !radio.hasAttribute("checked"))).toBe(true);
+
+    await user.click(screen.getByRole("radio", { name: /Маршрут/ }));
+
+    expect(screen.getByRole("button", { name: "Применить шаблон" })).toBeEnabled();
+  });
+
   it("distinguishes the template in use from a new selection", async () => {
     const user = userEvent.setup();
     render(

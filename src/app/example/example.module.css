@@ -327,7 +327,7 @@
 }
 
 .badgeSelected {
-  color: #9c461f;
+  color: #e9652f;
   background: var(--ex-accent-soft);
 }
 
@@ -350,13 +350,13 @@
 }
 
 .badgeTemplateAvailable {
-  color: #8a5636;
+  color: #202124;
   border: 1px solid rgba(138, 86, 54, 0.34);
   background: rgba(255, 250, 244, 0.82);
 }
 
 .badgeSoon {
-  color: #81685c;
+  color: #5f6368;
   background: #efe8e2;
 }
 
@@ -455,12 +455,12 @@
 }
 
 .templateCardSoon .templateCardMeta strong {
-  color: #a28b7e;
+  color: #5f6368;
   font-weight: 600;
 }
 
 .templateCardSoon .templateCardMeta > span:last-child {
-  color: #b7a69c;
+  color: #5f6368;
 }
 
 .templateCardSoon:hover {

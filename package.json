@@ -8,8 +8,11 @@
     "build": "next build",
     "brand:assets": "node scripts/build-brand-assets.mjs",
     "brand:check": "node scripts/check-brand-layouts.mjs",
+    "route:assets": "node scripts/optimize-route-assets.mjs",
+    "route:check": "node scripts/check-route-assets.mjs",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "eslint . && npm run ui:colors",
+    "ui:colors": "node scripts/check-ui-colors.mjs",
     "preflight": "npm run lint && npm test && npm run build && npm run smoke:local && npm run smoke:admin && npm run smoke:retention",
     "smoke:local": "node --env-file=.env.local scripts/smoke-local.mjs",
     "smoke:admin": "node --env-file=.env.local scripts/smoke-admin-local.mjs",
@@ -43,6 +46,7 @@
     "eslint-config-next": "^16.0.1",
     "jsdom": "^27.2.0",
     "playwright-core": "^1.61.0",
+    "sharp": "^0.34.5",
     "typescript": "^5.9.3",
     "vitest": "^4.0.8"
   }

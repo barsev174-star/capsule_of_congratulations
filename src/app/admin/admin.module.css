@@ -114,7 +114,7 @@
   padding: 10px 12px;
   border-radius: var(--a-radius-xs);
   background: rgba(233, 101, 47, 0.1);
-  color: #a33d1a;
+  color: #e9652f;
   font-size: 14px;
 }
 
@@ -358,7 +358,7 @@
 
 .badgeDraft {
   background: rgba(123, 103, 93, 0.12);
-  color: #5c4d45;
+  color: #202124;
 }
 
 .badgeCollecting {
@@ -451,13 +451,19 @@
   color: var(--a-text);
   font: inherit;
   font-size: 13px;
+  min-height: 40px;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
 }
 
 .actionButton:hover {
   background: var(--a-accent-light);
   border-color: var(--a-accent);
+}
+
+.actionButton:active,
+.notificationRetry:active {
+  transform: scale(0.96);
 }
 
 .actionButtonPrimary {
@@ -474,6 +480,58 @@
 
 .actionButtonDanger:hover {
   background: rgba(239, 68, 68, 0.14);
+}
+
+.notificationList {
+  display: grid;
+  gap: 8px;
+  min-width: 150px;
+}
+
+.notificationItem {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 13px;
+}
+
+.notificationStatus {
+  color: var(--a-muted);
+}
+
+.notificationStatusSent {
+  color: #15803d;
+}
+
+.notificationStatusFailed {
+  color: #b91c1c;
+}
+
+.notificationEmpty {
+  color: var(--a-muted);
+  font-size: 13px;
+  text-wrap: pretty;
+}
+
+.notificationRetry {
+  grid-column: 1 / -1;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: var(--a-radius-xs);
+  background: rgba(239, 68, 68, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.24);
+  color: #b91c1c;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.12s ease;
+}
+
+.notificationRetry:hover {
+  background: rgba(239, 68, 68, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.34);
 }
 
 /* Card detail */

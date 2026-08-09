@@ -27,7 +27,7 @@ export type CardDraft = {
   eventDate: string | null;
   description: string | null;
   signature: string | null;
-  templateId: CardTemplateId;
+  templateId: CardTemplateId | null;
   finalBlockSettings: FinalCardBlockSettings | null;
   finalBlockOrder: FinalCardBlockOrder | null;
   finalMessageSettings: FinalCardMessageSettings | null;
@@ -71,7 +71,7 @@ export type CreateCardInput = {
   eventDate?: string;
   description?: string;
   signature?: string;
-  templateId: CardTemplateId;
+  templateId: CardTemplateId | null;
 };
 
 export type CreateCardResult = {

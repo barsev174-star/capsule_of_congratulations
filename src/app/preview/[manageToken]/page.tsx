@@ -9,11 +9,9 @@ import {
 } from "@/lib/cards/repository";
 import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository";
 import { isGiftAccessible } from "@/lib/cards/lifecycle";
-import { getAiCardInsight } from "@/lib/ai/repository";
+import { getAiCardInsight, getAiCardQuoteSelection } from "@/lib/ai/repository";
 import {
-  BEST_QUOTE_COUNT,
-  buildContributionFingerprint,
-  isValidBestQuoteText
+  buildContributionFingerprint
 } from "@/lib/ai/card-insights";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
@@ -41,11 +39,12 @@ export default async function PreviewPage({ params }: Props) {
     notFound();
   }
 
-  const [contributions, mediaAssets, quotesInsight, qualitiesInsight] = await Promise.all([
+  const [contributions, mediaAssets, quotesInsight, qualitiesInsight, savedQuoteSelection] = await Promise.all([
     listContributionsByCardId(card.id),
     listCardMediaAssetsByCardId(card.id),
     getAiCardInsight(card.id, "quotes"),
-    getAiCardInsight(card.id, "qualities")
+    getAiCardInsight(card.id, "qualities"),
+    getAiCardQuoteSelection(card.id)
   ]);
 
   const fingerprint = buildContributionFingerprint(contributions);
@@ -54,11 +53,13 @@ export default async function PreviewPage({ params }: Props) {
   const quoteSelection = resolveFinalBestQuotes(
     card,
     quotesInsight?.items.map((item) => item.text) ?? [],
-    quotesAreStale
+    savedQuoteSelection && quotesInsight && savedQuoteSelection.sourceFingerprint === quotesInsight.sourceFingerprint
+      ? savedQuoteSelection.items.map((item) => item.text)
+      : []
   );
   const quotes = quoteSelection.quotes;
   const effectiveQuotesAreStale = quotesAreStale && !quoteSelection.usesLegacyDefault;
-  const qualities = !qualitiesAreStale && qualitiesInsight?.items.length === 5
+  const qualities = qualitiesInsight?.items.length === 5
     ? qualitiesInsight.items.map((item) => item.text)
     : [];
   const model = buildFinalCardViewModel(card, contributions, mediaAssets, {

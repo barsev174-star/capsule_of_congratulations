@@ -1,5 +1,4 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import { getDefaultTemplateForOccasion } from "@/lib/cards/templates";
 import { trackFunnel } from "@/lib/telemetry";
 import { saveCardDraft, saveContribution } from "@/lib/cards/repository";
 import { getGiftUrl, getJoinUrl, getManageUrl } from "@/lib/routes/card-links";
@@ -108,7 +107,7 @@ export const createEmptyCardDraft = async (): Promise<CreateCardResult> => {
     eventDate: null,
     description: null,
     signature: null,
-    templateId: getDefaultTemplateForOccasion(occasion),
+    templateId: null,
     finalBlockSettings: null,
     finalBlockOrder: null,
     finalMessageSettings: null,

@@ -58,6 +58,7 @@ type Props = {
   initialMainGreetingContributionId: string | null;
   mainGreetingStatusText: string;
   initialBestQuotes: string[];
+  initialSelectedBestQuotes: string[];
   bestQuotesAreStale: boolean;
   canGenerateBestQuotes: boolean;
   bestQuotesMinimumContributionCount: number;
@@ -434,6 +435,7 @@ export const BlockSettingsForm = ({
   initialMainGreetingContributionId,
   mainGreetingStatusText,
   initialBestQuotes,
+  initialSelectedBestQuotes,
   bestQuotesAreStale,
   canGenerateBestQuotes,
   bestQuotesMinimumContributionCount,
@@ -578,7 +580,7 @@ export const BlockSettingsForm = ({
   const [settingsState, formAction, isPending] = useActionState(handleSettingsAction, initialState);
   const [, startSettingsSaveTransition] = useTransition();
   const [bestQuotes, setBestQuotes] = useState(initialBestQuotes);
-  const [selectedBestQuotes, setSelectedBestQuotes] = useState(() => initialBestQuotes.slice(0, 3));
+  const [selectedBestQuotes, setSelectedBestQuotes] = useState(initialSelectedBestQuotes);
   const [quotesAreStale, setQuotesAreStale] = useState(bestQuotesAreStale);
   const [quotesMessage, setQuotesMessage] = useState("");
   const [aiUsage, setAiUsage] = useState(initialAiUsage);
@@ -616,8 +618,7 @@ export const BlockSettingsForm = ({
       const result = await saveBestQuoteSelectionAction(manageToken, selectedBestQuotes);
       setQuotesMessage(result.message);
       if (result.ok) {
-        setBestQuotes(result.quotes);
-        setSelectedBestQuotes(result.quotes.slice(0, 3));
+        setSelectedBestQuotes(result.quotes);
         router.refresh();
       }
     });
@@ -1251,6 +1252,7 @@ export const BlockSettingsForm = ({
                           </div>
                           <span className={styles.aiInsightUsage}>
                             AI: {aiUsage.remaining} из {aiUsage.limit}
+                            {aiUsage.freeQualitiesAvailable ? " · первый запуск бесплатно" : ""}
                           </span>
                         </div>
 
@@ -1275,7 +1277,7 @@ export const BlockSettingsForm = ({
                             type="button"
                             className={styles.contentAiButton}
                             onClick={handleGenerateQualities}
-                            disabled={isQualitiesPending || !canGenerateQualities || aiUsage.remaining === 0}
+                            disabled={isQualitiesPending || !canGenerateQualities || (aiUsage.remaining === 0 && !aiUsage.freeQualitiesAvailable)}
                           >
                             <span aria-hidden="true">✦</span>
                             {isQualitiesPending
@@ -1303,11 +1305,12 @@ export const BlockSettingsForm = ({
                           </div>
                           <span className={styles.aiInsightUsage}>
                             AI: {aiUsage.remaining} из {aiUsage.limit}
+                            {aiUsage.freeBestQuotesAvailable ? " · первый запуск бесплатно" : ""}
                           </span>
                         </div>
 
                         {quotesAreStale ? (
-                          <p className={styles.aiInsightStale}>Фразы нужно обновить: поздравления изменились или старые варианты не соответствуют текущему лимиту.</p>
+                          <p className={styles.aiInsightStale}>Поздравления изменились. Сохранённые варианты остаются доступны, но перед передачей открытки их нужно обновить.</p>
                         ) : null}
 
                         {bestQuotes.length > 0 ? (
@@ -1332,7 +1335,7 @@ export const BlockSettingsForm = ({
                             type="button"
                             className={styles.contentAiButton}
                             onClick={handleGenerateBestQuotes}
-                            disabled={isQuotesPending || !canGenerateBestQuotes || aiUsage.remaining === 0}
+                            disabled={isQuotesPending || !canGenerateBestQuotes || (aiUsage.remaining === 0 && !aiUsage.freeBestQuotesAvailable)}
                           >
                             <span aria-hidden="true">✦</span>
                             {isQuotesPending

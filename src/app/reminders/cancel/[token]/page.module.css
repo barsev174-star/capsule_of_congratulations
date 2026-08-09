@@ -3,7 +3,7 @@
   display: grid;
   place-items: center;
   padding: 32px 20px;
-  color: #432d24;
+  color: #202124;
   background:
     radial-gradient(circle at 20% 12%, rgba(255, 226, 197, 0.72), transparent 34%),
     linear-gradient(160deg, #fffaf4 0%, #fdf2e8 100%);
@@ -34,7 +34,7 @@
 
 .eyebrow {
   margin: 0 0 10px;
-  color: #d65d2d;
+  color: #e9652f;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -52,7 +52,7 @@
 .body {
   max-width: 440px;
   margin: 18px auto 28px;
-  color: #80685c;
+  color: #5f6368;
   font-size: 1.05rem;
   line-height: 1.65;
   text-wrap: pretty;
@@ -104,7 +104,7 @@
   justify-content: center;
   width: fit-content;
   margin: 18px auto 0;
-  color: #8b6f61;
+  color: #5f6368;
   font-weight: 700;
   text-underline-offset: 4px;
 }

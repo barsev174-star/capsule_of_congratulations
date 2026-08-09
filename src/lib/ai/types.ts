@@ -60,6 +60,8 @@ export type AiUsage = {
   used: number;
   limit: number;
   remaining: number;
+  freeBestQuotesAvailable?: boolean;
+  freeQualitiesAvailable?: boolean;
 };
 
 export type AiUsageSummary = AiUsage & {
@@ -80,6 +82,13 @@ export type AiCardInsight = {
   sourceFingerprint: string;
   provider: AiProviderName;
   model: string;
+  updatedAt: string;
+};
+
+export type AiCardQuoteSelection = {
+  cardId: string;
+  items: AiCardInsightItem[];
+  sourceFingerprint: string;
   updatedAt: string;
 };
 
@@ -123,6 +132,7 @@ export type AiGenerationLog = {
   cardId: string;
   generationType: AiGenerationType;
   status: "pending" | "succeeded";
+  isReservedFree?: boolean;
   inputJson?: string;
   outputText?: string;
   provider?: AiProviderName;

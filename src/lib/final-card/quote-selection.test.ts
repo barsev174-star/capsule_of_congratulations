@@ -10,17 +10,32 @@ const candidates = [
 
 describe("resolveFinalBestQuotes", () => {
   it("keeps the explicitly saved three current quotes", () => {
-    expect(resolveFinalBestQuotes({ deliveryStatus: "PREPARING" }, candidates.slice(0, 3), false))
+    expect(resolveFinalBestQuotes({ deliveryStatus: "PREPARING" }, candidates, candidates.slice(0, 3)))
       .toEqual({ quotes: candidates.slice(0, 3), usesLegacyDefault: false });
   });
 
+  it("keeps an explicit selection visible while its source set is marked stale elsewhere", () => {
+    expect(resolveFinalBestQuotes({ deliveryStatus: "PREPARING" }, candidates, candidates.slice(1, 4)))
+      .toEqual({ quotes: candidates.slice(1, 4), usesLegacyDefault: false });
+  });
+
   it("restores the first three legacy candidates for delivered cards", () => {
-    expect(resolveFinalBestQuotes({ deliveryStatus: "DELIVERED" }, candidates, true))
+    expect(resolveFinalBestQuotes({ deliveryStatus: "DELIVERED" }, candidates, []))
+      .toEqual({ quotes: candidates.slice(0, 3), usesLegacyDefault: true });
+  });
+
+  it("restores a legacy three-item insight for an editable card", () => {
+    expect(resolveFinalBestQuotes({ deliveryStatus: "PREPARING" }, candidates.slice(0, 3), []))
       .toEqual({ quotes: candidates.slice(0, 3), usesLegacyDefault: true });
   });
 
   it("does not infer a selection for cards that can still be edited", () => {
-    expect(resolveFinalBestQuotes({ deliveryStatus: "PREPARING" }, candidates, true))
+    expect(resolveFinalBestQuotes({ deliveryStatus: "PREPARING" }, candidates, []))
       .toEqual({ quotes: [], usesLegacyDefault: false });
+  });
+
+  it("does not accept a selection from a replaced candidate set", () => {
+    expect(resolveFinalBestQuotes({ deliveryStatus: "PREPARING" }, candidates.slice(0, 3), candidates.slice(1, 4)))
+      .toEqual({ quotes: candidates.slice(0, 3), usesLegacyDefault: true });
   });
 });

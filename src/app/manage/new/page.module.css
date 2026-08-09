@@ -4,7 +4,7 @@
   place-items: center;
   padding: 24px;
   background: #fff9f2;
-  color: #38261f;
+  color: #202124;
 }
 
 .card {
@@ -18,7 +18,7 @@
 
 .eyebrow {
   margin: 0 0 10px;
-  color: #d95828;
+  color: #e9652f;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.09em;
@@ -36,7 +36,7 @@
 .copy {
   margin: 18px auto 28px;
   max-width: 42ch;
-  color: #6f5548;
+  color: #202124;
   line-height: 1.6;
   text-wrap: pretty;
 }
@@ -75,7 +75,7 @@
 .backLink {
   display: inline-block;
   margin-top: 22px;
-  color: #7b5b4d;
+  color: #5f6368;
   text-decoration: underline;
   text-underline-offset: 3px;
 }

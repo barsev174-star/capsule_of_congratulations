@@ -4,6 +4,7 @@ import { getGiftLifecycleByFinalSlug } from "@/lib/cards/lifecycle-repository";
 import { getGiftPath } from "@/lib/routes/card-links";
 import { getAiCardInsight } from "@/lib/ai/repository";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
+import { isTemplateId } from "@/lib/cards/templates";
 import { createPublicSharePhotoDerivative, deletePublicSharePhotoDerivative } from "./media-storage";
 import { activatePublicShare, createPublicShare, getAccessiblePublicShareByTokenHash, getActivePublicShareByCardId, getPublicShareDraftOrActiveByCardId, getPublicShareById, getPublicSharePhoto, hasRevokedPublicShareByCardId, listPublicSharePhotos, replacePublicSharePhotos, revokePublicShare, updatePublicShare } from "./repository";
 import { createPublicShareToken, hashPublicShareToken } from "./tokens";
@@ -148,7 +149,7 @@ export const getPublicSharePayload = async (token: string): Promise<PublicShareP
   const share = await getAccessiblePublicShareByTokenHash(hashPublicShareToken(token));
   if (!share) return null;
   const card = await getCardDraftById(share.cardId);
-  if (!card) return null;
+  if (!card || !isTemplateId(card.templateId)) return null;
   const [photos, contributions, allMediaAssets] = await Promise.all([listPublicSharePhotos(share.id), listContributionsByCardId(card.id), listCardMediaAssetsByCardId(card.id)]);
   // Paper exports should show the same total as the public card. Route keeps
   // its established export counter unchanged while its layout remains frozen.

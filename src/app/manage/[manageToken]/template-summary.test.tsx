@@ -21,6 +21,21 @@ const templates = [
 ];
 
 describe("TemplateSummary", () => {
+  it("starts without an automatically selected template", () => {
+    render(
+      <TemplateSummary
+        manageToken="manage-token"
+        templates={templates}
+        initialTemplateId={null}
+      />
+    );
+
+    expect(screen.getByText("Шаблон не выбран")).toBeInTheDocument();
+    expect(screen.getByText("Это обязательный шаг перед открытием сбора.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Выбрать шаблон" })).toBeInTheDocument();
+    expect(screen.queryByText("Анимация: конверт с открыткой")).not.toBeInTheDocument();
+  });
+
   it("combines animation details with the template and restores focus after Escape", async () => {
     const user = userEvent.setup();
     render(

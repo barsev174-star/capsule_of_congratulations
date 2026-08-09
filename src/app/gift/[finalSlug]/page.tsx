@@ -1,17 +1,12 @@
 import { notFound } from "next/navigation";
 import { listCardDrafts, listCardMediaAssetsByCardId, listContributionsByCardId } from "@/lib/cards/repository";
-import { cardTemplates } from "@/lib/cards/templates";
+import { cardTemplates, isTemplateId } from "@/lib/cards/templates";
 import { getGiftLifecycleByFinalSlug, markRecipientFirstOpened } from "@/lib/cards/lifecycle-repository";
 import { FinalCard } from "@/components/final-card/final-card";
 import { GiftIntro } from "@/components/gift-intro/gift-intro";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
-import { getAiCardInsight } from "@/lib/ai/repository";
-import {
-  BEST_QUOTE_COUNT,
-  buildContributionFingerprint,
-  isValidBestQuoteText
-} from "@/lib/ai/card-insights";
+import { getAiCardInsight, getAiCardQuoteSelection } from "@/lib/ai/repository";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
 import { getPublicShareEditor } from "@/lib/public-shares/service";
 
@@ -36,28 +31,29 @@ export default async function GiftPage({ params, searchParams }: Props) {
   const cards = await listCardDrafts();
   const card = cards.find((item) => item.id === lifecycle.id && !item.deletedAt);
 
-  if (!card) {
+  if (!card || !isTemplateId(card.templateId)) {
     notFound();
   }
 
-  const [contributions, mediaAssets, quotesInsight, qualitiesInsight, publicShareEditor] = await Promise.all([
+  const [contributions, mediaAssets, quotesInsight, qualitiesInsight, savedQuoteSelection, publicShareEditor] = await Promise.all([
     listContributionsByCardId(card.id),
     listCardMediaAssetsByCardId(card.id),
     getAiCardInsight(card.id, "quotes"),
     getAiCardInsight(card.id, "qualities"),
+    getAiCardQuoteSelection(card.id),
     getPublicShareEditor(finalSlug)
   ]);
-  const contributionFingerprint = buildContributionFingerprint(contributions);
   const template = cardTemplates.find((item) => item.id === card.templateId);
   const quoteSelection = resolveFinalBestQuotes(
     card,
     quotesInsight?.items.map((item) => item.text) ?? [],
-    quotesInsight?.sourceFingerprint !== contributionFingerprint
+    savedQuoteSelection && quotesInsight && savedQuoteSelection.sourceFingerprint === quotesInsight.sourceFingerprint
+      ? savedQuoteSelection.items.map((item) => item.text)
+      : []
   );
   const model = buildFinalCardViewModel(card, contributions, mediaAssets, {
     quotes: quoteSelection.quotes,
-    qualities: qualitiesInsight?.sourceFingerprint === contributionFingerprint &&
-      qualitiesInsight.items.length === 5
+    qualities: qualitiesInsight?.items.length === 5
       ? qualitiesInsight.items.map((item) => item.text)
       : []
   });

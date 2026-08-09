@@ -15,7 +15,7 @@
 
 .title {
   margin: 0;
-  color: #4a332a;
+  color: #202124;
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(2.1rem, 4vw, 3.1rem);
   line-height: 1.05;
@@ -53,7 +53,7 @@
   padding: 18px 20px;
   border: 0;
   background: transparent;
-  color: #4a332a;
+  color: #202124;
   font: inherit;
   font-size: 0.94rem;
   font-weight: 700;
@@ -62,7 +62,7 @@
 }
 
 .trigger span:last-child {
-  color: #bd5731;
+  color: #e9652f;
   font-size: 1.1rem;
   transition: transform 220ms var(--motion-ease-out);
   flex-shrink: 0;
@@ -85,7 +85,7 @@
 .answer {
   margin: 0;
   padding: 0 20px 18px;
-  color: #705c50;
+  color: #202124;
   font-size: 0.9rem;
   line-height: 1.5;
   text-wrap: pretty;

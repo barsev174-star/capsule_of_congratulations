@@ -4,9 +4,11 @@ import { dirname, join } from "node:path";
 import { getPostgresPool, isPostgresConfigured } from "@/lib/db/postgres";
 import type {
   CreateSupportRequestInput,
+  SupportNotificationChannel,
   SupportRequest,
   SupportRequestStatus
 } from "./types";
+import { appendSupportNotificationDeliveries } from "./notifications-repository";
 
 const filePath = join(process.cwd(), "data", "support-requests.json");
 
@@ -63,7 +65,10 @@ export const countRecentSupportRequests = async (email: string, since: Date): Pr
   ).length;
 };
 
-export const createSupportRequest = async (input: CreateSupportRequestInput): Promise<SupportRequest> => {
+export const createSupportRequest = async (
+  input: CreateSupportRequestInput,
+  notificationChannels: SupportNotificationChannel[] = ["email"]
+): Promise<SupportRequest> => {
   const now = new Date().toISOString();
   const item: SupportRequest = {
     id: randomUUID(),
@@ -74,19 +79,38 @@ export const createSupportRequest = async (input: CreateSupportRequestInput): Pr
   };
 
   if (isPostgresConfigured()) {
-    const result = await getPostgresPool().query<SupportRequestRow>(
-      `INSERT INTO support_requests
-        (id, category, contact_name, email, message, source, status, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING *`,
-      [item.id, item.category, item.contactName, item.email, item.message, item.source, item.status, now, now]
-    );
-    return mapRow(result.rows[0]);
+    const client = await getPostgresPool().connect();
+    try {
+      await client.query("BEGIN");
+      const result = await client.query<SupportRequestRow>(
+        `INSERT INTO support_requests
+          (id, category, contact_name, email, message, source, status, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING *`,
+        [item.id, item.category, item.contactName, item.email, item.message, item.source, item.status, now, now]
+      );
+      for (const channel of [...new Set(notificationChannels)]) {
+        await client.query(
+          `INSERT INTO support_notification_deliveries
+            (id, support_request_id, channel, status, attempt_count, next_attempt_at, created_at, updated_at)
+           VALUES ($1, $2, $3, 'pending', 0, $4, $4, $4)`,
+          [randomUUID(), item.id, channel, now]
+        );
+      }
+      await client.query("COMMIT");
+      return mapRow(result.rows[0]);
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   const items = await readJson();
   items.push(item);
   await writeJson(items);
+  await appendSupportNotificationDeliveries(item.id, notificationChannels, now);
   return item;
 };
 

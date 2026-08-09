@@ -8,7 +8,7 @@ import styles from "./manage-page.module.css";
 type Props = {
   manageToken: string;
   templates: CardTemplate[];
-  currentTemplateId: CardTemplate["id"];
+  currentTemplateId: CardTemplate["id"] | null;
   onTemplateSelectionChange?: (templateId: CardTemplate["id"]) => void;
   onApplied?: () => void;
 };
@@ -28,7 +28,7 @@ export const TemplateSettingsForm = ({
   const [selectedTemplateId, setSelectedTemplateId] = useState(currentTemplateId);
   const handleTemplateAction = async (previousState: typeof initialState, formData: FormData) => {
     const result = await updateCardTemplateAction(previousState, formData);
-    if (result.ok) {
+    if (result.ok && selectedTemplateId) {
       onTemplateSelectionChange?.(selectedTemplateId);
       onApplied?.();
     }
@@ -40,8 +40,9 @@ export const TemplateSettingsForm = ({
     setSelectedTemplateId(templateId);
   };
   const selectedTemplate =
-    templates.find((template) => template.id === selectedTemplateId) ?? templates[0];
-  const isCurrentTemplateSelected = selectedTemplateId === currentTemplateId;
+    templates.find((template) => template.id === selectedTemplateId) ?? null;
+  const isCurrentTemplateSelected =
+    selectedTemplateId !== null && selectedTemplateId === currentTemplateId;
 
   return (
     <form action={formAction} className={styles.templatePickerForm}>
@@ -88,12 +89,24 @@ export const TemplateSettingsForm = ({
       <div className={styles.templatePickerFooter}>
         <span id="template-picker-status" role="status" aria-live="polite">
           {state.message ||
-            (isCurrentTemplateSelected
+            (!selectedTemplate
+              ? "Сначала выберите шаблон"
+              : isCurrentTemplateSelected
               ? `Шаблон «${selectedTemplate.name}» используется сейчас`
               : `Будет применён шаблон «${selectedTemplate.name}»`)}
         </span>
-        <button type="submit" className={styles.contentPrimaryButton} disabled={isPending || isCurrentTemplateSelected}>
-          {isPending ? "Применяем…" : isCurrentTemplateSelected ? "Этот шаблон уже используется" : "Применить шаблон"}
+        <button
+          type="submit"
+          className={styles.contentPrimaryButton}
+          disabled={isPending || !selectedTemplate || isCurrentTemplateSelected}
+        >
+          {isPending
+            ? "Применяем…"
+            : !selectedTemplate
+              ? "Выберите шаблон"
+              : isCurrentTemplateSelected
+                ? "Этот шаблон уже используется"
+                : "Применить шаблон"}
         </button>
       </div>
     </form>

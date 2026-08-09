@@ -57,7 +57,7 @@ describe("validateCreateCardFormData", () => {
     }
   });
 
-  it("falls back to default template for selected format", () => {
+  it("keeps template unselected until the organizer chooses one", () => {
     const result = validateCreateCardFormData(
       buildFormData({
         recipientName: "Анна",
@@ -73,7 +73,7 @@ describe("validateCreateCardFormData", () => {
     expect(result.success).toBe(true);
 
     if (result.success) {
-      expect(result.data.templateId).toBe("paper-birthday");
+      expect(result.data.templateId).toBeNull();
     }
   });
 });

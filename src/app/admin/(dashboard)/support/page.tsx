@@ -1,7 +1,13 @@
 import { requireAdminRole } from "@/lib/admin/session";
 import { listSupportRequests } from "@/lib/support/repository";
-import type { SupportRequestCategory, SupportRequestStatus } from "@/lib/support/types";
-import { updateSupportRequestStatusAction } from "../../actions-support";
+import { listSupportNotificationDeliveries } from "@/lib/support/notifications-repository";
+import type {
+  SupportNotificationChannel,
+  SupportNotificationStatus,
+  SupportRequestCategory,
+  SupportRequestStatus
+} from "@/lib/support/types";
+import { retrySupportNotificationAction, updateSupportRequestStatusAction } from "../../actions-support";
 import styles from "../../admin.module.css";
 
 const statuses: SupportRequestStatus[] = ["new", "in_progress", "resolved"];
@@ -15,6 +21,16 @@ const categoryLabels: Record<SupportRequestCategory, string> = {
   suggestion: "Предложение",
   question: "Вопрос"
 };
+const notificationChannelLabels: Record<SupportNotificationChannel, string> = {
+  email: "Email",
+  telegram: "Telegram"
+};
+const notificationStatusLabels: Record<SupportNotificationStatus, string> = {
+  pending: "В очереди",
+  sending: "Отправляется",
+  sent: "Отправлено",
+  failed: "Ошибка"
+};
 
 type Props = { searchParams: Promise<{ status?: string }> };
 
@@ -25,6 +41,11 @@ export default async function AdminSupportPage({ searchParams }: Props) {
     ? status as SupportRequestStatus
     : undefined;
   const requests = await listSupportRequests(selectedStatus);
+  const deliveries = await listSupportNotificationDeliveries(requests.map((request) => request.id));
+  const deliveriesByRequest = new Map(requests.map((request) => [
+    request.id,
+    deliveries.filter((delivery) => delivery.supportRequestId === request.id)
+  ]));
 
   return (
     <>
@@ -52,6 +73,7 @@ export default async function AdminSupportPage({ searchParams }: Props) {
                   <th>Контакт</th>
                   <th>Источник</th>
                   <th>Статус</th>
+                  <th>Уведомления</th>
                   <th>Дата</th>
                   <th>Действия</th>
                 </tr>
@@ -67,6 +89,34 @@ export default async function AdminSupportPage({ searchParams }: Props) {
                     </td>
                     <td>{request.source}</td>
                     <td><span className={styles.badge}>{statusLabels[request.status]}</span></td>
+                    <td>
+                      {(deliveriesByRequest.get(request.id) ?? []).length === 0 ? (
+                        <span className={styles.notificationEmpty}>Ранее не отправлялось</span>
+                      ) : (
+                        <div className={styles.notificationList}>
+                          {(deliveriesByRequest.get(request.id) ?? []).map((delivery) => (
+                            <div key={delivery.id} className={styles.notificationItem}>
+                              <span>{notificationChannelLabels[delivery.channel]}</span>
+                              <span className={`${styles.notificationStatus} ${
+                                delivery.status === "sent"
+                                  ? styles.notificationStatusSent
+                                  : delivery.status === "failed"
+                                    ? styles.notificationStatusFailed
+                                    : ""
+                              }`}>
+                                {notificationStatusLabels[delivery.status]}
+                              </span>
+                              {delivery.status === "failed" ? (
+                                <form action={retrySupportNotificationAction} className={styles.actionForm}>
+                                  <input type="hidden" name="deliveryId" value={delivery.id} />
+                                  <button type="submit" className={styles.notificationRetry}>Повторить</button>
+                                </form>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </td>
                     <td>{new Date(request.createdAt).toLocaleString("ru-RU")}</td>
                     <td>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

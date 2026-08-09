@@ -1,6 +1,8 @@
 "use server";
 
 import { countRecentSupportRequests, createSupportRequest } from "@/lib/support/repository";
+import { getConfiguredSupportNotificationChannels } from "@/lib/support/notifications";
+import { runSupportNotificationBatch } from "@/lib/support/notifications-service";
 import { validateSupportRequest } from "@/lib/support/validation";
 import { logger } from "@/lib/logger";
 
@@ -31,7 +33,10 @@ export async function submitSupportRequestAction(
     };
   }
 
-  const request = await createSupportRequest(validation.data);
+  const request = await createSupportRequest(
+    validation.data,
+    getConfiguredSupportNotificationChannels()
+  );
   const ticket = request.id.slice(0, 8).toUpperCase();
 
   logger.info("support.request_created", "Support request created", {
@@ -39,6 +44,15 @@ export async function submitSupportRequestAction(
     category: request.category,
     source: request.source
   });
+
+  try {
+    await runSupportNotificationBatch({ requestId: request.id });
+  } catch (error) {
+    logger.error("support.notification_dispatch_failed", "Support notification dispatch could not start", {
+      requestId: request.id,
+      errorType: error instanceof Error ? error.name : "UnknownError"
+    });
+  }
 
   return {
     status: "success",

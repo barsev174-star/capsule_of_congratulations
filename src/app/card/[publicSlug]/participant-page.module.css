@@ -38,7 +38,7 @@
 }
 
 .brandTagline {
-  color: #8a6e61;
+  color: #5f6368;
   font-size: 0.92rem;
 }
 
@@ -61,7 +61,7 @@
   box-shadow:
     0 0 0 1px rgba(92, 64, 48, 0.1),
     0 10px 24px rgba(83, 49, 28, 0.05);
-  color: #3b2921;
+  color: #202124;
   font-size: 0.95rem;
 }
 
@@ -120,7 +120,7 @@
 
 .heroSubline {
   margin: -4px 0 0;
-  color: #7f442e;
+  color: #202124;
   font-family: var(--font-caveat), Georgia, "Times New Roman", serif;
   font-size: clamp(1.8rem, 4vw, 2.7rem);
   font-weight: 700;
@@ -130,7 +130,7 @@
 
 .subtitle {
   margin: 0;
-  color: #5f493f;
+  color: #202124;
   font-size: 1.13rem;
   line-height: 1.7;
   max-width: 720px;
@@ -139,11 +139,11 @@
 
 .senderLine {
   margin: -6px 0 0;
-  color: #7f6558;
+  color: #5f6368;
 }
 
 .senderLine strong {
-  color: #33231d;
+  color: #202124;
 }
 
 .fromChip {
@@ -152,7 +152,7 @@
   padding: 9px 14px;
   border-radius: 999px;
   background: rgba(255, 252, 248, 0.84);
-  color: #8e4f34;
+  color: #5f6368;
   font-weight: 800;
   box-shadow:
     0 0 0 1px rgba(92, 64, 48, 0.1),
@@ -183,13 +183,13 @@
 }
 
 .fromStat {
-  color: #8e4f34;
+  color: #5f6368;
 }
 
 .stat strong {
   min-width: 0;
   overflow: hidden;
-  color: #33231d;
+  color: #202124;
   font-size: 0.95rem;
   line-height: 1.25;
   text-overflow: ellipsis;
@@ -548,7 +548,7 @@
 
 .hint {
   margin: 0;
-  color: #6e5549;
+  color: #202124;
   line-height: 1.6;
   text-wrap: pretty;
 }
@@ -589,7 +589,7 @@
 
 .fieldHint,
 .privacyNote {
-  color: #7f6558;
+  color: #5f6368;
   font-size: 0.95rem;
   line-height: 1.55;
 }
@@ -681,9 +681,9 @@
   color: var(--muted);
 }
 
-.consent { display: flex; align-items: flex-start; gap: 10px; padding: 6px 4px; color: #6e5549; font-size: .9rem; line-height: 1.45; border-radius: 14px; }
+.consent { display: flex; align-items: flex-start; gap: 10px; padding: 6px 4px; color: #202124; font-size: .9rem; line-height: 1.45; border-radius: 14px; }
 .consent input { width: 18px; height: 18px; margin-top: 2px; flex: 0 0 auto; accent-color: #c65431; }
-.consent a { color: #a7482a; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.consent a { color: #e9652f; text-decoration-thickness: 1px; text-underline-offset: 2px; }
 
 .actions {
   display: flex;
@@ -695,7 +695,7 @@
 .submitHint {
   width: 100%;
   margin: -4px 0 0;
-  color: #7f6558;
+  color: #5f6368;
   font-size: 0.95rem;
   text-align: center;
 }
@@ -893,7 +893,7 @@
   border: 0;
   border-radius: 16px;
   background: rgba(255, 252, 248, 0.86);
-  color: #33231d;
+  color: #202124;
   cursor: pointer;
   font-weight: 700;
   white-space: nowrap;
@@ -947,7 +947,7 @@
   border: 0;
   border-radius: 12px;
   background: transparent;
-  color: #7f6558;
+  color: #5f6368;
   cursor: pointer;
   font-size: 0.92rem;
   font-weight: 800;
@@ -960,7 +960,7 @@
 }
 
 .variantTab:hover {
-  color: #33231d;
+  color: #202124;
   background: rgba(255, 255, 255, 0.58);
 }
 
@@ -1086,7 +1086,7 @@
   height: 36px;
   border-radius: 999px;
   background: linear-gradient(145deg, #f4ece3, #fff8f0);
-  color: #8f7464;
+  color: #5f6368;
   font-weight: 800;
   box-shadow:
     inset 0 0 0 1px rgba(104, 78, 62, 0.08),
@@ -1108,7 +1108,7 @@
   margin: 14px 0 0;
   display: -webkit-box;
   overflow: hidden;
-  color: #33231d;
+  color: #202124;
   line-height: 1.65;
   text-wrap: pretty;
   -webkit-box-orient: vertical;
@@ -1176,7 +1176,7 @@
 .valuePreviewCopy > p:not(.valuePreviewEyebrow) {
   max-width: 470px;
   margin: 16px 0 0;
-  color: #795d4f;
+  color: #5f6368;
   line-height: 1.65;
   text-wrap: pretty;
 }
@@ -1190,7 +1190,7 @@
   margin-top: 24px;
   padding: 0 22px;
   border-radius: 999px;
-  color: #df5728;
+  color: #e9652f;
   text-decoration: none;
   background: rgba(255, 252, 248, 0.9);
   box-shadow:
@@ -1210,7 +1210,7 @@
 }
 
 .valuePreviewButton:hover {
-  color: #c8491e;
+  color: #e9652f;
   background: #fff;
   box-shadow:
     inset 0 0 0 1.5px rgba(218, 82, 35, 0.7),
@@ -1271,7 +1271,7 @@
 
 .valuePreviewFrom {
   margin-top: 14px;
-  color: #8a6b5c;
+  color: #5f6368;
   font-size: 0.82rem;
 }
 
@@ -1359,7 +1359,7 @@
 .reminderIntro > p:last-child {
   max-width: 280px;
   margin: 14px 0 0;
-  color: #795d4f;
+  color: #5f6368;
   line-height: 1.6;
   text-wrap: pretty;
 }
@@ -1416,7 +1416,7 @@
 }
 
 .reminderField > span {
-  color: #4b352c;
+  color: #202124;
   font-size: 0.85rem;
   font-weight: 750;
 }
@@ -1428,7 +1428,7 @@
   border: 1px solid rgba(78, 52, 40, 0.14);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.86);
-  color: #38261f;
+  color: #202124;
   font: inherit;
   padding: 0 16px;
   transition-property: border-color, box-shadow, background-color;
@@ -1448,7 +1448,7 @@
 }
 
 .reminderField input::placeholder {
-  color: #a48d81;
+  color: #5f6368;
 }
 
 .reminderButton {
@@ -1492,7 +1492,7 @@
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  color: #947c6f;
+  color: #5f6368;
   font-size: 0.78rem;
   line-height: 1.45;
   cursor: pointer;
@@ -1509,7 +1509,7 @@
 
 .reminderCancelHint {
   margin: 0 0 0 25px;
-  color: #8c7366;
+  color: #5f6368;
   font-size: 0.78rem;
   line-height: 1.45;
   text-wrap: pretty;
@@ -1525,13 +1525,13 @@
 }
 
 .reminderSuccess {
-  color: #77452f;
+  color: #202124;
   background: #fff0e4;
   box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.14);
 }
 
 .reminderWarning {
-  color: #76511d;
+  color: #e9652f;
   background: #fff7dc;
   box-shadow: inset 0 0 0 1px rgba(180, 126, 28, 0.16);
 }
@@ -1599,14 +1599,14 @@
   gap: 9px;
   margin: 0;
   padding-left: 4px;
-  color: #8c7366;
+  color: #5f6368;
   font-size: 0.88rem;
   line-height: 1.5;
 }
 
 .reminderHelper::before {
   content: "✉";
-  color: #c98a52;
+  color: #e9652f;
   font-size: 1rem;
 }
 
@@ -1673,7 +1673,7 @@
 
 .successCard p,
 .successCard code {
-  color: #7f6558;
+  color: #5f6368;
 }
 
 .giftPollCard,
@@ -1700,7 +1700,7 @@
 
 .participantSubmitted { gap: 4px; padding: 14px 18px; }
 .participantSubmitted strong { display: flex; align-items: center; gap: 6px; color: #ec662f; font-size: 1.02rem; }
-.participantSubmitted p { margin: 0; color: #7f6558; font-size: .92rem; }
+.participantSubmitted p { margin: 0; color: #5f6368; font-size: .92rem; }
 .giftPollError { margin: 0; color: #a63f2b; font-size: .92rem; }
 
 .panelPollTeaser {
@@ -1711,7 +1711,7 @@
   padding: 10px 14px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.55);
-  color: #7f6558;
+  color: #5f6368;
   font-size: 0.9rem;
   line-height: 1.45;
 }
@@ -1719,7 +1719,7 @@
 .giftPollEyebrow,
 .giftPollPrivacy {
   margin: 0;
-  color: #8e6b56;
+  color: #5f6368;
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1759,7 +1759,7 @@
   border: 1px solid rgba(113, 80, 58, 0.16);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.7);
-  color: #50372b;
+  color: #202124;
   text-align: left;
   cursor: pointer;
   transition-property: transform, box-shadow, border-color, background-color;
@@ -1772,13 +1772,13 @@
 .giftPollOptionSelected { border-color: #e9753b; background: #fff4e6; box-shadow: 0 0 0 3px rgba(233, 101, 47, 0.12); }
 .giftPollOptionImage { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; outline: 1px solid rgba(0, 0, 0, 0.1); }
 .giftPollOptionCopy { display: grid; gap: 2px; min-width: 0; padding-right: 42px; }
-.giftPollOptionCopy strong { color: #4d3327; }
+.giftPollOptionCopy strong { color: #202124; }
 .giftPollBudgetOption { grid-template-columns: minmax(0, 1fr); min-height: 80px; align-items: start; padding: 12px 14px; background: linear-gradient(135deg, #fffaf0, #fff1dc); }
 .giftPollBudgetOption .giftPollOptionCopy { gap: 4px; }
-.giftPollBudgetOption .giftPollOptionCopy strong { color: #a94f2a; font-size: 1.28rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.giftPollBudgetOption .giftPollOptionCopy strong { color: #e9652f; font-size: 1.28rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .giftPollOptions[data-compact="true"] .giftPollBudgetOption { min-height: 68px; }
-.giftPollOptionCopy span { color: #917b6b; font-size: .82rem; font-style: normal; }
-.giftPollOptionCopy em { color: #d6683d; font-size: .84rem; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; }
+.giftPollOptionCopy span { color: #5f6368; font-size: .82rem; font-style: normal; }
+.giftPollOptionCopy em { color: #e9652f; font-size: .84rem; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; }
 .giftPollOptionCopy a { width: max-content; color: #ec662f; font-size: .82rem; font-style: normal; text-decoration: none; text-underline-offset: 3px; }
 .giftPollOptionCopy a:hover,
 .giftPollOptionCopy a:focus-visible { color: #d95a2a; text-decoration: underline; text-decoration-thickness: 1px; }
@@ -1825,36 +1825,36 @@
 .giftPollSecondaryButton:active { transform: scale(.96); }
 .giftPollSecondaryButton:focus-visible { outline: 3px solid rgba(233, 101, 47, .25); outline-offset: 3px; }
 .giftPollSuccess strong { color: #ec662f; }
-.giftPollSuccess p { margin: 0; color: #7f6558; }
+.giftPollSuccess p { margin: 0; color: #5f6368; }
 .giftPollSuccess { gap: 10px; padding-block: 20px; }
 .giftPollInvite { grid-column: 1 / -1; display: grid; gap: 8px; padding: 12px 14px; border-radius: 18px; background: rgba(255, 249, 242, .78); box-shadow: inset 0 0 0 1px rgba(156, 103, 73, .1); }
-.giftPollInvite p { margin: 0; color: #7f6558; font-size: .9rem; }
+.giftPollInvite p { margin: 0; color: #5f6368; font-size: .9rem; }
 .giftPollVoteSuccess { gap: 5px; padding-block: 14px; }
 .giftPollVoteSuccess strong { display: flex; align-items: center; gap: 6px; }
 .giftPollChoiceRow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px; }
-.giftPollChoice { color: #50372b !important; }
+.giftPollChoice { color: #202124 !important; }
 .giftPollChoiceEdit { justify-self: start; display: inline-flex; align-items: center; min-height: 40px; padding-inline: 8px; }
-.giftPollVotePrivacy { color: #7f6558; font-size: .88rem; }
+.giftPollVotePrivacy { color: #5f6368; font-size: .88rem; }
 .giftPollSelectedSummary { display: flex; gap: 12px; align-items: center; padding: 10px; border-radius: 16px; background: rgba(255,255,255,.65); box-shadow: inset 0 0 0 1px rgba(92,64,48,.09); }
 .giftPollSelectedSummary img { width: 56px; height: 56px; flex: 0 0 auto; border-radius: 12px; object-fit: cover; outline: 1px solid rgba(0, 0, 0, .1); }
 .giftPollSelectedSummary div { display: grid; min-width: 0; gap: 3px; }
-.giftPollSelectedSummary em { color: #df5728; font-style: normal; font-weight: 800; }
-.giftPollSelectedSummary a { width: max-content; max-width: 100%; overflow: hidden; color: #bd5d32; font-size: .88rem; text-overflow: ellipsis; white-space: nowrap; }
+.giftPollSelectedSummary em { color: #e9652f; font-style: normal; font-weight: 800; }
+.giftPollSelectedSummary a { width: max-content; max-width: 100%; overflow: hidden; color: #e9652f; font-size: .88rem; text-overflow: ellipsis; white-space: nowrap; }
 .giftPollChangeHint { font-size: .9rem; }
 .giftPollInviteButton { min-height: 44px; padding: 0 18px; border: 1px solid rgba(236, 102, 47, .5); border-radius: 999px; background: transparent; color: #ec662f; font: inherit; font-weight: 700; cursor: pointer; }
 .giftPollInviteButton:hover { background: rgba(255,255,255,.65); }
 .giftPollInviteButton:focus-visible,
 .giftPollTextButton:focus-visible { outline: 3px solid rgba(233, 101, 47, .25); outline-offset: 3px; }
-.giftPollTextButton { justify-self: center; min-height: 40px; padding: 0 10px; border: 0; background: transparent; color: #d9683c; font: inherit; font-size: .92rem; font-weight: 500; text-decoration: none; text-underline-offset: 3px; cursor: pointer; }
+.giftPollTextButton { justify-self: center; min-height: 40px; padding: 0 10px; border: 0; background: transparent; color: #e9652f; font: inherit; font-size: .92rem; font-weight: 500; text-decoration: none; text-underline-offset: 3px; cursor: pointer; }
 .giftPollTextButton:hover,
 .giftPollTextButton:focus-visible { color: #d95a2a; text-decoration: underline; text-decoration-thickness: 1px; }
-.giftPollTextButton:disabled { color: #a88b7c; cursor: not-allowed; text-decoration: none; }
+.giftPollTextButton:disabled { color: #5f6368; cursor: not-allowed; text-decoration: none; }
 .giftPollCompactSuccess { grid-column: 1 / -1; display: grid; gap: 2px; padding: 10px 14px; border-radius: 18px; background: rgba(255, 249, 242, .78); box-shadow: inset 0 0 0 1px rgba(156, 103, 73, .1); }
-.giftPollCompactSuccess strong { color: #c85c32; font-size: .95rem; }
-.giftPollCompactSuccess p { margin: 0; color: #7f6558; font-size: .88rem; }
+.giftPollCompactSuccess strong { color: #e9652f; font-size: .95rem; }
+.giftPollCompactSuccess p { margin: 0; color: #5f6368; font-size: .88rem; }
 .giftPollSkipped { grid-column: 1 / -1; display: grid; gap: 2px; padding: 10px 14px; border-radius: 18px; background: rgba(255, 249, 242, .78); box-shadow: inset 0 0 0 1px rgba(156, 103, 73, .1); }
-.giftPollSkipped strong { color: #c85c32; font-size: .95rem; }
-.giftPollSkipped p { display: flex; flex-wrap: wrap; align-items: center; gap: 0; margin: 0; color: #7f6558; font-size: .88rem; }
+.giftPollSkipped strong { color: #e9652f; font-size: .95rem; }
+.giftPollSkipped p { display: flex; flex-wrap: wrap; align-items: center; gap: 0; margin: 0; color: #5f6368; font-size: .88rem; }
 .giftPollSkipped .giftPollTextButton { display: inline-flex; align-items: center; min-height: 40px; margin-inline: 2px; padding-inline: 8px; }
 
 .successCard {
@@ -1869,7 +1869,7 @@
 .successCard strong {
   display: block;
   margin-bottom: 3px;
-  color: #8e4f34;
+  color: #5f6368;
 }
 
 .successCard p {
@@ -2150,7 +2150,7 @@
   border: 1px solid rgba(233, 101, 47, 0.42);
   border-radius: 999px;
   background: linear-gradient(145deg, rgba(255, 244, 233, 0.94), rgba(255, 231, 212, 0.9));
-  color: #c6542f;
+  color: #e9652f;
   cursor: pointer;
   font: inherit;
   font-size: 0.9rem;
@@ -2279,7 +2279,7 @@
   border-radius: 16px;
   background: rgba(255, 252, 248, 0.72);
   box-shadow: inset 0 0 0 1px rgba(92, 64, 48, 0.08);
-  color: #7f6558;
+  color: #5f6368;
   font-size: 0.95rem;
   line-height: 1.55;
 }
@@ -2375,7 +2375,7 @@
 }
 
 .editorShellOver .editorCounter {
-  color: #a6562f;
+  color: #e9652f;
   font-weight: 700;
 }
 
@@ -2387,7 +2387,7 @@
   border: 1px solid rgba(198, 84, 47, 0.45);
   border-radius: 999px;
   background: rgba(255, 252, 248, 0.76);
-  color: #c6542f;
+  color: #e9652f;
   cursor: pointer;
   font: inherit;
   font-size: 0.86rem;
@@ -2418,7 +2418,7 @@
   border-radius: 14px;
   background: rgba(255, 246, 231, 0.9);
   box-shadow: 0 0 0 1px rgba(187, 124, 66, 0.16);
-  color: #8c5a3c;
+  color: #5f6368;
   font-size: 0.9rem;
   line-height: 1.5;
 }
@@ -2454,7 +2454,7 @@
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.6);
   box-shadow: inset 0 0 0 1px rgba(92, 64, 48, 0.1);
-  color: #50372b;
+  color: #202124;
   cursor: pointer;
   font: inherit;
   font-size: 0.94rem;
@@ -2511,7 +2511,7 @@
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.55);
   box-shadow: inset 0 0 0 1px rgba(92, 64, 48, 0.08);
-  color: #50372b;
+  color: #202124;
   cursor: pointer;
   font: inherit;
   font-size: 0.92rem;
@@ -2547,7 +2547,7 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  color: #977a68;
+  color: #5f6368;
   font-size: 0.82rem;
   line-height: 1.45;
 }
@@ -2611,7 +2611,7 @@
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: #c6542f;
+  color: #e9652f;
   cursor: pointer;
   font: inherit;
   font-size: 0.9rem;
@@ -2690,7 +2690,7 @@
 .promptButtonActive {
   background: rgba(255, 244, 233, 0.95);
   box-shadow: inset 0 0 0 1.5px rgba(198, 84, 47, 0.55);
-  color: #8e3f22;
+  color: #e9652f;
   font-weight: 700;
 }
 
@@ -2747,7 +2747,7 @@
 }
 
 .loadingSkeletonLabel {
-  color: #a6562f;
+  color: #e9652f;
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -2799,13 +2799,13 @@
 
 .panelFooterNote {
   margin: 0;
-  color: #7f6558;
+  color: #5f6368;
   font-size: 0.85rem;
   line-height: 1.55;
 }
 
 .panelFooterCounter {
-  color: #8c5a3c;
+  color: #5f6368;
   font-size: 0.85rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -2816,7 +2816,7 @@
 .panelRetryButton {
   border: 1px solid rgba(198, 84, 47, 0.45);
   background: rgba(255, 252, 248, 0.76);
-  color: #c6542f;
+  color: #e9652f;
   box-shadow: none;
   white-space: nowrap;
 }
@@ -2939,7 +2939,7 @@
 }
 
 .panelExampleLabel {
-  color: #a6562f;
+  color: #e9652f;
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -2954,7 +2954,7 @@
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: #c6542f;
+  color: #e9652f;
   cursor: pointer;
   font: inherit;
   font-size: 1.05rem;
@@ -2974,14 +2974,14 @@
 .panelExampleText {
   margin: 0;
   min-height: 2.6em;
-  color: #5d4436;
+  color: #202124;
   font-size: 0.95rem;
   line-height: 1.5;
   animation: joinPanelFadeUp 200ms ease both;
 }
 
 .panelExampleNote {
-  color: #977a68;
+  color: #5f6368;
   font-size: 0.78rem;
   line-height: 1.4;
 }
@@ -3086,7 +3086,7 @@
 
 .submitButton:disabled {
   background: linear-gradient(180deg, #f7cdb8 0%, #f2bda2 100%);
-  color: #9c4f33;
+  color: #e9652f;
   box-shadow: none;
   cursor: not-allowed;
   opacity: 1;
@@ -3214,7 +3214,7 @@
   display: block;
   overflow: hidden;
   min-width: 0;
-  color: #4d3327;
+  color: #202124;
   font-size: 0.88rem;
   font-weight: 700;
   line-height: 1.15;
@@ -3226,7 +3226,7 @@
   display: -webkit-box;
   overflow: hidden;
   min-width: 0;
-  color: #8c7366;
+  color: #5f6368;
   font-size: 0.76rem;
   font-weight: 600;
   line-height: 1.2;
@@ -3236,7 +3236,7 @@
 
 .contribCardText {
   overflow: hidden;
-  color: #5d4436;
+  color: #202124;
   font-size: 0.85rem;
   line-height: 1.35;
   text-overflow: ellipsis;
@@ -3254,7 +3254,7 @@
   border-radius: 999px;
   background: rgba(255, 250, 245, 0.96);
   box-shadow: 0 3px 10px rgba(104, 55, 29, 0.08);
-  color: #d9683c;
+  color: #e9652f;
   cursor: pointer;
   font-size: 1.65rem;
   line-height: 1;
@@ -3266,7 +3266,7 @@
   background: #fff4ec;
   border-color: rgba(201, 83, 39, 0.62);
   box-shadow: 0 4px 12px rgba(104, 55, 29, 0.1);
-  color: #c95327;
+  color: #e9652f;
 }
 
 .contribArrow:focus-visible {
@@ -3330,7 +3330,7 @@
     margin: 0;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-    color: #6e5549;
+    color: #202124;
     font-size: 0.88rem;
     line-height: 1.35;
   }

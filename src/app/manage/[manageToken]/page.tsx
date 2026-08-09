@@ -18,9 +18,10 @@ import { BasicsSettingsForm } from "./basics-settings-form";
 import { BlockSettingsForm } from "./block-settings-form";
 import { ContentStudio } from "./content-studio";
 import { CopyLinkButton } from "./copy-link-button";
+import { LinkPurposeList } from "./link-purpose-list";
 import { TemplateSummary } from "./template-summary";
 import styles from "./manage-page.module.css";
-import { getAiCardInsight, getAiUsageSummary } from "@/lib/ai/repository";
+import { getAiCardInsight, getAiCardQuoteSelection, getAiUsageSummary } from "@/lib/ai/repository";
 import {
   BEST_QUOTE_COUNT,
   BEST_QUOTE_MIN_CONTRIBUTION_COUNT,
@@ -126,14 +127,15 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const isDesignTab = activeTab === "design";
   const isMaterialTab = activeTab === "congratulations" || activeTab === "photos";
   const isGiftTab = activeTab === "gift";
-  const [allContributions, cardTemplates, visibleContributions, mediaAssets, aiUsage, quotesInsight, qualitiesInsight, giftPoll] = await Promise.all([
+  const [allContributions, cardTemplates, visibleContributions, mediaAssets, aiUsage, quotesInsight, qualitiesInsight, savedQuoteSelection, giftPoll] = await Promise.all([
     listAllContributionsByCardId(card.id),
     isDesignTab ? getCardTemplates() : Promise.resolve([]),
     listContributionsByCardId(card.id),
     listCardMediaAssetsByCardId(card.id),
-    isDesignTab || isMaterialTab ? getAiUsageSummary(card.id) : Promise.resolve({ used: 0, limit: 0, remaining: 0 }),
-    isDesignTab || isMaterialTab ? getAiCardInsight(card.id, "quotes") : Promise.resolve(null),
-    isDesignTab || isMaterialTab ? getAiCardInsight(card.id, "qualities") : Promise.resolve(null),
+    getAiUsageSummary(card.id),
+    getAiCardInsight(card.id, "quotes"),
+    getAiCardInsight(card.id, "qualities"),
+    getAiCardQuoteSelection(card.id),
     isGiftTab ? getGiftPollForManage(card.id) : Promise.resolve(null)
   ]);
   const hasValidGeneratedQuotes = Boolean(
@@ -154,14 +156,17 @@ export default async function ManagePage({ params, searchParams }: Props) {
     quotesInsight &&
     (!hasValidGeneratedQuotes || quotesInsight.sourceFingerprint !== contributionFingerprint)
   );
-  const quoteSelection = resolveFinalBestQuotes(card, generatedQuoteCandidates, quotesAreStale);
+  const savedQuoteTexts = savedQuoteSelection && quotesInsight && savedQuoteSelection.sourceFingerprint === quotesInsight.sourceFingerprint
+    ? savedQuoteSelection.items.map((item) => item.text)
+    : [];
+  const quoteSelection = resolveFinalBestQuotes(card, generatedQuoteCandidates, savedQuoteTexts);
   const generatedQuotes = quoteSelection.quotes;
   const effectiveQuotesAreStale = quotesAreStale && !quoteSelection.usesLegacyDefault;
   const qualitiesAreStale = Boolean(qualitiesInsight && qualitiesInsight.sourceFingerprint !== contributionFingerprint);
   const aiContent = { quotes: generatedQuotes, qualities: generatedQualities };
   const model = isMaterialTab ? buildFinalCardViewModel(card, visibleContributions, mediaAssets, aiContent) : null;
   const style = isTemplateId(card.templateId) ? card.templateId : "warm-classic";
-  const selectedTemplate = cardTemplates.find((template) => template.id === card.templateId) ?? cardTemplates[0];
+  const selectedTemplate = cardTemplates.find((template) => template.id === card.templateId) ?? null;
   const layoutMode = card.finalMessageSettings?.layoutMode ?? "grid-2";
   const mediaLayout = card.finalMessageSettings?.mediaLayout ?? "portrait";
   const messagePhotosEnabled = layoutMode === "column-media";
@@ -393,7 +398,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
               Мои открытки
             </Link>
             <div className={styles.publishNote}>
-              <span>Финальная ссылка откроется после передачи получателю.</span>
+              <span>Приватная ссылка получателя откроется после передачи открытки.</span>
             </div>
           </div>
         </header>
@@ -470,7 +475,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   requiredBlockIds={requiredLayoutBlockIds}
                   initialMainGreetingContributionId={mainGreetingContributionId}
                   mainGreetingStatusText={mainGreetingStatusText}
-                  initialBestQuotes={generatedQuotes}
+                   initialBestQuotes={generatedQuoteCandidates}
+                   initialSelectedBestQuotes={generatedQuotes}
                   bestQuotesAreStale={effectiveQuotesAreStale}
                   canGenerateBestQuotes={hasEnoughMeaningfulQuoteSources(visibleContributions)}
                   bestQuotesMinimumContributionCount={BEST_QUOTE_MIN_CONTRIBUTION_COUNT}
@@ -514,7 +520,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   <TemplateSummary
                     manageToken={manageToken}
                     templates={cardTemplates}
-                    initialTemplateId={selectedTemplate.id}
+                    initialTemplateId={selectedTemplate?.id ?? null}
                   />
                 </EditorSidebarCard>
               }
@@ -522,11 +528,28 @@ export default async function ManagePage({ params, searchParams }: Props) {
                 {lifecycle.deliveryStatus === "DELIVERED" ? (
                   <EditorSidebarCard className={`${styles.lifecycleSidebarCard} ${styles.statusContent}`}>
                     <div className={styles.statusCopy}>
-                      <h3>{giftAccessible ? "Финальная ссылка" : "Доступ получателя приостановлен"}</h3>
-                      <p>{giftAccessible ? "Финальная версия уже неизменяема. Её можно открыть или отправить ссылку получателю." : "Передача уже была выполнена, но доступ по финальной ссылке сейчас отключён."}</p>
+                      <h3>{giftAccessible ? "Приватная ссылка получателя" : "Доступ получателя приостановлен"}</h3>
+                      <p>{giftAccessible ? "Готовая открытка уже передана и больше не меняется." : "Передача уже была выполнена, но доступ по приватной ссылке получателя сейчас отключён."}</p>
+                      {giftAccessible ? <>
+                        <LinkPurposeList
+                          audience={`Только получателю — ${recipientName}`}
+                          purpose="Открыть готовую открытку без инструментов организатора"
+                          nextStep="Скопируйте ссылку и отправьте её получателю лично"
+                          tone="recipient"
+                        />
+                        <p className={styles.recipientPrivacyNote}>
+                          <span aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                              <rect x="5" y="10" width="14" height="10" rx="2" />
+                              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                            </svg>
+                          </span>
+                          <span><strong>Приватная ссылка.</strong> Не отправляйте её в общий чат участников.</span>
+                        </p>
+                      </> : null}
                     </div>
                     {giftAccessible ? <div className={styles.statusActions}>
-                      <CopyLinkButton value={getGiftPath(card.finalSlug)} label="Скопировать ссылку" cardId={card.id} telemetrySource="gift" className={styles.statusSecondaryAction} />
+                      <CopyLinkButton value={getGiftPath(card.finalSlug)} label="Скопировать приватную ссылку получателя" cardId={card.id} telemetrySource="gift" className={`${styles.statusSecondaryAction} ${styles.recipientLinkAction}`} />
                     </div> : null}
                   </EditorSidebarCard>
                 ) : lifecycle.collectionStatus === "DRAFT" ? (

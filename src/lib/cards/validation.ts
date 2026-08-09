@@ -1,5 +1,4 @@
 import {
-  getDefaultTemplateForOccasion,
   isOccasionId,
   isTemplateId,
   type OccasionId
@@ -39,12 +38,12 @@ const pushIssue = (issues: ValidationIssue[], field: string, message: string) =>
   issues.push({ field, message });
 };
 
-const resolveTemplate = (occasion: OccasionId, rawTemplate: string) => {
+const resolveTemplate = (rawTemplate: string) => {
   if (isTemplateId(rawTemplate)) {
     return rawTemplate;
   }
 
-  return getDefaultTemplateForOccasion(occasion);
+  return null;
 };
 
 export const validateCreateCardFormData = (formData: FormData): ValidationResult => {
@@ -109,7 +108,7 @@ export const validateCreateCardFormData = (formData: FormData): ValidationResult
       organizerEmail,
       eventDate,
       description,
-      templateId: resolveTemplate(validOccasion, rawTemplateId)
+      templateId: resolveTemplate(rawTemplateId)
     }
   };
 };

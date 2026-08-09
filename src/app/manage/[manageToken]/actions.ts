@@ -39,7 +39,11 @@ import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository"
 import { assertCardContentEditable } from "@/lib/cards/lifecycle";
 import { validateContributionFormData, validateContributionMessage } from "@/lib/contributions/validation";
 import { generateBestQuotes, generateQualities } from "@/lib/ai/service";
-import { buildContributionFingerprint, hasEnoughMeaningfulQuoteSources } from "@/lib/ai/card-insights";
+import {
+  BEST_QUOTE_MIN_CONTRIBUTION_COUNT,
+  buildContributionFingerprint,
+  hasEnoughMeaningfulQuoteSources
+} from "@/lib/ai/card-insights";
 import { AiError } from "@/lib/ai/types";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import type {
@@ -59,7 +63,12 @@ import { ensureGiftPollEnabled } from "@/lib/gift-polls/activation";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
 import { getGiftPath, getJoinPath, getManagePath } from "@/lib/routes/card-links";
 import { reportCriticalError } from "@/lib/telemetry";
-import { getAiCardInsight, getAiUsageSummary, saveAiCardInsight } from "@/lib/ai/repository";
+import {
+  getAiCardInsight,
+  getAiCardQuoteSelection,
+  getAiUsageSummary,
+  saveAiCardQuoteSelection
+} from "@/lib/ai/repository";
 import { ContributionLimitReachedError } from "@/lib/contributions/limits";
 import {
   closeGiftPoll,
@@ -74,6 +83,7 @@ import { GIFT_POLL_MAX_OPTIONS, isSafeProductUrl, normalizeBudgetAmount, normali
 import { sanitizeGiftPollText } from "@/lib/gift-polls/text-sanitization";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { buildCardBlockReadiness } from "@/lib/manage/card-design-readiness";
+import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
@@ -94,6 +104,10 @@ const assertManageContentEditable = async (manageToken: string) => {
 };
 
 const syncCardPhotoSettings = async (card: CardDraft, assets: CardMediaAsset[]) => {
+  if (!isTemplateId(card.templateId)) {
+    return;
+  }
+
   const currentMessageSettings = card.finalMessageSettings ?? {
     layoutMode: "grid-2" as const,
     mediaLayout: "portrait" as const,
@@ -844,15 +858,27 @@ export async function deliverCardAction(formData: FormData) {
   const manageToken = String(formData.get("manageToken") ?? "");
   const card = manageToken ? await getCardDraftByManageToken(manageToken) : null;
   if (!card) return;
-  const [contributions, assets, quotesInsight, qualitiesInsight] = await Promise.all([
+  if (!isTemplateId(card.templateId)) {
+    logger.warn("manage.delivery_blocked_by_template", "Card delivery blocked because no template is selected", {
+      cardId: card.id
+    });
+    return;
+  }
+  const [contributions, assets, quotesInsight, qualitiesInsight, savedQuoteSelection] = await Promise.all([
     listContributionsByCardId(card.id),
     listCardMediaAssetsByCardId(card.id),
     getAiCardInsight(card.id, "quotes"),
-    getAiCardInsight(card.id, "qualities")
+    getAiCardInsight(card.id, "qualities"),
+    getAiCardQuoteSelection(card.id)
   ]);
   const fingerprint = buildContributionFingerprint(contributions);
   const quotesAreStale = Boolean(quotesInsight && quotesInsight.sourceFingerprint !== fingerprint);
   const qualitiesAreStale = Boolean(qualitiesInsight && qualitiesInsight.sourceFingerprint !== fingerprint);
+  const quoteCandidates = quotesInsight?.items.map((item) => item.text) ?? [];
+  const selectedQuoteTexts = savedQuoteSelection && quotesInsight && savedQuoteSelection.sourceFingerprint === quotesInsight.sourceFingerprint
+    ? savedQuoteSelection.items.map((item) => item.text)
+    : [];
+  const quoteSelection = resolveFinalBestQuotes(card, quoteCandidates, selectedQuoteTexts);
   const readiness = buildCardBlockReadiness({
     card,
     requiredBlockIds: finalCardLayouts[card.templateId].blocks
@@ -860,10 +886,10 @@ export async function deliverCardAction(formData: FormData) {
       .map((block) => block.id),
     visibleContributions: contributions,
     mediaAssets: assets,
-    qualities: qualitiesAreStale ? [] : qualitiesInsight?.items.map((item) => item.text) ?? [],
+    qualities: qualitiesInsight?.items.map((item) => item.text) ?? [],
     qualitiesAreStale,
-    bestQuotes: quotesAreStale ? [] : quotesInsight?.items.map((item) => item.text) ?? [],
-    bestQuotesAreStale: quotesAreStale
+    bestQuotes: quoteSelection.quotes,
+    bestQuotesAreStale: quotesAreStale && !quoteSelection.usesLegacyDefault
   });
   if (readiness.some((block) => block.enabled && block.status !== "READY")) {
     logger.warn("manage.delivery_blocked_by_readiness", "Card delivery blocked by incomplete blocks", {
@@ -1053,6 +1079,9 @@ export async function updateFinalPresentationSettingsAction(
     : "portrait";
   const rawTemplateId = String(formData.get("templateId") ?? "");
   const templateId = isTemplateId(rawTemplateId) ? rawTemplateId : card.templateId;
+  if (!isTemplateId(templateId)) {
+    return { ok: false, message: "Сначала выберите шаблон открытки." };
+  }
   const visibleContributions = await listContributionsByCardId(card.id);
   const layoutProfile = getFinalCardMessageLayoutProfile(layoutMode, mediaLayout);
   const cardMediaAssets = await listCardMediaAssetsByCardId(card.id);
@@ -1367,6 +1396,9 @@ export async function saveCardMediaAction(
 export async function updateCardMomentsEnabledAction(manageToken: string, enabled: boolean) {
   const card = await getCardDraftByManageToken(manageToken);
   if (!card) return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+  if (!isTemplateId(card.templateId)) {
+    return { ok: false, message: "Сначала выберите шаблон открытки." };
+  }
   try {
     await assertManageContentEditable(manageToken);
   } catch (error) {
@@ -1487,7 +1519,12 @@ export async function saveBestQuoteSelectionAction(
   }
 
   const selectedItems = selected.map((quote) => candidateByText.get(quote)!);
-  await saveAiCardInsight({ ...insight, items: selectedItems, updatedAt: new Date().toISOString() });
+  await saveAiCardQuoteSelection({
+    cardId: card.id,
+    items: selectedItems,
+    sourceFingerprint: insight.sourceFingerprint,
+    updatedAt: new Date().toISOString()
+  });
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
   return { ok: true, message: "Выбранные фразы сохранены для финальной открытки.", quotes: selectedItems.map((item) => item.text) };
 }
@@ -1514,7 +1551,9 @@ export async function generateBestQuotesAction(
     });
     return {
       ok: false,
-      message: "В поздравлениях пока недостаточно содержательных самостоятельных фраз. Добавьте более личные воспоминания, благодарности или конкретные тёплые слова — тогда мы сможем выбрать три сильные цитаты.",
+      message: contributions.length < BEST_QUOTE_MIN_CONTRIBUTION_COUNT
+        ? `Для подбора лучших фраз нужно минимум ${BEST_QUOTE_MIN_CONTRIBUTION_COUNT} активных поздравлений.`
+        : "В поздравлениях пока недостаточно содержательных самостоятельных фраз. Добавьте более личные воспоминания, благодарности или конкретные тёплые слова — тогда мы сможем выбрать три сильные цитаты.",
       quotes: [],
       usage: await getAiUsageSummary(card.id)
     };
@@ -1596,7 +1635,7 @@ export async function generateQualitiesAction(
       ok: false,
       message: `Не удалось определить качества. Попробуйте ещё раз. Если ошибка повторится, сообщите код: ${errorId}.`,
       qualities: [],
-      usage: { used: 0, limit: 0, remaining: 0 }
+      usage: await getAiUsageSummary(card.id)
     };
   }
 

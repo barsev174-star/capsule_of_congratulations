@@ -129,7 +129,7 @@ const mapCard = (row: CardRow): CardDraft => ({
   eventDate: toDateOnly(row.event_date),
   description: row.description,
   signature: row.signature,
-  templateId: row.template_id as CardTemplateId,
+  templateId: row.template_id,
   finalBlockSettings: row.final_block_settings,
   finalBlockOrder: row.final_block_order,
   finalMessageSettings: row.final_message_settings,

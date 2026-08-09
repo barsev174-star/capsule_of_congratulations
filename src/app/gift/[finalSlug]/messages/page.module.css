@@ -2,7 +2,7 @@
   min-height: 100vh;
   padding: 28px 16px 56px;
   background: linear-gradient(180deg, #f7ecdf 0%, #efe2d3 100%);
-  color: #3b2b23;
+  color: #202124;
 }
 
 .shell {
@@ -27,7 +27,7 @@
 
 .eyebrow {
   margin: 0;
-  color: #c46f4d;
+  color: #e9652f;
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -43,7 +43,7 @@
 .subtitle,
 .role,
 .message {
-  color: #715d4f;
+  color: #202124;
   line-height: 1.7;
 }
 

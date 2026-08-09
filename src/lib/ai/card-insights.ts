@@ -6,7 +6,7 @@ import { containsTechnicalText, countCharacters } from "@/lib/ai/validation";
 
 export const BEST_QUOTE_COUNT = 3;
 export const BEST_QUOTE_CANDIDATE_COUNT = 6;
-export const BEST_QUOTE_MIN_CONTRIBUTION_COUNT = 3;
+export const BEST_QUOTE_MIN_CONTRIBUTION_COUNT = 6;
 export const BEST_QUOTE_MIN_MEANINGFUL_PHRASE_COUNT = 3;
 export const QUALITY_MIN_CONTRIBUTION_COUNT = 6;
 export const BEST_QUOTE_TARGET_MIN_LENGTH = 55;
@@ -72,7 +72,8 @@ export const getMeaningfulQuoteSourcePhrases = (
 
 export const hasEnoughMeaningfulQuoteSources = (
   contributions: Pick<Contribution, "id" | "message">[]
-) => getMeaningfulQuoteSourcePhrases(contributions).length >= BEST_QUOTE_MIN_MEANINGFUL_PHRASE_COUNT;
+) => contributions.length >= BEST_QUOTE_MIN_CONTRIBUTION_COUNT &&
+  getMeaningfulQuoteSourcePhrases(contributions).length >= BEST_QUOTE_MIN_MEANINGFUL_PHRASE_COUNT;
 
 export const validateBestQuoteCandidates = (
   value: unknown,

@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { getPostgresPool, isPostgresConfigured } from "@/lib/db/postgres";
 import type {
   AiCardInsight,
+  AiCardQuoteSelection,
   AiCardInsightType,
   AiGenerationInput,
   AiGenerationLog,
@@ -18,9 +19,33 @@ export type AiGenerationRequestState =
   | { status: "pending" }
   | { status: "succeeded"; variants: AiVariant[] };
 
+const protectedGenerationTypes: AiGenerationType[] = ["best_quotes", "qualities"];
+
+const isProtectedGenerationType = (type: AiGenerationType) => protectedGenerationTypes.includes(type);
+
+const freeAvailability = (usedTypes: Set<AiGenerationType>) => ({
+  freeBestQuotesAvailable: !usedTypes.has("best_quotes"),
+  freeQualitiesAvailable: !usedTypes.has("qualities")
+});
+
+const getLocalReservedFreeIds = (entries: AiGenerationLog[], cardId: string) => {
+  const cardEntries = entries
+    .filter((entry) => entry.cardId === cardId)
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id));
+  const ids = new Set(cardEntries.filter((entry) => entry.isReservedFree).map((entry) => entry.id));
+
+  for (const type of protectedGenerationTypes) {
+    const first = cardEntries.find((entry) => entry.generationType === type);
+    if (first) ids.add(first.id);
+  }
+
+  return ids;
+};
+
 const aiLogFilePath = join(process.cwd(), "data", "ai-generations.json");
 const paymentOrdersFilePath = join(process.cwd(), "data", "payment-orders.json");
 const aiInsightsFilePath = join(process.cwd(), "data", "ai-card-insights.json");
+const aiQuoteSelectionsFilePath = join(process.cwd(), "data", "ai-card-quote-selections.json");
 const aiAllowancesFilePath = join(process.cwd(), "data", "ai-card-allowances.json");
 const semanticPlanCacheFilePath = join(process.cwd(), "data", "ai-semantic-plan-cache.json");
 
@@ -96,25 +121,35 @@ export const reserveAiGeneration = async (input: {
       await client.query("BEGIN");
       await client.query("SELECT id FROM cards WHERE id = $1 FOR UPDATE", [input.cardId]);
       await client.query("DELETE FROM ai_generation_drafts WHERE created_at < now() - interval '30 days'");
+      const freeResult = await client.query<{ generation_type: AiGenerationType }>(
+        `SELECT generation_type
+         FROM ai_usage_events
+         WHERE card_id = $1
+           AND is_reserved_free = true
+           AND generation_type IN ('best_quotes', 'qualities')`,
+        [input.cardId]
+      );
+      const usedFreeTypes = new Set(freeResult.rows.map((row) => row.generation_type));
+      const isReservedFree = isProtectedGenerationType(generationType) && !usedFreeTypes.has(generationType);
       const countResult = await client.query<{ count: string }>(
         `SELECT count(*)::text AS count
          FROM ai_usage_events
-         WHERE card_id = $1`,
+         WHERE card_id = $1 AND is_reserved_free = false`,
         [input.cardId]
       );
       const usedBefore = Number(countResult.rows[0]?.count ?? 0);
 
-      if (usedBefore >= input.limit) {
+      if (usedBefore >= input.limit && !isReservedFree) {
         await client.query("ROLLBACK");
         return null;
       }
 
       const insertResult = await client.query(
-        `INSERT INTO ai_usage_events (id, card_id, generation_type, status, created_at)
-         VALUES ($1, $2, $3, 'pending', now())
+        `INSERT INTO ai_usage_events (id, card_id, generation_type, status, is_reserved_free, created_at)
+         VALUES ($1, $2, $3, 'pending', $4, now())
          ON CONFLICT (id) DO NOTHING
          RETURNING id`,
-        [input.id, input.cardId, generationType]
+        [input.id, input.cardId, generationType, isReservedFree]
       );
       if (insertResult.rows.length === 0) {
         await client.query("ROLLBACK");
@@ -122,12 +157,16 @@ export const reserveAiGeneration = async (input: {
       }
       await client.query("COMMIT");
 
+      if (isReservedFree) usedFreeTypes.add(generationType);
+      const usedAfter = usedBefore + (isReservedFree ? 0 : 1);
+
       return {
         id: input.id,
         usage: {
-          used: usedBefore + 1,
+          used: usedAfter,
           limit: input.limit,
-          remaining: input.limit - usedBefore - 1
+          remaining: Math.max(0, input.limit - usedAfter),
+          ...freeAvailability(usedFreeTypes)
         }
       };
     } catch (error) {
@@ -140,11 +179,17 @@ export const reserveAiGeneration = async (input: {
 
   const entries = await readAiLogs();
   if (entries.some((entry) => entry.id === input.id)) return null;
-  const usedBefore = entries.filter(
-    (entry) => entry.cardId === input.cardId
-  ).length;
+  const cardEntries = entries.filter((entry) => entry.cardId === input.cardId);
+  const reservedFreeIds = getLocalReservedFreeIds(entries, input.cardId);
+  const usedFreeTypes = new Set(
+    cardEntries
+      .filter((entry) => reservedFreeIds.has(entry.id))
+      .map((entry) => entry.generationType)
+  );
+  const isReservedFree = isProtectedGenerationType(generationType) && !usedFreeTypes.has(generationType);
+  const usedBefore = cardEntries.filter((entry) => !reservedFreeIds.has(entry.id)).length;
 
-  if (usedBefore >= input.limit) {
+  if (usedBefore >= input.limit && !isReservedFree) {
     return null;
   }
 
@@ -153,16 +198,21 @@ export const reserveAiGeneration = async (input: {
     cardId: input.cardId,
     generationType,
     status: "pending",
+    isReservedFree,
     createdAt: new Date().toISOString()
   });
   await writeAiLogs(entries);
 
+  if (isReservedFree) usedFreeTypes.add(generationType);
+  const usedAfter = usedBefore + (isReservedFree ? 0 : 1);
+
   return {
     id: input.id,
     usage: {
-      used: usedBefore + 1,
+      used: usedAfter,
       limit: input.limit,
-      remaining: input.limit - usedBefore - 1
+      remaining: Math.max(0, input.limit - usedAfter),
+      ...freeAvailability(usedFreeTypes)
     }
   };
 };
@@ -322,16 +372,39 @@ export const consumeAiGenerationDrafts = async (cardId: string, generationIds: s
 export const countAiGenerationsByCardId = async (cardId: string) => {
   if (isPostgresConfigured()) {
     const result = await getPostgresPool().query<{ count: string }>(
-      `SELECT count(*)::text AS count
-       FROM ai_usage_events
-       WHERE card_id = $1`,
+       `SELECT count(*)::text AS count
+        FROM ai_usage_events
+        WHERE card_id = $1 AND is_reserved_free = false`,
       [cardId]
     );
     return Number(result.rows[0]?.count ?? 0);
   }
 
   const entries = await readAiLogs();
-  return entries.filter((entry) => entry.cardId === cardId).length;
+  const reservedFreeIds = getLocalReservedFreeIds(entries, cardId);
+  return entries.filter((entry) => entry.cardId === cardId && !reservedFreeIds.has(entry.id)).length;
+};
+
+export const getAiReservedFreeTypes = async (cardId: string): Promise<Set<AiGenerationType>> => {
+  if (isPostgresConfigured()) {
+    const result = await getPostgresPool().query<{ generation_type: AiGenerationType }>(
+      `SELECT DISTINCT generation_type
+       FROM ai_usage_events
+       WHERE card_id = $1
+         AND is_reserved_free = true
+         AND generation_type IN ('best_quotes', 'qualities')`,
+      [cardId]
+    );
+    return new Set(result.rows.map((row) => row.generation_type));
+  }
+
+  const entries = await readAiLogs();
+  const reservedFreeIds = getLocalReservedFreeIds(entries, cardId);
+  return new Set(
+    entries
+      .filter((entry) => entry.cardId === cardId && reservedFreeIds.has(entry.id))
+      .map((entry) => entry.generationType)
+  );
 };
 
 export const completeAiUsageEvent = async (input: {
@@ -426,6 +499,54 @@ export const saveAiCardInsight = async (insight: AiCardInsight) => {
   await writeFile(aiInsightsFilePath, JSON.stringify(next, null, 2), "utf8");
 };
 
+export const getAiCardQuoteSelection = async (cardId: string): Promise<AiCardQuoteSelection | null> => {
+  if (isPostgresConfigured()) {
+    const result = await getPostgresPool().query<{
+      card_id: string;
+      items: AiCardQuoteSelection["items"];
+      source_fingerprint: string;
+      updated_at: Date | string;
+    }>(
+      `SELECT card_id, items, source_fingerprint, updated_at
+       FROM ai_card_quote_selections WHERE card_id = $1`,
+      [cardId]
+    );
+    const row = result.rows[0];
+    if (!row) return null;
+    return {
+      cardId: row.card_id,
+      items: row.items,
+      sourceFingerprint: row.source_fingerprint,
+      updatedAt: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at
+    };
+  }
+
+  const entries = await readJsonArray<AiCardQuoteSelection>(aiQuoteSelectionsFilePath);
+  return entries.find((entry) => entry.cardId === cardId) ?? null;
+};
+
+export const saveAiCardQuoteSelection = async (selection: AiCardQuoteSelection) => {
+  if (isPostgresConfigured()) {
+    await getPostgresPool().query(
+      `INSERT INTO ai_card_quote_selections
+         (card_id, items, source_fingerprint, updated_at)
+       VALUES ($1, $2::jsonb, $3, now())
+       ON CONFLICT (card_id) DO UPDATE SET
+         items = EXCLUDED.items,
+         source_fingerprint = EXCLUDED.source_fingerprint,
+         updated_at = now()`,
+      [selection.cardId, JSON.stringify(selection.items), selection.sourceFingerprint]
+    );
+    return;
+  }
+
+  const entries = await readJsonArray<AiCardQuoteSelection>(aiQuoteSelectionsFilePath);
+  const next = entries.filter((entry) => entry.cardId !== selection.cardId);
+  next.push(selection);
+  await ensureJsonFile(aiQuoteSelectionsFilePath);
+  await writeFile(aiQuoteSelectionsFilePath, JSON.stringify(next, null, 2), "utf8");
+};
+
 export const getAiBonusLimit = async (cardId: string) => {
   if (isPostgresConfigured()) {
     const result = await getPostgresPool().query<{ bonus_limit: number }>(
@@ -461,10 +582,11 @@ export const setAiBonusLimit = async (cardId: string, bonusLimit: number) => {
 };
 
 export const getAiUsageSummary = async (cardId: string): Promise<AiUsageSummary> => {
-  const [used, isPaid, bonusLimit] = await Promise.all([
+  const [used, isPaid, bonusLimit, usedFreeTypes] = await Promise.all([
     countAiGenerationsByCardId(cardId),
     hasPaidAiEntitlement(cardId),
-    getAiBonusLimit(cardId)
+    getAiBonusLimit(cardId),
+    getAiReservedFreeTypes(cardId)
   ]);
   const freeLimit = Number(process.env.AI_FREE_LIMIT ?? 5);
   const paidLimit = Number(process.env.AI_PAID_LIMIT ?? 30);
@@ -475,6 +597,7 @@ export const getAiUsageSummary = async (cardId: string): Promise<AiUsageSummary>
     used,
     limit,
     remaining: Math.max(0, limit - used),
+    ...freeAvailability(usedFreeTypes),
     baseLimit,
     bonusLimit,
     isPaid

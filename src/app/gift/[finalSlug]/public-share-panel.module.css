@@ -26,7 +26,7 @@
 
 .statusRevoked {
   background: var(--surface-peach);
-  color: #985040;
+  color: #5f6368;
   box-shadow: inset 0 0 0 1px rgba(191, 108, 71, 0.28);
 }
 
@@ -135,7 +135,7 @@
 
 .actionBar .revoke {
   background: transparent;
-  color: #985040;
+  color: #5f6368;
   box-shadow: inset 0 0 0 1px rgba(152, 80, 64, 0.3);
 }
 
@@ -977,7 +977,7 @@
 
   .mobileActions .revoke {
     background: transparent;
-    color: #985040;
+    color: #5f6368;
     box-shadow: inset 0 0 0 1px rgba(152, 80, 64, 0.3);
   }
 

@@ -49,7 +49,7 @@ export const occasions = [
 
 const legacyOccasions = ["teacher", "caregiver", "colleague"] as const satisfies ReadonlyArray<OccasionId>;
 
-export const isTemplateId = (value: string): value is CardTemplateId =>
+export const isTemplateId = (value: unknown): value is CardTemplateId =>
   cardTemplates.some((template) => template.id === value) ||
   legacyTemplateIds.some((templateId) => templateId === value);
 

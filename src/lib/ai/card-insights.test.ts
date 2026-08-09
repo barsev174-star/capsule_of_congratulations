@@ -196,7 +196,15 @@ describe("AI card insights", () => {
     expect(hasEnoughMeaningfulQuoteSources(formal)).toBe(false);
   });
 
-  it("accepts three distinct personal source phrases", () => {
-    expect(hasEnoughMeaningfulQuoteSources(contributions)).toBe(true);
+  it("requires six greetings with at least three distinct personal source phrases", () => {
+    expect(hasEnoughMeaningfulQuoteSources(contributions)).toBe(false);
+    expect(hasEnoughMeaningfulQuoteSources([
+      ...contributions,
+      ...contributions.map((contribution, index) => ({
+        ...contribution,
+        id: `additional-${index + 1}`,
+        message: `Личное дополнение ${index + 1}.`
+      }))
+    ])).toBe(true);
   });
 });
