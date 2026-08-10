@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import Image from "next/image";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import type { CardTemplateId } from "@/lib/cards/templates";
@@ -39,6 +39,33 @@ const subscribeSessionStorage = (callback: () => void) => {
 };
 
 const getOpenedServerSnapshot = () => false;
+
+const LightweightCardPreview = ({
+  recipientName,
+  fromLabel,
+  templateId,
+  accent
+}: {
+  recipientName: string;
+  fromLabel?: string;
+  templateId: CardTemplateId;
+  accent: string;
+}) => (
+  <div
+    className={styles.lightweightCardPreview}
+    data-template-id={templateId}
+    data-gift-intro-preview="lightweight"
+    style={{ "--gi-preview-accent": accent } as CSSProperties}
+  >
+    <span className={styles.lightweightCardKicker}>Открытка для</span>
+    <strong>{recipientName}</strong>
+    <span className={styles.lightweightCardRule} />
+    <span className={styles.lightweightCardLine} />
+    <span className={`${styles.lightweightCardLine} ${styles.lightweightCardLineShort}`} />
+    <span className={styles.lightweightCardMark}>♡</span>
+    <small>{fromLabel?.trim() || "С тёплыми словами"}</small>
+  </div>
+);
 
 export const GiftIntro = ({
   slug,
@@ -231,7 +258,7 @@ export const GiftIntro = ({
               <div className={styles.envelopeCard}>
                 <div className={styles.envelopeCardInside}>
                   <div className={`${styles.cardTemplatePreview} ${styles.cardTemplatePreviewLower}`} aria-hidden="true">
-                    <div className={styles.cardTemplateCanvas}>{children}</div>
+                    <LightweightCardPreview recipientName={name} fromLabel={fromLabel} templateId={templateId} accent={accentColor} />
                   </div>
                 </div>
                 <div className={styles.envelopeCardFold}>
@@ -245,7 +272,7 @@ export const GiftIntro = ({
                   </div>
                   <div className={styles.envelopeCardInsideTop} aria-hidden="true">
                     <div className={`${styles.cardTemplatePreview} ${styles.cardTemplatePreviewUpper}`}>
-                      <div className={styles.cardTemplateCanvas}>{children}</div>
+                      <LightweightCardPreview recipientName={name} fromLabel={fromLabel} templateId={templateId} accent={accentColor} />
                     </div>
                   </div>
                 </div>

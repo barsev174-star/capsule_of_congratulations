@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useActionState, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import type { GiftPollWithOptions } from "@/lib/gift-polls/types";
@@ -14,6 +14,7 @@ import { closeGiftPollAction, enableGiftPollAction, openGiftPollAction, reopenGi
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { useModalFocus } from "./use-modal-focus";
 import { GiftPollOrderEditor } from "./gift-poll-order-editor";
+import { ActionMenu } from "./action-menu";
 import styles from "./manage-page.module.css";
 
 type Mode = "gift" | "budget";
@@ -52,7 +53,6 @@ const ShieldIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1
 const HelpIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M9.8 9.4a2.4 2.4 0 1 1 3.4 2.2c-.8.4-1.2.9-1.2 1.8M12 17h.01" /></svg>;
 const CloseIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>;
 const ChevronDownIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 9.5 5.5 5 5.5-5" /></svg>;
-const DotsIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>;
 const InfoIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 10.5v5M12 7h.01" /></svg>;
 const ExternalIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4 11 13M9 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3" /></svg>;
 const ImageIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5" /><circle cx="9" cy="10" r="1.5" /><path d="m4.5 17 4.3-4.2 2.8 2.4 2.5-2.6 3.4 4.4" /></svg>;
@@ -80,28 +80,6 @@ const GiftPollHowDialog = ({ onClose }: { onClose: () => void }) => {
     </div>,
     document.body
   );
-};
-
-const GiftMenu = ({ label, buttonClassName, children }: { label: string; buttonClassName?: string; children: ReactNode }) => {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => { if (!rootRef.current?.contains(event.target as Node)) setOpen(false); };
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
-
-  return <div ref={rootRef} className={styles.giftMenu}>
-    <button type="button" className={buttonClassName ?? styles.giftMenuTrigger} aria-haspopup="menu" aria-expanded={open} aria-label={label} title={label} onClick={() => setOpen((current) => !current)}><DotsIcon /></button>
-    {open ? <div role="menu" className={styles.giftMenuList} onClick={(event) => { if ((event.target as HTMLElement).closest("button:not([disabled])")) setOpen(false); }}>{children}</div> : null}
-  </div>;
 };
 
 const VoterInfoPopover = () => {
@@ -564,6 +542,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
   const [enableState, enableAction, enabling] = useActionState(enableGiftPollAction, initialState);
   const [state, formAction, pending] = useActionState(saveGiftPollAction, initialState);
   const [openState, openAction, opening] = useActionState(openGiftPollAction, initialState);
+  const openSettingsStorageKey = `gift-poll-open-settings-${manageToken}`;
 
   const showToast = useCallback((message: string) => {
     setToast(message);
@@ -634,8 +613,19 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
   }, []);
 
   useEffect(() => {
-    if (enableState.ok && !poll) router.refresh();
-  }, [enableState.ok, poll, router]);
+    if (!enableState.ok) {
+      if (enableState.message) window.sessionStorage.removeItem(openSettingsStorageKey);
+      return;
+    }
+    if (!poll) router.refresh();
+  }, [enableState.ok, enableState.message, openSettingsStorageKey, poll, router]);
+
+  useEffect(() => {
+    if (!poll || window.sessionStorage.getItem(openSettingsStorageKey) !== "1") return;
+    window.sessionStorage.removeItem(openSettingsStorageKey);
+    const timeout = window.setTimeout(() => setSettingsOpen(true), 0);
+    return () => window.clearTimeout(timeout);
+  }, [openSettingsStorageKey, poll]);
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
@@ -740,7 +730,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
         <div className={styles.giftPollOnboardingActions}>
           <form action={enableAction} aria-busy={enabling}>
             <input type="hidden" name="manageToken" value={manageToken} />
-            <button type="submit" className={styles.giftPollEnableButton} disabled={enabling}>
+            <button type="submit" className={styles.giftPollEnableButton} disabled={enabling} onClick={() => { window.sessionStorage.setItem(openSettingsStorageKey, "1"); }}>
               {enabling ? <span className={styles.giftPollEnableSpinner} aria-hidden="true" /> : null}
               {enabling ? "Включаем голосование…" : "Включить голосование"}
             </button>
@@ -756,7 +746,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
         </button>
         <div id="gift-poll-benefits-content" className={styles.giftPollBenefitsContent} aria-hidden={!benefitsOpen}>
           <div className={styles.giftPollBenefitList}>
-            <article><span><GiftIcon /></span><div><h3>Варианты подарка</h3><p>Несколько подарков на выбор или вариант «Другое».</p></div></article>
+            <article><span><GiftIcon /></span><div><h3>Варианты подарка</h3><p>Несколько вариантов подарка на выбор.</p></div></article>
             <article><span><WalletIcon /></span><div><h3>Ориентир бюджета</h3><p>Несколько сумм для выбора общего ориентира.</p></div></article>
             <article><span><ShieldIcon /></span><div><h3>Результаты только для вас</h3><p>Голоса не попадут в финальную открытку.</p></div></article>
           </div>
@@ -842,13 +832,12 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
           </div>
           <div className={styles.giftPollOverviewActions}>
             {collectionIsOpen ? <a className={styles.giftPollPreviewButton} href={participantUrl} target="_blank" rel="noopener noreferrer">Открыть форму участника ↗</a> : <button type="button" className={styles.giftPollPreviewButton} disabled title="Форма участника станет доступна после открытия сбора поздравлений">Открыть форму участника ↗</button>}
-            <GiftMenu label="Действия с голосованием">
-              <button type="button" role="menuitem" className={styles.giftMenuItem} onClick={() => setSettingsOpen(true)}><PencilIcon />Настройки голосования</button>
-              {collectionIsOpen ? <button type="button" role="menuitem" className={styles.giftMenuItem} onClick={copyParticipantLink}><ExternalIcon />Скопировать ссылку на форму</button> : null}
-              <button type="button" role="menuitem" className={styles.giftMenuItem} onClick={openHowDialog}><HelpIcon />Как это работает</button>
-              {poll.status === "open" ? <><div role="separator" className={styles.giftMenuSeparator} /><button type="button" role="menuitem" className={`${styles.giftMenuItem} ${styles.giftMenuItemDanger}`} onClick={() => setConfirmClosePoll(true)}><CloseIcon />Закрыть голосование</button></> : null}
-              {poll.status === "closed" ? <><div role="separator" className={styles.giftMenuSeparator} /><button type="button" role="menuitem" className={styles.giftMenuItem} onClick={() => reopenFormRef.current?.requestSubmit()}><SwitchIcon />Возобновить голосование</button></> : null}
-            </GiftMenu>
+            <ActionMenu label="Действия с голосованием">
+              <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => setSettingsOpen(true)}><PencilIcon />Настройки голосования</button>
+              {collectionIsOpen ? <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={copyParticipantLink}><ExternalIcon />Скопировать ссылку на форму</button> : null}
+              <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={openHowDialog}><HelpIcon />Как это работает</button>
+              {poll.status === "closed" ? <><div role="separator" className={styles.actionMenuSeparator} /><button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => reopenFormRef.current?.requestSubmit()}><SwitchIcon />Возобновить голосование</button></> : null}
+            </ActionMenu>
           </div>
         </div>
         <div className={styles.giftPollSummary} aria-label="Сводка голосования">
@@ -858,6 +847,13 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
           <div className={styles.giftPollSummaryItem}><span className={styles.giftPollSummaryIcon}><CalendarIcon /></span><span><small>Завершение</small><strong>{formatCloseDate(poll.closesAt)}</strong></span></div>
           <button type="button" className={styles.giftPollSummaryEdit} aria-label="Изменить настройки голосования" title="Изменить настройки голосования" onClick={() => setSettingsOpen(true)}><PencilIcon /></button>
         </div>
+        {poll.status === "open" ? <div className={styles.giftPollClosePanel}>
+          <div>
+            <strong>Готовы подвести итоги?</strong>
+            <p>После закрытия новые голоса не принимаются, а участники увидят результаты. Вы сможете выбрать итоговый вариант и продолжить подготовку открытки.</p>
+          </div>
+          <button type="button" className={styles.giftPollCloseInlineButton} onClick={() => setConfirmClosePoll(true)}><CloseIcon />Закрыть голосование</button>
+        </div> : null}
       </header>
 
       <section className={styles.giftPollOptionsBlock} aria-labelledby="gift-poll-options-title">
@@ -883,17 +879,17 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
                 <div className={styles.giftPollOptionResult}><strong>{votes}</strong><span>{pluralVotes(votes).split(" ").slice(1).join(" ")}</span></div>
                 <div className={styles.giftPollProgress}><strong>{percent}%</strong><span><i style={{ width: `${percent}%` }} /></span></div>
                 <div className={styles.giftPollOptionCardActions}>
-                  <GiftMenu label={`Действия с вариантом «${option.title || `Вариант ${index + 1}`}»`}>
+                  <ActionMenu label={`Действия с вариантом «${option.title || `Вариант ${index + 1}`}»`}>
                     {optionsLocked ? <>
-                      <button type="button" role="menuitem" className={styles.giftMenuItem} onClick={() => setEditor({ option, isNew: false, readOnly: true })}><EyeIcon />Посмотреть</button>
-                      {option.productUrl ? <button type="button" role="menuitem" className={styles.giftMenuItem} onClick={() => window.open(option.productUrl, "_blank", "noopener")}><ExternalIcon />Открыть ссылку</button> : null}
+                      <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => setEditor({ option, isNew: false, readOnly: true })}><EyeIcon />Посмотреть</button>
+                      {option.productUrl ? <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => window.open(option.productUrl, "_blank", "noopener")}><ExternalIcon />Открыть ссылку</button> : null}
                     </> : <>
-                      <button type="button" role="menuitem" className={styles.giftMenuItem} onClick={() => setEditor({ option, isNew: false, readOnly: false })}><PencilIcon />Редактировать</button>
-                      {option.productUrl ? <button type="button" role="menuitem" className={styles.giftMenuItem} onClick={() => window.open(option.productUrl, "_blank", "noopener")}><ExternalIcon />Открыть ссылку</button> : null}
-                      <div role="separator" className={styles.giftMenuSeparator} />
-                      <button type="button" role="menuitem" className={`${styles.giftMenuItem} ${styles.giftMenuItemDanger}`} onClick={() => setOptionToDelete(option)}><CloseIcon />Удалить</button>
+                      <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => setEditor({ option, isNew: false, readOnly: false })}><PencilIcon />Редактировать</button>
+                      {option.productUrl ? <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => window.open(option.productUrl, "_blank", "noopener")}><ExternalIcon />Открыть ссылку</button> : null}
+                      <div role="separator" className={styles.actionMenuSeparator} />
+                      <button type="button" role="menuitem" className={`${styles.actionMenuItem} ${styles.actionMenuItemDanger}`} onClick={() => setOptionToDelete(option)}><CloseIcon />Удалить</button>
                     </>}
-                  </GiftMenu>
+                  </ActionMenu>
                 </div>
               </header>
             </article>;
@@ -925,7 +921,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
 
       {confirmClosePoll ? <ConfirmationDialog
         title="Закрыть голосование?"
-        description="Участники больше не смогут голосовать или менять свой выбор. Результаты сохранятся."
+        description="Новые голоса и изменения выбора больше не принимаются. Участники увидят результаты с количеством голосов, а вы сможете выбрать итоговый вариант и продолжить подготовку открытки."
         onDismiss={() => setConfirmClosePoll(false)}
         actions={[
           { label: "Отмена", tone: "secondary", onClick: () => setConfirmClosePoll(false) },

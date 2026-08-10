@@ -1,4 +1,4 @@
-import type { AiGenerationMode, AiGenerationRequest, AiStyle } from "@/lib/ai/types";
+import type { AiEditInstruction, AiGenerationMode, AiGenerationRequest, AiStyle } from "@/lib/ai/types";
 
 export const AI_DRAFT_LIMIT = 700;
 export const AI_SHORTEN_DRAFT_LIMIT = 1500;
@@ -15,6 +15,7 @@ export type AiValidationResult =
 
 const styles: AiStyle[] = ["warm-simple", "short-no-pathos", "humor", "touching", "respectful"];
 const modes: AiGenerationMode[] = ["compose", "improve", "shorten"];
+const editInstructions: AiEditInstruction[] = ["shorten", "warmer", "formal", "proofread", "detail", "alternative"];
 
 export const countCharacters = (value: string) => Array.from(value).length;
 
@@ -60,9 +61,13 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
   const draftNotes = normalizeText(body.draftNotes ?? body.draft);
   const style = normalizeText(body.style);
   const requestedMode = normalizeText(body.mode) || "compose";
+  const requestedEditInstruction = normalizeText(body.editInstruction);
   const mode = modes.includes(requestedMode as AiGenerationMode)
     ? (requestedMode as AiGenerationMode)
     : "compose";
+  const editInstruction = editInstructions.includes(requestedEditInstruction as AiEditInstruction)
+    ? requestedEditInstruction as AiEditInstruction
+    : undefined;
   const draftLength = countCharacters(draftNotes);
   const draftLimit = mode === "compose" ? AI_DRAFT_LIMIT : AI_SHORTEN_DRAFT_LIMIT;
 
@@ -113,6 +118,14 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
     issues.push({ field: "contributionId", message: "Не удалось определить поздравление для AI-редактирования." });
   }
 
+  if (requestedEditInstruction && !editInstruction) {
+    issues.push({ field: "editInstruction", message: "Не удалось определить задачу редактирования." });
+  }
+
+  if (mode === "compose" && editInstruction) {
+    issues.push({ field: "editInstruction", message: "Операция редактирования доступна только для готового поздравления." });
+  }
+
   if (issues.length > 0) return { success: false, issues };
 
   return {
@@ -126,7 +139,8 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
       relationshipContext: relationshipContext || undefined,
       draftNotes,
       style: style as AiStyle,
-      mode
+      mode,
+      editInstruction
     }
   };
 };
@@ -141,5 +155,6 @@ export const validateAiGenerationFormData = (formData: FormData): AiValidationRe
     relationshipContext: formData.get("relationshipContext"),
     draftNotes: formData.get("draftNotes"),
     style: formData.get("style"),
-    mode: formData.get("mode")
+    mode: formData.get("mode"),
+    editInstruction: formData.get("editInstruction")
   });

@@ -38,6 +38,7 @@
 
 .card {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 12px;
   min-height: 72px;
@@ -82,6 +83,7 @@
 }
 
 .cardTitle {
+  min-width: 0;
   margin: 0;
   font-size: 0.95rem;
   font-weight: 800;
@@ -89,32 +91,56 @@
   color: var(--text);
 }
 
-@media (min-width: 360px) and (max-width: 767px) {
+@media (max-width: 767px) {
   .card {
     display: grid;
-    grid-template-columns: 44px minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 8px;
     min-height: 0;
-    padding: 14px;
+    padding: 10px;
   }
 
   .icon {
-    width: 44px;
-    height: 44px;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
   }
 
   .cardTitle {
-    min-width: 0;
-    font-size: 14px;
-    line-height: 1.2;
-    overflow-wrap: normal;
+    font-size: clamp(0.72rem, 3.6vw, 0.875rem);
+    line-height: 1.22;
+    hyphens: auto;
+    overflow-wrap: anywhere;
     word-break: normal;
+    text-wrap: pretty;
   }
 }
 
 @media (max-width: 359px) {
+  .shell {
+    padding-inline: 12px;
+  }
+
   .grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .card {
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+  }
+
+  .icon svg {
+    width: 26px;
+    height: 26px;
   }
 }
 

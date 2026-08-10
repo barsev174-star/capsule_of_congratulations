@@ -135,11 +135,30 @@ describe("validateAiGenerationFormData", () => {
         contributionId: "contribution-1",
         draftNotes: "Спасибо за поддержку и добрые слова. Желаю больше радостных дней.",
         style: "warm-simple",
-        mode: "improve"
+        mode: "improve",
+        editInstruction: "proofread"
       })
     );
 
     expect(result.success).toBe(true);
-    if (result.success) expect(result.data.mode).toBe("improve");
+    if (result.success) {
+      expect(result.data.mode).toBe("improve");
+      expect(result.data.editInstruction).toBe("proofread");
+    }
+  });
+
+  it("rejects an editing instruction for a new greeting", () => {
+    const result = validateAiGenerationFormData(
+      buildFormData({
+        cardId: "card_1",
+        publicSlug: "card-slug",
+        draftNotes: "Спасибо за поддержку и добрые слова в важный момент.",
+        style: "warm-simple",
+        editInstruction: "warmer"
+      })
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.issues.some((issue) => issue.field === "editInstruction")).toBe(true);
   });
 });

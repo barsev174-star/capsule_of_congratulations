@@ -368,6 +368,7 @@ export const buildOrganizerJourney = (input: {
   blockReadiness: CardBlockReadinessView[];
   visibleContributionCount: number;
 }): OrganizerJourney => {
+  const deliveryComplete = input.lifecycle.deliveryStatus === "DELIVERED";
   const basicsComplete = Boolean(
     input.card.recipientName.trim() && input.card.occasionText.trim() && input.card.fromLabel.trim()
   );
@@ -375,16 +376,21 @@ export const buildOrganizerJourney = (input: {
   const collectionStarted = input.lifecycle.collectionStatus !== "DRAFT";
   const materialsCollected = input.visibleContributionCount > 0;
   const relevantBlocks = input.blockReadiness.filter((block) => block.required || block.enabled);
-  const allBlocksReady = relevantBlocks.every((block) => block.status === "READY");
-  const deliveryComplete = input.lifecycle.deliveryStatus === "DELIVERED";
-  const completion = [
-    basicsComplete,
-    designComplete,
-    collectionStarted,
-    materialsCollected,
-    allBlocksReady,
-    deliveryComplete
-  ];
+  const derivedBlocksReady = relevantBlocks.every((block) => block.status === "READY");
+  // Delivery is committed only after the server has verified every enabled block.
+  // Once committed, it is the authoritative state for every editor tab: stale
+  // derivative content must not move an immutable delivered card backwards.
+  const allBlocksReady = deliveryComplete || derivedBlocksReady;
+  const completion = deliveryComplete
+    ? [true, true, true, true, true, true]
+    : [
+        basicsComplete,
+        designComplete,
+        collectionStarted,
+        materialsCollected,
+        allBlocksReady,
+        false
+      ];
   const firstIncompleteIndex = completion.findIndex((value) => !value);
   const currentIndex = firstIncompleteIndex === -1 ? completion.length - 1 : firstIncompleteIndex;
   const definitions: Array<Omit<OrganizerJourneyStep, "status">> = [

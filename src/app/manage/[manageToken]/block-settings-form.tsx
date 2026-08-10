@@ -1170,34 +1170,38 @@ export const BlockSettingsForm = ({
                   </div>
 
                   <div className={styles.compositionControls}>
-                    {blockReadiness ? (
-                      <span
-                        className={`${styles.blockStatusBadge} ${styles[`blockStatus${blockReadiness.status}`]}`}
-                        aria-label={`Статус блока: ${blockReadiness.statusLabel}`}
-                      >
-                        <span aria-hidden="true">{blockReadiness.status === "READY" ? "✓" : blockReadiness.status === "ACTION_REQUIRED" ? "!" : "•"}</span>
-                        <span className={styles.blockStatusLabelDesktop}>{blockReadiness.statusLabel}</span>
-                        <span className={styles.blockStatusLabelMobile}>{blockReadiness.statusLabel}</span>
-                      </span>
-                    ) : null}
-                    {isReorderMode ? null : isRequired ? (
-                      <>
-                        <span className={styles.requiredBadge}>Обязательный</span>
-                        <span className={styles.lockIconWrap}>
-                          <LockIcon />
+                    <div className={styles.compositionStatusGroup}>
+                      {blockReadiness ? (
+                        <span
+                          className={`${styles.blockStatusBadge} ${styles[`blockStatus${blockReadiness.status}`]}`}
+                          aria-label={`Статус блока: ${blockReadiness.statusLabel}`}
+                        >
+                          {blockReadiness.status === "READY" || blockReadiness.status === "ACTION_REQUIRED" ? (
+                            <span aria-hidden="true">{blockReadiness.status === "READY" ? "✓" : "!"}</span>
+                          ) : null}
+                          <span className={styles.blockStatusLabelDesktop}>{blockReadiness.statusLabel}</span>
+                          <span className={styles.blockStatusLabelMobile}>{blockReadiness.statusLabel}</span>
                         </span>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        className={`${styles.modernToggle} ${isEnabled ? styles.modernToggleActive : ""}`}
-                        onClick={() => requestBlockToggle(block.id, !isEnabled)}
-                        aria-pressed={isEnabled}
-                        aria-label={isEnabled ? `Отключить блок ${block.label}` : `Включить блок ${block.label}`}
-                      >
-                        <span className={styles.modernToggleKnob} />
-                      </button>
-                    )}
+                      ) : null}
+                      {isReorderMode ? null : isRequired ? (
+                        <>
+                          <span className={styles.requiredBadge}>Обязательный</span>
+                          <span className={styles.lockIconWrap}>
+                            <LockIcon />
+                          </span>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className={`${styles.modernToggle} ${isEnabled ? styles.modernToggleActive : ""}`}
+                          onClick={() => requestBlockToggle(block.id, !isEnabled)}
+                          aria-pressed={isEnabled}
+                          aria-label={isEnabled ? `Отключить блок ${block.label}` : `Включить блок ${block.label}`}
+                        >
+                          <span className={styles.modernToggleKnob} />
+                        </button>
+                      )}
+                    </div>
 
                     {!isReorderMode && canExpand ? <button
                       type="button"

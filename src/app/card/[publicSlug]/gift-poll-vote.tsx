@@ -7,11 +7,12 @@ import styles from "./participant-page.module.css";
 
 type Option = { id: string; title: string; description: string | null; imageUrl: string | null; priceLabel: string | null; productUrl: string | null };
 type Poll = { id?: string; mode: "gift" | "budget"; title: string; question: string; closesAt?: string | null; options: Option[]; selectedOptionId?: string | null };
-type ClosedPoll = { hasVote: boolean; selectedOption: Option | null };
+type ClosedPoll = { hasVote: boolean; votedOptionId: string | null; selectedOption: Option | null; options: Array<Option & { votes: number }>; totalVotes: number };
 type View = "invite" | "form" | "skipped" | "voted" | "editing";
 
 const price = (value: string | null) => value ? (/[₽р]\.?$/iu.test(value.trim()) ? `≈ ${value.trim()}` : `≈ ${value.trim()} ₽`) : null;
 const titleCase = (value: string) => value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : value;
+const voteCountLabel = (count: number) => `${count} ${count % 10 === 1 && count % 100 !== 11 ? "голос" : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20) ? "голоса" : "голосов"}`;
 
 export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, inviteToReveal = false, showGreetingSuccess = false }: { publicSlug: string; active: boolean; focusOnReveal?: boolean; inviteToReveal?: boolean; showGreetingSuccess?: boolean }) => {
   const [poll, setPoll] = useState<Poll | null>(null);
@@ -70,7 +71,27 @@ export const GiftPollVote = ({ publicSlug, active, focusOnReveal = false, invite
     if (view === "editing" && selectedOptionId) requestAnimationFrame(() => document.getElementById(`gift-poll-option-${selectedOptionId}`)?.focus());
   }, [selectedOptionId, view]);
 
-  if (!poll && closed) return <section className={styles.giftPollSuccess} aria-live="polite"><strong>Голосование завершено</strong>{closed.selectedOption ? <><p>Организатор выбрал вариант:</p><p className={styles.giftPollChoice}><b>{titleCase(closed.selectedOption.title)}</b></p>{closed.selectedOption.description ? <p>{closed.selectedOption.description}</p> : null}</> : <p>Организатор завершил голосование. Итоговый вариант появится здесь после выбора.</p>}{closed.hasVote ? <p>Ваш голос был учтён.</p> : null}</section>;
+  if (!poll && closed) return <section className={`${styles.giftPollSuccess} ${styles.giftPollClosedResults}`} aria-live="polite" aria-labelledby="gift-poll-results-title">
+    <div className={styles.giftPollClosedHeader}>
+      <div><h2 id="gift-poll-results-title">Голосование завершено</h2><p>Всего учтено: {voteCountLabel(closed.totalVotes)}</p></div>
+      {closed.hasVote ? <span>Ваш голос учтён</span> : null}
+    </div>
+    {closed.options.length ? <ul className={styles.giftPollClosedList} aria-label="Результаты голосования">
+      {closed.options.map((option) => {
+        const percent = closed.totalVotes ? Math.round((option.votes / closed.totalVotes) * 100) : 0;
+        const selected = closed.selectedOption?.id === option.id;
+        const voted = closed.votedOptionId === option.id;
+        return <li key={option.id} className={selected ? styles.giftPollClosedOptionSelected : undefined}>
+          <div className={styles.giftPollClosedOptionTop}>
+            <span><strong>{titleCase(option.title)}</strong>{selected ? <small>Выбор организатора</small> : voted ? <small>Ваш выбор</small> : null}</span>
+            <b>{voteCountLabel(option.votes)}</b>
+          </div>
+          <div className={styles.giftPollClosedProgress} role="progressbar" aria-label={`${option.title}: ${percent}%`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}><span style={{ width: `${percent}%` }} /></div>
+        </li>;
+      })}
+    </ul> : <p>Голосов пока нет.</p>}
+    {closed.selectedOption ? <p className={styles.giftPollClosedDecision}>Организатор выбрал: <b>{titleCase(closed.selectedOption.title)}</b></p> : <p>Итоговый вариант появится здесь после выбора организатора.</p>}
+  </section>;
   if (!poll || !active) return null;
 
   const selectedOption = poll.options.find((option) => option.id === (savedOptionId ?? selectedOptionId));

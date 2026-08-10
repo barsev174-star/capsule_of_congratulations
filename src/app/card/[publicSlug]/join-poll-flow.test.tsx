@@ -109,6 +109,31 @@ describe("JoinSidePanel — приоритет состояний", () => {
     expect(screen.queryByText(/выбрать подарок/i)).not.toBeInTheDocument();
   });
 
+  it("при повторе сохраняет готовые варианты и показывает новую подготовку", () => {
+    const variants = [
+      { id: "short" as const, label: "Аккуратно", text: "Вариант один" },
+      { id: "warm" as const, label: "Теплее", text: "Вариант два" },
+      { id: "style" as const, label: "Живее", text: "Вариант три" }
+    ];
+    render(<JoinSidePanel {...panelProps} state="variants" variants={variants} isPending />);
+
+    expect(screen.getByText("Вариант один")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Готовим ещё три варианта");
+    expect(screen.getByRole("button", { name: "Готовим ещё…" })).toBeDisabled();
+  });
+
+  it("при ошибке повтора не скрывает прежние варианты", () => {
+    const variants = [
+      { id: "short" as const, label: "Аккуратно", text: "Вариант один" },
+      { id: "warm" as const, label: "Теплее", text: "Вариант два" },
+      { id: "style" as const, label: "Живее", text: "Вариант три" }
+    ];
+    render(<JoinSidePanel {...panelProps} state="variants" variants={variants} issues={["Проверьте соединение."]} />);
+
+    expect(screen.getByText("Вариант один")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Прежние варианты сохранены");
+  });
+
   it("ИИ error не вытесняется опросом", () => {
     render(<JoinSidePanel {...panelProps} state="error" issues={["Ошибка генерации"]} hasActivePoll={true} />);
 
@@ -255,6 +280,36 @@ describe("GiftPollVote — post-submit сценарий", () => {
     await userEvent.click(screen.getByRole("button", { name: "Изменить" }));
     expect(await screen.findByRole("button", { name: "Сохранить выбор" })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /книга/i })).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("после закрытия показывает участнику результаты с количеством голосов", async () => {
+    window.localStorage.setItem(storageKey, crypto.randomUUID());
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        poll: null,
+        closed: {
+          hasVote: true,
+          votedOptionId: "o1",
+          selectedOption: poll.options[1],
+          options: [
+            { ...poll.options[0], votes: 3 },
+            { ...poll.options[1], votes: 5 }
+          ],
+          totalVotes: 8
+        }
+      })
+    }));
+
+    render(<GiftPollVote publicSlug={slug} active />);
+
+    expect(await screen.findByRole("heading", { name: "Голосование завершено" })).toBeInTheDocument();
+    expect(screen.getByText("Всего учтено: 8 голосов")).toBeInTheDocument();
+    expect(screen.getByText("3 голоса")).toBeInTheDocument();
+    expect(screen.getByText("5 голосов")).toBeInTheDocument();
+    expect(screen.getByText("Ваш выбор")).toBeInTheDocument();
+    expect(screen.getByText("Выбор организатора")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "книга: 38%" })).toHaveAttribute("aria-valuenow", "38");
   });
 
   it("без inviteToReveal сохраняет прежнее поведение: форма голосования сразу", async () => {

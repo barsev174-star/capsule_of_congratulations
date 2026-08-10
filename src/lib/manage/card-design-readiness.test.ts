@@ -281,4 +281,32 @@ describe("buildOrganizerJourney", () => {
     expect(journey.currentStepId).toBe("delivery");
     expect(journey.nextAction.label).toBe("Передать получателю");
   });
+
+  it("keeps a delivered card completed when derived block data later looks stale", () => {
+    const cardInput = input({
+      card: {
+        ...input().card,
+        deliveryStatus: "DELIVERED"
+      }
+    });
+    const staleReadiness = buildCardBlockReadiness(cardInput);
+    expect(staleReadiness.some((block) => block.enabled && block.status !== "READY")).toBe(true);
+
+    const journey = buildOrganizerJourney({
+      card: cardInput.card,
+      lifecycle: {
+        collectionStatus: "CLOSED",
+        deliveryStatus: "DELIVERED",
+        paymentStatus: "PAID"
+      },
+      blockReadiness: staleReadiness,
+      visibleContributionCount: 0
+    });
+
+    expect(journey.allBlocksReady).toBe(true);
+    expect(journey.completedCount).toBe(journey.steps.length);
+    expect(journey.steps.every((step) => step.status === "COMPLETED")).toBe(true);
+    expect(journey.currentStepId).toBe("delivery");
+    expect(journey.nextAction.label).toBe("Посмотреть открытку");
+  });
 });

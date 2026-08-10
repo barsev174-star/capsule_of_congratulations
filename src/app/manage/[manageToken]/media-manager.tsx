@@ -19,9 +19,22 @@ import {
 } from "@/lib/cards/media-slots";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
-import { compressImageFile } from "@/lib/media/image-compression";
+import {
+  CARD_IMAGE_SOURCE_MAX_BYTES,
+  isHeicImageFile,
+  isSupportedImageSource,
+  prepareImageFileForUpload
+} from "@/lib/media/image-compression";
 import { deleteCardMediaAction, saveCardMediaAction, updateCardMomentsEnabledAction } from "./actions";
 import { ConfirmationDialog } from "./confirmation-dialog";
+import {
+  ActionMenu,
+  MenuDeleteIcon,
+  MenuDotsIcon,
+  MenuEditIcon,
+  MenuMoveIcon,
+  MenuReplaceIcon
+} from "./action-menu";
 import { useModalFocus } from "./use-modal-focus";
 import styles from "./manage-page.module.css";
 
@@ -45,6 +58,10 @@ type EditorState = {
   imageHeight: number | null;
   sourceSlot?: CardMediaSlot;
   targetWasOccupied?: boolean;
+  optimization?: {
+    originalBytes: number;
+    finalBytes: number;
+  };
 };
 
 type PhotoMoveUndo = {
@@ -118,27 +135,6 @@ const PhotoSlotCard = ({
   isRecentlyUpdated: boolean;
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-
-    const closeOnOutsidePointer = (event: PointerEvent) => {
-      if (event.target instanceof Node && !menuRef.current?.contains(event.target)) {
-        setMenuOpen(false);
-      }
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-
-    document.addEventListener("pointerdown", closeOnOutsidePointer, true);
-    document.addEventListener("keydown", closeOnEscape, true);
-    return () => {
-      document.removeEventListener("pointerdown", closeOnOutsidePointer, true);
-      document.removeEventListener("keydown", closeOnEscape, true);
-    };
-  }, [menuOpen]);
 
   if (!asset) {
     return (
@@ -182,26 +178,19 @@ const PhotoSlotCard = ({
           {getSlotOrientation(slot) === "vertical" ? <small>Вертикальное фото</small> : null}
         </span>
       </button>
-      <div ref={menuRef} className={styles.photoSlotMenuWrap}>
-        <button
-          type="button"
-          className={styles.photoSlotMenuButton}
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => { event.stopPropagation(); setMenuOpen((value) => !value); }}
-          aria-label={`Действия с фото, ${getSlotLabel(slot)}`}
-          aria-expanded={menuOpen}
-        >
-          ⋮
-        </button>
-        {menuOpen ? (
-          <div className={styles.photoSlotMenu} role="menu">
-            <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onEdit(asset); }}>Настроить фото</button>
-            <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onReplace(asset); }}>Заменить изображение</button>
-            <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onMove(asset); }}>Переместить в другой слот</button>
-            <button type="button" role="menuitem" className={styles.photoSlotMenuDanger} onClick={() => { setMenuOpen(false); onDelete(asset); }}>Удалить фото</button>
-          </div>
-        ) : null}
-      </div>
+      <ActionMenu
+        label="Меню фотографии"
+        className={styles.photoSlotMenuWrap}
+        triggerClassName={styles.photoSlotMenuButton}
+        menuClassName={styles.photoSlotMenu}
+        onOpenChange={setMenuOpen}
+      >
+        <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => onEdit(asset)}><MenuEditIcon />Настроить фото</button>
+        <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => onReplace(asset)}><MenuReplaceIcon />Заменить изображение</button>
+        <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => onMove(asset)}><MenuMoveIcon />Переместить в другой слот</button>
+        <div role="separator" className={styles.actionMenuSeparator} />
+        <button type="button" role="menuitem" className={`${styles.actionMenuItem} ${styles.actionMenuItemDanger}`} onClick={() => onDelete(asset)}><MenuDeleteIcon />Удалить фото</button>
+      </ActionMenu>
     </article>
   );
 };
@@ -456,9 +445,7 @@ const PhotoEditor = ({ manageToken, state, onClose, onSaved, onFailed, onReplace
       formData.set("imageWidth", String(state.imageWidth ?? state.asset?.imageWidth ?? 0));
       formData.set("imageHeight", String(state.imageHeight ?? state.asset?.imageHeight ?? 0));
       if (state.file) {
-        let uploadFile = state.file;
-        try { uploadFile = await compressImageFile(state.file); } catch { /* keep original */ }
-        formData.set("file", uploadFile);
+        formData.set("file", state.file);
         if (rightsConfirmed) formData.set("rightsConfirmed", "on");
       }
       const result = await saveCardMediaAction({ ok: false, message: "" }, formData);
@@ -518,6 +505,12 @@ const PhotoEditor = ({ manageToken, state, onClose, onSaved, onFailed, onReplace
               <strong>{Math.round(crop.zoom * 100)}%</strong>
             </label>
             <p className={styles.photoFileMeta}>{state.file ? state.file.name : state.asset?.fileName} · {formatFileSize(state.file?.size ?? state.asset?.sizeBytes ?? 0)}</p>
+            {state.optimization ? (
+              <p className={styles.photoOptimizationSummary} role="status">
+                <strong>Фото оптимизировано</strong>
+                <span>{formatFileSize(state.optimization.originalBytes)} → {formatFileSize(state.optimization.finalBytes)}</span>
+              </p>
+            ) : null}
             {state.asset ? (
               <div className={styles.photoEditorSecondaryActions}>
                 <button type="button" onClick={() => onReplace(state.asset!)}>Заменить изображение</button>
@@ -593,6 +586,7 @@ export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, me
   const [draggedAssetId, setDraggedAssetId] = useState<string | null>(null);
   const [photoDropTarget, setPhotoDropTarget] = useState<CardMediaSlot | null>(null);
   const [recentlyUpdatedSlots, setRecentlyUpdatedSlots] = useState<CardMediaSlot[]>([]);
+  const [photoPreparation, setPhotoPreparation] = useState<{ fileName: string; progress: number } | null>(null);
   const [momentsPending, startMomentsTransition] = useTransition();
   const [movePending, startMoveTransition] = useTransition();
   const [deletePending, startDeleteTransition] = useTransition();
@@ -650,32 +644,55 @@ export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, me
     }
   };
 
-  const openSelectedFile = (file: File) => {
+  const openSelectedFile = async (file: File) => {
     const request = fileRequestRef.current;
     if (!request) return;
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    fileRequestRef.current = null;
+    if (!isSupportedImageSource(file)) {
       trackPhotoEvent("photo_upload_failed", request.slot);
-      setToast("Неподдерживаемый формат. Поддерживаются JPG, PNG и WebP.");
+      setToast("Неподдерживаемый формат. Поддерживаются JPG, PNG, WebP, HEIC и HEIF.");
       return;
     }
-    if (file.size > 6 * 1024 * 1024) {
+    if (file.size > CARD_IMAGE_SOURCE_MAX_BYTES) {
       trackPhotoEvent("photo_upload_failed", request.slot);
-      setToast("Файл слишком большой. Размер файла превышает 6 МБ. Выберите другое фото.");
+      setToast("Исходное фото тяжелее 40 МБ. Выберите другую фотографию или уменьшите её в галерее телефона.");
       return;
     }
     trackPhotoEvent("photo_upload_started", request.slot);
-    const previewUrl = URL.createObjectURL(file);
+    setPhotoPreparation({ fileName: file.name, progress: 4 });
+    let prepared;
+    try {
+      prepared = await prepareImageFileForUpload(file, {
+        onProgress: (progress) => setPhotoPreparation({ fileName: file.name, progress: Math.round(progress * 100) })
+      });
+    } catch {
+      setPhotoPreparation(null);
+      trackPhotoEvent("photo_upload_failed", request.slot);
+      setToast(isHeicImageFile(file)
+        ? "Браузер не смог прочитать HEIC/HEIF. Включите в камере формат «Наиболее совместимый» или сохраните фото как JPEG."
+        : "Не удалось оптимизировать фото. Попробуйте другое изображение.");
+      return;
+    }
+    const previewUrl = URL.createObjectURL(prepared.file);
     const image = new Image();
-    image.onload = () => setEditor({
-      mode: request.mode,
-      slot: request.slot,
-      asset: request.asset,
-      file,
-      previewUrl,
-      imageWidth: image.naturalWidth,
-      imageHeight: image.naturalHeight
-    });
+    image.onload = () => {
+      setPhotoPreparation(null);
+      setEditor({
+        mode: request.mode,
+        slot: request.slot,
+        asset: request.asset,
+        file: prepared.file,
+        previewUrl,
+        imageWidth: image.naturalWidth,
+        imageHeight: image.naturalHeight,
+        optimization: prepared.optimized ? {
+          originalBytes: prepared.originalBytes,
+          finalBytes: prepared.file.size
+        } : undefined
+      });
+    };
     image.onerror = () => {
+      setPhotoPreparation(null);
       URL.revokeObjectURL(previewUrl);
       trackPhotoEvent("photo_upload_failed", request.slot);
       setToast("Не удалось загрузить фото. Попробуйте ещё раз.");
@@ -1029,8 +1046,8 @@ export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, me
   );
 
   return (
-    <section className={styles.photoWorkspace} aria-busy={momentsPending || movePending || deletePending}>
-      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(event) => event.target.files?.[0] && openSelectedFile(event.target.files[0])} />
+    <section className={styles.photoWorkspace} aria-busy={momentsPending || movePending || deletePending || Boolean(photoPreparation)}>
+      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden onChange={(event) => event.target.files?.[0] && void openSelectedFile(event.target.files[0])} />
 
       <header className={styles.photoWorkspaceHeader}>
         <div>
@@ -1048,6 +1065,25 @@ export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, me
           ? <p className={styles.photoCompleteStatus}>✓ Все необходимые фото добавлены</p>
           : <p className={styles.photoIncompleteStatus}>Осталось добавить {missingRequiredCount} фото</p>}
       </header>
+
+      {photoPreparation ? (
+        <div className={styles.photoOptimizationProgress} role="status" aria-live="polite">
+          <div>
+            <strong>Оптимизируем фото</strong>
+            <span>{photoPreparation.fileName}</span>
+          </div>
+          <div
+            className={styles.photoOptimizationTrack}
+            role="progressbar"
+            aria-label="Подготовка фотографии"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={photoPreparation.progress}
+          >
+            <span style={{ width: `${photoPreparation.progress}%` }} />
+          </div>
+        </div>
+      ) : null}
 
       <section id="congratulations-photos" className={styles.photoBlock}>
         <div className={styles.photoBlockHeader}>
@@ -1109,7 +1145,11 @@ export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, me
         )}
       </section>
 
-      <p className={styles.photoWorkspaceHint}>ⓘ Нажмите фото, чтобы настроить кадр. Заменить, переместить или удалить его можно через меню ⋯</p>
+      <p className={styles.photoWorkspaceHint}>
+        <span aria-hidden="true">ⓘ</span>
+        Нажмите фото, чтобы настроить кадр. Заменить, переместить или удалить его можно через меню
+        <span className={styles.photoWorkspaceHintMenuIcon} aria-hidden="true"><MenuDotsIcon /></span>
+      </p>
       <p className={`${styles.photoWorkspaceHint} ${styles.photoDesktopHint}`}>На компьютере порядок также можно изменить перетаскиванием.</p>
 
       {editor ? (

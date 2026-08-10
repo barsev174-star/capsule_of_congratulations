@@ -37,6 +37,13 @@ const emptyFieldFlags: FieldFlags = { authorName: false, authorRole: false, mess
 
 const initialState = { ok: false, message: "" };
 
+const LockIcon = () => (
+  <svg viewBox="0 0 20 20" aria-hidden="true">
+    <rect x="4.5" y="8.5" width="11" height="8" rx="2" />
+    <path d="M7 8.5V6a3 3 0 0 1 6 0v2.5" />
+  </svg>
+);
+
 const normalizeSnapshot = (snapshot: {
   authorName: string;
   authorRole: string;
@@ -75,6 +82,7 @@ export const ContributionEditor = ({
   const [mode, setMode] = useState<"manual" | "ai">(initialMode);
   const [aiGenerationIds, setAiGenerationIds] = useState<string[]>([]);
   const [aiDraft, setAiDraft] = useState("");
+  const [hasAiReplacement, setHasAiReplacement] = useState(false);
   const [isVisible, setIsVisible] = useState(contribution?.status !== "hidden");
   const [isMain, setIsMain] = useState(isMainGreeting);
   const [confirmation, setConfirmation] = useState<"close" | "delete" | null>(null);
@@ -237,7 +245,14 @@ export const ContributionEditor = ({
                   maxLength={80}
                   required
                 />
-                {authorNameError ? <span id="contribution-author-name-error" className={styles.contributionEditorFieldError} role="alert">Укажите имя автора.</span> : null}
+                <span
+                  id="contribution-author-name-error"
+                  className={`${styles.contributionEditorFieldError} ${authorNameError ? "" : styles.contributionEditorFieldErrorReserved}`}
+                  role={authorNameError ? "alert" : undefined}
+                  aria-hidden={authorNameError ? undefined : true}
+                >
+                  {authorNameError ? "Укажите имя автора." : "\u00a0"}
+                </span>
               </label>
               <label className={authorRoleError ? styles.contributionEditorFieldInvalid : undefined}>
                 <span>Роль или подпись</span>
@@ -252,7 +267,14 @@ export const ContributionEditor = ({
                   required
                   maxLength={80}
                 />
-                {authorRoleError ? <span id="contribution-author-role-error" className={styles.contributionEditorFieldError} role="alert">Укажите роль или подпись.</span> : null}
+                <span
+                  id="contribution-author-role-error"
+                  className={`${styles.contributionEditorFieldError} ${authorRoleError ? "" : styles.contributionEditorFieldErrorReserved}`}
+                  role={authorRoleError ? "alert" : undefined}
+                  aria-hidden={authorRoleError ? undefined : true}
+                >
+                  {authorRoleError ? "Укажите роль или подпись." : "\u00a0"}
+                </span>
               </label>
             </div>
 
@@ -278,14 +300,15 @@ export const ContributionEditor = ({
             </div>
 
             {mode === "manual" ? (
-              <label className={`${styles.contributionEditorMessage} ${messageError ? styles.contributionEditorFieldInvalid : ""}`}>
+              <div className={`${styles.contributionEditorMessage} ${messageError ? styles.contributionEditorFieldInvalid : ""}`}>
                 <span className={styles.contributionEditorLabelRow}>
-                  <span>Текст поздравления</span>
+                  <label htmlFor="contribution-editor-message">Текст поздравления</label>
                   <span className={styles.contributionEditorCounter}>
                     {message.length} / {CONTRIBUTION_MESSAGE_MAX_LENGTH}
                   </span>
                 </span>
                 <textarea
+                  id="contribution-editor-message"
                   value={message}
                   onChange={(event) => { setMessage(event.target.value); markEdited("message"); }}
                   onBlur={() => markBlurredAfterEdit("message")}
@@ -298,12 +321,27 @@ export const ContributionEditor = ({
                   required
                 />
                 {messageError ? <span id="contribution-message-error" className={styles.contributionEditorFieldError} role="alert">Напишите текст поздравления.</span> : null}
+                {hasAiReplacement && contribution ? (
+                  <span className={styles.contributionEditorAiUndo} role="status">
+                    <span>AI-вариант подставлен, но ещё не сохранён.</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMessage(contribution.message);
+                        setHasAiReplacement(false);
+                        markEdited("message");
+                      }}
+                    >
+                      Вернуть исходный текст
+                    </button>
+                  </span>
+                ) : null}
                 <span className={message.length > CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH ? styles.contributionEditorWarning : styles.contributionEditorHint}>
                   {message.length > CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH
                     ? "Поздравление можно сохранить, но для некоторых вариантов оформления его потребуется сократить."
                     : `Лучше всего смотрятся поздравления до ${CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH} символов.`}
                 </span>
-              </label>
+              </div>
             ) : (
               <div className={styles.contributionEditorAiMode}>
                 <AiHelper
@@ -313,6 +351,7 @@ export const ContributionEditor = ({
                   messageLimit={CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH}
                   onUseText={(text, generationId) => {
                     setMessage(text);
+                    setHasAiReplacement(Boolean(contribution));
                     markEdited("message");
                     setMode("manual");
                     setAiGenerationIds((currentIds) =>
@@ -327,6 +366,8 @@ export const ContributionEditor = ({
                   onDraftChange={setAiDraft}
                   variant="join"
                   greetingMode={greetingMode}
+                  sourceContributionId={contribution?.id}
+                  sourceText={contribution ? message : undefined}
                 />
               </div>
             )}
@@ -338,27 +379,36 @@ export const ContributionEditor = ({
                   role="switch"
                   aria-checked={isVisible}
                   aria-disabled={isPending || isMainGreeting}
+                  aria-describedby={isMainGreeting ? "main-greeting-lock-explanation" : undefined}
                   className={styles.contributionEditorOptionRow}
                   disabled={isPending || isMainGreeting}
                   onClick={() => setIsVisible((current) => !current)}
                 >
                   <span><strong>Показывать в открытке</strong><small>{isVisible ? "Видно получателю" : "Скрыто из открытки"}</small></span>
-                  <span className={styles.contributionEditorSwitch} aria-hidden="true"><span /></span>
+                  <span className={styles.contributionEditorOptionState} aria-hidden="true">
+                    {isMainGreeting ? <span className={styles.contributionEditorLockedState}><LockIcon />Заблокировано</span> : null}
+                    <span className={styles.contributionEditorSwitch}><span /></span>
+                  </span>
                 </button>
-                {isMainGreeting ? <p>Сначала выберите другое главное поздравление.</p> : null}
+                {isMainGreeting ? <p id="main-greeting-lock-explanation"><LockIcon />Сначала выберите другое главное поздравление.</p> : null}
 
                 <button
                   type="button"
                   role="switch"
                   aria-checked={isMain}
                   aria-disabled={isPending || !isVisible || isMainGreeting}
+                  aria-describedby={isMainGreeting ? "main-greeting-lock-explanation" : !isVisible ? "hidden-greeting-lock-explanation" : undefined}
                   className={styles.contributionEditorOptionRow}
                   disabled={isPending || !isVisible || isMainGreeting}
                   onClick={() => setIsMain((current) => !current)}
                 >
                   <span><strong>Главное поздравление</strong><small>Отдельный акцентный блок</small></span>
-                  <span className={styles.contributionEditorSwitch} aria-hidden="true"><span /></span>
+                  <span className={styles.contributionEditorOptionState} aria-hidden="true">
+                    {isMainGreeting || !isVisible ? <span className={styles.contributionEditorLockedState}><LockIcon />Заблокировано</span> : null}
+                    <span className={styles.contributionEditorSwitch}><span /></span>
+                  </span>
                 </button>
+                {!isVisible ? <p id="hidden-greeting-lock-explanation"><LockIcon />Сначала включите показ поздравления в открытке.</p> : null}
               </section>
             ) : null}
           </div>

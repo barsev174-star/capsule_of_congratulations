@@ -34,7 +34,7 @@ import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository"
 import { getCardLifecycleLabel, isGiftAccessible } from "@/lib/cards/lifecycle";
 import { getActiveMessageSlots, getAssetsForSlots, MEMORY_MEDIA_SLOTS } from "@/lib/cards/media-slots";
 import { openCollectionAction } from "./actions";
-import { getGiftPollForManage } from "@/lib/gift-polls/repository";
+import { getGiftPollForManage, getGiftPollVoteCountForManage } from "@/lib/gift-polls/repository";
 import { GiftPollSettingsForm } from "./gift-poll-settings-form";
 import { PaymentCheckoutButton } from "./payment-checkout-button";
 import { buildCardBlockReadiness, buildOrganizerJourney } from "@/lib/manage/card-design-readiness";
@@ -45,12 +45,17 @@ import { DesignStickyActions } from "./design-sticky-actions";
 import { DesignRail } from "./design-rail";
 import {
   isContentFocus,
+  getEditorTabCount,
   resolveEditorTab,
   type EditorTab
 } from "./content-focus";
 import { EditorSidebarCard } from "./editor-sidebar-card";
 import { ParticipantLinkCard } from "./participant-link-card";
 import { PreparationProgress } from "./preparation-progress";
+
+// Readiness combines several database-backed aggregates. Always render a fresh
+// server snapshot so refreshes, browser tabs and devices cannot reuse a stale page.
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{
@@ -127,7 +132,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const isDesignTab = activeTab === "design";
   const isMaterialTab = activeTab === "congratulations" || activeTab === "photos";
   const isGiftTab = activeTab === "gift";
-  const [allContributions, cardTemplates, visibleContributions, mediaAssets, aiUsage, quotesInsight, qualitiesInsight, savedQuoteSelection, giftPoll] = await Promise.all([
+  const [allContributions, cardTemplates, visibleContributions, mediaAssets, aiUsage, quotesInsight, qualitiesInsight, savedQuoteSelection, giftPoll, giftPollVoteCount] = await Promise.all([
     listAllContributionsByCardId(card.id),
     isDesignTab ? getCardTemplates() : Promise.resolve([]),
     listContributionsByCardId(card.id),
@@ -136,7 +141,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
     getAiCardInsight(card.id, "quotes"),
     getAiCardInsight(card.id, "qualities"),
     getAiCardQuoteSelection(card.id),
-    isGiftTab ? getGiftPollForManage(card.id) : Promise.resolve(null)
+    isGiftTab ? getGiftPollForManage(card.id) : Promise.resolve(null),
+    isGiftTab ? Promise.resolve<number | null>(null) : getGiftPollVoteCountForManage(card.id)
   ]);
   const hasValidGeneratedQuotes = Boolean(
     quotesInsight &&
@@ -190,6 +196,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
     memoryPhotoCount
   );
   const activePhotoCount = messageAssignedPhotoCount + (momentsEnabled ? memoryAssignedPhotoCount : 0);
+  const giftVoteCount = giftPoll?.totalVotes ?? giftPollVoteCount ?? 0;
   const savedMemoryTitle = card.finalMemorySettings?.title?.trim();
   const savedMemoryDescription = card.finalMemorySettings?.description?.trim();
   const memoryTitle = !savedMemoryTitle || savedMemoryTitle === "Наши воспоминания" ? "Моменты" : savedMemoryTitle;
@@ -405,18 +412,18 @@ export default async function ManagePage({ params, searchParams }: Props) {
 
         <nav className={styles.tabBar} aria-label="Разделы управления открыткой">
           {tabItems.map((item) => {
-            const count =
-              item.id === "congratulations"
-                ? allContributions.length
-                : item.id === "photos"
-                  ? activePhotoCount
-                  : null;
+            const count = getEditorTabCount(item.id, {
+              congratulations: allContributions.length,
+              photos: activePhotoCount,
+              giftVotes: giftVoteCount
+            });
             const ariaLabel = count === null ? item.label : `${item.label}, ${count}`;
 
             return (
               <Link
                 key={item.id}
                 href={`${getManagePath(manageToken)}?tab=${item.id}`}
+                prefetch={false}
                 className={`${styles.tabLink} ${activeTab === item.id ? styles.tabLinkActive : ""}`}
                 aria-current={activeTab === item.id ? "page" : undefined}
                 aria-label={ariaLabel}

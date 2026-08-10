@@ -6,6 +6,7 @@ import {
   prepareDraftForPrompt
 } from "@/lib/ai/greeting-context";
 import type {
+  AiEditInstruction,
   AiMatrixProviderResult,
   AiMatrixVariantType,
   AiProviderInput,
@@ -22,6 +23,14 @@ export const OPENAI_MATRIX_PROMPT_V3 = "greeting-openai-matrix-v3";
 export const OPENAI_MATRIX_PROMPT_VERSION = "greeting-openai-matrix-v4";
 
 const allVariantTypes: AiVariantType[] = ["short", "warm", "style"];
+const editInstructions: Record<AiEditInstruction, string> = {
+  shorten: "Сократи текст без потери главной мысли.",
+  warmer: "Сделай текст заметно теплее и душевнее, не добавляя фактов.",
+  formal: "Сделай тон более официальным и уважительным, сохранив факты и голос автора.",
+  proofread: "Исправь только орфографию, пунктуацию и неровные формулировки; минимально меняй текст.",
+  detail: "Включи в текст только явно отмеченную пользователем личную деталь; не придумывай других.",
+  alternative: "Предложи новую структуру и формулировки, сохранив смысл и факты."
+};
 const matrixVariantTypes: AiMatrixVariantType[] = [
   "short",
   "warm",
@@ -138,6 +147,7 @@ const buildTask = (input: AiProviderInput) => {
     : mode === "improve"
       ? "Бережно отредактируй исходный текст: сохрани смысл, обращение и факты, исправь язык и сделай фразы естественнее."
       : "Преврати мысли пользователя в готовое поздравление.";
+  const editTask = input.editInstruction ? editInstructions[input.editInstruction] : "";
   const existing = input.existingMessages.length
     ? input.existingMessages.slice(0, 12).map((text, index) => `${index + 1}. ${text}`).join("\n")
     : "нет";
@@ -152,7 +162,7 @@ const buildTask = (input: AiProviderInput) => {
     ? "Только вариант style должен содержать одну короткую мягкую шутку, основанную на детали из черновика. В short и warm юмора быть не должно."
     : "Не добавляй шутки и фразы про то, что диплом — чья-то заслуга: выбран не юмористический стиль.";
 
-  return `${modeTask}
+  return `${modeTask}${editTask ? `\nКонкретная задача: ${editTask}` : ""}
 
 Получатель: ${input.recipientName}
 Событие: ${input.occasionText || "не указано"}

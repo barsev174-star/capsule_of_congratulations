@@ -37,6 +37,16 @@ describe("GigaChat greeting prompts", () => {
     expect(prompt).toContain("Вариант style / «Ваш стиль»");
   });
 
+  it("passes the selected editing operation into the prompt", () => {
+    const prompt = buildGreetingPrompt({
+      ...buildInput("warm-simple"),
+      mode: "improve",
+      editInstruction: "proofread"
+    });
+
+    expect(prompt).toContain("Конкретная задача: исправь только ошибки");
+  });
+
   it("strengthens the system instruction only on retry", () => {
     expect(buildGreetingSystemPrompt(0)).not.toContain("Предыдущий ответ не подошёл");
     expect(buildGreetingSystemPrompt(1)).toContain(

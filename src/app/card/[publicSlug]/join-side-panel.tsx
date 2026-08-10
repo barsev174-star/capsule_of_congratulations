@@ -33,6 +33,7 @@ type VariantsProps = {
   isPending: boolean;
   limitReached: boolean;
   remaining: number | null;
+  issues: string[];
   onUseVariant: (text: string) => void;
   onRetry: () => void;
 };
@@ -43,6 +44,7 @@ const JoinVariants = ({
   isPending,
   limitReached,
   remaining,
+  issues,
   onUseVariant,
   onRetry
 }: VariantsProps) => {
@@ -68,18 +70,32 @@ const JoinVariants = ({
 
   if (collapsed) {
     return (
-      <div className={styles.variantCollapsedRow}>
-        <span>Вариант вставлен</span>
-        <button
-          type="button"
-          className={styles.variantCollapsedButton}
-          aria-expanded={false}
-          aria-controls={panelId}
-          onClick={() => setCollapsed(false)}
-        >
-          Показать остальные
-          <span className={styles.variantCollapsedIcon} aria-hidden="true">▾</span>
-        </button>
+      <div className={styles.variantCollapsedStack}>
+        {isPending ? (
+          <div className={styles.aiGenerationProgress} role="status">
+            <span className={styles.aiSpinner} aria-hidden="true" />
+            <span><strong>Готовим ещё три варианта</strong>Вставленный текст останется без изменений.</span>
+          </div>
+        ) : null}
+        {issues.length > 0 ? (
+          <div className={styles.aiRetainedError} role="alert">
+            <strong>Новые варианты не подготовились</strong>
+            <span>{issues[0]} Текущий текст сохранён.</span>
+          </div>
+        ) : null}
+        <div className={styles.variantCollapsedRow}>
+          <span>Вариант вставлен</span>
+          <button
+            type="button"
+            className={styles.variantCollapsedButton}
+            aria-expanded={false}
+            aria-controls={panelId}
+            onClick={() => setCollapsed(false)}
+          >
+            Показать остальные
+            <span className={styles.variantCollapsedIcon} aria-hidden="true">▾</span>
+          </button>
+        </div>
       </div>
     );
   }
@@ -87,6 +103,19 @@ const JoinVariants = ({
   return (
     <div className={styles.panelState}>
       <h2 className={styles.sectionTitle}>Выберите вариант</h2>
+      {isPending ? (
+        <div className={styles.aiGenerationProgress} role="status">
+          <span className={styles.aiSpinner} aria-hidden="true" />
+          <span><strong>Готовим ещё три варианта</strong>Текущие варианты останутся на экране до готовности новых.</span>
+        </div>
+      ) : null}
+      {!isPending && issues.length > 0 ? (
+        <div className={styles.aiRetainedError} role="alert">
+          <strong>Новые варианты не подготовились</strong>
+          <span>{issues[0]} Прежние варианты сохранены.</span>
+        </div>
+      ) : null}
+      {!isPending && issues.length === 0 ? <p className={styles.aiGenerationReady} role="status">Три варианта готовы</p> : null}
       <div className={`${styles.variants} ${styles.sidePanelVariants}`}>
         <div className={styles.variantTabs} role="tablist" aria-label="Варианты поздравления">
           {variants.map((item, index) => (
@@ -119,8 +148,8 @@ const JoinVariants = ({
               Использовать вариант
             </button>
             <button type="button" className={styles.retryButton} disabled={isPending || limitReached} onClick={onRetry}>
-              <span aria-hidden="true">↻</span>
-              Получить ещё
+              {isPending ? <span className={styles.aiSpinner} aria-hidden="true" /> : <span aria-hidden="true">↻</span>}
+              {isPending ? "Готовим ещё…" : "Получить ещё"}
             </button>
           </div>
         </article>
@@ -330,6 +359,7 @@ export const JoinSidePanel = ({
             isPending={isPending}
             limitReached={limitReached}
             remaining={remaining}
+            issues={issues}
             onUseVariant={onUseVariant}
             onRetry={onRetry}
           />

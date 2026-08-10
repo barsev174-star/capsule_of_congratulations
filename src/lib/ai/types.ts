@@ -9,6 +9,7 @@ export type AiVariantType = "short" | "warm" | "style";
 export type AiMatrixVariantType = "short" | "warm" | AiStyle;
 export type AiProviderName = "mock" | "gigachat" | "openai";
 export type AiGenerationMode = "compose" | "improve" | "shorten";
+export type AiEditInstruction = "shorten" | "warmer" | "formal" | "proofread" | "detail" | "alternative";
 export type AiGenerationType = "participant_message" | "best_quotes" | "qualities";
 export type AiCardInsightType = "quotes" | "qualities";
 
@@ -22,6 +23,7 @@ export type AiGenerationRequest = {
   draftNotes: string;
   style: AiStyle;
   mode?: AiGenerationMode;
+  editInstruction?: AiEditInstruction;
 };
 
 export type AiGenerationInput = {
@@ -36,6 +38,7 @@ export type AiGenerationInput = {
   messageLimit: number;
   existingMessages?: string[];
   mode?: AiGenerationMode;
+  editInstruction?: AiEditInstruction;
 };
 
 export type AiVariant = {

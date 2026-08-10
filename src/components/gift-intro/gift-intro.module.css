@@ -235,10 +235,6 @@
   will-change: opacity, clip-path;
 }
 
-.envelopeCardWhole .cardTemplateCanvas {
-  top: 0;
-}
-
 .envelopeCardInside {
   background: linear-gradient(180deg, #fffdfb 0%, #faf5ee 100%);
   box-shadow:
@@ -257,22 +253,99 @@
   pointer-events: none;
 }
 
-.cardTemplateCanvas {
+.lightweightCardPreview {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1212px;
-  transform: scale(var(--gi-card-preview-scale));
-  transform-origin: top left;
+  display: grid;
+  width: 100%;
+  height: 200%;
+  box-sizing: border-box;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 28px 22px;
+  overflow: hidden;
+  color: #202124;
+  background:
+    radial-gradient(circle at 82% 14%, color-mix(in srgb, var(--gi-preview-accent) 18%, transparent), transparent 24%),
+    linear-gradient(180deg, #ffffff 0%, #f7f8fa 100%);
+  text-align: center;
   pointer-events: none;
 }
 
-.cardTemplateCanvas :is(a, button, input, select, textarea) {
-  pointer-events: none;
+.lightweightCardPreview[data-template-id="route-adventure"] {
+  color: #f7f8fa;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(233, 101, 47, 0.2), transparent 24%),
+    linear-gradient(155deg, #202f2a, #17231f);
 }
 
-.cardTemplatePreviewLower .cardTemplateCanvas {
+.cardTemplatePreviewLower .lightweightCardPreview {
   top: -100%;
+}
+
+.lightweightCardKicker {
+  color: #5f6368;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lightweightCardPreview[data-template-id="route-adventure"] .lightweightCardKicker,
+.lightweightCardPreview[data-template-id="route-adventure"] small {
+  color: #d9e0dd;
+}
+
+.lightweightCardPreview strong {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.7rem;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  text-wrap: balance;
+}
+
+.lightweightCardRule {
+  width: 58%;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--gi-preview-accent);
+}
+
+.lightweightCardLine {
+  width: 76%;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.14;
+}
+
+.lightweightCardLineShort {
+  width: 52%;
+}
+
+.lightweightCardMark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffffff;
+  background: var(--gi-preview-accent);
+  font-size: 1.35rem;
+}
+
+.lightweightCardPreview small {
+  max-width: 80%;
+  overflow: hidden;
+  color: #5f6368;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cardTemplatePreviewCover {

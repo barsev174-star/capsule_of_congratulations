@@ -46,6 +46,19 @@ export const getGiftPollForManage = async (cardId: string): Promise<GiftPollWith
   return { ...mapPoll(row), options: optionsResult.rows.map(mapOption), votesByOptionId, totalVotes: Object.values(votesByOptionId).reduce((sum, count) => sum + count, 0) };
 };
 
+export const getGiftPollVoteCountForManage = async (cardId: string): Promise<number> => {
+  if (!isPostgresConfigured()) return 0;
+  const result = await getPostgresPool().query<{ count: string }>(
+    `SELECT count(*)::text AS count
+     FROM gift_votes v
+     JOIN gift_polls p ON p.id = v.poll_id
+     JOIN contributions c ON c.id = v.greeting_id
+     WHERE p.card_id = $1 AND p.status <> 'deleted' AND c.status = 'visible'`,
+    [cardId]
+  );
+  return Number(result.rows[0]?.count ?? 0);
+};
+
 export const createGiftPoll = async (input: Pick<GiftPoll, "cardId" | "mode" | "title" | "question" | "closesAt">) => {
   if (!isPostgresConfigured()) return unavailable();
   const id = randomUUID();
@@ -257,11 +270,14 @@ export const getGiftPollTeaser = async (cardId: string): Promise<Pick<Participan
 
 export const getClosedGiftPollParticipantState = async (cardId: string, participantTokenHash: string) => {
   if (!isPostgresConfigured()) return null;
-  const result = await getPostgresPool().query<{ has_vote: boolean; id: string | null; title: string | null; description: string | null; image_url: string | null; price_label: string | null; product_url: string | null }>(
-    `SELECT EXISTS(
+  const pool = getPostgresPool();
+  const result = await pool.query<{ poll_id: string; has_vote: boolean; voted_option_id: string | null; id: string | null; title: string | null; description: string | null; image_url: string | null; price_label: string | null; product_url: string | null }>(
+    `SELECT p.id AS poll_id,
+     EXISTS(
        SELECT 1 FROM gift_votes v JOIN gift_polls p ON p.id = v.poll_id
        WHERE p.card_id = $1 AND p.status = 'closed' AND v.participant_token_hash = $2
      ) AS has_vote,
+     (SELECT v.option_id FROM gift_votes v WHERE v.poll_id = p.id AND v.participant_token_hash = $2 LIMIT 1) AS voted_option_id,
      o.id, o.title, o.description, o.image_url, o.price_label, o.product_url
      FROM gift_polls p
      LEFT JOIN gift_poll_options o ON o.id = p.selected_option_id AND o.deleted_at IS NULL
@@ -278,7 +294,35 @@ export const getClosedGiftPollParticipantState = async (cardId: string, particip
     id: row.id, title: row.title, description: row.description, imageUrl: row.image_url,
     priceLabel: row.price_label, productUrl: row.product_url
   } : null;
-  return { hasVote: row.has_vote, selectedOption } satisfies ClosedParticipantGiftPollState;
+  const optionsResult = await pool.query<OptionRow & { votes: string }>(
+    `SELECT o.*, count(c.id)::text AS votes
+     FROM gift_poll_options o
+     LEFT JOIN gift_votes v ON v.option_id = o.id AND v.poll_id = o.poll_id
+     LEFT JOIN contributions c ON c.id = v.greeting_id AND c.status = 'visible'
+     WHERE o.poll_id = $1 AND o.deleted_at IS NULL
+     GROUP BY o.id
+     ORDER BY o.sort_order, o.created_at`,
+    [row.poll_id]
+  );
+  const options = optionsResult.rows.map((option) => {
+    const mapped = mapOption(option);
+    return {
+      id: mapped.id,
+      title: mapped.title,
+      description: mapped.description,
+      imageUrl: mapped.imageUrl,
+      priceLabel: mapped.priceLabel,
+      productUrl: mapped.productUrl,
+      votes: Number(option.votes)
+    };
+  });
+  return {
+    hasVote: row.has_vote,
+    votedOptionId: row.voted_option_id,
+    selectedOption,
+    options,
+    totalVotes: options.reduce((sum, option) => sum + option.votes, 0)
+  } satisfies ClosedParticipantGiftPollState;
 };
 
 export const upsertGiftVote = async (cardId: string, optionId: string, participantTokenHash: string) => {

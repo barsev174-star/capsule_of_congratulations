@@ -110,11 +110,14 @@ export async function POST(request: Request) {
       fromLabel: card.fromLabel,
       relationshipContext: sourceContribution?.authorRole || input.relationshipContext,
       occasionText: card.occasionText,
-      draftNotes: sourceContribution?.message ?? input.draftNotes,
+      // The contribution id authorizes and anchors manager editing, while the
+      // submitted draft may include an unsaved revision or a personal detail.
+      draftNotes: isManagerEdit ? input.draftNotes : sourceContribution?.message ?? input.draftNotes,
       style: input.style,
       messageLimit,
       existingMessages,
-      mode: input.mode
+      mode: input.mode,
+      editInstruction: input.editInstruction
     });
 
     return NextResponse.json({ ok: true, result }, { status: 200 });

@@ -90,6 +90,7 @@ describe("GiftPollSettingsForm inactive onboarding", () => {
     refresh.mockReset();
     enableGiftPollAction.mockClear();
     document.body.style.overflow = "";
+    window.sessionStorage.clear();
     setMobileMedia(true);
   });
 
@@ -165,6 +166,29 @@ describe("GiftPollSettingsForm inactive onboarding", () => {
     await waitFor(() => expect(enableGiftPollAction).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(refresh).toHaveBeenCalled());
   });
+
+  it("opens voting settings immediately after activation", async () => {
+    const user = userEvent.setup();
+    const view = renderInactivePoll();
+
+    await user.click(screen.getByRole("button", { name: "Включить голосование" }));
+    await waitFor(() => expect(refresh).toHaveBeenCalled());
+
+    view.rerender(
+      <main>
+        <GiftPollSettingsForm
+          manageToken="manage-token"
+          recipientName="Наталья Афанасьевна"
+          publicSlug="public-slug"
+          poll={{ ...activePoll, status: "draft" }}
+          eligibleVoterCount={7}
+          collectionIsOpen
+        />
+      </main>
+    );
+
+    expect(await screen.findByRole("dialog", { name: "Настройки голосования" })).toBeInTheDocument();
+  });
 });
 
 describe("GiftPollSettingsForm active poll", () => {
@@ -179,6 +203,25 @@ describe("GiftPollSettingsForm active poll", () => {
     expect(screen.getByText("Голосов: 0")).toBeInTheDocument();
     expect(screen.queryByText("0 из 7")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Кто может голосовать" })).toHaveAttribute("title", expect.stringContaining("Поздравления, добавленные организатором, не учитываются"));
+  });
+
+  it("keeps poll closing visible beside the results and explains every consequence", async () => {
+    const user = userEvent.setup();
+    render(<GiftPollSettingsForm manageToken="manage-token" recipientName="Наталья" publicSlug="public-slug" poll={activePoll} eligibleVoterCount={7} collectionIsOpen />);
+
+    await user.click(screen.getByRole("button", { name: "Закрыть голосование" }));
+
+    const dialog = screen.getByRole("alertdialog", { name: "Закрыть голосование?" });
+    expect(dialog).toHaveTextContent("Новые голоса и изменения выбора больше не принимаются");
+    expect(dialog).toHaveTextContent("Участники увидят результаты с количеством голосов");
+    expect(dialog).toHaveTextContent("продолжить подготовку открытки");
+  });
+
+  it("describes only gift options that actually exist", () => {
+    renderInactivePoll();
+
+    expect(screen.getByText("Несколько вариантов подарка на выбор.")).toBeInTheDocument();
+    expect(screen.queryByText(/вариант «Другое»/i)).not.toBeInTheDocument();
   });
 
   it("opens a dedicated order editor without reorder controls in the regular list", async () => {

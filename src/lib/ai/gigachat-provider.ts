@@ -2,11 +2,20 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { request as httpsRequest } from "node:https";
 import { resolve } from "node:path";
-import type { AiProviderInput, AiProviderResult, AiStyle } from "@/lib/ai/types";
+import type { AiEditInstruction, AiProviderInput, AiProviderResult, AiStyle } from "@/lib/ai/types";
 import { AiError } from "@/lib/ai/types";
 import { logger } from "@/lib/logger";
 
 type TokenCache = { token: string; expiresAt: number } | null;
+
+const editInstructions: Record<AiEditInstruction, string> = {
+  shorten: "сократи без потери главной мысли",
+  warmer: "сделай текст заметно теплее и душевнее без новых фактов",
+  formal: "сделай тон более официальным и уважительным, сохранив факты",
+  proofread: "исправь только ошибки и неровные формулировки, минимально меняя текст",
+  detail: "добавь только явно отмеченную пользователем личную деталь",
+  alternative: "предложи новую структуру и формулировки без изменения смысла"
+};
 
 declare global {
   var __gigachatTokenCache: TokenCache | undefined;
@@ -180,6 +189,7 @@ export const buildGreetingPrompt = (input: AiProviderInput) => {
     : "Пока нет.";
   const styleProfile = STYLE_PROFILES[input.style];
   const relationshipContext = input.relationshipContext?.trim() || "не указано";
+  const editTask = input.editInstruction ? editInstructions[input.editInstruction] : "бережно улучшить текст";
 
   if (input.mode === "shorten") {
     return `Ты бережно сокращаешь уже написанное поздравление для онлайн-открытки.
@@ -188,6 +198,7 @@ export const buildGreetingPrompt = (input: AiProviderInput) => {
 Отношение автора к получателю: ${relationshipContext}
 Максимальная длина каждого варианта: ${input.messageLimit} символов.
 Тон: ${styleProfile.label}. ${styleProfile.instruction}
+Конкретная задача: ${editTask}.
 
 Сделай три варианта сокращения:
 1. short — бережное сокращение, максимально сохраняющее интонацию автора;
@@ -216,6 +227,7 @@ ${existing}
 Отношение автора к получателю: ${relationshipContext}
 Максимальная длина каждого варианта: ${input.messageLimit} символов.
 Тон: ${styleProfile.label}. ${styleProfile.instruction}
+Конкретная задача: ${editTask}.
 
 Сделай три улучшенных варианта:
 1. short — бережная редактура: исправь ошибки и неровные формулировки, сохранив голос автора;

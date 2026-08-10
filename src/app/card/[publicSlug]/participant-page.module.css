@@ -1827,6 +1827,24 @@
 .giftPollSuccess strong { color: #ec662f; }
 .giftPollSuccess p { margin: 0; color: #5f6368; }
 .giftPollSuccess { gap: 10px; padding-block: 20px; }
+.giftPollClosedResults { gap: 14px; background: #ffffff; }
+.giftPollClosedHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.giftPollClosedHeader > div { display: grid; gap: 3px; }
+.giftPollClosedHeader h2 { margin: 0; color: #202124; font-size: 1.08rem; text-wrap: balance; }
+.giftPollClosedHeader > span { flex: 0 0 auto; padding: 5px 9px; border-radius: 999px; background: #f1f3f4; color: #5f6368; font-size: .76rem; font-weight: 800; }
+.giftPollClosedList { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.giftPollClosedList > li { display: grid; gap: 8px; padding: 11px 12px; border-radius: 14px; background: #f7f8fa; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+.giftPollClosedList > li.giftPollClosedOptionSelected { background: #fff0e6; box-shadow: inset 0 0 0 1px rgba(233,101,47,.22); }
+.giftPollClosedOptionTop { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.giftPollClosedOptionTop > span { display: grid; min-width: 0; gap: 2px; }
+.giftPollClosedOptionTop strong { overflow-wrap: anywhere; color: #202124; text-wrap: pretty; }
+.giftPollClosedOptionTop small { color: #5f6368; font-size: .75rem; }
+.giftPollClosedOptionTop > b { flex: 0 0 auto; color: #202124; font-size: .82rem; font-variant-numeric: tabular-nums; }
+.giftPollClosedProgress { height: 5px; overflow: hidden; border-radius: 999px; background: #e5e7eb; }
+.giftPollClosedProgress > span { display: block; height: 100%; border-radius: inherit; background: #8a9099; transition: width 220ms cubic-bezier(.2,0,0,1); }
+.giftPollClosedOptionSelected .giftPollClosedProgress > span { background: #e9652f; }
+.giftPollClosedDecision { padding-top: 2px; color: #5f6368; text-wrap: pretty; }
+.giftPollClosedDecision b { color: #202124; }
 .giftPollInvite { grid-column: 1 / -1; display: grid; gap: 8px; padding: 12px 14px; border-radius: 18px; background: rgba(255, 249, 242, .78); box-shadow: inset 0 0 0 1px rgba(156, 103, 73, .1); }
 .giftPollInvite p { margin: 0; color: #5f6368; font-size: .9rem; }
 .giftPollVoteSuccess { gap: 5px; padding-block: 14px; }
@@ -2121,6 +2139,8 @@
   .giftPollChoiceEdit { margin-left: -8px; }
   .giftPollOptionImage { width: 68px; height: 68px; }
   .giftPollCompactSuccess { padding: 9px 12px; }
+  .giftPollClosedHeader { align-items: stretch; flex-direction: column; }
+  .giftPollClosedHeader > span { width: fit-content; }
   .giftPollSkipped { padding: 9px 12px; }
   .giftPollSkipped p { display: grid; gap: 0; }
   .giftPollSkipped p > span { display: none; }
@@ -2370,6 +2390,111 @@
   font-variant-numeric: tabular-nums;
 }
 
+.aiEditSource {
+  display: grid;
+  gap: 7px;
+  padding: 13px 14px;
+  border-radius: 14px;
+  background: #f7f8fa;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.aiEditSource > span,
+.aiEditOperations legend,
+.aiEditDetail > span {
+  color: #202124;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.aiEditSource p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: #5f6368;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.aiEditOperations {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.aiEditOperations > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.aiEditOperations button {
+  display: grid;
+  min-height: 56px;
+  align-content: center;
+  gap: 2px;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.09);
+  color: #202124;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition-property: scale, background-color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.aiEditOperations button strong {
+  font-size: 0.84rem;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.aiEditOperations button span {
+  color: #5f6368;
+  font-size: 0.74rem;
+  line-height: 1.3;
+  text-wrap: pretty;
+}
+
+.aiEditOperations button:hover {
+  background: #f7f8fa;
+  box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.32), 0 5px 14px rgba(0, 0, 0, 0.05);
+}
+
+.aiEditOperations button:active {
+  scale: 0.96;
+}
+
+.aiEditOperations button:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.24);
+  outline-offset: 2px;
+}
+
+.aiEditOperations .aiEditOperationActive {
+  background: #fff0e6;
+  box-shadow: 0 0 0 2px #e9652f;
+  color: #202124;
+}
+
+.aiEditDetail {
+  display: grid;
+  gap: 7px;
+}
+
+.aiEditDetail textarea {
+  min-height: 82px;
+  resize: vertical;
+}
+
 .editorShellOver {
   border-color: rgba(187, 124, 66, 0.45);
 }
@@ -2602,6 +2727,54 @@
   font-weight: 700;
 }
 
+.variantCollapsedStack {
+  display: grid;
+  gap: 10px;
+}
+
+.aiGenerationProgress,
+.aiRetainedError {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 13px;
+  background: #f7f8fa;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+  color: #5f6368;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.aiGenerationReady {
+  width: fit-content;
+  margin: 0;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #f1f3f4;
+  color: #5f6368;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.aiGenerationProgress > span:last-child,
+.aiRetainedError > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.aiGenerationProgress strong,
+.aiRetainedError strong {
+  color: #202124;
+  font-size: 0.85rem;
+}
+
+.aiRetainedError {
+  background: #fff0e6;
+  box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.2);
+}
+
 .variantCollapsedButton {
   display: inline-flex;
   align-items: center;
@@ -2669,6 +2842,10 @@
   .promptsToggle,
   .promptsToggleIcon,
   .variantCollapsedButton {
+    transition: none;
+  }
+
+  .aiEditOperations button {
     transition: none;
   }
 }
@@ -3019,6 +3196,10 @@
 }
 
 @media (max-width: 560px) {
+  .aiEditOperations > div {
+    grid-template-columns: 1fr;
+  }
+
   .editorToolbarActions {
     flex: 1 1 100%;
     display: grid;

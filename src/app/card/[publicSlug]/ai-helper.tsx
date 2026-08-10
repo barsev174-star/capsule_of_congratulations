@@ -1,9 +1,26 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { AI_DRAFT_LIMIT } from "@/lib/ai/validation";
-import type { AiVariant } from "@/lib/ai/types";
+import { AI_DRAFT_LIMIT, AI_SHORTEN_DRAFT_LIMIT } from "@/lib/ai/validation";
+import type { AiGenerationMode, AiStyle, AiVariant } from "@/lib/ai/types";
 import styles from "./participant-page.module.css";
+
+type EditOperation = "shorten" | "warmer" | "formal" | "proofread" | "detail" | "alternative";
+
+const EDIT_OPERATIONS: Array<{
+  id: EditOperation;
+  label: string;
+  description: string;
+  mode: AiGenerationMode;
+  style: AiStyle;
+}> = [
+  { id: "shorten", label: "Сократить", description: "Сохранить главную мысль", mode: "shorten", style: "short-no-pathos" },
+  { id: "warmer", label: "Сделать теплее", description: "Добавить душевности", mode: "improve", style: "warm-simple" },
+  { id: "formal", label: "Сделать официальнее", description: "Сохранить уважительный тон", mode: "improve", style: "respectful" },
+  { id: "proofread", label: "Исправить ошибки", description: "Улучшить язык без смены смысла", mode: "improve", style: "warm-simple" },
+  { id: "detail", label: "Добавить личную деталь", description: "Включить ещё один важный факт", mode: "improve", style: "touching" },
+  { id: "alternative", label: "Предложить вариант", description: "Пересобрать текст по-новому", mode: "improve", style: "touching" }
+];
 
 type Props = {
   cardId: string;
@@ -17,6 +34,8 @@ type Props = {
   onDraftChange?: (draft: string) => void;
   variant?: "default" | "join";
   greetingMode?: "classic" | "matrix" | "ladder";
+  sourceContributionId?: string;
+  sourceText?: string;
 };
 
 export const AiHelper = ({
@@ -30,14 +49,18 @@ export const AiHelper = ({
   onGeneration,
   onDraftChange,
   variant = "default",
-  greetingMode = "classic"
+  greetingMode = "classic",
+  sourceContributionId,
+  sourceText
 }: Props) => {
   const [issues, setIssues] = useState<string[]>([]);
   const [variants, setVariants] = useState<AiVariant[]>([]);
   const [activeVariantIndex, setActiveVariantIndex] = useState(0);
   const [insertFeedback, setInsertFeedback] = useState("");
-  const [draftNotes, setDraftNotes] = useState("");
+  const [draftNotes, setDraftNotes] = useState(sourceText ?? "");
   const [selectedStyle, setSelectedStyle] = useState("touching");
+  const [editOperation, setEditOperation] = useState<EditOperation>("alternative");
+  const [personalDetail, setPersonalDetail] = useState("");
   const [generationId, setGenerationId] = useState("");
   const [remaining, setRemaining] = useState<number | null>(null);
   const [resultLimit, setResultLimit] = useState(messageLimit);
@@ -45,18 +68,44 @@ export const AiHelper = ({
   const [isPending, startTransition] = useTransition();
   const pendingRequestId = useRef<string | null>(null);
 
-  const handleGenerate = async (style: string) => {
+  const isEditingExisting = Boolean(sourceContributionId && sourceText);
+  const selectedEditOperation = EDIT_OPERATIONS.find((operation) => operation.id === editOperation) ?? EDIT_OPERATIONS[5];
+
+  const handleGenerate = async (style: AiStyle, mode: AiGenerationMode = "compose") => {
     const requestId = pendingRequestId.current ?? crypto.randomUUID();
     pendingRequestId.current = requestId;
     setIssues([]);
     setInsertFeedback("");
+
+    const detailSuffix = editOperation === "detail" && personalDetail.trim()
+      ? `\n\nЛичная деталь, которую нужно добавить: ${personalDetail.trim()}`
+      : "";
+    const sourceForEditing = sourceText ?? draftNotes;
+    const sourceBudget = Math.max(0, AI_SHORTEN_DRAFT_LIMIT - Array.from(detailSuffix).length);
+    const generationDraftSource = isEditingExisting
+      ? `${Array.from(sourceForEditing).slice(0, sourceBudget).join("")}${detailSuffix}`
+      : draftNotes;
+    const generationDraft = Array.from(generationDraftSource)
+      .slice(0, isEditingExisting ? AI_SHORTEN_DRAFT_LIMIT : AI_DRAFT_LIMIT)
+      .join("");
 
     let response: Response;
     try {
       response = await fetch("/api/ai/generate-greeting", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId, cardId, publicSlug, manageToken, draftNotes, style, relationshipContext })
+        body: JSON.stringify({
+          requestId,
+          cardId,
+          publicSlug,
+          manageToken,
+          contributionId: sourceContributionId,
+          draftNotes: generationDraft,
+          style,
+          mode,
+          editInstruction: isEditingExisting ? editOperation : undefined,
+          relationshipContext
+        })
       });
     } catch {
       setIssues(["Не удалось подготовить варианты. Попробуйте ещё раз через несколько секунд."]);
@@ -93,20 +142,27 @@ export const AiHelper = ({
   const isLadderMode = greetingMode === "ladder";
   const activeVariant = variants[activeVariantIndex] ?? variants[0];
   const aiFormId = `ai-helper-${cardId}`;
+  const detailIsMissing = isEditingExisting && editOperation === "detail" && personalDetail.trim().length < 5;
 
   const generateSelectedVariant = () => {
-    startTransition(async () => handleGenerate(selectedStyle));
+    const style = isEditingExisting ? selectedEditOperation.style : selectedStyle as AiStyle;
+    const mode = isEditingExisting ? selectedEditOperation.mode : "compose";
+    startTransition(async () => handleGenerate(style, mode));
   };
 
   return (
-    <section className={`${styles.aiCard} ${isJoinVariant ? styles.joinAiCard : ""}`}>
+    <section className={`${styles.aiCard} ${isJoinVariant ? styles.joinAiCard : ""}`} aria-busy={isPending}>
       <div className={styles.aiHeader}>
         <div>
           <h2 className={styles.sectionTitle}>
-            {isJoinVariant ? "Нужна помощь с текстом?" : "Помочь с текстом через AI"}
+            {isEditingExisting
+              ? "Улучшить готовое поздравление"
+              : isJoinVariant ? "Нужна помощь с текстом?" : "Помочь с текстом через AI"}
           </h2>
           <p className={styles.hint}>
-            {isLadderMode
+            {isEditingExisting
+              ? "Исходный текст уже подставлен. Выберите, что изменить, и сначала посмотрите варианты."
+              : isLadderMode
               ? `Набросайте мысли своими словами — AI предложит аккуратный, более тёплый и более живой варианты длиной до ${resultLimit} символов.`
               : `Набросайте мысли своими словами — AI соберёт из них три варианта длиной до ${resultLimit} символов.`}
           </p>
@@ -118,7 +174,48 @@ export const AiHelper = ({
         id={aiFormId}
         className={styles.form}
       >
-        <div className={styles.field}>
+        {isEditingExisting ? (
+          <>
+            <div className={styles.aiEditSource}>
+              <span>Исходный текст</span>
+              <p>{sourceText}</p>
+            </div>
+            <fieldset className={styles.aiEditOperations}>
+              <legend>Что сделать</legend>
+              <div>
+                {EDIT_OPERATIONS.map((operation) => (
+                  <button
+                    key={operation.id}
+                    type="button"
+                    className={editOperation === operation.id ? styles.aiEditOperationActive : undefined}
+                    aria-pressed={editOperation === operation.id}
+                    onClick={() => {
+                      setEditOperation(operation.id);
+                      setIssues([]);
+                    }}
+                  >
+                    <strong>{operation.label}</strong>
+                    <span>{operation.description}</span>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            {editOperation === "detail" ? (
+              <label className={styles.aiEditDetail}>
+                <span>Какую деталь добавить?</span>
+                <textarea
+                  value={personalDetail}
+                  onChange={(event) => {
+                    setPersonalDetail(event.target.value);
+                    setIssues([]);
+                  }}
+                  maxLength={300}
+                  placeholder="Например: вспомнить нашу поездку в Казань"
+                />
+              </label>
+            ) : null}
+          </>
+        ) : <div className={styles.field}>
           <div className={styles.fieldLabelRow}>
             <label htmlFor={`${aiFormId}-draft`}>Что хотите сказать?</label>
             <span className={styles.counter}>{Array.from(draftNotes).length} / {AI_DRAFT_LIMIT}</span>
@@ -139,16 +236,17 @@ export const AiHelper = ({
             aria-invalid={issues.length > 0}
             aria-describedby={issues.length > 0 ? `${aiFormId}-issues` : undefined}
           />
-          {issues.length > 0 ? (
-            <div id={`${aiFormId}-issues`} className={styles.errorBox} aria-live="polite">
-              <ul className={styles.errorList}>
-                {issues.map((issue) => <li key={issue}>{issue}</li>)}
-              </ul>
-            </div>
-          ) : null}
-        </div>
+        </div>}
 
-        {!isLadderMode ? <div className={styles.field}>
+        {issues.length > 0 ? (
+          <div id={`${aiFormId}-issues`} className={styles.errorBox} role="alert">
+            <ul className={styles.errorList}>
+              {issues.map((issue) => <li key={issue}>{issue}</li>)}
+            </ul>
+          </div>
+        ) : null}
+
+        {!isEditingExisting && !isLadderMode ? <div className={styles.field}>
           <label htmlFor={`${aiFormId}-style`}>Стиль поздравления</label>
           <select
             id={`${aiFormId}-style`}
@@ -168,13 +266,13 @@ export const AiHelper = ({
           <button
             type="button"
             className={isJoinVariant ? styles.aiButton : styles.submitButton}
-            disabled={isPending || limitReached}
+            disabled={isPending || limitReached || detailIsMissing}
             onClick={generateSelectedVariant}
           >
             {isPending
               ? <span className={styles.aiSpinner} aria-hidden="true" />
               : isJoinVariant ? <span className={styles.aiButtonIcon} aria-hidden="true" /> : null}
-            {isPending ? "Готовим варианты…" : "Получить 3 варианта"}
+            {isPending ? "Готовим варианты…" : isEditingExisting ? "Показать варианты" : "Получить 3 варианта"}
           </button>
           {remaining !== null ? (
             <span className={styles.note}>
@@ -192,6 +290,13 @@ export const AiHelper = ({
 
       {activeVariant ? (
         <div className={styles.variants}>
+          {isPending ? (
+            <div className={styles.aiGenerationProgress} role="status">
+              <span className={styles.aiSpinner} aria-hidden="true" />
+              <span><strong>Готовим ещё три варианта</strong>Текущие варианты останутся на экране до готовности новых.</span>
+            </div>
+          ) : null}
+          {!isPending && issues.length === 0 ? <p key={generationId} className={styles.aiGenerationReady} role="status">Три варианта готовы</p> : null}
           <div className={styles.variantTabs} role="tablist" aria-label="Варианты поздравления">
             {variants.map((item, index) => (
               <button
@@ -218,7 +323,7 @@ export const AiHelper = ({
                   setInsertFeedback("Текст вставлен в поздравление");
                 }}
               >
-                Вставить в поздравление
+                {isEditingExisting ? "Заменить текст этим вариантом" : "Вставить в поздравление"}
               </button>
               <button
                 type="button"
@@ -226,7 +331,7 @@ export const AiHelper = ({
                 disabled={isPending || limitReached}
                 onClick={generateSelectedVariant}
               >
-                Попробовать ещё
+                {isPending ? "Готовим ещё…" : "Попробовать ещё"}
               </button>
             </div>
             {insertFeedback ? <p className={styles.insertFeedback} aria-live="polite">{insertFeedback}</p> : null}

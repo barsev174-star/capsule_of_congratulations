@@ -8,6 +8,12 @@ export const editorTabValues = ["design", "congratulations", "photos", "gift"] a
 
 export type EditorTab = (typeof editorTabValues)[number];
 
+export type EditorTabCounts = {
+  congratulations: number;
+  photos: number;
+  giftVotes: number;
+};
+
 export const contentFocusValues = [
   "main-congratulation",
   "congratulations-photos",
@@ -44,6 +50,13 @@ export const resolveContentSection = ({
 
 export const isEditorTab = (value: string | undefined): value is EditorTab =>
   editorTabValues.some((tab) => tab === value);
+
+export const getEditorTabCount = (tab: EditorTab, counts: EditorTabCounts): number | null => {
+  if (tab === "congratulations") return counts.congratulations;
+  if (tab === "photos") return counts.photos;
+  if (tab === "gift") return counts.giftVotes;
+  return null;
+};
 
 export const resolveEditorTab = ({
   tab,

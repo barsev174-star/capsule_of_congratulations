@@ -4,6 +4,7 @@ import {
   getContentSectionForFocus,
   getContentSectionHref,
   getContentTabHref,
+  getEditorTabCount,
   isContentFocus,
   isContentSection,
   isEditorTab,
@@ -59,5 +60,14 @@ describe("content focus navigation", () => {
     })).toBe("photos");
     expect(resolveEditorTab({ tab: "unknown", section: undefined, focus: null }))
       .toBe("design");
+  });
+
+  it("uses the vote total for the mobile gift-tab counter", () => {
+    const counts = { congratulations: 12, photos: 5, giftVotes: 9 };
+
+    expect(getEditorTabCount("congratulations", counts)).toBe(12);
+    expect(getEditorTabCount("photos", counts)).toBe(5);
+    expect(getEditorTabCount("gift", counts)).toBe(9);
+    expect(getEditorTabCount("design", counts)).toBeNull();
   });
 });
