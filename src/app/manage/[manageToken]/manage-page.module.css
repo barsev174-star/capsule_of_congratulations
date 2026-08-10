@@ -13015,12 +13015,44 @@ button.contentStatusItemButton:active {
 }
 
 .participantLinkCard {
-  gap: 15px;
+  gap: 12px;
+}
+
+.participantLinkHeading {
+  gap: 4px;
+}
+
+.participantLinkHeading .linkAudienceBadge {
+  margin-bottom: 2px;
+}
+
+.participantCollectionStatus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  color: #5f6368;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+}
+
+.participantCollectionStatus strong {
+  color: #202124;
+  font-weight: 750;
+}
+
+.participantStatusDot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #348d44;
 }
 
 .participantLinkActions {
   display: grid;
-  gap: 9px;
+  gap: 8px;
 }
 
 .participantLinkPrimary,
@@ -13044,9 +13076,9 @@ button.contentStatusItemButton:active {
 
 .participantLinkPrimary {
   border: 0;
-  background: linear-gradient(180deg, #f36d37, #e65720);
+  background: #e9652f;
   color: #fff;
-  box-shadow: 0 8px 18px rgba(224, 81, 27, 0.18);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
 .participantLinkSecondary {
@@ -13056,25 +13088,135 @@ button.contentStatusItemButton:active {
   box-shadow: 0 0 0 1px rgba(226, 84, 32, 0.38);
 }
 
+.participantLinkPrimary:hover {
+  background: #df5f2e;
+}
+
+.participantLinkSecondary:hover {
+  background: #f7f8fa;
+  box-shadow: 0 0 0 1px rgba(226, 84, 32, 0.52);
+}
+
+.participantLinkPrimary:focus-visible,
+.participantLinkSecondary:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.24);
+  outline-offset: 2px;
+}
+
 .participantLinkPrimary:active,
 .participantLinkSecondary:active {
   scale: 0.96;
 }
 
-.participantCollectionControl {
-  display: grid;
-  gap: 7px;
-  padding-top: 5px;
+.participantLinkPrimary:active {
+  background: #c7532a;
 }
 
-.participantCollectionControl > span {
+.participantDisclosures {
+  border-top: 1px solid rgba(32, 33, 36, 0.1);
+}
+
+.participantDisclosure + .participantDisclosure {
+  border-top: 1px solid rgba(32, 33, 36, 0.1);
+}
+
+.participantDisclosureTrigger {
+  display: grid;
+  width: 100%;
+  min-height: 48px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #202124;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition-property: color, background-color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.participantDisclosureTrigger > strong {
+  min-width: 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.3;
+  text-wrap: pretty;
+}
+
+.participantDisclosureTrigger:hover,
+.participantDisclosureTrigger:active {
+  background: #f7f8fa;
+}
+
+.participantDisclosureTrigger:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.24);
+  outline-offset: 2px;
+}
+
+.participantDisclosureAside {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
   color: #5f6368;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.participantDisclosureAside svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  transition-property: transform;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.participantDisclosureTrigger[aria-expanded="true"] .participantDisclosureAside svg {
+  transform: rotate(180deg);
+}
+
+.participantDisclosureContent {
+  display: grid;
+  gap: 11px;
+  padding: 0 2px 14px;
+}
+
+.participantDisclosureContent[hidden] {
+  display: none;
+}
+
+.participantCollectionControl {
+  display: grid;
+  gap: 8px;
+}
+
+.participantCollectionControl h3 {
+  font-size: 0.82rem;
+}
+
+.participantCollectionControl p {
+  margin: 0;
+  color: #5f6368;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  text-wrap: pretty;
 }
 
 .participantCollectionControl .closeCollectionTrigger {
   width: 100%;
   min-height: 44px;
+  background: #fff;
   color: #e9652f;
   box-shadow: 0 0 0 1px rgba(226, 84, 32, 0.32);
 }
@@ -13346,14 +13488,22 @@ button.contentStatusItemButton:active {
   background: #f5f7f6;
 }
 
-.participantContributionCount {
-  color: #5f6368;
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
+.linkPurposeListCompact {
+  overflow: visible;
+  gap: 9px;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.participantContributionCount strong {
-  color: #202124;
+.linkPurposeListCompact > div {
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 8px;
+  padding: 0;
+}
+
+.linkPurposeListCompact > div + div {
+  border-top: 0;
 }
 
 .participantLinkClarification {
@@ -13363,82 +13513,22 @@ button.contentStatusItemButton:active {
   text-wrap: pretty;
 }
 
-.collectionCloseGuide {
+.participantPaymentContent {
   display: grid;
-  gap: 4px;
-  padding: 11px 12px;
-  border-radius: 14px;
-  background: #fff5ef;
-  box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.16);
+  gap: 10px;
 }
 
-.collectionCloseGuide strong {
-  color: #e9652f;
-  font-size: 0.78rem;
-}
-
-.collectionCloseGuide p {
-  margin: 0;
-  color: #5f6368;
-  font-size: 0.76rem;
-  line-height: 1.42;
-  text-wrap: pretty;
-}
-
-.earlyPaymentPanel {
-  display: grid;
-  gap: 11px;
-  padding: 14px;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow:
-    0 0 0 1px rgba(233, 101, 47, 0.18),
-    0 6px 18px rgba(0, 0, 0, 0.06);
-}
-
-.earlyPaymentHeading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.earlyPaymentHeading > div {
-  display: grid;
-  gap: 2px;
-}
-
-.earlyPaymentHeading span,
-.earlyPaymentHeading > strong {
-  color: #e9652f;
-}
-
-.earlyPaymentHeading span {
-  font-size: 0.68rem;
-  font-weight: 850;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
-.earlyPaymentHeading h3 {
-  margin: 0;
-  color: #202124;
-  font-size: 0.94rem;
-  text-wrap: balance;
-}
-
-.earlyPaymentHeading > strong {
-  font-size: 1rem;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.earlyPaymentPanel > p {
+.participantPaymentContent > p {
   margin: 0;
   color: #5f6368;
   font-size: 0.78rem;
   line-height: 1.45;
   text-wrap: pretty;
+}
+
+.participantPaymentContent .participantPaymentLead {
+  color: #e9652f;
+  font-weight: 800;
 }
 
 .earlyPaymentButton {
@@ -13447,18 +13537,21 @@ button.contentStatusItemButton:active {
   padding: 0 14px;
   border: 0;
   border-radius: 12px;
-  background: linear-gradient(180deg, #f36d37, #e65720);
+  background: #e9652f;
   color: #fff;
   font: inherit;
   font-size: 0.82rem;
   font-weight: 850;
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(224, 81, 27, 0.2);
-  transition: box-shadow 150ms ease-out, scale 150ms ease-out;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transition-property: background-color, box-shadow, scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
 }
 
 .earlyPaymentButton:hover {
-  box-shadow: 0 10px 22px rgba(224, 81, 27, 0.26);
+  background: #df5f2e;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
 }
 
 .earlyPaymentButton:focus-visible {
@@ -13467,6 +13560,7 @@ button.contentStatusItemButton:active {
 }
 
 .earlyPaymentButton:active {
+  background: #c7532a;
   scale: 0.96;
 }
 

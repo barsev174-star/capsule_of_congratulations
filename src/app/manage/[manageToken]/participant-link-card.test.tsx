@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ParticipantLinkCard } from "./participant-link-card";
 
@@ -11,7 +12,8 @@ vi.mock("./payment-checkout-button", () => ({
 }));
 
 describe("ParticipantLinkCard", () => {
-  it("makes the participant link audience, purpose and next step explicit", () => {
+  it("keeps the main actions and collection status visible while help stays collapsed", async () => {
+    const user = userEvent.setup();
     render(
       <ParticipantLinkCard
         manageToken="manage-token"
@@ -22,17 +24,26 @@ describe("ParticipantLinkCard", () => {
     );
 
     expect(screen.getByText("Для общего чата")).toBeInTheDocument();
-    expect(screen.getByText("Участникам — в общий чат")).toBeInTheDocument();
-    expect(screen.getByText("Собрать поздравления, фотографии и голоса за подарок")).toBeInTheDocument();
-    expect(screen.getByText("Дождитесь материалов, затем закройте сбор")).toBeInTheDocument();
+    expect(screen.getByText("Сбор открыт")).toBeVisible();
+    expect(screen.getByText("7 поздравлений")).toBeVisible();
     expect(screen.getByRole("button", { name: "Поделиться ссылкой для участников" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Скопировать ссылку для участников" })).toBeInTheDocument();
-    expect(screen.getByText(/Это не ссылка для получателя/)).toBeInTheDocument();
-    expect(screen.getByText("7")).toBeInTheDocument();
-    expect(screen.getByText("Когда закрывать сбор")).toBeInTheDocument();
+    const helpTrigger = screen.getByRole("button", { name: "Как работает сбор" });
+    expect(helpTrigger).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByText("Участникам — в общий чат")).not.toBeVisible();
+
+    helpTrigger.focus();
+    await user.keyboard("{Enter}");
+
+    expect(helpTrigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("Участникам — в общий чат")).toBeVisible();
+    expect(screen.getByText("Собрать поздравления, фотографии и голоса за подарок")).toBeVisible();
+    expect(screen.getByText("Когда всё собрано — закройте сбор")).toBeVisible();
+    expect(screen.getByText(/Это не ссылка для получателя/)).toBeVisible();
   });
 
-  it("shows early payment as a visible action instead of hiding it", () => {
+  it("keeps collection management and early payment collapsed by default", async () => {
+    const user = userEvent.setup();
     render(
       <ParticipantLinkCard
         manageToken="manage-token"
@@ -42,10 +53,36 @@ describe("ParticipantLinkCard", () => {
       />
     );
 
-    expect(screen.getByRole("heading", { name: "Оплата открытки" })).toBeInTheDocument();
-    expect(screen.getByText("399 ₽")).toBeInTheDocument();
-    expect(screen.getByText(/Сбор останется открытым/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Оплатить" })).toBeInTheDocument();
+    const managementTrigger = screen.getByRole("button", { name: "Управление сбором, Открыт" });
+    const paymentTrigger = screen.getByRole("button", { name: "Оплата открытки, 399 ₽" });
+    expect(managementTrigger).toHaveAttribute("aria-expanded", "false");
+    expect(paymentTrigger).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("button", { name: "Закрыть сбор" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Оплатить" })).not.toBeInTheDocument();
+
+    await user.click(managementTrigger);
+    expect(screen.getByRole("button", { name: "Закрыть сбор" })).toBeVisible();
+
+    await user.click(paymentTrigger);
+    expect(screen.getByText(/Сбор останется открытым/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Оплатить" })).toBeVisible();
     expect(screen.queryByText("Дополнительные действия")).not.toBeInTheDocument();
+  });
+
+  it("shows the existing paid state inside the payment disclosure", async () => {
+    const user = userEvent.setup();
+    render(
+      <ParticipantLinkCard
+        manageToken="manage-token"
+        participantLink="/join/public-token"
+        contributionCount={1}
+        lifecycle={{ paymentStatus: "PAID", hasAdminAccess: false }}
+      />
+    );
+
+    const paymentTrigger = screen.getByRole("button", { name: "Оплата открытки, Оплачено" });
+    expect(screen.getByText("Оплата подтверждена")).not.toBeVisible();
+    await user.click(paymentTrigger);
+    expect(screen.getByText("Оплата подтверждена")).toBeVisible();
   });
 });

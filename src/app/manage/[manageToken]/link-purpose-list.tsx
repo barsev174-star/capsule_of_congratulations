@@ -4,6 +4,8 @@ type Props = {
   audience: string;
   purpose: string;
   nextStep: string;
+  nextStepLabel?: string;
+  compact?: boolean;
   tone?: "participant" | "recipient";
 };
 
@@ -11,12 +13,14 @@ export const LinkPurposeList = ({
   audience,
   purpose,
   nextStep,
+  nextStepLabel = "Следующий шаг",
+  compact = false,
   tone = "participant"
 }: Props) => (
   <dl
     className={`${styles.linkPurposeList} ${
       tone === "recipient" ? styles.linkPurposeListRecipient : ""
-    }`}
+    } ${compact ? styles.linkPurposeListCompact : ""}`.trim()}
   >
     <div>
       <dt>Кому</dt>
@@ -27,7 +31,7 @@ export const LinkPurposeList = ({
       <dd>{purpose}</dd>
     </div>
     <div>
-      <dt>Следующий шаг</dt>
+      <dt>{nextStepLabel}</dt>
       <dd>{nextStep}</dd>
     </div>
   </dl>
