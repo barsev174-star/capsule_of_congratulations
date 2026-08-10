@@ -14,7 +14,7 @@ const EDIT_OPERATIONS: Array<{
   mode: AiGenerationMode;
   style: AiStyle;
 }> = [
-  { id: "shorten", label: "Сократить", description: "Сохранить главную мысль", mode: "shorten", style: "short-no-pathos" },
+  { id: "shorten", label: "Сократить до лимита", description: "Сохранить главную мысль", mode: "shorten", style: "short-no-pathos" },
   { id: "warmer", label: "Сделать теплее", description: "Добавить душевности", mode: "improve", style: "warm-simple" },
   { id: "formal", label: "Сделать официальнее", description: "Сохранить уважительный тон", mode: "improve", style: "respectful" },
   { id: "proofread", label: "Исправить ошибки", description: "Улучшить язык без смены смысла", mode: "improve", style: "warm-simple" },
@@ -36,6 +36,7 @@ type Props = {
   greetingMode?: "classic" | "matrix" | "ladder";
   sourceContributionId?: string;
   sourceText?: string;
+  initialDraft?: string;
 };
 
 export const AiHelper = ({
@@ -51,15 +52,16 @@ export const AiHelper = ({
   variant = "default",
   greetingMode = "classic",
   sourceContributionId,
-  sourceText
+  sourceText,
+  initialDraft
 }: Props) => {
   const [issues, setIssues] = useState<string[]>([]);
   const [variants, setVariants] = useState<AiVariant[]>([]);
   const [activeVariantIndex, setActiveVariantIndex] = useState(0);
   const [insertFeedback, setInsertFeedback] = useState("");
-  const [draftNotes, setDraftNotes] = useState(sourceText ?? "");
+  const [draftNotes, setDraftNotes] = useState(sourceText ?? initialDraft ?? "");
   const [selectedStyle, setSelectedStyle] = useState("touching");
-  const [editOperation, setEditOperation] = useState<EditOperation>("alternative");
+  const [editOperation, setEditOperation] = useState<EditOperation>("shorten");
   const [personalDetail, setPersonalDetail] = useState("");
   const [generationId, setGenerationId] = useState("");
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -69,7 +71,11 @@ export const AiHelper = ({
   const pendingRequestId = useRef<string | null>(null);
 
   const isEditingExisting = Boolean(sourceContributionId && sourceText);
-  const selectedEditOperation = EDIT_OPERATIONS.find((operation) => operation.id === editOperation) ?? EDIT_OPERATIONS[5];
+  const availableEditOperations = isEditingExisting
+    ? EDIT_OPERATIONS.filter((operation) => operation.id === "shorten" || operation.id === "proofread")
+    : EDIT_OPERATIONS;
+  const selectedEditOperation = availableEditOperations.find((operation) => operation.id === editOperation)
+    ?? availableEditOperations[0]!;
 
   const handleGenerate = async (style: AiStyle, mode: AiGenerationMode = "compose") => {
     const requestId = pendingRequestId.current ?? crypto.randomUUID();
@@ -161,7 +167,7 @@ export const AiHelper = ({
           </h2>
           <p className={styles.hint}>
             {isEditingExisting
-              ? "Исходный текст уже подставлен. Выберите, что изменить, и сначала посмотрите варианты."
+              ? "Можно бережно сократить текст или исправить ошибки без изменения смысла и авторского голоса. Сначала вы увидите варианты."
               : isLadderMode
               ? `Набросайте мысли своими словами — AI предложит аккуратный, более тёплый и более живой варианты длиной до ${resultLimit} символов.`
               : `Набросайте мысли своими словами — AI соберёт из них три варианта длиной до ${resultLimit} символов.`}
@@ -183,7 +189,7 @@ export const AiHelper = ({
             <fieldset className={styles.aiEditOperations}>
               <legend>Что сделать</legend>
               <div>
-                {EDIT_OPERATIONS.map((operation) => (
+                {availableEditOperations.map((operation) => (
                   <button
                     key={operation.id}
                     type="button"

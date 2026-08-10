@@ -37,7 +37,8 @@ describe("ParticipantLinkCard", () => {
 
     expect(helpTrigger).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText("Участникам — в общий чат")).toBeVisible();
-    expect(screen.getByText("Собрать поздравления, фотографии и голоса за подарок")).toBeVisible();
+    expect(screen.getByText("Что соберём")).toBeVisible();
+    expect(screen.getByText("Поздравления и голоса за подарок")).toBeVisible();
     expect(screen.getByText("Когда всё собрано — закройте сбор")).toBeVisible();
     expect(screen.getByText(/Это не ссылка для получателя/)).toBeVisible();
   });

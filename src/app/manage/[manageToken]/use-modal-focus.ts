@@ -7,7 +7,11 @@ let rootOverflow = "";
 let rootAriaHidden: string | null = null;
 let rootHadInert = false;
 
-export const useModalFocus = (dialogRef: RefObject<HTMLElement | null>, onEscape: () => void) => {
+export const useModalFocus = (
+  dialogRef: RefObject<HTMLElement | null>,
+  onEscape: () => void,
+  active = true
+) => {
   const escapeRef = useRef(onEscape);
 
   useEffect(() => {
@@ -15,6 +19,7 @@ export const useModalFocus = (dialogRef: RefObject<HTMLElement | null>, onEscape
   }, [onEscape]);
 
   useEffect(() => {
+    if (!active) return;
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const main = document.querySelector("main");
     if (modalDepth === 0) {
@@ -69,5 +74,5 @@ export const useModalFocus = (dialogRef: RefObject<HTMLElement | null>, onEscape
       }
       if (opener?.isConnected) opener.focus();
     };
-  }, [dialogRef]);
+  }, [active, dialogRef]);
 };

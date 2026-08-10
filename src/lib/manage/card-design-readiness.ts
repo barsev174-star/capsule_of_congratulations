@@ -110,10 +110,6 @@ const blockCopy: Record<FinalCardBlockId, { title: string; description: string }
     title: "Лучшие фразы",
     description: "Сильные и тёплые строки из поздравлений участников."
   },
-  "ai-summary": {
-    title: "Общее поздравление",
-    description: "Общее обращение от всей группы."
-  },
   closing: {
     title: "Финал",
     description: "Завершение открытки и общее тёплое пожелание."

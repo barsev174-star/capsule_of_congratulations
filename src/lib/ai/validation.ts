@@ -16,6 +16,10 @@ export type AiValidationResult =
 const styles: AiStyle[] = ["warm-simple", "short-no-pathos", "humor", "touching", "respectful"];
 const modes: AiGenerationMode[] = ["compose", "improve", "shorten"];
 const editInstructions: AiEditInstruction[] = ["shorten", "warmer", "formal", "proofread", "detail", "alternative"];
+const participantSafeEditInstructions: AiEditInstruction[] = ["shorten", "proofread"];
+
+export const isParticipantSafeEditInstruction = (instruction: AiEditInstruction | undefined) =>
+  Boolean(instruction && participantSafeEditInstructions.includes(instruction));
 
 export const countCharacters = (value: string) => Array.from(value).length;
 

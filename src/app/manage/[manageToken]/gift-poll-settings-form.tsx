@@ -14,7 +14,7 @@ import { closeGiftPollAction, enableGiftPollAction, openGiftPollAction, reopenGi
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { useModalFocus } from "./use-modal-focus";
 import { GiftPollOrderEditor } from "./gift-poll-order-editor";
-import { ActionMenu } from "./action-menu";
+import { ActionMenu, MenuDeleteIcon, MenuEditIcon } from "./action-menu";
 import styles from "./manage-page.module.css";
 
 type Mode = "gift" | "budget";
@@ -833,7 +833,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
           <div className={styles.giftPollOverviewActions}>
             {collectionIsOpen ? <a className={styles.giftPollPreviewButton} href={participantUrl} target="_blank" rel="noopener noreferrer">Открыть форму участника ↗</a> : <button type="button" className={styles.giftPollPreviewButton} disabled title="Форма участника станет доступна после открытия сбора поздравлений">Открыть форму участника ↗</button>}
             <ActionMenu label="Действия с голосованием">
-              <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => setSettingsOpen(true)}><PencilIcon />Настройки голосования</button>
+              <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => setSettingsOpen(true)}><MenuEditIcon />Настройки голосования</button>
               {collectionIsOpen ? <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={copyParticipantLink}><ExternalIcon />Скопировать ссылку на форму</button> : null}
               <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={openHowDialog}><HelpIcon />Как это работает</button>
               {poll.status === "closed" ? <><div role="separator" className={styles.actionMenuSeparator} /><button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => reopenFormRef.current?.requestSubmit()}><SwitchIcon />Возобновить голосование</button></> : null}
@@ -884,10 +884,10 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
                       <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => setEditor({ option, isNew: false, readOnly: true })}><EyeIcon />Посмотреть</button>
                       {option.productUrl ? <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => window.open(option.productUrl, "_blank", "noopener")}><ExternalIcon />Открыть ссылку</button> : null}
                     </> : <>
-                      <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => setEditor({ option, isNew: false, readOnly: false })}><PencilIcon />Редактировать</button>
+                      <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => setEditor({ option, isNew: false, readOnly: false })}><MenuEditIcon />Редактировать</button>
                       {option.productUrl ? <button type="button" role="menuitem" className={styles.actionMenuItem} onClick={() => window.open(option.productUrl, "_blank", "noopener")}><ExternalIcon />Открыть ссылку</button> : null}
                       <div role="separator" className={styles.actionMenuSeparator} />
-                      <button type="button" role="menuitem" className={`${styles.actionMenuItem} ${styles.actionMenuItemDanger}`} onClick={() => setOptionToDelete(option)}><CloseIcon />Удалить</button>
+                      <button type="button" role="menuitem" className={`${styles.actionMenuItem} ${styles.actionMenuItemDanger}`} onClick={() => setOptionToDelete(option)}><MenuDeleteIcon />Удалить</button>
                     </>}
                   </ActionMenu>
                 </div>

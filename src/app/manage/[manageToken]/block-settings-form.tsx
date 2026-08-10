@@ -179,11 +179,6 @@ const blockMeta: Record<
     summary: "Три короткие фразы, выбранные из поздравлений.",
     details: "Три короткие фразы, выбранные из поздравлений."
   },
-  "ai-summary": {
-    label: "Общее поздравление",
-    summary: "Общее обращение от всей группы.",
-    details: "Общий тёплый текст от всей группы."
-  },
   closing: {
     label: "Финал",
     summary: "Завершающий текст и подпись открытки.",
@@ -198,7 +193,6 @@ const allFinalCardBlockIds: FinalCardBlockId[] = [
   "messages",
   "memories",
   "quotes",
-  "ai-summary",
   "closing"
 ];
 
@@ -313,14 +307,6 @@ const BlockIcon = ({ blockId }: { blockId: FinalCardBlockId }) => {
     return (
       <svg viewBox="0 0 20 20" aria-hidden="true">
         <path d="M6.8 8.3c0-2 1.1-3.4 2.7-4.3-.6 1-.8 1.8-.8 2.8 0 1.2.8 2.1 2 2.1a2.2 2.2 0 0 1 2.1 2.4 2.8 2.8 0 0 1-2.9 2.9c-1.8 0-3.1-1.4-3.1-3.9Zm6.4 0c0-2 1.1-3.4 2.7-4.3-.6 1-.8 1.8-.8 2.8 0 1.2.8 2.1 2 2.1a2.2 2.2 0 0 1 2.1 2.4 2.8 2.8 0 0 1-2.9 2.9c-1.8 0-3.1-1.4-3.1-3.9Z" {...iconStrokeProps} />
-      </svg>
-    );
-  }
-
-  if (blockId === "ai-summary") {
-    return (
-      <svg viewBox="0 0 20 20" aria-hidden="true">
-        <path d="M6.1 9.1a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2Zm7.8 0a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2ZM2.8 15.5c.5-2.2 2.3-3.4 4.3-3.4s3.8 1.2 4.3 3.4M8.6 15.5c.5-2.2 2.3-3.4 4.3-3.4s3.8 1.2 4.3 3.4" {...iconStrokeProps} />
       </svg>
     );
   }

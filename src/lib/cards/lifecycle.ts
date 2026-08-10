@@ -20,6 +20,26 @@ export class CardLifecycleConflictError extends Error {
   }
 }
 
+export type DeliveryConfirmation = {
+  confirmed: boolean;
+  cardVersion: string;
+};
+
+export const assertDeliveryConfirmation = (
+  confirmation: DeliveryConfirmation | undefined,
+  currentCardVersion: string
+) => {
+  if (!confirmation?.confirmed || !confirmation.cardVersion) {
+    throw new CardLifecycleConflictError("Перед передачей подтвердите проверку финальной версии открытки.");
+  }
+
+  if (confirmation.cardVersion !== currentCardVersion) {
+    throw new CardLifecycleConflictError(
+      "Открытка изменилась после проверки. Обновите страницу, снова проверьте предпросмотр и подтвердите передачу."
+    );
+  }
+};
+
 export const isPurged = (card: Pick<CardLifecycle, "purgedAt">) => card.purgedAt !== null;
 
 export const isContentLocked = (card: Pick<CardLifecycle, "deliveryStatus">) =>

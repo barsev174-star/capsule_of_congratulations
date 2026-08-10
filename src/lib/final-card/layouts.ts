@@ -13,7 +13,6 @@ export const finalCardLayouts: Record<FinalCardStyleId, FinalCardLayout> = {
       required("messages"),
       optional("memories"),
       optional("quotes"),
-      optional("ai-summary"),
       required("closing")
     ]
   },
@@ -26,7 +25,6 @@ export const finalCardLayouts: Record<FinalCardStyleId, FinalCardLayout> = {
       required("messages"),
       optional("memories"),
       optional("quotes"),
-      optional("ai-summary"),
       required("closing")
     ]
   },
@@ -37,7 +35,6 @@ export const finalCardLayouts: Record<FinalCardStyleId, FinalCardLayout> = {
       optional("summary"),
       required("messages"),
       optional("memories"),
-      optional("ai-summary"),
       optional("quotes"),
       required("closing")
     ]
@@ -50,7 +47,6 @@ export const finalCardLayouts: Record<FinalCardStyleId, FinalCardLayout> = {
       required("messages"),
       optional("memories"),
       optional("quotes"),
-      optional("ai-summary"),
       required("closing")
     ]
   },
@@ -63,7 +59,6 @@ export const finalCardLayouts: Record<FinalCardStyleId, FinalCardLayout> = {
       required("messages"),
       optional("memories"),
       optional("quotes"),
-      optional("ai-summary"),
       required("closing")
     ]
   },
@@ -76,7 +71,6 @@ export const finalCardLayouts: Record<FinalCardStyleId, FinalCardLayout> = {
       required("messages"),
       optional("memories"),
       optional("quotes"),
-      optional("ai-summary"),
       required("closing")
     ]
   }

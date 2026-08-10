@@ -111,7 +111,8 @@ export const ParticipantLinkCard = ({
         <ParticipantDisclosure title="Как работает сбор">
           <LinkPurposeList
             audience="Участникам — в общий чат"
-            purpose="Собрать поздравления, фотографии и голоса за подарок"
+            purpose="Поздравления и голоса за подарок"
+            purposeLabel="Что соберём"
             nextStep="Когда всё собрано — закройте сбор"
             nextStepLabel="Что дальше"
             compact

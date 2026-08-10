@@ -13,15 +13,21 @@ vi.mock("@/app/card/[publicSlug]/ai-helper", () => ({
   AiHelper: ({
     sourceContributionId,
     sourceText,
+    initialDraft,
+    onDraftChange,
     onUseText
   }: {
     sourceContributionId?: string;
     sourceText?: string;
+    initialDraft?: string;
+    onDraftChange?: (draft: string) => void;
     onUseText: (text: string, generationId: string) => void;
   }) => (
     <div>
       <span>{sourceContributionId}</span>
       <p>{sourceText}</p>
+      <p>{sourceContributionId ? "Только безопасные операции" : "Все операции"}</p>
+      <label>AI-черновик<input aria-label="AI-черновик" value={initialDraft ?? ""} onChange={(event) => onDraftChange?.(event.target.value)} /></label>
       <button type="button" onClick={() => onUseText("Новый AI-вариант поздравления с тёплыми словами.", "generation-1")}>Выбрать AI-вариант</button>
     </div>
   )
@@ -61,6 +67,7 @@ describe("ContributionEditor AI editing", () => {
     await userEvent.click(screen.getByRole("tab", { name: /помочь с текстом/i }));
     expect(screen.getByText("contribution-1")).toBeInTheDocument();
     expect(screen.getByText(contribution.message)).toBeInTheDocument();
+    expect(screen.getByText("Только безопасные операции")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Выбрать AI-вариант" }));
     expect(screen.getByRole("textbox", { name: "Текст поздравления" })).toHaveValue("Новый AI-вариант поздравления с тёплыми словами.");
@@ -69,6 +76,29 @@ describe("ContributionEditor AI editing", () => {
     await userEvent.click(screen.getByRole("button", { name: "Вернуть исходный текст" }));
     expect(screen.getByRole("textbox", { name: "Текст поздравления" })).toHaveValue(contribution.message);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("сохраняет единый черновик при переходах между ручным и AI-режимами", async () => {
+    render(
+      <ContributionEditor
+        cardId="card-1"
+        manageToken="manage-1"
+        occasionText="С днём рождения!"
+        isMainGreeting={false}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+        onDeleted={vi.fn()}
+      />
+    );
+
+    const manualDraft = "Ручной черновик с тёплыми словами для получателя.";
+    await userEvent.type(screen.getByRole("textbox", { name: "Текст поздравления" }), manualDraft);
+    await userEvent.click(screen.getByRole("tab", { name: /помочь с текстом/i }));
+    expect(screen.getByLabelText("AI-черновик")).toHaveValue(manualDraft);
+
+    await userEvent.type(screen.getByLabelText("AI-черновик"), " Ещё одна мысль.");
+    await userEvent.click(screen.getByRole("tab", { name: "Написать самому" }));
+    expect(screen.getByRole("textbox", { name: "Текст поздравления" })).toHaveValue(`${manualDraft} Ещё одна мысль.`);
   });
 });
 

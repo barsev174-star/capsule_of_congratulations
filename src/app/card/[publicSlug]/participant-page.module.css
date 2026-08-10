@@ -115,7 +115,9 @@
   font-size: clamp(2.9rem, 6.2vw, 5.45rem);
   line-height: 1;
   text-wrap: balance;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: manual;
 }
 
 .heroSubline {
@@ -681,8 +683,8 @@
   color: var(--muted);
 }
 
-.consent { display: flex; align-items: flex-start; gap: 10px; padding: 6px 4px; color: #202124; font-size: .9rem; line-height: 1.45; border-radius: 14px; }
-.consent input { width: 18px; height: 18px; margin-top: 2px; flex: 0 0 auto; accent-color: #c65431; }
+.consent { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: start; gap: 10px; padding: 8px 4px; color: #202124; font-size: .9rem; line-height: 1.45; border-radius: 14px; }
+.consent input { width: 18px; height: 18px; margin: 2px 0 0; flex: 0 0 auto; accent-color: #e9652f; }
 .consent a { color: #e9652f; text-decoration-thickness: 1px; text-underline-offset: 2px; }
 
 .actions {
@@ -1941,7 +1943,7 @@
 
   .title {
     max-width: 100%;
-    font-size: clamp(2.9rem, 16vw, 4.3rem);
+    font-size: clamp(2rem, 11vw, 4.3rem);
     line-height: 1;
   }
 
@@ -2321,16 +2323,31 @@
   display: contents;
 }
 
+.formMainSurface {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(32, 33, 36, 0.1),
+    0 20px 60px rgba(32, 33, 36, 0.08);
+}
+
+.formMainSurface .formCard {
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+}
+
 .formCardMain {
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0;
+  overflow: hidden;
 }
 
 .formCardFooter {
-  margin-top: -24px;
-  padding-top: 4px;
-  border-top-right-radius: 0;
-  border-top-left-radius: 0;
+  margin-top: 0;
+  padding-top: 20px;
+  border-top: 1px solid #e8eaed;
+  background: #f7f8fa;
 }
 
 .editorShell {
@@ -3179,7 +3196,11 @@
   }
 
   .formCardFooter {
-    margin-top: -14px;
+    margin-top: 0;
+  }
+
+  .formMainSurface {
+    border-radius: 24px;
   }
 
   .sidePanelCard .variantActions {

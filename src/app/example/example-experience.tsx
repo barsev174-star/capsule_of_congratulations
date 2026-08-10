@@ -154,14 +154,12 @@ export const ExampleExperience = ({ children, routeChildren, initialTemplateId }
   if (started) {
     return (
       <GiftIntro
-        slug={selectedDemoModel.finalSlug}
         recipientName={selectedDemoModel.recipientName}
         subtitle={selectedTemplateId === "route-adventure" ? "для тебя собрали друзья" : "для тебя собрали тёплые слова"}
         fromLabel={selectedDemoModel.fromLabel}
         templateId={selectedTemplateId}
         animationId="envelope"
         accent={selectedTemplateId === "route-adventure" ? "#b08a4a" : "#df4f73"}
-        forceIntro
         onIntroDone={() => sendClientTelemetry("demo_card_opened", { route: "/example", template: selectedTemplateId })}
       >
         {selectedTemplateId === "route-adventure" ? routeChildren : children}

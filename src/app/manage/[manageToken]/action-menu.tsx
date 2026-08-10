@@ -33,8 +33,8 @@ export const MenuDotsIcon = () => (
 );
 
 export const MenuEditIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.7 4.2 4.2-.7L19 8.5 15.5 5 4 16.5Z" /><path d="m13.8 6.7 3.5 3.5" /></svg>;
-export const MenuReplaceIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-8a6 6 0 0 0-6 6v1" /><path d="m9 17-3-3-3 3" /><path d="M4 7h3" /></svg>;
-export const MenuMoveIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18" /><path d="m8 7 4-4 4 4M8 17l4 4 4-4M7 8l-4 4 4 4M17 8l4 4-4 4" /></svg>;
+export const MenuReplaceIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="13" height="13" rx="2.2" /><circle cx="8" cy="9" r="1.35" /><path d="m4.5 15 3.7-3.5 2.5 2.2 2.2-2.3 2.6 2.8" /><path d="M16.5 8H19a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-8.5a2 2 0 0 1-2-2V17" /></svg>;
+export const MenuMoveIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="6" height="14" rx="1.5" /><rect x="15" y="5" width="6" height="14" rx="1.5" /><path d="M10.5 9.5h3m0 0L12 8m1.5 1.5L12 11M13.5 14.5h-3m0 0L12 13m-1.5 1.5L12 16" /></svg>;
 export const MenuDeleteIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" /></svg>;
 
 export const ActionMenu = ({

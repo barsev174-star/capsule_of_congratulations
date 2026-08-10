@@ -3,6 +3,7 @@ import styles from "./manage-page.module.css";
 type Props = {
   audience: string;
   purpose: string;
+  purposeLabel?: string;
   nextStep: string;
   nextStepLabel?: string;
   compact?: boolean;
@@ -12,6 +13,7 @@ type Props = {
 export const LinkPurposeList = ({
   audience,
   purpose,
+  purposeLabel = "Для чего",
   nextStep,
   nextStepLabel = "Следующий шаг",
   compact = false,
@@ -27,7 +29,7 @@ export const LinkPurposeList = ({
       <dd>{audience}</dd>
     </div>
     <div>
-      <dt>Для чего</dt>
+      <dt>{purposeLabel}</dt>
       <dd>{purpose}</dd>
     </div>
     <div>

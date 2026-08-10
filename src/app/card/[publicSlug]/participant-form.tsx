@@ -392,6 +392,7 @@ export const ParticipantForm = ({
             });
           }}
         >
+          <div className={styles.formMainSurface}>
           <section className={`${styles.formCard} ${styles.formCardMain}`}>
             <div className={styles.form}>
               <div className={styles.cardHeader}>
@@ -503,25 +504,6 @@ export const ParticipantForm = ({
             </div>
           </section>
 
-          <JoinSidePanel
-            state={aiPanelState}
-            variants={aiVariants}
-            generationId={aiGenerationId}
-            isPending={isAiPending}
-            limitReached={aiLimitReached}
-            issues={aiIssues}
-            remaining={aiRemaining}
-            activeHintId={activeHintId}
-            activeHintExample={activeHintExample}
-            hintExampleVisible={hintBlockVisible}
-            exampleBlockId="join-hint-example"
-            hasActivePoll={hasActivePoll}
-            onHintSelect={handleHintSelect}
-            onHideHintExample={() => setHintBlockVisible(false)}
-            onUseVariant={handleUseVariant}
-            onRetry={generateAiVariants}
-          />
-
           <section className={`${styles.formCard} ${styles.formCardFooter}`}>
             <div className={styles.form}>
               <label className={styles.consent}>
@@ -543,6 +525,26 @@ export const ParticipantForm = ({
               </div>
             </div>
           </section>
+          </div>
+
+          <JoinSidePanel
+            state={aiPanelState}
+            variants={aiVariants}
+            generationId={aiGenerationId}
+            isPending={isAiPending}
+            limitReached={aiLimitReached}
+            issues={aiIssues}
+            remaining={aiRemaining}
+            activeHintId={activeHintId}
+            activeHintExample={activeHintExample}
+            hintExampleVisible={hintBlockVisible}
+            exampleBlockId="join-hint-example"
+            hasActivePoll={hasActivePoll}
+            onHintSelect={handleHintSelect}
+            onHideHintExample={() => setHintBlockVisible(false)}
+            onUseVariant={handleUseVariant}
+            onRetry={generateAiVariants}
+          />
         </form>
       )}
       <GiftPollVote

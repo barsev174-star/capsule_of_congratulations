@@ -8819,3 +8819,39 @@ body[data-scrapbook-mobile-preview] .paper-birthday .heroMain {
   color: #ffffff;
   background: #e9652f;
 }
+
+/* The image keeps a little bleed beneath the irregular paper aperture. */
+.paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaPortraitViewport {
+  inset: 8% 15.5% 15.5% !important;
+  width: auto !important;
+  height: auto !important;
+  aspect-ratio: 2 / 3;
+}
+
+.paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaPortraitViewport .mediaImage {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover;
+}
+
+/* Compact previews need the narrower paper artwork to close the transparent
+   seams around the portrait without stretching the photo underneath. */
+.paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] > .componentAssetOverlayLayer {
+  background-position: center !important;
+  background-size: 84% 100% !important;
+}
+
+/* Desktop has a wider rail than the compact preview. Give the paper enough
+   width to cover the portrait bleed, reveal more of the crop and trim only the
+   oversized lower paper field. Mobile keeps the geometry above unchanged. */
+@media (min-width: 900px) {
+  .paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] > .componentAssetOverlayLayer {
+    background-size: 90% 100% !important;
+    clip-path: inset(0 0 6% 0);
+  }
+
+  .paper-birthday .messageSplitPortrait .componentAssetFrame[data-component-asset-id="messagePolaroidPortrait"] .mediaPortraitViewport .mediaImage {
+    transform: scale(var(--paper-desktop-crop-zoom, 1)) !important;
+  }
+}

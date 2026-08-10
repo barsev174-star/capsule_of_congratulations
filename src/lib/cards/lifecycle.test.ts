@@ -5,6 +5,7 @@ import {
   assertCanDeliverCard,
   assertCanOpenCollection,
   assertCardContentEditable,
+  assertDeliveryConfirmation,
   canDeliverCard,
   canJoinCollection,
   getCardLifecycleLabel,
@@ -81,6 +82,15 @@ describe("card lifecycle", () => {
 
   it("makes repeated delivery idempotent at the domain boundary", () => {
     expect(() => assertCanDeliverCard({ ...preparingCard, deliveryStatus: "DELIVERED" })).not.toThrow();
+  });
+
+  it("requires delivery confirmation for the current card version", () => {
+    const version = "2026-08-10T10:00:00.000Z";
+
+    expect(() => assertDeliveryConfirmation(undefined, version)).toThrow(CardLifecycleConflictError);
+    expect(() => assertDeliveryConfirmation({ confirmed: false, cardVersion: version }, version)).toThrow(CardLifecycleConflictError);
+    expect(() => assertDeliveryConfirmation({ confirmed: true, cardVersion: "2026-08-10T09:59:59.000Z" }, version)).toThrow(/изменилась/);
+    expect(() => assertDeliveryConfirmation({ confirmed: true, cardVersion: version }, version)).not.toThrow();
   });
 
   it("uses lifecycle labels for payment restrictions and collection progress", () => {

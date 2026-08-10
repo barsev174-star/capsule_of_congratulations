@@ -71,6 +71,43 @@ describe("AiHelper form integration", () => {
     expect(await screen.findByRole("button", { name: "Заменить текст этим вариантом" })).toBeInTheDocument();
   });
 
+  it("для любого готового поздравления показывает только безопасные операции", () => {
+    render(
+      <AiHelper
+        cardId="card_test"
+        manageToken="manage_test"
+        occasionText="С днём рождения!"
+        messageLimit={500}
+        onUseText={vi.fn()}
+        sourceContributionId="contribution-1"
+        sourceText="Анна, спасибо за поддержку и доброту. Желаю радости каждый день!"
+        variant="join"
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /сократить до лимита/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /исправить ошибки/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /сделать теплее/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /добавить личную деталь/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /предложить вариант/i })).not.toBeInTheDocument();
+  });
+
+  it("начинает новый AI-черновик с переданного ручного текста", () => {
+    render(
+      <AiHelper
+        cardId="card_test"
+        manageToken="manage_test"
+        occasionText="С днём рождения!"
+        messageLimit={500}
+        onUseText={vi.fn()}
+        initialDraft="Черновик организатора уже написан вручную."
+        variant="join"
+      />
+    );
+
+    expect(screen.getByLabelText("Что хотите сказать?")).toHaveValue("Черновик организатора уже написан вручную.");
+  });
+
   it("во время повторной генерации оставляет прежние варианты на экране", async () => {
     let finishSecondRequest: ((value: unknown) => void) | undefined;
     const secondResponse = new Promise((resolve) => { finishSecondRequest = resolve; });

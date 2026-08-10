@@ -343,7 +343,7 @@ describe("PublicSharePanel: DRAFT", () => {
   it("показывает кнопку публикации для черновика", () => {
     renderPanel({ ...activeProps(), share: makeShare("DRAFT") });
 
-    expect(screen.getAllByRole("button", { name: "Опубликовать публичную страницу" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Опубликовать публичную страницу" })).toHaveLength(1);
     expect(publishPublicShareAction).not.toHaveBeenCalled();
   });
 });

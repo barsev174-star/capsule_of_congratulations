@@ -854,15 +854,22 @@ export async function closeCollectionAction(formData: FormData) {
   await runLifecycleAction(formData, closeCollection);
 }
 
-export async function deliverCardAction(formData: FormData) {
+export type DeliverCardState = { ok: boolean; message: string };
+
+export async function deliverCardAction(
+  _previousState: DeliverCardState,
+  formData: FormData
+): Promise<DeliverCardState> {
   const manageToken = String(formData.get("manageToken") ?? "");
+  const cardVersion = String(formData.get("cardVersion") ?? "");
+  const confirmed = formData.get("deliveryConfirmed") === "on";
   const card = manageToken ? await getCardDraftByManageToken(manageToken) : null;
-  if (!card) return;
+  if (!card) return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
   if (!isTemplateId(card.templateId)) {
     logger.warn("manage.delivery_blocked_by_template", "Card delivery blocked because no template is selected", {
       cardId: card.id
     });
-    return;
+    return { ok: false, message: "Сначала выберите шаблон открытки." };
   }
   const [contributions, assets, quotesInsight, qualitiesInsight, savedQuoteSelection] = await Promise.all([
     listContributionsByCardId(card.id),
@@ -898,9 +905,18 @@ export async function deliverCardAction(formData: FormData) {
         .filter((block) => block.enabled && block.status !== "READY")
         .map((block) => block.blockId)
     });
-    return;
+    return { ok: false, message: "Сначала завершите обязательные блоки открытки." };
   }
-  await runLifecycleAction(formData, deliverCard);
+  try {
+    await deliverCard(manageToken, { confirmed, cardVersion });
+    revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+    return { ok: true, message: "Открытка передана. Приватная ссылка готова." };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Не удалось передать открытку. Попробуйте ещё раз."
+    };
+  }
 }
 
 export async function updateContributionMessageAction(

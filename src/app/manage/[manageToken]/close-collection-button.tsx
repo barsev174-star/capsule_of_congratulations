@@ -10,14 +10,12 @@ type Props = {
 
 export const CloseCollectionButton = ({ manageToken }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isAcknowledged, setIsAcknowledged] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
 
   const closeDialog = useCallback(() => {
     setIsOpen(false);
-    setIsAcknowledged(false);
   }, []);
 
   useEffect(() => {
@@ -84,28 +82,17 @@ export const CloseCollectionButton = ({ manageToken }: Props) => {
             <h2 id="close-collection-title">Закрыть сбор поздравлений?</h2>
             <p>После закрытия начнётся финальная подготовка открытки:</p>
             <ul className={styles.collectionDialogConsequences}>
-              <li>участники не смогут добавлять поздравления, фотографии и голоса;</li>
-              <li>вы перейдёте к финальной проверке содержания и оформления;</li>
-              <li>после подготовки и оплаты станет доступна приватная ссылка получателя.</li>
+              <li>участники не смогут добавлять поздравления и голосовать за подарок;</li>
+              <li>вы перейдёте к спокойной финальной проверке содержания и оформления;</li>
+              <li>сбор можно открыть снова до передачи открытки получателю.</li>
             </ul>
-            <p className={styles.collectionDialogHint}>
-              До передачи открытки сбор можно будет открыть снова.
-            </p>
-            <label className={styles.collectionDialogAcknowledgement}>
-              <input
-                type="checkbox"
-                checked={isAcknowledged}
-                onChange={(event) => setIsAcknowledged(event.target.checked)}
-              />
-              <span>Я понимаю последствия и хочу перейти к финальной проверке.</span>
-            </label>
             <div className={styles.collectionDialogActions}>
               <button ref={cancelRef} type="button" onClick={closeDialog}>
                 Оставить сбор открытым
               </button>
               <form action={closeCollectionAction}>
                 <input type="hidden" name="manageToken" value={manageToken} />
-                <button type="submit" disabled={!isAcknowledged}>Закрыть сбор</button>
+                <button type="submit">Закрыть сбор</button>
               </form>
             </div>
           </section>

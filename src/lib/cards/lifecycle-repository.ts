@@ -2,8 +2,10 @@ import { getPostgresPool } from "@/lib/db/postgres";
 import {
   assertCanCloseCollection,
   assertCanDeliverCard,
+  assertDeliveryConfirmation,
   assertCanOpenCollection,
   CardLifecycleConflictError,
+  type DeliveryConfirmation,
   type CardLifecycle,
   isGiftAccessible
 } from "@/lib/cards/lifecycle";
@@ -21,6 +23,7 @@ export type CardLifecycleRecord = CardLifecycle & {
   collectionClosedAt: string | null;
   deliveredAt: string | null;
   recipientFirstOpenedAt: string | null;
+  updatedAt: string;
 };
 
 type CardLifecycleRow = {
@@ -43,6 +46,7 @@ type CardLifecycleRow = {
   collection_closed_at: Date | string | null;
   delivered_at: Date | string | null;
   recipient_first_opened_at: Date | string | null;
+  updated_at: Date | string;
 };
 
 const iso = (value: Date | string | null) => (value ? (value instanceof Date ? value.toISOString() : value) : null);
@@ -65,13 +69,14 @@ const mapCard = (row: CardLifecycleRow): CardLifecycleRecord => ({
   collectionOpenedAt: iso(row.collection_opened_at),
   collectionClosedAt: iso(row.collection_closed_at),
   deliveredAt: iso(row.delivered_at),
-  recipientFirstOpenedAt: iso(row.recipient_first_opened_at)
+  recipientFirstOpenedAt: iso(row.recipient_first_opened_at),
+  updatedAt: iso(row.updated_at) as string
 });
 
 const lifecycleColumns = `id, manage_token, final_slug, recipient_name, occasion_text, from_label, template_id,
   payment_status, collection_status, delivery_status, active_paid_order_id, active_access_grant_id, is_hidden,
   deleted_at, purged_at, collection_opened_at, collection_closed_at, delivered_at,
-  recipient_first_opened_at`;
+  recipient_first_opened_at, updated_at`;
 
 const selectLifecycle = `SELECT ${lifecycleColumns} FROM cards`;
 
@@ -154,7 +159,10 @@ export const closeCollection = async (manageToken: string): Promise<CardLifecycl
   }
 };
 
-export const deliverCard = async (manageToken: string): Promise<CardLifecycleRecord> => {
+export const deliverCard = async (
+  manageToken: string,
+  confirmation?: DeliveryConfirmation
+): Promise<CardLifecycleRecord> => {
   const client = await getPostgresPool().connect();
   try {
     await client.query("BEGIN");
@@ -168,6 +176,7 @@ export const deliverCard = async (manageToken: string): Promise<CardLifecycleRec
       return card;
     }
 
+    assertDeliveryConfirmation(confirmation, card.updatedAt);
     assertCanDeliverCard(card);
     assertCollectionReady(card);
     const updated = await client.query<CardLifecycleRow>(

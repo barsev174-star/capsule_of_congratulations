@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { deliverCardAction, openCollectionAction } from "./actions";
 import { ShareLinkButton } from "./copy-link-button";
 import { useMobileInputActivity } from "./use-mobile-input-activity";
+import { useModalFocus } from "./use-modal-focus";
 import styles from "./manage-page.module.css";
 
 type PrimaryAction =
@@ -15,12 +17,95 @@ type PrimaryAction =
 type Props = {
   manageToken: string;
   primaryAction: PrimaryAction;
+  deliveryVersion?: string;
   mobileOnly?: boolean;
+};
+
+const initialDeliveryState = { ok: false, message: "" };
+
+const DeliveryConfirmationButton = ({
+  manageToken,
+  cardVersion,
+  label
+}: {
+  manageToken: string;
+  cardVersion: string;
+  label: string;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [state, formAction, pending] = useActionState(deliverCardAction, initialDeliveryState);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalFocus(dialogRef, () => {
+    if (!pending) setIsOpen(false);
+  }, isOpen);
+
+  return (
+    <>
+      <button type="button" className={styles.designStickyPrimary} onClick={() => setIsOpen(true)}>
+        {label}
+      </button>
+      {isOpen
+        ? createPortal(
+            <div className={styles.deliveryDialogBackdrop} role="presentation">
+              <div
+                ref={dialogRef}
+                className={styles.deliveryDialog}
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="delivery-dialog-title"
+                aria-describedby="delivery-dialog-description"
+                tabIndex={-1}
+              >
+                <div className={styles.deliveryDialogCopy}>
+                  <span className={styles.deliveryDialogEyebrow}>Последняя проверка</span>
+                  <h2 id="delivery-dialog-title">Передать открытку получателю?</h2>
+                  <p id="delivery-dialog-description">
+                    После передачи поздравления, фотографии и оформление нельзя будет изменить.
+                  </p>
+                </div>
+                <ul className={styles.deliveryChecklist}>
+                  <li>Поздравления прочитаны и расположены верно</li>
+                  <li>Фотографии и их кадрирование проверены</li>
+                  <li>Оформление и предпросмотр выглядят правильно</li>
+                </ul>
+                <form action={formAction} className={styles.deliveryDialogForm}>
+                  <input type="hidden" name="manageToken" value={manageToken} />
+                  <input type="hidden" name="cardVersion" value={cardVersion} />
+                  <label className={styles.deliveryAcknowledgement}>
+                    <input
+                      type="checkbox"
+                      name="deliveryConfirmed"
+                      checked={checked}
+                      onChange={(event) => setChecked(event.target.checked)}
+                    />
+                    <span>Я проверил(а) финальную версию и понимаю, что после передачи редактирование будет заблокировано.</span>
+                  </label>
+                  {state.message && !state.ok ? (
+                    <p className={styles.deliveryDialogError} role="alert">{state.message}</p>
+                  ) : null}
+                  <div className={styles.deliveryDialogActions}>
+                    <button type="button" className={styles.deliveryCancel} disabled={pending} onClick={() => setIsOpen(false)}>
+                      Вернуться к проверке
+                    </button>
+                    <button type="submit" className={styles.deliveryConfirm} disabled={!checked || pending}>
+                      {pending ? "Передаём…" : "Передать получателю"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+    </>
+  );
 };
 
 export const DesignStickyActions = ({
   manageToken,
   primaryAction,
+  deliveryVersion,
   mobileOnly = false
 }: Props) => {
   const [basicsState, setBasicsState] = useState({ isDirty: false, isPending: false });
@@ -56,12 +141,11 @@ export const DesignStickyActions = ({
       </button>
     </form>
   ) : primaryAction.kind === "deliver" ? (
-    <form action={deliverCardAction}>
-      <input type="hidden" name="manageToken" value={manageToken} />
-      <button type="submit" className={styles.designStickyPrimary}>
-        {primaryAction.label}
-      </button>
-    </form>
+    <DeliveryConfirmationButton
+      manageToken={manageToken}
+      cardVersion={deliveryVersion ?? ""}
+      label={primaryAction.label}
+    />
   ) : primaryAction.kind === "share" ? (
     <ShareLinkButton
       value={primaryAction.value}

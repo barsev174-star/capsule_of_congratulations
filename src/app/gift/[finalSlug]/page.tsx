@@ -16,12 +16,11 @@ type Props = {
   }>;
   searchParams: Promise<{
     debugAssets?: string;
-    forceIntro?: string;
   }>;
 };
 
 export default async function GiftPage({ params, searchParams }: Props) {
-  const [{ finalSlug }, { debugAssets, forceIntro }] = await Promise.all([params, searchParams]);
+  const [{ finalSlug }, { debugAssets }] = await Promise.all([params, searchParams]);
   const lifecycle = await getGiftLifecycleByFinalSlug(finalSlug);
 
   if (!lifecycle) {
@@ -58,7 +57,6 @@ export default async function GiftPage({ params, searchParams }: Props) {
       : []
   });
   const isAssetDebugEnabled = process.env.NODE_ENV === "development" && debugAssets === "1";
-  const isForceIntroEnabled = process.env.NODE_ENV === "development" && forceIntro === "1";
   const hasPublicShareSettings = Boolean(publicShareEditor?.share || publicShareEditor?.wasRevoked);
   const publicShare = publicShareEditor ? {
     href: `/gift/${finalSlug}/share`,
@@ -69,12 +67,10 @@ export default async function GiftPage({ params, searchParams }: Props) {
 
   return (
     <><JourneyEvent event="gift_first_opened" cardId={card.id} route="gift" /><GiftIntro
-      slug={finalSlug}
       recipientName={card.recipientName}
       fromLabel={card.fromLabel}
       templateId={card.templateId}
       accent={template?.accent}
-      forceIntro={isForceIntroEnabled}
     >
       <FinalCard model={model} debugAssets={isAssetDebugEnabled} publicShare={publicShare} />
     </GiftIntro></>

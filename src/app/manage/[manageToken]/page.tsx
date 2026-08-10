@@ -232,10 +232,6 @@ export default async function ManagePage({ params, searchParams }: Props) {
     quotes: {
       label: "Лучшие фразы",
       description: "Три короткие фразы, выбранные из поздравлений."
-    },
-    "ai-summary": {
-      label: "Общее поздравление",
-      description: "Сводный блок, который собирает общий голос группы."
     }
   };
 
@@ -609,6 +605,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
           <DesignStickyActions
             manageToken={manageToken}
             primaryAction={stickyPrimaryAction}
+            deliveryVersion={card.updatedAt}
           />
           </>
         ) : activeTab === "gift" ? (

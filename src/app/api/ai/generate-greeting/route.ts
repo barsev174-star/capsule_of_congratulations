@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateParticipantMessage } from "@/lib/ai/service";
 import { AiError } from "@/lib/ai/types";
-import { validateAiGenerationRequest } from "@/lib/ai/validation";
+import { isParticipantSafeEditInstruction, validateAiGenerationRequest } from "@/lib/ai/validation";
 import {
   getCardDraftByManageToken,
   getCardDraftByPublicSlug,
@@ -93,6 +93,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Поздравление для AI-редактирования не найдено." }, { status: 404 });
   }
 
+  if (isManagerEdit && !isParticipantSafeEditInstruction(input.editInstruction)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Для готового поздравления доступны только сокращение до лимита и исправление ошибок."
+      },
+      { status: 403 }
+    );
+  }
+
   const existingMessages = buildExistingMessageContext(
     contributions
       .filter((item) => item.status === "visible" && item.id !== sourceContribution?.id)
@@ -110,9 +120,13 @@ export async function POST(request: Request) {
       fromLabel: card.fromLabel,
       relationshipContext: sourceContribution?.authorRole || input.relationshipContext,
       occasionText: card.occasionText,
-      // The contribution id authorizes and anchors manager editing, while the
-      // submitted draft may include an unsaved revision or a personal detail.
-      draftNotes: isManagerEdit ? input.draftNotes : sourceContribution?.message ?? input.draftNotes,
+      // A participant's original voice is immutable input. Organizer-owned text
+      // may include an unsaved revision or a personal detail.
+      draftNotes: sourceContribution?.source === "participant"
+        ? sourceContribution.message
+        : isManagerEdit
+          ? input.draftNotes
+          : sourceContribution?.message ?? input.draftNotes,
       style: input.style,
       messageLimit,
       existingMessages,

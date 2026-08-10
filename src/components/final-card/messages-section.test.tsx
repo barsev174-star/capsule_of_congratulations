@@ -1,8 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import type { Contribution } from "@/lib/cards/types";
+import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import { MessagesSection } from "./messages-section";
+import { ScrapbookDecorProvider } from "./scrapbook-decor-layer";
 import styles from "./final-card.module.css";
 
 const createContributions = (count: number): Contribution[] =>
@@ -16,12 +17,51 @@ const createContributions = (count: number): Contribution[] =>
     createdAt: new Date().toISOString()
   }));
 
+const paperPortraitAsset: CardMediaAsset = {
+  id: "paper-portrait-1",
+  cardId: "card-1",
+  slot: "portrait",
+  publicUrl: "/paper-portrait.jpg",
+  storagePath: "paper-portrait.jpg",
+  fileName: "paper-portrait.jpg",
+  mimeType: "image/jpeg",
+  sizeBytes: 1,
+  captionTitle: "Paper portrait",
+  captionSubtitle: "",
+  cropX: 74,
+  cropY: 51,
+  cropZoom: 1.35,
+  createdAt: "2026-08-10T00:00:00.000Z",
+  updatedAt: "2026-08-10T00:00:00.000Z"
+};
+
 const getCardByAuthor = (author: string) => {
   const authorElement = screen.getByText(author);
   return authorElement.closest("article") as HTMLElement;
 };
 
 describe("MessagesSection", () => {
+  it("keeps the saved crop and exposes a gentler desktop zoom for the Paper portrait", () => {
+    render(
+      <ScrapbookDecorProvider debugEnabled={false}>
+        <MessagesSection
+          contributions={createContributions(1)}
+          messageLayoutMode="column-media"
+          messageMediaAssets={[paperPortraitAsset]}
+          messageMediaLayout="portrait"
+          isPaperBirthday
+        />
+      </ScrapbookDecorProvider>
+    );
+
+    expect(screen.getByRole("img", { name: "Paper portrait" })).toHaveStyle({
+      objectPosition: "74% 51%",
+      transform: "scale(1.35)",
+      transformOrigin: "74% 51%",
+      "--paper-desktop-crop-zoom": "1.15"
+    });
+  });
+
   it("renders only 4 messages initially", () => {
     render(
       <MessagesSection

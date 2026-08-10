@@ -119,8 +119,6 @@ export const exampleCardModel: FinalCardViewModel = {
   summaryText: mainGreeting,
   mainGreetingContributionId: null,
   mainGreetingAuthorName: null,
-  aiSummaryTitle: "",
-  aiSummaryText: "",
   qualities: ["доброта", "чувство юмора", "поддержка", "внимание", "лёгкость", "тепло"],
   quotes: [
     "С тобой даже обычный день становится теплее.\n— Алексей",
@@ -278,8 +276,6 @@ export const routeAdventureDemoCardModel: FinalCardViewModel = {
     "Лёша — человек, на которого можно положиться. Он умеет поддержать, спокойно разобраться в сложной ситуации и вернуть уверенность, когда она особенно нужна.\n\nДрузья ценят его за честность, энергию и умение превращать обычные планы в настоящие истории.",
   mainGreetingContributionId: null,
   mainGreetingAuthorName: null,
-  aiSummaryTitle: "",
-  aiSummaryText: "",
   qualities: ["надёжный", "искренний", "сильный", "свой человек", "вдохновляющий"],
   quotes: [
     "Важно не то, насколько лёгкий путь, а с кем ты его проходишь.",

@@ -1,4 +1,14 @@
-import { validateAiGenerationFormData } from "@/lib/ai/validation";
+import { isParticipantSafeEditInstruction, validateAiGenerationFormData } from "@/lib/ai/validation";
+
+describe("participant AI edit policy", () => {
+  it("разрешает только сокращение и исправление ошибок", () => {
+    expect(isParticipantSafeEditInstruction("shorten")).toBe(true);
+    expect(isParticipantSafeEditInstruction("proofread")).toBe(true);
+    expect(isParticipantSafeEditInstruction("warmer")).toBe(false);
+    expect(isParticipantSafeEditInstruction("detail")).toBe(false);
+    expect(isParticipantSafeEditInstruction("alternative")).toBe(false);
+  });
+});
 
 const buildFormData = (entries: Record<string, string>) => {
   const formData = new FormData();

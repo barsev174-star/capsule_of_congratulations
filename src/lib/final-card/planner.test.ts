@@ -6,8 +6,7 @@ describe("buildFinalCardLayout", () => {
       hasSummary: false,
       hasQualities: false,
       hasMemories: false,
-      hasQuotes: false,
-      hasAiSummary: false
+      hasQuotes: false
     });
 
     expect(layout.blocks.map((block) => block.id)).toEqual(["hero", "messages", "quotes", "closing"]);
@@ -18,8 +17,7 @@ describe("buildFinalCardLayout", () => {
       hasSummary: true,
       hasQualities: false,
       hasMemories: true,
-      hasQuotes: true,
-      hasAiSummary: false
+      hasQuotes: true
     });
 
     expect(layout.blocks.map((block) => block.id)).toEqual(["hero", "summary", "messages", "memories", "quotes", "closing"]);
@@ -32,8 +30,7 @@ describe("buildFinalCardLayout", () => {
         hasSummary: true,
         hasQualities: true,
         hasMemories: false,
-        hasQuotes: true,
-        hasAiSummary: true
+        hasQuotes: true
       },
       {
         summary: false,
@@ -42,7 +39,7 @@ describe("buildFinalCardLayout", () => {
       }
     );
 
-    expect(layout.blocks.map((block) => block.id)).toEqual(["hero", "qualities", "messages", "ai-summary", "closing"]);
+    expect(layout.blocks.map((block) => block.id)).toEqual(["hero", "qualities", "messages", "closing"]);
   });
 
   it("respects custom block order from organizer", () => {
@@ -52,16 +49,14 @@ describe("buildFinalCardLayout", () => {
         hasSummary: true,
         hasQualities: true,
         hasMemories: false,
-        hasQuotes: true,
-        hasAiSummary: true
+        hasQuotes: true
       },
       {
         summary: true,
         qualities: true,
-        quotes: true,
-        "ai-summary": true
+        quotes: true
       },
-      ["hero", "messages", "summary", "qualities", "quotes", "ai-summary", "closing"]
+      ["hero", "messages", "summary", "qualities", "quotes", "closing"]
     );
 
     expect(layout.blocks.map((block) => block.id)).toEqual([
@@ -70,7 +65,6 @@ describe("buildFinalCardLayout", () => {
       "summary",
       "qualities",
       "quotes",
-      "ai-summary",
       "closing"
     ]);
   });

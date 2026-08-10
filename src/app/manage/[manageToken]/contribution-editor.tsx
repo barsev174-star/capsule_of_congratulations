@@ -363,7 +363,14 @@ export const ContributionEditor = ({
                       currentIds.includes(generationId) ? currentIds : [...currentIds, generationId]
                     )
                   }
-                  onDraftChange={setAiDraft}
+                  onDraftChange={(draft) => {
+                    setAiDraft(draft);
+                    if (!contribution) {
+                      setMessage(draft);
+                      markEdited("message");
+                    }
+                  }}
+                  initialDraft={contribution ? undefined : message}
                   variant="join"
                   greetingMode={greetingMode}
                   sourceContributionId={contribution?.id}

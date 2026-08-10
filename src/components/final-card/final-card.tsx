@@ -215,7 +215,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
       )}
 
       {model.blocks.map((block) => {
-        if (isPublic && ["summary", "messages", "ai-summary", "closing"].includes(block.id)) {
+        if (isPublic && ["summary", "messages", "closing"].includes(block.id)) {
           return null;
         }
 
@@ -585,31 +585,6 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
           ) : (
             <section key={block.id} className={`${styles.quotes} ${styles.section}`}>
               {content}
-            </section>
-          );
-        }
-
-        if (block.id === "ai-summary") {
-          const aiSummaryContent = (
-            <>
-              {renderAnchorLayer("bestPhrases")}
-              <h2 className={styles.sectionTitle}>{model.aiSummaryTitle}</h2>
-              <p className={styles.sectionText}>{model.aiSummaryText}</p>
-            </>
-          );
-
-          return isPaperBirthday ? (
-            <ScrapbookComponentFrame
-              key={block.id}
-              as="section"
-              assetId="aiSummaryPaper"
-              className={`${styles.summary} ${styles.section} ${styles.aiSummaryPanel} ${styles.decorAnchor}`}
-            >
-              {aiSummaryContent}
-            </ScrapbookComponentFrame>
-          ) : (
-            <section key={block.id} className={`${styles.summary} ${styles.section} ${styles.aiSummaryPanel}`}>
-              {aiSummaryContent}
             </section>
           );
         }

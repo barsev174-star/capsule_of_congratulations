@@ -329,16 +329,12 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
           {state.message ? <p className={state.ok ? styles.success : styles.error}>{state.message}</p> : null}
           {visibilityMessage ? <p className={visibilityMessage.includes("не удалось") ? styles.error : styles.success}>{visibilityMessage}</p> : null}
           {state.shareUrl ? <p className={styles.success}>Ссылка: <a href={state.shareUrl} target="_blank" rel="noreferrer">Открыть публичную страницу</a></p> : null}
-          <div className={styles.mobileActions}>
-            {isActive && hasUnsavedChanges && publicSharePath ? <Link className={styles.secondary} href={publicSharePath} target="_blank">Открыть опубликованную страницу</Link> : null}
-            {publishButton}
-            {revokeButton}
-          </div>
           <div className={styles.actionBar}>
             <div className={styles.actionBarInner}>
               <p className={`${styles.saveStatus} ${hasUnsavedChanges ? styles.saveStatusDirty : ""}`} role="status">{saveStatusText}</p>
               <div className={styles.actionButtons}>
-                <button type="submit" disabled={saveDisabled} onClick={() => { setPreviewRequested(false); setPublishRequested(false); }}>{pending ? "Сохраняем…" : share ? "Сохранить изменения" : "Создать черновик"}</button>
+                <button type="submit" className={styles.saveButton} disabled={saveDisabled} onClick={() => { setPreviewRequested(false); setPublishRequested(false); }}>{pending ? "Сохраняем…" : share ? "Сохранить изменения" : "Создать черновик"}</button>
+                {publishButton}
                 {!isActive || hasUnsavedChanges ? (
                   <button type="button" className={styles.secondary} onClick={openExactPreview} disabled={validationBlocked}>
                     <span className={styles.labelFull}>{pending && previewRequested ? "Сохраняем черновик…" : previewLabel}</span>
@@ -348,10 +344,7 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
                 {isActive && publicSharePath ? (
                   <Link className={`${hasUnsavedChanges ? styles.secondary : ""} ${hasUnsavedChanges ? styles.hideOnMobile : ""}`} href={publicSharePath} target="_blank">{publicLinkLabel}</Link>
                 ) : null}
-                <span className={styles.desktopExtras}>
-                  {publishButton}
-                  {revokeButton}
-                </span>
+                {revokeButton}
               </div>
             </div>
           </div>

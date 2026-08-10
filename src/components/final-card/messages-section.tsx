@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import { getCropStyle } from "@/lib/cards/media-slots";
 import type {
@@ -25,6 +26,16 @@ type Props = {
 
 const INITIAL_VISIBLE_COUNT = 4;
 const LOAD_MORE_STEP = 5;
+const PAPER_DESKTOP_MAX_PORTRAIT_ZOOM = 1.15;
+
+const getPaperPortraitCropStyle = (
+  asset: Pick<CardMediaAsset, "cropX" | "cropY" | "cropZoom">
+) => ({
+  ...getCropStyle(asset),
+  "--paper-desktop-crop-zoom": String(
+    Math.min(asset.cropZoom ?? 1, PAPER_DESKTOP_MAX_PORTRAIT_ZOOM)
+  )
+} as CSSProperties);
 
 const trimMessage = (message: string, maxChars: number) =>
   message.length > maxChars ? `${message.slice(0, maxChars - 1).trimEnd()}...` : message;
@@ -144,7 +155,7 @@ const renderMediaFigure = (
                 src={asset.publicUrl}
                 alt={asset.captionTitle || asset.captionSubtitle || title}
                 className={finalCardStyles.mediaImage}
-                style={getCropStyle(asset)}
+                style={getPaperPortraitCropStyle(asset)}
               />
             </span>
           ) : (

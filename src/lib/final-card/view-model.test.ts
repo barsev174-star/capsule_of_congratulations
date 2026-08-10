@@ -83,8 +83,7 @@ describe("buildFinalCardViewModel", () => {
         ...card,
         finalBlockSettings: {
           summary: false,
-          quotes: false,
-          "ai-summary": false
+          quotes: false
         }
       },
       contributions
@@ -217,7 +216,7 @@ describe("buildFinalCardViewModel", () => {
     const viewModel = buildFinalCardViewModel(
       {
         ...card,
-        finalBlockOrder: ["hero", "messages", "summary", "qualities", "quotes", "ai-summary", "closing", "memories"]
+        finalBlockOrder: ["hero", "messages", "summary", "qualities", "quotes", "closing", "memories"]
       },
       contributions
     );

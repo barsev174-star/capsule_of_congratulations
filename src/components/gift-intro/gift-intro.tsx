@@ -10,7 +10,6 @@ import styles from "./gift-intro.module.css";
 type GiftIntroState = "idle" | "playing" | "done";
 
 type GiftIntroProps = {
-  slug: string;
   recipientName: string;
   subtitle?: string;
   fromLabel?: string;
@@ -19,26 +18,21 @@ type GiftIntroProps = {
   accent?: string;
   closedEnvelopeImage?: string;
   openEnvelopeImage?: string;
-  forceIntro?: boolean;
   onIntroDone?: () => void;
   children: React.ReactNode;
 };
 
-const STORAGE_KEY_PREFIX = "gift-opened-";
-
 const INTRO_DURATION = 4800;
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
-const subscribeSessionStorage = (callback: () => void) => {
-  const handleStorage = (event: StorageEvent) => {
-    if (event.storageArea === sessionStorage) {
-      callback();
-    }
-  };
-  window.addEventListener("storage", handleStorage);
-  return () => window.removeEventListener("storage", handleStorage);
+const subscribeReducedMotion = (callback: () => void) => {
+  const mediaQuery = window.matchMedia?.(REDUCED_MOTION_QUERY);
+  mediaQuery?.addEventListener("change", callback);
+  return () => mediaQuery?.removeEventListener("change", callback);
 };
 
-const getOpenedServerSnapshot = () => false;
+const getReducedMotionSnapshot = () => window.matchMedia?.(REDUCED_MOTION_QUERY).matches ?? false;
+const getReducedMotionServerSnapshot = () => false;
 
 const LightweightCardPreview = ({
   recipientName,
@@ -68,7 +62,6 @@ const LightweightCardPreview = ({
 );
 
 export const GiftIntro = ({
-  slug,
   recipientName,
   subtitle = "для вас собрали тёплые слова",
   fromLabel,
@@ -77,27 +70,20 @@ export const GiftIntro = ({
   accent,
   closedEnvelopeImage = "/assets/gift/envelope-closed.png",
   openEnvelopeImage = "/assets/gift/envelope-open.png",
-  forceIntro = false,
   onIntroDone,
   children
 }: GiftIntroProps) => {
-  const getOpenedSnapshot = useCallback(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return sessionStorage.getItem(`${STORAGE_KEY_PREFIX}${slug}`) === "1";
-    } catch {
-      return false;
-    }
-  }, [slug]);
-
-  const alreadyOpened = useSyncExternalStore(subscribeSessionStorage, getOpenedSnapshot, getOpenedServerSnapshot);
+  const prefersReducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot
+  );
 
   const [state, setState] = useState<GiftIntroState>("idle");
   const [isFinalCardRevealed, setIsFinalCardRevealed] = useState(false);
   const [isHoveringCta, setIsHoveringCta] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const onIntroDoneRef = useRef(onIntroDone);
-  const shouldSkipIntro = alreadyOpened && state === "idle" && !forceIntro;
 
   useEffect(() => {
     onIntroDoneRef.current = onIntroDone;
@@ -109,13 +95,13 @@ export const GiftIntro = ({
   }, []);
 
   useEffect(() => {
-    const shouldLockScroll = !shouldSkipIntro && state !== "done";
+    const shouldLockScroll = state !== "done";
     document.body.style.overflow = shouldLockScroll ? "hidden" : "";
 
     return () => {
       document.body.style.overflow = "";
     };
-  }, [state, shouldSkipIntro]);
+  }, [state]);
 
   useEffect(() => {
     return () => clearTimers();
@@ -125,14 +111,6 @@ export const GiftIntro = ({
     timersRef.current.push(setTimeout(callback, delay));
   }, []);
 
-  const saveOpenedFlag = useCallback(() => {
-    try {
-      sessionStorage.setItem(`${STORAGE_KEY_PREFIX}${slug}`, "1");
-    } catch {
-      // ignore storage errors
-    }
-  }, [slug]);
-
   const handleOpen = useCallback(() => {
     if (state !== "idle") {
       return;
@@ -140,33 +118,30 @@ export const GiftIntro = ({
 
     clearTimers();
     setIsFinalCardRevealed(false);
+    if (prefersReducedMotion) {
+      setState("done");
+      onIntroDoneRef.current?.();
+      return;
+    }
     setState("playing");
     schedule(() => setIsFinalCardRevealed(true), 3550);
     schedule(() => {
-      saveOpenedFlag();
       setState("done");
       onIntroDoneRef.current?.();
     }, INTRO_DURATION);
-  }, [state, saveOpenedFlag, clearTimers, schedule]);
+  }, [state, prefersReducedMotion, clearTimers, schedule]);
 
   const handleSkip = useCallback(() => {
     clearTimers();
-    saveOpenedFlag();
-
     setState("done");
     onIntroDoneRef.current?.();
-  }, [clearTimers, saveOpenedFlag]);
+  }, [clearTimers]);
 
   const handleReplay = useCallback(() => {
     clearTimers();
-    try {
-      sessionStorage.removeItem(`${STORAGE_KEY_PREFIX}${slug}`);
-    } catch {
-      // ignore
-    }
     setIsFinalCardRevealed(false);
     setState("idle");
-  }, [clearTimers, slug]);
+  }, [clearTimers]);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -177,10 +152,6 @@ export const GiftIntro = ({
     },
     [handleOpen]
   );
-
-  if (shouldSkipIntro) {
-    return <>{children}</>;
-  }
 
   const name = recipientName.trim() || "Вам";
   const accentColor = accent ?? "#bf6c47";
@@ -195,7 +166,7 @@ export const GiftIntro = ({
         <div className={styles.replayBar}>
           <button type="button" className={styles.replayButton} onClick={handleReplay}>
             <span aria-hidden="true">↺</span>
-            Открыть ещё раз
+            Посмотреть ещё раз
           </button>
         </div>
       </div>
@@ -206,7 +177,7 @@ export const GiftIntro = ({
     <>
       {showFinalCard ? <div className={`${styles.finalReveal} ${styles.finalRevealReady}`}>{children}</div> : null}
       <div
-        className={`${styles.page} ${stateClass}`}
+        className={`${styles.page} ${stateClass} ${prefersReducedMotion ? styles.reducedMotion : ""}`}
         data-intro-state={state}
         data-animation-id={animationId}
         aria-live="polite"
