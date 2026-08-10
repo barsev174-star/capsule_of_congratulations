@@ -1,6 +1,7 @@
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { basename, extname, join, resolve, sep } from "node:path";
+import sharp from "sharp";
 
 // Public derivatives are deliberately kept outside Next's static `public/` tree.
 // They are served only after the share token and lifecycle have been checked.
@@ -121,4 +122,22 @@ export const deletePublicSharePhotoDerivative = async (storagePath: string) => {
 export const getPublicSharePhotoContentType = (fileName: string) => {
   const extension = extname(basename(fileName)).toLowerCase();
   return extension === ".png" ? "image/png" : extension === ".webp" ? "image/webp" : "image/jpeg";
+};
+
+export const preparePublicSharePhotoResponse = async ({
+  file,
+  fileName,
+  exportCompatible
+}: {
+  file: Buffer;
+  fileName: string;
+  exportCompatible: boolean;
+}) => {
+  const contentType = getPublicSharePhotoContentType(fileName);
+  if (!exportCompatible || contentType !== "image/webp") {
+    return { file, contentType };
+  }
+
+  const png = await sharp(file).png().toBuffer();
+  return { file: png, contentType: "image/png" as const };
 };

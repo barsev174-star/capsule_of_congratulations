@@ -31,6 +31,11 @@ const trim = (text: string | null | undefined, max: number) => {
   return `${cut || normalized.slice(0, max).trimEnd()}…`;
 };
 const asset = (origin: string, path: string) => new URL(path, origin).toString();
+const exportPhoto = (origin: string, path: string) => {
+  const url = new URL(path, origin);
+  url.searchParams.set("export", "1");
+  return url.toString();
+};
 const publicOrigin = (request: Request) => {
   const configured = process.env.NEXT_PUBLIC_SITE_URL;
   return typeof configured === "string" && configured.trim() ? new URL(configured).origin : new URL(request.url).origin;
@@ -140,7 +145,7 @@ const ExportCard = ({ payload, format, origin }: { payload: Payload; format: For
   const p = layout[format];
   const theme: Theme = payload.card.templateId === "route-adventure" ? "route" : "paper";
   const a = themeAssets[theme];
-  const photos = payload.photos.slice(0, formats[format].photos).map((photo) => ({ ...photo, url: new URL(photo.url, origin).toString() }));
+  const photos = payload.photos.slice(0, formats[format].photos).map((photo) => ({ ...photo, url: exportPhoto(origin, photo.url) }));
   const phrases = payload.phrases.slice(0, formats[format].phrases);
   const counters = [payload.share.showGreetingCount ? `${payload.card.greetingCount} поздравлений` : null, payload.share.showPhotoCount && payload.card.photoCount > 0 ? `${payload.card.photoCount} фото в открытке` : null].filter(Boolean);
   const panelStyle = theme === "route" ? { border: "1px solid rgba(184,137,71,.58)", borderRadius: 15, boxShadow: "0 10px 22px rgba(0,0,0,.2)" } : {};
