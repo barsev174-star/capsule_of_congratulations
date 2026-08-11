@@ -1,4 +1,4 @@
-import type { AiGenerationMode, AiStyle, AiVariant, AiVariantType } from "@/lib/ai/types";
+import type { AiEditInstruction, AiGenerationMode, AiStyle, AiVariant, AiVariantType } from "@/lib/ai/types";
 import { inferOccasionContext } from "@/lib/ai/greeting-context";
 import { containsTechnicalText, countCharacters } from "@/lib/ai/validation";
 
@@ -613,4 +613,88 @@ export const inspectProviderVariants = (input: ProviderValidationInput): Provide
 export const validateProviderVariants = (input: ProviderValidationInput): AiVariant[] | null => {
   const result = inspectProviderVariants(input);
   return result.variants.length === 3 && result.issues.length === 0 ? result.variants : null;
+};
+
+export type LiteralEditValidationIssue = {
+  code: "INVALID_RESULT" | "TOO_LONG" | "NOT_SHORTER" | "CREATIVE_REWRITE" | "INVENTED_FACT";
+  message: string;
+};
+
+export type LiteralEditValidationResult = {
+  variant: AiVariant | null;
+  issues: LiteralEditValidationIssue[];
+};
+
+const extractLiteralEditText = (value: unknown) => {
+  const variants = Array.isArray(value)
+    ? value
+    : value && typeof value === "object" && Array.isArray((value as { variants?: unknown }).variants)
+      ? (value as { variants: unknown[] }).variants
+      : null;
+
+  if (!variants || variants.length !== 1) return null;
+  const item = variants[0];
+  if (!item || typeof item !== "object") return null;
+  const raw = item as Record<string, unknown>;
+  if ((raw.type ?? raw.id) !== "style" || typeof raw.text !== "string") return null;
+  return raw.text.replace(/\s+/g, " ").trim();
+};
+
+const numberTokens = (value: string) => value.match(/\d+(?:[.,]\d+)?/g) ?? [];
+
+export const inspectLiteralEditResult = (input: {
+  value: unknown;
+  instruction: Extract<AiEditInstruction, "shorten" | "proofread">;
+  draftNotes: string;
+  maxLength: number;
+}): LiteralEditValidationResult => {
+  const issues: LiteralEditValidationIssue[] = [];
+  const text = extractLiteralEditText(input.value);
+
+  if (!text) {
+    return {
+      variant: null,
+      issues: [{ code: "INVALID_RESULT", message: "верни ровно один непустой результат типа style" }]
+    };
+  }
+
+  if (containsTechnicalText(text)) {
+    issues.push({ code: "INVALID_RESULT", message: "убери технический или служебный текст" });
+  }
+  if (countCharacters(text) > input.maxLength) {
+    issues.push({ code: "TOO_LONG", message: `уложи результат в ${input.maxLength} символов` });
+  }
+  if (numberTokens(text).join("|") !== numberTokens(input.draftNotes).join("|")) {
+    issues.push({ code: "INVENTED_FACT", message: "не добавляй, не удаляй и не изменяй числа или даты" });
+  }
+
+  if (input.instruction === "shorten") {
+    if (countCharacters(text) >= countCharacters(input.draftNotes)) {
+      issues.push({ code: "NOT_SHORTER", message: "результат должен быть строго короче исходного текста" });
+    }
+  } else {
+    const sourceLength = countCharacters(input.draftNotes);
+    const allowedDifference = Math.max(24, Math.ceil(sourceLength * 0.22));
+    if (
+      textSimilarity(text, input.draftNotes) < 0.72 ||
+      Math.abs(countCharacters(text) - sourceLength) > allowedDifference ||
+      Math.abs(countSentences(text) - countSentences(input.draftNotes)) > 1
+    ) {
+      issues.push({
+        code: "CREATIVE_REWRITE",
+        message: "исправь только орфографию, пунктуацию и явную грамматику, не переписывая лексику, тон и структуру"
+      });
+    }
+  }
+
+  return {
+    variant: issues.length === 0
+      ? {
+          id: "style",
+          label: input.instruction === "shorten" ? "Сокращённый текст" : "Исправленный текст",
+          text
+        }
+      : null,
+    issues
+  };
 };

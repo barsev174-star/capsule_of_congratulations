@@ -1,4 +1,9 @@
-import { inspectProviderVariants, textSimilarity, validateProviderVariants } from "@/lib/ai/response-validation";
+import {
+  inspectLiteralEditResult,
+  inspectProviderVariants,
+  textSimilarity,
+  validateProviderVariants
+} from "@/lib/ai/response-validation";
 
 const variants = [
   { type: "short", label: "Короткий", text: "Анна, желаю больше радостных и спокойных дней." },
@@ -59,6 +64,46 @@ describe("AI provider response validation", () => {
 
     expect(result).toHaveLength(3);
     expect(result?.every((variant) => variant.text.length < source.length)).toBe(true);
+  });
+
+  it("accepts one literal proofreading result without a creative rewrite", () => {
+    const source = "Анна, спасибо за поддержку , доброту и помощь в 2026 году!";
+    const result = inspectLiteralEditResult({
+      value: [{ id: "style", text: "Анна, спасибо за поддержку, доброту и помощь в 2026 году!" }],
+      instruction: "proofread",
+      draftNotes: source,
+      maxLength: 280
+    });
+
+    expect(result.issues).toEqual([]);
+    expect(result.variant?.label).toBe("Исправленный текст");
+  });
+
+  it("rejects a creative rewrite from proofreading", () => {
+    const result = inspectLiteralEditResult({
+      value: [{ id: "style", text: "Пусть впереди будет море ярких событий и удивительных побед!" }],
+      instruction: "proofread",
+      draftNotes: "Анна, спасибо за поддержку и доброту. Желаю спокойных дней!",
+      maxLength: 280
+    });
+
+    expect(result.variant).toBeNull();
+    expect(result.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "CREATIVE_REWRITE" })
+    ]));
+  });
+
+  it("requires one shortening result to be shorter and inside the limit", () => {
+    const source = "Анна, спасибо за поддержку и помощь во время учёбы. Желаю больше спокойных и радостных дней.";
+    const result = inspectLiteralEditResult({
+      value: [{ type: "style", text: "Анна, спасибо за поддержку в учёбе. Желаю радостных дней." }],
+      instruction: "shorten",
+      draftNotes: source,
+      maxLength: 70
+    });
+
+    expect(result.issues).toEqual([]);
+    expect(result.variant?.text.length).toBeLessThan(source.length);
   });
 
   it("rejects an invented patronymic", () => {

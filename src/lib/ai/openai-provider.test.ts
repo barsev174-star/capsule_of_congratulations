@@ -3,6 +3,7 @@ import {
   buildMatrixPromptV2,
   buildMatrixPromptV3,
   buildMatrixPromptV4,
+  buildGreetingTask,
   parseOpenAiGreetingContent,
   parseOpenAiMatrixContent
 } from "@/lib/ai/openai-provider";
@@ -78,6 +79,19 @@ describe("OpenAI greeting response", () => {
     expect(variants).toEqual([
       { id: "style", label: "Ваш стиль", text: "Новый вариант в выбранном стиле" }
     ]);
+  });
+
+  it("builds a literal one-result proofread task", () => {
+    const task = buildGreetingTask({
+      ...matrixInput,
+      mode: "improve",
+      editInstruction: "proofread",
+      requestedVariantTypes: ["style"]
+    });
+
+    expect(task).toContain("Исправить только орфографию, пунктуацию и явные грамматические ошибки");
+    expect(task).toContain("Верни ровно один результат типа style");
+    expect(task).not.toContain("полностью перепиши");
   });
 
   it("parses seven unique matrix variants", () => {

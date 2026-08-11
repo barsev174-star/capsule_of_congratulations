@@ -608,8 +608,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
               <div className={styles.closingContent}>
                 {isRouteAdventure ? (
                   <div className={styles.routeFooterSignature}>
-                    <p className={styles.routeFooterLead}>{model.footerSignature.split(/\n{2,}/)[0]}</p>
-                    <p className={styles.routeFooterSign}>{model.footerSignature.split(/\n{2,}/)[1] ?? "С теплом,\nдрузья"}</p>
+                    <p className={styles.routeFooterSign}>{model.footerSignature}</p>
                   </div>
                 ) : (
                   <p className={styles.closingSignature}>{model.footerSignature}</p>

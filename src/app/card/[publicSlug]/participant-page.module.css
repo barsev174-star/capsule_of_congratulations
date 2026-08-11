@@ -797,28 +797,20 @@
 
 .wandIcon,
 .aiButtonIcon {
-  position: relative;
-  display: inline-grid;
-  place-items: center;
+  display: block;
   flex: 0 0 auto;
   width: 58px;
   height: 58px;
+  box-sizing: border-box;
+  padding: 14px;
   border-radius: 999px;
   background: rgba(255, 252, 248, 0.9);
   color: #e9652f;
-  font-size: 1.5rem;
-  font-weight: 800;
-  box-shadow: 0 10px 26px rgba(83, 49, 28, 0.08);
-}
-
-.wandIcon::before,
-.wandIcon::after,
-.aiButtonIcon::before,
-.aiButtonIcon::after {
-  content: "";
-  position: absolute;
-  background: currentColor;
-  border-radius: 999px;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.08);
 }
 
 .aiSpinner {
@@ -833,43 +825,13 @@
 
 @keyframes aiSpinnerTurn { to { rotate: 360deg; } }
 
-.wandIcon::before,
-.aiButtonIcon::before {
-  width: 24px;
-  height: 4px;
-  transform: rotate(-38deg);
-}
-
-.wandIcon::after,
-.aiButtonIcon::after {
-  width: 7px;
-  height: 7px;
-  top: 13px;
-  right: 14px;
-  background: transparent;
-  border-top: 2px solid currentColor;
-  border-right: 2px solid currentColor;
-  transform: rotate(-12deg);
-}
-
 .aiButtonIcon {
   width: 22px;
   height: 22px;
+  padding: 0;
+  border-radius: 0;
   background: transparent;
   box-shadow: none;
-  font-size: 1.1rem;
-}
-
-.aiButtonIcon::before {
-  width: 18px;
-  height: 3px;
-}
-
-.aiButtonIcon::after {
-  width: 6px;
-  height: 6px;
-  top: 3px;
-  right: 1px;
 }
 
 .list {
@@ -2206,35 +2168,14 @@
 }
 
 .aiTriggerIcon {
-  position: relative;
-  display: inline-grid;
-  place-items: center;
+  display: block;
   flex: 0 0 auto;
-  width: 18px;
-  height: 18px;
-}
-
-.aiTriggerIcon::before,
-.aiTriggerIcon::after {
-  content: "";
-  position: absolute;
-  border-radius: 999px;
-}
-
-.aiTriggerIcon::before {
-  width: 12px;
-  height: 2.5px;
-  background: currentColor;
-  transform: rotate(-38deg);
-}
-
-.aiTriggerIcon::after {
-  width: 4px;
-  height: 4px;
-  top: 1px;
-  right: 1px;
-  background: transparent;
-  box-shadow: 0 0 0 1.6px currentColor;
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .sidePanel {

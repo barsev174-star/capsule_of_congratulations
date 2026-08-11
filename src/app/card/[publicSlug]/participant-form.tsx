@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AI_DRAFT_LIMIT } from "@/lib/ai/validation";
 import type { AiVariant } from "@/lib/ai/types";
 import { AiHelper } from "./ai-helper";
+import { TextAssistIcon } from "@/components/icons/text-assist-icon";
 import { GiftPollVote } from "./gift-poll-vote";
 import { JoinSidePanel } from "./join-side-panel";
 import { GREETING_HINTS, type GreetingHint, type GreetingHintId } from "./greeting-hints";
@@ -494,7 +495,7 @@ export const ParticipantForm = ({
                         onClick={generateAiVariants}
                         disabled={isAiPending || aiLimitReached}
                       >
-                        <span className={styles.aiTriggerIcon} aria-hidden="true" />
+                        <TextAssistIcon className={styles.aiTriggerIcon} />
                         {isAiPending ? "Готовим варианты..." : "Помочь с текстом"}
                       </button>
                     </div>

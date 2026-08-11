@@ -130,6 +130,14 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
     issues.push({ field: "editInstruction", message: "Операция редактирования доступна только для готового поздравления." });
   }
 
+  if (editInstruction === "shorten" && mode !== "shorten") {
+    issues.push({ field: "editInstruction", message: "Сокращение должно использовать режим сокращения текста." });
+  }
+
+  if (editInstruction === "proofread" && mode !== "improve") {
+    issues.push({ field: "editInstruction", message: "Исправление ошибок должно использовать режим проверки текста." });
+  }
+
   if (issues.length > 0) return { success: false, issues };
 
   return {

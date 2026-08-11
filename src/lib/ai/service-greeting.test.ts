@@ -131,6 +131,73 @@ describe("AI greeting service validation flow", () => {
     expect(mocks.completeAiGeneration).toHaveBeenCalledOnce();
   });
 
+  it("returns one literal proofreading result from GigaChat", async () => {
+    const draftNotes = "Анна, спасибо за поддержку , доброту и помощь в 2026 году!";
+    mocks.generateWithGigaChat.mockResolvedValue({
+      model: "GigaChat-2-Pro",
+      variants: [{ id: "style", label: "style", text: "Анна, спасибо за поддержку, доброту и помощь в 2026 году!" }]
+    });
+
+    const result = await generateParticipantMessage({
+      ...input,
+      draftNotes,
+      mode: "improve",
+      editInstruction: "proofread"
+    });
+
+    expect(result.variants).toEqual([
+      expect.objectContaining({ id: "style", label: "Исправленный текст" })
+    ]);
+    expect(mocks.generateWithGigaChat.mock.calls[0][0].requestedVariantTypes).toEqual(["style"]);
+  });
+
+  it("returns one literal shortening result from OpenAI without entering ladder mode", async () => {
+    process.env.AI_GREETING_PROVIDER = "openai";
+    process.env.AI_GREETING_MODE = "ladder";
+    const draftNotes = "Анна, спасибо за поддержку и помощь во время учёбы. Желаю больше спокойных и радостных дней.";
+    mocks.generateWithOpenAi.mockResolvedValue({
+      model: "gpt-5-mini",
+      variants: [{ id: "style", label: "style", text: "Анна, спасибо за поддержку в учёбе. Желаю радостных дней." }]
+    });
+
+    const result = await generateParticipantMessage({
+      ...input,
+      draftNotes,
+      messageLimit: 70,
+      mode: "shorten",
+      editInstruction: "shorten"
+    });
+
+    expect(result.variants).toEqual([
+      expect.objectContaining({ id: "style", label: "Сокращённый текст" })
+    ]);
+    expect(mocks.generateWithOpenAi.mock.calls[0][0].requestedVariantTypes).toEqual(["style"]);
+    expect(mocks.generateLadderWithOpenAi).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { instruction: "proofread" as const, mode: "improve" as const, messageLimit: 280 },
+    { instruction: "shorten" as const, mode: "shorten" as const, messageLimit: 72 }
+  ])("uses one safe local result for $instruction", async ({ instruction, mode, messageLimit }) => {
+    process.env.AI_PROVIDER = "mock";
+    const draftNotes = "Анна, спасибо за поддержку , доброту и помощь во время учёбы. Желаю больше спокойных дней!";
+
+    const result = await generateParticipantMessage({
+      ...input,
+      draftNotes,
+      messageLimit,
+      mode,
+      editInstruction: instruction
+    });
+
+    expect(result.variants).toHaveLength(1);
+    expect(result.variants[0].id).toBe("style");
+    expect(result.variants[0].text.length).toBeLessThanOrEqual(messageLimit);
+    if (instruction === "shorten") expect(result.variants[0].text.length).toBeLessThan(draftNotes.length);
+    expect(mocks.generateWithGigaChat).not.toHaveBeenCalled();
+    expect(mocks.generateWithOpenAi).not.toHaveBeenCalled();
+  });
+
   it("requires at least six greetings before generating qualities", async () => {
     const contributions = Array.from({ length: 5 }, (_, index) => ({
       id: `quality-${index + 1}`,

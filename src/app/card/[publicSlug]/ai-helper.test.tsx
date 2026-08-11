@@ -37,7 +37,7 @@ describe("AiHelper form integration", () => {
     const sourceText = "Анна, спасибо за твою поддержку и доброту. Желаю радости каждый день!";
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ result: { variants, generationId: "generation-1", usage: { remaining: 2 }, messageLimit: 500 } })
+      json: async () => ({ result: { variants: [variants[2]], generationId: "generation-1", usage: { remaining: 2 }, messageLimit: 500 } })
     });
     vi.stubGlobal("fetch", fetchMock);
 
@@ -57,7 +57,7 @@ describe("AiHelper form integration", () => {
     expect(screen.getByText(sourceText)).toBeInTheDocument();
     expect(screen.queryByLabelText("Что хотите сказать?")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /сократить/i }));
-    await userEvent.click(screen.getByRole("button", { name: "Показать варианты" }));
+    await userEvent.click(screen.getByRole("button", { name: "Показать результат" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const request = JSON.parse(fetchMock.mock.calls[0][1].body as string);
@@ -68,7 +68,9 @@ describe("AiHelper form integration", () => {
       style: "short-no-pathos",
       editInstruction: "shorten"
     });
-    expect(await screen.findByRole("button", { name: "Заменить текст этим вариантом" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Заменить текст результатом" })).toBeInTheDocument();
+    expect(screen.getByText("Результат готов")).toBeInTheDocument();
+    expect(screen.queryByRole("tablist", { name: "Варианты поздравления" })).not.toBeInTheDocument();
   });
 
   it("для любого готового поздравления показывает только безопасные операции", () => {

@@ -52,7 +52,12 @@ import {
   validateBestQuoteCandidates,
   validateQualityCandidates
 } from "@/lib/ai/card-insights";
-import { findSharedTemplatePhrase, inspectProviderVariants, textSimilarity } from "@/lib/ai/response-validation";
+import {
+  findSharedTemplatePhrase,
+  inspectLiteralEditResult,
+  inspectProviderVariants,
+  textSimilarity
+} from "@/lib/ai/response-validation";
 import type { ProviderVariantValidationIssue } from "@/lib/ai/response-validation";
 import { AiError } from "@/lib/ai/types";
 import type {
@@ -381,6 +386,38 @@ const buildShortenedVariants = (input: AiGenerationInput): AiVariant[] => {
   ];
 };
 
+const proofreadLocally = (value: string) => {
+  const normalized = cleanText(value)
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .replace(/([,;:!?])(?=[\p{L}\p{N}])/gu, "$1 ")
+    .replace(/([.!?])\1+/g, "$1");
+  return normalized.replace(/^\p{Ll}/u, (letter) => letter.toLocaleUpperCase("ru-RU"));
+};
+
+const shortenOnceAtWordBoundary = (value: string, limit: number) => {
+  const normalized = cleanText(value);
+  const source = Array.from(normalized);
+  const target = Math.max(1, Math.min(limit, source.length - 1));
+  const slice = source.slice(0, target).join("");
+  const boundary = slice.lastIndexOf(" ");
+  const shortened = slice
+    .slice(0, boundary >= Math.min(40, Math.floor(target * 0.6)) ? boundary : slice.length)
+    .replace(/[,:;\s]+$/, "")
+    .trim();
+  return shortened || source[0];
+};
+
+const buildLiteralEditVariant = (
+  input: AiGenerationInput,
+  instruction: "shorten" | "proofread"
+): AiVariant => ({
+  id: "style",
+  label: instruction === "shorten" ? "Сокращённый текст" : "Исправленный текст",
+  text: instruction === "shorten"
+    ? shortenOnceAtWordBoundary(input.draftNotes, input.messageLimit)
+    : proofreadLocally(input.draftNotes)
+});
+
 const getProviderName = (value?: string): AiProviderName =>
   value === "gigachat" || value === "openai" ? value : "mock";
 
@@ -495,13 +532,16 @@ const rescueFromMatrixPool = (
 
 export const generateParticipantMessage = async (input: AiGenerationInput): Promise<AiGenerationResult> => {
   const providerName = getProviderName(process.env.AI_GREETING_PROVIDER ?? process.env.AI_PROVIDER);
+  const literalEditInstruction = input.editInstruction === "shorten" || input.editInstruction === "proofread"
+    ? input.editInstruction
+    : null;
   const matrixRequested = process.env.AI_GREETING_MODE === "matrix";
   const ladderRequested = process.env.AI_GREETING_MODE === "ladder";
   const twoStepRequested = process.env.AI_GREETING_EXPERIMENT === "two_step" || process.env.AI_GREETING_EXPERIMENT === "semantic";
   // The editor's "Улучшить с AI" uses the same source text and needs the
   // same semantic safeguards as a newly composed participant message.
   // Shortening remains a separate, length-focused workflow.
-  const supportsSpecialMode = providerName === "openai" && (input.mode ?? "compose") !== "shorten";
+  const supportsSpecialMode = providerName === "openai" && !literalEditInstruction && (input.mode ?? "compose") !== "shorten";
   const greetingMode = twoStepRequested && supportsSpecialMode
     ? "two_step"
     : ladderRequested && supportsSpecialMode
@@ -554,6 +594,82 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
   const matrixSelectionPool: AiVariant[][] = [];
 
   try {
+    if (literalEditInstruction) {
+      let literalIssues: string[] = [];
+
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const providerInput = {
+            ...input,
+            existingMessages,
+            fromLabel: input.fromLabel ?? "",
+            attempt,
+            validationFeedback: literalIssues,
+            requestedVariantTypes: ["style" as const]
+          };
+          providerResult = providerName === "gigachat"
+            ? await generateWithGigaChat(providerInput)
+            : providerName === "openai"
+              ? await generateWithOpenAi(providerInput)
+              : {
+                  variants: [buildLiteralEditVariant(input, literalEditInstruction)],
+                  model: "local-literal-edit-v1"
+                };
+        } catch (error) {
+          if (
+            error instanceof AiError &&
+            (error.code === "PROVIDER_UNAVAILABLE" || error.code === "INVALID_PROVIDER_RESPONSE" || error.code === "INVALID_JSON")
+          ) {
+            lastProviderError = error;
+            literalIssues = error.code === "INVALID_JSON"
+              ? ["верни синтаксически валидный JSON с одним результатом типа style"]
+              : literalIssues;
+            if (attempt === 0) continue;
+            break;
+          }
+          throw error;
+        }
+
+        const validation = inspectLiteralEditResult({
+          value: providerResult.variants,
+          instruction: literalEditInstruction,
+          draftNotes: input.draftNotes,
+          maxLength: input.messageLimit
+        });
+        literalIssues = validation.issues.map((issue) => issue.message);
+        if (validation.variant) {
+          variants = [validation.variant];
+          break;
+        }
+      }
+
+      if (!variants || !providerResult) {
+        if (lastProviderError) throw lastProviderError;
+        throw new AiError(
+          "AI_VALIDATION_FAILED",
+          `Literal edit validation failed: ${literalIssues.join("; ") || "invalid result"}`
+        );
+      }
+
+      await completeAiGeneration({
+        id: generationId,
+        cardId: input.cardId,
+        generationInput: { ...input, existingMessages },
+        variants,
+        provider: providerName,
+        model: providerResult.model
+      });
+      logger.info("ai.literal_edit_generated", "Literal AI edit generated", {
+        cardId: input.cardId,
+        provider: providerName,
+        model: providerResult.model,
+        editInstruction: literalEditInstruction,
+        resultLength: Array.from(variants[0].text).length,
+        remainingCardGenerations: reservation.usage.remaining
+      });
+      return { generationId, variants, usage: reservation.usage, messageLimit: input.messageLimit };
+    }
+
     if (greetingMode === "ladder") {
       const ladderInput = {
         recipientName: input.recipientName,

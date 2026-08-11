@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { AI_DRAFT_LIMIT, AI_SHORTEN_DRAFT_LIMIT } from "@/lib/ai/validation";
 import type { AiGenerationMode, AiStyle, AiVariant } from "@/lib/ai/types";
+import { TextAssistIcon } from "@/components/icons/text-assist-icon";
 import styles from "./participant-page.module.css";
 
 type EditOperation = "shorten" | "warmer" | "formal" | "proofread" | "detail" | "alternative";
@@ -114,7 +115,9 @@ export const AiHelper = ({
         })
       });
     } catch {
-      setIssues(["Не удалось подготовить варианты. Попробуйте ещё раз через несколько секунд."]);
+      setIssues([isEditingExisting
+        ? "Не удалось подготовить результат. Попробуйте ещё раз через несколько секунд."
+        : "Не удалось подготовить варианты. Попробуйте ещё раз через несколько секунд."]);
       return;
     } finally {
       pendingRequestId.current = null;
@@ -124,13 +127,15 @@ export const AiHelper = ({
     if (!response.ok) {
       setLimitReached(response.status === 429);
       if (response.status >= 500) {
-        setIssues(["Не удалось подготовить варианты. Попробуйте ещё раз через несколько секунд."]);
+        setIssues([isEditingExisting
+          ? "Не удалось подготовить результат. Попробуйте ещё раз через несколько секунд."
+          : "Не удалось подготовить варианты. Попробуйте ещё раз через несколько секунд."]);
         return;
       }
       setIssues(
         payload.issues
           ? payload.issues.map((issue: { message: string }) => issue.message)
-          : [payload.message ?? "Не удалось получить варианты текста."]
+          : [payload.message ?? (isEditingExisting ? "Не удалось получить результат." : "Не удалось получить варианты текста.")]
       );
       return;
     }
@@ -167,13 +172,13 @@ export const AiHelper = ({
           </h2>
           <p className={styles.hint}>
             {isEditingExisting
-              ? "Можно бережно сократить текст или исправить ошибки без изменения смысла и авторского голоса. Сначала вы увидите варианты."
+              ? "Можно бережно сократить текст или исправить ошибки без изменения смысла и авторского голоса. Сначала вы увидите один результат."
               : isLadderMode
               ? `Набросайте мысли своими словами — AI предложит аккуратный, более тёплый и более живой варианты длиной до ${resultLimit} символов.`
               : `Набросайте мысли своими словами — AI соберёт из них три варианта длиной до ${resultLimit} символов.`}
           </p>
         </div>
-        {isJoinVariant ? <span className={styles.wandIcon} aria-hidden="true" /> : null}
+        {isJoinVariant ? <TextAssistIcon className={styles.wandIcon} /> : null}
       </div>
 
       <div
@@ -277,12 +282,14 @@ export const AiHelper = ({
           >
             {isPending
               ? <span className={styles.aiSpinner} aria-hidden="true" />
-              : isJoinVariant ? <span className={styles.aiButtonIcon} aria-hidden="true" /> : null}
-            {isPending ? "Готовим варианты…" : isEditingExisting ? "Показать варианты" : "Получить 3 варианта"}
+              : isJoinVariant ? <TextAssistIcon className={styles.aiButtonIcon} /> : null}
+            {isPending ? (isEditingExisting ? "Готовим результат…" : "Готовим варианты…") : isEditingExisting ? "Показать результат" : "Получить 3 варианта"}
           </button>
           {remaining !== null ? (
             <span className={styles.note}>
-              {remaining > 0 ? `Можно попробовать ещё ${remaining} раз` : "Лимит AI-вариантов исчерпан"}
+              {remaining > 0
+                ? `Можно попробовать ещё ${remaining} раз`
+                : isEditingExisting ? "Лимит AI-операций исчерпан" : "Лимит AI-вариантов исчерпан"}
             </span>
           ) : null}
         </div>
@@ -299,24 +306,35 @@ export const AiHelper = ({
           {isPending ? (
             <div className={styles.aiGenerationProgress} role="status">
               <span className={styles.aiSpinner} aria-hidden="true" />
-              <span><strong>Готовим ещё три варианта</strong>Текущие варианты останутся на экране до готовности новых.</span>
+              <span>
+                <strong>{isEditingExisting ? "Готовим новый результат" : "Готовим ещё три варианта"}</strong>
+                {isEditingExisting
+                  ? "Текущий результат останется на экране до готовности нового."
+                  : "Текущие варианты останутся на экране до готовности новых."}
+              </span>
             </div>
           ) : null}
-          {!isPending && issues.length === 0 ? <p key={generationId} className={styles.aiGenerationReady} role="status">Три варианта готовы</p> : null}
-          <div className={styles.variantTabs} role="tablist" aria-label="Варианты поздравления">
-            {variants.map((item, index) => (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                aria-selected={index === activeVariantIndex}
-                className={`${styles.variantTab} ${index === activeVariantIndex ? styles.variantTabActive : ""}`}
-                onClick={() => setActiveVariantIndex(index)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+          {!isPending && issues.length === 0 ? (
+            <p key={generationId} className={styles.aiGenerationReady} role="status">
+              {isEditingExisting ? "Результат готов" : "Три варианта готовы"}
+            </p>
+          ) : null}
+          {!isEditingExisting ? (
+            <div className={styles.variantTabs} role="tablist" aria-label="Варианты поздравления">
+              {variants.map((item, index) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={index === activeVariantIndex}
+                  className={`${styles.variantTab} ${index === activeVariantIndex ? styles.variantTabActive : ""}`}
+                  onClick={() => setActiveVariantIndex(index)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <article className={styles.variantCard}>
             <h3 className={styles.variantTitle}>{activeVariant.label}</h3>
             <p className={styles.message}>{activeVariant.text}</p>
@@ -329,7 +347,7 @@ export const AiHelper = ({
                   setInsertFeedback("Текст вставлен в поздравление");
                 }}
               >
-                {isEditingExisting ? "Заменить текст этим вариантом" : "Вставить в поздравление"}
+                {isEditingExisting ? "Заменить текст результатом" : "Вставить в поздравление"}
               </button>
               <button
                 type="button"
@@ -337,7 +355,7 @@ export const AiHelper = ({
                 disabled={isPending || limitReached}
                 onClick={generateSelectedVariant}
               >
-                {isPending ? "Готовим ещё…" : "Попробовать ещё"}
+                {isPending ? "Готовим ещё…" : isEditingExisting ? "Повторить операцию" : "Попробовать ещё"}
               </button>
             </div>
             {insertFeedback ? <p className={styles.insertFeedback} aria-live="polite">{insertFeedback}</p> : null}

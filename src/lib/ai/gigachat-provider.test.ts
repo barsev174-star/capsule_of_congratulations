@@ -37,14 +37,29 @@ describe("GigaChat greeting prompts", () => {
     expect(prompt).toContain("Вариант style / «Ваш стиль»");
   });
 
-  it("passes the selected editing operation into the prompt", () => {
+  it("builds a literal one-result proofreading prompt", () => {
     const prompt = buildGreetingPrompt({
       ...buildInput("warm-simple"),
       mode: "improve",
       editInstruction: "proofread"
     });
 
-    expect(prompt).toContain("Конкретная задача: исправь только ошибки");
+    expect(prompt).toContain("Исправь только орфографию, пунктуацию и явные грамматические ошибки");
+    expect(prompt).toContain('{"variants":[{"type":"style","text":"..."}]}');
+    expect(prompt).not.toContain("Сделай три улучшенных варианта");
+  });
+
+  it("builds a literal one-result shortening prompt", () => {
+    const prompt = buildGreetingPrompt({
+      ...buildInput("short-no-pathos"),
+      mode: "shorten",
+      editInstruction: "shorten",
+      messageLimit: 120
+    });
+
+    expect(prompt).toContain("строго короче исходного");
+    expect(prompt).toContain("не длиннее лимита");
+    expect(prompt).toContain('{"variants":[{"type":"style","text":"..."}]}');
   });
 
   it("strengthens the system instruction only on retry", () => {
@@ -58,6 +73,14 @@ describe("GigaChat greeting prompts", () => {
     const prompt = buildGreetingSystemPrompt(1, ["short: сократи текст до 280 символов"]);
 
     expect(prompt).toContain("short: сократи текст до 280 символов");
+  });
+
+  it("does not ask a literal retry to rewrite the source creatively", () => {
+    const prompt = buildGreetingSystemPrompt(1, ["сохрани лексику"], true);
+
+    expect(prompt).toContain("буквальную редакторскую операцию");
+    expect(prompt).toContain("сохрани лексику");
+    expect(prompt).not.toContain("не копируй черновик");
   });
 
   it("repairs a missing comma between variant objects", () => {
