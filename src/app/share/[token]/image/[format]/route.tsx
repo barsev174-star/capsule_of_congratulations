@@ -227,7 +227,15 @@ const makePdf = (jpeg: Buffer, width: number, height: number) => {
 export async function GET(request: Request, { params }: { params: Promise<{ token: string; format: string }> }) {
   const { token, format } = await params;
   if (!(format in formats)) return new Response(null, { status: 404 });
-  const payload = await getPublicSharePayload(token);
+  let payload: Payload | null = null;
+  if (process.env.NODE_ENV === "development") {
+    const { buildLegacyExportBaselinePayload, getLegacyTemplateIdFromExportBaselineToken } = await import(
+      "@/lib/final-card/legacy-baseline"
+    );
+    const baselineTemplateId = getLegacyTemplateIdFromExportBaselineToken(token);
+    if (baselineTemplateId) payload = buildLegacyExportBaselinePayload(baselineTemplateId);
+  }
+  payload ??= await getPublicSharePayload(token);
   if (!payload) return new Response(null, { status: 404 });
   const selectedFormat = format as Format;
   const { width, height } = formats[selectedFormat];

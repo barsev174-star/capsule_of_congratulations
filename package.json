@@ -10,6 +10,8 @@
     "brand:check": "node scripts/check-brand-layouts.mjs",
     "route:assets": "node scripts/optimize-route-assets.mjs",
     "route:check": "node scripts/check-route-assets.mjs",
+    "template:legacy-assets": "node scripts/check-legacy-template-assets.mjs",
+    "template:legacy-baseline": "node scripts/check-legacy-template-baseline.mjs",
     "start": "next start",
     "lint": "eslint . && npm run ui:colors && npm run ui:contrast",
     "ui:colors": "node scripts/check-ui-colors.mjs",
