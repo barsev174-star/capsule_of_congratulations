@@ -1,4 +1,3 @@
-import { isTemplateId } from "@/lib/cards/templates";
 import { BEST_QUOTE_COUNT, isValidBestQuoteText } from "@/lib/ai/card-insights";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
 import { resolveMainGreetingContribution } from "@/lib/final-card/main-greeting";
@@ -16,6 +15,7 @@ import type {
   FinalCardMessageMediaLayout,
   FinalCardStyleId
 } from "@/lib/final-card/types";
+import { templateRegistry } from "@/lib/templates/registry";
 
 export type FinalCardViewModel = {
   style: FinalCardStyleId;
@@ -144,8 +144,11 @@ const buildMemories = (contributions: Contribution[]) => {
   }));
 };
 
-const resolveStyle = (templateId: CardDraft["templateId"]): FinalCardStyleId =>
-  isTemplateId(templateId) ? templateId : "warm-classic";
+const resolveStyle = (templateId: CardDraft["templateId"]): FinalCardStyleId => {
+  if (!templateId) return "warm-classic";
+  const registration = templateRegistry.get(templateId);
+  return registration?.family === "legacy" ? registration.id : "warm-classic";
+};
 
 export const buildFinalCardViewModel = (
   card: CardDraft,

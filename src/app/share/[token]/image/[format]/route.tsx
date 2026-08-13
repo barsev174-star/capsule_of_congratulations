@@ -3,18 +3,22 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import sharp from "sharp";
+import { UniversalTemplateExportCard, universalExportFormats } from "@/components/templates/universal-v1/universal-export-card";
 import { getPublicSharePayload } from "@/lib/public-shares/service";
+import { buildUniversalPublicViewModel } from "@/lib/public-shares/universal";
+import { dispatchTemplateRenderer } from "@/lib/templates/dispatcher";
+import type { PublicSharePayload, PublicSharePayloadV1 } from "@/lib/public-shares/types";
 
 export const runtime = "nodejs";
 
 const formats = {
-  story: { width: 1080, height: 1920, phrases: 2, photos: 3 },
-  post: { width: 1080, height: 1350, phrases: 2, photos: 2 },
-  print: { width: 1240, height: 1754, phrases: 3, photos: 3 }
+  story: { width: universalExportFormats.story.width, height: universalExportFormats.story.height, phrases: 2, photos: 3 },
+  post: { width: universalExportFormats.post.width, height: universalExportFormats.post.height, phrases: 2, photos: 2 },
+  print: { width: universalExportFormats.a4.width, height: universalExportFormats.a4.height, phrases: 3, photos: 3 }
 } as const;
 
 type Format = keyof typeof formats;
-type Payload = NonNullable<Awaited<ReturnType<typeof getPublicSharePayload>>>;
+type Payload = PublicSharePayloadV1;
 
 // These are deliberately independent compositions, not a scale of /share.
 // Values are pixels in the raster canvas; print is rendered at 1240 × 1754.
@@ -227,7 +231,7 @@ const makePdf = (jpeg: Buffer, width: number, height: number) => {
 export async function GET(request: Request, { params }: { params: Promise<{ token: string; format: string }> }) {
   const { token, format } = await params;
   if (!(format in formats)) return new Response(null, { status: 404 });
-  let payload: Payload | null = null;
+  let payload: PublicSharePayload | null = null;
   if (process.env.NODE_ENV === "development") {
     const { buildLegacyExportBaselinePayload, getLegacyTemplateIdFromExportBaselineToken } = await import(
       "@/lib/final-card/legacy-baseline"
@@ -240,10 +244,38 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   const selectedFormat = format as Format;
   const { width, height } = formats[selectedFormat];
   const [caveat, ptSans] = await exportFonts();
-  const image = new ImageResponse(<ExportCard payload={payload} format={selectedFormat} origin={publicOrigin(request)} />, { width, height, fonts: [{ name: "Caveat", data: caveat, weight: 600, style: "normal" }, { name: "PT Sans", data: ptSans, weight: 400, style: "normal" }] });
+  const origin = publicOrigin(request);
+  const fonts = [
+    { name: "Caveat", data: caveat, weight: 600 as const, style: "normal" as const },
+    { name: "PT Sans", data: ptSans, weight: 400 as const, style: "normal" as const },
+    { name: "Inter", data: ptSans, weight: 400 as const, style: "normal" as const }
+  ];
+  let image: ImageResponse;
+  let flattenBackground = "#f6dfb9";
+  if (payload.version === 2) {
+    const dispatch = dispatchTemplateRenderer(payload.card.templateId);
+    if (!dispatch || dispatch.kind !== "universal-v1" || dispatch.registration.profile.export.profile !== "universal-export-v1") {
+      return new Response(null, { status: 404 });
+    }
+    const profile = dispatch.registration.profile;
+    const model = buildUniversalPublicViewModel(payload, profile);
+    flattenBackground = profile.colors.page;
+    image = new ImageResponse(
+      <UniversalTemplateExportCard
+        profile={profile}
+        model={model}
+        format={selectedFormat === "print" ? "a4" : selectedFormat}
+        resolveAsset={(path) => asset(origin, path)}
+        resolvePhoto={(path) => exportPhoto(origin, path)}
+      />,
+      { width, height, fonts }
+    );
+  } else {
+    image = new ImageResponse(<ExportCard payload={payload} format={selectedFormat} origin={origin} />, { width, height, fonts });
+  }
   const png = Buffer.from(await image.arrayBuffer());
   const preview = new URL(request.url).searchParams.get("preview") === "1";
-  if (selectedFormat !== "print" || preview) return new Response(new Uint8Array(await sharp(png).flatten({ background: "#f6dfb9" }).png().toBuffer()), { headers: { "Content-Type": "image/png", "Cache-Control": "no-store" } });
+  if (selectedFormat !== "print" || preview) return new Response(new Uint8Array(await sharp(png).flatten({ background: flattenBackground }).png().toBuffer()), { headers: { "Content-Type": "image/png", "Cache-Control": "no-store" } });
   const jpeg = await sharp(png).jpeg({ quality: 92 }).toBuffer();
   return new Response(new Uint8Array(makePdf(jpeg, width, height)), { headers: { "Content-Type": "application/pdf", "Content-Disposition": "attachment; filename=slovesto-card-print.pdf", "Cache-Control": "no-store" } });
 }

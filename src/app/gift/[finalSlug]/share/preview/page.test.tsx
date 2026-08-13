@@ -6,8 +6,8 @@ vi.mock("next/navigation", () => ({ notFound: vi.fn() }));
 vi.mock("@/lib/public-shares/service", () => ({
   getPublicShareDraftPreviewPresentation: vi.fn().mockResolvedValue({ model: {} })
 }));
-vi.mock("@/components/final-card/final-card", () => ({
-  FinalCard: () => <div data-testid="draft-card" />
+vi.mock("@/components/templates/template-card-renderer", () => ({
+  TemplateCardRenderer: () => <div data-testid="draft-card" />
 }));
 
 import PublicShareDraftPreviewPage from "./page";

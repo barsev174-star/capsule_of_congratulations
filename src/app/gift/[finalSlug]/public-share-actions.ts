@@ -13,7 +13,7 @@ export async function savePublicShareAction(finalSlug: string, _previous: Public
     const preset = String(formData.get("headlinePreset") ?? "GIFTED_CARD");
     const input: PublicShareEditorInput = {
       displayName: String(formData.get("displayName") ?? ""), headlinePreset: presets.includes(preset as PublicShareHeadlinePreset) ? preset as PublicShareHeadlinePreset : "GIFTED_CARD",
-      showOccasion: formData.get("showOccasion") === "on", showGreetingCount: formData.get("showGreetingCount") === "on", showPhotoCount: formData.get("showPhotoCount") === "on",
+      showOccasion: formData.get("showOccasion") === "on", showEventDate: formData.get("showEventDate") === "on", showGreetingCount: formData.get("showGreetingCount") === "on", showPhotoCount: formData.get("showPhotoCount") === "on",
       publicSummary: null, publicQualities: [],
       publicPhrases: formData.getAll("phraseText").map(String).map((text, index) => ({ id: `phrase-${index}`, text })), photoAssetIds,
       photoCaptions: Object.fromEntries(photoAssetIds.map((id) => [id, String(formData.get(`caption:${id}`) ?? "")])), photoConsentAccepted: formData.get("photoConsentAccepted") === "on"

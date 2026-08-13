@@ -1,5 +1,6 @@
 import {
   catalogTemplateRegistrations,
+  isProductTemplateId,
   isRegisteredTemplateId,
   type RegisteredTemplateId,
   type TemplateOccasionId
@@ -14,6 +15,7 @@ export type CardTemplate = {
   description: string;
   recommendedFor: OccasionId[];
   accent: string;
+  preview?: string;
 };
 
 export const cardTemplates: CardTemplate[] = catalogTemplateRegistrations.map((entry) => ({
@@ -21,7 +23,8 @@ export const cardTemplates: CardTemplate[] = catalogTemplateRegistrations.map((e
   name: entry.catalog.name,
   description: entry.catalog.description,
   recommendedFor: entry.catalog.recommendedFor,
-  accent: entry.catalog.accent
+  accent: entry.catalog.accent,
+  preview: entry.family === "universal-v1" ? entry.profile.metadata.preview.src : undefined
 }));
 
 export const occasions = [
@@ -34,6 +37,8 @@ const legacyOccasions = ["teacher", "caregiver", "colleague"] as const satisfies
 
 export const isTemplateId = (value: unknown): value is CardTemplateId =>
   isRegisteredTemplateId(value);
+
+export { isProductTemplateId };
 
 export const isOccasionId = (value: string): value is OccasionId =>
   occasions.some((occasion) => occasion.id === value) ||

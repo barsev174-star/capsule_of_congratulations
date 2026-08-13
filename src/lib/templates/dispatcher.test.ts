@@ -15,7 +15,8 @@ const universalRegistration = {
     name: "Пилот",
     description: "Технический профиль",
     recommendedFor: ["personal"],
-    accent: "#e9652f"
+    accent: "#e9652f",
+    availability: "studio"
   }
 } satisfies UniversalTemplateRegistration;
 

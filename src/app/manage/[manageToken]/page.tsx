@@ -9,7 +9,7 @@ import {
   listContributionsByCardId
 } from "@/lib/cards/repository";
 import { getCardTemplates } from "@/lib/cards/templates-server";
-import { isTemplateId } from "@/lib/cards/templates";
+import { isProductTemplateId } from "@/lib/cards/templates";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { getGiftPath, getJoinUrl, getManagePath, getPreviewPath } from "@/lib/routes/card-links";
 import type { FinalCardBlockId, FinalCardOptionalBlockId } from "@/lib/final-card/types";
@@ -22,6 +22,7 @@ import { LinkPurposeList } from "./link-purpose-list";
 import { TemplateSummary } from "./template-summary";
 import styles from "./manage-page.module.css";
 import { getAiCardInsight, getAiCardQuoteSelection, getAiUsageSummary } from "@/lib/ai/repository";
+import { templateRegistry } from "@/lib/templates/registry";
 import {
   BEST_QUOTE_COUNT,
   BEST_QUOTE_MIN_CONTRIBUTION_COUNT,
@@ -171,7 +172,10 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const qualitiesAreStale = Boolean(qualitiesInsight && qualitiesInsight.sourceFingerprint !== contributionFingerprint);
   const aiContent = { quotes: generatedQuotes, qualities: generatedQualities };
   const model = isMaterialTab ? buildFinalCardViewModel(card, visibleContributions, mediaAssets, aiContent) : null;
-  const style = isTemplateId(card.templateId) ? card.templateId : "warm-classic";
+  const selectedRegistration = isProductTemplateId(card.templateId)
+    ? templateRegistry.get(card.templateId)
+    : null;
+  const style = selectedRegistration?.family === "legacy" ? selectedRegistration.id : "warm-classic";
   const selectedTemplate = cardTemplates.find((template) => template.id === card.templateId) ?? null;
   const layoutMode = card.finalMessageSettings?.layoutMode ?? "grid-2";
   const mediaLayout = card.finalMessageSettings?.mediaLayout ?? "portrait";

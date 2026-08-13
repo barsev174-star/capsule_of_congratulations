@@ -79,7 +79,7 @@ describe("validateContributionFormData", () => {
     if (!result.success) expect(result.issues.some((issue) => issue.field === "authorRole")).toBe(true);
   });
 
-  it("allows messages over the current layout recommendation", () => {
+  it("preserves a full message over the compact card recommendation", () => {
     const result = validateContributionFormData(
       buildFormData({
         cardId: "card_123",
@@ -92,6 +92,11 @@ describe("validateContributionFormData", () => {
     );
 
     expect(result.success).toBe(true);
+  });
+
+  it("keeps the legacy global limit when a layout is not provided", () => {
+    const issues = validateContributionMessage(`one two three ${"x".repeat(320)}`);
+    expect(issues).toHaveLength(0);
   });
 
   it("reuses message rules for organizer editing", () => {

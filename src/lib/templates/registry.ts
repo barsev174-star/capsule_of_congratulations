@@ -1,6 +1,11 @@
 import type { TemplateProfile } from "@/lib/templates/profile";
+import {
+  generatedUniversalTemplateIds,
+  generatedUniversalTemplateRegistrations,
+  type GeneratedUniversalTemplateId
+} from "@/lib/templates/generated-registry";
 
-export const registeredTemplateIds = [
+export const legacyTemplateRegistrationIds = [
   "warm-classic",
   "team-modern",
   "bright-celebration",
@@ -9,7 +14,13 @@ export const registeredTemplateIds = [
   "route-adventure"
 ] as const;
 
-export type RegisteredTemplateId = (typeof registeredTemplateIds)[number];
+export const registeredTemplateIds = [
+  ...legacyTemplateRegistrationIds,
+  ...generatedUniversalTemplateIds
+] as const;
+
+export type RegisteredTemplateId = (typeof legacyTemplateRegistrationIds)[number] | GeneratedUniversalTemplateId;
+type LegacyTemplateRegistrationId = (typeof legacyTemplateRegistrationIds)[number];
 
 export type TemplateOccasionId =
   | "personal"
@@ -24,10 +35,11 @@ export type TemplateCatalogMetadata = {
   description: string;
   recommendedFor: TemplateOccasionId[];
   accent: string;
+  availability: "studio" | "product";
 };
 
 export type LegacyTemplateRegistration = {
-  id: RegisteredTemplateId;
+  id: LegacyTemplateRegistrationId;
   family: "legacy";
   renderer: "final-card-legacy";
   exportRenderer: "public-share-image-legacy";
@@ -67,7 +79,7 @@ export const createTemplateRegistry = (entries: readonly TemplateRegistration[])
 };
 
 const legacy = (
-  id: RegisteredTemplateId,
+  id: LegacyTemplateRegistrationId,
   catalog: TemplateCatalogMetadata | null = null
 ): LegacyTemplateRegistration => ({
   id,
@@ -86,22 +98,32 @@ export const templateRegistry = createTemplateRegistry([
     name: "Бумажный классический",
     description: "Праздничная открытка с бумажными листами, скотчем, полароидами и рукописным настроением.",
     recommendedFor: ["personal", "celebration", "colleague"],
-    accent: "#df4f73"
+    accent: "#df4f73",
+    availability: "product"
   }),
   legacy("route-adventure", {
     name: "Маршрут",
     description: "Приключенческая открытка с тёмным лесным фоном, крафтом, картами и воспоминаниями о пути.",
     recommendedFor: ["personal", "team", "celebration", "colleague"],
-    accent: "#b08a4a"
-  })
+    accent: "#b08a4a",
+    availability: "product"
+  }),
+  ...generatedUniversalTemplateRegistrations
 ]);
 
 export const catalogTemplateRegistrations = templateRegistry.entries.filter(
-  (entry): entry is TemplateRegistration & { catalog: TemplateCatalogMetadata } => entry.catalog !== null
+  (entry): entry is TemplateRegistration & { catalog: TemplateCatalogMetadata } =>
+    entry.catalog?.availability === "product"
 );
 
 export const isRegisteredTemplateId = (value: unknown): value is RegisteredTemplateId =>
   typeof value === "string" && registeredTemplateIds.some((id) => id === value);
+
+export const isProductTemplateId = (value: unknown): value is RegisteredTemplateId => {
+  if (!isRegisteredTemplateId(value)) return false;
+  const registration = templateRegistry.get(value);
+  return registration?.family === "legacy" || registration?.catalog.availability === "product";
+};
 
 export const defineUniversalTemplateRegistration = (
   profile: TemplateProfile,

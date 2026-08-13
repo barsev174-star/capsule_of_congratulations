@@ -18,6 +18,8 @@ type Props = {
   publicQualities: PublicShareQuality[];
   wasRevoked: boolean;
   publicSharePath: string | null;
+  hasEventDate: boolean;
+  requiresThreePhotos: boolean;
 };
 
 const initialState: PublicShareFormState = { ok: false, message: "" };
@@ -40,7 +42,7 @@ const plural = (count: number, forms: [string, string, string]) => {
 const defaultPublicCaption = (asset: CardMediaAsset, savedCaption: string | undefined) =>
   savedCaption || asset.captionTitle || asset.captionSubtitle || "";
 
-export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos, mediaAssets, phraseCandidates, publicQualities, wasRevoked, publicSharePath }: Props) {
+export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos, mediaAssets, phraseCandidates, publicQualities, wasRevoked, publicSharePath, hasEventDate, requiresThreePhotos }: Props) {
   const action = useMemo(() => savePublicShareAction.bind(null, finalSlug), [finalSlug]);
   const [state, formAction, pending] = useActionState(action, initialState);
   const router = useRouter();
@@ -50,6 +52,7 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
   const [displayName, setDisplayName] = useState(share?.displayName ?? defaultDisplayName ?? "");
   const [headlinePreset, setHeadlinePreset] = useState<string>(share?.headlinePreset ?? "GIFTED_CARD");
   const [showOccasion, setShowOccasion] = useState(share?.showOccasion ?? true);
+  const [showEventDate, setShowEventDate] = useState(share?.showEventDate ?? true);
   const [showGreetingCount, setShowGreetingCount] = useState(share?.showGreetingCount ?? true);
   const [showPhotoCount, setShowPhotoCount] = useState(share?.showPhotoCount ?? true);
   const [photoConsent, setPhotoConsent] = useState(photos.length > 0);
@@ -143,13 +146,14 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
     displayName: displayName.trim(),
     headlinePreset,
     showOccasion,
+    showEventDate,
     showGreetingCount,
     showPhotoCount,
     photoConsent,
     phrases: selectedPhrases,
     photos: selectedPhotoIds,
     captions: selectedPhotoIds.map((photoId) => captions[photoId]?.trim() ?? ""),
-  }), [displayName, headlinePreset, showOccasion, showGreetingCount, showPhotoCount, photoConsent, selectedPhrases, selectedPhotoIds, captions]);
+  }), [displayName, headlinePreset, showOccasion, showEventDate, showGreetingCount, showPhotoCount, photoConsent, selectedPhrases, selectedPhotoIds, captions]);
   const [submittedSignature, setSubmittedSignature] = useState(formSignature);
   const [savedSignature, setSavedSignature] = useState(formSignature);
   const [lastActionState, setLastActionState] = useState(state);
@@ -162,7 +166,8 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
   const isDraft = share?.status === "DRAFT";
   const hasUnsavedChanges = formSignature !== savedSignature;
   const consentError = selectedPhotoIds.length > 0 && !photoConsent;
-  const validationBlocked = pending || selectedPhrases.length !== 3 || consentError;
+  const photoCountError = requiresThreePhotos && selectedPhotoIds.length > 0 && selectedPhotoIds.length !== 3;
+  const validationBlocked = pending || selectedPhrases.length !== 3 || consentError || photoCountError;
   const saveDisabled = validationBlocked || (share !== null && !hasUnsavedChanges);
   const publishPending = publishRequested || isVisibilityPending;
   const previewLabel = isActive ? "Посмотреть изменения" : "Посмотреть перед публикацией";
@@ -184,12 +189,13 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
     .filter((asset): asset is CardMediaAsset => Boolean(asset));
   const visibleCounters = [
     showOccasion ? "Повод" : null,
+    hasEventDate && showEventDate ? "Дата события" : null,
     showGreetingCount ? "Количество поздравлений" : null,
     showPhotoCount ? "Количество фотографий" : null,
   ].filter((label): label is string => Boolean(label));
 
   const publishButton = isDraft ? (
-    <button type="button" className={styles.publishButton} disabled={publishPending || selectedPhrases.length !== 3 || consentError} onClick={startPublish}>
+    <button type="button" className={styles.publishButton} disabled={publishPending || validationBlocked} onClick={startPublish}>
       {publishPending ? "Публикуем…" : "Опубликовать публичную страницу"}
     </button>
   ) : null;
@@ -219,6 +225,12 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
                   <span>Повод</span>
                   <span className={styles.counterCheck} aria-hidden="true">✓</span>
                 </label>
+                {hasEventDate ? <label className={`${styles.counterCard} ${showEventDate ? styles.counterCardSelected : ""}`}>
+                  <input className={styles.visuallyHidden} type="checkbox" name="showEventDate" checked={showEventDate} onChange={(event) => setShowEventDate(event.target.checked)} />
+                  <span className={styles.counterIcon} aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></span>
+                  <span>Дата события</span>
+                  <span className={styles.counterCheck} aria-hidden="true">✓</span>
+                </label> : null}
                 <label className={`${styles.counterCard} ${showGreetingCount ? styles.counterCardSelected : ""}`}>
                   <input className={styles.visuallyHidden} type="checkbox" name="showGreetingCount" checked={showGreetingCount} onChange={(event) => setShowGreetingCount(event.target.checked)} />
                   <span className={styles.counterIcon} aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z"/></svg></span>
@@ -275,8 +287,8 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
           {mediaAssets.length > 0 ? (
             <section className={styles.card} aria-labelledby="share-section-photos">
               <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">4</span><h3 id="share-section-photos">Публичные фотографии</h3></header>
-              <p className={styles.cardHint}>Выберите до трёх фотографий. Они появятся в том порядке, в котором вы их выберете. При необходимости измените подписи.</p>
-              <strong className={selectedPhotoIds.length === 3 ? styles.ready : styles.photoCount}>Выбрано фото: {selectedPhotoIds.length} из 3</strong>
+              <p className={styles.cardHint}>{requiresThreePhotos ? "Для этого шаблона выберите ровно три фотографии или не публикуйте ни одной. Они появятся в выбранном порядке." : "Выберите до трёх фотографий. Они появятся в том порядке, в котором вы их выберете."} При необходимости измените подписи.</p>
+              <strong className={selectedPhotoIds.length === 3 || (requiresThreePhotos && selectedPhotoIds.length === 0) ? styles.ready : styles.photoCount}>Выбрано фото: {selectedPhotoIds.length} из 3</strong>
               <div className={styles.photoGrid}>
                 {mediaAssets.map((asset) => {
                   const orderIndex = selectedPhotoIds.indexOf(asset.id);
@@ -303,7 +315,7 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
                         name={`caption:${asset.id}`}
                         value={captions[asset.id] ?? ""}
                         onChange={(event) => setCaptions((current) => ({ ...current, [asset.id]: event.target.value }))}
-                        maxLength={120}
+                        maxLength={requiresThreePhotos ? 45 : 120}
                         placeholder="Добавьте короткую подпись"
                         aria-label="Подпись к фотографии"
                         onClick={(event) => event.stopPropagation()}
@@ -313,6 +325,7 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
                 })}
               </div>
               {selectedPhotoIds.map((photoId) => <input key={photoId} type="hidden" name="photoAssetId" value={photoId} />)}
+              {photoCountError ? <p className={styles.consentError}>Для блока «Моменты» выберите ровно три фотографии или снимите выбор со всех.</p> : null}
             </section>
           ) : null}
           {mediaAssets.length > 0 && selectedPhotoIds.length > 0 ? (

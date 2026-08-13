@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   defineTemplate,
+  defineTextCard,
   validateTemplateProfile,
   type TemplateProfile,
   type UniversalPhotoFrame
 } from "@/lib/templates/profile";
+import { defineSectionUnderlay } from "@/lib/templates/section-underlays";
 
 const asset = (name: string) => ({
   src: `/templates/test/${name}.webp` as const,
@@ -13,9 +15,7 @@ const asset = (name: string) => ({
 });
 
 const frame = (): UniversalPhotoFrame => ({
-  aspectRatio: 1.4,
-  aperture: { x: 0.08, y: 0.06, width: 0.84, height: 0.7 },
-  captionArea: { x: 0.08, y: 0.78, width: 0.84, height: 0.16 },
+  preset: "landscape-polaroid",
   fit: "cover",
   caption: {
     maxChars: 45,
@@ -29,6 +29,7 @@ const frame = (): UniversalPhotoFrame => ({
 const validProfile = (): TemplateProfile => ({
   id: "test-template",
   family: "universal-v1",
+  layoutPreset: "route-v1",
   metadata: {
     name: "Тестовый шаблон",
     description: "Проверяет контракт universal-v1.",
@@ -37,10 +38,10 @@ const validProfile = (): TemplateProfile => ({
   },
   assets: {
     page: asset("page"),
-    sections: { hero: asset("hero") },
-    greetingCards: [asset("greeting")],
-    qualityCards: [asset("quality")],
-    quoteCards: [asset("quote")],
+    sections: { hero: defineSectionUnderlay(asset("hero"), "adaptive-frame") },
+    greetingCards: Array.from({ length: 4 }, (_, index) => defineSectionUnderlay(asset(`greeting-${index + 1}`), "adaptive-frame")),
+    qualityCards: [defineTextCard({ ...asset("quality"), width: 480, height: 258 }, "quality-pill")],
+    quoteCards: [defineTextCard({ ...asset("quote"), width: 1402, height: 1122 }, "quote-panel")],
     photoFrames: {
       messagePortrait: frame(),
       messageLandscape: frame(),
@@ -92,14 +93,60 @@ describe("TemplateProfile", () => {
     expect(defineTemplate(profile)).toBe(profile);
   });
 
-  it("отклоняет фоторамку, выходящую за нормализованные границы", () => {
-    const profile = validProfile();
-    profile.assets.photoFrames.memory.aperture = { x: 0.8, y: 0, width: 0.4, height: 1 };
+  it("отклоняет неизвестный режим подложки блока", () => {
+    const profile = validProfile() as unknown as {
+      assets: { sections: { hero: { preset: string } } };
+    };
+    profile.assets.sections.hero.preset = "manual-pixels";
 
     const result = validateTemplateProfile(profile);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.issues).toContainEqual(expect.objectContaining({ path: "assets.photoFrames.memory.aperture" }));
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "assets.sections.hero.preset" }));
+    }
+  });
+
+  it("отклоняет неизвестный геометрический preset фоторамки", () => {
+    const profile = validProfile() as unknown as { assets: { photoFrames: { memory: { preset: string } } } };
+    profile.assets.photoFrames.memory.preset = "manual-pixels";
+
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "assets.photoFrames.memory.preset" }));
+    }
+  });
+
+  it("отклоняет размер ассета, не совпадающий с preset-ом фоторамки", () => {
+    const profile = validProfile();
+    profile.assets.photoFrames.memory.base = asset("wrong-frame-size");
+
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "assets.photoFrames.memory.base" }));
+    }
+  });
+
+  it("отклоняет неизвестный preset текстовой плашки", () => {
+    const profile = validProfile() as unknown as { assets: { quoteCards: Array<{ preset: string }> } };
+    profile.assets.quoteCards[0].preset = "manual-text-area";
+
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "assets.quoteCards.0.preset" }));
+    }
+  });
+
+  it("принимает только полный цикл из четырёх подложек поздравлений", () => {
+    const profile = validProfile() as unknown as { assets: { greetingCards: Array<TemplateProfile["assets"]["greetingCards"][number]> } };
+    profile.assets.greetingCards = profile.assets.greetingCards.slice(0, 3);
+
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "assets.greetingCards" }));
     }
   });
 

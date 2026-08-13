@@ -1,3 +1,19 @@
+import { universalLayoutPresetIds, type UniversalLayoutPresetId } from "@/lib/templates/layout-presets";
+import {
+  getUniversalPhotoFramePreset,
+  universalPhotoFramePresetIds,
+  type UniversalPhotoFramePresetId
+} from "@/lib/templates/photo-frame-presets";
+import {
+  universalSectionUnderlayPresetIds,
+  type TemplateSectionUnderlay
+} from "@/lib/templates/section-underlays";
+import {
+  getUniversalTextCardPreset,
+  universalTextCardPresetIds,
+  type UniversalTextCardPresetId
+} from "@/lib/templates/text-card-presets";
+
 export const UNIVERSAL_TEMPLATE_FAMILY = "universal-v1" as const;
 export const UNIVERSAL_EXPORT_PROFILE = "universal-export-v1" as const;
 
@@ -36,12 +52,20 @@ export type NormalizedRect = {
   height: number;
 };
 
+export type TemplateTextCard = {
+  asset: TemplateAssetRef;
+  preset: UniversalTextCardPresetId;
+};
+
+export const defineTextCard = (
+  asset: TemplateAssetRef,
+  preset: UniversalTextCardPresetId
+): TemplateTextCard => ({ asset, preset });
+
 export type UniversalPhotoFrame = {
-  aspectRatio: number;
+  preset: UniversalPhotoFramePresetId;
   base?: TemplateAssetRef;
-  aperture: NormalizedRect;
   overlay?: TemplateAssetRef;
-  captionArea: NormalizedRect;
   fit: "cover";
   caption: {
     maxChars: 45;
@@ -70,6 +94,7 @@ export type TemplateDecorLayer = {
 export type TemplateProfile = {
   id: string;
   family: typeof UNIVERSAL_TEMPLATE_FAMILY;
+  layoutPreset: UniversalLayoutPresetId;
   metadata: {
     name: string;
     description: string;
@@ -78,10 +103,10 @@ export type TemplateProfile = {
   };
   assets: {
     page?: TemplateAssetRef;
-    sections: Partial<Record<UniversalTemplateBlockId, TemplateAssetRef>>;
-    greetingCards: readonly TemplateAssetRef[];
-    qualityCards: readonly TemplateAssetRef[];
-    quoteCards: readonly TemplateAssetRef[];
+    sections: Partial<Record<UniversalTemplateBlockId, TemplateSectionUnderlay>>;
+    greetingCards: readonly TemplateSectionUnderlay[];
+    qualityCards: readonly TemplateTextCard[];
+    quoteCards: readonly TemplateTextCard[];
     photoFrames: {
       messagePortrait: UniversalPhotoFrame;
       messageLandscape: UniversalPhotoFrame;
@@ -247,13 +272,22 @@ const validatePhotoFrame = (
     return;
   }
 
-  if (typeof value.aspectRatio !== "number" || !Number.isFinite(value.aspectRatio) || value.aspectRatio <= 0) {
-    issues.push({ path: `${path}.aspectRatio`, message: "Соотношение сторон должно быть положительным числом." });
+  if (!universalPhotoFramePresetIds.includes(value.preset as never)) {
+    issues.push({ path: `${path}.preset`, message: "Неизвестный preset фоторамки." });
+    return;
   }
+  const preset = getUniversalPhotoFramePreset(value.preset as UniversalPhotoFramePresetId);
   validateAsset(value.base, `${path}.base`, issues, true);
   validateAsset(value.overlay, `${path}.overlay`, issues, true);
-  validateRect(value.aperture, `${path}.aperture`, issues);
-  validateRect(value.captionArea, `${path}.captionArea`, issues);
+  for (const key of ["base", "overlay"] as const) {
+    const asset = value[key];
+    if (isRecord(asset) && (asset.width !== preset.source.width || asset.height !== preset.source.height)) {
+      issues.push({
+        path: `${path}.${key}`,
+        message: `Ассет preset-а ${preset.id} должен иметь размер ${preset.source.width} × ${preset.source.height}.`
+      });
+    }
+  }
   if (value.fit !== "cover") {
     issues.push({ path: `${path}.fit`, message: "В universal-v1 поддерживается только fit=cover." });
   }
@@ -276,6 +310,56 @@ const validatePhotoFrame = (
   }
   if (typeof value.caption.minScale !== "number" || value.caption.minScale < 0.5 || value.caption.minScale > 1) {
     issues.push({ path: `${path}.caption.minScale`, message: "Минимальный масштаб подписи должен находиться в диапазоне 0.5…1." });
+  }
+};
+
+const validateTextCard = (
+  value: unknown,
+  path: string,
+  issues: TemplateProfileValidationIssue[]
+) => {
+  if (!isRecord(value)) {
+    issues.push({ path, message: "Ожидается декларативная текстовая плашка." });
+    return;
+  }
+  validateAsset(value.asset, `${path}.asset`, issues);
+  if (!universalTextCardPresetIds.includes(value.preset as never)) {
+    issues.push({ path: `${path}.preset`, message: "Неизвестный preset текстовой плашки." });
+    return;
+  }
+  const preset = getUniversalTextCardPreset(value.preset as UniversalTextCardPresetId);
+  if (isRecord(value.asset) && (value.asset.width !== preset.source.width || value.asset.height !== preset.source.height)) {
+    issues.push({ path: `${path}.asset`, message: `Ассет preset-а ${preset.id} должен иметь размер ${preset.source.width} × ${preset.source.height}.` });
+  }
+};
+
+const validateSectionUnderlay = (
+  value: unknown,
+  path: string,
+  issues: TemplateProfileValidationIssue[]
+) => {
+  if (!isRecord(value)) {
+    issues.push({ path, message: "Ожидается декларативная подложка блока." });
+    return;
+  }
+  validateAsset(value.asset, `${path}.asset`, issues);
+  if (!universalSectionUnderlayPresetIds.includes(value.preset as never)) {
+    issues.push({ path: `${path}.preset`, message: "Неизвестный preset подложки." });
+  }
+  if (value.opacity !== undefined && (typeof value.opacity !== "number" || value.opacity < 0 || value.opacity > 1)) {
+    issues.push({ path: `${path}.opacity`, message: "Прозрачность должна находиться в диапазоне 0…1." });
+  }
+  if (value.focalPoint !== undefined) {
+    if (!isRecord(value.focalPoint)) {
+      issues.push({ path: `${path}.focalPoint`, message: "Ожидается нормализованная точка фокуса." });
+    } else {
+      for (const key of ["x", "y"] as const) {
+        const coordinate = value.focalPoint[key];
+        if (typeof coordinate !== "number" || coordinate < 0 || coordinate > 1) {
+          issues.push({ path: `${path}.focalPoint.${key}`, message: "Координата должна находиться в диапазоне 0…1." });
+        }
+      }
+    }
   }
 };
 
@@ -307,6 +391,9 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
   if (value.family !== UNIVERSAL_TEMPLATE_FAMILY) {
     issues.push({ path: "family", message: `Ожидается семейство ${UNIVERSAL_TEMPLATE_FAMILY}.` });
   }
+  if (!universalLayoutPresetIds.includes(value.layoutPreset as UniversalLayoutPresetId)) {
+    issues.push({ path: "layoutPreset", message: "Неизвестный структурный preset шаблона." });
+  }
 
   if (!isRecord(value.metadata)) {
     issues.push({ path: "metadata", message: "Отсутствуют метаданные шаблона." });
@@ -324,12 +411,20 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
     issues.push({ path: "assets", message: "Отсутствует набор ассетов." });
   } else {
     validateAsset(value.assets.page, "assets.page", issues, true);
-    for (const collection of ["greetingCards", "qualityCards", "quoteCards"] as const) {
-      const assets = value.assets[collection];
-      if (!Array.isArray(assets)) {
-        issues.push({ path: `assets.${collection}`, message: "Ожидается массив ассетов." });
+    if (!Array.isArray(value.assets.greetingCards)) {
+      issues.push({ path: "assets.greetingCards", message: "Ожидается массив подложек поздравлений." });
+    } else {
+      if (value.assets.greetingCards.length !== 0 && value.assets.greetingCards.length !== 4) {
+        issues.push({ path: "assets.greetingCards", message: "Нужно либо 0, либо ровно 4 циклические подложки поздравлений." });
+      }
+      value.assets.greetingCards.forEach((underlay, index) => validateSectionUnderlay(underlay, `assets.greetingCards.${index}`, issues));
+    }
+    for (const collection of ["qualityCards", "quoteCards"] as const) {
+      const cards = value.assets[collection];
+      if (!Array.isArray(cards)) {
+        issues.push({ path: `assets.${collection}`, message: "Ожидается массив текстовых плашек." });
       } else {
-        assets.forEach((asset, index) => validateAsset(asset, `assets.${collection}.${index}`, issues));
+        cards.forEach((card, index) => validateTextCard(card, `assets.${collection}.${index}`, issues));
       }
     }
     if (!isRecord(value.assets.sections)) {
@@ -339,7 +434,7 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
         if (!universalTemplateBlockOrder.includes(key as UniversalTemplateBlockId)) {
           issues.push({ path: `assets.sections.${key}`, message: "Неизвестный семантический блок." });
         } else {
-          validateAsset(asset, `assets.sections.${key}`, issues);
+          validateSectionUnderlay(asset, `assets.sections.${key}`, issues);
         }
       });
     }

@@ -76,4 +76,23 @@ describe("validateCreateCardFormData", () => {
       expect(result.data.templateId).toBeNull();
     }
   });
+
+  it("does not attach a studio-only template to a product card", () => {
+    const result = validateCreateCardFormData(
+      buildFormData({
+        recipientName: "Анна",
+        occasion: "personal",
+        occasionText: "с днём рождения",
+        fromLabel: "От друзей",
+        organizerName: "Мария",
+        organizerEmail: "maria@example.com",
+        templateId: "northern-light"
+      })
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.templateId).toBeNull();
+    }
+  });
 });

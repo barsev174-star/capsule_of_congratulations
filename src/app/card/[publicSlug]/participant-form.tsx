@@ -232,7 +232,7 @@ export const ParticipantForm = ({
   };
 
   const submitDisabled =
-    isPending || Boolean(successMessage) || !participantConsent || !message.trim() || (isJoin && isOverLimit);
+    isPending || Boolean(successMessage) || !participantConsent || !message.trim();
 
   if (!isJoin) {
     return (
@@ -460,7 +460,7 @@ export const ParticipantForm = ({
                 <div className={styles.fieldLabelRow}>
                   <label htmlFor="message">Текст поздравления</label>
                 </div>
-                <div className={`${styles.editorShell} ${isOverLimit ? styles.editorShellOver : ""}`}>
+                <div className={styles.editorShell}>
                   <textarea
                     id="message"
                     name="message"
@@ -470,14 +470,13 @@ export const ParticipantForm = ({
                     maxLength={1500}
                     value={message}
                     aria-describedby="join-editor-limit"
-                    aria-invalid={isOverLimit}
                     onChange={(event) => handleMessageChange(event.target.value)}
                   />
                   <div className={styles.editorToolbar}>
                     <span className={styles.editorCounter} id="join-editor-limit">
                       {isOverLimit
-                        ? `${message.length} символов · ИИ сократит до ${messageLimit}`
-                        : `${message.length} символов · итоговое поздравление до ${messageLimit}`}
+                        ? `${message.length} символов · в карточке будет сокращённый показ`
+                        : `${message.length} символов · рекомендуем до ${messageLimit} для карточки`}
                     </span>
                     <div className={styles.editorToolbarActions}>
                       <button

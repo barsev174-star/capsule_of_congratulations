@@ -3,8 +3,8 @@ import { getPostgresPool } from "@/lib/db/postgres";
 import type { PublicCardShare, PublicCardSharePhoto, PublicShareHeadlinePreset, PublicSharePhrase, PublicSharePhraseCandidate, PublicShareQuality } from "./types";
 
 type ShareRow = {
-  id: string; card_id: string; token_hash: string | null; status: "DRAFT" | "ACTIVE" | "REVOKED"; payload_version: 1;
-  display_name: string | null; headline_preset: PublicShareHeadlinePreset; show_occasion: boolean; show_greeting_count: boolean;
+  id: string; card_id: string; token_hash: string | null; status: "DRAFT" | "ACTIVE" | "REVOKED"; payload_version: 1 | 2;
+  display_name: string | null; headline_preset: PublicShareHeadlinePreset; show_occasion: boolean; show_event_date: boolean; show_greeting_count: boolean;
   show_photo_count: boolean; public_summary: string | null; public_qualities: PublicShareQuality[]; public_phrases: PublicSharePhrase[];
   show_public_name: boolean; public_phrase_candidate_ids: string[]; photo_consent_version: string | null; photo_consent_accepted_at: Date | string | null; created_at: Date | string; updated_at: Date | string; activated_at: Date | string | null; revision: number; revoked_at: Date | string | null; revoked_by: string | null;
 };
@@ -20,7 +20,7 @@ const array = <T>(value: unknown): T[] => Array.isArray(value) ? value as T[] : 
 
 const mapShare = (row: ShareRow): PublicCardShare => ({
   id: row.id, cardId: row.card_id, tokenHash: row.token_hash, status: row.status, payloadVersion: row.payload_version,
-  displayName: row.display_name, showPublicName: row.show_public_name, headlinePreset: row.headline_preset, showOccasion: row.show_occasion,
+  displayName: row.display_name, showPublicName: row.show_public_name, headlinePreset: row.headline_preset, showOccasion: row.show_occasion, showEventDate: row.show_event_date ?? true,
   showGreetingCount: row.show_greeting_count, showPhotoCount: row.show_photo_count, publicSummary: row.public_summary,
   publicQualities: array<PublicShareQuality>(row.public_qualities), publicPhrases: array<PublicSharePhrase>(row.public_phrases), publicPhraseCandidateIds: array<string>(row.public_phrase_candidate_ids),
   photoConsentVersion: row.photo_consent_version, photoConsentAcceptedAt: iso(row.photo_consent_accepted_at),
@@ -82,20 +82,20 @@ export const getPublicShareById = async (id: string) => {
   return result.rows[0] ? mapShare(result.rows[0]) : null;
 };
 
-export const createPublicShare = async (input: { id: string; cardId: string; tokenHash: string | null; displayName: string | null }) => {
+export const createPublicShare = async (input: { id: string; cardId: string; tokenHash: string | null; displayName: string | null; payloadVersion?: 1 | 2 }) => {
   const result = await getPostgresPool().query<ShareRow>(
-    `INSERT INTO public_card_shares (id, card_id, token_hash, display_name, status)
-     VALUES ($1, $2, $3, $4, 'DRAFT') RETURNING *`, [input.id, input.cardId, input.tokenHash, input.displayName]
+    `INSERT INTO public_card_shares (id, card_id, token_hash, display_name, payload_version, status)
+     VALUES ($1, $2, $3, $4, $5, 'DRAFT') RETURNING *`, [input.id, input.cardId, input.tokenHash, input.displayName, input.payloadVersion ?? 1]
   );
   return mapShare(result.rows[0]);
 };
 
 export const updatePublicShare = async (share: PublicCardShare) => {
   const result = await getPostgresPool().query<ShareRow>(
-    `UPDATE public_card_shares SET display_name = $2, headline_preset = $3, show_occasion = $4, show_greeting_count = $5,
-      show_photo_count = $6, public_summary = $7, public_qualities = $8::jsonb, public_phrases = $9::jsonb,
-      photo_consent_version = $10, photo_consent_accepted_at = $11, updated_at = now() WHERE id = $1 AND status IN ('DRAFT', 'ACTIVE') RETURNING *`,
-    [share.id, share.displayName, share.headlinePreset, share.showOccasion, share.showGreetingCount, share.showPhotoCount,
+    `UPDATE public_card_shares SET display_name = $2, headline_preset = $3, show_occasion = $4, show_event_date = $5, show_greeting_count = $6,
+      show_photo_count = $7, public_summary = $8, public_qualities = $9::jsonb, public_phrases = $10::jsonb,
+      photo_consent_version = $11, photo_consent_accepted_at = $12, updated_at = now() WHERE id = $1 AND status IN ('DRAFT', 'ACTIVE') RETURNING *`,
+    [share.id, share.displayName, share.headlinePreset, share.showOccasion, share.showEventDate, share.showGreetingCount, share.showPhotoCount,
       share.publicSummary, JSON.stringify(share.publicQualities), JSON.stringify(share.publicPhrases), share.photoConsentVersion, share.photoConsentAcceptedAt]
   );
   return result.rows[0] ? mapShare(result.rows[0]) : null;

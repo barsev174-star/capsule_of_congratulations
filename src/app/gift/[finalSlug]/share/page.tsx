@@ -29,6 +29,8 @@ export default async function PublicShareEditorPage({ params }: { params: Promis
         publicQualities={editor.publicQualities}
         wasRevoked={editor.wasRevoked}
         publicSharePath={editor.publicSharePath}
+        hasEventDate={editor.hasEventDate}
+        requiresThreePhotos={editor.requiresThreePhotos}
       />
     </main>
   );

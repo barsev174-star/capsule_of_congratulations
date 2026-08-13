@@ -17,6 +17,12 @@ const templates = [
     id: "route-adventure" as const,
     name: "Маршрут",
     description: "Путешествие по важным моментам"
+  },
+  {
+    id: "northern-light" as const,
+    name: "Северное сияние",
+    description: "Светлая история о важных людях",
+    preview: "/templates/northern-light/preview.webp"
   }
 ];
 
@@ -57,5 +63,21 @@ describe("TemplateSummary", () => {
 
     expect(screen.queryByRole("dialog", { name: "Выберите шаблон" })).not.toBeInTheDocument();
     expect(opener).toHaveFocus();
+  });
+
+  it("shows a generated universal template preview without a template-id branch", () => {
+    render(
+      <TemplateSummary
+        manageToken="manage-token"
+        templates={templates}
+        initialTemplateId="northern-light"
+      />
+    );
+
+    expect(screen.getByRole("img", { name: "Северное сияние" })).toHaveAttribute(
+      "src",
+      "/templates/northern-light/preview.webp"
+    );
+    expect(screen.getAllByText("Светлая история о важных людях").length).toBeGreaterThan(0);
   });
 });

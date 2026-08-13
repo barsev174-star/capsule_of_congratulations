@@ -1,0 +1,506 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { startCardFromShowcaseAction } from "@/app/home-actions";
+import type {
+  NormalizedRect,
+  TemplateDecorLayer,
+  TemplateProfile,
+  UniversalPhotoFrame,
+  UniversalTemplateBlockId
+} from "@/lib/templates/profile";
+import {
+  formatUniversalEventDate,
+  getUniversalRenderedBlocks,
+  type UniversalTemplateContribution,
+  type UniversalTemplatePhoto,
+  type UniversalTemplateSurface,
+  type UniversalTemplateViewModel
+} from "@/lib/templates/view-model";
+import {
+  getUniversalLayoutPreset,
+  getUniversalMessageLayoutRule,
+  getUniversalMessageScenarioForPhotoCount
+} from "@/lib/templates/layout-presets";
+import { getUniversalPhotoFramePreset } from "@/lib/templates/photo-frame-presets";
+import { getUniversalTextCardPreset } from "@/lib/templates/text-card-presets";
+import {
+  getUniversalRecipientNameTier,
+  getUniversalPhotoCaptionLengthScale,
+  getUniversalQuoteLengthScale,
+  universalTextCapacityPresets
+} from "@/lib/templates/text-capacity-presets";
+import { getUnderlaySafeInsets } from "@/lib/templates/section-underlays";
+import { SectionUnderlay } from "./section-underlay";
+import styles from "./universal-card.module.css";
+
+export type UniversalTemplateViewport = "auto" | "desktop" | "mobile";
+export type UniversalTemplateActionContext = "demo" | "private" | "studio";
+
+export type UniversalCardProps = {
+  profile: TemplateProfile;
+  model: UniversalTemplateViewModel;
+  surface?: UniversalTemplateSurface;
+  viewport?: UniversalTemplateViewport;
+  actionContext?: UniversalTemplateActionContext;
+  publicVersionHref?: string;
+  debugSafeAreas?: boolean;
+  className?: string;
+};
+
+const normalizedRectStyle = (rect: NormalizedRect): CSSProperties => ({
+  left: `${rect.x * 100}%`,
+  top: `${rect.y * 100}%`,
+  width: `${rect.width * 100}%`,
+  height: `${rect.height * 100}%`
+});
+
+const initials = (name: string) => name
+  .split(/\s+/)
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((part) => part[0]?.toLocaleUpperCase("ru-RU"))
+  .join("");
+
+const getDecorVisibility = (
+  layer: TemplateDecorLayer,
+  viewport: UniversalTemplateViewport
+) => {
+  if (!layer.visibleOn || viewport === "auto") return true;
+  return layer.visibleOn.includes(viewport);
+};
+
+function DecorLayers({
+  profile,
+  anchor,
+  viewport
+}: {
+  profile: TemplateProfile;
+  anchor: TemplateDecorLayer["anchor"];
+  viewport: UniversalTemplateViewport;
+}) {
+  return profile.assets.decor
+    .filter((layer) => layer.anchor === anchor && getDecorVisibility(layer, viewport))
+    .map((layer) => (
+      <span
+        key={layer.id}
+        className={styles.decorLayer}
+        data-visible-on={layer.visibleOn?.join(" ")}
+        style={{
+          ...normalizedRectStyle(layer.rect),
+          opacity: layer.opacity ?? 1,
+          rotate: `${layer.rotation ?? 0}deg`
+        }}
+        aria-hidden="true"
+      >
+        <Image src={layer.asset.src} alt="" fill sizes="25vw" />
+      </span>
+    ));
+}
+
+function SectionSurface({
+  id,
+  profile,
+  viewport,
+  className = "",
+  children
+}: {
+  id: UniversalTemplateBlockId;
+  profile: TemplateProfile;
+  viewport: UniversalTemplateViewport;
+  className?: string;
+  children: ReactNode;
+}) {
+  const underlay = profile.assets.sections[id];
+  const surfaceColor = profile.colors.surfaces[id] ?? profile.colors.surface;
+  const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
+
+  return (
+    <section
+      className={`${styles.section} ${styles[id]} ${className}`.trim()}
+      data-universal-block={id}
+      data-underlay-preset={underlay?.preset}
+      style={{
+        "--uv1-section-surface": surfaceColor,
+        "--uv1-safe-top": safeInsets ? `${safeInsets.top * 100}cqw` : "0px",
+        "--uv1-safe-right": safeInsets ? `${safeInsets.right * 100}cqw` : "0px",
+        "--uv1-safe-bottom": safeInsets ? `${safeInsets.bottom * 100}cqw` : "0px",
+        "--uv1-safe-left": safeInsets ? `${safeInsets.left * 100}cqw` : "0px"
+      } as CSSProperties}
+    >
+      {underlay ? <SectionUnderlay underlay={underlay} className={styles.sectionUnderlay} /> : null}
+      <DecorLayers profile={profile} anchor={id} viewport={viewport} />
+      <div className={styles.sectionContent} data-section-content>{children}</div>
+      {underlay ? <><span className={styles.underlayGuide}><b>подложка</b></span><span className={styles.textSafeGuide}><b>safe text</b></span></> : null}
+    </section>
+  );
+}
+
+function UniversalPhoto({
+  photo,
+  frame,
+  priority = false,
+  className = ""
+}: {
+  photo: UniversalTemplatePhoto;
+  frame: UniversalPhotoFrame;
+  priority?: boolean;
+  className?: string;
+}) {
+  const framePreset = getUniversalPhotoFramePreset(frame.preset);
+  const captionStyle = {
+    ...normalizedRectStyle(framePreset.captionArea),
+    "--uv1-caption-scale": frame.caption.minScale * getUniversalPhotoCaptionLengthScale(photo.caption)
+  } as CSSProperties;
+
+  return (
+    <figure
+      className={`${styles.photoFrame} ${className}`.trim()}
+      style={{ aspectRatio: framePreset.aspectRatio }}
+      data-photo-frame
+    >
+      {frame.base ? <Image className={styles.frameBase} src={frame.base.src} alt="" fill sizes="40vw" aria-hidden="true" /> : null}
+      <span className={styles.photoAperture} style={normalizedRectStyle(framePreset.aperture)} data-photo-aperture>
+        <Image
+          src={photo.src}
+          alt={photo.alt}
+          fill
+          priority={priority}
+          sizes="(max-width: 640px) 88vw, 42vw"
+          style={{
+            objectFit: "cover",
+            objectPosition: `${photo.crop.x * 100}% ${photo.crop.y * 100}%`,
+            transform: `scale(${photo.crop.zoom})`
+          }}
+        />
+      </span>
+      {frame.overlay ? <Image className={styles.frameOverlay} src={frame.overlay.src} alt="" fill sizes="40vw" aria-hidden="true" /> : null}
+      <figcaption
+        className={`${styles.photoCaption} ${styles[`caption${frame.caption.align[0].toUpperCase()}${frame.caption.align.slice(1)}`]} ${frame.caption.fontToken === "handwritten" ? styles.handwrittenCaption : ""}`.trim()}
+        style={captionStyle}
+        data-safe-text
+        data-text-boundary
+        data-text-preset="photo-caption"
+        data-max-lines={universalTextCapacityPresets.photoCaption.maxLines}
+        data-photo-caption-area
+        title={photo.caption}
+      >
+        <span>{photo.caption}</span>
+      </figcaption>
+    </figure>
+  );
+}
+
+function MessageCard({ contribution, index, profile }: { contribution: UniversalTemplateContribution; index: number; profile: TemplateProfile }) {
+  const underlay = profile.assets.greetingCards[index % profile.assets.greetingCards.length];
+  const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
+  return (
+    <article
+      className={styles.messageCard}
+      data-message-card
+      data-greeting-card-index={underlay ? index % profile.assets.greetingCards.length : undefined}
+      style={safeInsets ? {
+        "--uv1-message-safe-top": `${safeInsets.top * 100}cqw`,
+        "--uv1-message-safe-right": `${safeInsets.right * 100}cqw`,
+        "--uv1-message-safe-bottom": `${safeInsets.bottom * 100}cqw`,
+        "--uv1-message-safe-left": `${safeInsets.left * 100}cqw`
+      } as CSSProperties : undefined}
+    >
+      {underlay ? <SectionUnderlay underlay={underlay} className={styles.messageCardUnderlay} /> : null}
+      <div className={styles.messageCardContent}>
+        <header className={styles.messageAuthor}>
+          {contribution.avatarUrl ? (
+            <span className={styles.avatarImage}><Image src={contribution.avatarUrl} alt="" fill sizes="44px" /></span>
+          ) : <span className={styles.avatarFallback} aria-hidden="true">{initials(contribution.authorName)}</span>}
+          <span><strong>{contribution.authorName}</strong>{contribution.authorRole ? <small>{contribution.authorRole}</small> : null}</span>
+        </header>
+        <p
+          data-safe-text
+          data-text-boundary
+          data-text-preset="message-card"
+          data-max-lines={universalTextCapacityPresets.messageCard.maxLines}
+          title={contribution.message}
+        >{contribution.message}</p>
+      </div>
+    </article>
+  );
+}
+
+function AllMessagesDialog({
+  contributions,
+  participantCount,
+  profile
+}: {
+  contributions: readonly UniversalTemplateContribution[];
+  participantCount: number;
+  profile: TemplateProfile;
+}) {
+  const [open, setOpen] = useState(false);
+  const dialogTheme = {
+    "--uv1-text": profile.colors.text,
+    "--uv1-muted": profile.colors.muted,
+    "--uv1-accent": profile.colors.accent,
+    "--uv1-surface": profile.colors.surface,
+    "--uv1-heading-font": profile.typography.heading.family,
+    "--uv1-body-font": profile.typography.body.family
+  } as CSSProperties;
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
+  return (
+    <>
+      <button
+        type="button"
+        className={`${styles.countBadge} ${styles.allMessagesButton}`}
+        aria-label={`${participantCount} поздравлений`}
+        title="Открыть все поздравления"
+        onClick={() => setOpen(true)}
+      ><strong>{participantCount}</strong> поздравлений</button>
+      {open ? createPortal(
+        <div className={styles.dialogBackdrop} role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setOpen(false);
+        }} style={dialogTheme}>
+          <section className={styles.messagesDialog} role="dialog" aria-modal="true" aria-labelledby="universal-all-messages-title">
+            <header><div><span>Полная подборка</span><h2 id="universal-all-messages-title">Все поздравления</h2></div><button type="button" onClick={() => setOpen(false)} aria-label="Закрыть все поздравления">×</button></header>
+            <div className={styles.dialogMessages}>{contributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} />)}</div>
+          </section>
+        </div>,
+        document.body
+      ) : null}
+    </>
+  );
+}
+
+function MessagesBlock({ profile, model }: { profile: TemplateProfile; model: UniversalTemplateViewModel }) {
+  const layoutPreset = getUniversalLayoutPreset(profile.layoutPreset);
+  const scenario = getUniversalMessageScenarioForPhotoCount(
+    profile.layoutPreset,
+    model.messagePhotos.length,
+    model.messageScenario
+  );
+  const layoutRule = getUniversalMessageLayoutRule(profile.layoutPreset, scenario);
+  const visibleCardCount = layoutRule.cardsPerPage;
+  const hasMedia = model.messagePhotos.length > 0;
+  const visibleContributions = hasMedia
+    ? model.contributions
+    : model.contributions.slice(0, visibleCardCount);
+
+  return (
+    <>
+      <div className={styles.sectionHeadingRow}><h2>Поздравления</h2><AllMessagesDialog contributions={model.contributions} participantCount={model.participantCount} profile={profile} /></div>
+      <div
+        className={styles.messagesComposition}
+        data-message-scenario={scenario}
+        data-media-distribution={layoutRule.mediaDistribution}
+        data-has-media={hasMedia || undefined}
+        style={{
+          "--uv1-message-stack-height": `${visibleCardCount * layoutPreset.geometry.messageCardHeight + (visibleCardCount - 1) * layoutPreset.geometry.messageGap}px`
+        } as CSSProperties}
+      >
+        <div className={styles.messageGrid} data-visible-card-count={visibleCardCount}>{visibleContributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} />)}</div>
+        {hasMedia ? <div className={styles.messagePhotoGrid}>{model.messagePhotos.map((photo, index) => {
+          const usePortraitFrame = layoutRule.photoFrame === "portrait";
+          return <UniversalPhoto
+            key={photo.id}
+            className={styles[`messagePhoto${index + 1}`]}
+            photo={photo}
+            frame={usePortraitFrame ? profile.assets.photoFrames.messagePortrait : profile.assets.photoFrames.messageLandscape}
+            priority={index === 0}
+          />;
+        })}</div> : null}
+      </div>
+    </>
+  );
+}
+
+function MemoriesBlock({ profile, model }: { profile: TemplateProfile; model: UniversalTemplateViewModel }) {
+  const [primary, second, third] = model.memoryPhotos;
+  if (!primary || !second || !third) return null;
+
+  return (
+    <div className={styles.memoriesLayout} data-memories-layout="route-strip">
+      <div className={styles.memoriesPhotos} data-memory-photo-row>
+        <UniversalPhoto className={styles.memoryPrimary} photo={primary} frame={profile.assets.photoFrames.memory} priority />
+        <div className={styles.memoriesIntro}><h2>{model.memoryTitle}</h2><p>{model.memoryDescription}</p></div>
+        <UniversalPhoto className={styles.memorySecondary} photo={second} frame={profile.assets.photoFrames.memory} />
+        <UniversalPhoto className={styles.memoryTertiary} photo={third} frame={profile.assets.photoFrames.memory} />
+      </div>
+    </div>
+  );
+}
+
+function ClosingActions({
+  context,
+  publicVersionHref
+}: {
+  context: UniversalTemplateActionContext;
+  publicVersionHref?: string;
+}) {
+  const createButton = (
+    <button type="submit" className={`${styles.closingAction} ${styles.closingActionPrimary}`}>
+      Создать такую же открытку
+    </button>
+  );
+  const publicVersionButton = publicVersionHref ? (
+    <a href={publicVersionHref} className={`${styles.closingAction} ${styles.closingActionSecondary}`}>
+      Настроить публичную версию
+    </a>
+  ) : (
+    <button type="button" className={`${styles.closingAction} ${styles.closingActionSecondary}`}>
+      Настроить публичную версию
+    </button>
+  );
+
+  return (
+    <div className={styles.closingActions} data-action-context={context}>
+      {context === "studio" ? createButton : <form action={startCardFromShowcaseAction}>{createButton}</form>}
+      {context === "private" || context === "studio" ? publicVersionButton : null}
+    </div>
+  );
+}
+
+export function UniversalTemplateCard({
+  profile,
+  model,
+  surface = "private",
+  viewport = "auto",
+  actionContext,
+  publicVersionHref,
+  debugSafeAreas = false,
+  className = ""
+}: UniversalCardProps) {
+  const blocks = getUniversalRenderedBlocks(model, surface);
+  const layoutPreset = getUniversalLayoutPreset(profile.layoutPreset);
+  const eventDate = formatUniversalEventDate(model.eventDate);
+  const quotes = surface === "private" ? model.privateQuotes : model.publicQuotes;
+  const photoCount = surface === "public" ? model.publicPhotoCount : model.messagePhotos.length;
+  const resolvedActionContext = actionContext ?? (surface === "private" ? "private" : "demo");
+  const recipientNameTier = getUniversalRecipientNameTier(model.recipientName);
+  const rootStyle = {
+    "--uv1-page": profile.colors.page,
+    "--uv1-text": profile.colors.text,
+    "--uv1-muted": profile.colors.muted,
+    "--uv1-accent": profile.colors.accent,
+    "--uv1-surface": profile.colors.surface,
+    "--uv1-heading-font": profile.typography.heading.family,
+    "--uv1-heading-weight": profile.typography.heading.weight,
+    "--uv1-body-font": profile.typography.body.family,
+    "--uv1-body-weight": profile.typography.body.weight,
+    "--uv1-handwritten-font": profile.typography.handwritten.family,
+    "--uv1-handwritten-weight": profile.typography.handwritten.weight,
+    "--uv1-shell-max-width": `${layoutPreset.geometry.shellMaxWidth}px`,
+    "--uv1-shell-padding-max": `${layoutPreset.geometry.shellPaddingMax}px`,
+    "--uv1-section-gap": `${layoutPreset.geometry.sectionGap}px`,
+    "--uv1-section-radius": `${layoutPreset.geometry.sectionRadius}px`,
+    "--uv1-section-padding-max": `${layoutPreset.geometry.sectionPaddingMax}px`,
+    "--uv1-section-heading-max": `${layoutPreset.geometry.sectionHeadingMax}px`,
+    "--uv1-hero-min-height": `${layoutPreset.geometry.heroMinHeight}px`,
+    "--uv1-hero-padding": `${layoutPreset.geometry.heroPadding}px`,
+    "--uv1-recipient-name-max": `${layoutPreset.geometry.recipientNameMax}px`,
+    "--uv1-recipient-name-long-max": `${layoutPreset.geometry.recipientNameLongMax}px`,
+    "--uv1-summary-content-max-width": `${layoutPreset.geometry.summaryContentMaxWidth}px`,
+    "--uv1-summary-padding-block": `${layoutPreset.geometry.summaryPaddingBlock}px`,
+    "--uv1-summary-padding-inline": `${layoutPreset.geometry.summaryPaddingInline}px`,
+    "--uv1-qualities-padding-top": `${layoutPreset.geometry.qualitiesPaddingTop}px`,
+    "--uv1-qualities-padding-bottom": `${layoutPreset.geometry.qualitiesPaddingBottom}px`,
+    "--uv1-qualities-padding-inline": `${layoutPreset.geometry.qualitiesPaddingInline}px`,
+    "--uv1-quality-card-height": `${layoutPreset.geometry.qualityCardHeight}px`,
+    "--uv1-quality-font-max": `${layoutPreset.geometry.qualityFontMax}px`,
+    "--uv1-messages-padding-block": `${layoutPreset.geometry.messagesPaddingBlock}px`,
+    "--uv1-messages-padding-inline": `${layoutPreset.geometry.messagesPaddingInline}px`,
+    "--uv1-message-card-height": `${layoutPreset.geometry.messageCardHeight}px`,
+    "--uv1-message-gap": `${layoutPreset.geometry.messageGap}px`,
+    "--uv1-message-text-font-max": `${layoutPreset.geometry.messageTextFontMax}px`,
+    "--uv1-message-trio-photo-width": `${layoutPreset.geometry.messageTrioPhotoWidthPercent}%`,
+    "--uv1-photo-caption-font-max": `${layoutPreset.geometry.photoCaptionFontMax}px`,
+    "--uv1-handwritten-photo-caption-font-max": `${layoutPreset.geometry.handwrittenPhotoCaptionFontMax}px`,
+    "--uv1-memory-caption-font-max": `${layoutPreset.geometry.memoryCaptionFontMax}px`,
+    "--uv1-photo-caption-inline-padding": `${layoutPreset.geometry.photoCaptionInlinePaddingPercent}%`,
+    "--uv1-quotes-padding-block": `${layoutPreset.geometry.quotesPaddingBlock}px`,
+    "--uv1-quotes-heading-gap": `${layoutPreset.geometry.quotesHeadingGap}px`,
+    "--uv1-quotes-heading-inline": `${layoutPreset.geometry.quotesHeadingInline}px`,
+    "--uv1-quote-card-height": `${layoutPreset.geometry.quoteCardHeight}px`,
+    "--uv1-quote-text-font-max": `${layoutPreset.geometry.quoteTextFontMax}px`,
+    "--uv1-closing-height": `${layoutPreset.geometry.closingHeight}px`,
+    "--uv1-closing-font-max": `${layoutPreset.geometry.closingFontMax}px`
+  } as CSSProperties;
+
+  return (
+    <main
+      className={`${styles.page} ${debugSafeAreas ? styles.debugSafeAreas : ""} ${className}`.trim()}
+      data-template-family="universal-v1"
+      data-template-id={profile.id}
+      data-layout-preset={profile.layoutPreset}
+      data-surface={surface}
+      data-viewport={viewport}
+      style={rootStyle}
+    >
+      {profile.assets.page ? <span className={styles.pageAsset} aria-hidden="true"><Image src={profile.assets.page.src} alt="" fill priority sizes="100vw" /></span> : null}
+      <DecorLayers profile={profile} anchor="templateRoot" viewport={viewport} />
+      <div className={styles.shell}>
+        {blocks.map((block) => {
+          if (block === "hero") return <SectionSurface key={block} id="hero" profile={profile} viewport={viewport} className={styles.heroSection}>
+            {model.occasion ? <span className={styles.heroOccasion}>{model.occasion}</span> : null}
+            {eventDate ? <time className={styles.eventDate} dateTime={model.eventDate ?? undefined}>{eventDate}</time> : null}
+            <div
+              className={styles.recipientNameBoundary}
+              data-safe-text
+              data-text-boundary
+              data-text-preset="recipient-name"
+              data-max-lines={universalTextCapacityPresets.recipientName.maxLines}
+              title={model.recipientName}
+            >
+              <h1
+                className={`${styles.recipientName} ${recipientNameTier === "long" ? styles.recipientNameLong : ""} ${recipientNameTier === "very-long" ? styles.recipientNameVeryLong : ""}`.trim()}
+              >{model.recipientName}</h1>
+            </div>
+            <p className={styles.heroDescription}>{model.heroDescription}</p>
+            <div className={styles.heroStats}>{model.participantCount > 0 ? <span><strong>{model.participantCount}</strong> поздравлений</span> : null}{photoCount && photoCount > 0 ? <span><strong>{photoCount}</strong> фото</span> : null}</div>
+          </SectionSurface>;
+
+          if (block === "summary") return <SectionSurface key={block} id="summary" profile={profile} viewport={viewport}>
+            <h2>{model.summaryTitle}</h2><p className={styles.mainGreeting}>{model.mainGreeting}</p>{model.mainGreetingAuthorName ? <p className={styles.summaryAuthor}>— {model.mainGreetingAuthorName}</p> : null}
+          </SectionSurface>;
+
+          if (block === "qualities") return <SectionSurface key={block} id="qualities" profile={profile} viewport={viewport}>
+            <h2>За что тебя ценят</h2><p className={styles.sectionSubtitle}>Собрано из поздравлений</p><div className={styles.qualitiesGrid}>{model.qualities.map((quality, index) => {
+              const card = profile.assets.qualityCards[index % Math.max(1, profile.assets.qualityCards.length)];
+              const textArea = card ? getUniversalTextCardPreset(card.preset).textArea : null;
+              return <article key={`${quality}-${index}`} className={styles.qualityCard} data-text-card>{card ? <Image src={card.asset.src} alt="" fill sizes="18vw" aria-hidden="true" /> : null}<strong data-safe-text data-text-boundary data-text-preset="quality-card" data-max-lines={universalTextCapacityPresets.qualityCard.maxLines} style={textArea ? normalizedRectStyle(textArea) : undefined} title={quality}><span>{quality}</span></strong></article>;
+            })}</div>
+          </SectionSurface>;
+
+          if (block === "messages") return <SectionSurface key={block} id="messages" profile={profile} viewport={viewport}><MessagesBlock profile={profile} model={model} /></SectionSurface>;
+
+          if (block === "memories") return <SectionSurface key={block} id="memories" profile={profile} viewport={viewport}><MemoriesBlock profile={profile} model={model} /></SectionSurface>;
+
+          if (block === "quotes") return <SectionSurface key={block} id="quotes" profile={profile} viewport={viewport}>
+            <h2>Лучшие фразы</h2><div className={styles.quotesGrid}>{quotes.slice(0, 3).map((quote, index) => {
+              const card = profile.assets.quoteCards[index % Math.max(1, profile.assets.quoteCards.length)];
+              const textArea = card ? getUniversalTextCardPreset(card.preset).textArea : null;
+              const quoteStyle = {
+                ...(textArea ? normalizedRectStyle(textArea) : {}),
+                "--uv1-quote-scale": getUniversalQuoteLengthScale(quote)
+              } as CSSProperties;
+              return <blockquote key={`${quote}-${index}`} className={styles.quoteCard} data-text-card>{card ? <Image src={card.asset.src} alt="" fill sizes="28vw" aria-hidden="true" /> : null}<span aria-hidden="true">“</span><p data-safe-text data-text-boundary data-text-preset="quote-card" data-max-lines={universalTextCapacityPresets.quoteCard.maxLines} style={quoteStyle} title={quote}>{quote}</p></blockquote>;
+            })}</div>
+          </SectionSurface>;
+
+          if (block === "closing") return <SectionSurface key={block} id="closing" profile={profile} viewport={viewport} className={styles.closingSection}><p>{model.privateSignature}</p><ClosingActions context={resolvedActionContext} publicVersionHref={publicVersionHref} /><div className={styles.closingBrand}><Link href="/">Создано в Slovesto</Link><small>Место, где слова становятся подарком</small></div></SectionSurface>;
+
+          return <section key={block} className={styles.publicNote} data-universal-block="public-note"><h2>В полной открытке — ещё больше тепла</h2><p>Личные поздравления и важные воспоминания бережно сохранены только для получателя.</p><ClosingActions context={resolvedActionContext} publicVersionHref={publicVersionHref} /></section>;
+        })}
+      </div>
+    </main>
+  );
+}

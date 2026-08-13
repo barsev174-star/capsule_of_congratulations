@@ -65,6 +65,7 @@ const makeShare = (status: PublicCardShare["status"]): PublicCardShare => ({
   showPublicName: true,
   headlinePreset: "GIFTED_CARD",
   showOccasion: true,
+  showEventDate: true,
   showGreetingCount: true,
   showPhotoCount: true,
   publicSummary: null,
@@ -92,7 +93,9 @@ const baseProps = (): PanelProps => ({
   phraseCandidates: PHRASES,
   publicQualities: QUALITIES,
   wasRevoked: false,
-  publicSharePath: null
+  publicSharePath: null,
+  hasEventDate: true,
+  requiresThreePhotos: false
 });
 
 const renderPanel = (overrides: Partial<PanelProps> = {}) =>
@@ -308,6 +311,42 @@ describe("PublicSharePanel: выбор фото", () => {
 
     expect(screen.queryByText("Без подтверждения нельзя сохранить публичные фотографии.")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Создать черновик" })).toBeEnabled();
+  });
+
+  it("для universal-v1 разрешает сохранить только 0 или 3 фотографии", async () => {
+    const user = userEvent.setup();
+    renderPanel({ ...photoProps(), requiresThreePhotos: true });
+
+    await user.click(unselectedPhotoCards()[0]);
+    await user.click(screen.getByRole("checkbox", { name: /подтверждаю, что могу разрешить/i }));
+
+    expect(screen.getByText("Для блока «Моменты» выберите ровно три фотографии или снимите выбор со всех.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Создать черновик" })).toBeDisabled();
+
+    await user.click(unselectedPhotoCards()[0]);
+    await user.click(unselectedPhotoCards()[0]);
+
+    expect(screen.queryByText("Для блока «Моменты» выберите ровно три фотографии или снимите выбор со всех.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Создать черновик" })).toBeEnabled();
+  });
+});
+
+describe("PublicSharePanel: дата события", () => {
+  it("показывает независимый переключатель только когда дата существует", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    const toggle = screen.getByRole("checkbox", { name: "Дата события" });
+    expect(toggle).toBeChecked();
+    expect(within(screen.getByLabelText("Что будет опубликовано")).getByText("Дата события")).toBeInTheDocument();
+
+    await user.click(toggle);
+    expect(within(screen.getByLabelText("Что будет опубликовано")).queryByText("Дата события")).not.toBeInTheDocument();
+  });
+
+  it("не показывает переключатель без даты", () => {
+    renderPanel({ hasEventDate: false });
+    expect(screen.queryByRole("checkbox", { name: "Дата события" })).not.toBeInTheDocument();
   });
 });
 

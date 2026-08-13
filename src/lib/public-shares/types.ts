@@ -11,11 +11,12 @@ export type PublicCardShare = {
   cardId: string;
   tokenHash: string | null;
   status: PublicCardShareStatus;
-  payloadVersion: 1;
+  payloadVersion: 1 | 2;
   displayName: string | null;
   showPublicName: boolean;
   headlinePreset: PublicShareHeadlinePreset;
   showOccasion: boolean;
+  showEventDate: boolean;
   showGreetingCount: boolean;
   showPhotoCount: boolean;
   publicSummary: string | null;
@@ -61,6 +62,7 @@ export type PublicShareEditorInput = Pick<
   | "displayName"
   | "headlinePreset"
   | "showOccasion"
+  | "showEventDate"
   | "showGreetingCount"
   | "showPhotoCount"
   | "publicSummary"
@@ -93,3 +95,36 @@ export type PublicSharePayloadV1 = {
   phrases: string[];
   photos: Array<{ id: string; url: string; caption: string }>;
 };
+
+export type PublicSharePayloadV2 = {
+  version: 2;
+  family: "universal-v1";
+  share: {
+    displayName: string | null;
+    headlinePreset: PublicShareHeadlinePreset;
+    showOccasion: boolean;
+    showEventDate: boolean;
+    showGreetingCount: boolean;
+    showPhotoCount: boolean;
+  };
+  card: {
+    templateId: string;
+    occasionText: string | null;
+    eventDate: string | null;
+    fromLabel: string | null;
+    greetingCount: number;
+    photoCount: number;
+  };
+  qualities: string[];
+  phrases: string[];
+  photos: Array<{
+    id: string;
+    url: string;
+    width: number;
+    height: number;
+    caption: string;
+    crop: { x: number; y: number; zoom: number };
+  }>;
+};
+
+export type PublicSharePayload = PublicSharePayloadV1 | PublicSharePayloadV2;

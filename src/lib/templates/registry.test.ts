@@ -4,6 +4,7 @@ import {
   catalogTemplateRegistrations,
   createTemplateRegistry,
   defineUniversalTemplateRegistration,
+  isProductTemplateId,
   isRegisteredTemplateId,
   templateRegistry,
   type LegacyTemplateRegistration
@@ -12,6 +13,7 @@ import {
 const universalProfile = defineTemplate({
   id: "pilot-template",
   family: "universal-v1",
+  layoutPreset: "route-v1",
   metadata: {
     name: "Пилот",
     description: "Технический профиль",
@@ -25,23 +27,17 @@ const universalProfile = defineTemplate({
     quoteCards: [],
     photoFrames: {
       messagePortrait: {
-        aspectRatio: 1,
-        aperture: { x: 0, y: 0, width: 1, height: 0.8 },
-        captionArea: { x: 0, y: 0.8, width: 1, height: 0.2 },
+        preset: "portrait-polaroid",
         fit: "cover",
         caption: { maxChars: 45, maxLines: 2, align: "center", fontToken: "body", minScale: 0.7 }
       },
       messageLandscape: {
-        aspectRatio: 1.5,
-        aperture: { x: 0, y: 0, width: 1, height: 0.8 },
-        captionArea: { x: 0, y: 0.8, width: 1, height: 0.2 },
+        preset: "landscape-polaroid",
         fit: "cover",
         caption: { maxChars: 45, maxLines: 2, align: "center", fontToken: "body", minScale: 0.7 }
       },
       memory: {
-        aspectRatio: 1.4,
-        aperture: { x: 0, y: 0, width: 1, height: 0.8 },
-        captionArea: { x: 0, y: 0.8, width: 1, height: 0.2 },
+        preset: "landscape-polaroid",
         fit: "cover",
         caption: { maxChars: 45, maxLines: 2, align: "center", fontToken: "body", minScale: 0.7 }
       }
@@ -72,7 +68,8 @@ const catalog = {
   name: "Пилот",
   description: "Технический профиль",
   recommendedFor: ["personal" as const],
-  accent: "#e9652f"
+  accent: "#e9652f",
+  availability: "studio" as const
 };
 
 describe("template registry", () => {
@@ -85,6 +82,11 @@ describe("template registry", () => {
   it("сохраняет распознавание скрытых legacy ID", () => {
     expect(isRegisteredTemplateId("warm-classic")).toBe(true);
     expect(isRegisteredTemplateId("paper-birthday")).toBe(true);
+    expect(isRegisteredTemplateId("northern-light")).toBe(true);
+    expect(isRegisteredTemplateId("daylight-proof")).toBe(true);
+    expect(isProductTemplateId("northern-light")).toBe(false);
+    expect(isProductTemplateId("daylight-proof")).toBe(false);
+    expect(isProductTemplateId("route-adventure")).toBe(true);
     expect(isRegisteredTemplateId("unknown")).toBe(false);
   });
 

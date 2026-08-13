@@ -22,9 +22,12 @@ export const TemplateSummary = ({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const selectedTemplate = templates.find((template) => template.id === templateId) ?? null;
-  const isPreviewTemplate = selectedTemplate
-    ? selectedTemplate.id === "paper-birthday" || selectedTemplate.id === "route-adventure"
-    : false;
+  const previewSrc = selectedTemplate?.preview
+    ?? (selectedTemplate?.id === "route-adventure"
+      ? "/assets/landing/template-route-adventure-preview.png"
+      : selectedTemplate?.id === "paper-birthday"
+        ? "/templates/warm-classic-preview.png"
+        : null);
 
   useEffect(() => {
     if (!isPickerOpen) {
@@ -73,12 +76,12 @@ export const TemplateSummary = ({
   return (
     <div className={styles.templateSummary}>
       <div className={styles.templateSummaryMain}>
-        {isPreviewTemplate && selectedTemplate ? (
+        {previewSrc && selectedTemplate ? (
           <div className={styles.templatePreviewWrap}>
             {/* Intentional fixed preview asset inside a CSS-sized template frame. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={selectedTemplate.id === "route-adventure" ? "/assets/landing/template-route-adventure-preview.png" : "/templates/warm-classic-preview.png"}
+              src={previewSrc}
               alt={selectedTemplate.name}
               className={styles.templatePreviewImage}
             />
@@ -104,11 +107,7 @@ export const TemplateSummary = ({
               {selectedTemplate?.description ?? "Это обязательный шаг перед открытием сбора."}
             </span>
             <span className={styles.templateDescriptionMobile}>
-              {!selectedTemplate
-                ? "Обязательный шаг"
-                : selectedTemplate.id === "route-adventure"
-                ? "Приключенческий тёмный стиль"
-                : "Тёплый бумажный стиль"}
+              {selectedTemplate?.description ?? "Обязательный шаг"}
             </span>
           </p>
           <button

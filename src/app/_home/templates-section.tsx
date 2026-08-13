@@ -13,8 +13,8 @@ const templateStyleMap: Record<string, string> = {
   "route-adventure": styles.routeAdventure
 };
 
-function TemplateMiniature({ templateId, accent }: { templateId: string; accent: string }) {
-  const imageSrc = getTemplateAsset(templateId);
+function TemplateMiniature({ templateId, accent, preview }: { templateId: string; accent: string; preview?: string }) {
+  const imageSrc = preview ?? getTemplateAsset(templateId);
   const styleClass = templateStyleMap[templateId] ?? styles.paperClassic;
 
   if (imageSrc) {
@@ -55,7 +55,7 @@ export async function TemplatesSection() {
         <div className={styles.grid}>
           {cardTemplates.map((template) => (
             <article key={template.id} className={`${styles.card} js-motion-card ${styles.active}`}>
-              <TemplateMiniature templateId={template.id} accent={template.accent} />
+              <TemplateMiniature templateId={template.id} accent={template.accent} preview={template.preview} />
               <h3 className={styles.cardTitle}>{template.name}</h3>
               <p className={styles.cardText}>{template.description}</p>
               <span className={styles.availableBadge}>Доступен</span>

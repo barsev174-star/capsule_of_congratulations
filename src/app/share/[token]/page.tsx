@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { FinalCard } from "@/components/final-card/final-card";
+import { TemplateCardRenderer } from "@/components/templates/template-card-renderer";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
 import { getPublicSharePayload, getPublicSharePresentation } from "@/lib/public-shares/service";
 import { ShareActions } from "./share-actions";
@@ -13,7 +13,7 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
   const payload = await getPublicSharePayload(token);
   if (!payload) return { robots: { index: false, follow: false }, title: "Открытка недоступна — Slovesto" };
   const title = `${payload.share.displayName!} делится открыткой — Slovesto`;
-  return { title, description: "Тёплая публичная часть подарка от Slovesto.", robots: { index: false, follow: false }, openGraph: { title, description: "Тёплая публичная часть подарка от Slovesto.", images: [`/share/${encodeURIComponent(token)}/image/og`] } };
+  return { title, description: "Тёплая публичная часть подарка от Slovesto.", robots: { index: false, follow: false }, openGraph: { title, description: "Тёплая публичная часть подарка от Slovesto.", ...(payload.version === 1 ? { images: [`/share/${encodeURIComponent(token)}/image/og`] } : {}) } };
 };
 
 export default async function PublicSharePage({ params }: Props) {
@@ -22,7 +22,9 @@ export default async function PublicSharePage({ params }: Props) {
   if (!presentation) notFound();
   return <main className={styles.page}>
     <JourneyEvent event="PUBLIC_SHARE_OPENED" route="share" />
-    <FinalCard model={presentation.model} mode="public" />
+    {presentation.kind === "universal-v1"
+      ? <TemplateCardRenderer dispatch={presentation.dispatch} model={presentation.model} surface="public" />
+      : <TemplateCardRenderer dispatch={presentation.dispatch} model={presentation.model} mode="public" />}
     <section className={styles.actions}><ShareActions publicName={presentation.publicName} token={token} /></section>
   </main>;
 }

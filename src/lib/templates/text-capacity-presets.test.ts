@@ -1,0 +1,33 @@
+import {
+  getUniversalRecipientNameTier,
+  getUniversalPhotoCaptionLengthScale,
+  getUniversalQuoteLengthScale,
+  universalTextCapacityPresets
+} from "@/lib/templates/text-capacity-presets";
+
+describe("universal text capacity presets", () => {
+  it("keeps hard limits for reusable template text regions", () => {
+    expect(universalTextCapacityPresets.recipientName).toMatchObject({ maxChars: 80, maxLines: 2 });
+    expect(universalTextCapacityPresets.photoCaption).toMatchObject({ maxChars: 45, maxLines: 2 });
+    expect(universalTextCapacityPresets.quoteCard).toMatchObject({ maxChars: 100, maxLines: 4 });
+    expect(universalTextCapacityPresets.messageCard.overflow).toBe("ellipsis");
+  });
+
+  it("selects a bounded recipient-name font tier", () => {
+    expect(getUniversalRecipientNameTier("Anna")).toBe("default");
+    expect(getUniversalRecipientNameTier("x".repeat(37))).toBe("long");
+    expect(getUniversalRecipientNameTier("x".repeat(61))).toBe("very-long");
+  });
+
+  it("scales only long photo captions inside the fixed two-line area", () => {
+    expect(getUniversalPhotoCaptionLengthScale("short caption")).toBe(1);
+    expect(getUniversalPhotoCaptionLengthScale("x".repeat(35))).toBe(.84);
+    expect(getUniversalPhotoCaptionLengthScale("x".repeat(45))).toBe(.78);
+  });
+
+  it("scales only near-limit quotes inside the fixed four-line area", () => {
+    expect(getUniversalQuoteLengthScale("x".repeat(80))).toBe(1);
+    expect(getUniversalQuoteLengthScale("x".repeat(81))).toBe(.93);
+    expect(getUniversalQuoteLengthScale("x".repeat(100))).toBe(.86);
+  });
+});

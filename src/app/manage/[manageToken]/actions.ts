@@ -32,7 +32,7 @@ import {
   normalizeCrop
 } from "@/lib/cards/media-slots";
 import { createContribution } from "@/lib/cards/service";
-import { isTemplateId } from "@/lib/cards/templates";
+import { isProductTemplateId, isTemplateId } from "@/lib/cards/templates";
 import type { CardDraft, CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
 import { closeCollection, deliverCard, openCollection } from "@/lib/cards/lifecycle-repository";
 import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository";
@@ -84,6 +84,7 @@ import { sanitizeGiftPollText } from "@/lib/gift-polls/text-sanitization";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { buildCardBlockReadiness } from "@/lib/manage/card-design-readiness";
 import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
+import { templateRegistry } from "@/lib/templates/registry";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
@@ -104,7 +105,7 @@ const assertManageContentEditable = async (manageToken: string) => {
 };
 
 const syncCardPhotoSettings = async (card: CardDraft, assets: CardMediaAsset[]) => {
-  if (!isTemplateId(card.templateId)) {
+  if (!isProductTemplateId(card.templateId)) {
     return;
   }
 
@@ -871,6 +872,14 @@ export async function deliverCardAction(
     });
     return { ok: false, message: "Сначала выберите шаблон открытки." };
   }
+  const templateRegistration = templateRegistry.get(card.templateId);
+  if (!templateRegistration || templateRegistration.family !== "legacy") {
+    logger.warn("manage.delivery_blocked_by_studio_template", "Universal studio template delivery is not enabled", {
+      cardId: card.id,
+      templateId: card.templateId
+    });
+    return { ok: false, message: "Этот шаблон пока доступен только для проверки в ателье." };
+  }
   const [contributions, assets, quotesInsight, qualitiesInsight, savedQuoteSelection] = await Promise.all([
     listContributionsByCardId(card.id),
     listCardMediaAssetsByCardId(card.id),
@@ -888,7 +897,7 @@ export async function deliverCardAction(
   const quoteSelection = resolveFinalBestQuotes(card, quoteCandidates, selectedQuoteTexts);
   const readiness = buildCardBlockReadiness({
     card,
-    requiredBlockIds: finalCardLayouts[card.templateId].blocks
+    requiredBlockIds: finalCardLayouts[templateRegistration.id].blocks
       .filter((block) => block.required)
       .map((block) => block.id),
     visibleContributions: contributions,
@@ -1176,7 +1185,7 @@ export async function updateCardTemplateAction(
 ) {
   const manageToken = String(formData.get("manageToken") ?? "");
   const templateIdValue = String(formData.get("templateId") ?? "");
-  if (!manageToken || !isTemplateId(templateIdValue)) {
+  if (!manageToken || !isProductTemplateId(templateIdValue)) {
     return { ok: false, message: "Не удалось выбрать шаблон." };
   }
 

@@ -1,6 +1,6 @@
 import {
   isOccasionId,
-  isTemplateId,
+  isProductTemplateId,
   type OccasionId
 } from "@/lib/cards/templates";
 import type { CreateCardInput } from "@/lib/cards/types";
@@ -39,7 +39,7 @@ const pushIssue = (issues: ValidationIssue[], field: string, message: string) =>
 };
 
 const resolveTemplate = (rawTemplate: string) => {
-  if (isTemplateId(rawTemplate)) {
+  if (isProductTemplateId(rawTemplate)) {
     return rawTemplate;
   }
 
