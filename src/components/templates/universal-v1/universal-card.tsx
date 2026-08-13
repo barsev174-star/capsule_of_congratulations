@@ -29,12 +29,12 @@ import { getUniversalPhotoFramePreset } from "@/lib/templates/photo-frame-preset
 import { getUniversalTextCardPreset } from "@/lib/templates/text-card-presets";
 import {
   getUniversalRecipientNameTier,
-  getUniversalPhotoCaptionLengthScale,
   getUniversalQuoteLengthScale,
   universalTextCapacityPresets
 } from "@/lib/templates/text-capacity-presets";
 import { getUnderlaySafeInsets } from "@/lib/templates/section-underlays";
 import { SectionUnderlay } from "./section-underlay";
+import { isUniversalBareSection } from "./section-presentation";
 import styles from "./universal-card.module.css";
 
 export type UniversalTemplateViewport = "auto" | "desktop" | "mobile";
@@ -83,11 +83,12 @@ function DecorLayers({
   viewport: UniversalTemplateViewport;
 }) {
   return profile.assets.decor
-    .filter((layer) => layer.anchor === anchor && getDecorVisibility(layer, viewport))
+    .filter((layer) => layer.anchor === anchor && getDecorVisibility(layer, viewport) && layer.asset.src.startsWith("/"))
     .map((layer) => (
       <span
         key={layer.id}
         className={styles.decorLayer}
+        data-decor-layer={layer.id}
         data-visible-on={layer.visibleOn?.join(" ")}
         style={{
           ...normalizedRectStyle(layer.rect),
@@ -114,14 +115,16 @@ function SectionSurface({
   className?: string;
   children: ReactNode;
 }) {
-  const underlay = profile.assets.sections[id];
+  const isBare = isUniversalBareSection(id);
+  const underlay = isBare ? undefined : profile.assets.sections[id];
   const surfaceColor = profile.colors.surfaces[id] ?? profile.colors.surface;
   const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
 
   return (
     <section
-      className={`${styles.section} ${styles[id]} ${className}`.trim()}
+      className={`${styles.section} ${styles[id]} ${isBare ? styles.bareSection : ""} ${className}`.trim()}
       data-universal-block={id}
+      data-section-presentation={isBare ? "bare" : "surface"}
       data-underlay-preset={underlay?.preset}
       style={{
         "--uv1-section-surface": surfaceColor,
@@ -153,7 +156,7 @@ function UniversalPhoto({
   const framePreset = getUniversalPhotoFramePreset(frame.preset);
   const captionStyle = {
     ...normalizedRectStyle(framePreset.captionArea),
-    "--uv1-caption-scale": frame.caption.minScale * getUniversalPhotoCaptionLengthScale(photo.caption)
+    "--uv1-caption-scale": frame.caption.minScale
   } as CSSProperties;
 
   return (
@@ -445,7 +448,7 @@ export function UniversalTemplateCard({
       data-viewport={viewport}
       style={rootStyle}
     >
-      {profile.assets.page ? <span className={styles.pageAsset} aria-hidden="true"><Image src={profile.assets.page.src} alt="" fill priority sizes="100vw" /></span> : null}
+      {profile.assets.page ? <span className={styles.pageAsset} aria-hidden="true" style={{ backgroundImage: `url(${profile.assets.page.src})` }} /> : null}
       <DecorLayers profile={profile} anchor="templateRoot" viewport={viewport} />
       <div className={styles.shell}>
         {blocks.map((block) => {
@@ -473,7 +476,7 @@ export function UniversalTemplateCard({
           </SectionSurface>;
 
           if (block === "qualities") return <SectionSurface key={block} id="qualities" profile={profile} viewport={viewport}>
-            <h2>За что тебя ценят</h2><p className={styles.sectionSubtitle}>Собрано из поздравлений</p><div className={styles.qualitiesGrid}>{model.qualities.map((quality, index) => {
+            <h2>За что тебя ценят</h2><div className={styles.qualitiesGrid}>{model.qualities.map((quality, index) => {
               const card = profile.assets.qualityCards[index % Math.max(1, profile.assets.qualityCards.length)];
               const textArea = card ? getUniversalTextCardPreset(card.preset).textArea : null;
               return <article key={`${quality}-${index}`} className={styles.qualityCard} data-text-card>{card ? <Image src={card.asset.src} alt="" fill sizes="18vw" aria-hidden="true" /> : null}<strong data-safe-text data-text-boundary data-text-preset="quality-card" data-max-lines={universalTextCapacityPresets.qualityCard.maxLines} style={textArea ? normalizedRectStyle(textArea) : undefined} title={quality}><span>{quality}</span></strong></article>;

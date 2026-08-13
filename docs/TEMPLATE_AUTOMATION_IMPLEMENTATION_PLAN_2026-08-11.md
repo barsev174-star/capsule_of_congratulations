@@ -418,6 +418,7 @@ npm run template:new -- --id=new-template --family=universal-v1
 Результат:
 
 - [x] все новые регистрации по умолчанию имеют `availability: "studio"`;
+- [x] справочник ателье автоматически показывает все зарегистрированные `universal-v1` шаблоны; `northern-light` и `daylight-proof` доступны без ручного ввода URL;
 - [x] studio-шаблоны отсутствуют в каталоге и менеджере и не принимаются server action выбора;
 - [x] manager/readiness/actions используют семейный dispatcher и не обращаются к legacy-layout по ID universal-шаблона;
 - [ ] реальная карточка из базы преобразуется в `UniversalTemplateViewModel` без fixtures;

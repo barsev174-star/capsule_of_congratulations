@@ -35,7 +35,8 @@ describe("northern-light pilot template", () => {
     );
 
     expect(container.querySelector('[data-template-id="northern-light"]')).toBeInTheDocument();
-    expect(container.innerHTML).toContain("%2Ftemplates%2Fnorthern-light%2Fpage.webp");
+    expect((container.querySelector('[data-template-id="northern-light"] > span[aria-hidden="true"]') as HTMLElement).style.backgroundImage)
+      .toContain("/templates/northern-light/page.webp");
     expect(container.querySelector('[data-universal-block="messages"]')).toBeInTheDocument();
 
     rerender(<TemplateCardRenderer dispatch={dispatch} model={model} surface="public" />);

@@ -11,6 +11,7 @@ import {
   validateTemplateProfile,
   type NormalizedRect,
   type TemplateAssetRef,
+  type TemplateDecorLayer,
   type TemplateFontToken,
   type UniversalTemplateFixtureId
 } from "@/lib/templates/profile";
@@ -30,7 +31,9 @@ import {
 } from "@/lib/templates/section-underlays";
 import { getUniversalTextCardPreset } from "@/lib/templates/text-card-presets";
 import {
+  createTemplateStudioDecorLayer,
   createTemplateStudioDraft,
+  getTemplateStudioStorageKey,
   listTemplateProfileAssets,
   parseTemplateStudioImport,
   replaceTemplateProfileAsset,
@@ -48,11 +51,12 @@ import styles from "./template-studio.module.css";
 
 type TemplateStudioProps = {
   initialDraft: TemplateStudioDraft;
+  registeredTemplateOptions: ReadonlyArray<{ id: string; label: string }>;
 };
 
 type ImportStatus = { tone: "neutral" | "success" | "error"; message: string };
 
-const templateOptions = [
+const inspectionTemplateOptions = [
   { id: "universal-sandbox", label: "Universal sandbox" },
   { id: "paper-birthday", label: "Paper — инспекция без миграции" },
   { id: "route-adventure", label: "Route — инспекция без миграции" }
@@ -61,7 +65,29 @@ const templateOptions = [
 const formatLabels: Record<TemplateStudioFormat, string> = { web: "Web", story: "Story", post: "Post", a4: "A4" };
 const surfaceLabels: Record<TemplateStudioSurface, string> = { private: "Private", public: "Public" };
 const viewportLabels: Record<TemplateStudioViewport, string> = { desktop: "Desktop", mobile: "Mobile" };
-const storageKey = (templateId: string) => `slovesto:template-studio:${templateId}:v4`;
+const decorVisibilityLabels = { desktop: "Desktop", mobile: "Mobile", export: "Экспорт" } as const;
+const decorAnchorLabels: Record<TemplateDecorLayer["anchor"], string> = {
+  templateRoot: "Вся открытка",
+  hero: "Шапка",
+  summary: "Главное поздравление",
+  qualities: "За что тебя ценят",
+  messages: "Поздравления",
+  memories: "Моменты",
+  quotes: "Лучшие фразы",
+  closing: "Подвал"
+};
+
+const decorPlacementPresets = [
+  { id: "page-top-left", label: "Страница · левый верх", anchor: "templateRoot", rect: { x: 0.02, y: 0.01, width: 0.22, height: 0.08 } },
+  { id: "page-top-right", label: "Страница · правый верх", anchor: "templateRoot", rect: { x: 0.76, y: 0.01, width: 0.22, height: 0.08 } },
+  { id: "hero-left", label: "Шапка · слева", anchor: "hero", rect: { x: 0.02, y: 0.06, width: 0.24, height: 0.82 } },
+  { id: "hero-right", label: "Шапка · справа", anchor: "hero", rect: { x: 0.74, y: 0.06, width: 0.24, height: 0.82 } }
+] as const satisfies ReadonlyArray<{
+  id: string;
+  label: string;
+  anchor: TemplateDecorLayer["anchor"];
+  rect: NormalizedRect;
+}>;
 
 const clone = <T,>(value: T): T => structuredClone(value);
 
@@ -130,7 +156,8 @@ function RectEditor({
   </div></fieldset>;
 }
 
-export function TemplateStudio({ initialDraft }: TemplateStudioProps) {
+export function TemplateStudio({ initialDraft, registeredTemplateOptions }: TemplateStudioProps) {
+  const draftStorageKey = useMemo(() => getTemplateStudioStorageKey(initialDraft), [initialDraft]);
   const [draft, setDraft] = useState(initialDraft);
   const [ready, setReady] = useState(false);
   const [fixtureId, setFixtureId] = useState<UniversalTemplateFixtureId>(initialDraft.profile.demo.fixture);
@@ -144,6 +171,8 @@ export function TemplateStudio({ initialDraft }: TemplateStudioProps) {
   const [optionalBlocks, setOptionalBlocks] = useState(true);
   const [longCaptions, setLongCaptions] = useState(false);
   const [showRouteReference, setShowRouteReference] = useState(false);
+  const [selectedDecorIndex, setSelectedDecorIndex] = useState(0);
+  const [decorUploadPending, setDecorUploadPending] = useState(false);
   const [importStatus, setImportStatus] = useState<ImportStatus>({ tone: "neutral", message: "Черновик сохраняется локально после первого изменения." });
   const [assetNetworkBytes, setAssetNetworkBytes] = useState<number | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -167,11 +196,14 @@ export function TemplateStudio({ initialDraft }: TemplateStudioProps) {
   const selectedGreetingCardPreset = selectedGreetingCard ? getUniversalSectionUnderlayPreset(selectedGreetingCard.preset) : null;
   const selectedUnderlay = draft.profile.assets.sections[draft.inspector.selectedBlock];
   const selectedUnderlayPreset = selectedUnderlay ? getUniversalSectionUnderlayPreset(selectedUnderlay.preset) : null;
+  const resolvedDecorIndex = Math.min(selectedDecorIndex, Math.max(0, draft.profile.assets.decor.length - 1));
+  const selectedDecorLayer = draft.profile.assets.decor[resolvedDecorIndex];
+  const templateOptions = [...inspectionTemplateOptions, ...registeredTemplateOptions];
   const currentTemplateListed = templateOptions.some((option) => option.id === draft.profile.id);
   const routeReferenceUrl = `/internal/template-baseline?template=route-adventure&surface=${surface}&scenario=${scenario}`;
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(storageKey(initialDraft.profile.id));
+    const stored = window.localStorage.getItem(draftStorageKey);
     queueMicrotask(() => {
       if (stored) {
         const result = parseTemplateStudioImport(stored, initialDraft);
@@ -184,12 +216,12 @@ export function TemplateStudio({ initialDraft }: TemplateStudioProps) {
       }
       setReady(true);
     });
-  }, [initialDraft]);
+  }, [draftStorageKey, initialDraft]);
 
   useEffect(() => {
     if (!ready) return;
-    window.localStorage.setItem(storageKey(initialDraft.profile.id), JSON.stringify(draft));
-  }, [draft, initialDraft.profile.id, ready]);
+    window.localStorage.setItem(draftStorageKey, JSON.stringify(draft));
+  }, [draft, draftStorageKey, ready]);
 
   useEffect(() => {
     let cancelled = false;
@@ -217,6 +249,60 @@ export function TemplateStudio({ initialDraft }: TemplateStudioProps) {
   const updateFont = (key: keyof typeof draft.profile.typography, patch: Partial<TemplateFontToken>) => updateDraft((next) => {
     next.profile.typography[key] = { ...next.profile.typography[key], ...patch };
   });
+  const updateDecorLayer = (updater: (layer: TemplateDecorLayer) => void) => updateDraft((next) => {
+    next.profile.assets.decor = next.profile.assets.decor.map((layer, index) => {
+      if (index !== resolvedDecorIndex) return layer;
+      const updated = clone(layer);
+      updater(updated);
+      return updated;
+    });
+  });
+  const addDecorLayer = () => {
+    const nextIndex = draft.profile.assets.decor.length;
+    updateDraft((next) => {
+      const layer = createTemplateStudioDecorLayer(next.profile, selectedAsset.asset, next.inspector.selectedBlock);
+      next.profile.assets.decor = [...next.profile.assets.decor, layer];
+      next.inspector.selectedAssetPath = `assets.decor.${nextIndex}.asset`;
+    });
+    setSelectedDecorIndex(nextIndex);
+  };
+  const removeDecorLayer = () => {
+    if (!selectedDecorLayer) return;
+    updateDraft((next) => {
+      next.profile.assets.decor = next.profile.assets.decor.filter((_, index) => index !== resolvedDecorIndex);
+      next.inspector.selectedAssetPath = "assets.page";
+    });
+    setSelectedDecorIndex(Math.max(0, resolvedDecorIndex - 1));
+  };
+  const uploadDecorAsset = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setDecorUploadPending(true);
+    setImportStatus({ tone: "neutral", message: "Загружаем декоративный ассет…" });
+    try {
+      const form = new FormData();
+      form.set("templateId", draft.profile.id);
+      form.set("file", file);
+      const response = await fetch("/api/internal/template-studio/decor", { method: "POST", body: form });
+      const payload = await response.json() as { asset?: TemplateAssetRef; message?: string };
+      if (!response.ok || !payload.asset) throw new Error(payload.message ?? "Не удалось загрузить ассет.");
+
+      const nextIndex = draft.profile.assets.decor.length;
+      updateDraft((next) => {
+        const layer = createTemplateStudioDecorLayer(next.profile, payload.asset as TemplateAssetRef, next.inspector.selectedBlock);
+        next.profile.assets.decor = [...next.profile.assets.decor, layer];
+        next.inspector.selectedAssetPath = `assets.decor.${nextIndex}.asset`;
+      });
+      setSelectedDecorIndex(nextIndex);
+      setImportStatus({ tone: "success", message: "Ассет загружен и добавлен как декоративный слой." });
+    } catch (error) {
+      setImportStatus({ tone: "error", message: error instanceof Error ? error.message : "Не удалось загрузить ассет." });
+    } finally {
+      setDecorUploadPending(false);
+    }
+  };
 
   const selectScenario = (value: UniversalMessageScenario) => {
     setScenario(value);
@@ -254,7 +340,7 @@ export function TemplateStudio({ initialDraft }: TemplateStudioProps) {
     if (!window.confirm("Сбросить локальные настройки этого черновика?")) return;
     const next = createTemplateStudioDraft(initialDraft.profile);
     setDraft(next);
-    window.localStorage.removeItem(storageKey(initialDraft.profile.id));
+    window.localStorage.removeItem(draftStorageKey);
     setImportStatus({ tone: "neutral", message: "Черновик сброшен к исходной конфигурации." });
   };
 
@@ -380,18 +466,55 @@ export function TemplateStudio({ initialDraft }: TemplateStudioProps) {
           {selectedGreetingCardPreset ? <><div className={styles.underlayPresetInfo}><strong>Циклическая подложка поздравления · {selectedGreetingCardNumber} из 4</strong><p>Четыре ассета назначаются поздравлениям по кругу. Nine-slice сохраняет края при разной высоте карточки.</p></div><div className={styles.underlayContract}><span>Safe text поздравления</span><strong>{Math.round(selectedGreetingCardPreset.safeArea.x * 100)}% · {Math.round(selectedGreetingCardPreset.safeArea.y * 100)}% · {Math.round(selectedGreetingCardPreset.safeArea.width * 100)}% · {Math.round(selectedGreetingCardPreset.safeArea.height * 100)}%</strong><p>Автор и текст остаются внутри общей безопасной области; подложка не требует подгонки под каждое поздравление.</p></div></> : selectedTextCard ? (() => { const preset = getUniversalTextCardPreset(selectedTextCard.preset); return <><div className={styles.underlayPresetInfo}><strong>{preset.label} · {preset.source.width} × {preset.source.height}</strong><p>{preset.description}</p></div><div className={styles.underlayContract}><span>Safe text плашки</span><strong>{Math.round(preset.textArea.x * 100)}% · {Math.round(preset.textArea.y * 100)}% · {Math.round(preset.textArea.width * 100)}% · {Math.round(preset.textArea.height * 100)}%</strong><p>Область закреплена стандартом и применяется одинаково в Web и Export. Попиксельная настройка для отдельного шаблона не требуется.</p></div></>; })() : <p className={styles.emptyUnderlayHint}>Выберите подложку поздравления, карточку качества или карточку фразы, чтобы увидеть её safe text.</p>}
         </div></details>
 
-        <details><summary>Декор и типографика</summary><div className={styles.detailsBody}>
-          {draft.profile.assets.decor.map((layer, index) => {
-            const visible = layer.visibleOn?.includes(inspectorVariant) ?? true;
-            return <label className={styles.decorToggle} key={layer.id}><input type="checkbox" checked={visible} onChange={(event) => updateDraft((next) => {
-              const current = next.profile.assets.decor[index];
-              const targets = new Set<"desktop" | "mobile" | "export">(current.visibleOn ?? ["desktop", "mobile", "export"]);
-              if (event.target.checked) targets.add(inspectorVariant); else targets.delete(inspectorVariant);
-              next.profile.assets.decor = next.profile.assets.decor.map((entry, entryIndex) => (
-                entryIndex === index ? { ...current, visibleOn: [...targets] } : entry
-              ));
-            })} /><span>{layer.id} · {inspectorVariant}</span></label>;
-          })}
+        <details open><summary>Декоративные слои</summary><div className={styles.detailsBody}>
+          <p className={styles.inspectorHint}>Декор располагается под содержимым: он может заходить на фон, но не перекрывает текст и фотографии.</p>
+          <label className={styles.decorUpload}>
+            <span>Новый декоративный файл</span>
+            <input type="file" accept="image/png,image/webp,image/avif" disabled={decorUploadPending} onChange={uploadDecorAsset} />
+            <small>{decorUploadPending ? "Загрузка…" : "PNG, WebP или AVIF до 8 МБ. Файл оптимизируется, путь и размеры заполнятся автоматически."}</small>
+          </label>
+          <div className={styles.decorToolbar}>
+            <label><span>Слой</span><select value={selectedDecorLayer ? resolvedDecorIndex : ""} onChange={(event) => setSelectedDecorIndex(Number(event.target.value))} disabled={!selectedDecorLayer}>
+              {!selectedDecorLayer ? <option value="">Слоёв пока нет</option> : null}
+              {draft.profile.assets.decor.map((layer, index) => <option key={`${layer.id}-${index}`} value={index}>{layer.id}</option>)}
+            </select></label>
+            <button type="button" className={styles.secondaryButton} onClick={addDecorLayer}>Добавить из выбранного ассета</button>
+            <button type="button" className={styles.textButton} onClick={removeDecorLayer} disabled={!selectedDecorLayer}>Удалить</button>
+          </div>
+          {selectedDecorLayer ? <div className={styles.decorEditor}>
+            <div className={styles.fieldGrid}>
+              <label><span>ID слоя</span><input value={selectedDecorLayer.id} onChange={(event) => updateDecorLayer((layer) => { layer.id = event.target.value; })} /></label>
+              <label><span>Привязка</span><select value={selectedDecorLayer.anchor} onChange={(event) => updateDecorLayer((layer) => { layer.anchor = event.target.value as TemplateDecorLayer["anchor"]; })}>
+                <option value="templateRoot">{decorAnchorLabels.templateRoot}</option>
+                {universalTemplateBlockOrder.map((block) => <option key={block} value={block}>{decorAnchorLabels[block]}</option>)}
+              </select></label>
+            </div>
+            <label><span>Web-путь ассета</span><input value={selectedDecorLayer.asset.src} aria-invalid={!selectedDecorLayer.asset.src.startsWith("/templates/")} onChange={(event) => updateDecorLayer((layer) => { layer.asset.src = event.target.value as `/${string}`; })} /><small>Используйте путь `/templates/…`, а не `C:\Project\…`. Проще загрузить файл полем выше.</small></label>
+            <div className={styles.fieldGrid}>
+              <label><span>Ширина файла</span><input type="number" min="1" value={selectedDecorLayer.asset.width} onChange={(event) => updateDecorLayer((layer) => { layer.asset.width = Number(event.target.value); })} /></label>
+              <label><span>Высота файла</span><input type="number" min="1" value={selectedDecorLayer.asset.height} onChange={(event) => updateDecorLayer((layer) => { layer.asset.height = Number(event.target.value); })} /></label>
+            </div>
+            <label><span>Готовая позиция</span><select value="" onChange={(event) => {
+              const preset = decorPlacementPresets.find((entry) => entry.id === event.target.value);
+              if (preset) updateDecorLayer((layer) => { layer.anchor = preset.anchor; layer.rect = clone(preset.rect); });
+            }}><option value="">Выберите позицию…</option>{decorPlacementPresets.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}</select></label>
+            <RectEditor label="Положение внутри привязки" value={selectedDecorLayer.rect} step={draft.inspector.gridStep} onChange={(value) => updateDecorLayer((layer) => { layer.rect = value; })} />
+            <div className={styles.fieldGrid}>
+              <label><span>Прозрачность</span><input type="number" min="0" max="1" step="0.05" value={selectedDecorLayer.opacity ?? 1} onChange={(event) => updateDecorLayer((layer) => { layer.opacity = Number(event.target.value); })} /></label>
+              <label><span>Поворот, °</span><input type="number" min="-360" max="360" step="1" value={selectedDecorLayer.rotation ?? 0} onChange={(event) => updateDecorLayer((layer) => { layer.rotation = Number(event.target.value); })} /></label>
+            </div>
+            <fieldset className={styles.decorVisibility}><legend>Показывать</legend><div className={styles.toggleGroup}>{(["desktop", "mobile", "export"] as const).map((target) => {
+              const visible = selectedDecorLayer.visibleOn?.includes(target) ?? true;
+              return <label key={target}><input type="checkbox" checked={visible} onChange={(event) => updateDecorLayer((layer) => {
+                const targets = new Set<"desktop" | "mobile" | "export">(layer.visibleOn ?? ["desktop", "mobile", "export"]);
+                if (event.target.checked) targets.add(target); else targets.delete(target);
+                layer.visibleOn = [...targets];
+              })} /><span>{decorVisibilityLabels[target]}</span></label>;
+            })}</div></fieldset>
+          </div> : <p className={styles.emptyUnderlayHint}>Выберите подходящий ассет выше и добавьте его как декоративный слой.</p>}
+        </div></details>
+
+        <details><summary>Типографика</summary><div className={styles.detailsBody}>
           {(Object.keys(draft.profile.typography) as Array<keyof typeof draft.profile.typography>).map((key) => <fieldset className={styles.fontEditor} key={key}><legend>{key}</legend><div className={styles.fieldGrid}><label><span>Семейство</span><input value={draft.profile.typography[key].family} onChange={(event) => updateFont(key, { family: event.target.value })} /></label><label><span>Вес</span><select value={draft.profile.typography[key].weight} onChange={(event) => updateFont(key, { weight: Number(event.target.value) as TemplateFontToken["weight"] })}>{[400, 500, 600, 700, 800, 900].map((weight) => <option key={weight} value={weight}>{weight}</option>)}</select></label></div></fieldset>)}
         </div></details>
 

@@ -23,12 +23,9 @@ export const daylight_proofProfile = defineTemplate({
   assets: {
     page: asset("/templates/daylight-proof/page.webp", 1536, 1024),
     sections: {
-      hero: defineSectionUnderlay(asset("/templates/daylight-proof/section-hero.webp", 1200, 670), "adaptive-frame"),
       summary: defineSectionUnderlay(asset("/templates/daylight-proof/section-summary.webp", 1200, 670), "adaptive-frame"),
-      qualities: defineSectionUnderlay(asset("/templates/daylight-proof/section-qualities.webp", 1200, 670), "adaptive-frame"),
       messages: defineSectionUnderlay(asset("/templates/daylight-proof/section-messages.webp", 1200, 670), "adaptive-frame"),
       memories: defineSectionUnderlay(asset("/templates/daylight-proof/section-memories.webp", 1200, 670), "adaptive-frame"),
-      quotes: defineSectionUnderlay(asset("/templates/daylight-proof/section-quotes.webp", 1200, 670), "adaptive-frame"),
       closing: defineSectionUnderlay(asset("/templates/daylight-proof/section-closing.webp", 1200, 670), "adaptive-frame")
     },
     greetingCards: Array.from({ length: 4 }, (_, index) => defineSectionUnderlay(

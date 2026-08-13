@@ -23,12 +23,9 @@ export const northern_lightProfile = defineTemplate({
   assets: {
     page: asset("/templates/northern-light/page.webp", 1536, 1024),
     sections: {
-      hero: defineSectionUnderlay(asset("/templates/northern-light/hero.webp", 1376, 768), "bottom-edge", { opacity: 0.34 }),
       summary: defineSectionUnderlay(asset("/templates/northern-light/hero.webp", 1376, 768), "bottom-edge", { opacity: 0.34 }),
-      qualities: defineSectionUnderlay(asset("/templates/northern-light/hero.webp", 1376, 768), "bottom-edge", { opacity: 0.34 }),
       messages: defineSectionUnderlay(asset("/templates/northern-light/hero.webp", 1376, 768), "bottom-edge", { opacity: 0.34 }),
       memories: defineSectionUnderlay(asset("/templates/northern-light/hero.webp", 1376, 768), "bottom-edge", { opacity: 0.34 }),
-      quotes: defineSectionUnderlay(asset("/templates/northern-light/hero.webp", 1376, 768), "bottom-edge", { opacity: 0.34 }),
       closing: defineSectionUnderlay(asset("/templates/northern-light/hero.webp", 1376, 768), "bottom-edge", { opacity: 0.34 })
     },
     greetingCards: [],

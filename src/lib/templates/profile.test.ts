@@ -93,6 +93,21 @@ describe("TemplateProfile", () => {
     expect(defineTemplate(profile)).toBe(profile);
   });
 
+  it("отклоняет повторяющиеся ID и неизвестные режимы видимости декора", () => {
+    const profile = validProfile();
+    profile.assets.decor = [
+      profile.assets.decor[0],
+      { ...profile.assets.decor[0], visibleOn: ["desktop", "tablet"] as never }
+    ];
+
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "assets.decor.1.id" }));
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "assets.decor.1.visibleOn" }));
+    }
+  });
+
   it("отклоняет неизвестный режим подложки блока", () => {
     const profile = validProfile() as unknown as {
       assets: { sections: { hero: { preset: string } } };

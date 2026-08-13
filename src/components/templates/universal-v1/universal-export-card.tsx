@@ -16,10 +16,10 @@ import { getUnderlaySafeInsets } from "@/lib/templates/section-underlays";
 import { getUniversalPhotoFramePreset } from "@/lib/templates/photo-frame-presets";
 import { getUniversalTextCardPreset } from "@/lib/templates/text-card-presets";
 import {
-  getUniversalPhotoCaptionLengthScale,
   getUniversalRecipientNameTier
 } from "@/lib/templates/text-capacity-presets";
 import { SectionUnderlay } from "./section-underlay";
+import { isUniversalBareSection } from "./section-presentation";
 
 export const universalExportFormats = {
   story: { width: 1080, height: 1920, phraseCount: 2 },
@@ -73,8 +73,8 @@ function Decor({
   anchor: TemplateDecorLayer["anchor"];
   resolveAsset: (src: `/${string}`) => string;
 }) {
-  return <>{profile.assets.decor.filter((layer) => layer.anchor === anchor && exportVisible(layer)).map((layer) => (
-    <div key={layer.id} style={{ position: "absolute", display: "flex", ...rectStyle(layer.rect), opacity: layer.opacity ?? 1, transform: `rotate(${layer.rotation ?? 0}deg)` }}>
+  return <>{profile.assets.decor.filter((layer) => layer.anchor === anchor && exportVisible(layer) && layer.asset.src.startsWith("/")).map((layer) => (
+    <div key={layer.id} data-decor-layer={layer.id} style={{ position: "absolute", display: "flex", ...rectStyle(layer.rect), opacity: layer.opacity ?? 1, transform: `rotate(${layer.rotation ?? 0}deg)` }}>
       <img src={resolveAsset(layer.asset.src)} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
     </div>
   ))}</>;
@@ -95,18 +95,19 @@ function ExportSection({
   resolveAsset: (src: `/${string}`) => string;
   children: ReactNode;
 }) {
-  const underlay = profile.assets.sections[id];
+  const isBare = isUniversalBareSection(id);
+  const underlay = isBare ? undefined : profile.assets.sections[id];
   const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
-  return <div data-universal-export-block={id} style={{
+  return <div data-universal-export-block={id} data-section-presentation={isBare ? "bare" : "surface"} style={{
     position: "relative",
     display: "flex",
     width: "100%",
     height,
     flexShrink: 0,
-    overflow: "hidden",
-    borderRadius: 28,
-    background: profile.colors.surfaces[id] ?? profile.colors.surface,
-    boxShadow: "0 2px 5px rgba(0,0,0,.05), 0 16px 34px rgba(0,0,0,.08)"
+    overflow: isBare ? "visible" : "hidden",
+    borderRadius: isBare ? 0 : 28,
+    background: isBare ? "transparent" : profile.colors.surfaces[id] ?? profile.colors.surface,
+    boxShadow: isBare ? "none" : "0 2px 5px rgba(0,0,0,.05), 0 16px 34px rgba(0,0,0,.08)"
   }}>
     {underlay ? <SectionUnderlay underlay={underlay} resolveAsset={resolveAsset} className="universal-export-underlay" targetSize={{ width, height }} /> : null}
     <Decor profile={profile} anchor={id} resolveAsset={resolveAsset} />
@@ -142,7 +143,7 @@ function ExportPhoto({
 }) {
   const framePreset = getUniversalPhotoFramePreset(frame.preset);
   const height = Math.round(width / framePreset.aspectRatio);
-  const resolvedCaptionFontSize = fontSize * frame.caption.minScale * getUniversalPhotoCaptionLengthScale(photo.caption);
+  const resolvedCaptionFontSize = fontSize * frame.caption.minScale;
   const alignItems = frame.caption.align === "left" ? "flex-start" : frame.caption.align === "right" ? "flex-end" : "center";
   return <div data-export-photo={photo.id} style={{ position: "relative", display: "flex", width, height, flexShrink: 0, overflow: "hidden" }}>
     {frame.base ? <img src={resolveAsset(frame.base.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
@@ -226,7 +227,7 @@ export function UniversalTemplateExportCard({
     fontFamily: profile.typography.body.family,
     fontWeight: profile.typography.body.weight
   }}>
-    {profile.assets.page ? <img src={resolveAsset(profile.assets.page.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: .24 }} /> : null}
+    {profile.assets.page ? <img src={resolveAsset(profile.assets.page.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /> : null}
     <Decor profile={profile} anchor="templateRoot" resolveAsset={resolveAsset} />
     <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%", height: "100%", justifyContent: "space-between", gap: availableGap }}>
       <ExportSection id="hero" profile={profile} width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset}>
@@ -243,8 +244,7 @@ export function UniversalTemplateExportCard({
 
       {qualities.length > 0 ? <ExportSection id="qualities" profile={profile} width={sectionWidth} height={layout.qualities} resolveAsset={resolveAsset}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: "16px 28px", boxSizing: "border-box" }}>
-          <span style={{ color: profile.colors.accent, fontSize: format === "story" ? 15 : 12, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>За что тебя ценят</span>
-          <strong style={{ marginTop: 3, fontFamily: profile.typography.heading.family, fontSize: layout.heading, textAlign: "center" }}>Пять особенных качеств</strong>
+          <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, textAlign: "center" }}>За что тебя ценят</strong>
           <div style={{ display: "flex", width: "100%", marginTop: 12, gap: 8 }}>{qualities.map((quality, index) => {
             const card = profile.assets.qualityCards[index % Math.max(profile.assets.qualityCards.length, 1)];
             return <div key={`${quality}-${index}`} style={{ position: "relative", display: "flex", minWidth: 0, flex: 1, minHeight: format === "story" ? 86 : 62, alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: 16, background: profile.colors.surface }}>
@@ -259,8 +259,7 @@ export function UniversalTemplateExportCard({
 
       {quotes.length >= 2 ? <ExportSection id="quotes" profile={profile} width={sectionWidth} height={layout.quotes} resolveAsset={resolveAsset}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: "16px 28px", boxSizing: "border-box" }}>
-          <span style={{ color: profile.colors.accent, fontSize: format === "story" ? 15 : 12, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>Выбор получателя</span>
-          <strong style={{ marginTop: 2, fontFamily: profile.typography.heading.family, fontSize: layout.heading, textAlign: "center" }}>Лучшие фразы</strong>
+          <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, textAlign: "center" }}>Лучшие фразы</strong>
           <div style={{ display: "flex", width: "100%", marginTop: 10, gap: 10 }}>{quotes.map((quote, index) => {
             const card = profile.assets.quoteCards[index % Math.max(profile.assets.quoteCards.length, 1)];
             return <div key={`${quote}-${index}`} style={{ position: "relative", display: "flex", flex: 1, minWidth: 0, minHeight: format === "story" ? 116 : 90, alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: 16, background: profile.colors.surface }}>

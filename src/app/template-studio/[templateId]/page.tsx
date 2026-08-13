@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { TemplateStudio } from "./template-studio";
 import { createTemplateStudioDraft } from "@/lib/templates/studio";
-import { templateRegistry } from "@/lib/templates/registry";
+import { studioTemplateRegistrations, templateRegistry } from "@/lib/templates/registry";
 
 type TemplateStudioPageProps = {
   params: Promise<{ templateId: string }>;
@@ -17,5 +17,13 @@ export default async function TemplateStudioPage({ params }: TemplateStudioPageP
   const registration = templateRegistry.get(templateId);
   const profile = registration?.family === "universal-v1" ? registration.profile : templateId;
 
-  return <TemplateStudio initialDraft={createTemplateStudioDraft(profile)} />;
+  const registeredTemplateOptions = studioTemplateRegistrations.map((entry) => ({
+    id: entry.id,
+    label: entry.catalog.name
+  }));
+
+  return <TemplateStudio
+    initialDraft={createTemplateStudioDraft(profile)}
+    registeredTemplateOptions={registeredTemplateOptions}
+  />;
 }

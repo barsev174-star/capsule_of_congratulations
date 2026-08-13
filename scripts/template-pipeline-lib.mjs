@@ -31,10 +31,10 @@ export const createAssetManifest = (id) => ({
     decodedMemoryBytes: 64_000_000,
     individualBytes: 2_000_000
   },
-  preview: { sourceAssetId: "section-hero", output: "preview.webp", width: 1200, height: 630 },
+  preview: { sourceAssetId: "page", output: "preview.webp", width: 1200, height: 630 },
   assets: [
     asset("page", "page.png", "page.webp", 1536, 1024, "opaque"),
-    ...["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"].map((block) =>
+    ...["summary", "messages", "memories", "closing"].map((block) =>
       asset(`section-${block}`, `section-${block}.png`, `section-${block}.webp`, 1376, 768)
     ),
     ...Array.from({ length: 4 }, (_, index) =>
@@ -74,12 +74,9 @@ export const ${id.replaceAll("-", "_")}Profile = defineTemplate({
   assets: {
     page: asset("/templates/${id}/page.webp", 1536, 1024),
     sections: {
-      hero: defineSectionUnderlay(asset("/templates/${id}/section-hero.webp", 1376, 768), "adaptive-frame"),
       summary: defineSectionUnderlay(asset("/templates/${id}/section-summary.webp", 1376, 768), "adaptive-frame"),
-      qualities: defineSectionUnderlay(asset("/templates/${id}/section-qualities.webp", 1376, 768), "adaptive-frame"),
       messages: defineSectionUnderlay(asset("/templates/${id}/section-messages.webp", 1376, 768), "adaptive-frame"),
       memories: defineSectionUnderlay(asset("/templates/${id}/section-memories.webp", 1376, 768), "adaptive-frame"),
-      quotes: defineSectionUnderlay(asset("/templates/${id}/section-quotes.webp", 1376, 768), "adaptive-frame"),
       closing: defineSectionUnderlay(asset("/templates/${id}/section-closing.webp", 1376, 768), "adaptive-frame")
     },
     greetingCards: [

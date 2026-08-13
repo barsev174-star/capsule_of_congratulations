@@ -18,10 +18,18 @@ describe("UniversalTemplateExportCard", () => {
       const root = container.querySelector(`[data-export-format="${format}"]`);
 
       expect(root).toBeInTheDocument();
+      expect((root?.querySelector(`img[src="${profile.assets.page?.src}"]`) as HTMLImageElement).style.opacity).toBe("");
       expect(root?.querySelector('[data-export-memories-layout="route-strip"]')).toBeInTheDocument();
       expect(root?.querySelector("[data-export-photo-row]")?.children).toHaveLength(3);
       expect(root?.querySelectorAll("[data-export-photo]")).toHaveLength(3);
       expect(root?.querySelector('[data-underlay-preset="adaptive-frame"]')?.querySelectorAll(":scope > svg")).toHaveLength(9);
+      for (const block of ["hero", "qualities", "quotes"]) {
+        const bareSection = root?.querySelector(`[data-universal-export-block="${block}"]`);
+        expect(bareSection).toHaveAttribute("data-section-presentation", "bare");
+        expect(bareSection?.querySelector("[data-underlay-preset]")).not.toBeInTheDocument();
+      }
+      expect(root).not.toHaveTextContent("Пять особенных качеств");
+      expect(root).not.toHaveTextContent("Выбор получателя");
       expect(root?.querySelectorAll('[data-universal-export-block="quotes"] [data-safe-text]')).toHaveLength(
         format === "a4" ? 3 : 2
       );
@@ -55,7 +63,8 @@ describe("UniversalTemplateExportCard", () => {
 
     expect(image.style.objectPosition).toBe(`${firstPhoto.crop.x * 100}% ${firstPhoto.crop.y * 100}%`);
     expect(image.style.transform).toBe(`scale(${firstPhoto.crop.zoom})`);
-    expect(container.innerHTML).toContain(profile.assets.sections.hero?.asset.src);
+    expect(container.innerHTML).toContain(profile.assets.page?.src);
+    expect(container.innerHTML).toContain(profile.assets.decor[0]?.asset.src);
     expect(container).toHaveTextContent(model.recipientName);
     expect(container).toHaveTextContent(firstPhoto.caption);
     expect(firstPhoto.caption).toHaveLength(45);

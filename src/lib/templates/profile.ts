@@ -449,6 +449,7 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
     if (!Array.isArray(value.assets.decor)) {
       issues.push({ path: "assets.decor", message: "Ожидается массив декоративных слоёв." });
     } else {
+      const decorIds = new Set<string>();
       value.assets.decor.forEach((layer, index) => {
         const path = `assets.decor.${index}`;
         if (!isRecord(layer)) {
@@ -457,6 +458,10 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
         }
         if (typeof layer.id !== "string" || !idPattern.test(layer.id)) {
           issues.push({ path: `${path}.id`, message: "ID слоя должен быть в kebab-case." });
+        } else if (decorIds.has(layer.id)) {
+          issues.push({ path: `${path}.id`, message: "ID декоративного слоя не должен повторяться." });
+        } else {
+          decorIds.add(layer.id);
         }
         validateAsset(layer.asset, `${path}.asset`, issues);
         if (layer.anchor !== "templateRoot" && !universalTemplateBlockOrder.includes(layer.anchor as UniversalTemplateBlockId)) {
@@ -465,6 +470,16 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
         validateRect(layer.rect, `${path}.rect`, issues);
         if (layer.opacity !== undefined && (typeof layer.opacity !== "number" || layer.opacity < 0 || layer.opacity > 1)) {
           issues.push({ path: `${path}.opacity`, message: "Прозрачность должна находиться в диапазоне 0…1." });
+        }
+        if (layer.rotation !== undefined && (typeof layer.rotation !== "number" || !Number.isFinite(layer.rotation) || layer.rotation < -360 || layer.rotation > 360)) {
+          issues.push({ path: `${path}.rotation`, message: "Поворот должен находиться в диапазоне −360…360 градусов." });
+        }
+        if (layer.visibleOn !== undefined) {
+          if (!Array.isArray(layer.visibleOn) || layer.visibleOn.some((target) => !["desktop", "mobile", "export"].includes(String(target)))) {
+            issues.push({ path: `${path}.visibleOn`, message: "Видимость декора поддерживает только desktop, mobile и export." });
+          } else if (new Set(layer.visibleOn).size !== layer.visibleOn.length) {
+            issues.push({ path: `${path}.visibleOn`, message: "Режимы видимости декоративного слоя не должны повторяться." });
+          }
         }
       });
     }

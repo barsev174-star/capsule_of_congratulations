@@ -1,6 +1,5 @@
 import {
   getUniversalRecipientNameTier,
-  getUniversalPhotoCaptionLengthScale,
   getUniversalQuoteLengthScale,
   universalTextCapacityPresets
 } from "@/lib/templates/text-capacity-presets";
@@ -17,12 +16,6 @@ describe("universal text capacity presets", () => {
     expect(getUniversalRecipientNameTier("Anna")).toBe("default");
     expect(getUniversalRecipientNameTier("x".repeat(37))).toBe("long");
     expect(getUniversalRecipientNameTier("x".repeat(61))).toBe("very-long");
-  });
-
-  it("scales only long photo captions inside the fixed two-line area", () => {
-    expect(getUniversalPhotoCaptionLengthScale("short caption")).toBe(1);
-    expect(getUniversalPhotoCaptionLengthScale("x".repeat(35))).toBe(.84);
-    expect(getUniversalPhotoCaptionLengthScale("x".repeat(45))).toBe(.78);
   });
 
   it("scales only near-limit quotes inside the fixed four-line area", () => {

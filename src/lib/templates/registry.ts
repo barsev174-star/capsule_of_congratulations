@@ -116,6 +116,10 @@ export const catalogTemplateRegistrations = templateRegistry.entries.filter(
     entry.catalog?.availability === "product"
 );
 
+export const studioTemplateRegistrations = templateRegistry.entries.filter(
+  (entry): entry is UniversalTemplateRegistration => entry.family === "universal-v1"
+);
+
 export const isRegisteredTemplateId = (value: unknown): value is RegisteredTemplateId =>
   typeof value === "string" && registeredTemplateIds.some((id) => id === value);
 

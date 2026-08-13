@@ -50,7 +50,7 @@ describe("route-v1 universal layout preset", () => {
       qualityCardHeight: 68,
       qualityFontMax: 16,
       messageTextFontMax: 17,
-      messageTrioPhotoWidthPercent: 86,
+      messageTrioPhotoWidthPercent: 95,
       photoCaptionFontMax: 18,
       handwrittenPhotoCaptionFontMax: 24,
       memoryCaptionFontMax: 28,

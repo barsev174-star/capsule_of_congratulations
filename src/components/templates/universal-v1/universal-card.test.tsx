@@ -43,13 +43,19 @@ describe("UniversalTemplateCard", () => {
     const model = buildUniversalFixtureViewModel("full-card-default", { templateId: profile.id });
     const { container } = render(<UniversalTemplateCard profile={profile} model={model} debugSafeAreas />);
     const hero = container.querySelector('[data-universal-block="hero"]') as HTMLElement;
+    const pageBackground = container.querySelector<HTMLElement>('[data-template-family="universal-v1"] > span[aria-hidden="true"]');
 
-    expect(hero).toHaveAttribute("data-underlay-preset", "adaptive-frame");
-    const underlay = hero.querySelector<HTMLElement>('[data-underlay-preset="adaptive-frame"]');
-    expect(underlay).toBeInTheDocument();
-    expect(underlay?.style.borderImageSource).toContain(profile.assets.sections.hero?.asset.src);
-    expect(hero).toHaveTextContent("подложка");
-    expect(hero).toHaveTextContent("safe text");
+    expect(pageBackground?.style.backgroundImage).toContain(profile.assets.page?.src);
+    expect(pageBackground?.querySelector("img")).not.toBeInTheDocument();
+
+    for (const block of ["hero", "qualities", "quotes"]) {
+      const bareSection = container.querySelector(`[data-universal-block="${block}"]`) as HTMLElement;
+      expect(bareSection).toHaveAttribute("data-section-presentation", "bare");
+      expect(bareSection).not.toHaveAttribute("data-underlay-preset");
+      expect(bareSection.querySelector("[data-underlay-preset]")).not.toBeInTheDocument();
+    }
+    expect(hero.querySelector(`[data-decor-layer="${profile.assets.decor[0]?.id}"]`)).toBeInTheDocument();
+    expect(container).not.toHaveTextContent("Собрано из поздравлений");
   });
 
   it.each(universalMessageScenarios)("implements the %s greeting composition", (scenario) => {
@@ -89,6 +95,7 @@ describe("UniversalTemplateCard", () => {
     expect(photo.style.transform).toBe(`scale(${model.messagePhotos[0].crop.zoom})`);
     expect(caption.textContent).toHaveLength(45);
     expect(caption.textContent).not.toContain("…");
+    expect(caption.style.getPropertyValue("--uv1-caption-scale")).toBe(String(profile.assets.photoFrames.messagePortrait.caption.minScale));
   });
 
   it("renders hard text-capacity boundaries independently of current text height", () => {
@@ -117,6 +124,7 @@ describe("UniversalTemplateCard", () => {
 
     expect(composition).toHaveAttribute("data-media-distribution", "distributed-trio");
     expect(composition.querySelector("[data-visible-card-count]")).toHaveAttribute("data-visible-card-count", "4");
+    expect((container.querySelector('[data-template-family="universal-v1"]') as HTMLElement).style.getPropertyValue("--uv1-message-trio-photo-width")).toBe("95%");
     expect(frames.map((frame) => frame.style.aspectRatio)).toEqual([
       String(getUniversalPhotoFramePreset(profile.assets.photoFrames.messageLandscape.preset).aspectRatio),
       String(getUniversalPhotoFramePreset(profile.assets.photoFrames.messageLandscape.preset).aspectRatio),

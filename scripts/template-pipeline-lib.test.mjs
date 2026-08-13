@@ -42,17 +42,20 @@ describe("template pipeline", () => {
     expect(profile).toContain('id: "northern-light"');
     expect(profile).toContain('defineSectionUnderlay');
     expect(profile).toContain('"adaptive-frame"');
+    expect(profile).not.toContain('qualities: defineSectionUnderlay');
+    expect(profile).not.toContain('quotes: defineSectionUnderlay');
     expect(ts.transpileModule(profile, { compilerOptions: { jsx: ts.JsxEmit.ReactJSX }, reportDiagnostics: true }).diagnostics).toEqual([]);
     expect(ts.transpileModule(registration, { compilerOptions: {}, reportDiagnostics: true }).diagnostics).toEqual([]);
     expect(registration).toContain('import type { UniversalTemplateRegistration }');
     expect(registration).not.toContain("defineUniversalTemplateRegistration(");
     expect(JSON.parse(manifest).preview.output).toBe("preview.webp");
     expect(JSON.parse(manifest).assets).toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: "section-hero", width: 1376, height: 768 }),
+      expect.objectContaining({ id: "page", width: 1536, height: 1024 }),
       expect.objectContaining({ id: "section-closing", width: 1376, height: 768 }),
       expect.objectContaining({ id: "greeting-card-4", width: 1200, height: 400 })
     ]));
     expect(JSON.parse(manifest).assets.filter((entry) => entry.id.startsWith("greeting-card-"))).toHaveLength(4);
+    expect(JSON.parse(manifest).assets.some((entry) => entry.id === "section-hero" || entry.id === "section-qualities" || entry.id === "section-quotes")).toBe(false);
     expect(registry).toContain('from "@/templates/northern-light/registration"');
     await expect(scaffoldTemplate({ root, id: "northern-light", name: "Повтор" })).rejects.toThrow("уже существует");
     expect(() => validateTemplateId("../escape")).toThrow("kebab-case");

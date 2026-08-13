@@ -82,7 +82,7 @@ const writeFrame = async ({ name, width, height, aperture, captionArea, radius, 
     .toFile(join(outputRoot, `${name}-overlay.png`));
 };
 
-const sectionNames = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
+const sectionNames = ["hero", "summary", "messages", "memories", "closing"];
 
 await Promise.all([
   ...sectionNames.map((name, index) => writeAdaptiveUnderlay({ name: `section-${name}`, width: 1200, height: 670, index })),
@@ -115,4 +115,4 @@ await Promise.all([
   })
 ]);
 
-console.log("DAYLIGHT_PROOF_SOURCE_ASSETS_READY 7 sections, 4 greeting cards, 2 frame geometries");
+console.log("DAYLIGHT_PROOF_SOURCE_ASSETS_READY 5 sections, 4 greeting cards, 2 frame geometries");

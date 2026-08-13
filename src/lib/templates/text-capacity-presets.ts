@@ -41,13 +41,6 @@ export const getUniversalRecipientNameTier = (value: string): UniversalRecipient
   return "default";
 };
 
-export const getUniversalPhotoCaptionLengthScale = (value: string) => {
-  const length = value.trim().length;
-  if (length > 42) return .78;
-  if (length > 34) return .84;
-  return 1;
-};
-
 export const getUniversalQuoteLengthScale = (value: string) => {
   const length = value.trim().length;
   if (length > 90) return .86;

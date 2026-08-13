@@ -6,6 +6,7 @@ import {
   defineUniversalTemplateRegistration,
   isProductTemplateId,
   isRegisteredTemplateId,
+  studioTemplateRegistrations,
   templateRegistry,
   type LegacyTemplateRegistration
 } from "@/lib/templates/registry";
@@ -88,6 +89,13 @@ describe("template registry", () => {
     expect(isProductTemplateId("daylight-proof")).toBe(false);
     expect(isProductTemplateId("route-adventure")).toBe(true);
     expect(isRegisteredTemplateId("unknown")).toBe(false);
+  });
+
+  it("показывает зарегистрированные universal-шаблоны в справочнике ателье", () => {
+    expect(studioTemplateRegistrations.map((entry) => entry.id)).toEqual([
+      "northern-light",
+      "daylight-proof"
+    ]);
   });
 
   it("регистрирует universal-v1 рядом с legacy", () => {

@@ -226,6 +226,61 @@
   accent-color: #e9652f;
 }
 
+.decorToolbar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+}
+
+.decorUpload {
+  padding: 12px;
+  border: 1px dashed #c9cdd3;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.decorUpload small,
+.decorEditor label small {
+  color: #5f6368;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.decorEditor input[aria-invalid="true"] {
+  border-color: #d93025;
+  box-shadow: 0 0 0 3px rgba(217, 48, 37, 0.12);
+}
+
+.decorToolbar label { grid-column: 1 / -1; }
+
+.decorToolbar button {
+  min-height: 40px;
+}
+
+.decorEditor {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e3e5e8;
+  border-radius: 14px;
+  background: #f7f8fa;
+}
+
+.decorVisibility {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.decorVisibility legend {
+  margin-bottom: 4px;
+  color: #5f6368;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(1202px, 1fr) minmax(340px, 420px);

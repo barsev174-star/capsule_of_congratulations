@@ -118,7 +118,7 @@ export const routeV1LayoutPreset: UniversalLayoutPreset = {
     messageCardHeight: 190,
     messageGap: 18,
     messageTextFontMax: 17,
-    messageTrioPhotoWidthPercent: 86,
+    messageTrioPhotoWidthPercent: 95,
     photoCaptionFontMax: 18,
     handwrittenPhotoCaptionFontMax: 24,
     memoryCaptionFontMax: 28,

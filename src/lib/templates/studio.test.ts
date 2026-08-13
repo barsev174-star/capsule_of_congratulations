@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  createTemplateStudioDecorLayer,
   createTemplateStudioDraft,
+  getTemplateStudioStorageKey,
   listTemplateProfileAssets,
   parseTemplateStudioImport,
   validateTemplateStudioDraft
@@ -21,6 +23,27 @@ describe("template studio draft", () => {
     expect(draft.profile).toEqual(northern_lightProfile);
     expect(draft.profile).not.toBe(northern_lightProfile);
     expect(validateTemplateStudioDraft(draft)).toEqual({ ok: true, issues: [] });
+  });
+
+  it("не восстанавливает локальный черновик поверх изменившейся исходной конфигурации", () => {
+    const initialDraft = createTemplateStudioDraft(northern_lightProfile);
+    const sameBaseline = structuredClone(initialDraft);
+    const changedBaseline = structuredClone(initialDraft);
+    changedBaseline.profile.assets.page.src = "/templates/northern-light/page-v2.webp";
+
+    expect(getTemplateStudioStorageKey(sameBaseline)).toBe(getTemplateStudioStorageKey(initialDraft));
+    expect(getTemplateStudioStorageKey(changedBaseline)).not.toBe(getTemplateStudioStorageKey(initialDraft));
+  });
+
+  it("создаёт переносимый декоративный слой из выбранного ассета", () => {
+    const draft = createTemplateStudioDraft();
+    const layer = createTemplateStudioDecorLayer(draft.profile, draft.profile.metadata.preview, "hero");
+
+    expect(layer.id).toMatch(/^decor-\d+$/);
+    expect(layer.asset).toEqual(draft.profile.metadata.preview);
+    expect(layer.asset).not.toBe(draft.profile.metadata.preview);
+    expect(layer.anchor).toBe("hero");
+    expect(layer.visibleOn).toEqual(["desktop", "mobile", "export"]);
   });
 
   it("импортирует как полный черновик, так и отдельный профиль", () => {

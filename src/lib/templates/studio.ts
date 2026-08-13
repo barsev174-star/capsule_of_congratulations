@@ -4,6 +4,7 @@ import {
   validateTemplateProfile,
   type NormalizedRect,
   type TemplateAssetRef,
+  type TemplateDecorLayer,
   type TemplateProfile,
   type TemplateProfileValidationIssue,
   type UniversalPhotoFrame,
@@ -51,6 +52,43 @@ export type TemplateStudioDraftValidationResult = {
   issues: TemplateProfileValidationIssue[];
 };
 
+const hashTemplateStudioBaseline = (draft: TemplateStudioDraft) => {
+  const source = JSON.stringify(draft);
+  let hash = 0x811c9dc5;
+
+  for (let index = 0; index < source.length; index += 1) {
+    hash ^= source.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+
+  return (hash >>> 0).toString(36);
+};
+
+export const getTemplateStudioStorageKey = (initialDraft: TemplateStudioDraft) =>
+  `slovesto:template-studio:${initialDraft.profile.id}:v6:${hashTemplateStudioBaseline(initialDraft)}`;
+
+export const createTemplateStudioDecorLayer = (
+  profile: TemplateProfile,
+  sourceAsset: TemplateAssetRef,
+  anchor: TemplateDecorLayer["anchor"] = "templateRoot"
+): TemplateDecorLayer => {
+  const ids = new Set(profile.assets.decor.map((layer) => layer.id));
+  let number = profile.assets.decor.length + 1;
+  while (ids.has(`decor-${number}`)) number += 1;
+
+  return {
+    id: `decor-${number}`,
+    asset: structuredClone(sourceAsset),
+    anchor,
+    rect: anchor === "templateRoot"
+      ? { x: 0.76, y: 0.01, width: 0.22, height: 0.08 }
+      : { x: 0.76, y: 0.04, width: 0.2, height: 0.28 },
+    opacity: 1,
+    rotation: 0,
+    visibleOn: ["desktop", "mobile", "export"]
+  };
+};
+
 const asset = (src: `/${string}`, width: number, height: number): TemplateAssetRef => ({ src, width, height });
 
 const photoFrame = (preset: "portrait-polaroid" | "landscape-polaroid"): UniversalPhotoFrame => ({
@@ -84,12 +122,9 @@ export const createTemplateStudioProfile = (templateId: string): TemplateProfile
   assets: {
     page: asset("/templates/scrapbook-clean/bg-paper-texture.png", 1536, 1024),
     sections: {
-      hero: defineSectionUnderlay(asset("/templates/scrapbook-clean/torn-paper-section.png", 1376, 768), "adaptive-frame", { opacity: 0.34 }),
       summary: defineSectionUnderlay(asset("/templates/scrapbook-clean/torn-paper-summary.png", 1381, 766), "adaptive-frame", { opacity: 0.34 }),
-      qualities: defineSectionUnderlay(asset("/templates/scrapbook-clean/torn-paper-section1.png", 1376, 768), "adaptive-frame", { opacity: 0.34 }),
       messages: defineSectionUnderlay(asset("/templates/scrapbook-clean/torn-paper-section.png", 1376, 768), "adaptive-frame", { opacity: 0.34 }),
       memories: defineSectionUnderlay(asset("/templates/scrapbook-clean/torn-paper-section1.png", 1376, 768), "adaptive-frame", { opacity: 0.34 }),
-      quotes: defineSectionUnderlay(asset("/templates/scrapbook-clean/torn-paper-section.png", 1376, 768), "adaptive-frame", { opacity: 0.34 }),
       closing: defineSectionUnderlay(asset("/templates/scrapbook-clean/torn-paper-summary.png", 1381, 766), "adaptive-frame", { opacity: 0.34 })
     },
     greetingCards: Array.from({ length: 4 }, () => defineSectionUnderlay(asset("/templates/scrapbook-clean/greeting-card-pink.png", 1402, 1122), "adaptive-frame")),
@@ -163,7 +198,7 @@ export const createTemplateStudioDraft = (
   version: 1,
   profile: typeof template === "string" ? createTemplateStudioProfile(template) : structuredClone(template),
   inspector: {
-    selectedAssetPath: "assets.sections.hero.asset",
+    selectedAssetPath: "assets.page",
     selectedBlock: "hero",
     selectedFrame: "memory",
     gridStep: 0.025,

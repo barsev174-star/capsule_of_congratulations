@@ -23,8 +23,16 @@
   pointer-events: none;
 }
 
-.pageAsset { z-index: 0; opacity: 0.24; }
-.pageAsset img { object-fit: cover; }
+.pageAsset {
+  z-index: 0;
+  inset: 0 0 auto;
+  height: clamp(680px, 72vw, 1080px);
+  background-position: top center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
+}
 .sectionUnderlay {
   z-index: 0;
   overflow: hidden;
@@ -52,6 +60,16 @@
     0 20px 46px rgba(0, 0, 0, 0.07);
 }
 .section { container-type: inline-size; }
+
+.bareSection {
+  margin-bottom: calc(var(--uv1-section-gap) * 0.5);
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.section:has(+ .bareSection) { margin-bottom: calc(var(--uv1-section-gap) * 0.5); }
 
 .sectionContent {
   position: relative;
@@ -194,8 +212,6 @@
 .summaryAuthor { margin: 14px 0 0; color: var(--uv1-muted); font-size: 14px; font-weight: 700; text-align: right; }
 
 .qualities .sectionContent { padding: max(var(--uv1-qualities-padding-top), var(--uv1-safe-top)) max(var(--uv1-qualities-padding-inline), var(--uv1-safe-right)) max(var(--uv1-qualities-padding-bottom), var(--uv1-safe-bottom)) max(var(--uv1-qualities-padding-inline), var(--uv1-safe-left)); text-align: center; }
-.sectionSubtitle { margin: -10px 0 18px; color: var(--uv1-muted); font-size: 14px; line-height: 1.4; }
-
 .qualitiesGrid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -531,7 +547,7 @@
 }
 
 .quotes .sectionContent { padding-block: max(var(--uv1-quotes-padding-block), var(--uv1-safe-top)) max(var(--uv1-quotes-padding-block), var(--uv1-safe-bottom)); }
-.quotes h2 { margin-bottom: var(--uv1-quotes-heading-gap); padding-inline: var(--uv1-quotes-heading-inline); }
+.quotes h2 { margin-bottom: var(--uv1-quotes-heading-gap); padding-inline: var(--uv1-quotes-heading-inline); text-align: center; }
 .quotesGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .quoteCard {
   position: relative;
