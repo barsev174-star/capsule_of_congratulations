@@ -56,7 +56,7 @@ describe("northern-light pilot template", () => {
       );
 
       expect(container.querySelector(`[data-export-format="${format}"]`)).toBeInTheDocument();
-      expect(container.querySelectorAll("[data-export-photo]")).toHaveLength(3);
+      expect(container.querySelectorAll("[data-export-photo]")).toHaveLength(universalExportFormats[format].photoCount);
       expect(container.innerHTML).toContain("/templates/northern-light/hero.webp");
     }
   );
