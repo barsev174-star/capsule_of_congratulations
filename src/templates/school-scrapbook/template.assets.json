@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "templateId": "school-scrapbook",
+  "budgets": {
+    "networkBytes": 8000000,
+    "decodedMemoryBytes": 64000000,
+    "individualBytes": 2000000
+  },
+  "preview": {
+    "sourceAssetId": "section-hero",
+    "output": "preview.webp",
+    "width": 1200,
+    "height": 630
+  },
+  "assets": [
+    {
+      "id": "page",
+      "source": "page.png",
+      "output": "page.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": "opaque",
+      "fit": "cover"
+    },
+    {
+      "id": "section-hero",
+      "source": "section-hero.png",
+      "output": "section-hero.webp",
+      "width": 1200,
+      "height": 670,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "section-summary",
+      "source": "section-summary.png",
+      "output": "section-summary.webp",
+      "width": 1200,
+      "height": 670,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "section-qualities",
+      "source": "section-qualities.png",
+      "output": "section-qualities.webp",
+      "width": 1200,
+      "height": 670,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "section-messages",
+      "source": "section-messages.png",
+      "output": "section-messages.webp",
+      "width": 1200,
+      "height": 670,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "section-memories",
+      "source": "section-memories.png",
+      "output": "section-memories.webp",
+      "width": 1200,
+      "height": 670,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "section-quotes",
+      "source": "section-quotes.png",
+      "output": "section-quotes.webp",
+      "width": 1200,
+      "height": 670,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "section-closing",
+      "source": "section-closing.png",
+      "output": "section-closing.webp",
+      "width": 1200,
+      "height": 670,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "greeting-card-1",
+      "source": "greeting-card-1.png",
+      "output": "greeting-card-1.webp",
+      "width": 1200,
+      "height": 400,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "greeting-card-2",
+      "source": "greeting-card-2.png",
+      "output": "greeting-card-2.webp",
+      "width": 1200,
+      "height": 400,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "greeting-card-3",
+      "source": "greeting-card-3.png",
+      "output": "greeting-card-3.webp",
+      "width": 1200,
+      "height": 400,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "greeting-card-4",
+      "source": "greeting-card-4.png",
+      "output": "greeting-card-4.webp",
+      "width": 1200,
+      "height": 400,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "quality-card",
+      "source": "quality-card.png",
+      "output": "quality-card.webp",
+      "width": 480,
+      "height": 258,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "quote-card",
+      "source": "quote-card.png",
+      "output": "quote-card.webp",
+      "width": 1402,
+      "height": 1122,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "photo-frame-portrait-base",
+      "source": "photo-frame-portrait-base.png",
+      "output": "photo-frame-portrait-base.webp",
+      "width": 802,
+      "height": 1122,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "photo-frame-portrait-overlay",
+      "source": "photo-frame-portrait-overlay.png",
+      "output": "photo-frame-portrait-overlay.webp",
+      "width": 802,
+      "height": 1122,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "photo-frame-landscape-base",
+      "source": "photo-frame-landscape-base.png",
+      "output": "photo-frame-landscape-base.webp",
+      "width": 1122,
+      "height": 802,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "photo-frame-landscape-overlay",
+      "source": "photo-frame-landscape-overlay.png",
+      "output": "photo-frame-landscape-overlay.webp",
+      "width": 1122,
+      "height": 802,
+      "alpha": "transparent",
+      "fit": "cover"
+    }
+  ]
+}
