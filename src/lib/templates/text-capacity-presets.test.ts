@@ -14,8 +14,9 @@ describe("universal text capacity presets", () => {
 
   it("selects a bounded recipient-name font tier", () => {
     expect(getUniversalRecipientNameTier("Anna")).toBe("default");
-    expect(getUniversalRecipientNameTier("x".repeat(37))).toBe("long");
-    expect(getUniversalRecipientNameTier("x".repeat(61))).toBe("very-long");
+    expect(getUniversalRecipientNameTier("x".repeat(19))).toBe("long");
+    expect(getUniversalRecipientNameTier("x".repeat(40))).toBe("long");
+    expect(getUniversalRecipientNameTier("x".repeat(41))).toBe("very-long");
   });
 
   it("scales only near-limit quotes inside the fixed four-line area", () => {

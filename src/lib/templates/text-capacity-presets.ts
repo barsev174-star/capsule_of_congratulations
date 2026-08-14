@@ -36,8 +36,8 @@ export type UniversalRecipientNameTier = "default" | "long" | "very-long";
 
 export const getUniversalRecipientNameTier = (value: string): UniversalRecipientNameTier => {
   const length = value.trim().length;
-  if (length > 60) return "very-long";
-  if (length > 36) return "long";
+  if (length > 40) return "very-long";
+  if (length > 18) return "long";
   return "default";
 };
 

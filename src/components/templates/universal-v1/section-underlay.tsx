@@ -82,22 +82,41 @@ export function SectionUnderlay({
   if (preset.rendering === "nine-slice") {
     if (!targetSize) {
       const slices = preset.slices!;
+      const borderWidth = `${slices.top * underlay.asset.height / underlay.asset.width * 100}cqw ${slices.right * 100}cqw ${slices.bottom * underlay.asset.height / underlay.asset.width * 100}cqw ${slices.left * 100}cqw`;
+      const borderImageSlice = `${slices.top * 100}% ${slices.right * 100}% ${slices.bottom * 100}% ${slices.left * 100}%`;
+      const frameLayerStyle = {
+        position: "absolute",
+        inset: 0,
+        boxSizing: "border-box",
+        borderStyle: "solid",
+        borderWidth,
+        borderImageSource: `url("${src}")`,
+        borderImageWidth: 1
+      } as CSSProperties;
       return (
         <span
           className={className}
           aria-hidden="true"
           data-underlay-preset={underlay.preset}
-          style={{
-            ...rootStyle,
-            boxSizing: "border-box",
-            borderStyle: "solid",
-            borderWidth: `${slices.top * underlay.asset.height / underlay.asset.width * 100}cqw ${slices.right * 100}cqw ${slices.bottom * underlay.asset.height / underlay.asset.width * 100}cqw ${slices.left * 100}cqw`,
-            borderImageSource: `url("${src}")`,
-            borderImageSlice: `${slices.top * 100}% ${slices.right * 100}% ${slices.bottom * 100}% ${slices.left * 100}% fill`,
-            borderImageWidth: 1,
-            borderImageRepeat: "stretch"
-          }}
-        />
+          style={rootStyle}
+        >
+          <span
+            data-underlay-layer="standard"
+            style={{
+              ...frameLayerStyle,
+              borderImageSlice: `${borderImageSlice} fill`,
+              borderImageRepeat: "stretch"
+            }}
+          />
+          <span
+            data-underlay-layer="mobile-variable-frame"
+            style={{
+              ...frameLayerStyle,
+              borderImageSlice,
+              borderImageRepeat: "stretch round"
+            }}
+          />
+        </span>
       );
     }
     return (

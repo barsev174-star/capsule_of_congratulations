@@ -38,6 +38,8 @@
   overflow: hidden;
 }
 
+.sectionUnderlay [data-underlay-layer="mobile-variable-frame"] { display: none; }
+
 .shell {
   position: relative;
   z-index: 2;
@@ -278,8 +280,12 @@
 
 .messagesComposition[data-has-media="true"] {
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.72fr);
+  grid-template-areas: "messages photos";
   align-items: start;
 }
+
+.messagesComposition[data-has-media="true"] > .messageGrid { grid-area: messages; }
+.messagesComposition[data-has-media="true"] > .messagePhotoGrid { grid-area: photos; }
 
 .messageGrid {
   display: grid;
@@ -293,6 +299,10 @@
 }
 
 .messagesComposition[data-has-media="true"] .messageGrid { grid-template-columns: 1fr; }
+
+.messagesComposition:not([data-has-media="true"]) .messageGrid[data-visible-card-count="3"] > .messageCard:nth-child(n + 4) {
+  display: none;
+}
 
 .messagesComposition[data-has-media="true"] .messageGrid {
   max-height: var(--uv1-message-stack-height);
@@ -374,7 +384,7 @@
 .messageAuthor strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .messageAuthor small { margin-top: 2px; color: var(--uv1-muted); font-size: 12px; }
 
-.messageCard > p {
+.messageCardContent > p {
   display: -webkit-box;
   min-height: 0;
   flex: 1 1 auto;
@@ -522,6 +532,17 @@
 .allMessagesButton:hover { background: color-mix(in srgb, var(--uv1-accent) 6%, var(--uv1-surface)); box-shadow: 0 5px 14px rgba(0, 0, 0, 0.08); }
 .allMessagesButton strong { color: var(--uv1-text); font-variant-numeric: tabular-nums; }
 
+.mobileAllMessagesButton {
+  display: none;
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+  margin-top: 18px;
+  font-size: 13px;
+}
+
+.mobileAllMessagesButton > span { white-space: nowrap; }
+
 .memoriesLayout {
   display: grid;
 }
@@ -567,11 +588,11 @@
 .quoteCard > p { display: -webkit-box; margin: 0; overflow: hidden; padding: 6px 10px; font-size: calc(clamp(16px, 1.5vw, var(--uv1-quote-text-font-max)) * var(--uv1-quote-scale, 1)); font-weight: 600; line-height: 1.18; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
 
 .closingSection .sectionContent { display: grid; justify-items: center; min-height: var(--uv1-closing-height); align-content: center; text-align: center; }
-.closingSection p { max-width: 720px; margin: 0; font-family: var(--uv1-handwritten-font), cursive; font-size: clamp(22px, 2.5vw, var(--uv1-closing-font-max)); font-weight: var(--uv1-handwritten-weight); line-height: 1.2; white-space: pre-wrap; }
+.closingSignature { max-width: 720px; margin: 0; font-family: var(--uv1-handwritten-font), cursive; font-size: clamp(22px, 2.5vw, var(--uv1-closing-font-max)); font-weight: var(--uv1-handwritten-weight); line-height: 1.2; white-space: pre-wrap; text-wrap: balance; }
 .closingActions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
 .closingActions form { display: contents; }
 .closingAction { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; box-sizing: border-box; padding: 9px 18px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 750; line-height: 1.2; text-decoration: none; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out, box-shadow 150ms ease-out, scale 150ms ease-out; }
-.closingAction:active { scale: 0.97; }
+.closingAction:active { scale: 0.96; }
 .closingActionPrimary { border: 1px solid #e9652f; color: #fff; background: #e9652f; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); }
 .closingActionPrimary:hover { border-color: #df5f2e; background: #df5f2e; }
 .closingActionSecondary { border: 1px solid #e9652f; color: #e9652f; background: #fff; }
@@ -580,10 +601,11 @@
 .closingBrand a { display: inline-flex; min-height: 40px; align-items: center; padding-inline: 8px; color: inherit; font-size: 14px; font-weight: 700; text-underline-offset: 3px; }
 .closingBrand small { margin-top: -7px; font-size: 12px; line-height: 1.35; }
 
-.publicNote { padding: clamp(28px, 5vw, 58px); color: white; background: var(--uv1-accent); text-align: center; }
-.publicNote h2 { margin-top: 0; }
-.publicNote p { max-width: 700px; margin: 0 auto; font-size: 17px; line-height: 1.55; }
+.publicNote { color: var(--uv1-text); text-align: center; }
+.publicNote h2 { max-width: 760px; margin: 0; }
+.publicNote p { max-width: 700px; margin: 14px auto 0; color: var(--uv1-muted); font-size: 17px; line-height: 1.55; }
 .publicNote .closingActions { margin-top: 22px; }
+.publicNote .closingBrand { margin-top: 16px; }
 
 .dialogBackdrop {
   position: fixed;
@@ -628,7 +650,7 @@
 .messagesDialog > header button:active { scale: 0.96; }
 .dialogMessages { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 18px; }
 .dialogMessages .messageCard { height: auto; min-height: 0; }
-.dialogMessages .messageCard > p { display: block; flex: none; overflow: visible; }
+.dialogMessages .messageCardContent > p { display: block; flex: none; overflow: visible; }
 
 .underlayGuide,
 .textSafeGuide { position: absolute; z-index: 6; display: none; pointer-events: none; box-sizing: border-box; border: 1px dashed var(--uv1-accent); }
@@ -699,18 +721,28 @@
 .page[data-viewport="mobile"] .section,
 .page[data-viewport="mobile"] .publicNote { margin-bottom: 14px; border-radius: 22px; }
 .page[data-viewport="mobile"] .sectionContent { padding: max(24px, var(--uv1-safe-top)) max(18px, var(--uv1-safe-right)) max(24px, var(--uv1-safe-bottom)) max(18px, var(--uv1-safe-left)); }
-.page[data-viewport="mobile"] .recipientName { font-size: clamp(44px, 17vw, 72px); }
-.page[data-viewport="mobile"] .recipientNameLong { font-size: clamp(34px, 12vw, 52px); }
-.page[data-viewport="mobile"] .recipientNameVeryLong { font-size: 12px; }
-.page[data-viewport="mobile"] .messageCard { height: 230px; }
+.page[data-viewport="mobile"] .recipientName { font-size: clamp(42px, 15vw, 64px); }
+.page[data-viewport="mobile"] .recipientNameLong { font-size: clamp(25px, 7.6vw, 34px); line-height: 1; }
+.page[data-viewport="mobile"] .recipientNameVeryLong { font-size: clamp(22px, 6.5vw, 27px); line-height: 1.04; }
+.page[data-viewport="mobile"] .messages > .sectionUnderlay [data-underlay-layer="standard"],
+.page[data-viewport="mobile"] .memories > .sectionUnderlay [data-underlay-layer="standard"],
+.page[data-viewport="mobile"] .closingSection > .sectionUnderlay [data-underlay-layer="standard"] { display: none; }
+.page[data-viewport="mobile"] .messages > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"],
+.page[data-viewport="mobile"] .memories > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"],
+.page[data-viewport="mobile"] .closingSection > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"] { display: block; }
+.page[data-viewport="mobile"] .messages .sectionHeadingRow { align-items: flex-start; flex-direction: column; gap: 10px; }
+.page[data-viewport="mobile"] .messageCard { height: auto; min-height: 200px; }
 .page[data-viewport="mobile"] .qualitiesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .page[data-viewport="mobile"] .qualityCard:last-child { grid-column: 1 / -1; }
-.page[data-viewport="mobile"] .messagesComposition[data-has-media="true"] { grid-template-columns: 1fr; }
+.page[data-viewport="mobile"] .messagesComposition[data-has-media="true"] { grid-template-columns: 1fr; grid-template-areas: "photos" "messages"; }
 .page[data-viewport="mobile"] .messageGrid,
 .page[data-viewport="mobile"] .messagesComposition[data-message-scenario] .messageGrid { grid-template-columns: 1fr; }
 .page[data-viewport="mobile"] .messagesComposition[data-has-media="true"] .messageGrid { max-height: none; padding-right: 0; overflow: visible; }
+.page[data-viewport="mobile"] .messagesComposition:not([data-has-media="true"]) .messageGrid[data-visible-card-count="3"] > .messageCard:nth-child(4) { display: flex; }
+.page[data-viewport="mobile"] .messageGrid > .messageCard:nth-child(n + 5) { display: none; }
 .page[data-viewport="mobile"] .messagePhotoGrid { height: auto; }
 .page[data-viewport="mobile"] .messagesComposition[data-media-distribution] .messagePhotoGrid > .photoFrame { width: 100%; max-height: none; transform: none; justify-self: stretch; }
+.page[data-viewport="mobile"] .mobileAllMessagesButton { display: inline-flex; align-items: center; gap: 0.3em; }
 .page[data-viewport="mobile"] .memoriesPhotos { grid-template-columns: 1fr; grid-template-areas: "intro" "primary" "secondary" "tertiary"; }
 .page[data-viewport="mobile"] .memoriesIntro { padding-inline: 0; text-align: center; }
 .page[data-viewport="mobile"] .closingActions,
@@ -724,18 +756,28 @@
   .page[data-viewport="auto"] .section,
   .page[data-viewport="auto"] .publicNote { margin-bottom: 14px; border-radius: 22px; }
   .page[data-viewport="auto"] .sectionContent { padding: max(24px, var(--uv1-safe-top)) max(18px, var(--uv1-safe-right)) max(24px, var(--uv1-safe-bottom)) max(18px, var(--uv1-safe-left)); }
-  .page[data-viewport="auto"] .recipientName { font-size: clamp(44px, 17vw, 72px); }
-  .page[data-viewport="auto"] .recipientNameLong { font-size: clamp(34px, 12vw, 52px); }
-  .page[data-viewport="auto"] .recipientNameVeryLong { font-size: 12px; }
-  .page[data-viewport="auto"] .messageCard { height: 230px; }
+  .page[data-viewport="auto"] .recipientName { font-size: clamp(42px, 15vw, 64px); }
+  .page[data-viewport="auto"] .recipientNameLong { font-size: clamp(25px, 7.6vw, 34px); line-height: 1; }
+  .page[data-viewport="auto"] .recipientNameVeryLong { font-size: clamp(22px, 6.5vw, 27px); line-height: 1.04; }
+  .page[data-viewport="auto"] .messages > .sectionUnderlay [data-underlay-layer="standard"],
+  .page[data-viewport="auto"] .memories > .sectionUnderlay [data-underlay-layer="standard"],
+  .page[data-viewport="auto"] .closingSection > .sectionUnderlay [data-underlay-layer="standard"] { display: none; }
+  .page[data-viewport="auto"] .messages > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"],
+  .page[data-viewport="auto"] .memories > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"],
+  .page[data-viewport="auto"] .closingSection > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"] { display: block; }
+  .page[data-viewport="auto"] .messages .sectionHeadingRow { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .page[data-viewport="auto"] .messageCard { height: auto; min-height: 200px; }
   .page[data-viewport="auto"] .qualitiesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .page[data-viewport="auto"] .qualityCard:last-child { grid-column: 1 / -1; }
-  .page[data-viewport="auto"] .messagesComposition[data-has-media="true"] { grid-template-columns: 1fr; }
+  .page[data-viewport="auto"] .messagesComposition[data-has-media="true"] { grid-template-columns: 1fr; grid-template-areas: "photos" "messages"; }
   .page[data-viewport="auto"] .messageGrid,
   .page[data-viewport="auto"] .messagesComposition[data-message-scenario] .messageGrid { grid-template-columns: 1fr; }
   .page[data-viewport="auto"] .messagesComposition[data-has-media="true"] .messageGrid { max-height: none; padding-right: 0; overflow: visible; }
+  .page[data-viewport="auto"] .messagesComposition:not([data-has-media="true"]) .messageGrid[data-visible-card-count="3"] > .messageCard:nth-child(4) { display: flex; }
+  .page[data-viewport="auto"] .messageGrid > .messageCard:nth-child(n + 5) { display: none; }
   .page[data-viewport="auto"] .messagePhotoGrid { height: auto; }
   .page[data-viewport="auto"] .messagesComposition[data-media-distribution] .messagePhotoGrid > .photoFrame { width: 100%; max-height: none; transform: none; justify-self: stretch; }
+  .page[data-viewport="auto"] .mobileAllMessagesButton { display: inline-flex; align-items: center; gap: 0.3em; }
   .page[data-viewport="auto"] .memoriesPhotos { grid-template-columns: 1fr; grid-template-areas: "intro" "primary" "secondary" "tertiary"; }
   .page[data-viewport="auto"] .memoriesIntro { padding-inline: 0; text-align: center; }
   .page[data-viewport="auto"] .closingActions,

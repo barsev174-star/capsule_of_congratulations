@@ -8,6 +8,9 @@
 - `docs/MVP_PRODUCT_BRIEF.md` — зафиксированная версия продуктового фокуса MVP 1.0.
 - `docs/TEMPLATE_SYSTEM.md` — система 4 базовых шаблонов для первой версии.
 - `docs/UI_BLOCK_ARCHITECTURE.md` — архитектура универсальных визуальных блоков и шаблонов.
+- `docs/UNIVERSAL_TEMPLATE_FAMILY_V1.md` — утверждённый контракт универсальной семьи шаблонов.
+- `docs/TEMPLATE_AUTOMATION_IMPLEMENTATION_PLAN_2026-08-11.md` — актуальный статус платформы шаблонов и порядок продолжения.
+- `docs/TEMPLATE_CREATION_RUNBOOK.md` — рабочая инструкция по профилю, ассетам, студии и приёмке нового шаблона.
 - `docs/GIT_REMOTE_SETUP.md` — что нужно для подключения GitHub и будущих push.
 - `docs/DECISIONS_LOG.md` — журнал продуктовых и технических решений.
 - `docs/DELIVERY_LOG.md` — журнал того, что сделано, что отложено и какие новые идеи появились.

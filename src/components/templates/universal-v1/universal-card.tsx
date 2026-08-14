@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { startCardFromShowcaseAction } from "@/app/home-actions";
 import type {
@@ -15,6 +15,7 @@ import type {
 import {
   formatUniversalEventDate,
   getUniversalRenderedBlocks,
+  type UniversalRenderedBlockId,
   type UniversalTemplateContribution,
   type UniversalTemplatePhoto,
   type UniversalTemplateSurface,
@@ -104,12 +105,14 @@ function DecorLayers({
 
 function SectionSurface({
   id,
+  dataBlockId = id,
   profile,
   viewport,
   className = "",
   children
 }: {
   id: UniversalTemplateBlockId;
+  dataBlockId?: UniversalRenderedBlockId;
   profile: TemplateProfile;
   viewport: UniversalTemplateViewport;
   className?: string;
@@ -123,7 +126,7 @@ function SectionSurface({
   return (
     <section
       className={`${styles.section} ${styles[id]} ${isBare ? styles.bareSection : ""} ${className}`.trim()}
-      data-universal-block={id}
+      data-universal-block={dataBlockId}
       data-section-presentation={isBare ? "bare" : "surface"}
       data-underlay-preset={underlay?.preset}
       style={{
@@ -233,15 +236,18 @@ function MessageCard({ contribution, index, profile }: { contribution: Universal
 }
 
 function AllMessagesDialog({
+  open,
+  onClose,
   contributions,
-  participantCount,
   profile
 }: {
+  open: boolean;
+  onClose: () => void;
   contributions: readonly UniversalTemplateContribution[];
-  participantCount: number;
   profile: TemplateProfile;
 }) {
-  const [open, setOpen] = useState(false);
+  const titleId = useId();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogTheme = {
     "--uv1-text": profile.colors.text,
     "--uv1-muted": profile.colors.muted,
@@ -255,36 +261,35 @@ function AllMessagesDialog({
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus({ preventScroll: true });
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
+      document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open]);
+  }, [onClose, open]);
 
-  return (
-    <>
-      <button
-        type="button"
-        className={`${styles.countBadge} ${styles.allMessagesButton}`}
-        aria-label={`${participantCount} поздравлений`}
-        title="Открыть все поздравления"
-        onClick={() => setOpen(true)}
-      ><strong>{participantCount}</strong> поздравлений</button>
-      {open ? createPortal(
-        <div className={styles.dialogBackdrop} role="presentation" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setOpen(false);
-        }} style={dialogTheme}>
-          <section className={styles.messagesDialog} role="dialog" aria-modal="true" aria-labelledby="universal-all-messages-title">
-            <header><div><span>Полная подборка</span><h2 id="universal-all-messages-title">Все поздравления</h2></div><button type="button" onClick={() => setOpen(false)} aria-label="Закрыть все поздравления">×</button></header>
-            <div className={styles.dialogMessages}>{contributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} />)}</div>
-          </section>
-        </div>,
-        document.body
-      ) : null}
-    </>
+  if (!open) return null;
+  return createPortal(
+    <div className={styles.dialogBackdrop} role="presentation" onMouseDown={(event) => {
+      if (event.target === event.currentTarget) onClose();
+    }} style={dialogTheme}>
+      <section className={styles.messagesDialog} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+        <header><div><span>Полная подборка</span><h2 id={titleId}>Все поздравления</h2></div><button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Закрыть все поздравления">×</button></header>
+        <div className={styles.dialogMessages}>{contributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} />)}</div>
+      </section>
+    </div>,
+    document.body
   );
 }
 
 function MessagesBlock({ profile, model }: { profile: TemplateProfile; model: UniversalTemplateViewModel }) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const dialogTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const scrollPositionRef = useRef(0);
   const layoutPreset = getUniversalLayoutPreset(profile.layoutPreset);
   const scenario = getUniversalMessageScenarioForPhotoCount(
     profile.layoutPreset,
@@ -296,11 +301,32 @@ function MessagesBlock({ profile, model }: { profile: TemplateProfile; model: Un
   const hasMedia = model.messagePhotos.length > 0;
   const visibleContributions = hasMedia
     ? model.contributions
-    : model.contributions.slice(0, visibleCardCount);
+    : model.contributions.slice(0, Math.max(4, visibleCardCount));
+  const openDialog = (trigger: HTMLButtonElement) => {
+    dialogTriggerRef.current = trigger;
+    scrollPositionRef.current = window.scrollY;
+    setDialogOpen(true);
+  };
+  const closeDialog = () => {
+    setDialogOpen(false);
+    window.requestAnimationFrame(() => {
+      if (window.scrollY !== scrollPositionRef.current) window.scrollTo(0, scrollPositionRef.current);
+      dialogTriggerRef.current?.focus({ preventScroll: true });
+    });
+  };
 
   return (
     <>
-      <div className={styles.sectionHeadingRow}><h2>Поздравления</h2><AllMessagesDialog contributions={model.contributions} participantCount={model.participantCount} profile={profile} /></div>
+      <div className={styles.sectionHeadingRow}>
+        <h2>Поздравления</h2>
+        <button
+          type="button"
+          className={`${styles.countBadge} ${styles.allMessagesButton}`}
+          aria-label={`${model.participantCount} поздравлений`}
+          title="Открыть все поздравления"
+          onClick={(event) => openDialog(event.currentTarget)}
+        ><strong>{model.participantCount}</strong> поздравлений</button>
+      </div>
       <div
         className={styles.messagesComposition}
         data-message-scenario={scenario}
@@ -310,7 +336,6 @@ function MessagesBlock({ profile, model }: { profile: TemplateProfile; model: Un
           "--uv1-message-stack-height": `${visibleCardCount * layoutPreset.geometry.messageCardHeight + (visibleCardCount - 1) * layoutPreset.geometry.messageGap}px`
         } as CSSProperties}
       >
-        <div className={styles.messageGrid} data-visible-card-count={visibleCardCount}>{visibleContributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} />)}</div>
         {hasMedia ? <div className={styles.messagePhotoGrid}>{model.messagePhotos.map((photo, index) => {
           const usePortraitFrame = layoutRule.photoFrame === "portrait";
           return <UniversalPhoto
@@ -321,7 +346,19 @@ function MessagesBlock({ profile, model }: { profile: TemplateProfile; model: Un
             priority={index === 0}
           />;
         })}</div> : null}
+        <div className={styles.messageGrid} data-visible-card-count={visibleCardCount}>{visibleContributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} />)}</div>
       </div>
+      <button
+        type="button"
+        className={`${styles.allMessagesButton} ${styles.mobileAllMessagesButton}`}
+        onClick={(event) => openDialog(event.currentTarget)}
+      ><span>Посмотреть все <strong>{model.participantCount}</strong> поздравлений</span></button>
+      <AllMessagesDialog
+        open={dialogOpen}
+        onClose={closeDialog}
+        contributions={model.contributions}
+        profile={profile}
+      />
     </>
   );
 }
@@ -368,6 +405,15 @@ function ClosingActions({
     <div className={styles.closingActions} data-action-context={context}>
       {context === "studio" ? createButton : <form action={startCardFromShowcaseAction}>{createButton}</form>}
       {context === "private" || context === "studio" ? publicVersionButton : null}
+    </div>
+  );
+}
+
+function ClosingBrand() {
+  return (
+    <div className={styles.closingBrand}>
+      <Link href="/">Создано в Slovesto</Link>
+      <small>Место, где слова становятся подарком</small>
     </div>
   );
 }
@@ -499,9 +545,9 @@ export function UniversalTemplateCard({
             })}</div>
           </SectionSurface>;
 
-          if (block === "closing") return <SectionSurface key={block} id="closing" profile={profile} viewport={viewport} className={styles.closingSection}><p>{model.privateSignature}</p><ClosingActions context={resolvedActionContext} publicVersionHref={publicVersionHref} /><div className={styles.closingBrand}><Link href="/">Создано в Slovesto</Link><small>Место, где слова становятся подарком</small></div></SectionSurface>;
+          if (block === "closing") return <SectionSurface key={block} id="closing" profile={profile} viewport={viewport} className={styles.closingSection}><p className={styles.closingSignature}>{model.privateSignature}</p><ClosingActions context={resolvedActionContext} publicVersionHref={publicVersionHref} /><ClosingBrand /></SectionSurface>;
 
-          return <section key={block} className={styles.publicNote} data-universal-block="public-note"><h2>В полной открытке — ещё больше тепла</h2><p>Личные поздравления и важные воспоминания бережно сохранены только для получателя.</p><ClosingActions context={resolvedActionContext} publicVersionHref={publicVersionHref} /></section>;
+          return <SectionSurface key={block} id="closing" dataBlockId="public-note" profile={profile} viewport={viewport} className={`${styles.closingSection} ${styles.publicNote}`}><h2>В полной открытке — ещё больше тепла</h2><p>Личные поздравления и важные воспоминания бережно сохранены только для получателя.</p><ClosingActions context={resolvedActionContext} publicVersionHref={publicVersionHref} /><ClosingBrand /></SectionSurface>;
         })}
       </div>
     </main>

@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { universalMessageScenarios } from "@/lib/templates/fixtures";
@@ -55,6 +55,9 @@ describe("UniversalTemplateCard", () => {
       expect(bareSection.querySelector("[data-underlay-preset]")).not.toBeInTheDocument();
     }
     expect(hero.querySelector(`[data-decor-layer="${profile.assets.decor[0]?.id}"]`)).toBeInTheDocument();
+    const messagesUnderlay = container.querySelector('[data-universal-block="messages"] > [data-underlay-preset="adaptive-frame"]');
+    expect(messagesUnderlay?.querySelector('[data-underlay-layer="standard"]')).toBeInTheDocument();
+    expect(messagesUnderlay?.querySelector('[data-underlay-layer="mobile-variable-frame"]')).toBeInTheDocument();
     expect(container).not.toHaveTextContent("Собрано из поздравлений");
   });
 
@@ -71,7 +74,7 @@ describe("UniversalTemplateCard", () => {
     expect(composition).toBeInTheDocument();
     const renderedCardCount = model.messagePhotos.length > 0
       ? model.contributions.length
-      : universalScenarioCardCount[scenario];
+      : Math.max(4, universalScenarioCardCount[scenario]);
     expect(composition).toHaveAttribute("data-message-scenario", scenario);
     expect(composition?.querySelector("[data-visible-card-count]")).toHaveAttribute("data-visible-card-count", String(universalScenarioCardCount[scenario]));
     expect(within(composition as HTMLElement).getAllByRole("article")).toHaveLength(renderedCardCount);
@@ -123,6 +126,7 @@ describe("UniversalTemplateCard", () => {
     const frames = Array.from(composition.querySelectorAll<HTMLElement>("[data-photo-frame]"));
 
     expect(composition).toHaveAttribute("data-media-distribution", "distributed-trio");
+    expect(composition.firstElementChild).toContainElement(frames[0]);
     expect(composition.querySelector("[data-visible-card-count]")).toHaveAttribute("data-visible-card-count", "4");
     expect((container.querySelector('[data-template-family="universal-v1"]') as HTMLElement).style.getPropertyValue("--uv1-message-trio-photo-width")).toBe("95%");
     expect(frames.map((frame) => frame.style.aspectRatio)).toEqual([
@@ -171,6 +175,14 @@ describe("UniversalTemplateCard", () => {
     expect(within(dialog).getAllByRole("article")).toHaveLength(model.contributions.length);
     await user.click(within(dialog).getByRole("button", { name: "Закрыть все поздравления" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("button", { name: "12 поздравлений" })).toHaveFocus());
+
+    const mobileTrigger = screen.getByRole("button", { name: "Посмотреть все 12 поздравлений" });
+    await user.click(mobileTrigger);
+    expect(screen.getByRole("dialog", { name: "Все поздравления" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await waitFor(() => expect(mobileTrigger).toHaveFocus());
   });
 
   it.each([0, 1, 2, 3] as const)("keeps moments visible with %s greeting photos", (photoCount) => {
@@ -186,10 +198,14 @@ describe("UniversalTemplateCard", () => {
 
   it("shows footer actions for demo, private and studio contexts", () => {
     const model = buildUniversalFixtureViewModel("full-card-default", { templateId: profile.id });
-    const { rerender } = render(<UniversalTemplateCard profile={profile} model={model} surface="public" actionContext="demo" />);
+    const { container, rerender } = render(<UniversalTemplateCard profile={profile} model={model} surface="public" actionContext="demo" />);
 
     expect(screen.getByRole("button", { name: "Создать такую же открытку" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Настроить публичную версию" })).not.toBeInTheDocument();
+    const publicFooter = container.querySelector('[data-universal-block="public-note"]');
+    expect(publicFooter).toHaveAttribute("data-underlay-preset", profile.assets.sections.closing?.preset);
+    expect(publicFooter?.innerHTML).toContain(profile.assets.sections.closing?.asset.src);
+    expect(screen.getByRole("link", { name: "Создано в Slovesto" })).toHaveAttribute("href", "/");
 
     rerender(<UniversalTemplateCard profile={profile} model={model} actionContext="private" />);
     expect(screen.getByRole("button", { name: "Настроить публичную версию" })).toBeInTheDocument();
