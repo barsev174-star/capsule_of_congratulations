@@ -10,6 +10,6 @@ export const school_scrapbookRegistration = {
     description: "Тёплый бумажный коллаж для 1 сентября, школы, класса и дружеских воспоминаний.",
     recommendedFor: ["personal", "celebration", "teacher"],
     accent: "#1859bd",
-    availability: "studio"
+    availability: "product"
   }
 } satisfies UniversalTemplateRegistration;

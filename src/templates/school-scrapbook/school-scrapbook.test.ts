@@ -3,6 +3,7 @@ import { dispatchTemplateRenderer } from "@/lib/templates/dispatcher";
 import { validateTemplateProfile } from "@/lib/templates/profile";
 import { createTemplateStudioDraft, validateTemplateStudioDraft } from "@/lib/templates/studio";
 import { school_scrapbookProfile } from "./profile";
+import { school_scrapbookRegistration } from "./registration";
 
 describe("school-scrapbook studio template", () => {
   it("keeps the studio profile valid and registered", () => {
@@ -12,6 +13,7 @@ describe("school-scrapbook studio template", () => {
     expect(validateTemplateProfile(school_scrapbookProfile)).toEqual(expect.objectContaining({ ok: true, issues: [] }));
     expect(dispatch?.kind).toBe("universal-v1");
     expect(dispatch?.registration.id).toBe("school-scrapbook");
+    expect(school_scrapbookRegistration.catalog.availability).toBe("product");
     expect(validateTemplateStudioDraft(draft)).toEqual({ ok: true, issues: [] });
   });
 

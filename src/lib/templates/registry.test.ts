@@ -74,10 +74,14 @@ const catalog = {
 };
 
 describe("template registry", () => {
-  it("оставляет Paper и Route в legacy и в каталоге", () => {
+  it("оставляет Paper и Route в legacy и добавляет продуктовый universal-шаблон", () => {
     expect(templateRegistry.get("paper-birthday")?.family).toBe("legacy");
     expect(templateRegistry.get("route-adventure")?.family).toBe("legacy");
-    expect(catalogTemplateRegistrations.map((entry) => entry.id)).toEqual(["paper-birthday", "route-adventure"]);
+    expect(catalogTemplateRegistrations.map((entry) => entry.id)).toEqual([
+      "paper-birthday",
+      "route-adventure",
+      "school-scrapbook"
+    ]);
   });
 
   it("сохраняет распознавание скрытых legacy ID", () => {
@@ -88,6 +92,7 @@ describe("template registry", () => {
     expect(isProductTemplateId("northern-light")).toBe(false);
     expect(isProductTemplateId("daylight-proof")).toBe(false);
     expect(isProductTemplateId("route-adventure")).toBe(true);
+    expect(isProductTemplateId("school-scrapbook")).toBe(true);
     expect(isRegisteredTemplateId("unknown")).toBe(false);
   });
 

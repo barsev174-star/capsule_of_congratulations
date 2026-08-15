@@ -95,4 +95,23 @@ describe("validateCreateCardFormData", () => {
       expect(result.data.templateId).toBeNull();
     }
   });
+
+  it("accepts the school scrapbook template for a product card", () => {
+    const result = validateCreateCardFormData(
+      buildFormData({
+        recipientName: "Анна",
+        occasion: "teacher",
+        occasionText: "с окончанием учебного года",
+        fromLabel: "От 5Б класса",
+        organizerName: "Мария",
+        organizerEmail: "maria@example.com",
+        templateId: "school-scrapbook"
+      })
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.templateId).toBe("school-scrapbook");
+    }
+  });
 });
