@@ -113,7 +113,7 @@ export function SectionUnderlay({
             data-underlay-layer="mobile-variable-frame"
             style={{
               ...frameLayerStyle,
-              borderImageSlice,
+              borderImageSlice: `${borderImageSlice} fill`,
               borderImageRepeat: "stretch round"
             }}
           />

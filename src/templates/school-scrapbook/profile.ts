@@ -123,6 +123,24 @@ export const school_scrapbookProfile = defineTemplate({
         rotation: 5,
         opacity: 0.92,
         visibleOn: ["desktop", "export"]
+      },
+      {
+        id: "hero-student-doodle-mobile",
+        asset: asset("/templates/school-scrapbook/decor-closing-student-doodle-v1.webp", 112, 112),
+        anchor: "hero",
+        rect: { x: 0.035, y: 0.69, width: 0.18, height: 0.26 },
+        rotation: -7,
+        opacity: 0.96,
+        visibleOn: ["mobile"]
+      },
+      {
+        id: "hero-student-girl-doodle-mobile",
+        asset: asset("/templates/school-scrapbook/decor-closing-student-girl-doodle-v3.webp", 105, 112),
+        anchor: "hero",
+        rect: { x: 0.785, y: 0.69, width: 0.17, height: 0.26 },
+        rotation: 6,
+        opacity: 0.96,
+        visibleOn: ["mobile"]
       }
     ]
   },

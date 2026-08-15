@@ -20,10 +20,12 @@ describe("UniversalTemplateExportCard", () => {
         templateId: profile.id,
         photoCount: 3
       });
+      model.publicPhotoCount = 6;
       const { container } = render(<UniversalTemplateExportCard profile={profile} model={model} format={format} />);
       const root = container.querySelector(`[data-export-format="${format}"]`);
 
       expect(root).toBeInTheDocument();
+      expect(root?.querySelector('[data-export-counter="photos"]')).toHaveTextContent("6 фото в открытке");
       expect((root?.querySelector(`img[src="${profile.assets.page?.src}"]`) as HTMLImageElement).style.opacity).toBe("");
       expect(root?.querySelector('[data-export-memories-layout="feature-stack"]')).toBeInTheDocument();
       expect(root?.querySelector("[data-export-photo-row]")?.children).toHaveLength(2);
@@ -95,6 +97,25 @@ describe("UniversalTemplateExportCard", () => {
 
     expect(container.querySelector('[data-universal-export-block="memories"]')).toBeInTheDocument();
     expect(container.querySelectorAll("[data-export-photo]")).toHaveLength(3);
+  });
+
+  it.each(["story", "post", "a4"] as const)("keeps the colorful school counters in the %s export", (format) => {
+    const schoolProfile = structuredClone(profile);
+    schoolProfile.id = "school-scrapbook";
+    const model = buildUniversalFixtureViewModel("public-full", { templateId: schoolProfile.id });
+    model.publicPhotoCount = 3;
+    const { container } = render(<UniversalTemplateExportCard profile={schoolProfile} model={model} format={format} />);
+
+    expect(container.querySelector('[data-export-counter="congratulations"]')).toHaveStyle({
+      color: "#1859bd",
+      background: "#fff0a8",
+      transform: "rotate(-1.5deg)"
+    });
+    expect(container.querySelector('[data-export-counter="photos"]')).toHaveStyle({
+      color: "#0b7278",
+      background: "#d9f3ef",
+      transform: "rotate(1.5deg)"
+    });
   });
 
   it("preserves overflowing anchored decor in export", () => {

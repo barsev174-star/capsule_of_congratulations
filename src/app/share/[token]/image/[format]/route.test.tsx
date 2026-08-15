@@ -81,6 +81,7 @@ describe("public share universal export route", () => {
     expect(mocks.imageCalls).toHaveLength(1);
     expect(mocks.imageCalls[0].element.type).toBe(UniversalTemplateExportCard);
     expect(mocks.imageCalls[0].element.props.format).toBe("story");
+    expect(mocks.imageCalls[0].element.props.model.publicPhotoCount).toBe(3);
     expect(mocks.imageCalls[0].options).toMatchObject({ width: 1080, height: 1920 });
   });
 

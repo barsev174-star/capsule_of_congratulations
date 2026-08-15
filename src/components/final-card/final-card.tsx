@@ -172,6 +172,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
   const isPaperBirthday = model.style === "paper-birthday";
   const isRouteAdventure = model.style === "route-adventure";
   const participantSummary = getParticipantSummary(model.participantCount);
+  const privatePhotoCount = model.messageMediaAssets.length + model.memoryMediaAssets.length;
   const publicPhotoCount = model.publicPhotoCount ?? null;
   const publicFullCardHasPhotos = model.publicFullCardHasPhotos ?? model.memoryMediaAssets.length > 0;
   const heroScaleClass = isPaperBirthday ? getPaperBirthdayHeroScaleClass(model.recipientName) : "";
@@ -290,6 +291,13 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                     <strong>{participantSummary.people}</strong>
                     <span>{participantSummary.action}</span>
                   </span>
+                  {privatePhotoCount > 0 ? <span className={`${styles.heroParticipants} ${styles.heroPhotoCount}`} data-hero-stat="photos" aria-label={`${privatePhotoCount} фотографий в открытке`}>
+                    <span className={styles.heroParticipantsIcon} aria-hidden="true">
+                      <CameraIcon />
+                    </span>
+                    <strong>{privatePhotoCount}</strong>
+                    <span>фото</span>
+                  </span> : null}
                   <a href="#messages" className={`${styles.button} ${styles.primaryButton} ${styles.heroOpenButton}`}>
                     <span aria-hidden="true">
                       <HeartEnvelopeIcon />

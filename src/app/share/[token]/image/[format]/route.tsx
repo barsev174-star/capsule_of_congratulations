@@ -151,7 +151,10 @@ const ExportCard = ({ payload, format, origin }: { payload: Payload; format: For
   const a = themeAssets[theme];
   const photos = payload.photos.slice(0, formats[format].photos).map((photo) => ({ ...photo, url: exportPhoto(origin, photo.url) }));
   const phrases = payload.phrases.slice(0, formats[format].phrases);
-  const counters = [payload.share.showGreetingCount ? `${payload.card.greetingCount} поздравлений` : null, payload.share.showPhotoCount && payload.card.photoCount > 0 ? `${payload.card.photoCount} фото в открытке` : null].filter(Boolean);
+  const counters = [
+    payload.share.showGreetingCount ? { kind: "greetings" as const, label: `${payload.card.greetingCount} поздравлений` } : null,
+    payload.share.showPhotoCount && payload.card.photoCount > 0 ? { kind: "photos" as const, label: `${payload.card.photoCount} фото в открытке` } : null
+  ].filter((counter): counter is { kind: "greetings" | "photos"; label: string } => counter !== null);
   const panelStyle = theme === "route" ? { border: "1px solid rgba(184,137,71,.58)", borderRadius: 15, boxShadow: "0 10px 22px rgba(0,0,0,.2)" } : {};
   const paper = theme === "paper";
   const paperHeroHeight = format === "story" ? p.hero : format === "post" ? 225 : 330;
@@ -189,7 +192,7 @@ const ExportCard = ({ payload, format, origin }: { payload: Payload; format: For
           {payload.share.showOccasion && payload.card.occasionText ? <div style={{ display: "flex", color: a.accent, fontSize: p.occasion, fontWeight: 700 }}>{payload.card.occasionText}</div> : null}
           {payload.share.displayName ? <div style={{ display: "flex", justifyContent: "center", maxWidth: "100%", marginTop: 9, color: a.text, fontFamily: theme === "paper" ? "Caveat" : "PT Sans", fontSize: p.name, fontWeight: 700, lineHeight: .96, textAlign: "center" }}>{trim(payload.share.displayName, 46)}</div> : null}
           <div style={{ display: "flex", maxWidth: 800, marginTop: paper && format === "post" ? 10 : 14, color: a.muted, fontSize: paper && format === "post" ? p.body - 2 : p.body, lineHeight: 1.23 }}>Близкие люди собрали здесь тёплые слова, фотографии и приятные моменты.</div>
-          {counters.length ? <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 12, marginTop: paper && format === "post" ? 9 : 13 }}>{counters.map((item, index) => <div key={item} style={{ display: "flex", alignItems: "center", gap: 9, padding: paper ? format === "post" ? "6px 14px" : "8px 15px" : "10px 18px", background: paper ? "rgba(255,252,246,.9)" : "linear-gradient(135deg,#8a592d,#5b351d)", border: paper ? "1px solid rgba(199,94,121,.24)" : "1px solid rgba(225,181,100,.72)", borderRadius: 999, boxShadow: paper ? "0 3px 7px rgba(103,72,55,.12)" : "inset 0 1px 0 rgba(255,239,196,.2), 0 3px 8px rgba(0,0,0,.2)", color: paper ? "#6a453b" : "#fff1d0", fontSize: p.counter, fontWeight: 700 }}><CounterIcon kind={index === 0 ? "greetings" : "photos"} size={Math.round(p.counter * .8)} color={paper ? "#c75e79" : undefined} />{item}</div>)}</div> : null}
+          {counters.length ? <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 12, marginTop: paper && format === "post" ? 9 : 13 }}>{counters.map((counter) => <div key={counter.kind} style={{ display: "flex", alignItems: "center", gap: 9, padding: paper ? format === "post" ? "6px 14px" : "8px 15px" : "10px 18px", background: paper ? "rgba(255,252,246,.9)" : "linear-gradient(135deg,#8a592d,#5b351d)", border: paper ? "1px solid rgba(199,94,121,.24)" : "1px solid rgba(225,181,100,.72)", borderRadius: 999, boxShadow: paper ? "0 3px 7px rgba(103,72,55,.12)" : "inset 0 1px 0 rgba(255,239,196,.2), 0 3px 8px rgba(0,0,0,.2)", color: paper ? "#6a453b" : "#fff1d0", fontSize: p.counter, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}><CounterIcon kind={counter.kind} size={Math.round(p.counter * .8)} color={paper ? "#c75e79" : undefined} />{counter.label}</div>)}</div> : null}
         </div>
       </Surface>
 

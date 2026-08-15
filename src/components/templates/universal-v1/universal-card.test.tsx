@@ -57,7 +57,10 @@ describe("UniversalTemplateCard", () => {
     expect(hero.querySelector(`[data-decor-layer="${profile.assets.decor[0]?.id}"]`)).toBeInTheDocument();
     const messagesUnderlay = container.querySelector('[data-universal-block="messages"] > [data-underlay-preset="adaptive-frame"]');
     expect(messagesUnderlay?.querySelector('[data-underlay-layer="standard"]')).toBeInTheDocument();
-    expect(messagesUnderlay?.querySelector('[data-underlay-layer="mobile-variable-frame"]')).toBeInTheDocument();
+    expect(messagesUnderlay?.querySelector('[data-underlay-layer="mobile-variable-frame"]')).toHaveStyle({
+      borderImageSlice: "8% 5% 8% 5% fill",
+      borderImageRepeat: "stretch round"
+    });
     expect(container).not.toHaveTextContent("Собрано из поздравлений");
   });
 
@@ -87,13 +90,26 @@ describe("UniversalTemplateCard", () => {
     const composition = container.querySelector(`[data-message-scenario="${scenario}"]`);
 
     expect(composition).toBeInTheDocument();
-    const renderedCardCount = model.messagePhotos.length > 0
-      ? model.contributions.length
-      : Math.max(4, universalScenarioCardCount[scenario]);
     expect(composition).toHaveAttribute("data-message-scenario", scenario);
     expect(composition?.querySelector("[data-visible-card-count]")).toHaveAttribute("data-visible-card-count", String(universalScenarioCardCount[scenario]));
-    expect(within(composition as HTMLElement).getAllByRole("article")).toHaveLength(renderedCardCount);
+    expect(within(composition as HTMLElement).getAllByRole("article")).toHaveLength(model.contributions.length);
     expect(composition?.querySelectorAll("[data-photo-frame]")).toHaveLength(universalScenarioPhotoCount[scenario]);
+  });
+
+  it.each([
+    ["grid-2", 2, 2, [0, 2, 1, 3]],
+    ["carousel-1", 1, 3, [0, 1, 2, 3]],
+    ["carousel-2", 2, 3, [0, 2, 4, 1]]
+  ] as const)("preserves the %s geometry in the desktop no-photo carousel", (scenario, rows, columns, expectedOrder) => {
+    const model = buildUniversalFixtureViewModel("full-card-default", { templateId: profile.id, scenario, photoCount: 0 });
+    const { container } = render(<UniversalTemplateCard profile={profile} model={model} viewport="desktop" />);
+    const carousel = container.querySelector('[data-message-layout="no-media-carousel"]');
+
+    expect(carousel).toHaveAttribute("data-carousel-rows", String(rows));
+    expect(carousel).toHaveAttribute("data-carousel-columns", String(columns));
+    expect(carousel?.children).toHaveLength(model.contributions.length);
+    expect(Array.from(carousel?.children ?? []).slice(0, 4).map((card) => (card as HTMLElement).style.getPropertyValue("--uv1-desktop-carousel-order"))).toEqual(expectedOrder.map(String));
+    expect(screen.queryByRole("button", { name: /столбик поздравлений/ })).not.toBeInTheDocument();
   });
 
   it("applies normalized crop data and preserves the full 45-character caption", () => {
@@ -176,10 +192,11 @@ describe("UniversalTemplateCard", () => {
       scenario: "grid-2",
       photoCount: 3
     });
-    const { container } = render(<UniversalTemplateCard profile={profile} model={model} />);
+    const { container } = render(<UniversalTemplateCard profile={profile} model={model} viewport="mobile" />);
     const memories = container.querySelector('[data-universal-block="memories"]') as HTMLElement;
 
     expect(memories.querySelector('[data-memories-layout="route-strip"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-hero-stat="photos"]')).toHaveTextContent("6 фото");
     expect(memories.querySelector("[data-memory-photo-row]")).toHaveTextContent(model.memoryTitle);
     expect(memories).not.toHaveTextContent("Фотоистория");
     expect(memories.querySelectorAll("[data-photo-frame]")).toHaveLength(3);
@@ -187,6 +204,7 @@ describe("UniversalTemplateCard", () => {
     await user.click(screen.getByRole("button", { name: "12 поздравлений" }));
     const dialog = screen.getByRole("dialog", { name: "Все поздравления" });
     expect(dialog.parentElement?.parentElement).toBe(document.body);
+    expect(dialog.parentElement).toHaveAttribute("data-viewport", "mobile");
     expect(within(dialog).getAllByRole("article")).toHaveLength(model.contributions.length);
     await user.click(within(dialog).getByRole("button", { name: "Закрыть все поздравления" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -247,7 +265,7 @@ describe("UniversalTemplateCard", () => {
       scenario: "landscape-trio",
       photoCount: 3
     });
-    const { container } = render(<UniversalTemplateCard profile={motionProfile} model={model} />);
+    const { container } = render(<UniversalTemplateCard profile={motionProfile} model={model} viewport="mobile" />);
     const page = container.querySelector("[data-template-family=\"universal-v1\"]");
     const hero = container.querySelector("[data-universal-block=\"hero\"]");
     const trigger = screen.getAllByRole("button", { name: /Открыть фотографию:/ })[0];
@@ -260,6 +278,7 @@ describe("UniversalTemplateCard", () => {
     await user.click(trigger);
     const dialog = screen.getByRole("dialog", { name: model.messagePhotos[0].caption });
     expect(dialog).toHaveAttribute("data-photo-viewer");
+    expect(dialog.parentElement).toHaveAttribute("data-viewport", "mobile");
     expect(within(dialog).getByText(`1 из ${uniquePhotoCount}`)).toBeInTheDocument();
 
     await user.keyboard("{ArrowRight}");

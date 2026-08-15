@@ -228,20 +228,24 @@ function UniversalPhoto({
   );
 }
 
-function MessageCard({ contribution, index, profile }: { contribution: UniversalTemplateContribution; index: number; profile: TemplateProfile }) {
+function MessageCard({ contribution, index, profile, carouselOrder }: { contribution: UniversalTemplateContribution; index: number; profile: TemplateProfile; carouselOrder?: number }) {
   const underlay = profile.assets.greetingCards[index % profile.assets.greetingCards.length];
   const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
+  const cardStyle = {
+    ...(safeInsets ? {
+      "--uv1-message-safe-top": `${safeInsets.top * 100}cqw`,
+      "--uv1-message-safe-right": `${safeInsets.right * 100}cqw`,
+      "--uv1-message-safe-bottom": `${safeInsets.bottom * 100}cqw`,
+      "--uv1-message-safe-left": `${safeInsets.left * 100}cqw`
+    } : {}),
+    ...(carouselOrder !== undefined ? { "--uv1-desktop-carousel-order": carouselOrder } : {})
+  } as CSSProperties;
   return (
     <article
       className={styles.messageCard}
       data-message-card
       data-greeting-card-index={underlay ? index % profile.assets.greetingCards.length : undefined}
-      style={safeInsets ? {
-        "--uv1-message-safe-top": `${safeInsets.top * 100}cqw`,
-        "--uv1-message-safe-right": `${safeInsets.right * 100}cqw`,
-        "--uv1-message-safe-bottom": `${safeInsets.bottom * 100}cqw`,
-        "--uv1-message-safe-left": `${safeInsets.left * 100}cqw`
-      } as CSSProperties : undefined}
+      style={cardStyle}
     >
       {underlay ? <SectionUnderlay underlay={underlay} className={styles.messageCardUnderlay} /> : null}
       <div className={styles.messageCardContent}>
@@ -267,12 +271,14 @@ function AllMessagesDialog({
   open,
   onClose,
   contributions,
-  profile
+  profile,
+  viewport
 }: {
   open: boolean;
   onClose: () => void;
   contributions: readonly UniversalTemplateContribution[];
   profile: TemplateProfile;
+  viewport: UniversalTemplateViewport;
 }) {
   const titleId = useId();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -302,7 +308,7 @@ function AllMessagesDialog({
 
   if (!open) return null;
   return createPortal(
-    <div className={styles.dialogBackdrop} data-template-id={profile.id} data-motion-preset={profile.motion?.preset ?? "calm"} role="presentation" onMouseDown={(event) => {
+    <div className={styles.dialogBackdrop} data-template-id={profile.id} data-motion-preset={profile.motion?.preset ?? "calm"} data-viewport={viewport} role="presentation" onMouseDown={(event) => {
       if (event.target === event.currentTarget) onClose();
     }} style={dialogTheme}>
       <section className={styles.messagesDialog} role="dialog" aria-modal="true" aria-labelledby={titleId}>
@@ -422,10 +428,12 @@ function PhotoViewerDialog({
 function MessagesBlock({
   profile,
   model,
+  viewport,
   onPhotoOpen
 }: {
   profile: TemplateProfile;
   model: UniversalTemplateViewModel;
+  viewport: UniversalTemplateViewport;
   onPhotoOpen?: (photoId: string, trigger: HTMLButtonElement) => void;
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -440,9 +448,17 @@ function MessagesBlock({
   const layoutRule = getUniversalMessageLayoutRule(profile.layoutPreset, scenario);
   const visibleCardCount = layoutRule.cardsPerPage;
   const hasMedia = model.messagePhotos.length > 0;
-  const visibleContributions = hasMedia
-    ? model.contributions
-    : model.contributions.slice(0, Math.max(4, visibleCardCount));
+  const visibleContributions = model.contributions;
+  const noMediaCarouselRows = scenario === "carousel-1" ? 1 : 2;
+  const noMediaCarouselColumns = scenario === "grid-2" ? 2 : 3;
+  const getNoMediaCarouselOrder = (index: number) => {
+    const pageSize = noMediaCarouselRows * noMediaCarouselColumns;
+    const page = Math.floor(index / pageSize);
+    const position = index % pageSize;
+    const row = Math.floor(position / noMediaCarouselColumns);
+    const column = position % noMediaCarouselColumns;
+    return page * pageSize + column * noMediaCarouselRows + row;
+  };
   const openDialog = (trigger: HTMLButtonElement) => {
     dialogTriggerRef.current = trigger;
     scrollPositionRef.current = window.scrollY;
@@ -488,7 +504,7 @@ function MessagesBlock({
             onOpen={onPhotoOpen}
           />;
         })}</div> : null}
-        <div className={styles.messageGrid} data-visible-card-count={visibleCardCount} data-motion-stagger>{visibleContributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} />)}</div>
+        <div className={styles.messageGrid} data-message-layout={hasMedia ? "media-stack" : "no-media-carousel"} data-carousel-rows={!hasMedia ? noMediaCarouselRows : undefined} data-carousel-columns={!hasMedia ? noMediaCarouselColumns : undefined} data-visible-card-count={visibleCardCount} data-motion-stagger>{visibleContributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} carouselOrder={!hasMedia ? getNoMediaCarouselOrder(index) : undefined} />)}</div>
       </div>
       <button
         type="button"
@@ -500,6 +516,7 @@ function MessagesBlock({
         onClose={closeDialog}
         contributions={model.contributions}
         profile={profile}
+        viewport={viewport}
       />
     </>
   );
@@ -582,7 +599,8 @@ export function UniversalTemplateCard({
   const layoutPreset = getUniversalLayoutPreset(profile.layoutPreset);
   const eventDate = formatUniversalEventDate(model.eventDate);
   const quotes = surface === "private" ? model.privateQuotes : model.publicQuotes;
-  const photoCount = surface === "public" ? model.publicPhotoCount : model.messagePhotos.length;
+  const privatePhotoCount = model.messagePhotos.length + model.memoryPhotos.length;
+  const photoCount = surface === "public" ? model.publicPhotoCount : privatePhotoCount;
   const resolvedActionContext = actionContext ?? (surface === "private" ? "private" : "demo");
   const recipientNameTier = getUniversalRecipientNameTier(model.recipientName);
   const photoViewerEnabled = profile.motion?.photoViewer ?? false;
@@ -681,7 +699,7 @@ export function UniversalTemplateCard({
               >{model.recipientName}</h1>
             </div>
             <p className={styles.heroDescription}>{model.heroDescription}</p>
-            <div className={styles.heroStats}>{model.participantCount > 0 ? <span><strong>{model.participantCount}</strong> поздравлений</span> : null}{photoCount && photoCount > 0 ? <span><strong>{photoCount}</strong> фото</span> : null}</div>
+            <div className={styles.heroStats}>{model.participantCount > 0 ? <span data-hero-stat="congratulations"><strong>{model.participantCount}</strong> поздравлений</span> : null}{photoCount && photoCount > 0 ? <span data-hero-stat="photos"><strong>{photoCount}</strong> фото</span> : null}</div>
           </SectionSurface>;
 
           if (block === "summary") return <SectionSurface key={block} id="summary" profile={profile} viewport={viewport}>
@@ -696,7 +714,7 @@ export function UniversalTemplateCard({
             })}</div>
           </SectionSurface>;
 
-          if (block === "messages") return <SectionSurface key={block} id="messages" profile={profile} viewport={viewport}><MessagesBlock profile={profile} model={model} onPhotoOpen={photoViewerEnabled ? openPhotoViewer : undefined} /></SectionSurface>;
+          if (block === "messages") return <SectionSurface key={block} id="messages" profile={profile} viewport={viewport}><MessagesBlock profile={profile} model={model} viewport={viewport} onPhotoOpen={photoViewerEnabled ? openPhotoViewer : undefined} /></SectionSurface>;
 
           if (block === "memories") return <SectionSurface key={block} id="memories" profile={profile} viewport={viewport}><MemoriesBlock profile={profile} model={model} onPhotoOpen={photoViewerEnabled ? openPhotoViewer : undefined} /></SectionSurface>;
 

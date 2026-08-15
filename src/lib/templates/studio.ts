@@ -327,7 +327,10 @@ export const listTemplateProfileAssets = (profile: TemplateProfile): TemplateStu
 
   push("metadata.preview", "Превью каталога", profile.metadata.preview);
   push("assets.page", "Фон страницы", profile.assets.page);
-  Object.entries(profile.assets.sections).forEach(([block, value]) => push(`assets.sections.${block}.asset`, `Подложка: ${block}`, value.asset));
+  Object.entries(profile.assets.sections).forEach(([block, value]) => {
+    push(`assets.sections.${block}.asset`, `Подложка: ${block}`, value.asset);
+    push(`assets.sections.${block}.mobileAsset`, `Mobile-подложка: ${block}`, value.mobileAsset);
+  });
   profile.assets.greetingCards.forEach((value, index) => push(`assets.greetingCards.${index}.asset`, `Подложка поздравления ${index + 1}`, value.asset));
   profile.assets.qualityCards.forEach((value, index) => push(`assets.qualityCards.${index}.asset`, `Карточка качества ${index + 1}`, value.asset));
   profile.assets.quoteCards.forEach((value, index) => push(`assets.quoteCards.${index}.asset`, `Карточка фразы ${index + 1}`, value.asset));

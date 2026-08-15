@@ -334,6 +334,7 @@ export function UniversalTemplateExportCard({
     : recipientNameTier === "long"
       ? layout.heading * recipientNameScale.long
       : layout.heading * recipientNameScale.default;
+  const hasSchoolStats = profile.id === "school-scrapbook";
 
   return <div data-template-family="universal-v1" data-export-format={format} style={{
     position: "relative",
@@ -359,7 +360,10 @@ export function UniversalTemplateExportCard({
             <strong style={{ maxWidth: "100%", maxHeight: "1.96em", overflow: "hidden", overflowWrap: "anywhere", fontFamily: profile.typography.heading.family, fontSize: recipientNameFontSize, fontWeight: profile.typography.heading.weight, lineHeight: .98, letterSpacing: "-.04em", textAlign: "center" }}>{model.recipientName}</strong>
           </div>
           <span style={{ maxWidth: 760, marginTop: 8, color: profile.colors.muted, fontSize: layout.body, lineHeight: 1.25, textAlign: "center" }}>{model.heroDescription}</span>
-          <div style={{ display: "flex", marginTop: 10, gap: 8 }}>{model.participantCount > 0 ? <span style={{ padding: "5px 10px", borderRadius: 999, background: profile.colors.surface, fontSize: layout.body - 3, fontVariantNumeric: "tabular-nums" }}><b>{model.participantCount}</b> поздравлений</span> : null}{shownPhotoCount ? <span style={{ padding: "5px 10px", borderRadius: 999, background: profile.colors.surface, fontSize: layout.body - 3, fontVariantNumeric: "tabular-nums" }}><b>{shownPhotoCount}</b> фото в открытке</span> : null}</div>
+          <div data-export-hero-stats style={{ display: "flex", marginTop: 10, gap: 8 }}>
+            {model.participantCount > 0 ? <span data-export-counter="congratulations" style={{ padding: "5px 10px", borderRadius: 999, color: hasSchoolStats ? "#1859bd" : undefined, background: hasSchoolStats ? "#fff0a8" : profile.colors.surface, boxShadow: hasSchoolStats ? "0 0 0 1px rgba(24, 89, 189, 0.12), 0 5px 12px rgba(24, 89, 189, 0.13)" : undefined, fontSize: layout.body - 3, fontVariantNumeric: "tabular-nums", fontWeight: hasSchoolStats ? 650 : undefined, transform: hasSchoolStats ? "rotate(-1.5deg)" : undefined }}><b>{model.participantCount}</b> поздравлений</span> : null}
+            {shownPhotoCount ? <span data-export-counter="photos" style={{ padding: "5px 10px", borderRadius: 999, color: hasSchoolStats ? "#0b7278" : undefined, background: hasSchoolStats ? "#d9f3ef" : profile.colors.surface, boxShadow: hasSchoolStats ? "0 0 0 1px rgba(11, 114, 120, 0.12), 0 5px 12px rgba(11, 114, 120, 0.13)" : undefined, fontSize: layout.body - 3, fontVariantNumeric: "tabular-nums", fontWeight: hasSchoolStats ? 650 : undefined, transform: hasSchoolStats ? "rotate(1.5deg)" : undefined }}><b>{shownPhotoCount}</b> фото в открытке</span> : null}
+          </div>
         </div>
       </ExportSection>
 

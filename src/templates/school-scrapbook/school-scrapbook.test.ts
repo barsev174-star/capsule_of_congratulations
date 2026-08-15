@@ -73,7 +73,9 @@ describe("school-scrapbook studio template", () => {
       { id: "summary-blue-rays-right", anchor: "summary", visibleOn: ["desktop", "export"] },
       { id: "closing-grade-5plus", anchor: "closing", visibleOn: ["desktop", "export"] },
       { id: "closing-student-doodle", anchor: "closing", visibleOn: ["desktop", "export"] },
-      { id: "closing-student-girl-doodle", anchor: "closing", visibleOn: ["desktop", "export"] }
+      { id: "closing-student-girl-doodle", anchor: "closing", visibleOn: ["desktop", "export"] },
+      { id: "hero-student-doodle-mobile", anchor: "hero", visibleOn: ["mobile"] },
+      { id: "hero-student-girl-doodle-mobile", anchor: "hero", visibleOn: ["mobile"] }
     ]);
   });
 
@@ -85,7 +87,9 @@ describe("school-scrapbook studio template", () => {
       "summary-blue-rays-right": { x: 0.93, y: 0.27, width: 0.24, height: 0.585 },
       "closing-grade-5plus": { x: 0.74, y: 0.075, width: 0.275, height: 0.545 },
       "closing-student-doodle": { x: 0.19, y: 0.295, width: 0.09, height: 0.54 },
-      "closing-student-girl-doodle": { x: 0.7, y: 0.295, width: 0.084, height: 0.54 }
+      "closing-student-girl-doodle": { x: 0.7, y: 0.295, width: 0.084, height: 0.54 },
+      "hero-student-doodle-mobile": { x: 0.035, y: 0.69, width: 0.18, height: 0.26 },
+      "hero-student-girl-doodle-mobile": { x: 0.785, y: 0.69, width: 0.17, height: 0.26 }
     });
   });
 

@@ -47,15 +47,21 @@ export function TemplatePreview({
 }: TemplatePreviewProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const geometry = draft.inspector.variants[format === "web" ? viewport : "export"];
-  const model = useMemo(() => buildUniversalFixtureViewModel(fixtureId, {
-    templateId: draft.profile.id,
-    scenario,
-    photoCount,
-    longName,
-    textMode,
-    optionalBlocks,
-    longCaptions
-  }), [draft.profile.id, fixtureId, longCaptions, longName, optionalBlocks, photoCount, scenario, textMode]);
+  const model = useMemo(() => {
+    const fixtureModel = buildUniversalFixtureViewModel(fixtureId, {
+      templateId: draft.profile.id,
+      scenario,
+      photoCount,
+      longName,
+      textMode,
+      optionalBlocks,
+      longCaptions
+    });
+    return {
+      ...fixtureModel,
+      publicPhotoCount: fixtureModel.messagePhotos.length + fixtureModel.memoryPhotos.length
+    };
+  }, [draft.profile.id, fixtureId, longCaptions, longName, optionalBlocks, photoCount, scenario, textMode]);
   const dispatch = useMemo(() => ({
     kind: "universal-v1" as const,
     registration: defineUniversalTemplateRegistration(draft.profile, {
