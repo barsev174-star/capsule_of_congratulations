@@ -185,6 +185,23 @@ describe("TemplateProfile", () => {
     }
   });
 
+  it("принимает только полный набор из пяти экспортных карточек качеств", () => {
+    const profile = validProfile();
+    profile.assets.exportQualityCards = Array.from({ length: 5 }, (_, index) => defineTextCard({
+      src: `/templates/test/quality-export-${index + 1}.webp`,
+      width: 720,
+      height: 180
+    }, "quality-pill-export"));
+    expect(validateTemplateProfile(profile)).toEqual({ ok: true, profile, issues: [] });
+
+    profile.assets.exportQualityCards = profile.assets.exportQualityCards.slice(0, 4);
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "assets.exportQualityCards" }));
+    }
+  });
+
   it("фиксирует полный вывод подписи ровно до 45 символов", () => {
     const profile = validProfile() as unknown as {
       assets: { photoFrames: { memory: { caption: { maxChars: number } } } };

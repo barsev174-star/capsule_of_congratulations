@@ -3,7 +3,7 @@
   "templateId": "school-scrapbook",
   "budgets": {
     "networkBytes": 8000000,
-    "decodedMemoryBytes": 64000000,
+    "decodedMemoryBytes": 68000000,
     "individualBytes": 2000000
   },
   "preview": {
@@ -244,6 +244,51 @@
       "output": "quality-card-5-v2.webp",
       "width": 480,
       "height": 258,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "quality-card-1-export-v1",
+      "source": "quality-card-1-export-v1.png",
+      "output": "quality-card-1-export-v1.webp",
+      "width": 720,
+      "height": 180,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "quality-card-2-export-v1",
+      "source": "quality-card-2-export-v1.png",
+      "output": "quality-card-2-export-v1.webp",
+      "width": 720,
+      "height": 180,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "quality-card-3-export-v1",
+      "source": "quality-card-3-export-v1.png",
+      "output": "quality-card-3-export-v1.webp",
+      "width": 720,
+      "height": 180,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "quality-card-4-export-v1",
+      "source": "quality-card-4-export-v1.png",
+      "output": "quality-card-4-export-v1.webp",
+      "width": 720,
+      "height": 180,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "quality-card-5-export-v1",
+      "source": "quality-card-5-export-v1.png",
+      "output": "quality-card-5-export-v1.webp",
+      "width": 720,
+      "height": 180,
       "alpha": "transparent",
       "fit": "cover"
     },

@@ -58,6 +58,12 @@ const layouts: Record<UniversalExportFormat, FormatLayout> = {
   a4: { padding: 38, verticalPadding: 18, gap: 6, hero: 310, qualities: 235, moments: 650, quotes: 220, closing: 268, heading: 43, body: 22 }
 };
 
+const dedicatedQualityLayouts = {
+  story: { sectionHeight: 295, cardHeight: 70, fontSize: 24 },
+  post: { sectionHeight: 248, cardHeight: 60, fontSize: 20 },
+  a4: { sectionHeight: 272, cardHeight: 65, fontSize: 22 }
+} as const;
+
 const rectStyle = (rect: NormalizedRect): CSSProperties => ({
   left: `${rect.x * 100}%`,
   top: `${rect.y * 100}%`,
@@ -318,6 +324,22 @@ export function UniversalTemplateExportCard({
   const sectionWidth = spec.width - layout.padding * 2;
   const eventDate = formatUniversalEventDate(model.eventDate);
   const qualities = model.qualities.length === 5 ? model.qualities : [];
+  const qualityCards = profile.assets.exportQualityCards?.length === 5
+    ? profile.assets.exportQualityCards
+    : profile.assets.qualityCards;
+  const hasDedicatedExportQualityCards = qualityCards === profile.assets.exportQualityCards;
+  const useDedicatedQualityLayout = hasDedicatedExportQualityCards && qualities.length > 0;
+  const dedicatedQualityLayout = dedicatedQualityLayouts[format];
+  const qualitySectionHeight = useDedicatedQualityLayout ? dedicatedQualityLayout.sectionHeight : layout.qualities;
+  const closingSectionHeight = useDedicatedQualityLayout
+    ? layout.closing - (qualitySectionHeight - layout.qualities)
+    : layout.closing;
+  const qualityCardHeight = useDedicatedQualityLayout ? dedicatedQualityLayout.cardHeight : format === "story" ? 52 : format === "post" ? 42 : 46;
+  const referenceQualityCard = qualityCards[0];
+  const qualityCardWidth = referenceQualityCard
+    ? qualityCardHeight * (referenceQualityCard.asset.width / referenceQualityCard.asset.height)
+    : qualityCardHeight * (480 / 258);
+  const qualityRows = [[0, 1], [2], [3, 4]] as const;
   const photos = model.memoryPhotos.length === 3 ? model.memoryPhotos.slice(0, spec.photoCount) : [];
   const quotes = model.publicQuotes.slice(0, spec.phraseCount);
   const shownPhotoCount = model.publicPhotoCount && model.publicPhotoCount > 0 ? model.publicPhotoCount : null;
@@ -335,6 +357,9 @@ export function UniversalTemplateExportCard({
       ? layout.heading * recipientNameScale.long
       : layout.heading * recipientNameScale.default;
   const hasSchoolStats = profile.id === "school-scrapbook";
+  const heroDescription = format === "story" && profile.id === "school-scrapbook"
+    ? model.heroDescription.replace("яркие моменты и пожелания", "яркие моменты\nи пожелания")
+    : model.heroDescription;
 
   return <div data-template-family="universal-v1" data-export-format={format} style={{
     position: "relative",
@@ -359,7 +384,7 @@ export function UniversalTemplateExportCard({
           <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: format === "story" ? 150 : format === "post" ? 64 : 100, flexShrink: 0, marginTop: eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
             <strong style={{ maxWidth: "100%", maxHeight: "1.96em", overflow: "hidden", overflowWrap: "anywhere", fontFamily: profile.typography.heading.family, fontSize: recipientNameFontSize, fontWeight: profile.typography.heading.weight, lineHeight: .98, letterSpacing: "-.04em", textAlign: "center" }}>{model.recipientName}</strong>
           </div>
-          <span style={{ maxWidth: 760, marginTop: 8, color: profile.colors.muted, fontSize: layout.body, lineHeight: 1.25, textAlign: "center" }}>{model.heroDescription}</span>
+          <span data-export-hero-description style={{ maxWidth: 760, marginTop: 8, color: profile.colors.muted, fontSize: layout.body, lineHeight: 1.25, textAlign: "center", whiteSpace: "pre-line" }}>{heroDescription}</span>
           <div data-export-hero-stats style={{ display: "flex", marginTop: 10, gap: 8 }}>
             {model.participantCount > 0 ? <span data-export-counter="congratulations" style={{ padding: "5px 10px", borderRadius: 999, color: hasSchoolStats ? "#1859bd" : undefined, background: hasSchoolStats ? "#fff0a8" : profile.colors.surface, boxShadow: hasSchoolStats ? "0 0 0 1px rgba(24, 89, 189, 0.12), 0 5px 12px rgba(24, 89, 189, 0.13)" : undefined, fontSize: layout.body - 3, fontVariantNumeric: "tabular-nums", fontWeight: hasSchoolStats ? 650 : undefined, transform: hasSchoolStats ? "rotate(-1.5deg)" : undefined }}><b>{model.participantCount}</b> поздравлений</span> : null}
             {shownPhotoCount ? <span data-export-counter="photos" style={{ padding: "5px 10px", borderRadius: 999, color: hasSchoolStats ? "#0b7278" : undefined, background: hasSchoolStats ? "#d9f3ef" : profile.colors.surface, boxShadow: hasSchoolStats ? "0 0 0 1px rgba(11, 114, 120, 0.12), 0 5px 12px rgba(11, 114, 120, 0.13)" : undefined, fontSize: layout.body - 3, fontVariantNumeric: "tabular-nums", fontWeight: hasSchoolStats ? 650 : undefined, transform: hasSchoolStats ? "rotate(1.5deg)" : undefined }}><b>{shownPhotoCount}</b> фото в открытке</span> : null}
@@ -367,17 +392,15 @@ export function UniversalTemplateExportCard({
         </div>
       </ExportSection>
 
-      {qualities.length > 0 ? <ExportSection id="qualities" profile={profile} width={sectionWidth} height={layout.qualities} resolveAsset={resolveAsset}>
-        <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: "16px 28px", boxSizing: "border-box" }}>
+      {qualities.length > 0 ? <ExportSection id="qualities" profile={profile} width={sectionWidth} height={qualitySectionHeight} resolveAsset={resolveAsset}>
+        <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: useDedicatedQualityLayout ? "6px 28px" : "16px 28px", boxSizing: "border-box" }}>
           <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, textAlign: "center" }}>За что тебя ценят</strong>
-          <div data-export-quality-grid="2-2-1" style={{ display: "flex", flexDirection: "column", width: "100%", marginTop: format === "story" ? 10 : 8, gap: format === "story" ? 7 : 6 }}>{[qualities.slice(0, 2), qualities.slice(2, 4), qualities.slice(4, 5)].map((row, rowIndex) => <div key={rowIndex} data-export-quality-row={rowIndex + 1} style={{ display: "flex", width: "100%", justifyContent: "center", gap: 9 }}>{row.map((quality, itemIndex) => {
-            const index = rowIndex * 2 + itemIndex;
-            const card = profile.assets.qualityCards[index % Math.max(profile.assets.qualityCards.length, 1)];
-            const cardWidth = (sectionWidth - 56 - 9) / 2;
-            const cardHeight = format === "story" ? 52 : format === "post" ? 42 : 46;
-            return <div key={`${quality}-${index}`} data-export-quality-card style={{ position: "relative", display: "flex", width: cardWidth, minWidth: 0, height: cardHeight, flexShrink: 0, alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: 14, background: profile.colors.surface }}>
-              {card ? <NineSliceAsset asset={card.asset} width={cardWidth} height={cardHeight} edges={{ top: .19, right: .16, bottom: .23, left: .16 }} resolveAsset={resolveAsset} /> : null}
-              <b data-safe-text data-text-boundary data-text-preset="quality-card" style={{ position: "absolute", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", overflow: "hidden", ...(card ? rectStyle(getUniversalTextCardPreset(card.preset).textArea) : { inset: 7 }), padding: 7, fontSize: format === "story" ? 27 : format === "post" ? 23 : 25, lineHeight: 1.04, textAlign: "center" }}>{quality}</b>
+          <div data-export-quality-grid="2-1-2" style={{ display: "flex", flexDirection: "column", width: "100%", alignItems: "center", marginTop: useDedicatedQualityLayout ? 5 : format === "story" ? 10 : 8, gap: useDedicatedQualityLayout ? 4 : format === "story" ? 7 : 6 }}>{qualityRows.map((row, rowIndex) => <div key={rowIndex} data-export-quality-row={rowIndex + 1} style={{ display: "flex", width: row.length === 2 ? qualityCardWidth * 3 : qualityCardWidth, justifyContent: row.length === 2 ? "space-between" : "center" }}>{row.map((index) => {
+            const quality = qualities[index];
+            const card = qualityCards[index % Math.max(qualityCards.length, 1)];
+            return <div key={`${quality}-${index}`} data-export-quality-card style={{ position: "relative", display: "flex", width: qualityCardWidth, minWidth: 0, height: qualityCardHeight, flexShrink: 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+              {card ? <img data-export-quality-asset src={resolveAsset(card.asset.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} /> : null}
+              <b data-safe-text data-text-boundary data-text-preset="quality-card" style={{ position: "absolute", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", overflow: "hidden", ...(card ? rectStyle(getUniversalTextCardPreset(card.preset).textArea) : { inset: 7 }), padding: 3, fontSize: useDedicatedQualityLayout ? dedicatedQualityLayout.fontSize : format === "story" ? 15 : format === "post" ? 12 : 13, lineHeight: 1.04, textAlign: "center" }}>{quality}</b>
             </div>;
           })}</div>)}</div>
         </div>
@@ -411,7 +434,7 @@ export function UniversalTemplateExportCard({
         </div>
       </ExportSection> : null}
 
-      <ExportSection id="closing" profile={profile} width={sectionWidth} height={layout.closing} resolveAsset={resolveAsset}>
+      <ExportSection id="closing" profile={profile} width={sectionWidth} height={closingSectionHeight} resolveAsset={resolveAsset}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: "16px 72px", boxSizing: "border-box", textAlign: "center" }}>
           <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading * .82, textAlign: "center" }}>В полной открытке — ещё больше тепла</strong>
           <span style={{ maxWidth: 830, marginTop: 7, color: profile.colors.muted, fontSize: layout.body, lineHeight: 1.2, textAlign: "center" }}>Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для получателя.</span>

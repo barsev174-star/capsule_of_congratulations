@@ -7,7 +7,10 @@ import { UniversalTemplateExportCard, universalExportFormats } from "./universal
 const profile = createTemplateStudioProfile("universal-export-test");
 const minimumPrimaryPhotoWidth = { story: 560, post: 540, a4: 600 } as const;
 const minimumSidePhotoWidth = { story: 350, post: 370, a4: 370 } as const;
-const qualityFontSize = { story: 27, post: 23, a4: 25 } as const;
+const qualityFontSize = { story: 15, post: 12, a4: 13 } as const;
+const dedicatedQualityFontSize = { story: 24, post: 20, a4: 22 } as const;
+const dedicatedQualityWidth = { story: 280, post: 240, a4: 260 } as const;
+const dedicatedClosingHeight = { story: 264, post: 188, a4: 231 } as const;
 const quoteFontSize = { story: 25, post: 20, a4: 22 } as const;
 const minimumRecipientNameFontSize = { story: 81, post: 61, a4: 73 } as const;
 const closingHeight = { story: 289, post: 216, a4: 268 } as const;
@@ -47,10 +50,15 @@ describe("UniversalTemplateExportCard", () => {
       )).toBeInTheDocument();
       const qualityRows = root?.querySelectorAll("[data-export-quality-row]");
       expect(qualityRows).toHaveLength(3);
-      expect(Array.from(qualityRows ?? []).map((row) => row.children.length)).toEqual([2, 2, 1]);
+      expect(root?.querySelector('[data-export-quality-grid="2-1-2"]')).toBeInTheDocument();
+      expect(Array.from(qualityRows ?? []).map((row) => row.children.length)).toEqual([2, 1, 2]);
       expect((root?.querySelector('[data-text-preset="quality-card"]') as HTMLElement).style.fontSize).toBe(`${qualityFontSize[format]}px`);
-      expect(root?.querySelectorAll('[data-export-quality-card] [data-export-asset-underlay="nine-slice"]')).toHaveLength(5);
-      expect(root?.querySelectorAll('[data-export-quality-card] [data-export-asset-underlay="nine-slice"] > svg')).toHaveLength(45);
+      expect(root?.querySelectorAll('[data-export-quality-card] [data-export-quality-asset]')).toHaveLength(5);
+      for (const qualityCard of Array.from(root?.querySelectorAll<HTMLElement>("[data-export-quality-card]") ?? [])) {
+        const qualityAsset = qualityCard.querySelector<HTMLElement>("[data-export-quality-asset]");
+        expect(qualityAsset).toHaveStyle({ objectFit: "contain" });
+        expect(Number.parseFloat(qualityCard.style.width) / Number.parseFloat(qualityCard.style.height)).toBeCloseTo(480 / 258, 4);
+      }
       const recipientName = root?.querySelector('[data-text-preset="recipient-name"] strong') as HTMLElement;
       expect(Number.parseFloat(recipientName.style.fontSize)).toBeGreaterThanOrEqual(minimumRecipientNameFontSize[format]);
       expect(root?.querySelector('[data-universal-export-block="closing"]')).toHaveStyle({ height: `${closingHeight[format]}px` });
@@ -88,6 +96,30 @@ describe("UniversalTemplateExportCard", () => {
     }
   );
 
+  it.each(["story", "post", "a4"] as const)("prefers proportional dedicated quality cards in the %s export", (format) => {
+    const dedicatedProfile = structuredClone(profile);
+    dedicatedProfile.assets.exportQualityCards = Array.from({ length: 5 }, (_, index) => ({
+      asset: { src: `/templates/test/quality-export-${index + 1}.webp` as const, width: 720, height: 180 },
+      preset: "quality-pill-export" as const
+    }));
+    const model = buildUniversalFixtureViewModel("public-full", { templateId: dedicatedProfile.id });
+    const { container } = render(<UniversalTemplateExportCard profile={dedicatedProfile} model={model} format={format} />);
+    const qualityCards = Array.from(container.querySelectorAll<HTMLElement>("[data-export-quality-card]"));
+
+    expect(qualityCards).toHaveLength(5);
+    expect(container.querySelector('[data-export-quality-asset]')).toHaveAttribute("src", "/templates/test/quality-export-1.webp");
+    expect(Number.parseFloat(qualityCards[0].style.width) / Number.parseFloat(qualityCards[0].style.height)).toBeCloseTo(4, 4);
+    expect(Number.parseFloat(qualityCards[0].style.width)).toBe(dedicatedQualityWidth[format]);
+    expect(container.querySelector('[data-text-preset="quality-card"]')).toHaveStyle({ fontSize: `${dedicatedQualityFontSize[format]}px` });
+    expect(container.querySelector('[data-universal-export-block="closing"]')).toHaveStyle({ height: `${dedicatedClosingHeight[format]}px` });
+    const qualityRows = Array.from(container.querySelectorAll<HTMLElement>("[data-export-quality-row]"));
+    expect(qualityRows.map((row) => row.children.length)).toEqual([2, 1, 2]);
+    expect(Number.parseFloat(qualityRows[0].style.width)).toBe(dedicatedQualityWidth[format] * 3);
+    expect(Number.parseFloat(qualityRows[1].style.width)).toBe(dedicatedQualityWidth[format]);
+    expect(Number.parseFloat(qualityRows[2].style.width)).toBe(dedicatedQualityWidth[format] * 3);
+    expect(container.querySelector('[data-export-quality-grid="2-1-2"]')).toHaveStyle({ alignItems: "center" });
+  });
+
   it.each([0, 1, 2] as const)("keeps moments independent from a %s-photo greeting layout", (photoCount) => {
     const model = buildUniversalFixtureViewModel("public-full", {
       templateId: profile.id,
@@ -116,6 +148,18 @@ describe("UniversalTemplateExportCard", () => {
       background: "#d9f3ef",
       transform: "rotate(1.5deg)"
     });
+  });
+
+  it("moves the school Story hero description onto an intentional second line", () => {
+    const schoolProfile = structuredClone(profile);
+    schoolProfile.id = "school-scrapbook";
+    const model = buildUniversalFixtureViewModel("public-full", { templateId: schoolProfile.id });
+    const { container } = render(<UniversalTemplateExportCard profile={schoolProfile} model={model} format="story" />);
+
+    expect(container.querySelector("[data-export-hero-description]")).toHaveTextContent(
+      "Тёплые слова, яркие моменты и пожелания специально для тебя."
+    );
+    expect(container.querySelector("[data-export-hero-description]")?.textContent).toContain("моменты\nи пожелания");
   });
 
   it("preserves overflowing anchored decor in export", () => {

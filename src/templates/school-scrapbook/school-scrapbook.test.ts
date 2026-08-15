@@ -23,6 +23,13 @@ describe("school-scrapbook studio template", () => {
       "/templates/school-scrapbook/quality-card-4-v2.webp",
       "/templates/school-scrapbook/quality-card-5-v2.webp"
     ]);
+    expect(school_scrapbookProfile.assets.exportQualityCards?.map(({ asset, preset }) => ({ src: asset.src, size: `${asset.width}x${asset.height}`, preset }))).toEqual([
+      { src: "/templates/school-scrapbook/quality-card-1-export-v1.webp", size: "720x180", preset: "quality-pill-export" },
+      { src: "/templates/school-scrapbook/quality-card-2-export-v1.webp", size: "720x180", preset: "quality-pill-export" },
+      { src: "/templates/school-scrapbook/quality-card-3-export-v1.webp", size: "720x180", preset: "quality-pill-export" },
+      { src: "/templates/school-scrapbook/quality-card-4-export-v1.webp", size: "720x180", preset: "quality-pill-export" },
+      { src: "/templates/school-scrapbook/quality-card-5-export-v1.webp", size: "720x180", preset: "quality-pill-export" }
+    ]);
   });
 
   it("uses cache-busted notebook surfaces for messages, captions, and quotes", () => {
@@ -67,13 +74,17 @@ describe("school-scrapbook studio template", () => {
 
   it("anchors colorful decor to the blocks it must follow", () => {
     expect(school_scrapbookProfile.assets.decor.map(({ id, anchor, visibleOn }) => ({ id, anchor, visibleOn }))).toEqual([
-      { id: "hero-globe-cluster", anchor: "hero", visibleOn: ["desktop", "export"] },
-      { id: "hero-backpack-cluster", anchor: "hero", visibleOn: ["desktop", "export"] },
+      { id: "hero-globe-cluster", anchor: "hero", visibleOn: ["desktop"] },
+      { id: "hero-globe-cluster-export", anchor: "hero", visibleOn: ["export"] },
+      { id: "hero-backpack-cluster", anchor: "hero", visibleOn: ["desktop"] },
+      { id: "hero-backpack-cluster-export", anchor: "hero", visibleOn: ["export"] },
       { id: "summary-blue-rays-left", anchor: "summary", visibleOn: ["desktop", "export"] },
       { id: "summary-blue-rays-right", anchor: "summary", visibleOn: ["desktop", "export"] },
       { id: "closing-grade-5plus", anchor: "closing", visibleOn: ["desktop", "export"] },
-      { id: "closing-student-doodle", anchor: "closing", visibleOn: ["desktop", "export"] },
-      { id: "closing-student-girl-doodle", anchor: "closing", visibleOn: ["desktop", "export"] },
+      { id: "closing-student-doodle", anchor: "closing", visibleOn: ["desktop"] },
+      { id: "closing-student-doodle-export", anchor: "closing", visibleOn: ["export"] },
+      { id: "closing-student-girl-doodle", anchor: "closing", visibleOn: ["desktop"] },
+      { id: "closing-student-girl-doodle-export", anchor: "closing", visibleOn: ["export"] },
       { id: "hero-student-doodle-mobile", anchor: "hero", visibleOn: ["mobile"] },
       { id: "hero-student-girl-doodle-mobile", anchor: "hero", visibleOn: ["mobile"] }
     ]);
@@ -82,12 +93,16 @@ describe("school-scrapbook studio template", () => {
   it("keeps the positions exported from the template studio", () => {
     expect(Object.fromEntries(school_scrapbookProfile.assets.decor.map(({ id, rect }) => [id, rect]))).toEqual({
       "hero-globe-cluster": { x: -0.025, y: 0.125, width: 0.32, height: 0.95 },
+      "hero-globe-cluster-export": { x: -0.025, y: 0.275, width: 0.27, height: 1 },
       "hero-backpack-cluster": { x: 0.595, y: 0.27, width: 0.47, height: 0.785 },
+      "hero-backpack-cluster-export": { x: 0.67, y: 0.395, width: 0.37, height: 0.86 },
       "summary-blue-rays-left": { x: -0.14, y: 0.245, width: 0.2, height: 0.585 },
       "summary-blue-rays-right": { x: 0.93, y: 0.27, width: 0.24, height: 0.585 },
       "closing-grade-5plus": { x: 0.74, y: 0.075, width: 0.275, height: 0.545 },
       "closing-student-doodle": { x: 0.19, y: 0.295, width: 0.09, height: 0.54 },
+      "closing-student-doodle-export": { x: 0.165, y: 0.445, width: 0.09, height: 0.54 },
       "closing-student-girl-doodle": { x: 0.7, y: 0.295, width: 0.084, height: 0.54 },
+      "closing-student-girl-doodle-export": { x: 0.7, y: 0.42, width: 0.084, height: 0.54 },
       "hero-student-doodle-mobile": { x: 0.035, y: 0.69, width: 0.18, height: 0.26 },
       "hero-student-girl-doodle-mobile": { x: 0.785, y: 0.69, width: 0.17, height: 0.26 }
     });

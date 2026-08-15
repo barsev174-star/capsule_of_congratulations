@@ -54,6 +54,13 @@ export const school_scrapbookProfile = defineTemplate({
       defineTextCard(asset("/templates/school-scrapbook/quality-card-4-v2.webp", 480, 258), "quality-pill"),
       defineTextCard(asset("/templates/school-scrapbook/quality-card-5-v2.webp", 480, 258), "quality-pill")
     ],
+    exportQualityCards: [
+      defineTextCard(asset("/templates/school-scrapbook/quality-card-1-export-v1.webp", 720, 180), "quality-pill-export"),
+      defineTextCard(asset("/templates/school-scrapbook/quality-card-2-export-v1.webp", 720, 180), "quality-pill-export"),
+      defineTextCard(asset("/templates/school-scrapbook/quality-card-3-export-v1.webp", 720, 180), "quality-pill-export"),
+      defineTextCard(asset("/templates/school-scrapbook/quality-card-4-export-v1.webp", 720, 180), "quality-pill-export"),
+      defineTextCard(asset("/templates/school-scrapbook/quality-card-5-export-v1.webp", 720, 180), "quality-pill-export")
+    ],
     quoteCards: [
       defineTextCard(asset("/templates/school-scrapbook/quote-card-v3.webp", 800, 640), "quote-panel-compact")
     ],
@@ -70,7 +77,16 @@ export const school_scrapbookProfile = defineTemplate({
         rect: { x: -0.025, y: 0.125, width: 0.32, height: 0.95 },
         rotation: -4,
         opacity: 0.9,
-        visibleOn: ["desktop", "export"]
+        visibleOn: ["desktop"]
+      },
+      {
+        id: "hero-globe-cluster-export",
+        asset: asset("/templates/school-scrapbook/decor-hero-globe-cluster-v1.webp", 220, 231),
+        anchor: "hero",
+        rect: { x: -0.025, y: 0.275, width: 0.27, height: 1 },
+        rotation: -4,
+        opacity: 0.9,
+        visibleOn: ["export"]
       },
       {
         id: "hero-backpack-cluster",
@@ -79,7 +95,16 @@ export const school_scrapbookProfile = defineTemplate({
         rect: { x: 0.595, y: 0.27, width: 0.47, height: 0.785 },
         rotation: -4,
         opacity: 0.8,
-        visibleOn: ["desktop", "export"]
+        visibleOn: ["desktop"]
+      },
+      {
+        id: "hero-backpack-cluster-export",
+        asset: asset("/templates/school-scrapbook/decor-hero-backpack-cluster-v1.webp", 224, 149),
+        anchor: "hero",
+        rect: { x: 0.67, y: 0.395, width: 0.37, height: 0.86 },
+        rotation: -4,
+        opacity: 0.8,
+        visibleOn: ["export"]
       },
       {
         id: "summary-blue-rays-left",
@@ -113,7 +138,16 @@ export const school_scrapbookProfile = defineTemplate({
         rect: { x: 0.19, y: 0.295, width: 0.09, height: 0.54 },
         rotation: -7,
         opacity: 0.92,
-        visibleOn: ["desktop", "export"]
+        visibleOn: ["desktop"]
+      },
+      {
+        id: "closing-student-doodle-export",
+        asset: asset("/templates/school-scrapbook/decor-closing-student-doodle-v1.webp", 112, 112),
+        anchor: "closing",
+        rect: { x: 0.165, y: 0.445, width: 0.09, height: 0.54 },
+        rotation: -7,
+        opacity: 0.92,
+        visibleOn: ["export"]
       },
       {
         id: "closing-student-girl-doodle",
@@ -122,7 +156,16 @@ export const school_scrapbookProfile = defineTemplate({
         rect: { x: 0.7, y: 0.295, width: 0.084, height: 0.54 },
         rotation: 5,
         opacity: 0.92,
-        visibleOn: ["desktop", "export"]
+        visibleOn: ["desktop"]
+      },
+      {
+        id: "closing-student-girl-doodle-export",
+        asset: asset("/templates/school-scrapbook/decor-closing-student-girl-doodle-v3.webp", 105, 112),
+        anchor: "closing",
+        rect: { x: 0.7, y: 0.42, width: 0.084, height: 0.54 },
+        rotation: 5,
+        opacity: 0.92,
+        visibleOn: ["export"]
       },
       {
         id: "hero-student-doodle-mobile",
@@ -165,6 +208,6 @@ export const school_scrapbookProfile = defineTemplate({
   motion: { preset: "playful", revealSections: true, photoViewer: true },
   public: { blocks: ["hero", "qualities", "memories", "quotes"] },
   export: { profile: "universal-export-v1" },
-  performance: { networkBudget: 8_000_000, decodedMemoryBudget: 64_000_000 },
+  performance: { networkBudget: 8_000_000, decodedMemoryBudget: 68_000_000 },
   demo: { fixture: "full-card-default" }
 });

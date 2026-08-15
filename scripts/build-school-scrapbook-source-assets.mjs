@@ -16,6 +16,14 @@ const colors = {
   green: "#5c9d58"
 };
 
+const qualityExportPalettes = [
+  { fill: "#ffd858", grid: "#d8ad24" },
+  { fill: "#ff929d", grid: "#d95469" },
+  { fill: "#9ce4e1", grid: "#48b5bd" },
+  { fill: "#a9dc5d", grid: "#639c35" },
+  { fill: "#eadcff", grid: "#ad8bd8" }
+];
+
 const variantBuffer = async (source, width, height, index) => {
   let pipeline = sharp(source);
   if (index % 2 === 1) pipeline = pipeline.flop();
@@ -87,6 +95,63 @@ const writeNotebookMessagePaper = async ({ name, source }) => {
 const writeSizedCard = async ({ name, source, width, height }) => {
   await sharp(source)
     .resize(width, height, { fit: "fill" })
+    .png({ compressionLevel: 9 })
+    .toFile(join(outputRoot, `${name}.png`));
+};
+
+const qualityCenterTextureSvg = (width, height, palette) => {
+  const insetY = Math.round(height * .16);
+  const gridSize = 18;
+  return `
+  <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="quality-grid" width="${gridSize}" height="${gridSize}" patternUnits="userSpaceOnUse">
+        <path d="M ${gridSize} 0 L 0 0 0 ${gridSize}" fill="none" stroke="${palette.grid}" stroke-opacity=".24" stroke-width="1"/>
+      </pattern>
+      <linearGradient id="quality-fade" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#000"/>
+        <stop offset=".08" stop-color="#fff"/>
+        <stop offset=".92" stop-color="#fff"/>
+        <stop offset="1" stop-color="#000"/>
+      </linearGradient>
+      <mask id="quality-center-mask">
+        <rect width="${width}" height="${height}" fill="url(#quality-fade)"/>
+      </mask>
+    </defs>
+    <g mask="url(#quality-center-mask)">
+      <rect y="${insetY}" width="${width}" height="${height - insetY * 2}" fill="${palette.fill}" fill-opacity=".88"/>
+      <rect y="${insetY}" width="${width}" height="${height - insetY * 2}" fill="url(#quality-grid)"/>
+    </g>
+  </svg>`;
+};
+
+const writeHorizontalQualityCard = async ({ name, source, palette, width = 720, height = 180 }) => {
+  const sourceWidth = Math.round(480 * (height / 258));
+  const normalized = await sharp(source)
+    .resize(480, 258, { fit: "fill" })
+    .resize(sourceWidth, height, { fit: "fill" })
+    .png()
+    .toBuffer();
+  const sideWidth = Math.round(sourceWidth * .36);
+  const centerSourceWidth = sourceWidth - sideWidth * 2;
+  const centerWidth = width - sideWidth * 2;
+  const left = await sharp(normalized).extract({ left: 0, top: 0, width: sideWidth, height }).png().toBuffer();
+  const centerTile = await sharp(normalized).extract({ left: sideWidth, top: 0, width: centerSourceWidth, height }).png().toBuffer();
+  const right = await sharp(normalized).extract({ left: sourceWidth - sideWidth, top: 0, width: sideWidth, height }).png().toBuffer();
+  const center = await sharp(centerTile)
+    .resize(centerWidth, height, { fit: "fill" })
+    .composite([{ input: Buffer.from(qualityCenterTextureSvg(centerWidth, height, palette)) }])
+    .png()
+    .toBuffer();
+
+  await sharp({
+    create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
+  })
+    .composite([
+      { input: left, left: 0, top: 0 },
+      { input: center, left: sideWidth, top: 0 },
+      { input: right, left: width - sideWidth, top: 0 }
+    ])
     .png({ compressionLevel: 9 })
     .toFile(join(outputRoot, `${name}.png`));
 };
@@ -286,6 +351,11 @@ await Promise.all([
     width: 480,
     height: 258
   })),
+  ...qualityCards.map((source, index) => writeHorizontalQualityCard({
+    name: `quality-card-${index + 1}-export-v1`,
+    source: join(outputRoot, source),
+    palette: qualityExportPalettes[index]
+  })),
   writeSizedCard({
     name: "quote-card-v3",
     source: join(outputRoot, "quote-card-decorative-v3-master.png"),
@@ -314,4 +384,4 @@ await Promise.all([
   })
 ]);
 
-console.log("SCHOOL_SCRAPBOOK_SOURCE_ASSETS_READY 7 sections, 4 greeting cards, 5 quality cards, 1 quote card, 2 frame geometries");
+console.log("SCHOOL_SCRAPBOOK_SOURCE_ASSETS_READY 7 sections, 4 greeting cards, 5 web quality cards, 5 export quality cards, 1 quote card, 2 frame geometries");

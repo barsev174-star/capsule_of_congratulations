@@ -3,10 +3,14 @@ import { getUniversalTextCardPreset, universalTextCardPresetIds } from "@/lib/te
 
 describe("universal text card presets", () => {
   it("fixes source size and safe text geometry", () => {
-    expect(universalTextCardPresetIds).toEqual(["quality-pill", "quote-panel", "quote-panel-compact"]);
+    expect(universalTextCardPresetIds).toEqual(["quality-pill", "quality-pill-export", "quote-panel", "quote-panel-compact"]);
     expect(getUniversalTextCardPreset("quality-pill")).toMatchObject({
       source: { width: 480, height: 258 },
       textArea: { x: 0.05, y: 0.1, width: 0.9, height: 0.8 }
+    });
+    expect(getUniversalTextCardPreset("quality-pill-export")).toMatchObject({
+      source: { width: 720, height: 180 },
+      textArea: { x: 0.07, y: 0.12, width: 0.86, height: 0.76 }
     });
     expect(getUniversalTextCardPreset("quote-panel")).toMatchObject({
       source: { width: 1402, height: 1122 },

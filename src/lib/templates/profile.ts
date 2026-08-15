@@ -117,6 +117,7 @@ export type TemplateProfile = {
     sections: Partial<Record<UniversalTemplateBlockId, TemplateSectionUnderlay>>;
     greetingCards: readonly TemplateSectionUnderlay[];
     qualityCards: readonly TemplateTextCard[];
+    exportQualityCards?: readonly TemplateTextCard[];
     quoteCards: readonly TemplateTextCard[];
     photoFrames: {
       messagePortrait: UniversalPhotoFrame;
@@ -450,6 +451,17 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
         issues.push({ path: `assets.${collection}`, message: "Ожидается массив текстовых плашек." });
       } else {
         cards.forEach((card, index) => validateTextCard(card, `assets.${collection}.${index}`, issues));
+      }
+    }
+    if (value.assets.exportQualityCards !== undefined) {
+      const cards = value.assets.exportQualityCards;
+      if (!Array.isArray(cards)) {
+        issues.push({ path: "assets.exportQualityCards", message: "Ожидается массив экспортных карточек качеств." });
+      } else {
+        if (cards.length !== 5) {
+          issues.push({ path: "assets.exportQualityCards", message: "Экспортный набор должен содержать ровно 5 карточек качеств." });
+        }
+        cards.forEach((card, index) => validateTextCard(card, `assets.exportQualityCards.${index}`, issues));
       }
     }
     if (!isRecord(value.assets.sections)) {

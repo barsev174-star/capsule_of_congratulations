@@ -1124,6 +1124,10 @@
 }
 
 @media (min-width: 641px) {
+  .page[data-viewport="auto"] .decorLayer[data-visible-on]:not([data-visible-on*="desktop"]) {
+    display: none;
+  }
+
   .page[data-viewport="auto"] .messageGrid[data-message-layout="no-media-carousel"] {
     grid-auto-flow: column;
     grid-template-columns: none;
