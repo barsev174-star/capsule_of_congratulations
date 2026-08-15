@@ -32,12 +32,21 @@
       "fit": "cover"
     },
     {
-      "id": "section-summary",
-      "source": "section-summary.png",
-      "output": "section-summary.webp",
+      "id": "section-summary-featured-desktop-v3",
+      "source": "section-summary-featured-desktop-v3.png",
+      "output": "section-summary-featured-desktop-v3.webp",
       "width": 1200,
-      "height": 670,
-      "alpha": "either",
+      "height": 360,
+      "alpha": "opaque",
+      "fit": "cover"
+    },
+    {
+      "id": "section-summary-featured-mobile-v3",
+      "source": "section-summary-featured-mobile-v3.png",
+      "output": "section-summary-featured-mobile-v3.webp",
+      "width": 600,
+      "height": 800,
+      "alpha": "opaque",
       "fit": "cover"
     },
     {
@@ -50,12 +59,21 @@
       "fit": "cover"
     },
     {
-      "id": "section-messages",
-      "source": "section-messages.png",
-      "output": "section-messages.webp",
+      "id": "section-messages-doodles-desktop-v3",
+      "source": "section-messages-doodles-desktop-v3.png",
+      "output": "section-messages-doodles-desktop-v3.webp",
       "width": 1200,
-      "height": 670,
-      "alpha": "either",
+      "height": 900,
+      "alpha": "opaque",
+      "fit": "cover"
+    },
+    {
+      "id": "section-messages-doodles-mobile-v3",
+      "source": "section-messages-doodles-mobile-v3.png",
+      "output": "section-messages-doodles-mobile-v3.webp",
+      "width": 600,
+      "height": 1000,
+      "alpha": "opaque",
       "fit": "cover"
     },
     {
@@ -77,99 +95,144 @@
       "fit": "cover"
     },
     {
-      "id": "section-closing",
-      "source": "section-closing.png",
-      "output": "section-closing.webp",
+      "id": "section-closing-finale-desktop-v3",
+      "source": "section-closing-finale-desktop-v3.png",
+      "output": "section-closing-finale-desktop-v3.webp",
       "width": 1200,
-      "height": 670,
-      "alpha": "either",
+      "height": 480,
+      "alpha": "opaque",
       "fit": "cover"
     },
     {
-      "id": "greeting-card-1",
-      "source": "greeting-card-1.png",
-      "output": "greeting-card-1.webp",
-      "width": 1200,
-      "height": 400,
-      "alpha": "either",
+      "id": "section-closing-finale-mobile-v3",
+      "source": "section-closing-finale-mobile-v3.png",
+      "output": "section-closing-finale-mobile-v3.webp",
+      "width": 600,
+      "height": 800,
+      "alpha": "opaque",
       "fit": "cover"
     },
     {
-      "id": "greeting-card-2",
-      "source": "greeting-card-2.png",
-      "output": "greeting-card-2.webp",
-      "width": 1200,
-      "height": 400,
-      "alpha": "either",
-      "fit": "cover"
-    },
-    {
-      "id": "greeting-card-3",
-      "source": "greeting-card-3.png",
-      "output": "greeting-card-3.webp",
+      "id": "greeting-card-1-v3",
+      "source": "greeting-card-1-v3.png",
+      "output": "greeting-card-1-v3.webp",
       "width": 1200,
       "height": 400,
       "alpha": "either",
       "fit": "cover"
     },
     {
-      "id": "greeting-card-4",
-      "source": "greeting-card-4.png",
-      "output": "greeting-card-4.webp",
+      "id": "greeting-card-2-v3",
+      "source": "greeting-card-2-v3.png",
+      "output": "greeting-card-2-v3.webp",
       "width": 1200,
       "height": 400,
       "alpha": "either",
       "fit": "cover"
     },
     {
-      "id": "quality-card",
-      "source": "quality-card.png",
-      "output": "quality-card.webp",
+      "id": "greeting-card-3-v3",
+      "source": "greeting-card-3-v3.png",
+      "output": "greeting-card-3-v3.webp",
+      "width": 1200,
+      "height": 400,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "greeting-card-4-v3",
+      "source": "greeting-card-4-v3.png",
+      "output": "greeting-card-4-v3.webp",
+      "width": 1200,
+      "height": 400,
+      "alpha": "either",
+      "fit": "cover"
+    },
+    {
+      "id": "quality-card-1-v2",
+      "source": "quality-card-1-v2.png",
+      "output": "quality-card-1-v2.webp",
       "width": 480,
       "height": 258,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "quality-card-2-v2",
+      "source": "quality-card-2-v2.png",
+      "output": "quality-card-2-v2.webp",
+      "width": 480,
+      "height": 258,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "quality-card-3-v2",
+      "source": "quality-card-3-v2.png",
+      "output": "quality-card-3-v2.webp",
+      "width": 480,
+      "height": 258,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "quality-card-4-v2",
+      "source": "quality-card-4-v2.png",
+      "output": "quality-card-4-v2.webp",
+      "width": 480,
+      "height": 258,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "quality-card-5-v2",
+      "source": "quality-card-5-v2.png",
+      "output": "quality-card-5-v2.webp",
+      "width": 480,
+      "height": 258,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "quote-card-v3",
+      "source": "quote-card-v3.png",
+      "output": "quote-card-v3.webp",
+      "width": 800,
+      "height": 640,
       "alpha": "either",
       "fit": "cover"
     },
     {
-      "id": "quote-card",
-      "source": "quote-card.png",
-      "output": "quote-card.webp",
-      "width": 1402,
-      "height": 1122,
-      "alpha": "either",
-      "fit": "cover"
-    },
-    {
-      "id": "photo-frame-portrait-base",
-      "source": "photo-frame-portrait-base.png",
-      "output": "photo-frame-portrait-base.webp",
+      "id": "photo-frame-portrait-v3-base",
+      "source": "photo-frame-portrait-v3-base.png",
+      "output": "photo-frame-portrait-v3-base.webp",
       "width": 802,
       "height": 1122,
       "alpha": "transparent",
       "fit": "cover"
     },
     {
-      "id": "photo-frame-portrait-overlay",
-      "source": "photo-frame-portrait-overlay.png",
-      "output": "photo-frame-portrait-overlay.webp",
+      "id": "photo-frame-portrait-v3-overlay",
+      "source": "photo-frame-portrait-v3-overlay.png",
+      "output": "photo-frame-portrait-v3-overlay.webp",
       "width": 802,
       "height": 1122,
       "alpha": "transparent",
       "fit": "cover"
     },
     {
-      "id": "photo-frame-landscape-base",
-      "source": "photo-frame-landscape-base.png",
-      "output": "photo-frame-landscape-base.webp",
+      "id": "photo-frame-landscape-v3-base",
+      "source": "photo-frame-landscape-v3-base.png",
+      "output": "photo-frame-landscape-v3-base.webp",
       "width": 1122,
       "height": 802,
       "alpha": "transparent",
       "fit": "cover"
     },
     {
-      "id": "photo-frame-landscape-overlay",
-      "source": "photo-frame-landscape-overlay.png",
-      "output": "photo-frame-landscape-overlay.webp",
+      "id": "photo-frame-landscape-v3-overlay",
+      "source": "photo-frame-landscape-v3-overlay.png",
+      "output": "photo-frame-landscape-v3-overlay.webp",
       "width": 1122,
       "height": 802,
       "alpha": "transparent",

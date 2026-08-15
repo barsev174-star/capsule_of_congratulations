@@ -3,10 +3,9 @@ import sharp from "sharp";
 
 const outputRoot = join(process.cwd(), "template-assets", "school-scrapbook", "source");
 const pageMaster = join(outputRoot, "page-master.png");
-const underlayAtlas = join(outputRoot, "underlay-art-atlas.png");
+const sectionSurfaceMaster = join(outputRoot, "section-surface-master-v2.png");
 const frameAtlas = join(outputRoot, "frame-art-atlas.png");
 const heroCardMaster = join(outputRoot, "hero-card-master.png");
-const quoteCardMaster = join(outputRoot, "quote-card-master.png");
 
 const colors = {
   cream: "#fffaf0",
@@ -40,9 +39,14 @@ const quietCenterSvg = (width, height, insetX, insetY, radius, opacity = .94) =>
       rx="${radius}" fill="${colors.cream}" fill-opacity="${opacity}"/>
   </svg>`;
 
-const writeAdaptiveUnderlay = async ({
+const tintSvg = (width, height, color, opacity) => `
+  <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${width}" height="${height}" fill="${color}" fill-opacity="${opacity}"/>
+  </svg>`;
+
+const writeFramedHero = async ({
   name,
-  source = underlayAtlas,
+  source,
   width,
   height,
   index,
@@ -57,6 +61,56 @@ const writeAdaptiveUnderlay = async ({
       { input: Buffer.from(quietCenterSvg(width, height, insetX, insetY, radius, centerOpacity)) },
       { input: Buffer.from(roundedMaskSvg(width, height, radius)), blend: "dest-in" }
     ])
+    .png({ compressionLevel: 9 })
+    .toFile(join(outputRoot, `${name}.png`));
+};
+
+const writeFullBleedPaper = async ({ name, source, width, height, index, tint, tintOpacity = .18 }) => {
+  const art = await variantBuffer(source, width, height, index);
+  const composites = tint
+    ? [{ input: Buffer.from(tintSvg(width, height, tint, tintOpacity)), blend: "over" }]
+    : [];
+
+  await sharp(art)
+    .composite(composites)
+    .png({ compressionLevel: 9 })
+    .toFile(join(outputRoot, `${name}.png`));
+};
+
+const writeNotebookMessagePaper = async ({ name, source }) => {
+  await sharp(source)
+    .resize(1200, 400, { fit: "fill" })
+    .png({ compressionLevel: 9 })
+    .toFile(join(outputRoot, `${name}.png`));
+};
+
+const writeSizedCard = async ({ name, source, width, height }) => {
+  await sharp(source)
+    .resize(width, height, { fit: "fill" })
+    .png({ compressionLevel: 9 })
+    .toFile(join(outputRoot, `${name}.png`));
+};
+
+const writeCoverCard = async ({ name, source, width, height }) => {
+  await sharp(source)
+    .resize(width, height, { fit: "cover", position: "center" })
+    .png({ compressionLevel: 9 })
+    .toFile(join(outputRoot, `${name}.png`));
+};
+
+const writeEdgeExtendedCard = async ({ name, source, width, height }) => {
+  const metadata = await sharp(source).metadata();
+  const scale = Math.min(width / metadata.width, height / metadata.height);
+  const innerWidth = Math.max(1, Math.round(metadata.width * scale));
+  const innerHeight = Math.max(1, Math.round(metadata.height * scale));
+  const left = Math.floor((width - innerWidth) / 2);
+  const right = width - innerWidth - left;
+  const top = Math.floor((height - innerHeight) / 2);
+  const bottom = height - innerHeight - top;
+
+  await sharp(source)
+    .resize(innerWidth, innerHeight, { fit: "fill" })
+    .extend({ top, right, bottom, left, extendWith: "copy" })
     .png({ compressionLevel: 9 })
     .toFile(join(outputRoot, `${name}.png`));
 };
@@ -79,18 +133,31 @@ const frameOverlaySvg = ({ width, height, aperture, radius }) => {
     </svg>`;
 };
 
-const captionPanelSvg = (width, height, captionArea) => `
+const captionPanelSvg = (width, height, captionArea, color) => {
+  const x = Math.round(width * captionArea.x);
+  const y = Math.round(height * captionArea.y);
+  const w = Math.round(width * captionArea.width);
+  const h = Math.round(height * captionArea.height);
+  const gridSize = Math.max(12, Math.round(height * .025));
+  return `
   <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-    <rect x="${Math.round(width * captionArea.x)}" y="${Math.round(height * captionArea.y)}"
-      width="${Math.round(width * captionArea.width)}" height="${Math.round(height * captionArea.height)}"
-      rx="${Math.max(12, Math.round(height * .018))}" fill="${colors.cream}" fill-opacity=".97"/>
+    <defs>
+      <pattern id="caption-grid" width="${gridSize}" height="${gridSize}" patternUnits="userSpaceOnUse">
+        <path d="M ${gridSize} 0 L 0 0 0 ${gridSize}" fill="none" stroke="${colors.blue}" stroke-opacity=".12" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}"
+      rx="${Math.max(12, Math.round(height * .018))}" fill="${color}" fill-opacity=".9"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}"
+      rx="${Math.max(12, Math.round(height * .018))}" fill="url(#caption-grid)"/>
   </svg>`;
+};
 
-const writeFrame = async ({ name, width, height, aperture, captionArea, radius, index }) => {
+const writeFrame = async ({ name, width, height, aperture, captionArea, captionColor, radius, index }) => {
   const art = await variantBuffer(frameAtlas, width, height, index);
   await sharp(art)
     .composite([
-      { input: Buffer.from(captionPanelSvg(width, height, captionArea)) },
+      { input: Buffer.from(captionPanelSvg(width, height, captionArea, captionColor)) },
       { input: Buffer.from(roundedMaskSvg(width, height, radius, 10)), blend: "dest-in" }
     ])
     .png({ compressionLevel: 9 })
@@ -107,69 +174,97 @@ await sharp(pageMaster)
   .png({ compressionLevel: 9 })
   .toFile(join(outputRoot, "page.png"));
 
-const sectionNames = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
+const sectionSurfaces = [
+  { name: "qualities", tint: "#fff0b8" },
+  { name: "memories", tint: "#dff2e3" },
+  { name: "quotes", tint: "#eee4fa" }
+];
+
+const responsiveSectionSurfaces = [
+  { name: "section-summary-featured-desktop-v3", source: "section-summary-featured-desktop-v3-master.png", width: 1200, height: 360, mode: "extend" },
+  { name: "section-summary-featured-mobile-v3", source: "section-summary-featured-mobile-v3-master.png", width: 600, height: 800, mode: "cover" },
+  { name: "section-messages-doodles-desktop-v3", source: "section-messages-doodles-v2-master.png", width: 1200, height: 900, mode: "cover" },
+  { name: "section-messages-doodles-mobile-v3", source: "section-messages-doodles-v2-master.png", width: 600, height: 1000, mode: "cover" },
+  { name: "section-closing-finale-desktop-v3", source: "section-closing-finale-desktop-v3-master.png", width: 1200, height: 480, mode: "cover" },
+  { name: "section-closing-finale-mobile-v3", source: "section-closing-finale-mobile-v3-master.png", width: 600, height: 800, mode: "cover" }
+];
+
+const greetingCards = [
+  "notebook-message-yellow-v4.png",
+  "notebook-message-turquoise-v4.png",
+  "notebook-message-mint-v4.png",
+  "notebook-message-lilac-v4.png"
+];
+const qualityCards = [
+  "quality-card-1-v2-master.png",
+  "quality-card-2-v2-master.png",
+  "quality-card-3-v2-master.png",
+  "quality-card-4-v2-master.png",
+  "quality-card-5-v2-master.png"
+];
 
 await Promise.all([
-  ...sectionNames.map((name, index) => writeAdaptiveUnderlay({
+  writeFramedHero({
+    name: "section-hero",
+    source: heroCardMaster,
+    width: 1200,
+    height: 670,
+    index: 0,
+    insetX: .075,
+    insetY: .11,
+    centerOpacity: .9
+  }),
+  ...sectionSurfaces.map(({ name, tint }, index) => writeFullBleedPaper({
     name: `section-${name}`,
-    source: name === "hero" ? heroCardMaster : underlayAtlas,
+    source: sectionSurfaceMaster,
     width: 1200,
     height: 670,
     index,
-    insetX: name === "hero" ? .075 : .065,
-    insetY: name === "hero" ? .11 : .095,
-    centerOpacity: name === "hero" ? .9 : .95
+    tint,
+    tintOpacity: .1
   })),
-  ...Array.from({ length: 4 }, (_, index) => writeAdaptiveUnderlay({
-    name: `greeting-card-${index + 1}`,
-    width: 1200,
-    height: 400,
-    index: index + sectionNames.length,
-    insetX: .055,
-    insetY: .09,
-    radius: 24,
-    centerOpacity: .96
+  ...responsiveSectionSurfaces.map(({ name, source, width, height, mode }) => (mode === "extend" ? writeEdgeExtendedCard : writeCoverCard)({
+    name,
+    source: join(outputRoot, source),
+    width,
+    height
   })),
-  writeAdaptiveUnderlay({
-    name: "quality-card",
-    source: heroCardMaster,
+  ...greetingCards.map((source, index) => writeNotebookMessagePaper({
+    name: `greeting-card-${index + 1}-v3`,
+    source: join(outputRoot, source)
+  })),
+  ...qualityCards.map((source, index) => writeSizedCard({
+    name: `quality-card-${index + 1}-v2`,
+    source: join(outputRoot, source),
     width: 480,
-    height: 258,
-    index: 1,
-    insetX: .05,
-    insetY: .1,
-    radius: 24,
-    centerOpacity: .97
-  }),
-  writeAdaptiveUnderlay({
-    name: "quote-card",
-    source: quoteCardMaster,
-    width: 1402,
-    height: 1122,
-    index: 0,
-    insetX: .055,
-    insetY: .08,
-    radius: 42,
-    centerOpacity: .95
+    height: 258
+  })),
+  writeSizedCard({
+    name: "quote-card-v3",
+    source: join(outputRoot, "quote-card-decorative-v3-master.png"),
+    width: 800,
+    height: 640
   }),
   writeFrame({
-    name: "photo-frame-portrait",
+    name: "photo-frame-portrait-v3",
     width: 802,
     height: 1122,
     aperture: { x: .08, y: .05, width: .84, height: .76 },
     captionArea: { x: .08, y: .83, width: .84, height: .11 },
+    captionColor: "#fff1c9",
     radius: 34,
     index: 0
   }),
   writeFrame({
-    name: "photo-frame-landscape",
+    name: "photo-frame-landscape-v3",
     width: 1122,
     height: 802,
     aperture: { x: .08, y: .07, width: .84, height: .70 },
     captionArea: { x: .08, y: .80, width: .84, height: .14 },
+    captionColor: "#d9f3ef",
     radius: 34,
     index: 3
   })
 ]);
 
-console.log("SCHOOL_SCRAPBOOK_SOURCE_ASSETS_READY 7 sections, 4 greeting cards, 2 frame geometries");
+console.log("SCHOOL_SCRAPBOOK_SOURCE_ASSETS_READY 7 sections, 4 greeting cards, 5 quality cards, 1 quote card, 2 frame geometries");

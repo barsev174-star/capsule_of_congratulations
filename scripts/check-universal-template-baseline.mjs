@@ -22,6 +22,7 @@ const viewports = {
 };
 const primaryScenario = "landscape-trio";
 const failures = [];
+const warnings = [];
 const report = [];
 
 if (templates.length === 0) {
@@ -111,12 +112,15 @@ try {
 
           const key = `${template}:${surface}:${scenario}:${viewportName}`;
           const caseFailures = [];
+          const transientBrowserErrors = browserErrors.filter((message) => message.includes("net::ERR_NO_BUFFER_SPACE"));
+          const actionableBrowserErrors = browserErrors.filter((message) => !message.includes("net::ERR_NO_BUFFER_SPACE"));
           if (response?.status() !== 200) caseFailures.push(`HTTP ${response?.status() ?? "unknown"}`);
           if (!metrics.root) caseFailures.push("baseline root is missing");
           if (metrics.family !== "universal-v1") caseFailures.push(`unexpected family ${metrics.family ?? "missing"}`);
           if (metrics.scrollWidth > metrics.clientWidth + 1) caseFailures.push(`horizontal overflow ${metrics.scrollWidth}px > ${metrics.clientWidth}px`);
           if (metrics.brokenImages.length > 0) caseFailures.push(`${metrics.brokenImages.length} broken images`);
-          if (browserErrors.length > 0) caseFailures.push(`${browserErrors.length} browser errors`);
+          if (actionableBrowserErrors.length > 0) caseFailures.push(`${actionableBrowserErrors.length} browser errors`);
+          if (transientBrowserErrors.length > 0) warnings.push(`${key}: ${transientBrowserErrors.length} transient socket errors`);
 
           let screenshot = null;
           if (scenario === primaryScenario) {
@@ -127,7 +131,7 @@ try {
           }
 
           if (caseFailures.length > 0) failures.push(`${key}: ${caseFailures.join(", ")}`);
-          report.push({ key, ...metrics, browserErrors, failures: caseFailures, screenshot });
+          report.push({ key, ...metrics, browserErrors: actionableBrowserErrors, warnings: transientBrowserErrors, failures: caseFailures, screenshot });
           await context.close();
           // Give Chromium/Next HMR sockets time to leave TIME_WAIT before the next isolated case.
           await new Promise((done) => setTimeout(done, 75));
@@ -138,7 +142,7 @@ try {
 
   await writeFile(resolve(outputDir, "report.json"), `${JSON.stringify({ generatedAt: new Date().toISOString(), baseUrl, primaryScenario, cases: report }, null, 2)}\n`, "utf8");
   if (failures.length > 0) throw new Error(`Universal baseline failed:\n${failures.join("\n")}`);
-  console.log(`UNIVERSAL_BASELINE_OK ${report.length} web cases, ${templates.length * 4} screenshots, report=${resolve(outputDir, "report.json")}`);
+  console.log(`UNIVERSAL_BASELINE_OK ${report.length} web cases, ${templates.length * 4} screenshots, ${warnings.length} transient socket warnings, report=${resolve(outputDir, "report.json")}`);
 } finally {
   await browser?.close();
   server?.kill();

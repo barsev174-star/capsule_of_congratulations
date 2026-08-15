@@ -343,6 +343,7 @@ const validateSectionUnderlay = (
     return;
   }
   validateAsset(value.asset, `${path}.asset`, issues);
+  if (value.mobileAsset !== undefined) validateAsset(value.mobileAsset, `${path}.mobileAsset`, issues);
   if (!universalSectionUnderlayPresetIds.includes(value.preset as never)) {
     issues.push({ path: `${path}.preset`, message: "Неизвестный preset подложки." });
   }
@@ -361,6 +362,7 @@ const validateSectionUnderlay = (
       }
     }
   }
+  if (value.safeArea !== undefined) validateRect(value.safeArea, `${path}.safeArea`, issues);
 };
 
 const validateFont = (

@@ -31,6 +31,7 @@ describe("template studio draft", () => {
     const changedBaseline = structuredClone(initialDraft);
     changedBaseline.profile.assets.page.src = "/templates/northern-light/page-v2.webp";
 
+    expect(getTemplateStudioStorageKey(initialDraft)).toContain(":v7:");
     expect(getTemplateStudioStorageKey(sameBaseline)).toBe(getTemplateStudioStorageKey(initialDraft));
     expect(getTemplateStudioStorageKey(changedBaseline)).not.toBe(getTemplateStudioStorageKey(initialDraft));
   });

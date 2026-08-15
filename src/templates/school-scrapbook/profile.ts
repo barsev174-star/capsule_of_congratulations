@@ -24,25 +24,41 @@ export const school_scrapbookProfile = defineTemplate({
     page: asset("/templates/school-scrapbook/page.webp", 1536, 1024),
     sections: {
       hero: defineSectionUnderlay(asset("/templates/school-scrapbook/section-hero.webp", 1200, 670), "adaptive-frame"),
-      summary: defineSectionUnderlay(asset("/templates/school-scrapbook/section-summary.webp", 1200, 670), "adaptive-frame"),
+      summary: defineSectionUnderlay(asset("/templates/school-scrapbook/section-summary-featured-desktop-v3.webp", 1200, 360), "cover", {
+        mobileAsset: asset("/templates/school-scrapbook/section-summary-featured-mobile-v3.webp", 600, 800),
+        safeArea: { x: 0.18, y: 0.1, width: 0.64, height: 0.8 }
+      }),
       qualities: defineSectionUnderlay(asset("/templates/school-scrapbook/section-qualities.webp", 1200, 670), "adaptive-frame"),
-      messages: defineSectionUnderlay(asset("/templates/school-scrapbook/section-messages.webp", 1200, 670), "adaptive-frame"),
+      messages: defineSectionUnderlay(asset("/templates/school-scrapbook/section-messages-doodles-desktop-v3.webp", 1200, 900), "cover", {
+        mobileAsset: asset("/templates/school-scrapbook/section-messages-doodles-mobile-v3.webp", 600, 1000),
+        safeArea: { x: 0.065, y: 0.08, width: 0.87, height: 0.8 }
+      }),
       memories: defineSectionUnderlay(asset("/templates/school-scrapbook/section-memories.webp", 1200, 670), "adaptive-frame"),
       quotes: defineSectionUnderlay(asset("/templates/school-scrapbook/section-quotes.webp", 1200, 670), "adaptive-frame"),
-      closing: defineSectionUnderlay(asset("/templates/school-scrapbook/section-closing.webp", 1200, 670), "adaptive-frame")
+      closing: defineSectionUnderlay(asset("/templates/school-scrapbook/section-closing-finale-desktop-v3.webp", 1200, 480), "cover", {
+        mobileAsset: asset("/templates/school-scrapbook/section-closing-finale-mobile-v3.webp", 600, 800)
+      })
     },
     greetingCards: [
-      defineSectionUnderlay(asset("/templates/school-scrapbook/greeting-card-1.webp", 1200, 400), "adaptive-frame"),
-      defineSectionUnderlay(asset("/templates/school-scrapbook/greeting-card-2.webp", 1200, 400), "adaptive-frame"),
-      defineSectionUnderlay(asset("/templates/school-scrapbook/greeting-card-3.webp", 1200, 400), "adaptive-frame"),
-      defineSectionUnderlay(asset("/templates/school-scrapbook/greeting-card-4.webp", 1200, 400), "adaptive-frame")
+      defineSectionUnderlay(asset("/templates/school-scrapbook/greeting-card-1-v3.webp", 1200, 400), "adaptive-frame"),
+      defineSectionUnderlay(asset("/templates/school-scrapbook/greeting-card-2-v3.webp", 1200, 400), "adaptive-frame"),
+      defineSectionUnderlay(asset("/templates/school-scrapbook/greeting-card-3-v3.webp", 1200, 400), "adaptive-frame"),
+      defineSectionUnderlay(asset("/templates/school-scrapbook/greeting-card-4-v3.webp", 1200, 400), "adaptive-frame")
     ],
-    qualityCards: [defineTextCard(asset("/templates/school-scrapbook/quality-card.webp", 480, 258), "quality-pill")],
-    quoteCards: [defineTextCard(asset("/templates/school-scrapbook/quote-card.webp", 1402, 1122), "quote-panel")],
+    qualityCards: [
+      defineTextCard(asset("/templates/school-scrapbook/quality-card-1-v2.webp", 480, 258), "quality-pill"),
+      defineTextCard(asset("/templates/school-scrapbook/quality-card-2-v2.webp", 480, 258), "quality-pill"),
+      defineTextCard(asset("/templates/school-scrapbook/quality-card-3-v2.webp", 480, 258), "quality-pill"),
+      defineTextCard(asset("/templates/school-scrapbook/quality-card-4-v2.webp", 480, 258), "quality-pill"),
+      defineTextCard(asset("/templates/school-scrapbook/quality-card-5-v2.webp", 480, 258), "quality-pill")
+    ],
+    quoteCards: [
+      defineTextCard(asset("/templates/school-scrapbook/quote-card-v3.webp", 800, 640), "quote-panel-compact")
+    ],
     photoFrames: {
-      messagePortrait: frame("portrait-polaroid", "/templates/school-scrapbook/photo-frame-portrait-base.webp", "/templates/school-scrapbook/photo-frame-portrait-overlay.webp", 802, 1122),
-      messageLandscape: frame("landscape-polaroid", "/templates/school-scrapbook/photo-frame-landscape-base.webp", "/templates/school-scrapbook/photo-frame-landscape-overlay.webp", 1122, 802),
-      memory: frame("landscape-polaroid", "/templates/school-scrapbook/photo-frame-landscape-base.webp", "/templates/school-scrapbook/photo-frame-landscape-overlay.webp", 1122, 802)
+      messagePortrait: frame("portrait-polaroid", "/templates/school-scrapbook/photo-frame-portrait-v3-base.webp", "/templates/school-scrapbook/photo-frame-portrait-v3-overlay.webp", 802, 1122),
+      messageLandscape: frame("landscape-polaroid", "/templates/school-scrapbook/photo-frame-landscape-v3-base.webp", "/templates/school-scrapbook/photo-frame-landscape-v3-overlay.webp", 1122, 802),
+      memory: frame("landscape-polaroid", "/templates/school-scrapbook/photo-frame-landscape-v3-base.webp", "/templates/school-scrapbook/photo-frame-landscape-v3-overlay.webp", 1122, 802)
     },
     decor: []
   },
@@ -53,7 +69,15 @@ export const school_scrapbookProfile = defineTemplate({
   },
   colors: {
     page: "#f6f0e3", text: "#16365c", muted: "#53677d", accent: "#e9652f", surface: "#fffaf0",
-    surfaces: { hero: "#fffaf0", summary: "#fffaf0", qualities: "#fffaf0", messages: "#fffaf0", memories: "#fffaf0", quotes: "#fffaf0", closing: "#fffaf0" }
+    surfaces: {
+      hero: "#fffaf0",
+      summary: "#eef7f5",
+      qualities: "#fff7d6",
+      messages: "#edf5ff",
+      memories: "#eff8f2",
+      quotes: "#f5effb",
+      closing: "#eaf3fb"
+    }
   },
   intro: { surface: "#fffaf0", text: "#16365c", accent: "#1859bd" },
   public: { blocks: ["hero", "qualities", "memories", "quotes"] },

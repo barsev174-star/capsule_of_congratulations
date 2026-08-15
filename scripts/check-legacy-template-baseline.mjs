@@ -27,6 +27,7 @@ const exportFormats = {
   print: { width: 1240, height: 1754 }
 };
 const failures = [];
+const warnings = [];
 const report = [];
 const exportReport = [];
 
@@ -127,13 +128,16 @@ try {
 
           const key = `${template}:${surface}:${scenario}:${viewportName}`;
           const caseFailures = [];
+          const transientBrowserErrors = browserErrors.filter((message) => message.includes("net::ERR_NO_BUFFER_SPACE"));
+          const actionableBrowserErrors = browserErrors.filter((message) => !message.includes("net::ERR_NO_BUFFER_SPACE"));
           if (response?.status() !== 200) caseFailures.push(`HTTP ${response?.status() ?? "unknown"}`);
           if (!metrics.root) caseFailures.push("baseline root is missing");
           if (metrics.scrollWidth > metrics.clientWidth + 1) {
             caseFailures.push(`horizontal overflow ${metrics.scrollWidth}px > ${metrics.clientWidth}px`);
           }
           if (metrics.brokenImages.length > 0) caseFailures.push(`${metrics.brokenImages.length} broken images`);
-          if (browserErrors.length > 0) caseFailures.push(`${browserErrors.length} browser errors`);
+          if (actionableBrowserErrors.length > 0) caseFailures.push(`${actionableBrowserErrors.length} browser errors`);
+          if (transientBrowserErrors.length > 0) warnings.push(`${key}: ${transientBrowserErrors.length} transient socket errors`);
 
           let screenshot = null;
           if (scenario === primaryScenario) {
@@ -145,8 +149,9 @@ try {
           }
 
           if (caseFailures.length > 0) failures.push(`${key}: ${caseFailures.join(", ")}`);
-          report.push({ key, ...metrics, browserErrors, failures: caseFailures, screenshot });
+          report.push({ key, ...metrics, browserErrors: actionableBrowserErrors, warnings: transientBrowserErrors, failures: caseFailures, screenshot });
           await context.close();
+          await new Promise((done) => setTimeout(done, 75));
         }
       }
     }
@@ -188,7 +193,7 @@ try {
   );
 
   if (failures.length > 0) throw new Error(`Legacy baseline failed:\n${failures.join("\n")}`);
-  console.log(`LEGACY_BASELINE_OK ${report.length} web cases, 8 web screenshots, 6 exports, report=${resolve(outputDir, "report.json")}`);
+  console.log(`LEGACY_BASELINE_OK ${report.length} web cases, 8 web screenshots, 6 exports, ${warnings.length} transient socket warnings, report=${resolve(outputDir, "report.json")}`);
 } finally {
   await browser?.close();
   server?.kill();

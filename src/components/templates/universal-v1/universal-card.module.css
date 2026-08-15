@@ -39,6 +39,10 @@
 }
 
 .sectionUnderlay [data-underlay-layer="mobile-variable-frame"] { display: none; }
+.sectionUnderlay [data-underlay-variant="mobile"] { display: none; }
+
+.page[data-viewport="mobile"] .sectionUnderlay[data-has-mobile-asset="true"] > [data-underlay-variant="desktop"] { display: none; }
+.page[data-viewport="mobile"] .sectionUnderlay[data-has-mobile-asset="true"] > [data-underlay-variant="mobile"] { display: block; }
 
 .shell {
   position: relative;
@@ -92,6 +96,15 @@
   line-height: 1.02;
   letter-spacing: -0.035em;
   text-wrap: balance;
+}
+
+.page[data-template-id="school-scrapbook"] .section h2 {
+  color: #1859bd;
+  font-family: var(--uv1-handwritten-font), cursive;
+  font-size: clamp(31px, 4vw, calc(var(--uv1-section-heading-max) * 1.28));
+  font-weight: var(--uv1-handwritten-weight);
+  line-height: 1;
+  letter-spacing: 0.005em;
 }
 
 .section p,
@@ -258,6 +271,13 @@
   -webkit-line-clamp: 2;
 }
 
+.page[data-template-id="school-scrapbook"] .qualityCard {
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .sectionHeadingRow {
   display: flex;
   align-items: center;
@@ -271,6 +291,19 @@
 
 .sectionHeadingRow h2 { margin-bottom: 0; }
 .countBadge { flex: 0 0 auto; color: var(--uv1-text); }
+
+.page[data-template-id="school-scrapbook"][data-viewport="desktop"] .messages .sectionHeadingRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.72fr);
+}
+
+.page[data-template-id="school-scrapbook"][data-viewport="desktop"] .messages .sectionHeadingRow h2 {
+  text-align: center;
+}
+
+.page[data-template-id="school-scrapbook"][data-viewport="desktop"] .messages .sectionHeadingRow .countBadge {
+  justify-self: end;
+}
 
 .messagesComposition {
   display: grid;
@@ -335,6 +368,18 @@
 }
 
 .messageCardUnderlay { z-index: 0; }
+
+.page[data-template-id="school-scrapbook"] .messageCard {
+  overflow: hidden;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.page[data-template-id="school-scrapbook"] .messageCardUnderlay {
+  transform: scale(1.065);
+  transform-origin: center;
+}
 
 .messageCardContent {
   position: relative;
@@ -587,6 +632,11 @@
 .quoteCard > span { left: 0; top: 0; display: block; height: 28px; padding: 13px 18px 0; color: var(--uv1-accent); font-family: Georgia, serif; font-size: 38px; line-height: 1; }
 .quoteCard > p { display: -webkit-box; margin: 0; overflow: hidden; padding: 6px 10px; font-size: calc(clamp(16px, 1.5vw, var(--uv1-quote-text-font-max)) * var(--uv1-quote-scale, 1)); font-weight: 600; line-height: 1.18; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
 
+.page[data-template-id="school-scrapbook"] .quoteCard > p {
+  text-align: center;
+  text-wrap: balance;
+}
+
 .closingSection .sectionContent { display: grid; justify-items: center; min-height: var(--uv1-closing-height); align-content: center; text-align: center; }
 .closingSignature { max-width: 720px; margin: 0; font-family: var(--uv1-handwritten-font), cursive; font-size: clamp(22px, 2.5vw, var(--uv1-closing-font-max)); font-weight: var(--uv1-handwritten-weight); line-height: 1.2; white-space: pre-wrap; text-wrap: balance; }
 .closingActions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
@@ -751,6 +801,8 @@
 .page[data-viewport="mobile"] .dialogMessages { grid-template-columns: 1fr; }
 
 @media (max-width: 640px) {
+  .page[data-viewport="auto"] .sectionUnderlay[data-has-mobile-asset="true"] > [data-underlay-variant="desktop"] { display: none; }
+  .page[data-viewport="auto"] .sectionUnderlay[data-has-mobile-asset="true"] > [data-underlay-variant="mobile"] { display: block; }
   .page[data-viewport="auto"] .decorLayer[data-visible-on]:not([data-visible-on*="mobile"]) { display: none; }
   .page[data-viewport="auto"] .shell { width: min(100% - 20px, 520px); padding: 18px 0; }
   .page[data-viewport="auto"] .section,

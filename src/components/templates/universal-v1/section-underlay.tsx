@@ -65,6 +65,7 @@ export function SectionUnderlay({
 }: SectionUnderlayProps) {
   const preset = getUniversalSectionUnderlayPreset(underlay.preset);
   const src = resolveAsset(underlay.asset.src);
+  const mobileSrc = underlay.mobileAsset ? resolveAsset(underlay.mobileAsset.src) : null;
   const opacity = underlay.opacity ?? 1;
   const rootStyle = {
     position: "absolute",
@@ -152,6 +153,7 @@ export function SectionUnderlay({
       className={className}
       aria-hidden="true"
       data-underlay-preset={underlay.preset}
+      data-has-mobile-asset={mobileSrc ? "true" : undefined}
       style={{
         ...rootStyle,
         ...(preset.rendering === "bottom-edge" ? { height: `${(preset.edgeSize ?? 0.12) * 100}%`, top: "auto" } : {})
@@ -160,6 +162,7 @@ export function SectionUnderlay({
       <img
         src={src}
         alt=""
+        data-underlay-variant="desktop"
         style={{
           width: "100%",
           height: "100%",
@@ -167,6 +170,19 @@ export function SectionUnderlay({
           objectPosition: `${focalPoint.x * 100}% ${focalPoint.y * 100}%`
         }}
       />
+      {mobileSrc ? <img
+        src={mobileSrc}
+        alt=""
+        data-underlay-variant="mobile"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: `${focalPoint.x * 100}% ${focalPoint.y * 100}%`
+        }}
+      /> : null}
     </span>
   );
 }

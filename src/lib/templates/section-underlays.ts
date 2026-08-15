@@ -17,9 +17,11 @@ export type NormalizedEdgeInsets = {
 
 export type TemplateSectionUnderlay = {
   asset: TemplateAssetRef;
+  mobileAsset?: TemplateAssetRef;
   preset: UniversalSectionUnderlayPresetId;
   opacity?: number;
   focalPoint?: { x: number; y: number };
+  safeArea?: NormalizedRect;
 };
 
 export type UniversalSectionUnderlayPreset = {
@@ -66,11 +68,11 @@ export const getUniversalSectionUnderlayPreset = (id: UniversalSectionUnderlayPr
 export const defineSectionUnderlay = (
   asset: TemplateAssetRef,
   preset: UniversalSectionUnderlayPresetId = "adaptive-frame",
-  options: Pick<TemplateSectionUnderlay, "opacity" | "focalPoint"> = {}
+  options: Pick<TemplateSectionUnderlay, "opacity" | "focalPoint" | "mobileAsset" | "safeArea"> = {}
 ): TemplateSectionUnderlay => ({ asset, preset, ...options });
 
 export const getUnderlaySafeInsets = (underlay: TemplateSectionUnderlay) => {
-  const safeArea = getUniversalSectionUnderlayPreset(underlay.preset).safeArea;
+  const safeArea = underlay.safeArea ?? getUniversalSectionUnderlayPreset(underlay.preset).safeArea;
   const aspectHeight = underlay.asset.height / underlay.asset.width;
   return {
     top: safeArea.y * aspectHeight,

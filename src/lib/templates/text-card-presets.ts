@@ -1,6 +1,6 @@
 import type { NormalizedRect } from "@/lib/templates/profile";
 
-export const universalTextCardPresetIds = ["quality-pill", "quote-panel"] as const;
+export const universalTextCardPresetIds = ["quality-pill", "quote-panel", "quote-panel-compact"] as const;
 export type UniversalTextCardPresetId = (typeof universalTextCardPresetIds)[number];
 
 export type UniversalTextCardPreset = {
@@ -24,6 +24,13 @@ export const universalTextCardPresets: Readonly<Record<UniversalTextCardPresetId
     label: "Карточка цитаты",
     description: "Стандарт 1402 × 1122 с местом для кавычки и многострочной фразы.",
     source: { width: 1402, height: 1122 },
+    textArea: { x: 0.055, y: 0.28, width: 0.89, height: 0.62 }
+  },
+  "quote-panel-compact": {
+    id: "quote-panel-compact",
+    label: "Компактная карточка цитаты",
+    description: "Оптимизированный стандарт 800 × 640 с той же безопасной областью для многострочной фразы.",
+    source: { width: 800, height: 640 },
     textArea: { x: 0.055, y: 0.28, width: 0.89, height: 0.62 }
   }
 };

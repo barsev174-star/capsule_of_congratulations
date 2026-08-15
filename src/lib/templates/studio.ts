@@ -65,7 +65,7 @@ const hashTemplateStudioBaseline = (draft: TemplateStudioDraft) => {
 };
 
 export const getTemplateStudioStorageKey = (initialDraft: TemplateStudioDraft) =>
-  `slovesto:template-studio:${initialDraft.profile.id}:v6:${hashTemplateStudioBaseline(initialDraft)}`;
+  `slovesto:template-studio:${initialDraft.profile.id}:v7:${hashTemplateStudioBaseline(initialDraft)}`;
 
 export const createTemplateStudioDecorLayer = (
   profile: TemplateProfile,

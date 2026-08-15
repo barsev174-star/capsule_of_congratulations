@@ -176,6 +176,7 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
   const [importStatus, setImportStatus] = useState<ImportStatus>({ tone: "neutral", message: "Черновик сохраняется локально после первого изменения." });
   const [assetNetworkBytes, setAssetNetworkBytes] = useState<number | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const hydratedStorageKey = useRef<string | null>(null);
   const validation = useMemo(() => validateTemplateStudioDraft(draft), [draft]);
   const profileValidation = useMemo(() => validateTemplateProfile(draft.profile), [draft.profile]);
   const assets = useMemo(() => listTemplateProfileAssets(draft.profile), [draft.profile]);
@@ -203,8 +204,13 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
   const routeReferenceUrl = `/internal/template-baseline?template=route-adventure&surface=${surface}&scenario=${scenario}`;
 
   useEffect(() => {
+    let cancelled = false;
+    hydratedStorageKey.current = null;
     const stored = window.localStorage.getItem(draftStorageKey);
     queueMicrotask(() => {
+      if (cancelled) return;
+      setReady(false);
+      setDraft(initialDraft);
       if (stored) {
         const result = parseTemplateStudioImport(stored, initialDraft);
         if (result.ok) {
@@ -213,13 +219,19 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
         } else {
           setImportStatus({ tone: "error", message: "Локальный черновик повреждён и не был применён." });
         }
+      } else {
+        setImportStatus({ tone: "neutral", message: "Загружена актуальная исходная конфигурация." });
       }
+      hydratedStorageKey.current = draftStorageKey;
       setReady(true);
     });
+    return () => {
+      cancelled = true;
+    };
   }, [draftStorageKey, initialDraft]);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || hydratedStorageKey.current !== draftStorageKey) return;
     window.localStorage.setItem(draftStorageKey, JSON.stringify(draft));
   }, [draft, draftStorageKey, ready]);
 

@@ -94,7 +94,8 @@ describe("template registry", () => {
   it("показывает зарегистрированные universal-шаблоны в справочнике ателье", () => {
     expect(studioTemplateRegistrations.map((entry) => entry.id)).toEqual([
       "northern-light",
-      "daylight-proof"
+      "daylight-proof",
+      "school-scrapbook"
     ]);
   });
 

@@ -36,4 +36,20 @@ describe("universal section underlays", () => {
       focalPoint: { x: 0.2, y: 0.8 }
     });
   });
+
+  it("supports responsive artwork and a block-specific safe area", () => {
+    const mobileAsset = { src: "/templates/test/section-mobile.webp" as const, width: 720, height: 960 };
+    const underlay = defineSectionUnderlay(asset, "cover", {
+      mobileAsset,
+      safeArea: { x: 0.18, y: 0.1, width: 0.64, height: 0.8 }
+    });
+
+    expect(underlay).toEqual(expect.objectContaining({ mobileAsset }));
+    expect(getUnderlaySafeInsets(underlay)).toEqual({
+      top: expect.closeTo(0.056, 3),
+      right: expect.closeTo(0.18, 4),
+      bottom: expect.closeTo(0.056, 3),
+      left: 0.18
+    });
+  });
 });
