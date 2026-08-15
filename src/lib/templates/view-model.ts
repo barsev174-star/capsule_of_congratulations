@@ -130,7 +130,7 @@ export const buildUniversalFixtureViewModel = (
     occasion: fixture.occasion,
     eventDate: fixture.eventDate,
     fromLabel: fixture.fromLabel,
-    heroDescription: `Открытка ${fixture.fromLabel}: важные слова, фотографии и тёплые воспоминания.`,
+    heroDescription: "Тёплые слова, яркие моменты и пожелания специально для тебя.",
     participantCount: fixture.contributions.length,
     publicPhotoCount: null,
     summaryTitle: "Главное о тебе",

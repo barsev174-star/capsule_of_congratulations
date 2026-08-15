@@ -51,6 +51,7 @@ describe("UniversalTemplateViewModel", () => {
     ]);
     expect(full.summaryTitle).toBe("Главное о тебе");
     expect(full.mainGreetingAuthorName).toBe(full.contributions[0]?.authorName);
+    expect(full.heroDescription).toBe("Тёплые слова, яркие моменты и пожелания специально для тебя.");
   });
 
   it.each([0, 1, 2, 3] as const)("не связывает три фото «Моментов» со схемой поздравлений (%s фото)", (photoCount) => {

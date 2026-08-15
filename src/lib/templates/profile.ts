@@ -52,6 +52,9 @@ export type NormalizedRect = {
   height: number;
 };
 
+export const normalizedRectOverflows = (rect: NormalizedRect) =>
+  rect.x < 0 || rect.y < 0 || rect.x + rect.width > 1 || rect.y + rect.height > 1;
+
 export type TemplateTextCard = {
   asset: TemplateAssetRef;
   preset: UniversalTextCardPresetId;
@@ -89,6 +92,14 @@ export type TemplateDecorLayer = {
   opacity?: number;
   rotation?: number;
   visibleOn?: ReadonlyArray<"desktop" | "mobile" | "export">;
+};
+
+export type TemplateMotionPreset = "calm" | "playful";
+
+export type TemplateMotionProfile = {
+  preset: TemplateMotionPreset;
+  revealSections: boolean;
+  photoViewer: boolean;
 };
 
 export type TemplateProfile = {
@@ -135,6 +146,7 @@ export type TemplateProfile = {
     mark?: TemplateAssetRef;
     pattern?: TemplateAssetRef;
   };
+  motion?: TemplateMotionProfile;
   public: {
     blocks: readonly UniversalPublicBlockId[];
   };
@@ -233,7 +245,8 @@ const validateAsset = (
 const validateRect = (
   value: unknown,
   path: string,
-  issues: TemplateProfileValidationIssue[]
+  issues: TemplateProfileValidationIssue[],
+  allowOverflow = false
 ) => {
   if (!isRecord(value)) {
     issues.push({ path, message: "Ожидается нормализованный прямоугольник." });
@@ -243,8 +256,9 @@ const validateRect = (
   const keys = ["x", "y", "width", "height"] as const;
   for (const key of keys) {
     const coordinate = value[key];
-    if (typeof coordinate !== "number" || !Number.isFinite(coordinate) || coordinate < 0 || coordinate > 1) {
-      issues.push({ path: `${path}.${key}`, message: "Координата должна находиться в диапазоне 0…1." });
+    const minimum = allowOverflow && (key === "x" || key === "y") ? -1 : 0;
+    if (typeof coordinate !== "number" || !Number.isFinite(coordinate) || coordinate < minimum || coordinate > 1) {
+      issues.push({ path: `${path}.${key}`, message: `Координата должна находиться в диапазоне ${minimum}…1.` });
     }
   }
 
@@ -254,11 +268,20 @@ const validateRect = (
   if (typeof value.height === "number" && value.height <= 0) {
     issues.push({ path: `${path}.height`, message: "Высота должна быть больше нуля." });
   }
-  if (typeof value.x === "number" && typeof value.width === "number" && value.x + value.width > 1) {
-    issues.push({ path, message: "Прямоугольник выходит за правую границу контейнера." });
-  }
-  if (typeof value.y === "number" && typeof value.height === "number" && value.y + value.height > 1) {
-    issues.push({ path, message: "Прямоугольник выходит за нижнюю границу контейнера." });
+  if (allowOverflow) {
+    if (typeof value.x === "number" && typeof value.width === "number" && (value.x >= 1 || value.x + value.width <= 0)) {
+      issues.push({ path, message: "Декоративный слой должен хотя бы частично пересекать привязку по горизонтали." });
+    }
+    if (typeof value.y === "number" && typeof value.height === "number" && (value.y >= 1 || value.y + value.height <= 0)) {
+      issues.push({ path, message: "Декоративный слой должен хотя бы частично пересекать привязку по вертикали." });
+    }
+  } else {
+    if (typeof value.x === "number" && typeof value.width === "number" && value.x + value.width > 1) {
+      issues.push({ path, message: "Прямоугольник выходит за правую границу контейнера." });
+    }
+    if (typeof value.y === "number" && typeof value.height === "number" && value.y + value.height > 1) {
+      issues.push({ path, message: "Прямоугольник выходит за нижнюю границу контейнера." });
+    }
   }
 };
 
@@ -469,7 +492,7 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
         if (layer.anchor !== "templateRoot" && !universalTemplateBlockOrder.includes(layer.anchor as UniversalTemplateBlockId)) {
           issues.push({ path: `${path}.anchor`, message: "Неизвестная привязка декоративного слоя." });
         }
-        validateRect(layer.rect, `${path}.rect`, issues);
+        validateRect(layer.rect, `${path}.rect`, issues, true);
         if (layer.opacity !== undefined && (typeof layer.opacity !== "number" || layer.opacity < 0 || layer.opacity > 1)) {
           issues.push({ path: `${path}.opacity`, message: "Прозрачность должна находиться в диапазоне 0…1." });
         }
@@ -522,6 +545,21 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
     validateColor(value.intro.accent, "intro.accent", issues);
     validateAsset(value.intro.mark, "intro.mark", issues, true);
     validateAsset(value.intro.pattern, "intro.pattern", issues, true);
+  }
+
+  if (value.motion !== undefined) {
+    if (!isRecord(value.motion)) {
+      issues.push({ path: "motion", message: "Ожидается декларативный профиль движения." });
+    } else {
+      if (!["calm", "playful"].includes(String(value.motion.preset))) {
+        issues.push({ path: "motion.preset", message: "Поддерживаются только режимы calm и playful." });
+      }
+      for (const key of ["revealSections", "photoViewer"] as const) {
+        if (typeof value.motion[key] !== "boolean") {
+          issues.push({ path: "motion." + key, message: "Ожидается логическое значение." });
+        }
+      }
+    }
   }
 
   if (!isRecord(value.public) || !Array.isArray(value.public.blocks)) {

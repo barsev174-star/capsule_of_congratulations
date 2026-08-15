@@ -93,6 +93,26 @@ describe("TemplateProfile", () => {
     expect(defineTemplate(profile)).toBe(profile);
   });
 
+  it("принимает только декларативные motion-профили calm и playful", () => {
+    const profile = validProfile();
+    profile.motion = { preset: "playful", revealSections: true, photoViewer: true };
+    expect(validateTemplateProfile(profile)).toEqual({ ok: true, profile, issues: [] });
+
+    profile.motion = { preset: "energetic", revealSections: true, photoViewer: true } as never;
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "motion.preset" }));
+    }
+  });
+
+  it("разрешает anchored-декору частично выходить за границы блока", () => {
+    const profile = validProfile();
+    profile.assets.decor[0].rect = { x: -0.1, y: 0.05, width: 0.25, height: 0.2 };
+
+    expect(validateTemplateProfile(profile)).toEqual({ ok: true, profile, issues: [] });
+  });
+
   it("отклоняет повторяющиеся ID и неизвестные режимы видимости декора", () => {
     const profile = validProfile();
     profile.assets.decor = [

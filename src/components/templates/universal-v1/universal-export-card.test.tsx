@@ -97,6 +97,21 @@ describe("UniversalTemplateExportCard", () => {
     expect(container.querySelectorAll("[data-export-photo]")).toHaveLength(3);
   });
 
+  it("preserves overflowing anchored decor in export", () => {
+    const overflowProfile = structuredClone(profile);
+    overflowProfile.assets.decor[0] = {
+      ...overflowProfile.assets.decor[0],
+      anchor: "closing",
+      rect: { x: 0.9, y: 0.1, width: 0.2, height: 0.3 }
+    };
+    const model = buildUniversalFixtureViewModel("public-full", { templateId: profile.id });
+    const { container } = render(<UniversalTemplateExportCard profile={overflowProfile} model={model} format="story" />);
+    const closing = container.querySelector('[data-universal-export-block="closing"]');
+
+    expect(closing).toHaveAttribute("data-decor-overflow", "visible");
+    expect(closing?.querySelector("[data-export-underlay-clip]")).toBeInTheDocument();
+  });
+
   it("reuses normalized crop, profile assets and full boundary text", () => {
     const model = buildUniversalFixtureViewModel("photo-crop-stress", {
       templateId: profile.id,

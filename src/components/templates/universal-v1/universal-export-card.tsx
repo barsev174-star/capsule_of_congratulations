@@ -1,12 +1,13 @@
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text -- The component is rasterized by ImageResponse. */
 import type { CSSProperties, ReactNode } from "react";
-import type {
-  NormalizedRect,
-  TemplateAssetRef,
-  TemplateDecorLayer,
-  TemplateProfile,
-  UniversalPhotoFrame,
-  UniversalTemplateBlockId
+import {
+  normalizedRectOverflows,
+  type NormalizedRect,
+  type TemplateAssetRef,
+  type TemplateDecorLayer,
+  type TemplateProfile,
+  type UniversalPhotoFrame,
+  type UniversalTemplateBlockId
 } from "@/lib/templates/profile";
 import {
   formatUniversalEventDate,
@@ -100,6 +101,9 @@ function ExportSection({
   const isBare = isUniversalBareSection(id);
   const underlay = isBare ? undefined : profile.assets.sections[id];
   const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
+  const hasOverflowDecor = profile.assets.decor.some((layer) =>
+    layer.anchor === id && exportVisible(layer) && normalizedRectOverflows(layer.rect)
+  );
   const isMemories = id === "memories";
   const safePadding = safeInsets ? {
     top: Math.min(safeInsets.top * width, height * (isMemories ? .08 : .12)),
@@ -107,21 +111,22 @@ function ExportSection({
     bottom: Math.min(safeInsets.bottom * width, height * (isMemories ? .08 : .12)),
     left: safeInsets.left * width * (isMemories ? .45 : 1)
   } : null;
-  return <div data-universal-export-block={id} data-section-presentation={isBare ? "bare" : "surface"} style={{
+  return <div data-universal-export-block={id} data-section-presentation={isBare ? "bare" : "surface"} data-decor-overflow={hasOverflowDecor ? "visible" : undefined} style={{
     position: "relative",
     display: "flex",
     width: "100%",
     height,
     flexShrink: 0,
-    overflow: isBare ? "visible" : "hidden",
+    overflow: isBare || hasOverflowDecor ? "visible" : "hidden",
     borderRadius: isBare ? 0 : 28,
     background: isBare ? "transparent" : profile.colors.surfaces[id] ?? profile.colors.surface,
     boxShadow: isBare ? "none" : "0 2px 5px rgba(0,0,0,.05), 0 16px 34px rgba(0,0,0,.08)"
   }}>
-    {underlay ? id === "closing"
-      ? <HorizontalSliceAsset asset={underlay.asset} width={width} height={height} edgeRatio={.1} resolveAsset={resolveAsset} />
-      : <SectionUnderlay underlay={underlay} resolveAsset={resolveAsset} className="universal-export-underlay" targetSize={{ width, height }} />
-      : null}
+    {underlay ? <div data-export-underlay-clip style={{ position: "absolute", inset: 0, overflow: "hidden", borderRadius: 28 }}>
+      {id === "closing"
+        ? <HorizontalSliceAsset asset={underlay.asset} width={width} height={height} edgeRatio={.1} resolveAsset={resolveAsset} />
+        : <SectionUnderlay underlay={underlay} resolveAsset={resolveAsset} className="universal-export-underlay" targetSize={{ width, height }} />}
+    </div> : null}
     <Decor profile={profile} anchor={id} resolveAsset={resolveAsset} />
     <div style={{
       position: "relative",

@@ -113,6 +113,60 @@
       "fit": "cover"
     },
     {
+      "id": "decor-hero-globe-cluster-v1",
+      "source": "decor-hero-globe-cluster-v1.png",
+      "output": "decor-hero-globe-cluster-v1.webp",
+      "width": 220,
+      "height": 231,
+      "alpha": "transparent",
+      "fit": "contain"
+    },
+    {
+      "id": "decor-hero-backpack-cluster-v1",
+      "source": "decor-hero-backpack-cluster-v1.png",
+      "output": "decor-hero-backpack-cluster-v1.webp",
+      "width": 224,
+      "height": 149,
+      "alpha": "transparent",
+      "fit": "contain"
+    },
+    {
+      "id": "decor-closing-grade-5plus-v1",
+      "source": "decor-closing-grade-5plus-v1.png",
+      "output": "decor-closing-grade-5plus-v1.webp",
+      "width": 224,
+      "height": 149,
+      "alpha": "transparent",
+      "fit": "contain"
+    },
+    {
+      "id": "decor-summary-blue-rays-v1",
+      "source": "decor-summary-blue-rays-v1.png",
+      "output": "decor-summary-blue-rays-v1.webp",
+      "width": 96,
+      "height": 89,
+      "alpha": "transparent",
+      "fit": "contain"
+    },
+    {
+      "id": "decor-closing-student-doodle-v1",
+      "source": "decor-closing-student-doodle-v1.png",
+      "output": "decor-closing-student-doodle-v1.webp",
+      "width": 112,
+      "height": 112,
+      "alpha": "transparent",
+      "fit": "contain"
+    },
+    {
+      "id": "decor-closing-student-girl-doodle-v3",
+      "source": "decor-closing-student-girl-doodle-v3.png",
+      "output": "decor-closing-student-girl-doodle-v3.webp",
+      "width": 105,
+      "height": 112,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
       "id": "greeting-card-1-v3",
       "source": "greeting-card-1-v3.png",
       "output": "greeting-card-1-v3.webp",

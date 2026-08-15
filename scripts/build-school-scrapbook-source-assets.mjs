@@ -103,14 +103,61 @@ const writeEdgeExtendedCard = async ({ name, source, width, height }) => {
   const scale = Math.min(width / metadata.width, height / metadata.height);
   const innerWidth = Math.max(1, Math.round(metadata.width * scale));
   const innerHeight = Math.max(1, Math.round(metadata.height * scale));
-  const left = Math.floor((width - innerWidth) / 2);
-  const right = width - innerWidth - left;
   const top = Math.floor((height - innerHeight) / 2);
-  const bottom = height - innerHeight - top;
-
-  await sharp(source)
+  const tileSourceWidth = Math.min(metadata.width, Math.round(metadata.height * .55));
+  const tileSourceHeight = Math.min(metadata.height, Math.round(metadata.height * .45));
+  const tileLeft = Math.floor((metadata.width - tileSourceWidth) / 2);
+  const tileTop = Math.floor((metadata.height - tileSourceHeight) / 2);
+  const paperTile = await sharp(source)
+    .extract({ left: tileLeft, top: tileTop, width: tileSourceWidth, height: tileSourceHeight })
+    .resize(Math.max(1, Math.round(tileSourceWidth * scale)), Math.max(1, Math.round(tileSourceHeight * scale)), { fit: "fill" })
+    .png()
+    .toBuffer();
+  const background = await sharp({
+    create: { width, height, channels: 3, background: { r: 218, g: 242, b: 231 } }
+  })
+    .composite([{ input: paperTile, tile: true }])
+    .png()
+    .toBuffer();
+  const art = await sharp(source)
     .resize(innerWidth, innerHeight, { fit: "fill" })
-    .extend({ top, right, bottom, left, extendWith: "copy" })
+    .png()
+    .toBuffer();
+  const leftWidth = Math.floor(innerWidth / 2);
+  const rightWidth = innerWidth - leftWidth;
+  const sideInset = Math.round(width * .062);
+  const rightLeft = width - sideInset - rightWidth;
+  const gapLeft = sideInset + leftWidth;
+  const gapWidth = rightLeft - gapLeft;
+  const bridgeHeight = Math.max(1, Math.round(height * .11));
+  const bridgeSampleWidth = Math.min(4, innerWidth);
+  const bridgeLeft = Math.max(0, leftWidth - Math.ceil(bridgeSampleWidth / 2));
+  const leftArt = await sharp(art)
+    .extract({ left: 0, top: 0, width: leftWidth, height: innerHeight })
+    .png()
+    .toBuffer();
+  const rightArt = await sharp(art)
+    .extract({ left: leftWidth, top: 0, width: rightWidth, height: innerHeight })
+    .png()
+    .toBuffer();
+  const topBridge = await sharp(art)
+    .extract({ left: bridgeLeft, top: 0, width: bridgeSampleWidth, height: bridgeHeight })
+    .resize(gapWidth, bridgeHeight, { fit: "fill" })
+    .png()
+    .toBuffer();
+  const bottomBridge = await sharp(art)
+    .extract({ left: bridgeLeft, top: innerHeight - bridgeHeight, width: bridgeSampleWidth, height: bridgeHeight })
+    .resize(gapWidth, bridgeHeight, { fit: "fill" })
+    .png()
+    .toBuffer();
+
+  await sharp(background)
+    .composite([
+      { input: leftArt, left: sideInset, top },
+      { input: rightArt, left: rightLeft, top },
+      { input: topBridge, left: gapLeft, top },
+      { input: bottomBridge, left: gapLeft, top: top + innerHeight - bridgeHeight }
+    ])
     .png({ compressionLevel: 9 })
     .toFile(join(outputRoot, `${name}.png`));
 };

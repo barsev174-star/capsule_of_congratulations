@@ -2,15 +2,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { startCardFromShowcaseAction } from "@/app/home-actions";
-import type {
-  NormalizedRect,
-  TemplateDecorLayer,
-  TemplateProfile,
-  UniversalPhotoFrame,
-  UniversalTemplateBlockId
+import { useScrollReveal } from "@/components/scroll-reveal/scroll-reveal";
+import {
+  normalizedRectOverflows,
+  type NormalizedRect,
+  type TemplateDecorLayer,
+  type TemplateProfile,
+  type UniversalPhotoFrame,
+  type UniversalTemplateBlockId
 } from "@/lib/templates/profile";
 import {
   formatUniversalEventDate,
@@ -122,13 +124,25 @@ function SectionSurface({
   const underlay = isBare ? undefined : profile.assets.sections[id];
   const surfaceColor = profile.colors.surfaces[id] ?? profile.colors.surface;
   const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
+  const revealProps = useScrollReveal<HTMLElement>({
+    disabled: !profile.motion?.revealSections
+  });
+  const hasOverflowDecor = profile.assets.decor.some((layer) =>
+    layer.anchor === id &&
+    getDecorVisibility(layer, viewport) &&
+    layer.asset.src.startsWith("/") &&
+    normalizedRectOverflows(layer.rect)
+  );
 
   return (
     <section
+      {...revealProps}
       className={`${styles.section} ${styles[id]} ${isBare ? styles.bareSection : ""} ${className}`.trim()}
       data-universal-block={dataBlockId}
       data-section-presentation={isBare ? "bare" : "surface"}
       data-underlay-preset={underlay?.preset}
+      data-decor-overflow={hasOverflowDecor ? "visible" : undefined}
+      data-motion-section={profile.motion?.revealSections ? "true" : undefined}
       style={{
         "--uv1-section-surface": surfaceColor,
         "--uv1-safe-top": safeInsets ? `${safeInsets.top * 100}cqw` : "0px",
@@ -149,18 +163,33 @@ function UniversalPhoto({
   photo,
   frame,
   priority = false,
-  className = ""
+  className = "",
+  onOpen
 }: {
   photo: UniversalTemplatePhoto;
   frame: UniversalPhotoFrame;
   priority?: boolean;
   className?: string;
+  onOpen?: (photoId: string, trigger: HTMLButtonElement) => void;
 }) {
   const framePreset = getUniversalPhotoFramePreset(frame.preset);
   const captionStyle = {
     ...normalizedRectStyle(framePreset.captionArea),
     "--uv1-caption-scale": frame.caption.minScale
   } as CSSProperties;
+  const apertureStyle = normalizedRectStyle(framePreset.aperture);
+  const photoImage = <Image
+    src={photo.src}
+    alt={photo.alt}
+    fill
+    priority={priority}
+    sizes="(max-width: 640px) 88vw, 42vw"
+    style={{
+      objectFit: "cover",
+      objectPosition: `${photo.crop.x * 100}% ${photo.crop.y * 100}%`,
+      transform: `scale(${photo.crop.zoom})`
+    }}
+  />;
 
   return (
     <figure
@@ -169,20 +198,19 @@ function UniversalPhoto({
       data-photo-frame
     >
       {frame.base ? <Image className={styles.frameBase} src={frame.base.src} alt="" fill sizes="40vw" aria-hidden="true" /> : null}
-      <span className={styles.photoAperture} style={normalizedRectStyle(framePreset.aperture)} data-photo-aperture>
-        <Image
-          src={photo.src}
-          alt={photo.alt}
-          fill
-          priority={priority}
-          sizes="(max-width: 640px) 88vw, 42vw"
-          style={{
-            objectFit: "cover",
-            objectPosition: `${photo.crop.x * 100}% ${photo.crop.y * 100}%`,
-            transform: `scale(${photo.crop.zoom})`
-          }}
-        />
-      </span>
+      {onOpen ? (
+        <button
+          type="button"
+          className={styles.photoAperture}
+          style={apertureStyle}
+          data-photo-aperture
+          data-photo-open
+          aria-label={`Открыть фотографию: ${photo.caption}`}
+          onClick={(event) => onOpen(photo.id, event.currentTarget)}
+        >
+          {photoImage}
+        </button>
+      ) : <span className={styles.photoAperture} style={apertureStyle} data-photo-aperture>{photoImage}</span>}
       {frame.overlay ? <Image className={styles.frameOverlay} src={frame.overlay.src} alt="" fill sizes="40vw" aria-hidden="true" /> : null}
       <figcaption
         className={`${styles.photoCaption} ${styles[`caption${frame.caption.align[0].toUpperCase()}${frame.caption.align.slice(1)}`]} ${frame.caption.fontToken === "handwritten" ? styles.handwrittenCaption : ""}`.trim()}
@@ -274,7 +302,7 @@ function AllMessagesDialog({
 
   if (!open) return null;
   return createPortal(
-    <div className={styles.dialogBackdrop} role="presentation" onMouseDown={(event) => {
+    <div className={styles.dialogBackdrop} data-template-id={profile.id} data-motion-preset={profile.motion?.preset ?? "calm"} role="presentation" onMouseDown={(event) => {
       if (event.target === event.currentTarget) onClose();
     }} style={dialogTheme}>
       <section className={styles.messagesDialog} role="dialog" aria-modal="true" aria-labelledby={titleId}>
@@ -286,7 +314,120 @@ function AllMessagesDialog({
   );
 }
 
-function MessagesBlock({ profile, model }: { profile: TemplateProfile; model: UniversalTemplateViewModel }) {
+function PhotoViewerDialog({
+  activePhotoId,
+  photos,
+  profile,
+  viewport,
+  onClose,
+  onSelect
+}: {
+  activePhotoId: string | null;
+  photos: readonly UniversalTemplatePhoto[];
+  profile: TemplateProfile;
+  viewport: UniversalTemplateViewport;
+  onClose: () => void;
+  onSelect: (photoId: string) => void;
+}) {
+  const titleId = useId();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const pointerStartXRef = useRef<number | null>(null);
+  const activeIndex = photos.findIndex((photo) => photo.id === activePhotoId);
+  const activePhoto = activeIndex >= 0 ? photos[activeIndex] : null;
+  const dialogTheme = {
+    "--uv1-page": profile.colors.page,
+    "--uv1-text": profile.colors.text,
+    "--uv1-muted": profile.colors.muted,
+    "--uv1-accent": profile.colors.accent,
+    "--uv1-surface": profile.colors.surface,
+    "--uv1-heading-font": profile.typography.heading.family,
+    "--uv1-body-font": profile.typography.body.family
+  } as CSSProperties;
+  const selectOffset = (offset: number) => {
+    if (photos.length < 2 || activeIndex < 0) return;
+    const nextIndex = (activeIndex + offset + photos.length) % photos.length;
+    onSelect(photos[nextIndex].id);
+  };
+
+  useEffect(() => {
+    if (!activePhoto) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus({ preventScroll: true });
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+      if (event.key === "ArrowLeft" && photos.length > 1) {
+        event.preventDefault();
+        onSelect(photos[(activeIndex - 1 + photos.length) % photos.length].id);
+      }
+      if (event.key === "ArrowRight" && photos.length > 1) {
+        event.preventDefault();
+        onSelect(photos[(activeIndex + 1) % photos.length].id);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [activeIndex, activePhoto, onClose, onSelect, photos]);
+
+  if (!activePhoto) return null;
+  return createPortal(
+    <div
+      className={styles.photoDialogBackdrop}
+      data-template-id={profile.id}
+      data-motion-preset={profile.motion?.preset ?? "calm"}
+      data-viewport={viewport}
+      role="presentation"
+      style={dialogTheme}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section className={styles.photoDialog} role="dialog" aria-modal="true" aria-labelledby={titleId} data-photo-viewer>
+        <header>
+          <div><span>Фотография</span><h2 id={titleId} aria-live="polite">{activePhoto.caption}</h2></div>
+          <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Закрыть просмотр фотографии">×</button>
+        </header>
+        <div
+          className={styles.photoDialogStage}
+          onPointerDown={(event) => {
+            if (event.pointerType === "touch" || event.pointerType === "pen") pointerStartXRef.current = event.clientX;
+          }}
+          onPointerCancel={() => { pointerStartXRef.current = null; }}
+          onPointerUp={(event) => {
+            const startX = pointerStartXRef.current;
+            pointerStartXRef.current = null;
+            if (startX === null || photos.length < 2) return;
+            const distance = event.clientX - startX;
+            if (Math.abs(distance) >= 48) selectOffset(distance < 0 ? 1 : -1);
+          }}
+        >
+          <Image src={activePhoto.src} alt={activePhoto.alt} fill sizes="(max-width: 640px) 100vw, 88vw" priority style={{ objectFit: "contain" }} />
+        </div>
+        <footer>
+          <span>{activeIndex + 1} из {photos.length}</span>
+          {photos.length > 1 ? <div>
+            <button type="button" onClick={() => selectOffset(-1)} aria-label="Предыдущая фотография">‹</button>
+            <button type="button" onClick={() => selectOffset(1)} aria-label="Следующая фотография">›</button>
+          </div> : null}
+        </footer>
+      </section>
+    </div>,
+    document.body
+  );
+}
+
+function MessagesBlock({
+  profile,
+  model,
+  onPhotoOpen
+}: {
+  profile: TemplateProfile;
+  model: UniversalTemplateViewModel;
+  onPhotoOpen?: (photoId: string, trigger: HTMLButtonElement) => void;
+}) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const dialogTriggerRef = useRef<HTMLButtonElement | null>(null);
   const scrollPositionRef = useRef(0);
@@ -336,7 +477,7 @@ function MessagesBlock({ profile, model }: { profile: TemplateProfile; model: Un
           "--uv1-message-stack-height": `${visibleCardCount * layoutPreset.geometry.messageCardHeight + (visibleCardCount - 1) * layoutPreset.geometry.messageGap}px`
         } as CSSProperties}
       >
-        {hasMedia ? <div className={styles.messagePhotoGrid}>{model.messagePhotos.map((photo, index) => {
+        {hasMedia ? <div className={styles.messagePhotoGrid} data-motion-stagger>{model.messagePhotos.map((photo, index) => {
           const usePortraitFrame = layoutRule.photoFrame === "portrait";
           return <UniversalPhoto
             key={photo.id}
@@ -344,9 +485,10 @@ function MessagesBlock({ profile, model }: { profile: TemplateProfile; model: Un
             photo={photo}
             frame={usePortraitFrame ? profile.assets.photoFrames.messagePortrait : profile.assets.photoFrames.messageLandscape}
             priority={index === 0}
+            onOpen={onPhotoOpen}
           />;
         })}</div> : null}
-        <div className={styles.messageGrid} data-visible-card-count={visibleCardCount}>{visibleContributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} />)}</div>
+        <div className={styles.messageGrid} data-visible-card-count={visibleCardCount} data-motion-stagger>{visibleContributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} />)}</div>
       </div>
       <button
         type="button"
@@ -363,17 +505,25 @@ function MessagesBlock({ profile, model }: { profile: TemplateProfile; model: Un
   );
 }
 
-function MemoriesBlock({ profile, model }: { profile: TemplateProfile; model: UniversalTemplateViewModel }) {
+function MemoriesBlock({
+  profile,
+  model,
+  onPhotoOpen
+}: {
+  profile: TemplateProfile;
+  model: UniversalTemplateViewModel;
+  onPhotoOpen?: (photoId: string, trigger: HTMLButtonElement) => void;
+}) {
   const [primary, second, third] = model.memoryPhotos;
   if (!primary || !second || !third) return null;
 
   return (
     <div className={styles.memoriesLayout} data-memories-layout="route-strip">
-      <div className={styles.memoriesPhotos} data-memory-photo-row>
-        <UniversalPhoto className={styles.memoryPrimary} photo={primary} frame={profile.assets.photoFrames.memory} priority />
+      <div className={styles.memoriesPhotos} data-memory-photo-row data-motion-stagger>
+        <UniversalPhoto className={styles.memoryPrimary} photo={primary} frame={profile.assets.photoFrames.memory} priority onOpen={onPhotoOpen} />
         <div className={styles.memoriesIntro}><h2>{model.memoryTitle}</h2><p>{model.memoryDescription}</p></div>
-        <UniversalPhoto className={styles.memorySecondary} photo={second} frame={profile.assets.photoFrames.memory} />
-        <UniversalPhoto className={styles.memoryTertiary} photo={third} frame={profile.assets.photoFrames.memory} />
+        <UniversalPhoto className={styles.memorySecondary} photo={second} frame={profile.assets.photoFrames.memory} onOpen={onPhotoOpen} />
+        <UniversalPhoto className={styles.memoryTertiary} photo={third} frame={profile.assets.photoFrames.memory} onOpen={onPhotoOpen} />
       </div>
     </div>
   );
@@ -435,6 +585,21 @@ export function UniversalTemplateCard({
   const photoCount = surface === "public" ? model.publicPhotoCount : model.messagePhotos.length;
   const resolvedActionContext = actionContext ?? (surface === "private" ? "private" : "demo");
   const recipientNameTier = getUniversalRecipientNameTier(model.recipientName);
+  const photoViewerEnabled = profile.motion?.photoViewer ?? false;
+  const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
+  const photoTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const viewerPhotos = useMemo(() => {
+    const photos = surface === "public" ? model.memoryPhotos : [...model.messagePhotos, ...model.memoryPhotos];
+    return Array.from(new Map(photos.map((photo) => [photo.id, photo])).values());
+  }, [model.memoryPhotos, model.messagePhotos, surface]);
+  const openPhotoViewer = useCallback((photoId: string, trigger: HTMLButtonElement) => {
+    photoTriggerRef.current = trigger;
+    setActivePhotoId(photoId);
+  }, [setActivePhotoId]);
+  const closePhotoViewer = useCallback(() => {
+    setActivePhotoId(null);
+    window.requestAnimationFrame(() => photoTriggerRef.current?.focus({ preventScroll: true }));
+  }, [setActivePhotoId]);
   const rootStyle = {
     "--uv1-page": profile.colors.page,
     "--uv1-text": profile.colors.text,
@@ -492,6 +657,8 @@ export function UniversalTemplateCard({
       data-layout-preset={profile.layoutPreset}
       data-surface={surface}
       data-viewport={viewport}
+      data-motion-preset={profile.motion?.preset ?? "calm"}
+      data-photo-viewer-enabled={photoViewerEnabled ? "true" : undefined}
       style={rootStyle}
     >
       {profile.assets.page ? <span className={styles.pageAsset} aria-hidden="true" style={{ backgroundImage: `url(${profile.assets.page.src})` }} /> : null}
@@ -522,19 +689,19 @@ export function UniversalTemplateCard({
           </SectionSurface>;
 
           if (block === "qualities") return <SectionSurface key={block} id="qualities" profile={profile} viewport={viewport}>
-            <h2>За что тебя ценят</h2><div className={styles.qualitiesGrid}>{model.qualities.map((quality, index) => {
+            <h2>За что тебя ценят</h2><div className={styles.qualitiesGrid} data-motion-stagger>{model.qualities.map((quality, index) => {
               const card = profile.assets.qualityCards[index % Math.max(1, profile.assets.qualityCards.length)];
               const textArea = card ? getUniversalTextCardPreset(card.preset).textArea : null;
               return <article key={`${quality}-${index}`} className={styles.qualityCard} data-text-card>{card ? <Image src={card.asset.src} alt="" fill sizes="18vw" aria-hidden="true" /> : null}<strong data-safe-text data-text-boundary data-text-preset="quality-card" data-max-lines={universalTextCapacityPresets.qualityCard.maxLines} style={textArea ? normalizedRectStyle(textArea) : undefined} title={quality}><span>{quality}</span></strong></article>;
             })}</div>
           </SectionSurface>;
 
-          if (block === "messages") return <SectionSurface key={block} id="messages" profile={profile} viewport={viewport}><MessagesBlock profile={profile} model={model} /></SectionSurface>;
+          if (block === "messages") return <SectionSurface key={block} id="messages" profile={profile} viewport={viewport}><MessagesBlock profile={profile} model={model} onPhotoOpen={photoViewerEnabled ? openPhotoViewer : undefined} /></SectionSurface>;
 
-          if (block === "memories") return <SectionSurface key={block} id="memories" profile={profile} viewport={viewport}><MemoriesBlock profile={profile} model={model} /></SectionSurface>;
+          if (block === "memories") return <SectionSurface key={block} id="memories" profile={profile} viewport={viewport}><MemoriesBlock profile={profile} model={model} onPhotoOpen={photoViewerEnabled ? openPhotoViewer : undefined} /></SectionSurface>;
 
           if (block === "quotes") return <SectionSurface key={block} id="quotes" profile={profile} viewport={viewport}>
-            <h2>Лучшие фразы</h2><div className={styles.quotesGrid}>{quotes.slice(0, 3).map((quote, index) => {
+            <h2>Лучшие фразы</h2><div className={styles.quotesGrid} data-motion-stagger>{quotes.slice(0, 3).map((quote, index) => {
               const card = profile.assets.quoteCards[index % Math.max(1, profile.assets.quoteCards.length)];
               const textArea = card ? getUniversalTextCardPreset(card.preset).textArea : null;
               const quoteStyle = {
@@ -550,6 +717,14 @@ export function UniversalTemplateCard({
           return <SectionSurface key={block} id="closing" dataBlockId="public-note" profile={profile} viewport={viewport} className={`${styles.closingSection} ${styles.publicNote}`}><h2>В полной открытке — ещё больше тепла</h2><p>Личные поздравления и важные воспоминания бережно сохранены только для получателя.</p><ClosingActions context={resolvedActionContext} publicVersionHref={publicVersionHref} /><ClosingBrand /></SectionSurface>;
         })}
       </div>
+      {photoViewerEnabled ? <PhotoViewerDialog
+        activePhotoId={activePhotoId}
+        photos={viewerPhotos}
+        profile={profile}
+        viewport={viewport}
+        onClose={closePhotoViewer}
+        onSelect={setActivePhotoId}
+      /> : null}
     </main>
   );
 }

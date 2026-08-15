@@ -230,12 +230,27 @@ defineTemplate({
   typography: { heading, body, handwritten },
   colors: { page, text, muted, accent, surfaces },
   intro: { surface, text, accent, mark, pattern },
+  motion: { preset: "calm" | "playful", revealSections, photoViewer },
   public: { blocks: ["hero", "qualities", "memories", "quotes"] },
   export: { profile: "universal-export-v1" },
   performance: { networkBudget, decodedMemoryBudget },
   demo: { fixture: "full-card-default" }
 });
 ```
+
+### Motion-контракт
+
+`motion` — необязательная декларативная часть `TemplateProfile`. Она не содержит CSS, callbacks или произвольные сценарии и поддерживает только:
+
+- `preset: "calm" | "playful"` — интенсивность общей motion-системы;
+- `revealSections` — одноразовое появление секций и последовательное появление карточек через общий `IntersectionObserver`;
+- `photoViewer` — интерактивное окно фотографии и полноэкранный просмотр.
+
+Общий web-renderer применяет одинаковую семантику движения ко всем профилям: desktop использует lift, тень и ограниченный zoom фотографии; mobile — одноразовый reveal и tactile press только для реально интерактивных элементов. `playful` допускает немного большую амплитуду и детерминированный микроповорот карточек, `calm` исключает подпрыгивание и остаётся визуально сдержанным. Постоянно движущийся декор запрещён.
+
+Фотопросмотр открывается только при `photoViewer: true`, сохраняет подпись, поддерживает `Escape`, стрелки клавиатуры, экранные кнопки и свайп, блокирует прокрутку фона и возвращает фокус на исходную фотографию. Публичная поверхность строит галерею только из разрешённых публичных фотографий.
+
+`prefers-reduced-motion: reduce` оставляет контент сразу видимым и отключает reveal, lift, zoom, поворот и tactile scale. Export-renderer остаётся полностью статичным: motion-профиль влияет только на web-просмотр и не меняет Story/Post/A4.
 
 ## 12. Завершение этапа 1
 

@@ -10,11 +10,11 @@
 }
 
 :global([data-reveal="fade-up"]) {
-  transform: translateY(28px);
+  transform: translateY(var(--reveal-distance, 28px));
 }
 
 :global([data-reveal="fade-down"]) {
-  transform: translateY(-18px);
+  transform: translateY(calc(var(--reveal-distance, 18px) * -1));
 }
 
 :global([data-reveal="slide-left"]) {
@@ -42,7 +42,7 @@
 
 :global([data-reveal="stagger"]) > * {
   opacity: 0;
-  transform: translateY(28px);
+  transform: translateY(var(--reveal-distance, 28px));
   transition:
     opacity var(--reveal-duration, var(--motion-normal, 480ms)) var(--motion-ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
     transform var(--reveal-duration, var(--motion-normal, 480ms)) var(--motion-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
@@ -67,7 +67,7 @@
   /* No horizontal sweeps on mobile: side slides degrade to fade-up. */
   :global([data-reveal="slide-left"]),
   :global([data-reveal="slide-right"]) {
-    transform: translateY(28px);
+    transform: translateY(var(--reveal-distance, 28px));
   }
 
   /* Must come after the slide rules above: revealed elements settle. */

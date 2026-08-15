@@ -15,7 +15,9 @@ type RevealOptions = {
   variant?: RevealVariant;
   delay?: number;
   duration?: number;
+  distance?: number;
   step?: number;
+  disabled?: boolean;
   onReveal?: () => void;
 };
 
@@ -42,7 +44,7 @@ const getSharedObserver = () => {
 };
 
 const isReducedMotion = () =>
-  typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
  * Hook: returns props to spread onto an element (`{...reveal}`) and reveals it
@@ -50,7 +52,7 @@ const isReducedMotion = () =>
  * IntersectionObserver is shared by all reveal elements on the page.
  */
 export function useScrollReveal<T extends HTMLElement>(options?: RevealOptions) {
-  const { variant = "fade-up", delay = 0, duration, step, onReveal } = options ?? {};
+  const { variant = "fade-up", delay = 0, duration, distance, step, disabled = false, onReveal } = options ?? {};
   const onRevealRef = useRef(onReveal);
 
   useEffect(() => {
@@ -60,12 +62,18 @@ export function useScrollReveal<T extends HTMLElement>(options?: RevealOptions) 
   const ref = useCallback(
     (element: T | null) => {
       if (!element) return undefined;
+      if (disabled) return undefined;
       if (isReducedMotion()) {
         onRevealRef.current?.();
         return undefined;
       }
       element.setAttribute("data-reveal", variant);
       const callback = () => onRevealRef.current?.();
+      if (typeof IntersectionObserver === "undefined") {
+        element.setAttribute("data-reveal-visible", "true");
+        callback();
+        return undefined;
+      }
       revealCallbacks.set(element, callback);
       getSharedObserver().observe(element);
       return () => {
@@ -73,16 +81,17 @@ export function useScrollReveal<T extends HTMLElement>(options?: RevealOptions) 
         sharedObserver?.unobserve(element);
       };
     },
-    [variant]
+    [disabled, variant]
   );
 
   const style = useMemo(() => {
     const value: Record<string, string> = {};
     if (delay) value["--reveal-delay"] = `${delay}ms`;
     if (duration) value["--reveal-duration"] = `${duration}ms`;
+    if (distance) value["--reveal-distance"] = `${distance}px`;
     if (step) value["--reveal-step"] = `${step}ms`;
     return value as CSSProperties;
-  }, [delay, duration, step]);
+  }, [delay, distance, duration, step]);
 
   return useMemo(() => ({ ref, style }), [ref, style]);
 }

@@ -61,6 +61,21 @@ describe("UniversalTemplateCard", () => {
     expect(container).not.toHaveTextContent("Собрано из поздравлений");
   });
 
+  it("keeps overflowing decor attached to its semantic section", () => {
+    const overflowProfile = structuredClone(profile);
+    overflowProfile.assets.decor[0] = {
+      ...overflowProfile.assets.decor[0],
+      anchor: "summary",
+      rect: { x: -0.1, y: 0.2, width: 0.2, height: 0.3 }
+    };
+    const model = buildUniversalFixtureViewModel("full-card-default", { templateId: profile.id });
+    const { container } = render(<UniversalTemplateCard profile={overflowProfile} model={model} viewport="desktop" />);
+    const summary = container.querySelector('[data-universal-block="summary"]');
+
+    expect(summary).toHaveAttribute("data-decor-overflow", "visible");
+    expect(summary?.querySelector(`[data-decor-layer="${overflowProfile.assets.decor[0].id}"]`)).toBeInTheDocument();
+  });
+
   it.each(universalMessageScenarios)("implements the %s greeting composition", (scenario) => {
     const model = buildUniversalFixtureViewModel("full-card-default", {
       templateId: profile.id,
@@ -221,6 +236,37 @@ describe("UniversalTemplateCard", () => {
 
     expect(screen.getByRole("link", { name: "Создано в Slovesto" })).toHaveAttribute("href", "/");
     expect(screen.getByText("Место, где слова становятся подарком")).toBeInTheDocument();
+  });
+
+  it("reveals motion-enabled sections and opens the accessible photo viewer", async () => {
+    const user = userEvent.setup();
+    const motionProfile = structuredClone(profile);
+    motionProfile.motion = { preset: "playful", revealSections: true, photoViewer: true };
+    const model = buildUniversalFixtureViewModel("full-card-default", {
+      templateId: motionProfile.id,
+      scenario: "landscape-trio",
+      photoCount: 3
+    });
+    const { container } = render(<UniversalTemplateCard profile={motionProfile} model={model} />);
+    const page = container.querySelector("[data-template-family=\"universal-v1\"]");
+    const hero = container.querySelector("[data-universal-block=\"hero\"]");
+    const trigger = screen.getAllByRole("button", { name: /Открыть фотографию:/ })[0];
+    const uniquePhotoCount = new Set([...model.messagePhotos, ...model.memoryPhotos].map((photo) => photo.id)).size;
+
+    expect(page).toHaveAttribute("data-motion-preset", "playful");
+    expect(hero).toHaveAttribute("data-motion-section", "true");
+    expect(hero).toHaveAttribute("data-reveal-visible", "true");
+
+    await user.click(trigger);
+    const dialog = screen.getByRole("dialog", { name: model.messagePhotos[0].caption });
+    expect(dialog).toHaveAttribute("data-photo-viewer");
+    expect(within(dialog).getByText(`1 из ${uniquePhotoCount}`)).toBeInTheDocument();
+
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("dialog", { name: model.messagePhotos[1].caption })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await waitFor(() => expect(trigger).toHaveFocus());
   });
 
   it("keeps the opening preview lightweight and profile-driven", () => {

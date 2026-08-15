@@ -37,6 +37,9 @@ describe("school-scrapbook studio template", () => {
     ]);
     expect(school_scrapbookProfile.assets.photoFrames.messagePortrait.base?.src).toContain("photo-frame-portrait-v3-base.webp");
     expect(school_scrapbookProfile.assets.photoFrames.memory.base?.src).toContain("photo-frame-landscape-v3-base.webp");
+    expect(school_scrapbookProfile.assets.photoFrames.messagePortrait.caption.minScale).toBe(0.7);
+    expect(school_scrapbookProfile.assets.photoFrames.messageLandscape.caption.minScale).toBe(0.7);
+    expect(school_scrapbookProfile.assets.photoFrames.memory.caption.minScale).toBe(0.7);
   });
 
   it("uses distinct proportional surfaces for the featured greeting, messages, and closing", () => {
@@ -56,6 +59,45 @@ describe("school-scrapbook studio template", () => {
       asset: expect.objectContaining({ src: "/templates/school-scrapbook/section-closing-finale-desktop-v3.webp" }),
       mobileAsset: expect.objectContaining({ src: "/templates/school-scrapbook/section-closing-finale-mobile-v3.webp" })
     }));
-    expect(school_scrapbookProfile.assets.sections.memories?.preset).toBe("adaptive-frame");
+    expect(school_scrapbookProfile.assets.sections.memories).toEqual(expect.objectContaining({
+      preset: "adaptive-frame",
+      safeArea: { x: 0.04, y: 0.075, width: 0.92, height: 0.85 }
+    }));
+  });
+
+  it("anchors colorful decor to the blocks it must follow", () => {
+    expect(school_scrapbookProfile.assets.decor.map(({ id, anchor, visibleOn }) => ({ id, anchor, visibleOn }))).toEqual([
+      { id: "hero-globe-cluster", anchor: "hero", visibleOn: ["desktop", "export"] },
+      { id: "hero-backpack-cluster", anchor: "hero", visibleOn: ["desktop", "export"] },
+      { id: "summary-blue-rays-left", anchor: "summary", visibleOn: ["desktop", "export"] },
+      { id: "summary-blue-rays-right", anchor: "summary", visibleOn: ["desktop", "export"] },
+      { id: "closing-grade-5plus", anchor: "closing", visibleOn: ["desktop", "export"] },
+      { id: "closing-student-doodle", anchor: "closing", visibleOn: ["desktop", "export"] },
+      { id: "closing-student-girl-doodle", anchor: "closing", visibleOn: ["desktop", "export"] }
+    ]);
+  });
+
+  it("keeps the positions exported from the template studio", () => {
+    expect(Object.fromEntries(school_scrapbookProfile.assets.decor.map(({ id, rect }) => [id, rect]))).toEqual({
+      "hero-globe-cluster": { x: -0.025, y: 0.125, width: 0.32, height: 0.95 },
+      "hero-backpack-cluster": { x: 0.595, y: 0.27, width: 0.47, height: 0.785 },
+      "summary-blue-rays-left": { x: -0.14, y: 0.245, width: 0.2, height: 0.585 },
+      "summary-blue-rays-right": { x: 0.93, y: 0.27, width: 0.24, height: 0.585 },
+      "closing-grade-5plus": { x: 0.74, y: 0.075, width: 0.275, height: 0.545 },
+      "closing-student-doodle": { x: 0.19, y: 0.295, width: 0.09, height: 0.54 },
+      "closing-student-girl-doodle": { x: 0.7, y: 0.295, width: 0.084, height: 0.54 }
+    });
+  });
+
+  it("uses the school-blue accent for template actions", () => {
+    expect(school_scrapbookProfile.colors.accent).toBe("#1859bd");
+  });
+
+  it("uses playful motion with section reveals and photo viewing", () => {
+    expect(school_scrapbookProfile.motion).toEqual({
+      preset: "playful",
+      revealSections: true,
+      photoViewer: true
+    });
   });
 });

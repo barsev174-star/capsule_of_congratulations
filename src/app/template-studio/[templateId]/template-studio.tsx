@@ -130,17 +130,21 @@ function RectEditor({
   label,
   value,
   step,
+  allowOverflow = false,
   onChange
 }: {
   label: string;
   value: NormalizedRect;
   step: number;
+  allowOverflow?: boolean;
   onChange: (value: NormalizedRect) => void;
 }) {
   return <fieldset className={styles.rectEditor}><legend>{label}</legend><div className={styles.fieldGrid}>
-    {(["x", "y", "width", "height"] as const).map((key) => <label key={key}><span>{key}</span><input
+    {(["x", "y", "width", "height"] as const).map((key) => {
+      const minimum = allowOverflow && (key === "x" || key === "y") ? -1 : 0;
+      return <label key={key}><span>{key}</span><input
       type="number"
-      min="0"
+      min={minimum}
       max="1"
       step={step}
       value={value[key]}
@@ -149,10 +153,11 @@ function RectEditor({
         if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
         event.preventDefault();
         const direction = event.key === "ArrowUp" ? 1 : -1;
-        const nextValue = Math.min(1, Math.max(0, Number((value[key] + direction * step).toFixed(3))));
+        const nextValue = Math.min(1, Math.max(minimum, Number((value[key] + direction * step).toFixed(3))));
         onChange({ ...value, [key]: nextValue });
       }}
-    /></label>)}
+    /></label>;
+    })}
   </div></fieldset>;
 }
 
@@ -510,7 +515,7 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
               const preset = decorPlacementPresets.find((entry) => entry.id === event.target.value);
               if (preset) updateDecorLayer((layer) => { layer.anchor = preset.anchor; layer.rect = clone(preset.rect); });
             }}><option value="">Выберите позицию…</option>{decorPlacementPresets.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}</select></label>
-            <RectEditor label="Положение внутри привязки" value={selectedDecorLayer.rect} step={draft.inspector.gridStep} onChange={(value) => updateDecorLayer((layer) => { layer.rect = value; })} />
+            <RectEditor label="Положение относительно привязки" value={selectedDecorLayer.rect} step={draft.inspector.gridStep} allowOverflow onChange={(value) => updateDecorLayer((layer) => { layer.rect = value; })} />
             <div className={styles.fieldGrid}>
               <label><span>Прозрачность</span><input type="number" min="0" max="1" step="0.05" value={selectedDecorLayer.opacity ?? 1} onChange={(event) => updateDecorLayer((layer) => { layer.opacity = Number(event.target.value); })} /></label>
               <label><span>Поворот, °</span><input type="number" min="-360" max="360" step="1" value={selectedDecorLayer.rotation ?? 0} onChange={(event) => updateDecorLayer((layer) => { layer.rotation = Number(event.target.value); })} /></label>

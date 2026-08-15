@@ -36,6 +36,7 @@
 .sectionUnderlay {
   z-index: 0;
   overflow: hidden;
+  border-radius: inherit;
 }
 
 .sectionUnderlay [data-underlay-layer="mobile-variable-frame"] { display: none; }
@@ -66,6 +67,41 @@
     0 20px 46px rgba(0, 0, 0, 0.07);
 }
 .section { container-type: inline-size; }
+.section[data-decor-overflow="visible"] { overflow: visible; }
+
+.page[data-motion-preset="calm"],
+.dialogBackdrop[data-motion-preset="calm"],
+.photoDialogBackdrop[data-motion-preset="calm"] {
+  --uv1-motion-duration: 320ms;
+  --uv1-motion-step: 45ms;
+  --uv1-photo-hover-scale: 1.02;
+  --reveal-duration: 360ms;
+  --reveal-distance: 8px;
+}
+
+.page[data-motion-preset="playful"],
+.dialogBackdrop[data-motion-preset="playful"],
+.photoDialogBackdrop[data-motion-preset="playful"] {
+  --uv1-motion-duration: 400ms;
+  --uv1-motion-step: 55ms;
+  --uv1-photo-hover-scale: 1.035;
+  --reveal-duration: 420ms;
+  --reveal-distance: 12px;
+}
+
+@keyframes uv1-stagger-item-reveal {
+  from { opacity: 0; translate: 0 var(--reveal-distance, 10px); }
+}
+
+.section[data-motion-section="true"][data-reveal-visible="true"] [data-motion-stagger] > * {
+  animation: uv1-stagger-item-reveal var(--uv1-motion-duration) cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.section[data-motion-section="true"][data-reveal-visible="true"] [data-motion-stagger] > *:nth-child(2) { animation-delay: calc(1 * var(--uv1-motion-step)); }
+.section[data-motion-section="true"][data-reveal-visible="true"] [data-motion-stagger] > *:nth-child(3) { animation-delay: calc(2 * var(--uv1-motion-step)); }
+.section[data-motion-section="true"][data-reveal-visible="true"] [data-motion-stagger] > *:nth-child(4) { animation-delay: calc(3 * var(--uv1-motion-step)); }
+.section[data-motion-section="true"][data-reveal-visible="true"] [data-motion-stagger] > *:nth-child(5) { animation-delay: calc(4 * var(--uv1-motion-step)); }
+.section[data-motion-section="true"][data-reveal-visible="true"] [data-motion-stagger] > *:nth-child(6) { animation-delay: calc(5 * var(--uv1-motion-step)); }
 
 .bareSection {
   margin-bottom: calc(var(--uv1-section-gap) * 0.5);
@@ -244,6 +280,9 @@
   background: color-mix(in srgb, var(--uv1-accent) 8%, var(--uv1-surface));
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 7px 18px rgba(0, 0, 0, 0.06);
   text-align: center;
+  transition-property: translate, rotate, filter, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
 }
 
 .qualityCard img,
@@ -361,22 +400,24 @@
   border-radius: 20px;
   background: color-mix(in srgb, var(--uv1-surface) 94%, var(--uv1-accent));
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 7px 16px rgba(0, 0, 0, 0.05);
-  transition-property: box-shadow, translate;
-  transition-duration: 160ms;
+  transition-property: opacity, box-shadow, translate, rotate, filter;
+  transition-duration: 200ms;
   transition-timing-function: ease-out;
   scroll-snap-align: start;
 }
 
 .messageCardUnderlay { z-index: 0; }
 
-.page[data-template-id="school-scrapbook"] .messageCard {
+.page[data-template-id="school-scrapbook"] .messageCard,
+.dialogBackdrop[data-template-id="school-scrapbook"] .messageCard {
   overflow: hidden;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
 }
 
-.page[data-template-id="school-scrapbook"] .messageCardUnderlay {
+.page[data-template-id="school-scrapbook"] .messageCardUnderlay,
+.dialogBackdrop[data-template-id="school-scrapbook"] .messageCardUnderlay {
   transform: scale(1.065);
   transform-origin: center;
 }
@@ -397,6 +438,40 @@
     translate: 0 -2px;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.07), 0 12px 24px rgba(0, 0, 0, 0.08);
   }
+
+  .page[data-motion-preset] .photoFrame:hover {
+    translate: 0 -2px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 14px 30px rgba(0, 0, 0, 0.12);
+  }
+
+  .page[data-motion-preset="playful"] .photoFrame:hover { translate: 0 -3px; }
+  .page[data-photo-viewer-enabled="true"] .photoFrame:hover .photoAperture img { scale: var(--uv1-photo-hover-scale); }
+
+  .page[data-motion-preset] .qualityCard:hover,
+  .page[data-motion-preset] .quoteCard:hover {
+    translate: 0 -2px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.07), 0 12px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  .page[data-motion-preset="playful"] .qualityCard:hover,
+  .page[data-motion-preset="playful"] .quoteCard:hover {
+    filter: drop-shadow(0 8px 8px rgba(13, 61, 112, 0.14));
+  }
+
+  .page[data-motion-preset="playful"] .qualityCard:nth-child(odd):hover,
+  .page[data-motion-preset="playful"] .quoteCard:nth-child(odd):hover { rotate: -0.18deg; }
+  .page[data-motion-preset="playful"] .qualityCard:nth-child(even):hover,
+  .page[data-motion-preset="playful"] .quoteCard:nth-child(even):hover { rotate: 0.18deg; }
+
+  .page[data-motion-preset="playful"] .messageCard:hover,
+  .dialogBackdrop[data-motion-preset="playful"] .messageCard:hover {
+    translate: 0 -3px;
+    filter: drop-shadow(0 8px 8px rgba(13, 61, 112, 0.14));
+  }
+  .page[data-motion-preset="playful"] .messageCard:nth-child(odd):hover,
+  .dialogBackdrop[data-motion-preset="playful"] .messageCard:nth-child(odd):hover { rotate: -0.15deg; }
+  .page[data-motion-preset="playful"] .messageCard:nth-child(even):hover,
+  .dialogBackdrop[data-motion-preset="playful"] .messageCard:nth-child(even):hover { rotate: 0.15deg; }
 }
 
 .messageAuthor {
@@ -510,6 +585,9 @@
   border-radius: 20px;
   background: var(--uv1-surface);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.07), 0 10px 24px rgba(0, 0, 0, 0.08);
+  transition-property: opacity, translate, scale, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
 }
 
 .frameBase,
@@ -522,11 +600,17 @@
   z-index: 1;
   display: block;
   overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: transparent;
   outline: 1px solid rgba(0, 0, 0, 0.1);
   outline-offset: -1px;
 }
 
-.photoAperture img { transition-property: transform; transition-duration: 180ms; transition-timing-function: ease-out; }
+.photoAperture[data-photo-open] { cursor: zoom-in; }
+.photoAperture:focus-visible { outline: 3px solid var(--uv1-accent); outline-offset: 2px; }
+.photoAperture img { scale: 1; transition-property: scale; transition-duration: 200ms; transition-timing-function: ease-out; }
+.photoFrame:has(.photoAperture[data-photo-open]:active) { scale: 0.985; }
 
 .photoCaption {
   position: absolute;
@@ -625,6 +709,9 @@
   border-radius: 20px;
   background: color-mix(in srgb, var(--uv1-accent) 7%, var(--uv1-surface));
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 8px 20px rgba(0, 0, 0, 0.06);
+  transition-property: translate, rotate, filter, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
 }
 
 .quoteCard > span,
@@ -637,6 +724,14 @@
   text-wrap: balance;
 }
 
+.page[data-template-id="school-scrapbook"] .photoCaption {
+  padding-inline: 2.5%;
+}
+
+.page[data-template-id="school-scrapbook"] .handwrittenCaption {
+  line-height: 0.86;
+}
+
 .closingSection .sectionContent { display: grid; justify-items: center; min-height: var(--uv1-closing-height); align-content: center; text-align: center; }
 .closingSignature { max-width: 720px; margin: 0; font-family: var(--uv1-handwritten-font), cursive; font-size: clamp(22px, 2.5vw, var(--uv1-closing-font-max)); font-weight: var(--uv1-handwritten-weight); line-height: 1.2; white-space: pre-wrap; text-wrap: balance; }
 .closingActions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
@@ -647,9 +742,28 @@
 .closingActionPrimary:hover { border-color: #df5f2e; background: #df5f2e; }
 .closingActionSecondary { border: 1px solid #e9652f; color: #e9652f; background: #fff; }
 .closingActionSecondary:hover { background: #f7f8fa; }
+.page[data-template-id="school-scrapbook"] .closingActionPrimary {
+  border-color: var(--uv1-accent);
+  background: var(--uv1-accent);
+}
+.page[data-template-id="school-scrapbook"] .closingActionPrimary:hover {
+  border-color: color-mix(in srgb, var(--uv1-accent) 88%, #000);
+  background: color-mix(in srgb, var(--uv1-accent) 88%, #000);
+}
+.page[data-template-id="school-scrapbook"] .closingActionSecondary {
+  border-color: var(--uv1-accent);
+  color: var(--uv1-accent);
+  background: #fff;
+}
+.page[data-template-id="school-scrapbook"] .closingActionSecondary:hover {
+  background: color-mix(in srgb, var(--uv1-accent) 7%, #fff);
+}
 .closingBrand { display: grid; justify-items: center; margin-top: 8px; color: var(--uv1-muted); }
 .closingBrand a { display: inline-flex; min-height: 40px; align-items: center; padding-inline: 8px; color: inherit; font-size: 14px; font-weight: 700; text-underline-offset: 3px; }
 .closingBrand small { margin-top: -7px; font-size: 12px; line-height: 1.35; }
+.page[data-template-id="school-scrapbook"] .closingBrand { margin-top: 10px; }
+.page[data-template-id="school-scrapbook"] .closingBrand a { min-height: 42px; padding-inline: 10px; font-size: 16px; }
+.page[data-template-id="school-scrapbook"] .closingBrand small { margin-top: -5px; font-size: 14px; font-weight: 500; }
 
 .publicNote { color: var(--uv1-text); text-align: center; }
 .publicNote h2 { max-width: 760px; margin: 0; }
@@ -701,6 +815,84 @@
 .dialogMessages { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 18px; }
 .dialogMessages .messageCard { height: auto; min-height: 0; }
 .dialogMessages .messageCardContent > p { display: block; flex: none; overflow: visible; }
+
+.photoDialogBackdrop {
+  position: fixed;
+  z-index: 2100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  color: var(--uv1-text);
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(10px);
+  font-family: var(--uv1-body-font), var(--font-inter), Arial, sans-serif;
+}
+
+.photoDialog {
+  display: grid;
+  width: min(1120px, 100%);
+  height: min(880px, calc(100vh - 40px));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--uv1-surface);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.4);
+}
+
+.photoDialog > header,
+.photoDialog > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+}
+
+.photoDialog > header { border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
+.photoDialog > header div { min-width: 0; }
+.photoDialog > header span { color: var(--uv1-accent); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.photoDialog > header h2 { margin: 3px 0 0; overflow: hidden; font-family: var(--uv1-heading-font), sans-serif; font-size: clamp(18px, 2.4vw, 26px); line-height: 1.15; text-overflow: ellipsis; text-wrap: balance; }
+.photoDialog > header button,
+.photoDialog > footer button {
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  color: var(--uv1-text);
+  background: color-mix(in srgb, var(--uv1-text) 7%, transparent);
+  font: inherit;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition-property: scale, background-color;
+  transition-duration: 150ms;
+}
+.photoDialog > header button:active,
+.photoDialog > footer button:active { scale: 0.96; }
+
+.photoDialogStage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #111418;
+  touch-action: pan-y;
+  user-select: none;
+}
+.photoDialogStage img { object-position: center; }
+
+.photoDialog > footer { border-top: 1px solid rgba(0, 0, 0, 0.08); }
+.photoDialog > footer > span { color: var(--uv1-muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.photoDialog > footer > div { display: flex; gap: 8px; }
+
+.photoDialogBackdrop[data-viewport="mobile"] { padding: 10px; }
+.photoDialogBackdrop[data-viewport="mobile"] .photoDialog { height: calc(100vh - 20px); border-radius: 22px; }
+.photoDialogBackdrop[data-viewport="mobile"] .photoDialog > header,
+.photoDialogBackdrop[data-viewport="mobile"] .photoDialog > footer { padding: 12px 14px; }
 
 .underlayGuide,
 .textSafeGuide { position: absolute; z-index: 6; display: none; pointer-events: none; box-sizing: border-box; border: 1px dashed var(--uv1-accent); }
@@ -838,11 +1030,27 @@
   .page[data-viewport="auto"] .dialogMessages { grid-template-columns: 1fr; }
   .dialogBackdrop { padding: 10px; }
   .messagesDialog { max-height: calc(100vh - 20px); border-radius: 22px; }
+  .photoDialogBackdrop { padding: 10px; }
+  .photoDialog { height: calc(100vh - 20px); border-radius: 22px; }
+  .photoDialog > header,
+  .photoDialog > footer { padding: 12px 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .messageCard,
+  .qualityCard,
+  .quoteCard,
+  .photoFrame,
   .photoAperture img,
   .allMessagesButton,
-  .messagesDialog > header button { transition-duration: 0ms; }
+  .messagesDialog > header button,
+  .photoDialog button { transition-duration: 0ms; }
+
+  .section[data-motion-section="true"][data-reveal-visible="true"] [data-motion-stagger] > * { animation: none; }
+  .messageCard:hover,
+  .photoFrame:hover,
+  .qualityCard:hover,
+  .quoteCard:hover { translate: none; rotate: none; filter: none; }
+  .photoFrame:hover .photoAperture img,
+  .photoFrame:has(.photoAperture[data-photo-open]:active) { scale: 1; }
 }
