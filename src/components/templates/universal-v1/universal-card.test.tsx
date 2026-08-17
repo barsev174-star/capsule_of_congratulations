@@ -2,6 +2,8 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { universalMessageScenarios } from "@/lib/templates/fixtures";
+import type { CardBlockReadinessView } from "@/lib/manage/card-design-readiness";
+import { universalTemplateBlockOrder } from "@/lib/templates/profile";
 import { createTemplateStudioProfile } from "@/lib/templates/studio";
 import { getUniversalPhotoFramePreset } from "@/lib/templates/photo-frame-presets";
 import {
@@ -28,6 +30,7 @@ describe("UniversalTemplateCard", () => {
       "quotes",
       "closing"
     ]);
+    expect(screen.getByText(model.privateSignature)).toBeInTheDocument();
 
     rerender(<UniversalTemplateCard profile={profile} model={model} surface="public" />);
     expect(Array.from(container.querySelectorAll("[data-universal-block]"), (node) => node.getAttribute("data-universal-block"))).toEqual([
@@ -35,6 +38,70 @@ describe("UniversalTemplateCard", () => {
       "qualities",
       "memories",
       "quotes",
+      "public-note"
+    ]);
+  });
+
+  it("keeps enabled incomplete blocks in the private preview and hides only disabled blocks", () => {
+    const model = buildUniversalFixtureViewModel("minimal", {
+      templateId: profile.id,
+      optionalBlocks: false
+    });
+    const blockReadiness: CardBlockReadinessView[] = universalTemplateBlockOrder.map((blockId) => ({
+      blockId,
+      enabled: blockId !== "memories",
+      required: ["hero", "summary", "messages", "closing"].includes(blockId),
+      isLocked: ["hero", "summary", "messages", "closing"].includes(blockId),
+      status: blockId === "memories"
+        ? "DISABLED"
+        : blockId === "qualities"
+          ? "ACTION_REQUIRED"
+          : blockId === "quotes"
+            ? "WAITING_FOR_CONTENT"
+            : "READY",
+      title: blockId === "qualities" ? "Качества" : blockId === "quotes" ? "Лучшие фразы" : blockId,
+      description: "Описание блока",
+      statusLabel: "Требует настройки",
+      explanation: blockId === "qualities" ? "Качества нужно обновить." : "Нужно больше поздравлений.",
+      action: blockId === "qualities"
+        ? { label: "Обновить качества", target: "block-qualities", kind: "anchor" }
+        : undefined
+    }));
+    const { container, rerender } = render(
+      <UniversalTemplateCard
+        profile={profile}
+        model={model}
+        manageToken="manage-token"
+        blockReadiness={blockReadiness}
+      />
+    );
+
+    expect(Array.from(container.querySelectorAll("[data-universal-block]"), (node) => node.getAttribute("data-universal-block"))).toEqual([
+      "hero",
+      "summary",
+      "qualities",
+      "messages",
+      "quotes",
+      "closing"
+    ]);
+    expect(container.querySelector('[data-universal-block="qualities"]')).toHaveAttribute("data-block-readiness", "ACTION_REQUIRED");
+    expect(container.querySelector('[data-universal-block="quotes"]')).toHaveAttribute("data-block-readiness", "WAITING_FOR_CONTENT");
+    expect(screen.getByRole("link", { name: "Обновить качества" })).toHaveAttribute(
+      "href",
+      "/manage/manage-token#block-qualities"
+    );
+    expect(container.querySelector('[data-universal-block="memories"]')).not.toBeInTheDocument();
+
+    rerender(
+      <UniversalTemplateCard
+        profile={profile}
+        model={model}
+        surface="public"
+        blockReadiness={blockReadiness}
+      />
+    );
+    expect(Array.from(container.querySelectorAll("[data-universal-block]"), (node) => node.getAttribute("data-universal-block"))).toEqual([
+      "hero",
       "public-note"
     ]);
   });
@@ -132,6 +199,23 @@ describe("UniversalTemplateCard", () => {
     expect(caption.style.getPropertyValue("--uv1-caption-scale")).toBe(String(profile.assets.photoFrames.messagePortrait.caption.minScale));
   });
 
+  it("keeps an ordinary photo caption above the configured minimum scale", () => {
+    const model = buildUniversalFixtureViewModel("public-full", {
+      templateId: profile.id,
+      photoCount: 3
+    });
+    model.memoryPhotos[0] = {
+      ...model.memoryPhotos[0],
+      caption: "Самая тёплая прогулка этого года"
+    };
+    const { container } = render(<UniversalTemplateCard profile={profile} model={model} surface="public" />);
+    const caption = Array.from(container.querySelectorAll<HTMLElement>("figcaption"))
+      .find((node) => node.textContent === model.memoryPhotos[0].caption);
+
+    expect(Number(caption?.style.getPropertyValue("--uv1-caption-scale")))
+      .toBeGreaterThan(profile.assets.photoFrames.memory.caption.minScale);
+  });
+
   it("renders hard text-capacity boundaries independently of current text height", () => {
     const model = buildUniversalFixtureViewModel("full-card-default", {
       templateId: profile.id,
@@ -144,6 +228,19 @@ describe("UniversalTemplateCard", () => {
     expect(container.querySelector('[data-text-preset="message-card"]')).toHaveAttribute("data-max-lines", "5");
     expect(container.querySelector('[data-text-preset="photo-caption"]')).toHaveAttribute("data-max-lines", "2");
     expect(container.querySelectorAll("[data-text-boundary]").length).toBeGreaterThan(10);
+  });
+
+  it("puts a Russian first name and patronymic on separate hero lines", () => {
+    const model = buildUniversalFixtureViewModel("full-card-default", { templateId: profile.id });
+    model.recipientName = "Наталья Афанасьевна";
+    const { container, rerender } = render(<UniversalTemplateCard profile={profile} model={model} />);
+    const heading = container.querySelector("h1") as HTMLElement;
+
+    expect(Array.from(heading.children, (line) => line.textContent)).toEqual(["Наталья", "Афанасьевна"]);
+
+    model.recipientName = "Анна Иванова";
+    rerender(<UniversalTemplateCard profile={profile} model={model} />);
+    expect(Array.from((container.querySelector("h1") as HTMLElement).children, (line) => line.textContent)).toEqual(["Анна Иванова"]);
   });
 
   it("uses four greeting slots and three landscape frames for landscape-trio", () => {
@@ -289,15 +386,18 @@ describe("UniversalTemplateCard", () => {
   });
 
   it("keeps the opening preview lightweight and profile-driven", () => {
+    const introProfile = { ...profile, intro: { ...profile.intro, kicker: "Открытка" } };
     const { container } = render(
-      <UniversalTemplateIntroPreview profile={profile} recipientName="Александра" fromLabel="От команды" />
+      <UniversalTemplateIntroPreview profile={introProfile} recipientName="Александра" fromLabel="От команды" />
     );
     const intro = container.querySelector('[data-universal-intro="lightweight"]') as HTMLElement;
 
-    expect(intro).toHaveAttribute("data-template-id", profile.id);
+    expect(intro).toHaveAttribute("data-template-id", introProfile.id);
     expect(intro).toHaveTextContent("Александра");
-    expect(intro.innerHTML).toContain(profile.intro.mark?.src);
-    expect(intro.innerHTML).not.toContain(profile.assets.page?.src);
+    expect(intro).toHaveTextContent("Открытка");
+    expect(intro).not.toHaveTextContent("Открытка для");
+    expect(intro.innerHTML).toContain(introProfile.intro.mark?.src);
+    expect(intro.innerHTML).not.toContain(introProfile.assets.page?.src);
     expect(intro.querySelectorAll("img")).toHaveLength(1);
   });
 });

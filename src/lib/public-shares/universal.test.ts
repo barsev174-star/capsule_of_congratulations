@@ -92,4 +92,17 @@ describe("universal public share", () => {
     expect(partialModel.memoryPhotos).toEqual([]);
     expect(getUniversalRenderedBlocks(partialModel, "public")).not.toContain("memories");
   });
+
+  it("uses the two-line public header rule from the template profile", () => {
+    const configuredProfile = {
+      ...profile,
+      public: {
+        ...profile.public,
+        heroDescription: "Первая строка\nВторая строка"
+      }
+    };
+
+    expect(buildUniversalPublicViewModel(payload(), configuredProfile).heroDescription)
+      .toBe("Первая строка\nВторая строка");
+  });
 });

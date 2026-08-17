@@ -18,6 +18,7 @@ type Props = {
   manageToken: string;
   primaryAction: PrimaryAction;
   deliveryVersion?: string;
+  deliveryWarnings?: string[];
   mobileOnly?: boolean;
 };
 
@@ -26,11 +27,13 @@ const initialDeliveryState = { ok: false, message: "" };
 const DeliveryConfirmationButton = ({
   manageToken,
   cardVersion,
-  label
+  label,
+  warnings
 }: {
   manageToken: string;
   cardVersion: string;
   label: string;
+  warnings: string[];
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -69,6 +72,14 @@ const DeliveryConfirmationButton = ({
                   <li>Фотографии и их кадрирование проверены</li>
                   <li>Оформление и предпросмотр выглядят правильно</li>
                 </ul>
+                {warnings.length > 0 ? (
+                  <div className={styles.deliveryWarning} role="status">
+                    <strong>Можно передать без обновления</strong>
+                    <ul>
+                      {warnings.map((warning) => <li key={warning}>{warning}</li>)}
+                    </ul>
+                  </div>
+                ) : null}
                 <form action={formAction} className={styles.deliveryDialogForm}>
                   <input type="hidden" name="manageToken" value={manageToken} />
                   <input type="hidden" name="cardVersion" value={cardVersion} />
@@ -106,6 +117,7 @@ export const DesignStickyActions = ({
   manageToken,
   primaryAction,
   deliveryVersion,
+  deliveryWarnings = [],
   mobileOnly = false
 }: Props) => {
   const [basicsState, setBasicsState] = useState({ isDirty: false, isPending: false });
@@ -145,6 +157,7 @@ export const DesignStickyActions = ({
       manageToken={manageToken}
       cardVersion={deliveryVersion ?? ""}
       label={primaryAction.label}
+      warnings={deliveryWarnings}
     />
   ) : primaryAction.kind === "share" ? (
     <ShareLinkButton

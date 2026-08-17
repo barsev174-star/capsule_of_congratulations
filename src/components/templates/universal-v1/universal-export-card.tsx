@@ -14,13 +14,18 @@ import {
   type UniversalTemplatePhoto,
   type UniversalTemplateViewModel
 } from "@/lib/templates/view-model";
-import { getUnderlaySafeInsets } from "@/lib/templates/section-underlays";
+import {
+  getUnderlaySafeInsets,
+  getUniversalSectionUnderlayPreset,
+  type TemplateSectionUnderlay
+} from "@/lib/templates/section-underlays";
 import { getUniversalPhotoFramePreset } from "@/lib/templates/photo-frame-presets";
 import { getUniversalTextCardPreset } from "@/lib/templates/text-card-presets";
 import {
+  getUniversalPhotoCaptionScale,
+  getUniversalRecipientNameLines,
   getUniversalRecipientNameTier
 } from "@/lib/templates/text-capacity-presets";
-import { SectionUnderlay } from "./section-underlay";
 import { isUniversalBareSection } from "./section-presentation";
 
 export const universalExportFormats = {
@@ -73,20 +78,83 @@ const rectStyle = (rect: NormalizedRect): CSSProperties => ({
 
 const exportVisible = (layer: TemplateDecorLayer) => !layer.visibleOn || layer.visibleOn.includes("export");
 
+const croppedAssetUrl = (
+  resolvedSrc: string,
+  source: { x: number; y: number; width: number; height: number },
+  target: { width: number; height: number }
+) => {
+  const crop = [source.x, source.y, source.width, source.height].map((value) => Math.max(0, Math.round(value)));
+  const separator = resolvedSrc.includes("?") ? "&" : "?";
+  return `${resolvedSrc}${separator}crop=${crop.join(",")}&width=${Math.max(1, Math.round(target.width))}&height=${Math.max(1, Math.round(target.height))}`;
+};
+
+const slicedAssetUrl = (
+  resolvedSrc: string,
+  target: { width: number; height: number },
+  slices: string
+) => {
+  const separator = resolvedSrc.includes("?") ? "&" : "?";
+  return `${resolvedSrc}${separator}width=${Math.max(1, Math.round(target.width))}&height=${Math.max(1, Math.round(target.height))}&slices=${encodeURIComponent(slices)}`;
+};
+
+const coverCrop = (
+  asset: TemplateAssetRef,
+  target: { width: number; height: number },
+  focalPoint = { x: .5, y: .5 }
+) => {
+  const sourceAspect = asset.width / asset.height;
+  const targetAspect = target.width / target.height;
+  if (sourceAspect > targetAspect) {
+    const width = Math.max(1, Math.round(asset.height * targetAspect));
+    return { x: Math.round((asset.width - width) * focalPoint.x), y: 0, width, height: asset.height };
+  }
+  const height = Math.max(1, Math.round(asset.width / targetAspect));
+  return { x: 0, y: Math.round((asset.height - height) * focalPoint.y), width: asset.width, height };
+};
+
 function Decor({
   profile,
   anchor,
+  width,
+  height,
   resolveAsset
 }: {
   profile: TemplateProfile;
   anchor: TemplateDecorLayer["anchor"];
+  width: number;
+  height: number;
   resolveAsset: (src: `/${string}`) => string;
 }) {
-  return <>{profile.assets.decor.filter((layer) => layer.anchor === anchor && exportVisible(layer) && layer.asset.src.startsWith("/")).map((layer) => (
-    <div key={layer.id} data-decor-layer={layer.id} style={{ position: "absolute", display: "flex", ...rectStyle(layer.rect), opacity: layer.opacity ?? 1, transform: `rotate(${layer.rotation ?? 0}deg)` }}>
-      <img src={resolveAsset(layer.asset.src)} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-    </div>
-  ))}</>;
+  return <>{profile.assets.decor.filter((layer) => layer.anchor === anchor && exportVisible(layer) && layer.asset.src.startsWith("/")).map((layer) => {
+    const box = {
+      left: layer.rect.x * width,
+      top: layer.rect.y * height,
+      width: layer.rect.width * width,
+      height: layer.rect.height * height
+    };
+    const assetAspect = layer.asset.width / layer.asset.height;
+    const boxAspect = box.width / box.height;
+    const renderedWidth = boxAspect > assetAspect ? box.height * assetAspect : box.width;
+    const renderedHeight = boxAspect > assetAspect ? box.height : box.width / assetAspect;
+    return <img
+      key={layer.id}
+      data-decor-layer={layer.id}
+      data-decor-asset
+      src={resolveAsset(layer.asset.src)}
+      width={Math.round(renderedWidth)}
+      height={Math.round(renderedHeight)}
+      style={{
+        position: "absolute",
+        zIndex: 3,
+        left: box.left + (box.width - renderedWidth) / 2,
+        top: box.top + (box.height - renderedHeight) / 2,
+        width: renderedWidth,
+        height: renderedHeight,
+        opacity: layer.opacity ?? 1,
+        transform: `rotate(${layer.rotation ?? 0}deg)`
+      }}
+    />;
+  })}</>;
 }
 
 function ExportSection({
@@ -118,7 +186,7 @@ function ExportSection({
     left: safeInsets.left * width * (isMemories ? .45 : 1)
   } : null;
   return <div data-universal-export-block={id} data-section-presentation={isBare ? "bare" : "surface"} data-decor-overflow={hasOverflowDecor ? "visible" : undefined} style={{
-    position: "relative",
+    ...(id === "qualities" ? {} : { position: "relative" as const }),
     display: "flex",
     width: "100%",
     height,
@@ -128,14 +196,16 @@ function ExportSection({
     background: isBare ? "transparent" : profile.colors.surfaces[id] ?? profile.colors.surface,
     boxShadow: isBare ? "none" : "0 2px 5px rgba(0,0,0,.05), 0 16px 34px rgba(0,0,0,.08)"
   }}>
-    {underlay ? <div data-export-underlay-clip style={{ position: "absolute", inset: 0, overflow: "hidden", borderRadius: 28 }}>
+    {underlay ? <>
       {id === "closing"
-        ? <HorizontalSliceAsset asset={underlay.asset} width={width} height={height} edgeRatio={.1} resolveAsset={resolveAsset} />
-        : <SectionUnderlay underlay={underlay} resolveAsset={resolveAsset} className="universal-export-underlay" targetSize={{ width, height }} />}
-    </div> : null}
-    <Decor profile={profile} anchor={id} resolveAsset={resolveAsset} />
+        ? <HorizontalSliceAsset asset={underlay.asset} width={width} height={height} edgeRatio={underlay.exportHorizontalSliceEdgeRatio ?? .1} resolveAsset={resolveAsset} />
+        : <ExportSectionUnderlay underlay={underlay} width={width} height={height} resolveAsset={resolveAsset} />}
+    </> : null}
+    {id === "closing" ? null : <Decor profile={profile} anchor={id} width={width} height={height} resolveAsset={resolveAsset} />}
     <div style={{
-      position: "relative",
+      position: underlay ? "absolute" : "relative",
+      zIndex: 2,
+      ...(underlay ? { left: 0, top: 0 } : {}),
       display: "flex",
       width: "100%",
       height: "100%",
@@ -168,7 +238,10 @@ function ExportPhoto({
 }) {
   const framePreset = getUniversalPhotoFramePreset(frame.preset);
   const height = Math.round(width / framePreset.aspectRatio);
-  const resolvedCaptionFontSize = fontSize * frame.caption.minScale;
+  const resolvedCaptionFontSize = fontSize * getUniversalPhotoCaptionScale(
+    photo.caption,
+    frame.caption.minScale
+  );
   const alignItems = frame.caption.align === "left" ? "flex-start" : frame.caption.align === "right" ? "flex-end" : "center";
   const captionAreaStyle = width <= 360
     ? { ...rectStyle(framePreset.captionArea), top: "78%", height: "18%" }
@@ -196,22 +269,7 @@ function HorizontalSliceAsset({
   edgeRatio: number;
   resolveAsset: (src: `/${string}`) => string;
 }) {
-  const sourceEdgeWidth = asset.width * edgeRatio;
-  const targetEdgeWidth = Math.min(sourceEdgeWidth * (height / asset.height), width * .28);
-  const sourceCenterWidth = asset.width - sourceEdgeWidth * 2;
-  const targetCenterWidth = Math.max(0, width - targetEdgeWidth * 2);
-  const src = resolveAsset(asset.src);
-  const slices = [
-    { x: 0, width: targetEdgeWidth, viewX: 0, viewWidth: sourceEdgeWidth },
-    { x: targetEdgeWidth, width: targetCenterWidth, viewX: sourceEdgeWidth, viewWidth: sourceCenterWidth },
-    { x: targetEdgeWidth + targetCenterWidth, width: targetEdgeWidth, viewX: sourceEdgeWidth + sourceCenterWidth, viewWidth: sourceEdgeWidth }
-  ];
-
-  return <svg data-export-asset-underlay="horizontal-slice" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
-    {slices.map((slice, index) => <svg key={index} x={slice.x} y={0} width={slice.width} height={height} viewBox={`${slice.viewX} 0 ${slice.viewWidth} ${asset.height}`} preserveAspectRatio="none" overflow="hidden">
-      <image href={src} x={0} y={0} width={asset.width} height={asset.height} preserveAspectRatio="none" />
-    </svg>)}
-  </svg>;
+  return <img data-export-asset-underlay="horizontal-slice" data-export-raster-slice src={slicedAssetUrl(resolveAsset(asset.src), { width, height }, `horizontal:${edgeRatio}`)} width={Math.round(width)} height={Math.round(height)} style={{ width: "100%", height: "100%", flexShrink: 0 }} />;
 }
 
 function NineSliceAsset({
@@ -219,43 +277,57 @@ function NineSliceAsset({
   width,
   height,
   edges,
-  resolveAsset
+  resolveAsset,
+  inFlow = false,
+  opacity = 1
 }: {
   asset: TemplateAssetRef;
   width: number;
   height: number;
   edges: { top: number; right: number; bottom: number; left: number };
   resolveAsset: (src: `/${string}`) => string;
+  inFlow?: boolean;
+  opacity?: number;
 }) {
-  const sourceXs = [0, edges.left, 1 - edges.right, 1];
-  const sourceYs = [0, edges.top, 1 - edges.bottom, 1];
-  const verticalEdgesHeight = (edges.top + edges.bottom) * asset.height;
-  const scale = Math.min(width / asset.width, height / verticalEdgesHeight);
-  const targetXs = [
-    0,
-    edges.left * asset.width * scale,
-    width - edges.right * asset.width * scale,
-    width
-  ];
-  const targetYs = [
-    0,
-    edges.top * asset.height * scale,
-    height - edges.bottom * asset.height * scale,
-    height
-  ];
-  const src = resolveAsset(asset.src);
+  return <img
+    data-export-asset-underlay="nine-slice"
+    data-export-raster-slice
+    src={slicedAssetUrl(resolveAsset(asset.src), { width, height }, `nine:${edges.top},${edges.right},${edges.bottom},${edges.left}`)}
+    width={Math.round(width)}
+    height={Math.round(height)}
+    style={inFlow
+      ? { width: "100%", height: "100%", flexShrink: 0, opacity }
+      : { position: "absolute", left: 0, top: 0, width: "100%", height: "100%", opacity }}
+  />;
+}
 
-  return <svg data-export-asset-underlay="nine-slice" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
-    {[0, 1, 2].flatMap((row) => [0, 1, 2].map((column) => {
-      const sourceX = sourceXs[column] * asset.width;
-      const sourceY = sourceYs[row] * asset.height;
-      const sourceWidth = (sourceXs[column + 1] - sourceXs[column]) * asset.width;
-      const sourceHeight = (sourceYs[row + 1] - sourceYs[row]) * asset.height;
-      return <svg key={`${row}-${column}`} x={targetXs[column]} y={targetYs[row]} width={Math.max(0, targetXs[column + 1] - targetXs[column])} height={Math.max(0, targetYs[row + 1] - targetYs[row])} viewBox={`${sourceX} ${sourceY} ${sourceWidth} ${sourceHeight}`} preserveAspectRatio="none" overflow="hidden">
-        <image href={src} x={0} y={0} width={asset.width} height={asset.height} preserveAspectRatio="none" />
-      </svg>;
-    }))}
-  </svg>;
+function ExportSectionUnderlay({
+  underlay,
+  width,
+  height,
+  resolveAsset
+}: {
+  underlay: TemplateSectionUnderlay;
+  width: number;
+  height: number;
+  resolveAsset: (src: `/${string}`) => string;
+}) {
+  const preset = getUniversalSectionUnderlayPreset(underlay.preset);
+  if (preset.rendering === "nine-slice") {
+    return <NineSliceAsset asset={underlay.asset} width={width} height={height} edges={preset.slices!} resolveAsset={resolveAsset} inFlow opacity={underlay.opacity ?? 1} />;
+  }
+
+  const focalPoint = underlay.focalPoint ?? { x: .5, y: .5 };
+  const bottomEdgeHeight = preset.rendering === "bottom-edge"
+    ? `${(preset.edgeSize ?? .12) * 100}%`
+    : "100%";
+  const targetHeight = preset.rendering === "bottom-edge" ? height * (preset.edgeSize ?? .12) : height;
+  const src = croppedAssetUrl(
+    resolveAsset(underlay.asset.src),
+    coverCrop(underlay.asset, { width, height: targetHeight }, focalPoint),
+    { width, height: targetHeight }
+  );
+  return <img data-underlay-preset={underlay.preset} src={src} width={Math.round(width)} height={Math.round(targetHeight)} style={{ width: "100%", height: bottomEdgeHeight, alignSelf: "flex-end", flexShrink: 0, opacity: underlay.opacity ?? 1 }} />;
 }
 
 function Moments({
@@ -346,6 +418,7 @@ export function UniversalTemplateExportCard({
   const sectionCount = 2 + Number(qualities.length > 0) + Number(photos.length > 0) + Number(quotes.length >= 2);
   const availableGap = sectionCount > 1 ? layout.gap : 0;
   const recipientNameTier = getUniversalRecipientNameTier(model.recipientName);
+  const recipientNameLines = getUniversalRecipientNameLines(model.recipientName);
   const recipientNameScale = format === "post"
     ? { veryLong: .82, long: 1.05, default: 1.58 }
     : format === "a4"
@@ -356,10 +429,24 @@ export function UniversalTemplateExportCard({
     : recipientNameTier === "long"
       ? layout.heading * recipientNameScale.long
       : layout.heading * recipientNameScale.default;
-  const hasSchoolStats = profile.id === "school-scrapbook";
-  const heroDescription = format === "story" && profile.id === "school-scrapbook"
+  const heroDescription = format === "story"
     ? model.heroDescription.replace("яркие моменты и пожелания", "яркие моменты\nи пожелания")
     : model.heroDescription;
+  const congratulationsCounter = profile.export.counters?.congratulations ?? {
+    text: profile.colors.accent,
+    surface: profile.colors.surfaces.qualities ?? profile.colors.surface
+  };
+  const photosCounter = profile.export.counters?.photos ?? {
+    text: profile.colors.text,
+    surface: profile.colors.surfaces.memories ?? profile.colors.surface
+  };
+  const pageSrc = profile.assets.page
+    ? croppedAssetUrl(
+        resolveAsset(profile.assets.page.src),
+        coverCrop(profile.assets.page, { width: spec.width, height: spec.height }),
+        { width: spec.width, height: spec.height }
+      )
+    : null;
 
   return <div data-template-family="universal-v1" data-export-format={format} style={{
     position: "relative",
@@ -374,25 +461,26 @@ export function UniversalTemplateExportCard({
     fontFamily: profile.typography.body.family,
     fontWeight: profile.typography.body.weight
   }}>
-    {profile.assets.page ? <img src={resolveAsset(profile.assets.page.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /> : null}
-    <Decor profile={profile} anchor="templateRoot" resolveAsset={resolveAsset} />
+    {pageSrc ? <img data-export-page-underlay src={pageSrc} width={spec.width} height={spec.height} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%" }} /> : null}
+    <Decor profile={profile} anchor="templateRoot" width={spec.width} height={spec.height} resolveAsset={resolveAsset} />
     <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%", height: "100%", justifyContent: "space-between", gap: availableGap }}>
-      <ExportSection id="hero" profile={profile} width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset}>
-        <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: format === "post" ? "8px 78px" : format === "a4" ? "14px 78px" : "20px 78px", boxSizing: "border-box", textAlign: "center" }}>
+      <div data-universal-export-block="hero" data-section-presentation="bare" style={{ position: "relative", display: "flex", width: "100%", height: layout.hero, flexShrink: 0, overflow: "hidden" }}>
+        <Decor profile={profile} anchor="hero" width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset} />
+        <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: format === "post" ? "8px 78px" : format === "a4" ? "14px 78px" : "20px 78px", boxSizing: "border-box", textAlign: "center" }}>
           {model.occasion ? <span style={{ color: profile.colors.accent, fontSize: format === "story" ? 18 : 14, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>{model.occasion}</span> : null}
           {eventDate ? <span style={{ marginTop: 5, color: profile.colors.muted, fontSize: format === "story" ? 18 : 14 }}>{eventDate}</span> : null}
-          <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: format === "story" ? 150 : format === "post" ? 64 : 100, flexShrink: 0, marginTop: eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-            <strong style={{ maxWidth: "100%", maxHeight: "1.96em", overflow: "hidden", overflowWrap: "anywhere", fontFamily: profile.typography.heading.family, fontSize: recipientNameFontSize, fontWeight: profile.typography.heading.weight, lineHeight: .98, letterSpacing: "-.04em", textAlign: "center" }}>{model.recipientName}</strong>
-          </div>
+          {model.recipientName ? <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: format === "story" ? 150 : format === "post" ? 64 : 100, flexShrink: 0, marginTop: eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+            <span aria-label={model.recipientName} style={{ maxWidth: "100%", fontFamily: profile.typography.heading.family, fontSize: recipientNameFontSize, fontWeight: profile.typography.heading.weight, lineHeight: .98, letterSpacing: "-.04em", textAlign: "center", whiteSpace: "pre-line" }}>{recipientNameLines.join("\n")}</span>
+          </div> : null}
           <span data-export-hero-description style={{ maxWidth: 760, marginTop: 8, color: profile.colors.muted, fontSize: layout.body, lineHeight: 1.25, textAlign: "center", whiteSpace: "pre-line" }}>{heroDescription}</span>
           <div data-export-hero-stats style={{ display: "flex", marginTop: 10, gap: 8 }}>
-            {model.participantCount > 0 ? <span data-export-counter="congratulations" style={{ padding: "5px 10px", borderRadius: 999, color: hasSchoolStats ? "#1859bd" : undefined, background: hasSchoolStats ? "#fff0a8" : profile.colors.surface, boxShadow: hasSchoolStats ? "0 0 0 1px rgba(24, 89, 189, 0.12), 0 5px 12px rgba(24, 89, 189, 0.13)" : undefined, fontSize: layout.body - 3, fontVariantNumeric: "tabular-nums", fontWeight: hasSchoolStats ? 650 : undefined, transform: hasSchoolStats ? "rotate(-1.5deg)" : undefined }}><b>{model.participantCount}</b> поздравлений</span> : null}
-            {shownPhotoCount ? <span data-export-counter="photos" style={{ padding: "5px 10px", borderRadius: 999, color: hasSchoolStats ? "#0b7278" : undefined, background: hasSchoolStats ? "#d9f3ef" : profile.colors.surface, boxShadow: hasSchoolStats ? "0 0 0 1px rgba(11, 114, 120, 0.12), 0 5px 12px rgba(11, 114, 120, 0.13)" : undefined, fontSize: layout.body - 3, fontVariantNumeric: "tabular-nums", fontWeight: hasSchoolStats ? 650 : undefined, transform: hasSchoolStats ? "rotate(1.5deg)" : undefined }}><b>{shownPhotoCount}</b> фото в открытке</span> : null}
+            {model.participantCount > 0 ? <span data-export-counter="congratulations" style={{ padding: "5px 10px", borderRadius: 999, color: congratulationsCounter.text, background: congratulationsCounter.surface, boxShadow: `0 0 0 1px ${profile.colors.accent}1f, 0 5px 12px ${profile.colors.accent}21`, fontSize: layout.body - 3, fontVariantNumeric: "tabular-nums", fontWeight: 650, transform: "rotate(-1.5deg)" }}><b>{model.participantCount}</b> поздравлений</span> : null}
+            {shownPhotoCount ? <span data-export-counter="photos" style={{ padding: "5px 10px", borderRadius: 999, color: photosCounter.text, background: photosCounter.surface, boxShadow: `0 0 0 1px ${profile.colors.accent}1f, 0 5px 12px ${profile.colors.accent}21`, fontSize: layout.body - 3, fontVariantNumeric: "tabular-nums", fontWeight: 650, transform: "rotate(1.5deg)" }}><b>{shownPhotoCount}</b> фото в открытке</span> : null}
           </div>
         </div>
-      </ExportSection>
+      </div>
 
-      {qualities.length > 0 ? <ExportSection id="qualities" profile={profile} width={sectionWidth} height={qualitySectionHeight} resolveAsset={resolveAsset}>
+      {qualities.length > 0 ? <div data-universal-export-block="qualities" data-section-presentation="bare" style={{ display: "flex", width: "100%", height: qualitySectionHeight, flexShrink: 0 }}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: useDedicatedQualityLayout ? "6px 28px" : "16px 28px", boxSizing: "border-box" }}>
           <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, textAlign: "center" }}>За что тебя ценят</strong>
           <div data-export-quality-grid="2-1-2" style={{ display: "flex", flexDirection: "column", width: "100%", alignItems: "center", marginTop: useDedicatedQualityLayout ? 5 : format === "story" ? 10 : 8, gap: useDedicatedQualityLayout ? 4 : format === "story" ? 7 : 6 }}>{qualityRows.map((row, rowIndex) => <div key={rowIndex} data-export-quality-row={rowIndex + 1} style={{ display: "flex", width: row.length === 2 ? qualityCardWidth * 3 : qualityCardWidth, justifyContent: row.length === 2 ? "space-between" : "center" }}>{row.map((index) => {
@@ -404,11 +492,11 @@ export function UniversalTemplateExportCard({
             </div>;
           })}</div>)}</div>
         </div>
-      </ExportSection> : null}
+      </div> : null}
 
       {photos.length >= 2 ? <ExportSection id="memories" profile={profile} width={sectionWidth} height={layout.moments} resolveAsset={resolveAsset}><Moments profile={profile} photos={photos} format={format} layout={layout} resolveAsset={resolveAsset} resolvePhoto={resolvePhoto} /></ExportSection> : null}
 
-      {quotes.length >= 2 ? <ExportSection id="quotes" profile={profile} width={sectionWidth} height={layout.quotes} resolveAsset={resolveAsset}>
+      {quotes.length >= 2 ? <div data-universal-export-block="quotes" data-section-presentation="bare" style={{ display: "flex", width: "100%", height: layout.quotes, flexShrink: 0 }}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: "0 28px", boxSizing: "border-box" }}>
           <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, lineHeight: 1.04, textAlign: "center" }}>Особенно тёплые слова</strong>
           <div style={{ display: "flex", width: "100%", marginTop: 10, gap: 10, flexShrink: 0 }}>{quotes.map((quote, index) => {
@@ -432,7 +520,7 @@ export function UniversalTemplateExportCard({
             </div>;
           })}</div>
         </div>
-      </ExportSection> : null}
+      </div> : null}
 
       <ExportSection id="closing" profile={profile} width={sectionWidth} height={closingSectionHeight} resolveAsset={resolveAsset}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: "16px 72px", boxSizing: "border-box", textAlign: "center" }}>
@@ -442,6 +530,9 @@ export function UniversalTemplateExportCard({
           <span style={{ marginTop: 3, color: profile.colors.muted, fontSize: layout.body - 4 }}>Место, где слова становятся подарком</span>
         </div>
       </ExportSection>
+    </div>
+    <div data-export-closing-decor style={{ position: "absolute", zIndex: 3, display: "flex", left: layout.padding, top: spec.height - layout.verticalPadding - closingSectionHeight, width: sectionWidth, height: closingSectionHeight }}>
+      <Decor profile={profile} anchor="closing" width={sectionWidth} height={closingSectionHeight} resolveAsset={resolveAsset} />
     </div>
   </div>;
 }

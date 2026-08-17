@@ -95,9 +95,9 @@ describe("school-scrapbook studio template", () => {
   it("keeps the positions exported from the template studio", () => {
     expect(Object.fromEntries(school_scrapbookProfile.assets.decor.map(({ id, rect }) => [id, rect]))).toEqual({
       "hero-globe-cluster": { x: -0.025, y: 0.125, width: 0.32, height: 0.95 },
-      "hero-globe-cluster-export": { x: -0.025, y: 0.275, width: 0.27, height: 1 },
+      "hero-globe-cluster-export": { x: -0.13, y: 0.18, width: 0.45, height: 1 },
       "hero-backpack-cluster": { x: 0.595, y: 0.27, width: 0.47, height: 0.785 },
-      "hero-backpack-cluster-export": { x: 0.67, y: 0.395, width: 0.37, height: 0.86 },
+      "hero-backpack-cluster-export": { x: 0.66, y: 0.17, width: 0.52, height: 1 },
       "summary-blue-rays-left": { x: -0.14, y: 0.245, width: 0.2, height: 0.585 },
       "summary-blue-rays-right": { x: 0.93, y: 0.27, width: 0.24, height: 0.585 },
       "closing-grade-5plus": { x: 0.74, y: 0.075, width: 0.275, height: 0.545 },
@@ -108,6 +108,19 @@ describe("school-scrapbook studio template", () => {
       "hero-student-doodle-mobile": { x: 0.035, y: 0.69, width: 0.18, height: 0.26 },
       "hero-student-girl-doodle-mobile": { x: 0.785, y: 0.69, width: 0.17, height: 0.26 }
     });
+  });
+
+  it("keeps the downloadable hero decor intersecting the header canvas", () => {
+    const exportHeroDecor = school_scrapbookProfile.assets.decor.filter(
+      ({ anchor, visibleOn }) => anchor === "hero" && visibleOn?.includes("export")
+    );
+
+    for (const { rect } of exportHeroDecor) {
+      const visibleWidth = Math.min(1, rect.x + rect.width) - Math.max(0, rect.x);
+      const visibleHeight = Math.min(1, rect.y + rect.height) - Math.max(0, rect.y);
+      expect(visibleWidth).toBeGreaterThan(0);
+      expect(visibleHeight).toBeGreaterThan(0);
+    }
   });
 
   it("uses the school-blue accent for template actions", () => {

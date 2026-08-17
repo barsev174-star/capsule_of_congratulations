@@ -8,6 +8,7 @@ import {
   updateContributionStatus
 } from "@/lib/cards/repository";
 import { getPostgresPool, isPostgresConfigured } from "@/lib/db/postgres";
+import { mapPostgresCardRow, type PostgresCardRow } from "@/lib/cards/repository-postgres";
 import type {
   CardDraft,
   CardMediaAsset,
@@ -226,7 +227,7 @@ export const listAdminCards = async (options: ListAdminCardsOptions = {}): Promi
   const { paymentStatus, collectionStatus, deliveryStatus, search, limit = 50, offset = 0 } = options;
 
   if (isPostgresConfigured()) {
-    const conditions: string[] = [];
+    const conditions: string[] = ["purged_at IS NULL"];
     const params: (string | PaymentStatus | CollectionStatus | DeliveryStatus)[] = [];
 
     if (paymentStatus) {
@@ -264,13 +265,8 @@ export const listAdminCards = async (options: ListAdminCardsOptions = {}): Promi
     `;
     params.push(String(limit), String(offset));
 
-    const result = await getPostgresPool().query<CardDraft>(query, params);
-    return result.rows.map((row) => ({
-      ...row,
-      createdAt: toIso(row.createdAt),
-      updatedAt: toIso(row.updatedAt),
-      eventDate: row.eventDate ? toIso(row.eventDate as unknown as Date | string).slice(0, 10) : null
-    }));
+    const result = await getPostgresPool().query<PostgresCardRow>(query, params);
+    return result.rows.map(mapPostgresCardRow);
   }
 
   let cards = await listCardDrafts();

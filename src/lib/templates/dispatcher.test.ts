@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { dispatchTemplateRenderer, requireTemplateRenderer } from "@/lib/templates/dispatcher";
+import {
+  dispatchTemplateRenderer,
+  getTemplateFinalCardStyleId,
+  requireTemplateRenderer
+} from "@/lib/templates/dispatcher";
 import {
   createTemplateRegistry,
   templateRegistry,
@@ -42,6 +46,13 @@ describe("template dispatcher", () => {
       kind: "universal-v1",
       registration: { profile: universalRegistration.profile }
     });
+  });
+
+  it("использует эталонную layout-схему universal-шаблона при проверке передачи", () => {
+    const dispatch = requireTemplateRenderer("school-scrapbook");
+
+    expect(dispatch.kind).toBe("universal-v1");
+    expect(getTemplateFinalCardStyleId(dispatch)).toBe("route-adventure");
   });
 
   it("не маскирует незарегистрированный ID", () => {

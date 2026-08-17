@@ -535,6 +535,16 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
           {(Object.keys(draft.profile.typography) as Array<keyof typeof draft.profile.typography>).map((key) => <fieldset className={styles.fontEditor} key={key}><legend>{key}</legend><div className={styles.fieldGrid}><label><span>Семейство</span><input value={draft.profile.typography[key].family} onChange={(event) => updateFont(key, { family: event.target.value })} /></label><label><span>Вес</span><select value={draft.profile.typography[key].weight} onChange={(event) => updateFont(key, { weight: Number(event.target.value) as TemplateFontToken["weight"] })}>{[400, 500, 600, 700, 800, 900].map((weight) => <option key={weight} value={weight}>{weight}</option>)}</select></label></div></fieldset>)}
         </div></details>
 
+        <details><summary>Публичная версия</summary><div className={styles.detailsBody}>
+          <p className={styles.inspectorHint}>Текст показывается под именем в публичной шапке. Один перенос строки сохраняется в открытке; максимум две строки и 180 символов.</p>
+          <label><span>Текст в шапке</span><textarea rows={3} maxLength={180} value={draft.profile.public.heroDescription ?? ""} placeholder={"Тёплая публичная часть подарка:\nважные слова, фотографии и приятные моменты."} onChange={(event) => updateDraft((next) => { next.profile.public.heroDescription = event.target.value; })} /></label>
+        </div></details>
+
+        <details open><summary>Заставка открытки</summary><div className={styles.detailsBody}>
+          <p className={styles.inspectorHint}>Надпись показывается над именем получателя в облегчённой миниатюре. Если поле пустое, используется «Открытка для».</p>
+          <label><span>Надпись над именем</span><input maxLength={40} value={draft.profile.intro.kicker ?? ""} placeholder="Открытка для" onChange={(event) => updateDraft((next) => { next.profile.intro.kicker = event.target.value; })} /></label>
+        </div></details>
+
         {!validation.ok ? <div className={styles.issueList}><strong>Публикация заблокирована</strong><ul>{validation.issues.slice(0, 8).map((issue, index) => <li key={`${issue.path}-${index}`}><code>{issue.path || "draft"}</code> {issue.message}</li>)}</ul></div> : null}
         <div className={styles.inspectorFooter}><p data-tone={importStatus.tone}>{importStatus.message}</p><div><button type="button" className={styles.textButton} onClick={resetDraft}>Сбросить</button><button type="button" className={styles.primaryButton} disabled={!validation.ok} onClick={() => setImportStatus({ tone: "success", message: "Проверка пройдена: черновик можно передавать на регистрацию." })}>Проверить к регистрации</button></div></div>
       </aside>

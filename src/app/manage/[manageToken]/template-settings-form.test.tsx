@@ -17,6 +17,12 @@ const templates = [
     id: "route-adventure" as const,
     name: "Маршрут",
     description: "Путешествие по важным моментам"
+  },
+  {
+    id: "school-scrapbook" as const,
+    name: "Школьный коллаж",
+    description: "Школьные воспоминания",
+    preview: "/templates/school-scrapbook/preview.webp"
   }
 ];
 
@@ -65,5 +71,22 @@ describe("TemplateSettingsForm", () => {
       "aria-selected",
       "true"
     );
+  });
+
+  it("uses a universal template's own catalog preview", () => {
+    const { container } = render(
+      <TemplateSettingsForm
+        manageToken="manage-token"
+        templates={templates}
+        currentTemplateId="school-scrapbook"
+      />
+    );
+
+    const schoolCard = screen.getByRole("radio", { name: /Школьный коллаж/ }).closest("label");
+    expect(schoolCard?.querySelector("img")).toHaveAttribute(
+      "src",
+      "/templates/school-scrapbook/preview.webp"
+    );
+    expect(container.querySelectorAll('img[src="/templates/warm-classic-preview.png"]')).toHaveLength(1);
   });
 });

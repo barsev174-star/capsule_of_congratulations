@@ -29,7 +29,9 @@ export function AdminNav({ role }: AdminNavProps) {
   return (
     <nav className={styles.nav} aria-label="Админ-меню">
       {visibleItems.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const isActive = item.href === "/admin"
+          ? pathname === item.href
+          : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
         return (
           <Link

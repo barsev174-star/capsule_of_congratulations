@@ -87,6 +87,16 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
     if (!areRequiredFieldsReady(nextFields)) setIsMobileExpanded(true);
   };
 
+  const handleEventDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const form = event.currentTarget.form;
+    handleChange("eventDate")(event);
+    form?.requestSubmit();
+  };
+
+  const handleAutoSaveBlur = (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    event.currentTarget.form?.requestSubmit();
+  };
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -282,22 +292,29 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
       <div className={styles.fieldGrid}>
         <div className={styles.field}>
           <label htmlFor="eventDate">Дата события</label>
+          <span className={styles.fieldHint} id="event-date-hint">Сохраняется автоматически после выбора.</span>
           <input
             id="eventDate"
             name="eventDate"
             type="date"
             value={fields.eventDate}
-            onChange={handleChange("eventDate")}
+            onChange={handleEventDateChange}
+            aria-describedby="event-date-hint"
           />
         </div>
         <div className={styles.field}>
           <label htmlFor="signature">Подпись в конце открытки</label>
+          <span className={styles.fieldHint} id="signature-hint">Сохраняется автоматически после выхода из поля.</span>
           <input
             id="signature"
             name="signature"
             value={fields.signature}
             onChange={handleChange("signature")}
+            onBlur={handleAutoSaveBlur}
+            aria-describedby="signature-hint"
             placeholder="Например, С любовью, команда Product & Design"
+            minLength={2}
+            maxLength={120}
           />
         </div>
       </div>

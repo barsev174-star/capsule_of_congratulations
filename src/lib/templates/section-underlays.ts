@@ -22,6 +22,7 @@ export type TemplateSectionUnderlay = {
   opacity?: number;
   focalPoint?: { x: number; y: number };
   safeArea?: NormalizedRect;
+  exportHorizontalSliceEdgeRatio?: number;
 };
 
 export type UniversalSectionUnderlayPreset = {
@@ -68,7 +69,7 @@ export const getUniversalSectionUnderlayPreset = (id: UniversalSectionUnderlayPr
 export const defineSectionUnderlay = (
   asset: TemplateAssetRef,
   preset: UniversalSectionUnderlayPresetId = "adaptive-frame",
-  options: Pick<TemplateSectionUnderlay, "opacity" | "focalPoint" | "mobileAsset" | "safeArea"> = {}
+  options: Pick<TemplateSectionUnderlay, "opacity" | "focalPoint" | "mobileAsset" | "safeArea" | "exportHorizontalSliceEdgeRatio"> = {}
 ): TemplateSectionUnderlay => ({ asset, preset, ...options });
 
 export const getUnderlaySafeInsets = (underlay: TemplateSectionUnderlay) => {

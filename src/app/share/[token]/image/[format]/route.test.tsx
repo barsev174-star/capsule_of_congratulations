@@ -71,6 +71,13 @@ describe("public share universal export route", () => {
   });
 
   it("routes payload v2 to the shared universal Story renderer", async () => {
+    const webpProfile = structuredClone(profile);
+    webpProfile.assets.page = {
+      src: "/templates/test/page.webp",
+      width: 1536,
+      height: 1024
+    };
+    mocks.dispatch.mockReturnValue({ kind: "universal-v1", registration: { profile: webpProfile } });
     const response = await GET(
       new Request("http://localhost:3000/share/token/image/story"),
       { params: Promise.resolve({ token: "token", format: "story" }) }
@@ -82,6 +89,8 @@ describe("public share universal export route", () => {
     expect(mocks.imageCalls[0].element.type).toBe(UniversalTemplateExportCard);
     expect(mocks.imageCalls[0].element.props.format).toBe("story");
     expect(mocks.imageCalls[0].element.props.model.publicPhotoCount).toBe(3);
+    expect(mocks.imageCalls[0].element.props.resolveAsset(webpProfile.assets.page.src))
+      .toBe("http://localhost:3000/api/template-export-asset?src=%2Ftemplates%2Ftest%2Fpage.webp&v=2");
     expect(mocks.imageCalls[0].options).toMatchObject({ width: 1080, height: 1920 });
   });
 

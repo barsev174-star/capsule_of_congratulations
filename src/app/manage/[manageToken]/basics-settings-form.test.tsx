@@ -1,7 +1,8 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CardDraft } from "@/lib/cards/types";
+import { updateCardBasicsAction } from "./actions";
 import { BasicsSettingsForm } from "./basics-settings-form";
 
 const refresh = vi.fn();
@@ -49,6 +50,21 @@ const buildCard = (overrides: Partial<CardDraft> = {}): CardDraft => ({
 describe("BasicsSettingsForm mobile summary", () => {
   beforeEach(() => {
     refresh.mockReset();
+    vi.mocked(updateCardBasicsAction).mockReset();
+    vi.mocked(updateCardBasicsAction).mockImplementation(async (_state, formData) => ({
+      ok: true,
+      message: "Изменения сохранены.",
+      fields: {
+        recipientName: String(formData.get("recipientName") ?? ""),
+        fromLabel: String(formData.get("fromLabel") ?? ""),
+        occasionText: String(formData.get("occasionText") ?? ""),
+        organizerName: String(formData.get("organizerName") ?? ""),
+        organizerEmail: String(formData.get("organizerEmail") ?? ""),
+        eventDate: String(formData.get("eventDate") ?? ""),
+        description: String(formData.get("description") ?? ""),
+        signature: String(formData.get("signature") ?? "")
+      }
+    }));
     window.history.replaceState(null, "", "/manage/manage-token");
   });
 
@@ -82,5 +98,29 @@ describe("BasicsSettingsForm mobile summary", () => {
       "true"
     );
     expect(screen.getByText("Нужно заполнить")).toBeInTheDocument();
+  });
+
+  it("saves the event date immediately after it is selected", async () => {
+    render(<BasicsSettingsForm manageToken="manage-token" card={buildCard()} />);
+
+    fireEvent.change(screen.getByLabelText("Дата события"), { target: { value: "2026-09-01" } });
+
+    await waitFor(() => expect(updateCardBasicsAction).toHaveBeenCalledOnce());
+    const submitted = vi.mocked(updateCardBasicsAction).mock.calls[0]?.[1];
+    expect(submitted?.get("eventDate")).toBe("2026-09-01");
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it("saves the closing signature after leaving the field", async () => {
+    render(<BasicsSettingsForm manageToken="manage-token" card={buildCard()} />);
+
+    const signature = screen.getByLabelText("Подпись в конце открытки");
+    fireEvent.change(signature, { target: { value: "Короче поздравляем!" } });
+    fireEvent.blur(signature);
+
+    await waitFor(() => expect(updateCardBasicsAction).toHaveBeenCalledOnce());
+    const submitted = vi.mocked(updateCardBasicsAction).mock.calls[0]?.[1];
+    expect(submitted?.get("signature")).toBe("Короче поздравляем!");
+    expect(refresh).toHaveBeenCalledOnce();
   });
 });

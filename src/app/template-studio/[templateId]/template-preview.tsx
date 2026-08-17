@@ -5,8 +5,12 @@ import { TemplateCardRenderer } from "@/components/templates/template-card-rende
 import { UniversalTemplateExportCard } from "@/components/templates/universal-v1/universal-export-card";
 import { UniversalTemplateIntroPreview } from "@/components/templates/universal-v1/universal-intro-preview";
 import type { UniversalMessageScenario } from "@/lib/templates/fixtures";
-import type { UniversalTemplateFixtureId } from "@/lib/templates/profile";
+import {
+  DEFAULT_UNIVERSAL_PUBLIC_HERO_DESCRIPTION,
+  type UniversalTemplateFixtureId
+} from "@/lib/templates/profile";
 import { defineUniversalTemplateRegistration } from "@/lib/templates/registry";
+import { resolveTemplateExportAsset } from "@/lib/templates/export-asset-url";
 import type {
   TemplateStudioDraft,
   TemplateStudioFormat,
@@ -59,9 +63,23 @@ export function TemplatePreview({
     });
     return {
       ...fixtureModel,
+      heroDescription: surface === "public"
+        ? draft.profile.public.heroDescription?.trim() || DEFAULT_UNIVERSAL_PUBLIC_HERO_DESCRIPTION
+        : fixtureModel.heroDescription,
       publicPhotoCount: fixtureModel.messagePhotos.length + fixtureModel.memoryPhotos.length
     };
-  }, [draft.profile.id, fixtureId, longCaptions, longName, optionalBlocks, photoCount, scenario, textMode]);
+  }, [
+    draft.profile.id,
+    draft.profile.public.heroDescription,
+    fixtureId,
+    longCaptions,
+    longName,
+    optionalBlocks,
+    photoCount,
+    scenario,
+    surface,
+    textMode
+  ]);
   const dispatch = useMemo(() => ({
     kind: "universal-v1" as const,
     registration: defineUniversalTemplateRegistration(draft.profile, {
@@ -135,6 +153,7 @@ export function TemplatePreview({
               profile={draft.profile}
               model={model}
               format={format}
+              resolveAsset={resolveTemplateExportAsset}
             />
           )}
         </div>

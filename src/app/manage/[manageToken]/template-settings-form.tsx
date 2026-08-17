@@ -52,9 +52,10 @@ export const TemplateSettingsForm = ({
           const selected = selectedTemplateId === template.id;
           const isCurrent = currentTemplateId === template.id;
           const isNewSelection = selected && !isCurrent;
-          const previewSrc = template.id === "route-adventure"
-            ? "/assets/landing/template-route-adventure-preview.png"
-            : "/templates/warm-classic-preview.png";
+          const previewSrc = template.preview
+            ?? (template.id === "route-adventure"
+              ? "/assets/landing/template-route-adventure-preview.png"
+              : "/templates/warm-classic-preview.png");
           return (
             <label
               key={template.id}

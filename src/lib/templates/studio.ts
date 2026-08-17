@@ -343,6 +343,7 @@ export const listTemplateProfileAssets = (profile: TemplateProfile): TemplateStu
   profile.assets.decor.forEach((layer, index) => push(`assets.decor.${index}.asset`, `Декор: ${layer.id}`, layer.asset));
   push("intro.mark", "Знак заставки", profile.intro.mark);
   push("intro.pattern", "Паттерн заставки", profile.intro.pattern);
+  profile.intro.decor?.forEach((asset, index) => push(`intro.decor.${index}`, `Декор заставки ${index + 1}`, asset));
   return entries;
 };
 

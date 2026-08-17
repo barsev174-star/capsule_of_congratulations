@@ -10,6 +10,7 @@ import type {
   FinalCardMemorySettings,
   FinalCardMessageSettings
 } from "@/lib/final-card/types";
+import { serializeDateOnly } from "@/lib/dates/date-only";
 
 type CardRow = {
   id: string;
@@ -101,7 +102,7 @@ const toDateOnly = (value: Date | string | null) => {
     return null;
   }
 
-  return value instanceof Date ? value.toISOString().slice(0, 10) : value;
+  return serializeDateOnly(value);
 };
 
 const jsonParam = (value: unknown) => (value === null || value === undefined ? null : JSON.stringify(value));
@@ -160,6 +161,10 @@ const mapCard = (row: CardRow): CardDraft => ({
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at)
 });
+
+export type PostgresCardRow = CardRow;
+
+export const mapPostgresCardRow = (row: PostgresCardRow): CardDraft => mapCard(row);
 
 const mapContribution = (row: ContributionRow): Contribution => ({
   id: row.id,

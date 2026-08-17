@@ -31,6 +31,31 @@ describe("GiftIntro rendering budget", () => {
     expect(screen.getByRole("button", { name: "Посмотреть ещё раз" })).toBeInTheDocument();
   });
 
+  it("добавляет озорной школьный декор только в облегчённую миниатюру школьного шаблона", () => {
+    render(
+      <GiftIntro
+        recipientName="Наталья Афанасьевна"
+        previewKicker="Открытка"
+        previewPreset="scrapbook"
+        previewDecor={[
+          "/templates/school-scrapbook/decor-closing-student-doodle-v1.webp",
+          "/templates/school-scrapbook/decor-closing-student-girl-doodle-v3.webp"
+        ]}
+        templateId="school-scrapbook"
+      >
+        <div>Полная открытка</div>
+      </GiftIntro>
+    );
+
+    expect(document.querySelectorAll('[data-template-id="school-scrapbook"]')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-school-preview-decor="boy"]')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-school-preview-decor="girl"]')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-school-preview-decor="sticker"]')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-school-preview-decor="tape"]')).toHaveLength(2);
+    expect(screen.getAllByText("Открытка")).toHaveLength(2);
+    expect(screen.queryByText("Открытка для")).not.toBeInTheDocument();
+  });
+
   it("повторно запускает ту же заставку", () => {
     vi.useFakeTimers();
     render(

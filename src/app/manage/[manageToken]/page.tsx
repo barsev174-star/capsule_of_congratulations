@@ -22,7 +22,7 @@ import { LinkPurposeList } from "./link-purpose-list";
 import { TemplateSummary } from "./template-summary";
 import styles from "./manage-page.module.css";
 import { getAiCardInsight, getAiCardQuoteSelection, getAiUsageSummary } from "@/lib/ai/repository";
-import { templateRegistry } from "@/lib/templates/registry";
+import { dispatchTemplateRenderer, getTemplateFinalCardStyleId } from "@/lib/templates/dispatcher";
 import {
   BEST_QUOTE_COUNT,
   BEST_QUOTE_MIN_CONTRIBUTION_COUNT,
@@ -172,10 +172,12 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const qualitiesAreStale = Boolean(qualitiesInsight && qualitiesInsight.sourceFingerprint !== contributionFingerprint);
   const aiContent = { quotes: generatedQuotes, qualities: generatedQualities };
   const model = isMaterialTab ? buildFinalCardViewModel(card, visibleContributions, mediaAssets, aiContent) : null;
-  const selectedRegistration = isProductTemplateId(card.templateId)
-    ? templateRegistry.get(card.templateId)
+  const selectedTemplateDispatch = isProductTemplateId(card.templateId)
+    ? dispatchTemplateRenderer(card.templateId)
     : null;
-  const style = selectedRegistration?.family === "legacy" ? selectedRegistration.id : "warm-classic";
+  const style = selectedTemplateDispatch
+    ? getTemplateFinalCardStyleId(selectedTemplateDispatch)
+    : "warm-classic";
   const selectedTemplate = cardTemplates.find((template) => template.id === card.templateId) ?? null;
   const layoutMode = card.finalMessageSettings?.layoutMode ?? "grid-2";
   const mediaLayout = card.finalMessageSettings?.mediaLayout ?? "portrait";
@@ -274,6 +276,9 @@ export default async function ManagePage({ params, searchParams }: Props) {
     blockReadiness,
     visibleContributionCount: visibleContributions.length
   });
+  const deliveryWarnings = blockReadiness
+    .filter((block) => block.enabled && block.warning)
+    .map((block) => block.warning!);
   const resolveDesignActionHref = (action: { kind: "anchor" | "tab"; target: string }) => {
     if (action.kind === "tab") {
       const target = action.target === "content" ? "congratulations" : action.target;
@@ -610,6 +615,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
             manageToken={manageToken}
             primaryAction={stickyPrimaryAction}
             deliveryVersion={card.updatedAt}
+            deliveryWarnings={deliveryWarnings}
           />
           </>
         ) : activeTab === "gift" ? (

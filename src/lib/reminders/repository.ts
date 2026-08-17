@@ -8,6 +8,7 @@ import type {
   EventReminderSchedule,
   EventReminderStatus
 } from "./types";
+import { serializeDateOnly } from "@/lib/dates/date-only";
 
 const filePath = join(process.cwd(), "data", "event-reminders.json");
 
@@ -43,7 +44,7 @@ type EventReminderRow = {
 const toIso = (value: Date | string | null) =>
   value === null ? null : value instanceof Date ? value.toISOString() : value;
 const toDateOnly = (value: Date | string) =>
-  value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
+  serializeDateOnly(value);
 
 const mapRow = (row: EventReminderRow): EventReminder => ({
   id: row.id,

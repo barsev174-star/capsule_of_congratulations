@@ -1,6 +1,9 @@
 import type { CardMediaAsset } from "@/lib/cards/types";
 import type { PublicSharePayloadV2 } from "@/lib/public-shares/types";
-import type { TemplateProfile } from "@/lib/templates/profile";
+import {
+  DEFAULT_UNIVERSAL_PUBLIC_HERO_DESCRIPTION,
+  type TemplateProfile
+} from "@/lib/templates/profile";
 import type { UniversalTemplatePhoto, UniversalTemplateViewModel } from "@/lib/templates/view-model";
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -94,7 +97,8 @@ export const buildUniversalPublicViewModel = (
     occasion: payload.card.occasionText ?? "",
     eventDate: payload.card.eventDate,
     fromLabel: payload.card.fromLabel ?? "",
-    heroDescription: "Тёплая публичная часть подарка: важные слова, фотографии и приятные моменты.",
+    heroDescription: profile.public.heroDescription?.trim()
+      || DEFAULT_UNIVERSAL_PUBLIC_HERO_DESCRIPTION,
     participantCount: payload.card.greetingCount,
     publicPhotoCount: payload.share.showPhotoCount ? payload.card.photoCount : null,
     summaryTitle: "",

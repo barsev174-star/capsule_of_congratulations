@@ -32,6 +32,7 @@ export type CardBlockReadinessView = {
   description: string;
   statusLabel: string;
   explanation: string;
+  warning?: string;
   action?: CardDesignAction;
 };
 
@@ -171,6 +172,12 @@ const withStatusLabel = (block: CardBlockReadinessView, label: string) => ({
   statusLabel: label
 });
 
+const withWarning = (block: CardBlockReadinessView, warning: string) => ({
+  ...block,
+  statusLabel: "Готово, можно обновить",
+  warning
+});
+
 const isEnabled = (input: CardDesignReadinessInput, blockId: FinalCardBlockId) =>
   input.requiredBlockIds.includes(blockId) || optionalBlockEnabled(input.card.finalBlockSettings, blockId);
 
@@ -256,15 +263,20 @@ export const buildCardBlockReadiness = (
           { label: "Перейти к поздравлениям", target: "content", kind: "tab" }
         );
       }
-      return input.qualities.length === 5 && !input.qualitiesAreStale
-        ? makeBlock(input, blockId, "READY", "Определены пять качеств по активным поздравлениям.")
-        : withStatusLabel(makeBlock(
+      if (input.qualities.length === 5) {
+        const readyBlock = makeBlock(input, blockId, "READY", "Определены пять качеств по активным поздравлениям.");
+        return input.qualitiesAreStale
+          ? withWarning(
+              readyBlock,
+              "После создания качеств появились новые поздравления. Сохранённые качества останутся в открытке; обновлять их необязательно."
+            )
+          : readyBlock;
+      }
+      return withStatusLabel(makeBlock(
             input,
             blockId,
             "ACTION_REQUIRED",
-            input.qualitiesAreStale
-              ? "Поздравления изменились — качества нужно обновить."
-              : "Материала достаточно, можно определить пять качеств.",
+            "Материала достаточно, можно определить пять качеств.",
             { label: input.qualities.length ? "Обновить качества" : "Определить 5 качеств", target: "block-qualities", kind: "anchor" }
           ), "Нужно определить");
     }
@@ -331,19 +343,23 @@ export const buildCardBlockReadiness = (
       }
       const selectedQuotesReady =
         input.bestQuotes.length === 3 &&
-        input.bestQuotes.every(isValidBestQuoteText) &&
-        !input.bestQuotesAreStale;
-      return selectedQuotesReady
-        ? makeBlock(input, blockId, "READY", "Выбраны три фразы для финальной открытки.")
-        : withStatusLabel(makeBlock(
+        input.bestQuotes.every(isValidBestQuoteText);
+      if (selectedQuotesReady) {
+        const readyBlock = makeBlock(input, blockId, "READY", "Выбраны три фразы для финальной открытки.");
+        return input.bestQuotesAreStale
+          ? withWarning(
+              readyBlock,
+              "После выбора фраз появились новые поздравления. Сохранённые фразы останутся в открытке; обновлять их необязательно."
+            )
+          : readyBlock;
+      }
+      return withStatusLabel(makeBlock(
             input,
             blockId,
             "ACTION_REQUIRED",
-            input.bestQuotesAreStale
-              ? "Поздравления изменились — варианты фраз нужно обновить."
-              : input.bestQuotes.length > 3
-                ? "Выберите и сохраните ровно три фразы."
-                : "Материала достаточно, можно подобрать лучшие фразы.",
+            input.bestQuotes.length > 3
+              ? "Выберите и сохраните ровно три фразы."
+              : "Материала достаточно, можно подобрать лучшие фразы.",
             { label: input.bestQuotes.length > 3 ? "Выбрать лучшие фразы" : "Подобрать фразы", target: "block-quotes", kind: "anchor" }
           ), "Нужно подобрать");
     }

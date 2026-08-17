@@ -38,6 +38,7 @@ describe("DesignStickyActions", () => {
       <DesignStickyActions
         manageToken="manage-token"
         deliveryVersion="2026-08-10T10:00:00.000Z"
+        deliveryWarnings={["Сохранённые фразы можно оставить без обновления."]}
         primaryAction={{ kind: "deliver", label: "Передать получателю" }}
       />
     );
@@ -48,6 +49,8 @@ describe("DesignStickyActions", () => {
     const dialog = screen.getByRole("alertdialog", { name: "Передать открытку получателю?" });
     const confirm = within(dialog).getByRole("button", { name: "Передать получателю" });
     expect(confirm).toBeDisabled();
+    expect(within(dialog).getByText("Можно передать без обновления")).toBeInTheDocument();
+    expect(within(dialog).getByText("Сохранённые фразы можно оставить без обновления.")).toBeInTheDocument();
     expect(dialog.querySelector('input[name="cardVersion"]')).toHaveValue("2026-08-10T10:00:00.000Z");
 
     await user.click(screen.getByRole("checkbox"));

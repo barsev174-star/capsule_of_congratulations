@@ -6,8 +6,10 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSPrope
 import { createPortal } from "react-dom";
 import { startCardFromShowcaseAction } from "@/app/home-actions";
 import { useScrollReveal } from "@/components/scroll-reveal/scroll-reveal";
+import type { CardBlockReadinessView } from "@/lib/manage/card-design-readiness";
 import {
   normalizedRectOverflows,
+  universalTemplateBlockOrder,
   type NormalizedRect,
   type TemplateDecorLayer,
   type TemplateProfile,
@@ -31,6 +33,8 @@ import {
 import { getUniversalPhotoFramePreset } from "@/lib/templates/photo-frame-presets";
 import { getUniversalTextCardPreset } from "@/lib/templates/text-card-presets";
 import {
+  getUniversalPhotoCaptionScale,
+  getUniversalRecipientNameLines,
   getUniversalRecipientNameTier,
   getUniversalQuoteLengthScale,
   universalTextCapacityPresets
@@ -50,6 +54,8 @@ export type UniversalCardProps = {
   viewport?: UniversalTemplateViewport;
   actionContext?: UniversalTemplateActionContext;
   publicVersionHref?: string;
+  manageToken?: string;
+  blockReadiness?: CardBlockReadinessView[];
   debugSafeAreas?: boolean;
   className?: string;
 };
@@ -175,7 +181,7 @@ function UniversalPhoto({
   const framePreset = getUniversalPhotoFramePreset(frame.preset);
   const captionStyle = {
     ...normalizedRectStyle(framePreset.captionArea),
-    "--uv1-caption-scale": frame.caption.minScale
+    "--uv1-caption-scale": getUniversalPhotoCaptionScale(photo.caption, frame.caption.minScale)
   } as CSSProperties;
   const apertureStyle = normalizedRectStyle(framePreset.aperture);
   const photoImage = <Image
@@ -585,6 +591,37 @@ function ClosingBrand() {
   );
 }
 
+function ReadinessPlaceholder({
+  readiness,
+  manageToken
+}: {
+  readiness: CardBlockReadinessView;
+  manageToken?: string;
+}) {
+  const actionHref = readiness.action && manageToken
+    ? readiness.action.kind === "tab"
+      ? `/manage/${manageToken}?tab=${readiness.action.target}`
+      : `/manage/${manageToken}#${readiness.action.target}`
+    : null;
+
+  return (
+    <section
+      className={`${styles.section} ${styles.previewBlockPlaceholder}`}
+      data-universal-block={readiness.blockId}
+      data-block-readiness={readiness.status}
+    >
+      <span className={styles.previewBlockPlaceholderBadge}>Требует настройки</span>
+      <h2>{readiness.title}</h2>
+      <p>{readiness.explanation}</p>
+      {actionHref && readiness.action ? (
+        <Link href={actionHref} className={styles.previewBlockPlaceholderAction}>
+          {readiness.action.label}
+        </Link>
+      ) : null}
+    </section>
+  );
+}
+
 export function UniversalTemplateCard({
   profile,
   model,
@@ -592,10 +629,19 @@ export function UniversalTemplateCard({
   viewport = "auto",
   actionContext,
   publicVersionHref,
+  manageToken,
+  blockReadiness = [],
   debugSafeAreas = false,
   className = ""
 }: UniversalCardProps) {
-  const blocks = getUniversalRenderedBlocks(model, surface);
+  const contentBlocks = getUniversalRenderedBlocks(model, surface);
+  const readinessByBlock = new Map(blockReadiness.map((item) => [item.blockId, item]));
+  const blocks: UniversalRenderedBlockId[] = surface === "private" && blockReadiness.length > 0
+    ? universalTemplateBlockOrder.filter((blockId) => {
+        const readiness = readinessByBlock.get(blockId);
+        return readiness ? readiness.enabled : contentBlocks.includes(blockId);
+      })
+    : contentBlocks;
   const layoutPreset = getUniversalLayoutPreset(profile.layoutPreset);
   const eventDate = formatUniversalEventDate(model.eventDate);
   const quotes = surface === "private" ? model.privateQuotes : model.publicQuotes;
@@ -603,6 +649,7 @@ export function UniversalTemplateCard({
   const photoCount = surface === "public" ? model.publicPhotoCount : privatePhotoCount;
   const resolvedActionContext = actionContext ?? (surface === "private" ? "private" : "demo");
   const recipientNameTier = getUniversalRecipientNameTier(model.recipientName);
+  const recipientNameLines = getUniversalRecipientNameLines(model.recipientName);
   const photoViewerEnabled = profile.motion?.photoViewer ?? false;
   const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
   const photoTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -683,6 +730,11 @@ export function UniversalTemplateCard({
       <DecorLayers profile={profile} anchor="templateRoot" viewport={viewport} />
       <div className={styles.shell}>
         {blocks.map((block) => {
+          const readiness = block === "public-note" ? undefined : readinessByBlock.get(block);
+          if (surface === "private" && readiness && readiness.status !== "READY") {
+            return <ReadinessPlaceholder key={block} readiness={readiness} manageToken={manageToken} />;
+          }
+
           if (block === "hero") return <SectionSurface key={block} id="hero" profile={profile} viewport={viewport} className={styles.heroSection}>
             {model.occasion ? <span className={styles.heroOccasion}>{model.occasion}</span> : null}
             {eventDate ? <time className={styles.eventDate} dateTime={model.eventDate ?? undefined}>{eventDate}</time> : null}
@@ -696,7 +748,8 @@ export function UniversalTemplateCard({
             >
               <h1
                 className={`${styles.recipientName} ${recipientNameTier === "long" ? styles.recipientNameLong : ""} ${recipientNameTier === "very-long" ? styles.recipientNameVeryLong : ""}`.trim()}
-              >{model.recipientName}</h1>
+                aria-label={model.recipientName}
+              >{recipientNameLines.map((line) => <span key={line}>{line}</span>)}</h1>
             </div>
             <p className={styles.heroDescription}>{model.heroDescription}</p>
             <div className={styles.heroStats}>{model.participantCount > 0 ? <span data-hero-stat="congratulations"><strong>{model.participantCount}</strong> поздравлений</span> : null}{photoCount && photoCount > 0 ? <span data-hero-stat="photos"><strong>{photoCount}</strong> фото</span> : null}</div>

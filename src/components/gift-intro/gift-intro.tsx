@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import Image from "next/image";
 import { BrandLogo } from "@/components/brand/brand-logo";
-import type { CardTemplateId } from "@/lib/cards/templates";
+import type { CardTemplate, CardTemplateId } from "@/lib/cards/templates";
 import { defaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import styles from "./gift-intro.module.css";
 
@@ -13,6 +13,9 @@ type GiftIntroProps = {
   recipientName: string;
   subtitle?: string;
   fromLabel?: string;
+  previewKicker?: string;
+  previewPreset?: CardTemplate["introPreset"];
+  previewDecor?: readonly string[];
   templateId?: CardTemplateId;
   animationId?: GiftAnimationId;
   accent?: string;
@@ -37,34 +40,58 @@ const getReducedMotionServerSnapshot = () => false;
 const LightweightCardPreview = ({
   recipientName,
   fromLabel,
+  kicker,
   templateId,
-  accent
+  accent,
+  preset,
+  decor
 }: {
   recipientName: string;
   fromLabel?: string;
+  kicker: string;
   templateId: CardTemplateId;
   accent: string;
-}) => (
-  <div
-    className={styles.lightweightCardPreview}
-    data-template-id={templateId}
-    data-gift-intro-preview="lightweight"
-    style={{ "--gi-preview-accent": accent } as CSSProperties}
-  >
-    <span className={styles.lightweightCardKicker}>Открытка для</span>
-    <strong>{recipientName}</strong>
-    <span className={styles.lightweightCardRule} />
-    <span className={styles.lightweightCardLine} />
-    <span className={`${styles.lightweightCardLine} ${styles.lightweightCardLineShort}`} />
-    <span className={styles.lightweightCardMark}>♡</span>
-    <small>{fromLabel?.trim() || "С тёплыми словами"}</small>
-  </div>
-);
+  preset: NonNullable<CardTemplate["introPreset"]>;
+  decor: readonly string[];
+}) => {
+  return (
+    <div
+      className={styles.lightweightCardPreview}
+      data-template-id={templateId}
+      data-preview-preset={preset}
+      data-gift-intro-preview="lightweight"
+      style={{ "--gi-preview-accent": accent } as CSSProperties}
+    >
+      {preset === "scrapbook" ? (
+        <>
+          <span className={styles.schoolPreviewTape} data-school-preview-decor="tape" aria-hidden="true" />
+          <span className={styles.schoolPreviewSticker} data-school-preview-decor="sticker" aria-hidden="true">5+</span>
+          {decor.slice(0, 2).map((src, index) => <span
+            key={`${src}-${index}`}
+            className={`${styles.schoolPreviewDoodle} ${index === 0 ? styles.schoolPreviewDoodleBoy : styles.schoolPreviewDoodleGirl}`}
+            data-school-preview-decor={index === 0 ? "boy" : "girl"}
+            aria-hidden="true"
+          ><Image src={src} alt="" width={54} height={78} /></span>)}
+        </>
+      ) : null}
+      <span className={styles.lightweightCardKicker}>{kicker}</span>
+      <strong>{recipientName}</strong>
+      <span className={styles.lightweightCardRule} />
+      <span className={styles.lightweightCardLine} />
+      <span className={`${styles.lightweightCardLine} ${styles.lightweightCardLineShort}`} />
+      <span className={styles.lightweightCardMark}>♡</span>
+      <small>{fromLabel?.trim() || "С тёплыми словами"}</small>
+    </div>
+  );
+};
 
 export const GiftIntro = ({
   recipientName,
   subtitle = "для вас собрали тёплые слова",
   fromLabel,
+  previewKicker = "Открытка для",
+  previewPreset = "default",
+  previewDecor = [],
   templateId = "warm-classic",
   animationId = defaultGiftAnimationId,
   accent,
@@ -73,6 +100,7 @@ export const GiftIntro = ({
   onIntroDone,
   children
 }: GiftIntroProps) => {
+  const resolvedPreviewKicker = previewKicker.trim() || "Открытка для";
   const prefersReducedMotion = useSyncExternalStore(
     subscribeReducedMotion,
     getReducedMotionSnapshot,
@@ -229,7 +257,7 @@ export const GiftIntro = ({
               <div className={styles.envelopeCard}>
                 <div className={styles.envelopeCardInside}>
                   <div className={`${styles.cardTemplatePreview} ${styles.cardTemplatePreviewLower}`} aria-hidden="true">
-                    <LightweightCardPreview recipientName={name} fromLabel={fromLabel} templateId={templateId} accent={accentColor} />
+                    <LightweightCardPreview recipientName={name} fromLabel={fromLabel} kicker={resolvedPreviewKicker} templateId={templateId} accent={accentColor} preset={previewPreset} decor={previewDecor} />
                   </div>
                 </div>
                 <div className={styles.envelopeCardFold}>
@@ -243,7 +271,7 @@ export const GiftIntro = ({
                   </div>
                   <div className={styles.envelopeCardInsideTop} aria-hidden="true">
                     <div className={`${styles.cardTemplatePreview} ${styles.cardTemplatePreviewUpper}`}>
-                      <LightweightCardPreview recipientName={name} fromLabel={fromLabel} templateId={templateId} accent={accentColor} />
+                      <LightweightCardPreview recipientName={name} fromLabel={fromLabel} kicker={resolvedPreviewKicker} templateId={templateId} accent={accentColor} preset={previewPreset} decor={previewDecor} />
                     </div>
                   </div>
                 </div>

@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { createTemplateStudioProfile } from "@/lib/templates/studio";
 import { buildUniversalFixtureViewModel } from "@/lib/templates/view-model";
+import { school_scrapbookProfile } from "@/templates/school-scrapbook/profile";
 import { UniversalTemplateExportCard, universalExportFormats } from "./universal-export-card";
 
 const profile = createTemplateStudioProfile("universal-export-test");
@@ -29,7 +30,10 @@ describe("UniversalTemplateExportCard", () => {
 
       expect(root).toBeInTheDocument();
       expect(root?.querySelector('[data-export-counter="photos"]')).toHaveTextContent("6 фото в открытке");
-      expect((root?.querySelector(`img[src="${profile.assets.page?.src}"]`) as HTMLImageElement).style.opacity).toBe("");
+      expect(root?.querySelector("[data-export-page-underlay]")).toHaveAttribute(
+        "src",
+        expect.stringContaining(`${profile.assets.page?.src}?crop=`)
+      );
       expect(root?.querySelector('[data-export-memories-layout="feature-stack"]')).toBeInTheDocument();
       expect(root?.querySelector("[data-export-photo-row]")?.children).toHaveLength(2);
       expect(root?.querySelectorAll("[data-export-photo]")).toHaveLength(universalExportFormats[format].photoCount);
@@ -59,10 +63,10 @@ describe("UniversalTemplateExportCard", () => {
         expect(qualityAsset).toHaveStyle({ objectFit: "contain" });
         expect(Number.parseFloat(qualityCard.style.width) / Number.parseFloat(qualityCard.style.height)).toBeCloseTo(480 / 258, 4);
       }
-      const recipientName = root?.querySelector('[data-text-preset="recipient-name"] strong') as HTMLElement;
+      const recipientName = root?.querySelector('[data-text-preset="recipient-name"] > span') as HTMLElement;
       expect(Number.parseFloat(recipientName.style.fontSize)).toBeGreaterThanOrEqual(minimumRecipientNameFontSize[format]);
       expect(root?.querySelector('[data-universal-export-block="closing"]')).toHaveStyle({ height: `${closingHeight[format]}px` });
-      expect(root?.querySelector('[data-underlay-preset="adaptive-frame"]')?.querySelectorAll(":scope > svg")).toHaveLength(9);
+      expect(root?.querySelector('[data-export-asset-underlay="nine-slice"][data-export-raster-slice]')).toBeInTheDocument();
       for (const block of ["hero", "qualities", "quotes"]) {
         const bareSection = root?.querySelector(`[data-universal-export-block="${block}"]`);
         expect(bareSection).toHaveAttribute("data-section-presentation", "bare");
@@ -87,7 +91,7 @@ describe("UniversalTemplateExportCard", () => {
       }
       const closingUnderlay = root?.querySelector('[data-universal-export-block="closing"] [data-export-asset-underlay="horizontal-slice"]');
       expect(closingUnderlay).toBeInTheDocument();
-      expect(closingUnderlay?.querySelectorAll(":scope > svg")).toHaveLength(3);
+      expect(closingUnderlay).toHaveAttribute("data-export-raster-slice");
       expect(root?.querySelectorAll('[data-universal-export-block="quotes"] [data-safe-text]')).toHaveLength(
         format === "story" ? 2 : 3
       );
@@ -132,11 +136,9 @@ describe("UniversalTemplateExportCard", () => {
   });
 
   it.each(["story", "post", "a4"] as const)("keeps the colorful school counters in the %s export", (format) => {
-    const schoolProfile = structuredClone(profile);
-    schoolProfile.id = "school-scrapbook";
-    const model = buildUniversalFixtureViewModel("public-full", { templateId: schoolProfile.id });
+    const model = buildUniversalFixtureViewModel("public-full", { templateId: school_scrapbookProfile.id });
     model.publicPhotoCount = 3;
-    const { container } = render(<UniversalTemplateExportCard profile={schoolProfile} model={model} format={format} />);
+    const { container } = render(<UniversalTemplateExportCard profile={school_scrapbookProfile} model={model} format={format} />);
 
     expect(container.querySelector('[data-export-counter="congratulations"]')).toHaveStyle({
       color: "#1859bd",
@@ -148,6 +150,28 @@ describe("UniversalTemplateExportCard", () => {
       background: "#d9f3ef",
       transform: "rotate(1.5deg)"
     });
+  });
+
+  it.each(["story", "post", "a4"] as const)("keeps the school decor proportional in the %s export", (format) => {
+    const model = buildUniversalFixtureViewModel("public-full", { templateId: school_scrapbookProfile.id });
+    const { container } = render(<UniversalTemplateExportCard profile={school_scrapbookProfile} model={model} format={format} />);
+
+    for (const layerId of [
+      "hero-globe-cluster-export",
+      "hero-backpack-cluster-export",
+      "closing-student-doodle-export",
+      "closing-student-girl-doodle-export"
+    ]) {
+      const layer = container.querySelector<HTMLElement>(`[data-decor-layer="${layerId}"]`);
+      const sourceLayer = school_scrapbookProfile.assets.decor.find(({ id }) => id === layerId);
+      expect(layer).toBeInTheDocument();
+      expect(sourceLayer).toBeDefined();
+      expect(Number.parseFloat(layer?.style.width ?? "0") / Number.parseFloat(layer?.style.height ?? "1"))
+        .toBeCloseTo((sourceLayer?.asset.width ?? 1) / (sourceLayer?.asset.height ?? 1), 4);
+    }
+
+    expect(container.querySelector('[data-universal-export-block="closing"] [data-export-asset-underlay="horizontal-slice"]'))
+      .toHaveAttribute("src", expect.stringContaining("horizontal%3A0.25"));
   });
 
   it("moves the school Story hero description onto an intentional second line", () => {
@@ -162,6 +186,15 @@ describe("UniversalTemplateExportCard", () => {
     expect(container.querySelector("[data-export-hero-description]")?.textContent).toContain("моменты\nи пожелания");
   });
 
+  it.each(["story", "post", "a4"] as const)("puts a Russian patronymic on a dedicated line in the %s export", (format) => {
+    const model = buildUniversalFixtureViewModel("public-full", { templateId: profile.id });
+    model.recipientName = "Наталья Афанасьевна";
+    const { container } = render(<UniversalTemplateExportCard profile={profile} model={model} format={format} />);
+    const heading = container.querySelector('[data-text-preset="recipient-name"] > span') as HTMLElement;
+
+    expect(heading.textContent).toBe("Наталья\nАфанасьевна");
+  });
+
   it("preserves overflowing anchored decor in export", () => {
     const overflowProfile = structuredClone(profile);
     overflowProfile.assets.decor[0] = {
@@ -174,7 +207,7 @@ describe("UniversalTemplateExportCard", () => {
     const closing = container.querySelector('[data-universal-export-block="closing"]');
 
     expect(closing).toHaveAttribute("data-decor-overflow", "visible");
-    expect(closing?.querySelector("[data-export-underlay-clip]")).toBeInTheDocument();
+    expect(closing?.querySelector("[data-export-raster-slice]")).toBeInTheDocument();
   });
 
   it("reuses normalized crop, profile assets and full boundary text", () => {

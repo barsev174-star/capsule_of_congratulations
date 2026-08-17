@@ -38,7 +38,8 @@ export const school_scrapbookProfile = defineTemplate({
       }),
       quotes: defineSectionUnderlay(asset("/templates/school-scrapbook/section-quotes.webp", 1200, 670), "adaptive-frame"),
       closing: defineSectionUnderlay(asset("/templates/school-scrapbook/section-closing-finale-desktop-v3.webp", 1200, 480), "cover", {
-        mobileAsset: asset("/templates/school-scrapbook/section-closing-finale-mobile-v3.webp", 600, 800)
+        mobileAsset: asset("/templates/school-scrapbook/section-closing-finale-mobile-v3.webp", 600, 800),
+        exportHorizontalSliceEdgeRatio: 0.25
       })
     },
     greetingCards: [
@@ -83,7 +84,7 @@ export const school_scrapbookProfile = defineTemplate({
         id: "hero-globe-cluster-export",
         asset: asset("/templates/school-scrapbook/decor-hero-globe-cluster-v1.webp", 220, 231),
         anchor: "hero",
-        rect: { x: -0.025, y: 0.275, width: 0.27, height: 1 },
+        rect: { x: -0.13, y: 0.18, width: 0.45, height: 1 },
         rotation: -4,
         opacity: 0.9,
         visibleOn: ["export"]
@@ -101,7 +102,7 @@ export const school_scrapbookProfile = defineTemplate({
         id: "hero-backpack-cluster-export",
         asset: asset("/templates/school-scrapbook/decor-hero-backpack-cluster-v1.webp", 224, 149),
         anchor: "hero",
-        rect: { x: 0.67, y: 0.395, width: 0.37, height: 0.86 },
+        rect: { x: 0.66, y: 0.17, width: 0.52, height: 1 },
         rotation: -4,
         opacity: 0.8,
         visibleOn: ["export"]
@@ -204,10 +205,29 @@ export const school_scrapbookProfile = defineTemplate({
       closing: "#eaf3fb"
     }
   },
-  intro: { surface: "#fffaf0", text: "#16365c", accent: "#1859bd" },
+  intro: {
+    surface: "#fffaf0",
+    text: "#16365c",
+    accent: "#1859bd",
+    preset: "scrapbook",
+    kicker: "Открытка",
+    decor: [
+      asset("/templates/school-scrapbook/decor-closing-student-doodle-v1.webp", 112, 112),
+      asset("/templates/school-scrapbook/decor-closing-student-girl-doodle-v3.webp", 105, 112)
+    ]
+  },
   motion: { preset: "playful", revealSections: true, photoViewer: true },
-  public: { blocks: ["hero", "qualities", "memories", "quotes"] },
-  export: { profile: "universal-export-v1" },
-  performance: { networkBudget: 8_000_000, decodedMemoryBudget: 68_000_000 },
+  public: {
+    blocks: ["hero", "qualities", "memories", "quotes"],
+    heroDescription: "Тёплая публичная часть подарка:\nважные слова, фотографии и приятные моменты."
+  },
+  export: {
+    profile: "universal-export-v1",
+    counters: {
+      congratulations: { text: "#1859bd", surface: "#fff0a8" },
+      photos: { text: "#0b7278", surface: "#d9f3ef" }
+    }
+  },
+  performance: { networkBudget: 8_000_000, decodedMemoryBudget: 72_000_000 },
   demo: { fixture: "full-card-default" }
 });

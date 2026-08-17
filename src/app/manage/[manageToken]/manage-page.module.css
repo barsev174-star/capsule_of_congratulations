@@ -9367,6 +9367,11 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
   color: #35733d;
 }
 
+.blockStatusWarning {
+  background: rgba(233, 101, 47, 0.1);
+  color: #c7532a;
+}
+
 .blockStatusACTION_REQUIRED {
   background: var(--bg-hover);
   color: #e9652f;
@@ -9388,6 +9393,17 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
   border-radius: 12px;
   background: rgba(246, 239, 232, 0.72);
   color: var(--text-primary);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.compositionReadinessWarning {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(233, 101, 47, 0.1);
+  color: var(--text-secondary);
   font-size: 0.88rem;
   line-height: 1.45;
   text-wrap: pretty;
@@ -14353,6 +14369,29 @@ button.contentStatusItemButton:active {
   border-radius: 18px;
   color: var(--text-primary);
   background: var(--bg-subtle);
+}
+
+.deliveryWarning {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(233, 101, 47, 0.1);
+  color: var(--text-primary);
+}
+
+.deliveryWarning strong {
+  color: #c7532a;
+}
+
+.deliveryWarning ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  text-wrap: pretty;
 }
 
 .deliveryDialogForm {

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { PreviewBar } from "@/components/preview/preview-bar";
 import { PreviewWatermark } from "@/components/preview/preview-watermark";
-import { FinalCard } from "@/components/final-card/final-card";
+import { TemplateCardRenderer } from "@/components/templates/template-card-renderer";
 import {
   getCardDraftByManageToken,
   listCardMediaAssetsByCardId,
@@ -13,10 +13,11 @@ import { getAiCardInsight, getAiCardQuoteSelection } from "@/lib/ai/repository";
 import {
   buildContributionFingerprint
 } from "@/lib/ai/card-insights";
-import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { buildCardBlockReadiness } from "@/lib/manage/card-design-readiness";
+import { getUniversalLayoutPreset } from "@/lib/templates/layout-presets";
+import { buildPrivateCardPresentation } from "@/lib/templates/private-card-presentation";
 
 export const metadata = {
   robots: {
@@ -62,13 +63,17 @@ export default async function PreviewPage({ params }: Props) {
   const qualities = qualitiesInsight?.items.length === 5
     ? qualitiesInsight.items.map((item) => item.text)
     : [];
-  const model = buildFinalCardViewModel(card, contributions, mediaAssets, {
+  const presentation = buildPrivateCardPresentation(card, contributions, mediaAssets, {
     quotes,
     qualities
   }, { includeIncompleteBlocks: true });
+  if (!presentation) notFound();
+  const readinessLayout = presentation.kind === "legacy"
+    ? finalCardLayouts[presentation.model.style]
+    : finalCardLayouts[getUniversalLayoutPreset(presentation.dispatch.registration.profile.layoutPreset).referenceTemplateId];
   const blockReadiness = buildCardBlockReadiness({
     card,
-    requiredBlockIds: finalCardLayouts[model.style].blocks
+    requiredBlockIds: readinessLayout.blocks
       .filter((block) => block.required)
       .map((block) => block.id),
     visibleContributions: contributions,
@@ -85,12 +90,21 @@ export default async function PreviewPage({ params }: Props) {
     <>
       <PreviewBar manageToken={manageToken} finalSlug={card.finalSlug} published={published} />
       <PreviewWatermark />
-      <FinalCard
-        model={model}
-        mode="preview"
-        manageToken={manageToken}
-        blockReadiness={blockReadiness}
-      />
+      {presentation.kind === "universal-v1"
+        ? <TemplateCardRenderer
+            dispatch={presentation.dispatch}
+            model={presentation.model}
+            actionContext="private"
+            manageToken={manageToken}
+            blockReadiness={blockReadiness}
+          />
+        : <TemplateCardRenderer
+            dispatch={presentation.dispatch}
+            model={presentation.model}
+            mode="preview"
+            manageToken={manageToken}
+            blockReadiness={blockReadiness}
+          />}
     </>
   );
 }

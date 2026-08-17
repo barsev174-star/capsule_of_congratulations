@@ -2,12 +2,20 @@ import Link from "next/link";
 import { listAdminCards } from "@/lib/admin/repository";
 import { requireAdminRole } from "@/lib/admin/session";
 import { getCardLifecycleLabel } from "@/lib/cards/lifecycle";
+import { getManagePath, getPreviewPath } from "@/lib/routes/card-links";
 import styles from "../../admin.module.css";
 
 type Props = {
   searchParams: Promise<{
     search?: string;
   }>;
+};
+
+const valueOrFallback = (value: string | null | undefined, fallback: string) => value?.trim() || fallback;
+
+const formatCreatedAt = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Дата не указана" : date.toLocaleDateString("ru-RU");
 };
 
 export default async function AdminCardsPage({ searchParams }: Props) {
@@ -56,32 +64,45 @@ export default async function AdminCardsPage({ searchParams }: Props) {
                 {cards.map((card) => (
                   <tr key={card.id}>
                     <td>
-                      <Link href={`/admin/cards/${card.id}`}>{card.recipientName}</Link>
+                      <Link href={`/admin/cards/${card.id}`} className={styles.cardPrimaryLink}>
+                        {valueOrFallback(card.recipientName, "Получатель не указан")}
+                      </Link>
+                      <span className={styles.cardId} title={card.id}>ID: {card.id.slice(0, 8)}</span>
                     </td>
-                    <td>{card.occasionText}</td>
-                    <td>
-                      {card.organizerName}
-                      <br />
-                      <span style={{ color: "var(--a-muted)", fontSize: 13 }}>{card.organizerEmail}</span>
+                    <td>{valueOrFallback(card.occasionText, "Повод не указан")}</td>
+                    <td className={styles.organizerCell}>
+                      <span>{valueOrFallback(card.organizerName, "Организатор не указан")}</span>
+                      <span className={styles.cellSecondary}>{valueOrFallback(card.organizerEmail, "Email не указан")}</span>
                     </td>
                     <td>
-                      <span className={styles.badge}>
-                        {getCardLifecycleLabel({
-                          paymentStatus: card.paymentStatus,
-                          collectionStatus: card.collectionStatus ?? "DRAFT",
-                          deliveryStatus: card.deliveryStatus ?? "PREPARING"
-                        })}
+                      <span className={`${styles.badge} ${card.deletedAt ? styles.badgeDeleted : ""}`.trim()}>
+                        {card.deletedAt
+                          ? "Удалена"
+                          : getCardLifecycleLabel({
+                              paymentStatus: card.paymentStatus,
+                              collectionStatus: card.collectionStatus ?? "DRAFT",
+                              deliveryStatus: card.deliveryStatus ?? "PREPARING"
+                            })}
                       </span>
                     </td>
-                    <td>{new Date(card.createdAt).toLocaleDateString("ru-RU")}</td>
+                    <td className={styles.dateCell}>{formatCreatedAt(card.createdAt)}</td>
                     <td>
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <Link href={`/manage/${card.manageToken}`} className={styles.detailLink}>
-                          Управлять
+                      <div className={styles.cardActions}>
+                        <Link href={`/admin/cards/${card.id}`} className={`${styles.detailLink} ${styles.detailLinkPrimary}`.trim()}>
+                          Детали и доступ
                         </Link>
-                        <Link href={`/preview/${card.manageToken}`} className={styles.detailLink}>
-                          Предпросмотр
-                        </Link>
+                        {!card.deletedAt && card.manageToken?.trim() ? (
+                          <>
+                          <Link href={getManagePath(card.manageToken)} className={styles.detailLink}>
+                            Управлять
+                          </Link>
+                          <Link href={getPreviewPath(card.manageToken)} className={styles.detailLink}>
+                            Предпросмотр
+                          </Link>
+                          </>
+                        ) : (
+                          <span className={styles.emptyValue}>Пользовательские действия недоступны</span>
+                        )}
                       </div>
                     </td>
                   </tr>

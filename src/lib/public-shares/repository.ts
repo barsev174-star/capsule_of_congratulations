@@ -94,9 +94,11 @@ export const updatePublicShare = async (share: PublicCardShare) => {
   const result = await getPostgresPool().query<ShareRow>(
     `UPDATE public_card_shares SET display_name = $2, headline_preset = $3, show_occasion = $4, show_event_date = $5, show_greeting_count = $6,
       show_photo_count = $7, public_summary = $8, public_qualities = $9::jsonb, public_phrases = $10::jsonb,
-      photo_consent_version = $11, photo_consent_accepted_at = $12, updated_at = now() WHERE id = $1 AND status IN ('DRAFT', 'ACTIVE') RETURNING *`,
+      photo_consent_version = $11, photo_consent_accepted_at = $12, payload_version = $13,
+      updated_at = now() WHERE id = $1 AND status IN ('DRAFT', 'ACTIVE') RETURNING *`,
     [share.id, share.displayName, share.headlinePreset, share.showOccasion, share.showEventDate, share.showGreetingCount, share.showPhotoCount,
-      share.publicSummary, JSON.stringify(share.publicQualities), JSON.stringify(share.publicPhrases), share.photoConsentVersion, share.photoConsentAcceptedAt]
+      share.publicSummary, JSON.stringify(share.publicQualities), JSON.stringify(share.publicPhrases), share.photoConsentVersion, share.photoConsentAcceptedAt,
+      share.payloadVersion]
   );
   return result.rows[0] ? mapShare(result.rows[0]) : null;
 };

@@ -1,6 +1,8 @@
 .page {
   position: relative;
+  width: min(100%, calc(var(--uv1-shell-max-width) + 2 * var(--uv1-shell-padding-max)));
   min-height: 100vh;
+  margin-inline: auto;
   overflow: hidden;
   color: var(--uv1-text);
   background: var(--uv1-page);
@@ -74,6 +76,69 @@
     0 2px 5px rgba(0, 0, 0, 0.04),
     0 20px 46px rgba(0, 0, 0, 0.07);
 }
+
+.previewBlockPlaceholder {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  padding: 32px;
+  color: #202124;
+  background: #ffffff;
+  text-align: center;
+}
+
+.previewBlockPlaceholderBadge {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: #a63d20;
+  background: #fff0e6;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.page[data-surface="private"] .section.previewBlockPlaceholder h2,
+.page[data-surface="private"] .section.previewBlockPlaceholder p {
+  margin: 0;
+  color: #202124;
+  font-family: var(--font-inter), Arial, sans-serif;
+}
+
+.page[data-surface="private"] .section.previewBlockPlaceholder h2 {
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 800;
+  text-wrap: balance;
+}
+
+.page[data-surface="private"] .section.previewBlockPlaceholder p {
+  color: #5f6368;
+  text-wrap: pretty;
+}
+
+.previewBlockPlaceholderAction {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  padding: 0 18px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #e9652f;
+  font-weight: 700;
+  text-decoration: none;
+  transition-property: background-color, scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.previewBlockPlaceholderAction:hover { background: #df5f2e; }
+.previewBlockPlaceholderAction:active { background: #c7532a; scale: 0.96; }
+.previewBlockPlaceholderAction:focus-visible { outline: 3px solid rgba(233, 101, 47, 0.35); outline-offset: 3px; }
 .section { container-type: inline-size; }
 .section[data-decor-overflow="visible"] { overflow: visible; }
 
@@ -225,6 +290,7 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
+.recipientName > span { display: block; }
 
 .recipientNameLong { font-size: clamp(40px, 5.5vw, var(--uv1-recipient-name-long-max)); line-height: 0.98; }
 .recipientNameVeryLong { font-size: clamp(26px, 2.5vw, 28px); line-height: 1.02; }
@@ -235,6 +301,8 @@
   color: var(--uv1-muted);
   font-size: clamp(15px, 1.7vw, 18px);
   line-height: 1.5;
+  text-wrap: balance;
+  white-space: pre-line;
 }
 
 .heroStats {
@@ -780,6 +848,8 @@
 }
 
 .page[data-template-id="school-scrapbook"] .photoCaption {
+  top: 78% !important;
+  height: 18% !important;
   padding-inline: 2.5%;
 }
 
@@ -1043,7 +1113,7 @@
 .page[data-viewport="mobile"] .publicNote { margin-bottom: 14px; border-radius: 22px; }
 .page[data-viewport="mobile"] .sectionContent { padding: max(24px, var(--uv1-safe-top)) max(18px, var(--uv1-safe-right)) max(24px, var(--uv1-safe-bottom)) max(18px, var(--uv1-safe-left)); }
 .page[data-viewport="mobile"] .recipientName { font-size: clamp(42px, 15vw, 64px); }
-.page[data-viewport="mobile"] .recipientNameLong { font-size: clamp(25px, 7.6vw, 34px); line-height: 1; }
+.page[data-viewport="mobile"] .recipientNameLong { font-size: clamp(34px, 11vw, 46px); line-height: 0.96; }
 .page[data-viewport="mobile"] .recipientNameVeryLong { font-size: clamp(22px, 6.5vw, 27px); line-height: 1.04; }
 .page[data-viewport="mobile"] .messages > .sectionUnderlay [data-underlay-layer="standard"],
 .page[data-viewport="mobile"] .memories > .sectionUnderlay [data-underlay-layer="standard"],
@@ -1084,7 +1154,7 @@
   .page[data-viewport="auto"] .publicNote { margin-bottom: 14px; border-radius: 22px; }
   .page[data-viewport="auto"] .sectionContent { padding: max(24px, var(--uv1-safe-top)) max(18px, var(--uv1-safe-right)) max(24px, var(--uv1-safe-bottom)) max(18px, var(--uv1-safe-left)); }
   .page[data-viewport="auto"] .recipientName { font-size: clamp(42px, 15vw, 64px); }
-  .page[data-viewport="auto"] .recipientNameLong { font-size: clamp(25px, 7.6vw, 34px); line-height: 1; }
+  .page[data-viewport="auto"] .recipientNameLong { font-size: clamp(34px, 11vw, 46px); line-height: 0.96; }
   .page[data-viewport="auto"] .recipientNameVeryLong { font-size: clamp(22px, 6.5vw, 27px); line-height: 1.04; }
   .page[data-viewport="auto"] .messages > .sectionUnderlay [data-underlay-layer="standard"],
   .page[data-viewport="auto"] .memories > .sectionUnderlay [data-underlay-layer="standard"],

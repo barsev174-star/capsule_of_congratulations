@@ -2,11 +2,17 @@ import { notFound } from "next/navigation";
 import { FinalCard } from "@/components/final-card/final-card";
 import { TemplateCardRenderer } from "@/components/templates/template-card-renderer";
 import {
+  UniversalTemplateExportCard,
+  universalExportFormats,
+  type UniversalExportFormat
+} from "@/components/templates/universal-v1/universal-export-card";
+import {
   buildLegacyBaselineModel,
   isLegacyMessageScenario,
   isLegacyTemplateId
 } from "@/lib/final-card/legacy-baseline";
 import { dispatchTemplateRenderer } from "@/lib/templates/dispatcher";
+import { resolveTemplateExportAsset } from "@/lib/templates/export-asset-url";
 import { universalMessageScenarios, type UniversalMessageScenario } from "@/lib/templates/fixtures";
 import {
   buildUniversalFixtureViewModel,
@@ -26,6 +32,7 @@ export default async function TemplateBaselinePage({ searchParams }: BaselinePag
   const template = firstValue(params.template);
   const scenario = firstValue(params.scenario);
   const surface = firstValue(params.surface);
+  const format = firstValue(params.format);
 
   if (surface !== "private" && surface !== "public") notFound();
 
@@ -50,6 +57,25 @@ export default async function TemplateBaselinePage({ searchParams }: BaselinePag
     scenario: universalScenario,
     photoCount: universalScenarioPhotoCount[universalScenario]
   });
+
+  if (format && format in universalExportFormats) {
+    const exportFormat = format as UniversalExportFormat;
+    const spec = universalExportFormats[exportFormat];
+    return (
+      <main
+        data-template-baseline={`${template}:export:${exportFormat}`}
+        data-template-export-baseline={exportFormat}
+        style={{ width: spec.width, height: spec.height }}
+      >
+        <UniversalTemplateExportCard
+          profile={dispatch.registration.profile}
+          model={model}
+          format={exportFormat}
+          resolveAsset={resolveTemplateExportAsset}
+        />
+      </main>
+    );
+  }
 
   return (
     <main data-template-baseline={`${template}:${surface}:${scenario}`}>

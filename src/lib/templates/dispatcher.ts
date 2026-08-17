@@ -4,6 +4,8 @@ import {
   type TemplateRegistry,
   type UniversalTemplateRegistration
 } from "@/lib/templates/registry";
+import type { FinalCardStyleId } from "@/lib/final-card/types";
+import { getUniversalLayoutPreset } from "@/lib/templates/layout-presets";
 
 export type TemplateRendererDispatch =
   | {
@@ -37,3 +39,9 @@ export const requireTemplateRenderer = (
   }
   return dispatch;
 };
+
+export const getTemplateFinalCardStyleId = (
+  dispatch: TemplateRendererDispatch
+): FinalCardStyleId => dispatch.kind === "legacy"
+  ? dispatch.registration.id
+  : getUniversalLayoutPreset(dispatch.registration.profile.layoutPreset).referenceTemplateId;

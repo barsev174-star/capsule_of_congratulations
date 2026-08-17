@@ -2,13 +2,13 @@ import { notFound } from "next/navigation";
 import { listCardDrafts, listCardMediaAssetsByCardId, listContributionsByCardId } from "@/lib/cards/repository";
 import { cardTemplates, isTemplateId } from "@/lib/cards/templates";
 import { getGiftLifecycleByFinalSlug, markRecipientFirstOpened } from "@/lib/cards/lifecycle-repository";
-import { FinalCard } from "@/components/final-card/final-card";
+import { TemplateCardRenderer } from "@/components/templates/template-card-renderer";
 import { GiftIntro } from "@/components/gift-intro/gift-intro";
-import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
 import { getAiCardInsight, getAiCardQuoteSelection } from "@/lib/ai/repository";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
 import { getPublicShareEditor } from "@/lib/public-shares/service";
+import { buildPrivateCardPresentation } from "@/lib/templates/private-card-presentation";
 
 type Props = {
   params: Promise<{
@@ -50,12 +50,13 @@ export default async function GiftPage({ params, searchParams }: Props) {
       ? savedQuoteSelection.items.map((item) => item.text)
       : []
   );
-  const model = buildFinalCardViewModel(card, contributions, mediaAssets, {
+  const presentation = buildPrivateCardPresentation(card, contributions, mediaAssets, {
     quotes: quoteSelection.quotes,
     qualities: qualitiesInsight?.items.length === 5
       ? qualitiesInsight.items.map((item) => item.text)
       : []
   });
+  if (!presentation) notFound();
   const isAssetDebugEnabled = process.env.NODE_ENV === "development" && debugAssets === "1";
   const hasPublicShareSettings = Boolean(publicShareEditor?.share || publicShareEditor?.wasRevoked);
   const publicShare = publicShareEditor ? {
@@ -69,10 +70,26 @@ export default async function GiftPage({ params, searchParams }: Props) {
     <><JourneyEvent event="gift_first_opened" cardId={card.id} route="gift" /><GiftIntro
       recipientName={card.recipientName}
       fromLabel={card.fromLabel}
+      previewKicker={template?.introKicker}
+      previewPreset={template?.introPreset}
+      previewDecor={template?.introDecor}
       templateId={card.templateId}
       accent={template?.accent}
     >
-      <FinalCard model={model} debugAssets={isAssetDebugEnabled} publicShare={publicShare} />
+      {presentation.kind === "universal-v1"
+        ? <TemplateCardRenderer
+            dispatch={presentation.dispatch}
+            model={presentation.model}
+            actionContext="private"
+            publicVersionHref={publicShare?.href}
+            debugSafeAreas={isAssetDebugEnabled}
+          />
+        : <TemplateCardRenderer
+            dispatch={presentation.dispatch}
+            model={presentation.model}
+            debugAssets={isAssetDebugEnabled}
+            publicShare={publicShare}
+          />}
     </GiftIntro></>
   );
 }

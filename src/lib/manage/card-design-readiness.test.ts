@@ -81,7 +81,7 @@ describe("buildCardBlockReadiness", () => {
     expect(byId(result, "quotes").statusLabel).toBe("Нужны поздравления");
   });
 
-  it("requires six greetings for qualities and respects the stale state", () => {
+  it("requires six greetings for qualities and keeps saved stale qualities deliverable", () => {
     const notEnough = Array.from({ length: 5 }, (_, index) => ({ id: String(index + 1) }));
     expect(byId(buildCardBlockReadiness(input({ visibleContributions: notEnough })), "qualities").status)
       .toBe("WAITING_FOR_CONTENT");
@@ -93,11 +93,13 @@ describe("buildCardBlockReadiness", () => {
       visibleContributions: contributions,
       qualities: ["доброта", "забота", "юмор", "поддержка", "надёжность"]
     })), "qualities").status).toBe("READY");
-    expect(byId(buildCardBlockReadiness(input({
+    const staleQualities = byId(buildCardBlockReadiness(input({
       visibleContributions: contributions,
       qualities: ["доброта", "забота", "юмор", "поддержка", "надёжность"],
       qualitiesAreStale: true
-    })), "qualities").status).toBe("ACTION_REQUIRED");
+    })), "qualities");
+    expect(staleQualities.status).toBe("READY");
+    expect(staleQualities.warning).toContain("обновлять их необязательно");
   });
 
   it("checks the selected message layout photo requirements", () => {
@@ -192,6 +194,14 @@ describe("buildCardBlockReadiness", () => {
       visibleContributions: contributions,
       bestQuotes: candidates.slice(0, 3)
     })), "quotes").status).toBe("READY");
+
+    const staleQuotes = byId(buildCardBlockReadiness(input({
+      visibleContributions: contributions,
+      bestQuotes: candidates.slice(0, 3),
+      bestQuotesAreStale: true
+    })), "quotes");
+    expect(staleQuotes.status).toBe("READY");
+    expect(staleQuotes.warning).toContain("обновлять их необязательно");
   });
 
   it("keeps the fallback final block ready under the existing rendering rules", () => {
@@ -279,6 +289,41 @@ describe("buildOrganizerJourney", () => {
 
     expect(journey.allBlocksReady).toBe(true);
     expect(journey.currentStepId).toBe("delivery");
+    expect(journey.nextAction.label).toBe("Передать получателю");
+  });
+
+  it("allows delivery with stale but already saved qualities and quotes", () => {
+    const contributions = Array.from({ length: 6 }, (_, index) => ({ id: `greeting-${index + 1}` }));
+    const cardInput = input({
+      card: {
+        ...input().card,
+        finalBlockSettings: { summary: false, qualities: true, memories: false, quotes: true }
+      },
+      requiredBlockIds: ["hero", "messages", "closing"],
+      visibleContributions: contributions,
+      qualities: ["доброта", "забота", "юмор", "поддержка", "надёжность"],
+      qualitiesAreStale: true,
+      bestQuotes: [
+        "Спасибо за поддержку, которая всегда помогает двигаться дальше.",
+        "Ты умеешь замечать хорошее даже в самом непростом дне.",
+        "Рядом с тобой рабочие будни становятся легче и теплее."
+      ],
+      bestQuotesAreStale: true
+    });
+    const readiness = buildCardBlockReadiness(cardInput);
+    const journey = buildOrganizerJourney({
+      card: cardInput.card,
+      lifecycle: {
+        collectionStatus: "CLOSED",
+        deliveryStatus: "PREPARING",
+        paymentStatus: "PAID"
+      },
+      blockReadiness: readiness,
+      visibleContributionCount: contributions.length
+    });
+
+    expect(readiness.filter((block) => block.warning)).toHaveLength(2);
+    expect(journey.allBlocksReady).toBe(true);
     expect(journey.nextAction.label).toBe("Передать получателю");
   });
 

@@ -30,7 +30,7 @@ export function UniversalTemplateIntroPreview({
     >
       {profile.intro.pattern ? <Image className={styles.introPattern} src={profile.intro.pattern.src} alt="" fill sizes="280px" aria-hidden="true" /> : null}
       {profile.intro.mark ? <span className={styles.introMark}><Image src={profile.intro.mark.src} alt="" fill sizes="44px" /></span> : <span className={styles.introFallbackMark} aria-hidden="true">♡</span>}
-      <span>Открытка для</span>
+      <span>{profile.intro.kicker?.trim() || "Открытка для"}</span>
       <strong>{recipientName}</strong>
       <i aria-hidden="true" />
       <small>{fromLabel?.trim() || "С тёплыми словами"}</small>

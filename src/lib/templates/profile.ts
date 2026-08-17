@@ -16,6 +16,8 @@ import {
 
 export const UNIVERSAL_TEMPLATE_FAMILY = "universal-v1" as const;
 export const UNIVERSAL_EXPORT_PROFILE = "universal-export-v1" as const;
+export const DEFAULT_UNIVERSAL_PUBLIC_HERO_DESCRIPTION =
+  "Тёплая публичная часть подарка:\nважные слова, фотографии и приятные моменты.";
 
 export const universalTemplateBlockOrder = [
   "hero",
@@ -144,15 +146,23 @@ export type TemplateProfile = {
     surface: string;
     text: string;
     accent: string;
+    preset?: "default" | "scrapbook";
+    kicker?: string;
     mark?: TemplateAssetRef;
     pattern?: TemplateAssetRef;
+    decor?: readonly TemplateAssetRef[];
   };
   motion?: TemplateMotionProfile;
   public: {
     blocks: readonly UniversalPublicBlockId[];
+    heroDescription?: string;
   };
   export: {
     profile: typeof UNIVERSAL_EXPORT_PROFILE;
+    counters?: {
+      congratulations: { text: string; surface: string };
+      photos: { text: string; surface: string };
+    };
   };
   performance: {
     networkBudget: number;
@@ -387,6 +397,13 @@ const validateSectionUnderlay = (
     }
   }
   if (value.safeArea !== undefined) validateRect(value.safeArea, `${path}.safeArea`, issues);
+  if (value.exportHorizontalSliceEdgeRatio !== undefined && (
+    typeof value.exportHorizontalSliceEdgeRatio !== "number" ||
+    value.exportHorizontalSliceEdgeRatio <= 0 ||
+    value.exportHorizontalSliceEdgeRatio >= 0.5
+  )) {
+    issues.push({ path: `${path}.exportHorizontalSliceEdgeRatio`, message: "Доля бокового края экспорта должна находиться в диапазоне 0…0.5." });
+  }
 };
 
 const validateFont = (
@@ -555,8 +572,24 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
     validateColor(value.intro.surface, "intro.surface", issues);
     validateColor(value.intro.text, "intro.text", issues);
     validateColor(value.intro.accent, "intro.accent", issues);
+    if (value.intro.preset !== undefined && !["default", "scrapbook"].includes(String(value.intro.preset))) {
+      issues.push({ path: "intro.preset", message: "Неизвестный preset облегчённой заставки." });
+    }
+    if (value.intro.kicker !== undefined && (
+      typeof value.intro.kicker !== "string" ||
+      value.intro.kicker.trim().length > 40
+    )) {
+      issues.push({ path: "intro.kicker", message: "Ожидается надпись длиной до 40 символов." });
+    }
     validateAsset(value.intro.mark, "intro.mark", issues, true);
     validateAsset(value.intro.pattern, "intro.pattern", issues, true);
+    if (value.intro.decor !== undefined) {
+      if (!Array.isArray(value.intro.decor) || value.intro.decor.length > 2) {
+        issues.push({ path: "intro.decor", message: "Заставка поддерживает не более двух декоративных ассетов." });
+      } else {
+        value.intro.decor.forEach((asset, index) => validateAsset(asset, `intro.decor.${index}`, issues));
+      }
+    }
   }
 
   if (value.motion !== undefined) {
@@ -588,10 +621,33 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
     if (canonical.some((block, index) => block !== actual[index])) {
       issues.push({ path: "public.blocks", message: "Публичные блоки должны следовать каноническому порядку." });
     }
+    if (value.public.heroDescription !== undefined) {
+      if (typeof value.public.heroDescription !== "string") {
+        issues.push({ path: "public.heroDescription", message: "Ожидается текст публичной шапки." });
+      } else if (value.public.heroDescription.length > 180) {
+        issues.push({ path: "public.heroDescription", message: "Текст публичной шапки не должен превышать 180 символов." });
+      } else if (value.public.heroDescription.split(/\r?\n/).length > 2) {
+        issues.push({ path: "public.heroDescription", message: "Текст публичной шапки должен занимать не более двух заданных строк." });
+      }
+    }
   }
 
   if (!isRecord(value.export) || value.export.profile !== UNIVERSAL_EXPORT_PROFILE) {
     issues.push({ path: "export.profile", message: `Ожидается профиль ${UNIVERSAL_EXPORT_PROFILE}.` });
+  } else if (value.export.counters !== undefined) {
+    if (!isRecord(value.export.counters)) {
+      issues.push({ path: "export.counters", message: "Ожидаются цвета экспортных счётчиков." });
+    } else {
+      for (const counter of ["congratulations", "photos"] as const) {
+        const palette = value.export.counters[counter];
+        if (!isRecord(palette)) {
+          issues.push({ path: `export.counters.${counter}`, message: "Ожидаются цвета текста и поверхности." });
+        } else {
+          validateColor(palette.text, `export.counters.${counter}.text`, issues);
+          validateColor(palette.surface, `export.counters.${counter}.surface`, issues);
+        }
+      }
+    }
   }
   if (!isRecord(value.performance)) {
     issues.push({ path: "performance", message: "Отсутствуют бюджеты производительности." });

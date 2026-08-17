@@ -274,11 +274,23 @@
   pointer-events: none;
 }
 
-.lightweightCardPreview[data-template-id="route-adventure"] {
+.lightweightCardPreview[data-preview-preset="route"] {
   color: #f7f8fa;
   background:
     radial-gradient(circle at 82% 14%, rgba(233, 101, 47, 0.2), transparent 24%),
     linear-gradient(155deg, #202f2a, #17231f);
+}
+
+.lightweightCardPreview[data-preview-preset="scrapbook"] {
+  color: #16365c;
+  background:
+    radial-gradient(circle at 11% 17%, #ffd43b 0 4px, transparent 5px),
+    radial-gradient(circle at 88% 31%, #ee6aa7 0 3px, transparent 4px),
+    radial-gradient(circle at 13% 74%, #42c7c7 0 3px, transparent 4px),
+    linear-gradient(rgba(24, 89, 189, 0.075) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(24, 89, 189, 0.075) 1px, transparent 1px),
+    #fffaf0;
+  background-size: auto, auto, auto, 22px 22px, 22px 22px, auto;
 }
 
 .cardTemplatePreviewLower .lightweightCardPreview {
@@ -293,8 +305,8 @@
   text-transform: uppercase;
 }
 
-.lightweightCardPreview[data-template-id="route-adventure"] .lightweightCardKicker,
-.lightweightCardPreview[data-template-id="route-adventure"] small {
+.lightweightCardPreview[data-preview-preset="route"] .lightweightCardKicker,
+.lightweightCardPreview[data-preview-preset="route"] small {
   color: #d9e0dd;
 }
 
@@ -308,11 +320,35 @@
   text-wrap: balance;
 }
 
+.lightweightCardPreview[data-preview-preset="scrapbook"] strong {
+  position: relative;
+  z-index: 2;
+  max-width: 100%;
+  overflow: visible;
+  color: #16365c;
+  font-family: var(--font-inter), Arial, sans-serif;
+  font-size: clamp(1.4rem, 5.4vw, 1.6rem);
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  text-overflow: clip;
+  text-shadow: 2px 2px 0 rgba(255, 212, 59, 0.55);
+  transform: rotate(-1deg);
+}
+
 .lightweightCardRule {
   width: 58%;
   height: 3px;
   border-radius: 999px;
   background: var(--gi-preview-accent);
+}
+
+.lightweightCardPreview[data-preview-preset="scrapbook"] .lightweightCardRule {
+  z-index: 2;
+  width: 64%;
+  height: 5px;
+  background: #1859bd;
+  box-shadow: 0 4px 0 #42c7c7;
+  transform: rotate(-1deg);
 }
 
 .lightweightCardLine {
@@ -321,6 +357,22 @@
   border-radius: 999px;
   background: currentColor;
   opacity: 0.14;
+}
+
+.lightweightCardPreview[data-preview-preset="scrapbook"] .lightweightCardLine {
+  z-index: 2;
+  width: 70%;
+  height: 8px;
+  border-radius: 2px 7px 3px 6px;
+  background: #ffd43b;
+  opacity: 0.82;
+  transform: rotate(1.5deg);
+}
+
+.lightweightCardPreview[data-preview-preset="scrapbook"] .lightweightCardLineShort {
+  width: 48%;
+  background: #42c7c7;
+  transform: rotate(-2deg);
 }
 
 .lightweightCardLineShort {
@@ -338,6 +390,20 @@
   font-size: 1.35rem;
 }
 
+.lightweightCardPreview[data-preview-preset="scrapbook"] .lightweightCardMark {
+  z-index: 2;
+  width: 48px;
+  height: 48px;
+  border: 3px solid #ffffff;
+  border-radius: 38% 62% 44% 56%;
+  color: #16365c;
+  background: #ffd43b;
+  box-shadow: 0 4px 0 #ee6aa7;
+  font-size: 1.5rem;
+  font-weight: 900;
+  transform: rotate(-7deg);
+}
+
 .lightweightCardPreview small {
   max-width: 80%;
   overflow: hidden;
@@ -346,6 +412,88 @@
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.lightweightCardPreview[data-preview-preset="scrapbook"] .lightweightCardKicker,
+.lightweightCardPreview[data-preview-preset="scrapbook"] small {
+  position: relative;
+  z-index: 2;
+  color: #1859bd;
+}
+
+.lightweightCardPreview[data-preview-preset="scrapbook"] .lightweightCardKicker {
+  padding: 4px 9px;
+  border-radius: 4px;
+  background: rgba(255, 212, 59, 0.72);
+  letter-spacing: 0.1em;
+  transform: rotate(1deg);
+}
+
+.lightweightCardPreview[data-preview-preset="scrapbook"] small {
+  max-width: 68%;
+  font-family: var(--font-caveat), "Segoe Print", cursive;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.schoolPreviewTape,
+.schoolPreviewSticker,
+.schoolPreviewDoodle {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.schoolPreviewTape {
+  top: 3%;
+  left: -7%;
+  width: 60%;
+  height: 22px;
+  background: #42c7c7;
+  clip-path: polygon(0 13%, 8% 0, 18% 19%, 28% 4%, 40% 18%, 51% 2%, 64% 17%, 77% 0, 88% 16%, 100% 5%, 100% 86%, 88% 100%, 76% 82%, 63% 98%, 50% 84%, 36% 100%, 23% 83%, 10% 96%, 0 84%);
+  opacity: 0.88;
+  transform: rotate(-2deg);
+}
+
+.schoolPreviewSticker {
+  top: 8%;
+  right: 6%;
+  display: grid;
+  width: 44px;
+  height: 42px;
+  place-items: center;
+  border: 3px solid #ffffff;
+  border-radius: 44% 56% 51% 49%;
+  color: #ffffff;
+  background: #ee6aa7;
+  box-shadow: 0 3px 0 rgba(22, 54, 92, 0.18);
+  font-family: var(--font-inter), Arial, sans-serif;
+  font-size: 1rem;
+  font-weight: 900;
+  transform: rotate(9deg);
+}
+
+.schoolPreviewDoodle {
+  top: 72%;
+  width: 54px;
+  height: 78px;
+  filter: drop-shadow(0 3px 0 rgba(22, 54, 92, 0.12));
+}
+
+.schoolPreviewDoodle img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.schoolPreviewDoodleBoy {
+  left: 6%;
+  transform: rotate(-5deg);
+}
+
+.schoolPreviewDoodleGirl {
+  right: 5%;
+  transform: rotate(5deg);
 }
 
 .cardTemplatePreviewCover {

@@ -27,6 +27,8 @@ type UniversalRendererProps = {
   viewport?: UniversalTemplateViewport;
   actionContext?: UniversalTemplateActionContext;
   publicVersionHref?: string;
+  manageToken?: string;
+  blockReadiness?: CardBlockReadinessView[];
   debugSafeAreas?: boolean;
 };
 
@@ -56,6 +58,8 @@ export function TemplateCardRenderer(props: TemplateCardRendererProps) {
       viewport={universal.viewport}
       actionContext={universal.actionContext}
       publicVersionHref={universal.publicVersionHref}
+      manageToken={universal.manageToken}
+      blockReadiness={universal.blockReadiness}
       debugSafeAreas={universal.debugSafeAreas}
     />
   );

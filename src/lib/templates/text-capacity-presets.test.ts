@@ -1,4 +1,6 @@
 import {
+  getUniversalPhotoCaptionScale,
+  getUniversalRecipientNameLines,
   getUniversalRecipientNameTier,
   getUniversalQuoteLengthScale,
   universalTextCapacityPresets
@@ -19,9 +21,22 @@ describe("universal text capacity presets", () => {
     expect(getUniversalRecipientNameTier("x".repeat(41))).toBe("very-long");
   });
 
+  it("puts a Russian first name and patronymic on separate lines", () => {
+    expect(getUniversalRecipientNameLines("Наталья Афанасьевна")).toEqual(["Наталья", "Афанасьевна"]);
+    expect(getUniversalRecipientNameLines("Алексей Петрович")).toEqual(["Алексей", "Петрович"]);
+    expect(getUniversalRecipientNameLines("Анна Иванова")).toEqual(["Анна Иванова"]);
+  });
+
   it("scales only near-limit quotes inside the fixed four-line area", () => {
     expect(getUniversalQuoteLengthScale("x".repeat(80))).toBe(1);
     expect(getUniversalQuoteLengthScale("x".repeat(81))).toBe(.93);
     expect(getUniversalQuoteLengthScale("x".repeat(100))).toBe(.86);
+  });
+
+  it("keeps short captions full-size and approaches minScale only near the hard limit", () => {
+    expect(getUniversalPhotoCaptionScale("Короткая подпись", .7)).toBe(1);
+    expect(getUniversalPhotoCaptionScale("Самая тёплая прогулка этого года", .7)).toBeCloseTo(.929, 3);
+    expect(getUniversalPhotoCaptionScale("x".repeat(39), .7)).toBeCloseTo(.806, 3);
+    expect(getUniversalPhotoCaptionScale("x".repeat(45), .7)).toBe(.7);
   });
 });

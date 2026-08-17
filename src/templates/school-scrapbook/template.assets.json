@@ -3,11 +3,11 @@
   "templateId": "school-scrapbook",
   "budgets": {
     "networkBytes": 8000000,
-    "decodedMemoryBytes": 68000000,
+    "decodedMemoryBytes": 72000000,
     "individualBytes": 2000000
   },
   "preview": {
-    "sourceAssetId": "section-hero",
+    "sourceAssetId": "catalog-preview-v2",
     "output": "preview.webp",
     "width": 1200,
     "height": 630
@@ -19,6 +19,15 @@
       "output": "page.webp",
       "width": 1536,
       "height": 1024,
+      "alpha": "opaque",
+      "fit": "cover"
+    },
+    {
+      "id": "catalog-preview-v2",
+      "source": "catalog-preview-v2.png",
+      "output": "catalog-preview-v2.webp",
+      "width": 1200,
+      "height": 630,
       "alpha": "opaque",
       "fit": "cover"
     },

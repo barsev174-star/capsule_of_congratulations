@@ -89,8 +89,20 @@ const validProfile = (): TemplateProfile => ({
 describe("TemplateProfile", () => {
   it("принимает декларативный профиль universal-v1", () => {
     const profile = validProfile();
+    profile.intro.kicker = "Открытка";
     expect(validateTemplateProfile(profile)).toEqual({ ok: true, profile, issues: [] });
     expect(defineTemplate(profile)).toBe(profile);
+  });
+
+  it("проверяет надпись над именем для облегчённой заставки", () => {
+    const profile = validProfile();
+    profile.intro.kicker = "Очень длинная надпись над именем получателя открытки";
+
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "intro.kicker" }));
+    }
   });
 
   it("принимает только декларативные motion-профили calm и playful", () => {
@@ -103,6 +115,19 @@ describe("TemplateProfile", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.issues).toContainEqual(expect.objectContaining({ path: "motion.preset" }));
+    }
+  });
+
+  it("ограничивает текст публичной шапки двумя заданными строками", () => {
+    const profile = validProfile();
+    profile.public.heroDescription = "Первая строка\nВторая строка";
+    expect(validateTemplateProfile(profile)).toEqual({ ok: true, profile, issues: [] });
+
+    profile.public.heroDescription = "Первая\nВторая\nТретья";
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "public.heroDescription" }));
     }
   });
 
@@ -213,6 +238,30 @@ describe("TemplateProfile", () => {
     if (!result.ok) {
       expect(result.issues).toContainEqual(expect.objectContaining({
         path: "assets.photoFrames.memory.caption.maxChars"
+      }));
+    }
+  });
+
+  it("валидирует декларативные настройки заставки и экспорта", () => {
+    const profile = validProfile();
+    profile.intro.preset = "scrapbook";
+    profile.intro.decor = [asset("intro-boy"), asset("intro-girl")];
+    profile.export.counters = {
+      congratulations: { text: "#1859bd", surface: "#fff0a8" },
+      photos: { text: "#0b7278", surface: "#d9f3ef" }
+    };
+    profile.assets.sections.closing = defineSectionUnderlay(asset("closing"), "cover", {
+      exportHorizontalSliceEdgeRatio: 0.25
+    });
+
+    expect(validateTemplateProfile(profile)).toEqual({ ok: true, profile, issues: [] });
+
+    profile.assets.sections.closing.exportHorizontalSliceEdgeRatio = 0.75;
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({
+        path: "assets.sections.closing.exportHorizontalSliceEdgeRatio"
       }));
     }
   });

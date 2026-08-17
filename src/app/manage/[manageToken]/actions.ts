@@ -61,7 +61,7 @@ import { deleteStoredCardMediaFile, saveCardMediaFile } from "@/lib/media/local-
 import { importGiftOptionImage } from "@/lib/gift-polls/image-storage";
 import { ensureGiftPollEnabled } from "@/lib/gift-polls/activation";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
-import { getGiftPath, getJoinPath, getManagePath } from "@/lib/routes/card-links";
+import { getGiftPath, getJoinPath, getManagePath, getPreviewPath } from "@/lib/routes/card-links";
 import { reportCriticalError } from "@/lib/telemetry";
 import {
   getAiCardInsight,
@@ -84,7 +84,7 @@ import { sanitizeGiftPollText } from "@/lib/gift-polls/text-sanitization";
 import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { buildCardBlockReadiness } from "@/lib/manage/card-design-readiness";
 import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
-import { templateRegistry } from "@/lib/templates/registry";
+import { dispatchTemplateRenderer, getTemplateFinalCardStyleId } from "@/lib/templates/dispatcher";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
@@ -440,6 +440,7 @@ const cardBasicsError = (message: string, fields?: CardBasicsFields): CardBasics
 
 const revalidateCardSurfaces = (manageToken: string, publicSlug: string, finalSlug: string) => {
   revalidatePath(getManagePath(manageToken));
+  revalidatePath(getPreviewPath(manageToken));
   revalidatePath(getJoinPath(publicSlug));
   revalidatePath(getGiftPath(finalSlug));
   revalidatePath(`${getGiftPath(finalSlug)}/messages`);
@@ -872,14 +873,15 @@ export async function deliverCardAction(
     });
     return { ok: false, message: "Сначала выберите шаблон открытки." };
   }
-  const templateRegistration = templateRegistry.get(card.templateId);
-  if (!templateRegistration || templateRegistration.family !== "legacy") {
-    logger.warn("manage.delivery_blocked_by_studio_template", "Universal studio template delivery is not enabled", {
+  const templateDispatch = dispatchTemplateRenderer(card.templateId);
+  if (!templateDispatch || !isProductTemplateId(card.templateId)) {
+    logger.warn("manage.delivery_blocked_by_studio_template", "Studio-only template delivery is not enabled", {
       cardId: card.id,
       templateId: card.templateId
     });
     return { ok: false, message: "Этот шаблон пока доступен только для проверки в ателье." };
   }
+  const readinessStyle = getTemplateFinalCardStyleId(templateDispatch);
   const [contributions, assets, quotesInsight, qualitiesInsight, savedQuoteSelection] = await Promise.all([
     listContributionsByCardId(card.id),
     listCardMediaAssetsByCardId(card.id),
@@ -897,7 +899,7 @@ export async function deliverCardAction(
   const quoteSelection = resolveFinalBestQuotes(card, quoteCandidates, selectedQuoteTexts);
   const readiness = buildCardBlockReadiness({
     card,
-    requiredBlockIds: finalCardLayouts[templateRegistration.id].blocks
+    requiredBlockIds: finalCardLayouts[readinessStyle].blocks
       .filter((block) => block.required)
       .map((block) => block.id),
     visibleContributions: contributions,

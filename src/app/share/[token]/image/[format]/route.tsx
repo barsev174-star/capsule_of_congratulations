@@ -7,6 +7,7 @@ import { UniversalTemplateExportCard, universalExportFormats } from "@/component
 import { getPublicSharePayload } from "@/lib/public-shares/service";
 import { buildUniversalPublicViewModel } from "@/lib/public-shares/universal";
 import { dispatchTemplateRenderer } from "@/lib/templates/dispatcher";
+import { resolveTemplateExportAsset } from "@/lib/templates/export-asset-url";
 import type { PublicSharePayload, PublicSharePayloadV1 } from "@/lib/public-shares/types";
 
 export const runtime = "nodejs";
@@ -48,6 +49,10 @@ const exportFonts = async () => Promise.all([
   readFile(join(process.cwd(), "public", "fonts", "Caveat-Cyrillic-600.woff")),
   readFile(join(process.cwd(), "public", "fonts", "PTSans-Cyrillic-400.woff"))
 ]);
+
+export const resolveUniversalExportAsset = (origin: string, src: `/${string}`) => {
+  return resolveTemplateExportAsset(src, origin);
+};
 
 type Theme = "paper" | "route";
 const themeAssets = {
@@ -262,13 +267,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     }
     const profile = dispatch.registration.profile;
     const model = buildUniversalPublicViewModel(payload, profile);
+    const resolveAsset = (path: `/${string}`) => resolveUniversalExportAsset(origin, path);
     flattenBackground = profile.colors.page;
     image = new ImageResponse(
       <UniversalTemplateExportCard
         profile={profile}
         model={model}
         format={selectedFormat === "print" ? "a4" : selectedFormat}
-        resolveAsset={(path) => asset(origin, path)}
+        resolveAsset={resolveAsset}
         resolvePhoto={(path) => exportPhoto(origin, path)}
       />,
       { width, height, fonts }
@@ -276,7 +282,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   } else {
     image = new ImageResponse(<ExportCard payload={payload} format={selectedFormat} origin={origin} />, { width, height, fonts });
   }
-  const png = Buffer.from(await image.arrayBuffer());
+  let png: Buffer;
+  try {
+    png = Buffer.from(await image.arrayBuffer());
+  } catch (error) {
+    console.error("Universal public export rendering failed", error);
+    if (process.env.NODE_ENV === "development") {
+      return new Response(error instanceof Error ? error.stack ?? error.message : String(error), {
+        status: 500,
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+      });
+    }
+    throw error;
+  }
   const preview = new URL(request.url).searchParams.get("preview") === "1";
   if (selectedFormat !== "print" || preview) return new Response(new Uint8Array(await sharp(png).flatten({ background: flattenBackground }).png().toBuffer()), { headers: { "Content-Type": "image/png", "Cache-Control": "no-store" } });
   const jpeg = await sharp(png).jpeg({ quality: 92 }).toBuffer();

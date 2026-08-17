@@ -16,6 +16,9 @@ export type CardTemplate = {
   recommendedFor: OccasionId[];
   accent: string;
   preview?: string;
+  introKicker?: string;
+  introPreset?: "default" | "route" | "scrapbook";
+  introDecor?: string[];
 };
 
 export const cardTemplates: CardTemplate[] = catalogTemplateRegistrations.map((entry) => ({
@@ -24,7 +27,12 @@ export const cardTemplates: CardTemplate[] = catalogTemplateRegistrations.map((e
   description: entry.catalog.description,
   recommendedFor: entry.catalog.recommendedFor,
   accent: entry.catalog.accent,
-  preview: entry.family === "universal-v1" ? entry.profile.metadata.preview.src : undefined
+  preview: entry.family === "universal-v1" ? entry.profile.metadata.preview.src : undefined,
+  introKicker: entry.family === "universal-v1" ? entry.profile.intro.kicker : undefined,
+  introPreset: entry.family === "universal-v1"
+    ? entry.profile.intro.preset ?? "default"
+    : entry.id === "route-adventure" ? "route" : "default",
+  introDecor: entry.family === "universal-v1" ? entry.profile.intro.decor?.map(({ src }) => src) : undefined
 }));
 
 export const occasions = [

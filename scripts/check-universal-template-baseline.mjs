@@ -21,6 +21,11 @@ const viewports = {
   mobile: { width: 390, height: 844 }
 };
 const primaryScenario = "landscape-trio";
+const exportFormats = {
+  story: { width: 1080, height: 1920 },
+  post: { width: 1080, height: 1350 },
+  a4: { width: 1240, height: 1754 }
+};
 const failures = [];
 const warnings = [];
 const report = [];
@@ -138,11 +143,75 @@ try {
         }
       }
     }
+
+    for (const [format, viewport] of Object.entries(exportFormats)) {
+      const context = await browser.newContext({ viewport, reducedMotion: "reduce", deviceScaleFactor: 1 });
+      const page = await context.newPage();
+      const browserErrors = [];
+      page.on("pageerror", (error) => browserErrors.push(error.message));
+      page.on("console", (message) => { if (message.type() === "error") browserErrors.push(message.text()); });
+
+      const query = new URLSearchParams({ template, surface: "public", scenario: primaryScenario, format });
+      const response = await page.goto(`${baseUrl}/internal/template-baseline?${query}`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+      await page.addStyleTag({ content: "html,body{margin:0!important}nextjs-portal{display:none!important}*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}" });
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+        const pendingImages = Promise.all([...document.images].map((image) => image.complete ? Promise.resolve() : new Promise((done) => {
+          image.addEventListener("load", done, { once: true });
+          image.addEventListener("error", done, { once: true });
+        })));
+        await Promise.race([pendingImages, new Promise((done) => setTimeout(done, 5_000))]);
+      });
+
+      const metrics = await page.evaluate(() => {
+        const canvas = document.querySelector("[data-export-format]");
+        const rect = canvas?.getBoundingClientRect();
+        const imageSources = [...document.images].map((image) => image.currentSrc || image.src);
+        return {
+          root: document.querySelector("[data-template-baseline]")?.getAttribute("data-template-baseline") ?? null,
+          family: canvas?.getAttribute("data-template-family") ?? null,
+          format: canvas?.getAttribute("data-export-format") ?? null,
+          width: rect?.width ?? null,
+          height: rect?.height ?? null,
+          pageUnderlay: Boolean(document.querySelector("[data-export-page-underlay]")),
+          closingSlice: Boolean(document.querySelector('[data-universal-export-block="closing"] [data-export-raster-slice]')),
+          rawTemplateAssets: imageSources.filter((src) => new URL(src, location.href).pathname.startsWith("/templates/")),
+          transformedTemplateAssets: imageSources.filter((src) => new URL(src, location.href).pathname === "/api/template-export-asset").length,
+          brokenImages: [...document.images].filter((image) => image.complete && image.naturalWidth === 0).map((image) => image.currentSrc || image.src)
+        };
+      });
+
+      const key = `${template}:export:${format}`;
+      const caseFailures = [];
+      const transientBrowserErrors = browserErrors.filter((message) => message.includes("net::ERR_NO_BUFFER_SPACE"));
+      const actionableBrowserErrors = browserErrors.filter((message) => !message.includes("net::ERR_NO_BUFFER_SPACE"));
+      if (response?.status() !== 200) caseFailures.push(`HTTP ${response?.status() ?? "unknown"}`);
+      if (!metrics.root) caseFailures.push("baseline root is missing");
+      if (metrics.family !== "universal-v1") caseFailures.push(`unexpected family ${metrics.family ?? "missing"}`);
+      if (metrics.format !== format) caseFailures.push(`unexpected format ${metrics.format ?? "missing"}`);
+      if (metrics.width !== viewport.width || metrics.height !== viewport.height) caseFailures.push(`canvas ${metrics.width}x${metrics.height}, expected ${viewport.width}x${viewport.height}`);
+      if (!metrics.pageUnderlay) caseFailures.push("page underlay is missing");
+      if (!metrics.closingSlice) caseFailures.push("closing slice is missing");
+      if (metrics.rawTemplateAssets.length > 0) caseFailures.push(`${metrics.rawTemplateAssets.length} raw template assets bypass the transform route`);
+      if (metrics.transformedTemplateAssets === 0) caseFailures.push("transformed template assets are missing");
+      if (metrics.brokenImages.length > 0) caseFailures.push(`${metrics.brokenImages.length} broken images`);
+      if (actionableBrowserErrors.length > 0) caseFailures.push(`${actionableBrowserErrors.length} browser errors`);
+      if (transientBrowserErrors.length > 0) warnings.push(`${key}: ${transientBrowserErrors.length} transient socket errors`);
+
+      const fileName = `${template}-export-${format}.png`;
+      const path = resolve(outputDir, fileName);
+      await page.screenshot({ path, fullPage: true });
+      const screenshot = { fileName, sha256: createHash("sha256").update(await readFile(path)).digest("hex") };
+      if (caseFailures.length > 0) failures.push(`${key}: ${caseFailures.join(", ")}`);
+      report.push({ key, ...metrics, browserErrors: actionableBrowserErrors, warnings: transientBrowserErrors, failures: caseFailures, screenshot });
+      await context.close();
+      await new Promise((done) => setTimeout(done, 75));
+    }
   }
 
   await writeFile(resolve(outputDir, "report.json"), `${JSON.stringify({ generatedAt: new Date().toISOString(), baseUrl, primaryScenario, cases: report }, null, 2)}\n`, "utf8");
   if (failures.length > 0) throw new Error(`Universal baseline failed:\n${failures.join("\n")}`);
-  console.log(`UNIVERSAL_BASELINE_OK ${report.length} web cases, ${templates.length * 4} screenshots, ${warnings.length} transient socket warnings, report=${resolve(outputDir, "report.json")}`);
+  console.log(`UNIVERSAL_BASELINE_OK ${report.length} web/export cases, ${templates.length * 7} screenshots, ${warnings.length} transient socket warnings, report=${resolve(outputDir, "report.json")}`);
 } finally {
   await browser?.close();
   server?.kill();

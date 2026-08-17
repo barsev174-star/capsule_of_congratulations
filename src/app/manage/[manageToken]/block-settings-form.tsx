@@ -490,6 +490,7 @@ export const BlockSettingsForm = ({
   const allEnabledBlocksReady = readiness
     .filter((block) => block.enabled)
     .every((block) => block.status === "READY");
+  const readinessWarnings = readiness.filter((block) => block.enabled && block.warning);
 
   const currentCompositionKey = JSON.stringify({
     blockOrder,
@@ -1024,7 +1025,11 @@ export const BlockSettingsForm = ({
         <div className={`${styles.readinessBanner} ${styles.readinessBannerReady}`} role="status">
           <div>
             <strong>Оформление готово</strong>
-            <span>Все включённые и обязательные блоки настроены. Проверьте открытку перед передачей.</span>
+            <span>
+              {readinessWarnings.length > 0
+                ? "После настройки появились новые поздравления. Сохранённые результаты можно оставить — это не мешает передаче открытки."
+                : "Все включённые и обязательные блоки настроены. Проверьте открытку перед передачей."}
+            </span>
           </div>
         </div>
       ) : contextualActions.length > 0 ? (
@@ -1159,11 +1164,11 @@ export const BlockSettingsForm = ({
                     <div className={styles.compositionStatusGroup}>
                       {blockReadiness ? (
                         <span
-                          className={`${styles.blockStatusBadge} ${styles[`blockStatus${blockReadiness.status}`]}`}
+                          className={`${styles.blockStatusBadge} ${styles[`blockStatus${blockReadiness.status}`]} ${blockReadiness.warning ? styles.blockStatusWarning : ""}`.trim()}
                           aria-label={`Статус блока: ${blockReadiness.statusLabel}`}
                         >
                           {blockReadiness.status === "READY" || blockReadiness.status === "ACTION_REQUIRED" ? (
-                            <span aria-hidden="true">{blockReadiness.status === "READY" ? "✓" : "!"}</span>
+                            <span aria-hidden="true">{blockReadiness.status === "READY" && !blockReadiness.warning ? "✓" : "!"}</span>
                           ) : null}
                           <span className={styles.blockStatusLabelDesktop}>{blockReadiness.statusLabel}</span>
                           <span className={styles.blockStatusLabelMobile}>{blockReadiness.statusLabel}</span>
@@ -1206,6 +1211,9 @@ export const BlockSettingsForm = ({
                     {blockReadiness && blockReadiness.status !== "READY" ? (
                       <p className={styles.compositionReadinessExplanation}>{blockReadiness.explanation}</p>
                     ) : null}
+                    {blockReadiness?.warning ? (
+                      <p className={styles.compositionReadinessWarning}>{blockReadiness.warning}</p>
+                    ) : null}
 
                     {block.id === "summary" ? (
                       <div className={styles.messageSettings}>
@@ -1247,7 +1255,7 @@ export const BlockSettingsForm = ({
                         </div>
 
                         {qualitiesStale ? (
-                          <p className={styles.aiInsightStale}>Поздравления изменились — качества лучше обновить.</p>
+                          <p className={styles.aiInsightStale}>После создания качеств появились новые поздравления. Текущие качества можно оставить и передать открытку без обновления.</p>
                         ) : null}
 
                         {qualities.length > 0 ? (
@@ -1300,7 +1308,7 @@ export const BlockSettingsForm = ({
                         </div>
 
                         {quotesAreStale ? (
-                          <p className={styles.aiInsightStale}>Поздравления изменились. Сохранённые варианты остаются доступны, но перед передачей открытки их нужно обновить.</p>
+                          <p className={styles.aiInsightStale}>После выбора фраз появились новые поздравления. Текущие фразы можно оставить и передать открытку без обновления.</p>
                         ) : null}
 
                         {bestQuotes.length > 0 ? (
