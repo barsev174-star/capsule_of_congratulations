@@ -84,6 +84,8 @@
 
 .assetImage {
   object-fit: cover;
+  outline: 1px solid var(--line);
+  outline-offset: -1px;
   transition: transform var(--motion-normal, 420ms) var(--motion-ease-out);
 }
 
@@ -350,6 +352,10 @@
 @media (min-width: 1024px) {
   .section {
     padding: 112px 0;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .preview,

@@ -1,5 +1,6 @@
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type { FinalCardViewModel } from "@/lib/final-card/view-model";
+import type { UniversalTemplatePhoto, UniversalTemplateViewModel } from "@/lib/templates/view-model";
 
 const createdAt = "2026-07-03T00:00:00.000Z";
 
@@ -147,6 +148,74 @@ export const exampleCardModel: FinalCardViewModel = {
     { id: "closing", required: true }
   ]
 };
+
+export const schoolScrapbookDemoCardModel: UniversalTemplateViewModel = (() => {
+  const photo = (
+    id: string,
+    fileName: string,
+    width: number,
+    height: number,
+    caption: string
+  ): UniversalTemplatePhoto => ({
+    id: `example-alisa-${id}`,
+    src: `/examples/alisa-school/${fileName}`,
+    width,
+    height,
+    caption,
+    crop: { x: 0.5, y: 0.5, zoom: 1 },
+    alt: `Фотография для открытки Алиса`
+  });
+
+  const messagePhotos: UniversalTemplatePhoto[] = [
+    photo("portrait", "alice-portrait.webp", 1086, 1448, "Первое сентября — начало новых открытий")
+  ];
+
+  const memoryPhotos: UniversalTemplatePhoto[] = [
+    photo("friends", "alice-friends.webp", 1489, 1056, "Друзья рядом — и всё становится веселее"),
+    photo("parents-school", "alice-parents-school.webp", 1448, 1086, "Первый школьный день, который хочется запомнить"),
+    photo("family-home", "alice-family-home.webp", 1448, 1086, "Утро, полное волнения и улыбок")
+  ];
+
+  const mainGreeting = "Алиса, поздравляем тебя с Днём знаний! Начинается новый учебный год — ещё одна маленькая глава твоей большой истории. Желаем тебе идти в школу с интересом, не бояться задавать вопросы, пробовать новое и радоваться своим успехам. Пусть рядом будут добрые учителя и настоящие друзья, уроки приносят открытия, а перемены — весёлые истории. Оставайся такой же любознательной, доброй, смелой и удивительно светлой. Мы всегда рядом, всегда поддержим и очень тобой гордимся.";
+
+  return {
+    templateId: "school-scrapbook",
+    recipientName: "Алиса",
+    occasion: "1 сентября",
+    eventDate: "2026-09-01",
+    fromLabel: "от семьи",
+    heroDescription: "Тёплые слова, яркие моменты и пожелания специально для тебя.",
+    participantCount: 9,
+    publicPhotoCount: null,
+    summaryTitle: "Главное поздравление",
+    mainGreeting,
+    mainGreetingAuthorName: "Мама и папа · родители",
+    qualities: ["доброта", "любознательность", "старание", "дружелюбие", "смелость"],
+    contributions: [
+      { id: "example-alisa-main", authorName: "Мама и папа", authorRole: "родители", message: mainGreeting },
+      { id: "example-alisa-babushka-lida", authorName: "Бабушка Лида", authorRole: "бабушка", message: "Алисочка, с 1 сентября! Желаю тебе с удовольствием узнавать новое, радоваться своим успехам и каждое утро идти в школу с хорошим настроением. Пусть рядом всегда будут добрые люди и верные друзья." },
+      { id: "example-alisa-dedushka-viktor", authorName: "Дедушка Виктор", authorRole: "дедушка", message: "Алиса, с Днём знаний! Желаю тебе смелости перед сложными задачами, терпения и настоящего любопытства. Не бойся ошибаться — именно так появляются знания и большие победы!" },
+      { id: "example-alisa-tetya-olya", authorName: "Тётя Оля", authorRole: "тётя", message: "Алиса, поздравляю с началом учебного года! Пусть в твоих тетрадях будет много пятёрок, а в каждом дне — ещё больше улыбок, интересных событий и весёлых перемен." },
+      { id: "example-alisa-dyadya-sasha", authorName: "Дядя Саша", authorRole: "дядя", message: "С 1 сентября, Алиса! Желаю тебе находить ответы на самые сложные вопросы, открывать новые увлечения и всегда верить в себя. Пусть учёба будет настоящим приключением!" },
+      { id: "example-alisa-babushka-natasha", authorName: "Бабушка Наташа", authorRole: "бабушка", message: "Моя дорогая Алиса, пусть этот школьный год будет добрым и счастливым. Желаю тебе хороших учителей, замечательных друзей и много поводов возвращаться домой с улыбкой." },
+      { id: "example-alisa-dedushka-nikolay", authorName: "Дедушка Николай", authorRole: "дедушка", message: "Алиса, поздравляю тебя с Днём знаний! Желаю быть внимательной, настойчивой и никогда не терять интереса к новому. Пусть каждый день приносит тебе хотя бы одно маленькое открытие." },
+      { id: "example-alisa-tetya-lena", authorName: "Тётя Лена", authorRole: "тётя", message: "Алисочка, с новым школьным годом! Пусть у тебя всё получается, новые знания даются легко, а школа дарит не только уроки, но и много тёплых воспоминаний." },
+      { id: "example-alisa-dyadya-andrey", authorName: "Дядя Андрей", authorRole: "дядя", message: "Алиса, с праздником! Желаю тебе отличного настроения, интересных предметов и друзей, с которыми весело и на уроках, и на переменах. Пусть этот год получится ярким!" }
+    ],
+    messageScenario: "portrait",
+    messagePhotos,
+    memoryTitle: "Моменты, которые хочется сохранить",
+    memoryDescription: "Первый школьный день, семья и друзья — моменты, к которым хочется возвращаться.",
+    memoryPhotos,
+    privateQuotes: [
+      "Пусть каждый школьный день приносит тебе новое маленькое открытие.",
+      "Не бойся ошибаться — самые интересные победы начинаются с попытки.",
+      "Пусть рядом будут люди, с которыми интересно учиться, дружить и мечтать."
+    ],
+    publicQuotes: [],
+    privateSignature: "С любовью и верой в тебя — твоя семья."
+  };
+})();
 
 const routeContributions: Contribution[] = [
   contribution(

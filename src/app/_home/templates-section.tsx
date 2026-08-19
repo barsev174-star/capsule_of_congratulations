@@ -49,7 +49,7 @@ export async function TemplatesSection() {
       <div className={styles.shell}>
         <div className={styles.heading}>
           <h2 className={`${styles.title} text-balance`}>Выберите настроение открытки</h2>
-          <p className={styles.subtitle}>Выберите один из двух тщательно проработанных шаблонов. Новые стили появятся позже.</p>
+          <p className={styles.subtitle}>Выберите один из трёх тщательно проработанных шаблонов. Новые стили появятся позже.</p>
         </div>
 
         <div className={styles.grid}>
@@ -59,7 +59,7 @@ export async function TemplatesSection() {
               <h3 className={styles.cardTitle}>{template.name}</h3>
               <p className={styles.cardText}>{template.description}</p>
               <span className={styles.availableBadge}>Доступен</span>
-              {template.id === "paper-birthday" || template.id === "route-adventure" ? (
+              {template.id === "paper-birthday" || template.id === "route-adventure" || template.id === "school-scrapbook" ? (
                 <Link className={styles.demoLink} href={`/example?template=${template.id}`}>
                   Открыть интерактивный пример
                 </Link>
