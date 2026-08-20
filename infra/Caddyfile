@@ -1,0 +1,13 @@
+slovesto.ru {
+  encode gzip zstd
+
+  reverse_proxy web:3000 {
+    header_up Host {host}
+    header_up X-Forwarded-Host {host}
+    header_up X-Forwarded-Proto https
+  }
+}
+
+www.slovesto.ru {
+  redir https://slovesto.ru{uri} permanent
+}
