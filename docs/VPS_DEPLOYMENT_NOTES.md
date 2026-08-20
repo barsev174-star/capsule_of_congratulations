@@ -1,321 +1,162 @@
 # VPS deployment notes
 
-Актуальная инструкция ближайшего обновления: `docs/DEPLOY_UPDATE_2026-07-02.md`.
-
-Дата: 2026-06-24
+Актуально на 20 августа 2026 года. Это основной документ по production-инфраструктуре Slovesto.
 
 ## Текущий production-статус
 
-VPS-размещение MVP завершено.
+- Домен: `https://slovesto.ru`.
+- Проект на VPS: `/home/deploy/capsule`.
+- Docker Compose project: `capsule`.
+- На VPS не должно быть других прикладных Docker-проектов.
+- Production commit после выделения собственного ingress: `7e4819f`.
 
-Рабочие URL:
+Рабочие контейнеры:
 
-1. `https://darislova.ru`
-2. `https://www.darislova.ru`
+| Контейнер | Назначение | Публичные порты |
+| --- | --- | --- |
+| `capsule-caddy-1` | HTTPS, редирект `www`, reverse proxy | `80`, `443` |
+| `capsule-web-1` | Next.js и export-worker | только `127.0.0.1:3100 → 3000` |
+| `capsule-postgres-1` | PostgreSQL | наружу не публикуется |
 
-Фактическая схема:
+Общие данные и сеть:
 
-1. Проект лежит на VPS в `/home/deploy/capsule`.
-2. Compose project: `capsule`.
-3. Контейнеры:
-   - `capsule-postgres-1` — PostgreSQL;
-   - `capsule-web-1` — Next.js production server.
-4. `capsule-web-1` опубликован только на host loopback: `127.0.0.1:3100->3000`.
-5. Публичные `80/443` обслуживает существующий Caddy из production stack Prognozist.
-6. Caddy подключен к Docker network `capsule_default`.
-7. Caddy site block:
+- Docker network: `capsule_default`.
+- PostgreSQL volume: `capsule_postgres_data`.
+- Caddy volumes: `capsule_caddy_data`, `capsule_caddy_config`.
+- Загруженные файлы: bind mount `/home/deploy/capsule/public/uploads`.
+- Медиа публичных версий: bind mount `/home/deploy/capsule/data/public-share-media`.
+
+## Caddy принадлежит Slovesto
+
+Caddy является сервисом `caddy` в `docker-compose.prod.yml` и использует `infra/Caddyfile`. Он больше не зависит от другого Compose-проекта или ручного `docker network connect`.
+
+Проксирование выполняется напрямую внутри `capsule_default`:
 
 ```caddyfile
-darislova.ru, www.darislova.ru {
+slovesto.ru {
   encode gzip zstd
-  reverse_proxy capsule-web-1:3000
+  reverse_proxy web:3000
+}
+
+www.slovesto.ru {
+  redir https://slovesto.ru{uri} permanent
 }
 ```
 
-8. HTTPS-сертификаты выпущены Caddy автоматически.
-9. PostgreSQL migration применена.
-10. Ручной backup базы и uploads проверен.
-11. Root cron backup настроен:
+Сертификаты выпускаются и обновляются Caddy автоматически. Данные ACME сохраняются в `capsule_caddy_data` и не должны удаляться при обычном деплое.
 
-```cron
-35 3 * * * cd /home/deploy/capsule && BACKUP_DIR=/home/deploy/capsule/backups RETENTION_DAYS=14 bash infra/scripts/run-nightly-backup.sh >> /var/log/capsule-backup.log 2>&1
-```
+## Production compose
 
-12. Health check пройден:
+Проверка конфигурации:
 
 ```bash
-BASE_URL=https://darislova.ru bash infra/scripts/check-production-health.sh
+cd /home/deploy/capsule
+docker compose -f docker-compose.prod.yml --env-file .env.production config --quiet
 ```
 
-Результат:
-
-```text
-Production health checks passed
-```
-
-Важный нюанс: Caddy был подключен к `capsule_default` вручную через `docker network connect`. Если контейнер Caddy будет пересоздан, это подключение может пропасть. Тогда его нужно повторить или закрепить общую сеть в compose-конфигурации Prognozist.
-
-## Подойдёт ли VPS
-
-Текущий VPS: 2 CPU, 4 GB RAM, 30 GB SSD, Ubuntu.
-
-Для MVP подходит:
-
-1. Next.js production server.
-2. PostgreSQL.
-3. Nginx reverse proxy.
-4. Локальное хранение загруженных фото на первом этапе.
-
-Главный риск — не процессор, а диск и бэкапы пользовательских фото.
-
-## Рекомендуемая схема MVP
-
-1. Caddy принимает HTTPS и проксирует в Next.js.
-2. Next.js работает в Docker Compose service `web`.
-3. PostgreSQL живёт на той же VPS.
-4. Загруженные фото хранятся локально.
-5. База и папка загрузок регулярно бэкапятся.
-
-## Важно: на VPS уже живёт Prognozist
-
-На сервере уже работает другой проект: Telegram bot + Mini App “Прогнозист”.
-
-По его документации:
-
-1. production-домен: `https://prognozistapp.ru`;
-2. production запускается через `docker-compose.prod.yml`;
-3. реальные public-контейнеры называются `predictions-prod-*`;
-4. HTTPS и reverse proxy обслуживает `caddy`;
-5. в проекте уже есть PostgreSQL;
-6. есть отдельный dev-like stack `predictions_*`, который не обслуживает public-домен.
-
-Для открыток нельзя бездумно ставить второй nginx на порты `80/443` или запускать новый сервис на уже занятых портах. Также не стоит подключаться к production-базе Прогнозиста: лучше держать отдельную базу/контейнер/volume, чтобы проекты не влияли друг на друга.
-
-## Рекомендуемая схема рядом с Prognozist
-
-Самый безопасный вариант для первого деплоя открыток:
-
-1. отдельная папка проекта на VPS, например `/home/deploy/capsule`;
-2. отдельный `docker-compose.prod.yml` для открыток;
-3. отдельный compose project name, например `capsule`;
-4. отдельные контейнеры:
-   - `capsule-web`;
-   - `capsule-postgres`;
-5. отдельный volume PostgreSQL, например `capsule-postgres-data`;
-6. отдельная папка uploads, например `/home/deploy/capsule/public/uploads/cards`;
-7. один основной домен для MVP: `https://darislova.ru`.
-
-URL-структура MVP на одном домене:
-
-1. `/` — лендинг.
-2. `/create` — создание открытки.
-3. `/join/[slug]` — страница участников.
-4. `/manage/[manageToken]` — управление для организатора.
-5. `/preview/[manageToken]` — предпросмотр для организатора.
-6. `/gift/[slug]` — финальная открытка для получателя.
-
-Поддомены `cards.`, `gift.`, `app.` пока не нужны. Их можно добавить позже через редиректы, когда появится личный кабинет или отдельный публичный хостинг открыток.
-
-Reverse proxy:
-
-1. если оставляем Caddy как общий вход на сервере, добавляем в него второй site block для домена открыток;
-2. если ставим nginx, сначала нужно понять, не занят ли уже `80/443` Caddy из Прогнозиста;
-3. одновременно Caddy и nginx на одних и тех же публичных портах запускать нельзя.
-
-Практически лучше использовать существующий Caddy-подход: он уже получает HTTPS-сертификаты и обслуживает Prognozist. Для открыток нужен отдельный site block на `darislova.ru`, который проксирует в `capsule-web`.
-
-## Ограничение фото
-
-В одной открытке максимум 7 фото:
-
-1. до 3 фото в блоке поздравлений;
-2. до 3 фото в блоке “Моменты”.
-
-При лимите исходного файла 6 MB абсолютный верхний предел одной открытки — около 36 MB до оптимизации. Реальный целевой размер после будущей оптимизации — 2-5 MB на открытку.
-
-## Что нужно решить перед загрузками в production
-
-1. Хранить локально или сразу подключать S3-compatible storage.
-2. Делать ли оптимизацию изображений до сохранения.
-3. Как часто делать backup.
-4. Сколько хранить черновики и тестовые открытки.
-5. Нужна ли ручная команда очистки удалённых/старых файлов.
-
-## Моё предложение
-
-Для ближайшего VPS-релиза:
-
-1. оставить локальное хранение файлов;
-2. использовать PostgreSQL для данных;
-3. не трогать production stack Прогнозиста;
-4. поднять открытки как отдельный compose-stack;
-5. добавить отдельный backup базы и uploads;
-6. оптимизацию изображений добавить следующим отдельным шагом;
-7. интерфейс хранения сделать так, чтобы позже заменить локальный диск на S3 без переписывания экранов.
-
-## Локальное хранение uploads
-
-На первом VPS-релизе пользовательские фото сохраняются на диск:
-
-```text
-public/uploads/cards/<cardId>/<fileName>
-```
-
-Публичный URL строится так:
-
-```text
-/uploads/cards/<cardId>/<fileName>
-```
-
-В коде это вынесено в `src/lib/media/local-card-media-storage.ts`. Экраны и репозитории теперь не знают, как именно устроен путь на диске, поэтому позже этот слой можно заменить на S3-compatible storage.
-
-Удаление старых файлов ограничено папкой `public/uploads/cards`, чтобы метаданные из базы не могли случайно удалить файл вне uploads.
-
-Что обязательно бэкапить на VPS:
-
-1. PostgreSQL database.
-2. `public/uploads/cards`.
-
-Что пока не делаем:
-
-1. Автоматическую оптимизацию изображений.
-2. S3-хранилище.
-3. Очистку старых неиспользуемых файлов по расписанию.
-
-## Подготовленные элементы
-
-1. Добавлена зависимость `pg`.
-2. Добавлен скрипт `npm run db:migrate`.
-3. Добавлена первая SQL-миграция `migrations/0001_initial_mvp_flow.sql`.
-4. Добавлен серверный модуль `src/lib/db/postgres.ts`.
-5. Добавлен Postgres-репозиторий для открыток, поздравлений и медиа.
-6. Текущий `repository.ts` автоматически использует Postgres, если задан `DATABASE_URL`; без него локальная разработка остаётся на JSON.
-7. Добавлен `.env.example` с единственной обязательной production-переменной на текущем этапе: `DATABASE_URL`.
-8. Добавлен локальный storage-слой для фото открыток: `src/lib/media/local-card-media-storage.ts`.
-9. Добавлен route-helper `src/lib/routes/card-links.ts`; production-ссылки строятся через `NEXT_PUBLIC_SITE_URL=https://darislova.ru`.
-10. Добавлены production-файлы для отдельного Docker Compose stack:
-    - `Dockerfile.prod`;
-    - `docker-compose.prod.yml`;
-    - `.env.production.example`;
-    - `.dockerignore`.
-
-## Production compose для открыток
-
-Открытки поднимаются отдельным compose project:
-
-```yaml
-name: capsule
-```
-
-Сервисы:
-
-1. `postgres` — отдельная база открыток, не база Прогнозиста.
-2. `web` — Next.js production server.
-
-Порт:
-
-```text
-127.0.0.1:3100 -> web:3000
-```
-
-Так приложение не занимает публичные `80/443`. Публичный HTTPS должен остаться за Caddy.
-
-Uploads:
-
-```text
-./public/uploads -> /app/public/uploads
-```
-
-Это bind mount, чтобы загруженные фото не исчезали при пересборке контейнера.
-
-## First production setup
-
-На VPS, в отдельной папке проекта открыток:
+Запуск или обновление полного стека:
 
 ```bash
-cp .env.production.example .env.production
-```
-
-В `.env.production` обязательно заменить:
-
-1. `POSTGRES_PASSWORD`;
-2. пароль внутри `DATABASE_URL`;
-3. при необходимости `WEB_PORT`, если `3100` занят.
-
-Проверить compose config:
-
-```bash
-PROD_ENV_FILE=.env.production.example \
-docker compose -f docker-compose.prod.yml --env-file .env.production config
-```
-
-На Windows PowerShell для dry-run:
-
-```powershell
-$env:PROD_ENV_FILE=".env.production.example"
-docker compose -f docker-compose.prod.yml --env-file .env.production.example config
-```
-
-Запустить stack:
-
-```bash
+cd /home/deploy/capsule
+git pull --ff-only origin main
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 ```
 
-Запустить миграции:
+Если менялся только Caddyfile или описание сервиса Caddy:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d caddy
+```
+
+Миграции выполняются идемпотентно при старте web. При необходимости их можно вызвать вручную:
 
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.production exec web npm run db:migrate
 ```
 
-Проверить контейнеры:
+## Обязательная проверка после деплоя
 
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.production ps
+docker inspect --format '{{.State.Health.Status}}' capsule-web-1
+curl -fsS -o /dev/null -w 'root=%{http_code} %{time_total}s\n' https://slovesto.ru/
+curl -fsS -o /dev/null -w 'example=%{http_code} %{time_total}s\n' https://slovesto.ru/example
 ```
 
-Локальная проверка с VPS:
+Ожидается:
+
+- `capsule-web-1` и `capsule-postgres-1` — healthy;
+- `capsule-caddy-1` — running;
+- `/` и `/example` — HTTP 200;
+- `www.slovesto.ru` перенаправляется на основной домен;
+- в `docker ps` нет посторонних прикладных контейнеров.
+
+Дополнительно проверить:
+
+1. `/manage/{token}` и переключение вкладок.
+2. Публичную страницу `/share/{token}`.
+3. Story, Post и A4 на реальном публичном токене.
+4. `/` и `/?_rsc=test` во время Story.
+5. Логи `export:*` до `export:complete`.
+
+Подробности экспортного контура находятся в `docs/PUBLIC_SHARE_EXPORTS.md`.
+
+## Export-worker
+
+Production-маршрут экспорта не выполняет Satori/Resvg в основном процессе Next.js. `capsule-web-1` запускает отдельный Next.js worker на `127.0.0.1:3001`:
+
+- worker создаётся лениво при первом экспорте;
+- одновременно выполняется только один экспорт;
+- worker запускается с `nice -n 10`;
+- основной Next.js проксирует только выбранный формат;
+- при зависании worker останавливается и будет создан заново;
+- лимит рендера — 75 секунд;
+- лимит proxy-запроса — 82 секунды;
+- клиентский abort — 85 секунд.
+
+Понижать эти лимиты без production-замеров нельзя. Увеличение лимитов не является исправлением нехватки CPU.
+
+## Мониторинг ресурсов
+
+Минимальная диагностика VPS:
 
 ```bash
-curl -I http://127.0.0.1:3100
+uptime
+free -m
+df -h /
+vmstat 1 5
+docker stats --no-stream
+docker system df
+docker ps -a
 ```
 
-## Caddy рядом с Prognozist
+Тревожные признаки:
 
-Так как public `80/443` уже занимает Caddy из Прогнозиста, для `darislova.ru` нужно добавить второй site block в production Caddyfile Прогнозиста или вынести Caddy в общий infra-layer позже.
+- CPU idle устойчиво около `0%`;
+- load average существенно выше числа CPU;
+- сотни процессов или zombie-процессов;
+- неожиданные контейнеры, сети или volumes;
+- `EAI_AGAIN postgres` в логах Next.js;
+- экспорт не доходит от `export:start` до `export:assets-loaded`;
+- диск заполнен более чем на 80%.
 
-Минимальный site block:
+Не следует диагностировать такие симптомы только через Caddy или DNS: сначала нужно проверить общую нагрузку хоста и все Docker-проекты.
 
-```caddyfile
-darislova.ru {
-  encode gzip zstd
-  reverse_proxy host.docker.internal:3100
-}
-```
+## Backup
 
-На Linux для доступа Caddy-контейнера к host port может понадобиться добавить в сервис `caddy` проекта Прогнозист:
+Production-скрипты:
 
-```yaml
-extra_hosts:
-  - "host.docker.internal:host-gateway"
-```
-
-Альтернатива чище, но требует аккуратной настройки: подключить Caddy и `capsule-web` к общей external Docker network и проксировать напрямую на `capsule-web:3000`. Для первого MVP проще начать с local host port `3100`.
-
-## Backup and health scripts
-
-Добавлены production-скрипты:
-
-1. `infra/scripts/backup-postgres.sh` — делает `pg_dump` из контейнера `postgres`.
-2. `infra/scripts/backup-uploads.sh` — архивирует `public/uploads/cards`.
-3. `infra/scripts/run-nightly-backup.sh` — делает оба backup, checksum и latest symlink.
-4. `infra/scripts/cleanup-old-backups.sh` — удаляет старые backup-файлы.
-5. `infra/scripts/check-production-health.sh` — проверяет `/` и `/manage/new` на production URL.
+- `infra/scripts/backup-postgres.sh`;
+- `infra/scripts/backup-uploads.sh`;
+- `infra/scripts/run-nightly-backup.sh`;
+- `infra/scripts/cleanup-old-backups.sh`;
+- `infra/scripts/verify-backup-restore.sh`.
 
 Ручной backup:
 
 ```bash
-bash infra/scripts/run-nightly-backup.sh
+cd /home/deploy/capsule
+BACKUP_DIR=/var/backups/capsule bash infra/scripts/run-nightly-backup.sh
 ```
 
 Рекомендуемый cron:
@@ -324,90 +165,46 @@ bash infra/scripts/run-nightly-backup.sh
 35 3 * * * cd /home/deploy/capsule && BACKUP_DIR=/var/backups/capsule RETENTION_DAYS=14 bash infra/scripts/run-nightly-backup.sh >> /var/log/capsule-backup.log 2>&1
 ```
 
-Минимум для восстановления:
+Минимальный комплект восстановления:
 
-1. свежий `postgres-*.sql.gz`;
-2. свежий `uploads-*.tar.gz`;
-3. соответствующие `.sha256` файлы;
-4. копия `.env.production` в безопасном месте вне репозитория.
+1. PostgreSQL dump и checksum.
+2. Архив uploads и checksum.
+3. Копия `.env.production` вне Git.
+4. Рабочий commit и предыдущий Docker image Slovesto.
 
-## Пример запуска миграций
+## Данные и очистка Docker
 
-```bash
-DATABASE_URL="postgres://capsule:password@localhost:5432/capsule" npm run db:migrate
-```
+Нельзя удалять без отдельного подтверждения:
 
-На Windows PowerShell:
+- `capsule_postgres_data`;
+- `/home/deploy/capsule/public/uploads`;
+- `/home/deploy/capsule/data/public-share-media`;
+- `.env.production`;
+- активные и rollback-образы `capsule-web`.
 
-```powershell
-$env:DATABASE_URL="postgres://capsule:password@localhost:5432/capsule"
-npm run db:migrate
-```
+`docker builder prune -af` не затрагивает работающие images/containers, но удаляет кеш сборки. Следующий deploy после такой очистки будет существенно дольше.
 
-## Режимы хранения
+## Инцидент 20 августа 2026 года
 
-### Локальная разработка без `DATABASE_URL`
+На VPS был обнаружен скомпрометированный контейнер другого проекта, который занимал оба CPU и создавал сотни процессов. Проект полностью удалён, а Caddy перенесён в `capsule`.
 
-Приложение продолжает читать и писать:
+Подробная временная линия, признаки, выполненная очистка и контрольные замеры: `docs/PRODUCTION_INCIDENT_2026-08-20.md`.
 
-1. `data/cards.json`;
-2. `data/contributions.json`;
-3. `data/media-assets.json`.
+## Retention и служебные задания
 
-### VPS / production с `DATABASE_URL`
-
-Приложение переключается на PostgreSQL для:
-
-1. открыток;
-2. поздравлений;
-3. медиа-метаданных.
-
-Файлы изображений пока остаются на диске сервера. Это следующий слой, который можно позже заменить на S3-compatible storage.
-
-## Следующий практический шаг
-
-1. Пройти полный production smoke-flow с реальной тестовой открыткой:
-   - создать открытку с `https://darislova.ru`;
-   - заполнить основу;
-   - открыть ссылку участника;
-   - добавить поздравление;
-   - загрузить тестовое фото;
-   - открыть `/gift/[slug]`;
-   - проверить, что текст и фото отображаются после обновления страницы.
-2. Через сутки проверить, что cron создал новый backup:
-
-```bash
-ls -lh /home/deploy/capsule/backups
-tail -80 /var/log/capsule-backup.log
-```
-
-3. Закрепить подключение Caddy к сети `capsule_default` в инфраструктуре, чтобы оно не зависело от ручного `docker network connect`.
-4. После проверки production flow вернуться к продуктовой работе: бренд “Дари слова”, тексты лендинга и UX-polish `/join/[slug]`.
-
-## Update 2026-07-06 Retention deployment
-
-Ближайший accumulated deploy должен применить migration `0015_card_retention.sql` и установить ежедневный retention job после backup:
+Retention запускается после backup:
 
 ```cron
 20 4 * * * cd /home/deploy/capsule && PROD_ENV_FILE=/home/deploy/capsule/.env.production bash infra/scripts/run-card-retention.sh >> /var/log/capsule-retention.log 2>&1
 ```
 
-Retention:
+Перед добавлением или изменением cron нужно один раз вызвать соответствующий скрипт вручную и проверить лог. Текущий пользовательский crontab также содержит отправку event reminders из `/home/deploy/capsule`.
 
-1. окончательно удаляет открытки через 30 дней после soft-delete;
-2. удаляет неопубликованные открытки через 90 дней без активности;
-3. учитывает свежие изменения открытки, поздравления и фото как активность;
-4. не удаляет опубликованные открытки автоматически;
-5. удаляет связанные записи и файлы uploads.
+## Rollback
 
-Перед установкой cron вручную вызвать скрипт один раз, проверить JSON-ответ и затем повторить `npm run preflight` локально и production smoke по `docs/DEPLOY_RUNBOOK_2026-07-06.md`.
-
-## Local state before first VPS move
-
-Перед деплоем убедиться, что локально зафиксировано:
-
-1. `/` создает новый пустой черновик и редиректит в `/manage/[manageToken]`.
-2. `/join/[slug]` — следующий экран для UX-polish.
-3. PostgreSQL container для локальной проверки можно поднять как `capsule-postgres`.
-4. Для Windows PowerShell использовать `npm.cmd`, если обычный `npm` блокируется Execution Policy.
-5. На VPS не трогать рабочий Prognozist stack без явной необходимости.
+1. Зафиксировать текущий commit, контейнеры и логи.
+2. Не удалять volumes PostgreSQL, Caddy и bind mounts.
+3. Вернуть предыдущий рабочий `capsule-web` image/commit.
+4. Выполнить `docker compose up -d` для нужных сервисов.
+5. Проверить Caddy, health web/PostgreSQL, `/`, `/example`, manager и минимальный публичный экспорт.
+6. Восстанавливать PostgreSQL только при подтверждённом повреждении данных и только из проверенного backup.

@@ -1,5 +1,15 @@
 # Журнал поставки
 
+## Update 2026-08-20 Production Export Recovery And VPS Isolation
+
+1. Публичный export-контур исправлен: диалог больше не запускает Story/Post/A4 при открытии, выбранный формат рендерится в отдельном Next.js worker с concurrency `1`, `nice -n 10`, timeout/restart и этапными `export:*` логами.
+2. Production-диагностика выявила соседний скомпрометированный контейнер `predictions-prod-frontend-1`: до 177,5% CPU, 403 процесса, 359 zombie-процессов и root-скрипт `/bin/.rguard`.
+3. Полностью удалены production/dev стеки «Прогнозиста», их БД, volumes, networks, images, исходники и 8,08 ГБ build cache. Процессы и Docker-ресурсы `predictions` отсутствуют.
+4. Скрытая зависимость HTTPS устранена: Caddy перенесён из чужого Compose-проекта в `capsule`, использует собственные volumes, `infra/Caddyfile` и сеть `capsule_default`.
+5. Диск освобождён с 85% до 43% использования, доступная RAM выросла примерно до 2,48 ГБ, CPU idle в покое — 94–98%, минутный load average — около 1.
+6. Production smoke успешен: `/example` отвечает за 0,07–0,26 с, manager — за 0,14–0,37 с, Story/Post/A4 формируются за 16,3/10,5/15,8 с. Во время Story `/` и RSC отвечают примерно за 0,06 с.
+7. Канонические документы VPS, deploy и public exports актуализированы; добавлен postmortem `PRODUCTION_INCIDENT_2026-08-20.md`.
+
 ## Update 2026-08-14 Universal Mobile And Footer Acceptance
 
 1. Документация синхронизирована с историей реализации: пакет замечаний №3 отмечен выполненным, а `P2-13` переведён из отложенной задачи в этап продуктовой приёмки универсальной платформы.
