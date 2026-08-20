@@ -21,6 +21,42 @@ const formats = {
 type Format = keyof typeof formats;
 type Payload = PublicSharePayloadV1;
 
+const EXPORT_RENDER_TIMEOUT_MS = 40_000;
+const MAX_CONCURRENT_EXPORTS = 1;
+let activeExports = 0;
+let exportSequence = 0;
+
+class ExportRenderTimeoutError extends Error {
+  constructor() {
+    super("Public share export render timed out");
+    this.name = "ExportRenderTimeoutError";
+  }
+}
+
+const exportLog = (
+  event: "export:start" | "export:assets-loaded" | "export:layout-rendered" | "export:image-rendered" | "export:file-created" | "export:complete" | "export:failed",
+  context: { requestId: string; format: Format; startedAt: number; [key: string]: unknown }
+) => {
+  const { startedAt, ...rest } = context;
+  const entry = { level: event === "export:failed" ? "error" : "info", event, durationMs: Date.now() - startedAt, ...rest };
+  if (event === "export:failed") console.error(JSON.stringify(entry));
+  else console.info(JSON.stringify(entry));
+};
+
+const withRenderTimeout = async <T,>(operation: Promise<T>) => {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => reject(new ExportRenderTimeoutError()), EXPORT_RENDER_TIMEOUT_MS);
+      })
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+};
+
 // These are deliberately independent compositions, not a scale of /share.
 // Values are pixels in the raster canvas; print is rendered at 1240 × 1754.
 const layout = {
@@ -41,13 +77,12 @@ const exportPhoto = (origin: string, path: string) => {
   url.searchParams.set("export", "1");
   return url.toString();
 };
-const publicOrigin = (request: Request) => {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL;
-  return typeof configured === "string" && configured.trim() ? new URL(configured).origin : new URL(request.url).origin;
-};
+const rendererOrigin = (request: Request) => process.env.NODE_ENV === "production"
+  ? `http://127.0.0.1:${process.env.PORT?.trim() || "3000"}`
+  : new URL(request.url).origin;
 const exportFonts = async () => Promise.all([
   readFile(join(process.cwd(), "public", "fonts", "Caveat-Cyrillic-600.woff")),
-  readFile(join(process.cwd(), "public", "fonts", "PTSans-Cyrillic-400.woff"))
+  readFile(join(process.cwd(), "public", "fonts", "PTSans-Full-400.ttf"))
 ]);
 
 export const resolveUniversalExportAsset = (origin: string, src: `/${string}`) => {
@@ -98,7 +133,7 @@ const PaperHeroPolaroid = ({ origin, photo, side, format }: { origin: string; ph
   const left = side === "left"
     ? compact ? 10 : 10
     : compact ? 918 : format === "print" ? 988 : 836;
-  return <div style={{ position: "absolute", display: "flex", left, top: compact ? 18 : 14, width, height, overflow: "hidden", transform: `rotate(${rotation}deg)`, zIndex: 1 }}>
+  return <div style={{ position: "absolute", display: "flex", left, top: compact ? 18 : 14, width, height, overflow: "hidden", transform: `rotate(${rotation}deg)` }}>
     <img src={asset(origin, photo)} style={{ position: "absolute", left: "17%", top: "13.5%", width: "66%", height: "56.5%", objectFit: "cover" }} />
     <img src={asset(origin, "/templates/scrapbook-clean/polaroid-transparent.png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
   </div>;
@@ -107,12 +142,12 @@ const PaperHeroPolaroid = ({ origin, photo, side, format }: { origin: string; ph
 const PaperHeroDecor = ({ origin, format }: { origin: string; format: Format }) => <>
   <PaperHeroPolaroid origin={origin} photo="/templates/scrapbook-clean/top-polaroid-cake.png" side="left" format={format} />
   <PaperHeroPolaroid origin={origin} photo="/templates/scrapbook-clean/top-polaroid-bouquet.png" side="right" format={format} />
-  <img src={asset(origin, "/templates/scrapbook-clean/heart-sticker-puffy-gold.png")} style={{ position: "absolute", left: format === "post" ? 128 : 194, top: format === "post" ? 72 : 116, width: format === "post" ? 27 : 43, transform: "rotate(18deg)", zIndex: 2 }} />
+  <img src={asset(origin, "/templates/scrapbook-clean/heart-sticker-puffy-gold.png")} style={{ position: "absolute", left: format === "post" ? 128 : 194, top: format === "post" ? 72 : 116, width: format === "post" ? 27 : 43, transform: "rotate(18deg)" }} />
 </>;
 
 const PaperMomentsDecor = ({ origin, format }: { origin: string; format: Format }) => <>
-  <img src={asset(origin, "/templates/scrapbook-clean/camera.png")} style={{ position: "absolute", top: format === "post" ? 10 : 20, left: format === "post" ? "48%" : "42%", width: format === "post" ? 46 : 76, transform: "rotate(8deg)", opacity: .9, zIndex: 1 }} />
-  <img src={asset(origin, "/templates/scrapbook-clean/heart-sticker-puffy-pink.png")} style={{ position: "absolute", top: format === "post" ? 36 : 58, right: format === "post" ? 44 : 76, width: format === "post" ? 35 : 56, transform: "rotate(14deg)", zIndex: 1 }} />
+  <img src={asset(origin, "/templates/scrapbook-clean/camera.png")} style={{ position: "absolute", top: format === "post" ? 10 : 20, left: format === "post" ? "48%" : "42%", width: format === "post" ? 46 : 76, transform: "rotate(8deg)", opacity: .9 }} />
+  <img src={asset(origin, "/templates/scrapbook-clean/heart-sticker-puffy-pink.png")} style={{ position: "absolute", top: format === "post" ? 36 : 58, right: format === "post" ? 44 : 76, width: format === "post" ? 35 : 56, transform: "rotate(14deg)" }} />
 </>;
 
 const PhotoCard = ({ photo, index, width, theme, origin, captionSize, format, scaleX = 1 }: { photo: Payload["photos"][number]; index: number; width: number; theme: Theme; origin: string; captionSize: number; format: Format; scaleX?: number }) => {
@@ -172,7 +207,7 @@ const ExportCard = ({ payload, format, origin }: { payload: Payload; format: For
 
   const momentHeading = <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}><div style={{ ...titleStyle, fontSize: p.momentsTitle }}>Моменты</div><div style={{ display: "flex", color: a.muted, fontFamily: "Caveat", fontSize: p.momentsLead, marginTop: -4 }}>Фото, которыми хочется поделиться</div></div>;
   const moments = photos.length === 3 && format !== "post" ? <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%" }}>
-    <div style={{ display: "flex", alignSelf: "flex-start", ...(format === "story" ? { position: "absolute", left: 92, top: paper ? 38 : 10, zIndex: 1 } : { position: "absolute", left: 78, top: 52, zIndex: 1 }) }}>{momentHeading}</div>
+    <div style={{ display: "flex", alignSelf: "flex-start", ...(format === "story" ? { position: "absolute", left: 92, top: paper ? 38 : 10 } : { position: "absolute", left: 78, top: 52 }) }}>{momentHeading}</div>
     <div style={{ display: "flex", alignItems: format === "story" ? "flex-start" : "flex-end", justifyContent: "center", gap: 0, marginTop: format === "story" ? 12 : 24, width: "100%", ...(format === "story" ? { transform: "translateX(5px)" } : format === "print" ? { transform: "translateX(10px)" } : {}) }}>
       <div style={{ display: "flex", paddingTop: format === "story" ? 128 : 0, ...(format === "print" ? { position: "relative", left: paper ? -20 : -38, top: paper ? -66 : -8 } : {}) }}><PhotoCard photo={photos[0]} index={0} width={paper ? Math.round(p.mainPhoto * (format === "print" ? 1 : 1.05)) : p.mainPhoto} theme={theme} origin={origin} captionSize={p.caption} format={format} scaleX={!paper && format === "print" ? 1.05 : 1} /></div>
       <div style={{ display: "flex", flexDirection: "column", gap: 4, ...(format === "print" ? paper ? { transform: "translateX(-12px)" } : { position: "relative", left: -12 } : {}) }}>{photos.slice(1).map((photo, index) => <div key={photo.id} style={paper && (format === "story" || format === "print") ? { display: "flex", transform: index === 0 ? `translateY(${format === "print" ? 12 : 10}px)` : `translateY(-${format === "print" ? 12 : 10}px)` } : { display: "flex" }}><PhotoCard photo={photo} index={index + 1} width={paper ? Math.round(p.sidePhoto * (format === "print" ? 1 : 1.1)) : p.sidePhoto} theme={theme} origin={origin} captionSize={p.caption} format={format} scaleX={!paper && format === "print" ? 1.1 : 1} /></div>)}</div>
@@ -193,7 +228,7 @@ const ExportCard = ({ payload, format, origin }: { payload: Payload; format: For
     <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: paper ? 4 : p.gap, width: "100%" }}>
       <Surface origin={origin} image={a.hero} imageFit={theme === "route" && format === "post" ? "cover" : "fill"} imagePosition={format === "post" ? "center top" : "center"} style={{ minHeight: paper ? paperHeroHeight : p.hero }}>
         {paper ? <PaperHeroDecor origin={origin} format={format} /> : null}
-        <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", padding: theme === "route" ? format === "post" ? "8px 110px 6px" : "38px 120px 28px" : format === "post" ? "26px 70px 10px" : "42px 70px 26px", textAlign: "center" }}>
+        <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", padding: theme === "route" ? format === "post" ? "8px 110px 6px" : "38px 120px 28px" : format === "post" ? "26px 70px 10px" : "42px 70px 26px", textAlign: "center" }}>
           {payload.share.showOccasion && payload.card.occasionText ? <div style={{ display: "flex", color: a.accent, fontSize: p.occasion, fontWeight: 700 }}>{payload.card.occasionText}</div> : null}
           {payload.share.displayName ? <div style={{ display: "flex", justifyContent: "center", maxWidth: "100%", marginTop: 9, color: a.text, fontFamily: theme === "paper" ? "Caveat" : "PT Sans", fontSize: p.name, fontWeight: 700, lineHeight: .96, textAlign: "center" }}>{trim(payload.share.displayName, 46)}</div> : null}
           <div style={{ display: "flex", maxWidth: 800, marginTop: paper && format === "post" ? 10 : 14, color: a.muted, fontSize: paper && format === "post" ? p.body - 2 : p.body, lineHeight: 1.23 }}>Близкие люди собрали здесь тёплые слова, фотографии и приятные моменты.</div>
@@ -239,6 +274,20 @@ const makePdf = (jpeg: Buffer, width: number, height: number) => {
 export async function GET(request: Request, { params }: { params: Promise<{ token: string; format: string }> }) {
   const { token, format } = await params;
   if (!(format in formats)) return new Response(null, { status: 404 });
+  const selectedFormat = format as Format;
+  if (activeExports >= MAX_CONCURRENT_EXPORTS) {
+    return new Response("Сейчас уже готовится другой файл. Повторите попытку через несколько секунд.", {
+      status: 429,
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "Retry-After": "5" }
+    });
+  }
+  activeExports += 1;
+  const startedAt = Date.now();
+  const requestId = `${process.pid}-${++exportSequence}`;
+  const log = (event: Parameters<typeof exportLog>[0], extra: Record<string, unknown> = {}) => exportLog(event, { requestId, format: selectedFormat, startedAt, ...extra });
+  log("export:start", { activeExports });
+  let releaseWhenRenderSettles = false;
+  try {
   let payload: PublicSharePayload | null = null;
   if (process.env.NODE_ENV === "development") {
     const { buildLegacyExportBaselinePayload, getLegacyTemplateIdFromExportBaselineToken } = await import(
@@ -246,20 +295,31 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     );
     const baselineTemplateId = getLegacyTemplateIdFromExportBaselineToken(token);
     if (baselineTemplateId) payload = buildLegacyExportBaselinePayload(baselineTemplateId);
+    if (!payload && token === "school-scrapbook-export-baseline") {
+      const { schoolScrapbookDemoCardModel: model } = await import("@/lib/example-card");
+      payload = {
+        version: 2,
+        family: "universal-v1",
+        share: { displayName: model.recipientName, headlinePreset: "GIFTED_CARD", showOccasion: true, showEventDate: true, showGreetingCount: true, showPhotoCount: true },
+        card: { templateId: model.templateId, occasionText: model.occasion, eventDate: model.eventDate, fromLabel: model.fromLabel, greetingCount: model.participantCount, photoCount: model.memoryPhotos.length },
+        qualities: [...model.qualities],
+        phrases: [...model.privateQuotes.slice(0, 3)],
+        photos: model.memoryPhotos.map((photo, index) => ({ id: photo.id, url: `/examples/kristina/${index + 1}.jpg`, width: photo.width, height: photo.height, caption: photo.caption, crop: photo.crop }))
+      };
+    }
   }
   payload ??= await getPublicSharePayload(token);
   if (!payload) return new Response(null, { status: 404 });
-  const selectedFormat = format as Format;
   const { width, height } = formats[selectedFormat];
   const [caveat, ptSans] = await exportFonts();
-  const origin = publicOrigin(request);
+  const origin = rendererOrigin(request);
+  log("export:assets-loaded", { payloadVersion: payload.version, width, height });
   const fonts = [
     { name: "Caveat", data: caveat, weight: 600 as const, style: "normal" as const },
     { name: "PT Sans", data: ptSans, weight: 400 as const, style: "normal" as const },
     { name: "Inter", data: ptSans, weight: 400 as const, style: "normal" as const }
   ];
   let image: ImageResponse;
-  let flattenBackground = "#f6dfb9";
   if (payload.version === 2) {
     const dispatch = dispatchTemplateRenderer(payload.card.templateId);
     if (!dispatch || dispatch.kind !== "universal-v1" || dispatch.registration.profile.export.profile !== "universal-export-v1") {
@@ -268,7 +328,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     const profile = dispatch.registration.profile;
     const model = buildUniversalPublicViewModel(payload, profile);
     const resolveAsset = (path: `/${string}`) => resolveUniversalExportAsset(origin, path);
-    flattenBackground = profile.colors.page;
     image = new ImageResponse(
       <UniversalTemplateExportCard
         profile={profile}
@@ -282,21 +341,45 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   } else {
     image = new ImageResponse(<ExportCard payload={payload} format={selectedFormat} origin={origin} />, { width, height, fonts });
   }
+  log("export:layout-rendered");
   let png: Buffer;
+  const renderPromise = image.arrayBuffer();
   try {
-    png = Buffer.from(await image.arrayBuffer());
+    png = Buffer.from(await withRenderTimeout(renderPromise));
   } catch (error) {
-    console.error("Universal public export rendering failed", error);
-    if (process.env.NODE_ENV === "development") {
-      return new Response(error instanceof Error ? error.stack ?? error.message : String(error), {
-        status: 500,
+    log("export:failed", { stage: "image-rendered", error: error instanceof Error ? error.message : String(error) });
+    if (error instanceof ExportRenderTimeoutError) {
+      releaseWhenRenderSettles = true;
+      void renderPromise.finally(() => { activeExports -= 1; }).catch(() => undefined);
+      return new Response("Подготовка файла заняла слишком много времени. Попробуйте ещё раз чуть позже.", {
+        status: 504,
         headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
       });
     }
-    throw error;
+    return new Response("Не удалось подготовить файл. Попробуйте ещё раз.", {
+      status: 500,
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+    });
   }
+  log("export:image-rendered", { pngBytes: png.length });
   const preview = new URL(request.url).searchParams.get("preview") === "1";
-  if (selectedFormat !== "print" || preview) return new Response(new Uint8Array(await sharp(png).flatten({ background: flattenBackground }).png().toBuffer()), { headers: { "Content-Type": "image/png", "Cache-Control": "no-store" } });
+  if (selectedFormat !== "print" || preview) {
+    log("export:file-created", { contentType: "image/png", fileBytes: png.length });
+    log("export:complete");
+    return new Response(new Uint8Array(png), { headers: { "Content-Type": "image/png", "Content-Length": String(png.length), "Cache-Control": "no-store" } });
+  }
   const jpeg = await sharp(png).jpeg({ quality: 92 }).toBuffer();
-  return new Response(new Uint8Array(makePdf(jpeg, width, height)), { headers: { "Content-Type": "application/pdf", "Content-Disposition": "attachment; filename=slovesto-card-print.pdf", "Cache-Control": "no-store" } });
+  const pdf = makePdf(jpeg, width, height);
+  log("export:file-created", { contentType: "application/pdf", fileBytes: pdf.length });
+  log("export:complete");
+  return new Response(new Uint8Array(pdf), { headers: { "Content-Type": "application/pdf", "Content-Length": String(pdf.length), "Content-Disposition": "attachment; filename=slovesto-card-print.pdf", "Cache-Control": "no-store" } });
+  } catch (error) {
+    log("export:failed", { stage: "route", error: error instanceof Error ? error.message : String(error) });
+    return new Response("Не удалось подготовить файл. Попробуйте ещё раз.", {
+      status: 500,
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+    });
+  } finally {
+    if (!releaseWhenRenderSettles) activeExports -= 1;
+  }
 }

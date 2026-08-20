@@ -4,6 +4,12 @@ import sharp from "sharp";
 
 export const runtime = "nodejs";
 
+const MAX_CACHE_BYTES = 48 * 1024 * 1024;
+type TransformResult = { file: Buffer; contentType: string } | { status: 400 };
+const transformedAssetCache = new Map<string, { file: Buffer; contentType: string }>();
+const pendingTransforms = new Map<string, Promise<TransformResult | null>>();
+let transformedAssetCacheBytes = 0;
+
 const supportedAssetPattern = /^\/templates\/[a-z0-9][a-z0-9/_-]*\.(?:webp|avif|png|jpe?g)$/iu;
 
 const parseCrop = (value: string | null) => {
@@ -86,6 +92,36 @@ const renderSlices = async (
   }).composite(composites).png().toBuffer();
 };
 
+const rememberTransform = (key: string, value: { file: Buffer; contentType: string }) => {
+  while (transformedAssetCacheBytes + value.file.length > MAX_CACHE_BYTES && transformedAssetCache.size > 0) {
+    const oldestKey = transformedAssetCache.keys().next().value as string;
+    const oldest = transformedAssetCache.get(oldestKey);
+    transformedAssetCache.delete(oldestKey);
+    transformedAssetCacheBytes -= oldest?.file.length ?? 0;
+  }
+  if (value.file.length <= MAX_CACHE_BYTES) {
+    transformedAssetCache.set(key, value);
+    transformedAssetCacheBytes += value.file.length;
+  }
+};
+
+const cachedTransform = async (key: string, transform: () => Promise<TransformResult | null>) => {
+  const cached = transformedAssetCache.get(key);
+  if (cached) {
+    transformedAssetCache.delete(key);
+    transformedAssetCache.set(key, cached);
+    return cached;
+  }
+  const pending = pendingTransforms.get(key);
+  if (pending) return pending;
+  const operation = transform().then((value) => {
+    if (value && "file" in value) rememberTransform(key, value);
+    return value;
+  }).finally(() => pendingTransforms.delete(key));
+  pendingTransforms.set(key, operation);
+  return operation;
+};
+
 export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const src = searchParams.get("src") ?? "";
@@ -104,33 +140,30 @@ export async function GET(request: Request) {
   const filePath = resolve(publicRoot, ...src.split("/").filter(Boolean));
   if (!filePath.startsWith(`${publicRoot}${sep}`)) return new Response(null, { status: 404 });
 
+  const cacheKey = searchParams.toString();
   try {
-    const input = await readFile(filePath);
-    const source = sharp(input);
-    const metadata = await source.metadata();
-    if (!metadata.width || !metadata.height) return new Response(null, { status: 404 });
-    if (slices && width && height) {
-      const png = await renderSlices(input, metadata.width, metadata.height, width, height, slices);
-      return new Response(new Uint8Array(png), {
-        headers: {
-          "Content-Type": "image/png",
-          "Content-Length": String(png.length),
-          "Cache-Control": "public, max-age=31536000, immutable"
-        }
-      });
-    }
-    if (crop) {
-      if (crop.left + crop.width > metadata.width || crop.top + crop.height > metadata.height) {
-        return new Response(null, { status: 400 });
+    const transformed = await cachedTransform(cacheKey, async () => {
+      const input = await readFile(filePath);
+      const source = sharp(input);
+      const metadata = await source.metadata();
+      if (!metadata.width || !metadata.height) return null;
+      if (slices && width && height) {
+        const file = await renderSlices(input, metadata.width, metadata.height, width, height, slices);
+        return { file, contentType: "image/png" };
       }
-      source.extract(crop);
-    }
-    if (width && height) source.resize(width, height, { fit: "fill" });
-    const png = await source.png().toBuffer();
-    return new Response(new Uint8Array(png), {
+      if (crop) {
+        if (crop.left + crop.width > metadata.width || crop.top + crop.height > metadata.height) return { status: 400 as const };
+        source.extract(crop);
+      }
+      if (width && height) source.resize(width, height, { fit: "fill" });
+      return { file: await source.png().toBuffer(), contentType: "image/png" };
+    });
+    if (!transformed) return new Response(null, { status: 404 });
+    if ("status" in transformed) return new Response(null, { status: transformed.status });
+    return new Response(new Uint8Array(transformed.file), {
       headers: {
-        "Content-Type": "image/png",
-        "Content-Length": String(png.length),
+        "Content-Type": transformed.contentType,
+        "Content-Length": String(transformed.file.length),
         "Cache-Control": "public, max-age=31536000, immutable"
       }
     });

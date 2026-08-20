@@ -6,6 +6,8 @@ import styles from "./public-share-download-dialog.module.css";
 
 type Format = "story" | "post" | "print";
 
+const EXPORT_TIMEOUT_MS = 45_000;
+
 const formats: Array<{ id: Format; title: string; description: string; suffix: string }> = [
   { id: "story", title: "Для сторис", description: "Вертикальная история 9:16 для Telegram, VK, Instagram и других сервисов.", suffix: "story.png" },
   { id: "post", title: "Для поста", description: "Пост 4:5 для ленты социальных сетей.", suffix: "post.png" },
@@ -20,7 +22,7 @@ const fileStem = (publicName: string | null) => {
 export function PublicShareDownloadDialog({ token, publicName, onClose, trigger }: { token: string; publicName: string | null; onClose: () => void; trigger: React.RefObject<HTMLButtonElement | null> }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState<Format | null>(null);
-  const [error, setError] = useState<Format | null>(null);
+  const [error, setError] = useState<{ format: Format; message: string } | null>(null);
 
   useEffect(() => {
     const triggerElement = trigger.current;
@@ -42,19 +44,35 @@ export function PublicShareDownloadDialog({ token, publicName, onClose, trigger 
 
   const download = async (format: Format, file: string) => {
     setLoading(format); setError(null);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), EXPORT_TIMEOUT_MS);
     try {
-      const response = await fetch(`/share/${encodeURIComponent(token)}/image/${format}`, { cache: "no-store" });
-      if (!response.ok) throw new Error("export unavailable");
+      const response = await fetch(`/share/${encodeURIComponent(token)}/image/${format}`, {
+        cache: "no-store",
+        signal: controller.signal
+      });
+      if (!response.ok) {
+        const message = (await response.text()).trim();
+        throw new Error(message || "Не удалось подготовить файл. Попробуйте ещё раз.");
+      }
       const blob = await response.blob();
       const href = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = href; anchor.download = file; anchor.click();
       URL.revokeObjectURL(href);
       sendClientTelemetry(format === "story" ? "PUBLIC_SHARE_STORY_DOWNLOADED" : format === "post" ? "PUBLIC_SHARE_POST_DOWNLOADED" : "PUBLIC_SHARE_PRINT_DOWNLOADED", { route: "share" });
-    } catch {
-      setError(format);
+    } catch (caught) {
+      const message = controller.signal.aborted
+        ? "Подготовка заняла слишком много времени. Попробуйте ещё раз чуть позже."
+        : caught instanceof Error && caught.message
+          ? caught.message
+          : "Не удалось подготовить файл. Попробуйте ещё раз.";
+      setError({ format, message });
       sendClientTelemetry("PUBLIC_SHARE_EXPORT_FAILED", { route: "share", format });
-    } finally { setLoading(null); }
+    } finally {
+      window.clearTimeout(timeout);
+      setLoading(null);
+    }
   };
 
   return <div className={styles.overlay} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
@@ -63,8 +81,8 @@ export function PublicShareDownloadDialog({ token, publicName, onClose, trigger 
       <h2 id="download-title">Выберите формат</h2>
       <p className={styles.lead}>Скачайте открытку или поделитесь ей.</p>
       <div className={styles.options}>{formats.map((format) => <article className={styles.option} key={format.id}>
-        <img className={`${styles.preview} ${styles[format.id]}`} src={`/share/${encodeURIComponent(token)}/image/${format.id}${format.id === "print" ? "?preview=1" : ""}`} alt="" />
-        <div className={styles.optionContent}><h3>{format.title}</h3><p>{format.description}</p><button type="button" onClick={() => void download(format.id, `${fileStem(publicName)}-${format.suffix}`)} disabled={loading !== null}>{loading === format.id ? "Готовим файл…" : "Скачать"}</button>{error === format.id ? <span className={styles.error}>Не удалось подготовить файл. Попробуйте ещё раз.</span> : null}</div>
+        <div className={`${styles.formatPreview} ${styles[format.id]}`} aria-hidden="true"><span>{format.id === "print" ? "A4" : format.id === "story" ? "9:16" : "4:5"}</span></div>
+        <div className={styles.optionContent}><h3>{format.title}</h3><p>{format.description}</p><button type="button" onClick={() => void download(format.id, `${fileStem(publicName)}-${format.suffix}`)} disabled={loading !== null}>{loading === format.id ? "Подготовка файла…" : "Скачать"}</button>{error?.format === format.id ? <span className={styles.error} role="alert">{error.message}</span> : null}</div>
       </article>)}</div>
       <p className={styles.note}>В файлы попадает только то, что получатель разрешил показать публично.</p>
     </div>

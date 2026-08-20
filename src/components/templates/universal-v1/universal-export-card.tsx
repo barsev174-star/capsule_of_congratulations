@@ -145,7 +145,6 @@ function Decor({
       height={Math.round(renderedHeight)}
       style={{
         position: "absolute",
-        zIndex: 3,
         left: box.left + (box.width - renderedWidth) / 2,
         top: box.top + (box.height - renderedHeight) / 2,
         width: renderedWidth,
@@ -204,7 +203,6 @@ function ExportSection({
     {id === "closing" ? null : <Decor profile={profile} anchor={id} width={width} height={height} resolveAsset={resolveAsset} />}
     <div style={{
       position: underlay ? "absolute" : "relative",
-      zIndex: 2,
       ...(underlay ? { left: 0, top: 0 } : {}),
       display: "flex",
       width: "100%",
@@ -466,7 +464,7 @@ export function UniversalTemplateExportCard({
     <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%", height: "100%", justifyContent: "space-between", gap: availableGap }}>
       <div data-universal-export-block="hero" data-section-presentation="bare" style={{ position: "relative", display: "flex", width: "100%", height: layout.hero, flexShrink: 0, overflow: "hidden" }}>
         <Decor profile={profile} anchor="hero" width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset} />
-        <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: format === "post" ? "8px 78px" : format === "a4" ? "14px 78px" : "20px 78px", boxSizing: "border-box", textAlign: "center" }}>
+        <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: format === "post" ? "8px 78px" : format === "a4" ? "14px 78px" : "20px 78px", boxSizing: "border-box", textAlign: "center" }}>
           {model.occasion ? <span style={{ color: profile.colors.accent, fontSize: format === "story" ? 18 : 14, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>{model.occasion}</span> : null}
           {eventDate ? <span style={{ marginTop: 5, color: profile.colors.muted, fontSize: format === "story" ? 18 : 14 }}>{eventDate}</span> : null}
           {model.recipientName ? <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: format === "story" ? 150 : format === "post" ? 64 : 100, flexShrink: 0, marginTop: eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
@@ -531,7 +529,7 @@ export function UniversalTemplateExportCard({
         </div>
       </ExportSection>
     </div>
-    <div data-export-closing-decor style={{ position: "absolute", zIndex: 3, display: "flex", left: layout.padding, top: spec.height - layout.verticalPadding - closingSectionHeight, width: sectionWidth, height: closingSectionHeight }}>
+    <div data-export-closing-decor style={{ position: "absolute", display: "flex", left: layout.padding, top: spec.height - layout.verticalPadding - closingSectionHeight, width: sectionWidth, height: closingSectionHeight }}>
       <Decor profile={profile} anchor="closing" width={sectionWidth} height={closingSectionHeight} resolveAsset={resolveAsset} />
     </div>
   </div>;
