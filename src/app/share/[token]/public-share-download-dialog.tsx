@@ -6,7 +6,7 @@ import styles from "./public-share-download-dialog.module.css";
 
 type Format = "story" | "post" | "print";
 
-const EXPORT_TIMEOUT_MS = 45_000;
+const EXPORT_TIMEOUT_MS = 85_000;
 
 const formats: Array<{ id: Format; title: string; description: string; suffix: string }> = [
   { id: "story", title: "Для сторис", description: "Вертикальная история 9:16 для Telegram, VK, Instagram и других сервисов.", suffix: "story.png" },

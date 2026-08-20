@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text -- Images are rasterized server-side by ImageResponse. */
 import { ImageResponse } from "next/og";
+import { spawn, type ChildProcess } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import sharp from "sharp";
@@ -21,10 +22,15 @@ const formats = {
 type Format = keyof typeof formats;
 type Payload = PublicSharePayloadV1;
 
-const EXPORT_RENDER_TIMEOUT_MS = 40_000;
+const EXPORT_RENDER_TIMEOUT_MS = 75_000;
+const EXPORT_PROXY_TIMEOUT_MS = 82_000;
+const EXPORT_WORKER_PORT = 3001;
 const MAX_CONCURRENT_EXPORTS = 1;
 let activeExports = 0;
 let exportSequence = 0;
+let exportWorker: ChildProcess | null = null;
+let exportWorkerStartup: Promise<void> | null = null;
+let exportWorkerCleanupRegistered = false;
 
 class ExportRenderTimeoutError extends Error {
   constructor() {
@@ -54,6 +60,86 @@ const withRenderTimeout = async <T,>(operation: Promise<T>) => {
     ]);
   } finally {
     if (timeout) clearTimeout(timeout);
+  }
+};
+
+const stopExportWorker = () => {
+  const worker = exportWorker;
+  exportWorker = null;
+  exportWorkerStartup = null;
+  if (worker && worker.exitCode === null) worker.kill("SIGTERM");
+};
+
+const waitForExportWorker = async (worker: ChildProcess) => {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if (worker.exitCode !== null) throw new Error(`Export worker exited with code ${worker.exitCode}`);
+    try {
+      const response = await fetch(`http://127.0.0.1:${EXPORT_WORKER_PORT}/robots.txt`, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(1_000)
+      });
+      if (response.ok) return;
+    } catch {
+      // The worker is still starting.
+    }
+    await new Promise((resolveWait) => setTimeout(resolveWait, 100));
+  }
+  throw new Error("Export worker did not become ready");
+};
+
+const ensureExportWorker = async () => {
+  if (exportWorker && exportWorker.exitCode === null && !exportWorkerStartup) return;
+  if (exportWorkerStartup) return exportWorkerStartup;
+  const nextBin = join(process.cwd(), "node_modules", "next", "dist", "bin", "next");
+  const worker = spawn(process.execPath, [nextBin, "start", "-H", "127.0.0.1", "-p", String(EXPORT_WORKER_PORT)], {
+    cwd: process.cwd(),
+    env: { ...process.env, PUBLIC_SHARE_EXPORT_WORKER: "1", PORT: String(EXPORT_WORKER_PORT), HOSTNAME: "127.0.0.1" },
+    stdio: ["ignore", "inherit", "inherit"]
+  });
+  exportWorker = worker;
+  if (!exportWorkerCleanupRegistered) {
+    exportWorkerCleanupRegistered = true;
+    process.once("exit", stopExportWorker);
+  }
+  worker.once("exit", () => {
+    if (exportWorker === worker) {
+      exportWorker = null;
+      exportWorkerStartup = null;
+    }
+  });
+  exportWorkerStartup = waitForExportWorker(worker).then(() => {
+    exportWorkerStartup = null;
+  }).catch((error) => {
+    stopExportWorker();
+    throw error;
+  });
+  return exportWorkerStartup;
+};
+
+const proxyExportToWorker = async (request: Request, token: string, format: Format) => {
+  try {
+    await ensureExportWorker();
+    const sourceUrl = new URL(request.url);
+    const workerUrl = new URL(`/share/${encodeURIComponent(token)}/image/${format}`, `http://127.0.0.1:${EXPORT_WORKER_PORT}`);
+    workerUrl.search = sourceUrl.search;
+    const response = await fetch(workerUrl, { cache: "no-store", signal: AbortSignal.timeout(EXPORT_PROXY_TIMEOUT_MS) });
+    const headers = new Headers();
+    for (const name of ["content-type", "content-length", "content-disposition", "cache-control", "retry-after"]) {
+      const value = response.headers.get(name);
+      if (value) headers.set(name, value);
+    }
+    headers.set("X-Export-Worker", "isolated");
+    return new Response(response.body, { status: response.status, headers });
+  } catch (error) {
+    stopExportWorker();
+    const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
+    console.error(JSON.stringify({ level: "error", event: "export:proxy-failed", format, error: error instanceof Error ? error.message : String(error) }));
+    return new Response(timedOut
+      ? "Подготовка файла заняла слишком много времени. Попробуйте ещё раз чуть позже."
+      : "Сервис подготовки файла временно недоступен. Попробуйте ещё раз.", {
+      status: timedOut ? 504 : 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+    });
   }
 };
 
@@ -275,6 +361,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   const { token, format } = await params;
   if (!(format in formats)) return new Response(null, { status: 404 });
   const selectedFormat = format as Format;
+  if (process.env.NODE_ENV === "production" && process.env.PUBLIC_SHARE_EXPORT_WORKER !== "1") {
+    if (activeExports >= MAX_CONCURRENT_EXPORTS) {
+      return new Response("Сейчас уже готовится другой файл. Повторите попытку через несколько секунд.", {
+        status: 429,
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "Retry-After": "5" }
+      });
+    }
+    activeExports += 1;
+    try {
+      return await proxyExportToWorker(request, token, selectedFormat);
+    } finally {
+      activeExports -= 1;
+    }
+  }
   if (activeExports >= MAX_CONCURRENT_EXPORTS) {
     return new Response("Сейчас уже готовится другой файл. Повторите попытку через несколько секунд.", {
       status: 429,
