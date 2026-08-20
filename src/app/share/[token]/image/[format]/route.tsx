@@ -91,7 +91,10 @@ const ensureExportWorker = async () => {
   if (exportWorker && exportWorker.exitCode === null && !exportWorkerStartup) return;
   if (exportWorkerStartup) return exportWorkerStartup;
   const nextBin = join(process.cwd(), "node_modules", "next", "dist", "bin", "next");
-  const worker = spawn(process.execPath, [nextBin, "start", "-H", "127.0.0.1", "-p", String(EXPORT_WORKER_PORT)], {
+  const nextArgs = [nextBin, "start", "-H", "127.0.0.1", "-p", String(EXPORT_WORKER_PORT)];
+  const workerCommand = process.platform === "win32" ? process.execPath : "nice";
+  const workerArgs = process.platform === "win32" ? nextArgs : ["-n", "10", process.execPath, ...nextArgs];
+  const worker = spawn(workerCommand, workerArgs, {
     cwd: process.cwd(),
     env: { ...process.env, PUBLIC_SHARE_EXPORT_WORKER: "1", PORT: String(EXPORT_WORKER_PORT), HOSTNAME: "127.0.0.1" },
     stdio: ["ignore", "inherit", "inherit"]
