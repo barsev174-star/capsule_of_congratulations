@@ -9,9 +9,15 @@ import styles from "./share-actions.module.css";
 
 const Icon = ({ children }: { children: React.ReactNode }) => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">{children}</svg>;
 
+export const buildVersionedShareUrl = (url: string) => {
+  const versioned = new URL(url);
+  versioned.searchParams.set("preview", "v1");
+  return versioned.toString();
+};
+
 export const buildNativeShareData = (publicName: string | null, url: string): ShareData => ({
   title: publicName ? `${publicName} делится открыткой` : "Тёплая открытка от близких",
-  url
+  url: buildVersionedShareUrl(url)
 });
 
 export function ShareActions({ publicName, token }: { publicName: string | null; token: string }) {
@@ -19,7 +25,7 @@ export function ShareActions({ publicName, token }: { publicName: string | null;
   const [downloadOpen, setDownloadOpen] = useState(false);
   const downloadTrigger = useRef<HTMLButtonElement>(null);
   const copy = async () => {
-    try { await navigator.clipboard.writeText(window.location.href); sendClientTelemetry("PUBLIC_SHARE_LINK_COPIED", { route: "share" }); setCopyState("copied"); window.setTimeout(() => setCopyState("idle"), 1800); }
+    try { await navigator.clipboard.writeText(buildVersionedShareUrl(window.location.href)); sendClientTelemetry("PUBLIC_SHARE_LINK_COPIED", { route: "share" }); setCopyState("copied"); window.setTimeout(() => setCopyState("idle"), 1800); }
     catch { setCopyState("failed"); }
   };
   const share = async () => {
