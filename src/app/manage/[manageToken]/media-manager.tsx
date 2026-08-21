@@ -50,6 +50,9 @@ type Props = {
 };
 
 type EditorMode = "add" | "edit" | "replace" | "move";
+
+const readClientTime = () => globalThis.performance?.now() ?? Date.now();
+
 type EditorState = {
   mode: EditorMode;
   slot: CardMediaSlot;
@@ -271,13 +274,15 @@ const MoveDialog = ({ asset, assets, availableSlots, onClose, onSelect }: {
   );
 };
 
-const PhotoEditor = ({ manageToken, state, useUniversalFrameAperture, onClose, onSaved, onFailed, onReplace, onDelete }: {
+const PhotoEditor = ({ manageToken, state, useUniversalFrameAperture, onClose, onSaved, onFailed, onTransferStarted, onTransferCompleted, onReplace, onDelete }: {
   manageToken: string;
   state: EditorState;
   useUniversalFrameAperture: boolean;
   onClose: () => void;
   onSaved: (message: string, asset?: CardMediaAsset, moved?: boolean) => void;
   onFailed: () => void;
+  onTransferStarted: (uploadBytes: number) => void;
+  onTransferCompleted: (durationMs: number, uploadBytes: number) => void;
   onReplace: (asset: CardMediaAsset) => void;
   onDelete: (asset: CardMediaAsset) => void;
 }) => {
@@ -451,11 +456,16 @@ const PhotoEditor = ({ manageToken, state, useUniversalFrameAperture, onClose, o
         formData.set("file", state.file);
         if (rightsConfirmed) formData.set("rightsConfirmed", "on");
       }
+      const transferStartedAt = state.file ? readClientTime() : null;
+      if (state.file) onTransferStarted(state.file.size);
       const result = await saveCardMediaAction({ ok: false, message: "" }, formData);
       if (!result.ok) {
         setError("Не удалось сохранить изменения. Попробуйте ещё раз.");
         onFailed();
         return;
+      }
+      if (state.file && transferStartedAt !== null) {
+        onTransferCompleted(readClientTime() - transferStartedAt, state.file.size);
       }
       const returnedAsset = "asset" in result ? result.asset : undefined;
       const nextAsset = returnedAsset ?? (state.asset ? {
@@ -633,13 +643,18 @@ export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, me
     getSlotBlock(asset.slot) === "greetings" && !activeMessageSlotSet.has(asset.slot)
   ).length;
 
-  const trackPhotoEvent = (event: Parameters<typeof sendClientTelemetry>[0], slot?: CardMediaSlot) => {
+  const trackPhotoEvent = (
+    event: Parameters<typeof sendClientTelemetry>[0],
+    slot?: CardMediaSlot,
+    extraContext: Record<string, string> = {}
+  ) => {
     sendClientTelemetry(event, {
       cardId,
       block: slot ? getSlotBlock(slot) : "moments",
       slot: slot ?? "",
       layout: messagePhotosEnabled ? mediaLayout : "none",
-      deviceType: getDeviceType()
+      deviceType: getDeviceType(),
+      ...extraContext
     });
   };
 
@@ -667,6 +682,7 @@ export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, me
       return;
     }
     trackPhotoEvent("photo_upload_started", request.slot);
+    const preparationStartedAt = readClientTime();
     setPhotoPreparation({ fileName: file.name, progress: 4 });
     let prepared;
     try {
@@ -681,6 +697,12 @@ export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, me
         : "Не удалось оптимизировать фото. Попробуйте другое изображение.");
       return;
     }
+    trackPhotoEvent("photo_preparation_completed", request.slot, {
+      durationMs: String(Math.round(readClientTime() - preparationStartedAt)),
+      originalBytes: String(prepared.originalBytes),
+      uploadBytes: String(prepared.file.size),
+      optimized: String(prepared.optimized)
+    });
     const previewUrl = URL.createObjectURL(prepared.file);
     const image = new Image();
     image.onload = () => {
@@ -742,7 +764,8 @@ export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, me
       : completedEditor?.mode === "move"
         ? completedEditor.targetWasOccupied ? "Фотографии поменяны местами" : "Фото перемещено"
         : "Изменения сохранены");
-    router.refresh();
+    // The server returns the saved asset, so the mounted manager can stay authoritative.
+    // A route refresh here reloads the full server tree and makes the photo tab flash.
   };
 
   const moveAsset = (asset: CardMediaAsset, targetSlot: CardMediaSlot) => {
@@ -1077,7 +1100,7 @@ export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, me
       {photoPreparation ? (
         <div className={styles.photoOptimizationProgress} role="status" aria-live="polite">
           <div>
-            <strong>Оптимизируем фото</strong>
+            <strong>Подготавливаем фото</strong>
             <span>{photoPreparation.fileName}</span>
           </div>
           <div
@@ -1171,6 +1194,13 @@ export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, me
             if (editor.file) trackPhotoEvent("photo_upload_failed", editor.slot);
             if (editor.mode === "move") setToast("Не удалось сохранить изменения. Попробуйте ещё раз.");
           }}
+          onTransferStarted={(uploadBytes) => trackPhotoEvent("photo_transfer_started", editor.slot, {
+            uploadBytes: String(uploadBytes)
+          })}
+          onTransferCompleted={(durationMs, uploadBytes) => trackPhotoEvent("photo_transfer_completed", editor.slot, {
+            durationMs: String(Math.round(durationMs)),
+            uploadBytes: String(uploadBytes)
+          })}
           onReplace={(asset) => requestFile(asset.slot, "replace", asset)}
           onDelete={setDeleteAsset}
         />

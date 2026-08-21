@@ -12,6 +12,29 @@ describe("telemetry", () => {
     expect(parseClientTelemetry({ event: "payment.started", context: {} })).toBeNull();
   });
 
+  it("keeps safe upload timing fields for photo diagnostics", () => {
+    expect(parseClientTelemetry({
+      event: "photo_preparation_completed",
+      context: {
+        cardId: "card_1",
+        durationMs: "184",
+        originalBytes: "5314542",
+        uploadBytes: "1048576",
+        optimized: "true",
+        fileName: "private-photo.jpg"
+      }
+    })).toEqual({
+      event: "photo_preparation_completed",
+      context: {
+        cardId: "card_1",
+        durationMs: "184",
+        originalBytes: "5314542",
+        uploadBytes: "1048576",
+        optimized: "true"
+      }
+    });
+  });
+
   it("gives critical errors a searchable id without logging their message", async () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const errorId = await reportCriticalError("database", new Error("private database detail"), { cardId: "card_1" });

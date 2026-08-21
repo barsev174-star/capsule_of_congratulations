@@ -13,8 +13,9 @@ export type PreparedImage = {
   optimized: boolean;
 };
 
-export const CARD_IMAGE_UPLOAD_MAX_BYTES = 6 * 1024 * 1024;
+export const CARD_IMAGE_UPLOAD_TARGET_BYTES = Math.round(1.2 * 1024 * 1024);
 export const CARD_IMAGE_SOURCE_MAX_BYTES = 40 * 1024 * 1024;
+export const CARD_IMAGE_MAX_DIMENSION = 2000;
 
 const browserSourceTypes = new Set([
   "image/jpeg",
@@ -32,8 +33,16 @@ export const isHeicImageFile = (file: Pick<File, "name" | "type">) =>
 export const isSupportedImageSource = (file: Pick<File, "name" | "type">) =>
   browserSourceTypes.has(file.type) || ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(extension(file));
 
-export const shouldOptimizeImageFile = (file: Pick<File, "name" | "type" | "size">) =>
-  file.size > CARD_IMAGE_UPLOAD_MAX_BYTES || isHeicImageFile(file);
+export const shouldOptimizeImageFile = (
+  file: Pick<File, "name" | "type" | "size">,
+  dimensions?: { width: number; height: number }
+) =>
+  file.size > CARD_IMAGE_UPLOAD_TARGET_BYTES
+  || isHeicImageFile(file)
+  || Boolean(dimensions && (
+    dimensions.width > CARD_IMAGE_MAX_DIMENSION
+    || dimensions.height > CARD_IMAGE_MAX_DIMENSION
+  ));
 
 type DecodedImage = {
   source: CanvasImageSource;
@@ -86,11 +95,11 @@ const encodeCanvas = (canvas: HTMLCanvasElement, mimeType: string, quality: numb
 
 export const compressImageFile = async (file: File, options?: CompressionOptions): Promise<File> => {
   const {
-    maxWidth = 2000,
-    maxHeight = 2000,
+    maxWidth = CARD_IMAGE_MAX_DIMENSION,
+    maxHeight = CARD_IMAGE_MAX_DIMENSION,
     quality = 0.86,
     mimeType = "image/jpeg",
-    maxOutputBytes = CARD_IMAGE_UPLOAD_MAX_BYTES,
+    maxOutputBytes = CARD_IMAGE_UPLOAD_TARGET_BYTES,
     onProgress
   } = options ?? {};
   onProgress?.(0.08);
@@ -141,12 +150,18 @@ export const prepareImageFileForUpload = async (
   if (file.size > CARD_IMAGE_SOURCE_MAX_BYTES) throw new Error("IMAGE_SOURCE_TOO_LARGE");
 
   if (!shouldOptimizeImageFile(file)) {
-    options?.onProgress?.(1);
-    return { file, originalBytes: file.size, optimized: false };
+    const decoded = await decodeImage(file);
+    const dimensions = { width: decoded.width, height: decoded.height };
+    decoded.cleanup();
+
+    if (!shouldOptimizeImageFile(file, dimensions)) {
+      options?.onProgress?.(1);
+      return { file, originalBytes: file.size, optimized: false };
+    }
   }
 
   const prepared = await compressImageFile(file, {
-    maxOutputBytes: CARD_IMAGE_UPLOAD_MAX_BYTES,
+    maxOutputBytes: CARD_IMAGE_UPLOAD_TARGET_BYTES,
     onProgress: options?.onProgress
   });
   return { file: prepared, originalBytes: file.size, optimized: true };

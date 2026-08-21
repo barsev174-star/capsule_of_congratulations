@@ -34,6 +34,9 @@ export const clientEvents = [
   "PUBLIC_SHARE_CREATE_CARD_CLICKED",
   "photo_slot_opened",
   "photo_upload_started",
+  "photo_preparation_completed",
+  "photo_transfer_started",
+  "photo_transfer_completed",
   "photo_upload_completed",
   "photo_upload_failed",
   "photo_replaced",
@@ -60,7 +63,11 @@ const allowedClientContextKeys = new Set([
   "block",
   "slot",
   "layout",
-  "deviceType"
+  "deviceType",
+  "durationMs",
+  "originalBytes",
+  "uploadBytes",
+  "optimized"
 ]);
 
 export const parseClientTelemetry = (input: unknown): { event: ClientTelemetryEvent; context: LogContext } | null => {
