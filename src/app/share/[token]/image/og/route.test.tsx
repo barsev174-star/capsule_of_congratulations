@@ -82,4 +82,20 @@ describe("public share Open Graph image", () => {
     expect(serialized).toContain("school-scrapbook");
     expect(mocks.getPayload).not.toHaveBeenCalled();
   });
+
+  it("loads production assets through the container loopback instead of the proxy request origin", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("PORT", "3000");
+    mocks.getPayload.mockResolvedValue(schoolV2);
+
+    const response = await GET(new Request("https://localhost:3000/share/token/image/og"), {
+      params: Promise.resolve({ token: "token" })
+    });
+    const serialized = JSON.stringify(mocks.imageCalls[0].element);
+
+    expect(response.status).toBe(200);
+    expect(serialized).toContain("http://127.0.0.1:3000/brand/logo-mark.svg");
+    expect(serialized).toContain("http://127.0.0.1:3000/api/template-export-asset");
+    expect(serialized).not.toContain("https://localhost:3000");
+  });
 });

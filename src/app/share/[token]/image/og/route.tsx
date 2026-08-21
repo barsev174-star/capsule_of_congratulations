@@ -8,7 +8,11 @@ import { catalogTemplateRegistrations } from "@/lib/templates/registry";
 
 export const runtime = "nodejs";
 
-const absoluteAsset = (request: Request, path: `/${string}`) => new URL(path, request.url).toString();
+const getAssetOrigin = (request: Request) => process.env.NODE_ENV === "production"
+  ? `http://127.0.0.1:${process.env.PORT?.trim() || "3000"}`
+  : new URL(request.url).origin;
+
+const absoluteAsset = (origin: string, path: `/${string}`) => new URL(path, origin).toString();
 
 const getDevelopmentBaselinePayload = (token: string): PublicSharePayload | null => {
   if (process.env.NODE_ENV !== "development" || !token.startsWith("og-baseline-")) return null;
@@ -40,7 +44,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   if (!payload) return new Response(null, { status: 404, headers: { "Cache-Control": "no-store" } });
 
   const template = getPublicShareOgTemplate(payload.card.templateId);
-  const preview = resolveTemplateExportAsset(template.preview, new URL(request.url).origin);
+  const assetOrigin = getAssetOrigin(request);
+  const preview = resolveTemplateExportAsset(template.preview, assetOrigin);
   return new ImageResponse(
     <div style={{
       position: "relative",
@@ -68,7 +73,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <img src={absoluteAsset(request, "/brand/logo-mark.svg")} style={{ width: 48, height: 48, objectFit: "contain" }} />
+            <img src={absoluteAsset(assetOrigin, "/brand/logo-mark.svg")} style={{ width: 48, height: 48, objectFit: "contain" }} />
             <div style={{ display: "flex", color: "#202124", fontSize: 31, fontWeight: 700, letterSpacing: -.4 }}>Slovesto</div>
           </div>
           <div style={{ display: "flex", marginTop: 7, color: "#8a9099", fontSize: 18 }}>
