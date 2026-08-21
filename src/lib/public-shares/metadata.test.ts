@@ -1,4 +1,8 @@
+import { access } from "node:fs/promises";
+import path from "node:path";
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
+import { cardTemplates } from "@/lib/cards/templates";
 import { buildPublicShareMetadata, getPublicShareOgTemplate } from "./metadata";
 import type { PublicSharePayloadV2 } from "./types";
 
@@ -39,7 +43,7 @@ describe("public share metadata", () => {
     const serialized = JSON.stringify(metadata);
 
     expect(metadata.openGraph?.images).toEqual([expect.objectContaining({
-      url: "/share/public%20token/image/og",
+      url: "/assets/share-og/school-scrapbook-v1.png",
       width: 1200,
       height: 630
     })]);
@@ -49,9 +53,10 @@ describe("public share metadata", () => {
     expect(serialized).not.toContain("private");
   });
 
-  it("knows all three product template previews", () => {
-    expect(getPublicShareOgTemplate("paper-birthday").preview).toContain("template-paper");
-    expect(getPublicShareOgTemplate("route-adventure").preview).toContain("route-adventure");
-    expect(getPublicShareOgTemplate("school-scrapbook").preview).toContain("school-scrapbook");
+  it.each(cardTemplates)("has a generated static social image for $id", async ({ id }) => {
+    const socialImage = getPublicShareOgTemplate(id).socialImage;
+    const file = path.join(process.cwd(), "public", socialImage.slice(1));
+    await expect(access(file)).resolves.toBeUndefined();
+    await expect(sharp(file).metadata()).resolves.toMatchObject({ format: "png", width: 1200, height: 630 });
   });
 });

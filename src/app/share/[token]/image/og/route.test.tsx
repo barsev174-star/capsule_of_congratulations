@@ -1,19 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import sharp from "sharp";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PublicSharePayloadV1, PublicSharePayloadV2 } from "@/lib/public-shares/types";
 
-const mocks = vi.hoisted(() => ({
-  getPayload: vi.fn(),
-  imageCalls: [] as Array<{ element: React.ReactElement; options: { width: number; height: number; headers?: Record<string, string> } }>
-}));
-
-vi.mock("next/og", () => ({
-  ImageResponse: class ImageResponse {
-    constructor(element: React.ReactElement, options: { width: number; height: number; headers?: Record<string, string> }) {
-      mocks.imageCalls.push({ element, options });
-      return new Response("png", { status: 200, headers: { "Content-Type": "image/png", ...options.headers } });
-    }
-  }
-}));
+const mocks = vi.hoisted(() => ({ getPayload: vi.fn() }));
 vi.mock("@/lib/public-shares/service", () => ({ getPublicSharePayload: mocks.getPayload }));
 
 import { GET } from "./route";
@@ -39,63 +28,29 @@ const schoolV2: PublicSharePayloadV2 = {
 };
 
 describe("public share Open Graph image", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mocks.imageCalls.length = 0;
-  });
-
-  afterEach(() => vi.unstubAllEnvs());
+  beforeEach(() => vi.clearAllMocks());
 
   it.each([
     ["paper-birthday", baseV1],
     ["route-adventure", { ...baseV1, card: { ...baseV1.card, templateId: "route-adventure" } }],
     ["school-scrapbook", schoolV2]
-  ])("renders a safe 1200x630 preview for %s", async (templateId, payload) => {
+  ])("serves a static 1200x630 PNG with crawler-compatible headers for %s", async (_templateId, payload) => {
     mocks.getPayload.mockResolvedValue(payload);
     const response = await GET(new Request("http://localhost:3000/share/token/image/og"), { params: Promise.resolve({ token: "token" }) });
-    const serialized = JSON.stringify(mocks.imageCalls[0].element);
+    const file = Buffer.from(await response.arrayBuffer());
+    const metadata = await sharp(file).metadata();
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("image/png");
-    expect(mocks.imageCalls[0].options).toMatchObject({ width: 1200, height: 630 });
-    expect(serialized).toContain(templateId === "school-scrapbook" ? "school-scrapbook" : templateId.split("-")[0]);
-    expect(serialized).not.toContain("Личное имя");
-    expect(serialized).not.toContain("личная фраза");
-    expect(serialized).not.toContain("/photo/private");
+    expect(response.headers.get("content-length")).toBe(String(file.byteLength));
+    expect(response.headers.get("cache-control")).toContain("immutable");
+    expect(response.headers.get("x-robots-tag")).toBeNull();
+    expect(metadata).toMatchObject({ format: "png", width: 1200, height: 630 });
   });
 
   it("returns 404 for an unavailable share", async () => {
     mocks.getPayload.mockResolvedValue(null);
     const response = await GET(new Request("http://localhost:3000/share/missing/image/og"), { params: Promise.resolve({ token: "missing" }) });
     expect(response.status).toBe(404);
-    expect(mocks.imageCalls).toHaveLength(0);
-  });
-
-  it("builds the universal visual baseline from the product registry", async () => {
-    vi.stubEnv("NODE_ENV", "development");
-    const response = await GET(new Request("http://localhost:3000/share/og-baseline-school-scrapbook/image/og"), {
-      params: Promise.resolve({ token: "og-baseline-school-scrapbook" })
-    });
-    const serialized = JSON.stringify(mocks.imageCalls[0].element);
-
-    expect(response.status).toBe(200);
-    expect(serialized).toContain("school-scrapbook");
-    expect(mocks.getPayload).not.toHaveBeenCalled();
-  });
-
-  it("loads production assets through the container loopback instead of the proxy request origin", async () => {
-    vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("PORT", "3000");
-    mocks.getPayload.mockResolvedValue(schoolV2);
-
-    const response = await GET(new Request("https://localhost:3000/share/token/image/og"), {
-      params: Promise.resolve({ token: "token" })
-    });
-    const serialized = JSON.stringify(mocks.imageCalls[0].element);
-
-    expect(response.status).toBe(200);
-    expect(serialized).toContain("http://127.0.0.1:3000/brand/logo-mark.svg");
-    expect(serialized).toContain("http://127.0.0.1:3000/api/template-export-asset");
-    expect(serialized).not.toContain("https://localhost:3000");
   });
 });

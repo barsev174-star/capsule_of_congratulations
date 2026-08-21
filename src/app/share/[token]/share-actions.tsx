@@ -8,7 +8,11 @@ import { PublicShareDownloadDialog } from "./public-share-download-dialog";
 import styles from "./share-actions.module.css";
 
 const Icon = ({ children }: { children: React.ReactNode }) => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">{children}</svg>;
-const SHARE_TEXT = "Близкие люди собрали здесь много тёплых слов и приятных воспоминаний.";
+
+export const buildNativeShareData = (publicName: string | null, url: string): ShareData => ({
+  title: publicName ? `${publicName} делится открыткой` : "Тёплая открытка от близких",
+  url
+});
 
 export function ShareActions({ publicName, token }: { publicName: string | null; token: string }) {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
@@ -20,7 +24,7 @@ export function ShareActions({ publicName, token }: { publicName: string | null;
   };
   const share = async () => {
     if (!navigator.share) return copy();
-    try { await navigator.share({ title: publicName ? `${publicName} делится открыткой` : "Тёплая открытка от близких", text: SHARE_TEXT, url: window.location.href }); sendClientTelemetry("PUBLIC_SHARE_NATIVE_SHARED", { route: "share" }); }
+    try { await navigator.share(buildNativeShareData(publicName, window.location.href)); sendClientTelemetry("PUBLIC_SHARE_NATIVE_SHARED", { route: "share" }); }
     catch { await copy(); }
   };
   const openDownload = () => { sendClientTelemetry("PUBLIC_SHARE_DOWNLOAD_DIALOG_OPENED", { route: "share" }); setDownloadOpen(true); };

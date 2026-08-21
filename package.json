@@ -8,6 +8,7 @@
     "build": "next build",
     "brand:assets": "node scripts/build-brand-assets.mjs",
     "brand:check": "node scripts/check-brand-layouts.mjs",
+    "share:og-assets": "node scripts/build-public-share-og-assets.mjs",
     "route:assets": "node scripts/optimize-route-assets.mjs",
     "route:check": "node scripts/check-route-assets.mjs",
     "template:legacy-assets": "node scripts/check-legacy-template-assets.mjs",

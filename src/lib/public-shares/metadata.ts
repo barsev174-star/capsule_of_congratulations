@@ -4,26 +4,20 @@ import type { PublicSharePayload } from "./types";
 
 export type PublicShareOgTemplate = {
   name: string;
-  preview: `/${string}`;
-  background: string;
-  accentSurface: string;
+  socialImage: `/${string}`;
 };
 
 const fallbackTemplate: PublicShareOgTemplate = {
   name: "Открытка Slovesto",
-  preview: "/brand/og-default-1200x630.png",
-  background: "#f7f8fa",
-  accentSurface: "#fff0e8"
+  socialImage: "/assets/share-og/paper-birthday-v1.png"
 };
 
 export const getPublicShareOgTemplate = (templateId: string): PublicShareOgTemplate => {
   const template = cardTemplates.find(({ id }) => id === templateId);
-  if (!template?.preview) return fallbackTemplate;
+  if (!template) return fallbackTemplate;
   return {
     name: template.name,
-    preview: template.preview as `/${string}`,
-    background: "#f7f8fa",
-    accentSurface: "#fff0e8"
+    socialImage: `/assets/share-og/${template.id}-v1.png`
   };
 };
 
@@ -35,8 +29,8 @@ export const buildPublicShareMetadata = (token: string, payload: PublicSharePayl
   const description = "Тёплые слова и моменты, которыми хочется поделиться.";
   const encodedToken = encodeURIComponent(token);
   const path = `/share/${encodedToken}`;
-  const image = `${path}/image/og`;
   const template = getPublicShareOgTemplate(payload.card.templateId);
+  const image = template.socialImage;
   const imageDescription = `Публичная открытка Slovesto, шаблон «${template.name}»`;
   return {
     title,
