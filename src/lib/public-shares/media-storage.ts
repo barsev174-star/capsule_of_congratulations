@@ -12,6 +12,7 @@ type PublicSharePhotoSource = {
   sourceStoragePath: string;
   sourceFileName: string;
   mimeType: string;
+  normalizeOrientation?: boolean;
 };
 
 export type StoredPublicSharePhoto = {
@@ -97,9 +98,23 @@ const stripMetadata = (input: Buffer, mimeType: string) => {
   return input;
 };
 
-export const createPublicSharePhotoDerivative = async ({ publicShareId, sourceStoragePath, sourceFileName, mimeType }: PublicSharePhotoSource): Promise<StoredPublicSharePhoto> => {
+export const sanitizePublicSharePhoto = async (
+  input: Buffer,
+  mimeType: string,
+  normalizeOrientation = false
+) => {
+  if (!normalizeOrientation) return stripMetadata(input, mimeType);
+
+  const pipeline = sharp(input).rotate();
+  if (mimeType === "image/jpeg") return pipeline.jpeg({ quality: 95 }).toBuffer();
+  if (mimeType === "image/png") return pipeline.png().toBuffer();
+  if (mimeType === "image/webp") return pipeline.webp({ quality: 95 }).toBuffer();
+  return stripMetadata(input, mimeType);
+};
+
+export const createPublicSharePhotoDerivative = async ({ publicShareId, sourceStoragePath, sourceFileName, mimeType, normalizeOrientation = false }: PublicSharePhotoSource): Promise<StoredPublicSharePhoto> => {
   const source = await readFile(sourceStoragePath);
-  const sanitized = stripMetadata(source, mimeType);
+  const sanitized = await sanitizePublicSharePhoto(source, mimeType, normalizeOrientation);
   const extension = extname(sourceFileName).toLowerCase() || (mimeType === "image/png" ? ".png" : mimeType === "image/webp" ? ".webp" : ".jpg");
   const fileName = `${randomUUID()}${extension}`;
   const directory = join(PUBLIC_SHARE_MEDIA_STORAGE_ROOT, publicShareId);

@@ -553,7 +553,7 @@
   flex: 1;
   flex-direction: column;
   box-sizing: border-box;
-  padding: max(18px, var(--uv1-message-safe-top, 0px)) max(18px, var(--uv1-message-safe-right, 0px)) max(18px, var(--uv1-message-safe-bottom, 0px)) max(18px, var(--uv1-message-safe-left, 0px));
+  padding: max(14px, var(--uv1-message-safe-top, 0px)) max(16px, var(--uv1-message-safe-right, 0px)) max(14px, var(--uv1-message-safe-bottom, 0px)) max(16px, var(--uv1-message-safe-left, 0px));
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -603,6 +603,23 @@
   gap: 10px;
 }
 
+.messageCard:not([data-message-expanded="true"]) .messageAuthor {
+  min-height: 18px;
+  gap: 0;
+}
+
+.messageCard:not([data-message-expanded="true"]) .messageAuthor > span:last-child {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.messageCard:not([data-message-expanded="true"]) .messageAuthor strong,
+.messageCard:not([data-message-expanded="true"]) .messageAuthor small {
+  display: inline;
+  margin: 0;
+}
+
 .avatarImage,
 .avatarFallback {
   position: relative;
@@ -628,15 +645,23 @@
 .messageAuthor small { margin-top: 2px; color: var(--uv1-muted); font-size: 12px; }
 
 .messageCardContent > p {
-  display: -webkit-box;
+  display: block;
   min-height: 0;
   flex: 1 1 auto;
-  margin: 14px 0 0;
+  margin: 8px 0 0;
   overflow: hidden;
   font-size: clamp(16px, 1.55vw, var(--uv1-message-text-font-max));
-  line-height: 1.5;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 5;
+  line-height: 1.35;
+}
+
+.messageCard[data-message-density="compact"] .messageCardContent > p,
+.messageCard[data-message-density="dense"] .messageCardContent > p {
+  font-size: 15px;
+  line-height: 1.28;
+}
+
+.messageCard[data-message-density="dense"] .messageCardContent > p {
+  margin-top: 6px;
 }
 
 .messagePhotoGrid {
@@ -939,7 +964,8 @@
 .messagesDialog > header button:active { scale: 0.96; }
 .dialogMessages { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 18px; }
 .dialogMessages .messageCard { height: auto; min-height: 0; }
-.dialogMessages .messageCardContent > p { display: block; flex: none; overflow: visible; }
+.dialogMessages .messageCardContent { padding: 18px; }
+.dialogMessages .messageCardContent > p { display: block; flex: none; margin-top: 14px; overflow: visible; line-height: 1.5; }
 
 .dialogBackdrop[data-viewport="mobile"] {
   padding: 10px;

@@ -72,7 +72,8 @@ describe("GiftIntro rendering budget", () => {
     expect(screen.queryByTestId("full-final-card")).not.toBeInTheDocument();
   });
 
-  it("при reduced motion открывает открытку без длинной анимации", () => {
+  it("по явному нажатию показывает полное раскрытие даже при reduced motion", () => {
+    vi.useFakeTimers();
     vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
       matches: true,
       addEventListener: vi.fn(),
@@ -86,7 +87,14 @@ describe("GiftIntro rendering budget", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /посмотреть, что внутри/i }));
 
+    expect(document.querySelector('[data-intro-state="playing"]')).toBeInTheDocument();
+    expect(screen.queryByTestId("full-final-card")).not.toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(3550));
     expect(screen.getByTestId("full-final-card")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Посмотреть ещё раз" })).not.toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(1250));
     expect(screen.getByRole("button", { name: "Посмотреть ещё раз" })).toBeInTheDocument();
   });
 });

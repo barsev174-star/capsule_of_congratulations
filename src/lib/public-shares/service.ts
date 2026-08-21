@@ -183,7 +183,13 @@ export const savePublicShare = async (finalSlug: string, submitted: PublicShareE
       if (existing) {
         photoRows.push({ ...existing, publicShareId: share.id, sortOrder, publicCaption: clean(input.photoCaptions[asset.id], publicCaptionLimit) || "" });
       } else {
-        const derivative = await createPublicSharePhotoDerivative({ publicShareId: share.id, sourceStoragePath: asset.storagePath, sourceFileName: asset.fileName, mimeType: asset.mimeType });
+        const derivative = await createPublicSharePhotoDerivative({
+          publicShareId: share.id,
+          sourceStoragePath: asset.storagePath,
+          sourceFileName: asset.fileName,
+          mimeType: asset.mimeType,
+          normalizeOrientation: dispatch.kind === "universal-v1"
+        });
         createdPaths.push(derivative.storagePath);
         photoRows.push({ publicShareId: share.id, cardMediaAssetId: asset.id, ...derivative, mimeType: asset.mimeType, sortOrder, publicCaption: clean(input.photoCaptions[asset.id], publicCaptionLimit) || "" });
       }

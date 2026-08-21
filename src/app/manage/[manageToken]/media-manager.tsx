@@ -18,6 +18,7 @@ import {
   normalizeCrop
 } from "@/lib/cards/media-slots";
 import type { FinalCardMessageMediaLayout } from "@/lib/final-card/types";
+import { getUniversalPhotoApertureAspectRatio } from "@/lib/templates/photo-frame-presets";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
 import {
   CARD_IMAGE_SOURCE_MAX_BYTES,
@@ -45,6 +46,7 @@ type Props = {
   mediaLayout: FinalCardMessageMediaLayout;
   messagePhotosEnabled: boolean;
   initialMomentsEnabled: boolean;
+  useUniversalFrameAperture?: boolean;
 };
 
 type EditorMode = "add" | "edit" | "replace" | "move";
@@ -269,9 +271,10 @@ const MoveDialog = ({ asset, assets, availableSlots, onClose, onSelect }: {
   );
 };
 
-const PhotoEditor = ({ manageToken, state, onClose, onSaved, onFailed, onReplace, onDelete }: {
+const PhotoEditor = ({ manageToken, state, useUniversalFrameAperture, onClose, onSaved, onFailed, onReplace, onDelete }: {
   manageToken: string;
   state: EditorState;
+  useUniversalFrameAperture: boolean;
   onClose: () => void;
   onSaved: (message: string, asset?: CardMediaAsset, moved?: boolean) => void;
   onFailed: () => void;
@@ -482,6 +485,11 @@ const PhotoEditor = ({ manageToken, state, onClose, onSaved, onFailed, onReplace
           <div className={styles.photoCropPanel}>
             <div
               className={`${styles.photoCropViewport} ${getSlotOrientation(state.slot) === "vertical" ? styles.photoCropVertical : ""} ${cropDragging ? styles.photoCropDragging : ""}`}
+              style={useUniversalFrameAperture ? {
+                aspectRatio: getUniversalPhotoApertureAspectRatio(
+                  getSlotOrientation(state.slot) === "vertical" ? "portrait-polaroid" : "landscape-polaroid"
+                )
+              } : undefined}
               onPointerDown={startCropDrag}
               aria-label="Удерживайте фото и перемещайте его внутри рамки"
             >
@@ -565,7 +573,7 @@ const PhotoEditor = ({ manageToken, state, onClose, onSaved, onFailed, onReplace
   );
 };
 
-export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, messagePhotosEnabled, initialMomentsEnabled }: Props) => {
+export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, messagePhotosEnabled, initialMomentsEnabled, useUniversalFrameAperture = false }: Props) => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileRequestRef = useRef<{ slot: CardMediaSlot; mode: "add" | "replace"; asset?: CardMediaAsset } | null>(null);
@@ -1156,6 +1164,7 @@ export const MediaManager = ({ cardId, manageToken, mediaAssets, mediaLayout, me
         <PhotoEditor
           manageToken={manageToken}
           state={editor}
+          useUniversalFrameAperture={useUniversalFrameAperture}
           onClose={closeEditor}
           onSaved={finishEditor}
           onFailed={() => {

@@ -9060,9 +9060,11 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
 }
 
 .templateDialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   width: min(900px, 100%);
   max-height: min(760px, calc(100dvh - 48px));
-  overflow: auto;
+  overflow: hidden;
   padding: 24px;
   border-radius: 26px;
   background: var(--bg-surface);
@@ -9115,6 +9117,8 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
 
 .templatePickerForm {
   display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
   gap: 18px;
 }
 
@@ -9122,6 +9126,10 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .templatePickerCard {
@@ -9210,6 +9218,10 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  position: sticky;
+  z-index: 1;
+  bottom: 0;
+  background: var(--bg-surface);
 }
 
 .templatePickerFooter > span {
@@ -9648,9 +9660,13 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
 
 .designStickyPrimary {
   min-width: 220px;
-  background: linear-gradient(180deg, #ef7240, #df5f2e);
+  background: #e9652f;
   color: #fff;
   box-shadow: 0 12px 24px rgba(223, 95, 46, 0.2);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .designStickyPrimary:hover { background: #df5f2e; }
 }
 
 .designStickySecondary {
@@ -9663,6 +9679,8 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
 .designStickySecondary:active {
   transform: scale(0.96);
 }
+
+.designStickyPrimary:active { background: #c7532a; }
 
 @media (max-width: 1199px) {
   .designStudio {
@@ -12923,19 +12941,22 @@ button.contentStatusItemButton:active {
     padding: 0 18px;
     border: 0;
     border-radius: 13px;
-    background: linear-gradient(180deg, #f36d37, #e55620);
+    background: #e9652f;
     color: #fff;
     font: inherit;
-    font-weight: 900;
+    font-weight: 850;
     text-align: center;
     text-decoration: none;
     cursor: pointer;
     box-shadow: 0 10px 22px rgba(229, 86, 32, 0.22);
-    transition-property: scale, box-shadow;
+    transition-property: background-color, scale, box-shadow;
     transition-duration: 150ms;
   }
 
+  .contentStickyPrimary:hover { background: #df5f2e; }
+
   .contentStickyPrimary:active {
+    background: #c7532a;
     scale: 0.96;
   }
 
@@ -13329,6 +13350,11 @@ button.contentStatusItemButton:active {
 .participantLinkActions {
   display: grid;
   gap: 8px;
+}
+
+.participantCloseCollectionAction .closeCollectionTrigger {
+  width: 100%;
+  min-height: 44px;
 }
 
 .participantLinkPrimary,

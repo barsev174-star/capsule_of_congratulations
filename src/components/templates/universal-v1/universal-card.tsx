@@ -193,7 +193,8 @@ function UniversalPhoto({
     style={{
       objectFit: "cover",
       objectPosition: `${photo.crop.x * 100}% ${photo.crop.y * 100}%`,
-      transform: `scale(${photo.crop.zoom})`
+      transform: `scale(${photo.crop.zoom})`,
+      transformOrigin: `${photo.crop.x * 100}% ${photo.crop.y * 100}%`
     }}
   />;
 
@@ -234,7 +235,23 @@ function UniversalPhoto({
   );
 }
 
-function MessageCard({ contribution, index, profile, carouselOrder }: { contribution: UniversalTemplateContribution; index: number; profile: TemplateProfile; carouselOrder?: number }) {
+const fitCompactMessage = (value: string, maxChars: number) => {
+  const normalized = value.trim();
+  if (normalized.length <= maxChars) return normalized;
+  const candidate = normalized.slice(0, Math.max(1, maxChars - 1)).trimEnd();
+  const lastSpace = candidate.lastIndexOf(" ");
+  const fitted = lastSpace >= Math.floor(candidate.length * .72) ? candidate.slice(0, lastSpace) : candidate;
+  return `${fitted.trimEnd()}…`;
+};
+
+function MessageCard({ contribution, index, profile, carouselOrder, maxChars = universalTextCapacityPresets.messageCard.maxChars, expanded = false }: {
+  contribution: UniversalTemplateContribution;
+  index: number;
+  profile: TemplateProfile;
+  carouselOrder?: number;
+  maxChars?: number;
+  expanded?: boolean;
+}) {
   const underlay = profile.assets.greetingCards[index % profile.assets.greetingCards.length];
   const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
   const cardStyle = {
@@ -246,28 +263,34 @@ function MessageCard({ contribution, index, profile, carouselOrder }: { contribu
     } : {}),
     ...(carouselOrder !== undefined ? { "--uv1-desktop-carousel-order": carouselOrder } : {})
   } as CSSProperties;
+  const compactMessage = fitCompactMessage(contribution.message, maxChars);
+  const message = expanded ? contribution.message : compactMessage;
+  const density = message.length > 240 ? "dense" : message.length > 160 ? "compact" : "default";
   return (
     <article
       className={styles.messageCard}
       data-message-card
+      data-message-expanded={expanded || undefined}
+      data-message-over-limit={!expanded && contribution.message.trim().length > maxChars || undefined}
+      data-message-density={density}
       data-greeting-card-index={underlay ? index % profile.assets.greetingCards.length : undefined}
       style={cardStyle}
     >
       {underlay ? <SectionUnderlay underlay={underlay} className={styles.messageCardUnderlay} /> : null}
       <div className={styles.messageCardContent}>
         <header className={styles.messageAuthor}>
-          {contribution.avatarUrl ? (
+          {expanded && contribution.avatarUrl ? (
             <span className={styles.avatarImage}><Image src={contribution.avatarUrl} alt="" fill sizes="44px" /></span>
-          ) : <span className={styles.avatarFallback} aria-hidden="true">{initials(contribution.authorName)}</span>}
+          ) : expanded ? <span className={styles.avatarFallback} aria-hidden="true">{initials(contribution.authorName)}</span> : null}
           <span><strong>{contribution.authorName}</strong>{contribution.authorRole ? <small>{contribution.authorRole}</small> : null}</span>
         </header>
         <p
           data-safe-text
           data-text-boundary
           data-text-preset="message-card"
-          data-max-lines={universalTextCapacityPresets.messageCard.maxLines}
+          data-max-chars={maxChars}
           title={contribution.message}
-        >{contribution.message}</p>
+        >{message}</p>
       </div>
     </article>
   );
@@ -319,7 +342,7 @@ function AllMessagesDialog({
     }} style={dialogTheme}>
       <section className={styles.messagesDialog} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header><div><span>Полная подборка</span><h2 id={titleId}>Все поздравления</h2></div><button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Закрыть все поздравления">×</button></header>
-        <div className={styles.dialogMessages}>{contributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} />)}</div>
+        <div className={styles.dialogMessages}>{contributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} expanded />)}</div>
       </section>
     </div>,
     document.body
@@ -510,7 +533,7 @@ function MessagesBlock({
             onOpen={onPhotoOpen}
           />;
         })}</div> : null}
-        <div className={styles.messageGrid} data-message-layout={hasMedia ? "media-stack" : "no-media-carousel"} data-carousel-rows={!hasMedia ? noMediaCarouselRows : undefined} data-carousel-columns={!hasMedia ? noMediaCarouselColumns : undefined} data-visible-card-count={visibleCardCount} data-motion-stagger>{visibleContributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} carouselOrder={!hasMedia ? getNoMediaCarouselOrder(index) : undefined} />)}</div>
+        <div className={styles.messageGrid} data-message-layout={hasMedia ? "media-stack" : "no-media-carousel"} data-carousel-rows={!hasMedia ? noMediaCarouselRows : undefined} data-carousel-columns={!hasMedia ? noMediaCarouselColumns : undefined} data-visible-card-count={visibleCardCount} data-motion-stagger>{visibleContributions.map((contribution, index) => <MessageCard key={contribution.id} contribution={contribution} index={index} profile={profile} maxChars={layoutRule.maxChars} carouselOrder={!hasMedia ? getNoMediaCarouselOrder(index) : undefined} />)}</div>
       </div>
       <button
         type="button"

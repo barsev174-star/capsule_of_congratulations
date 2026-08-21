@@ -40,3 +40,8 @@ export const universalPhotoFramePresets: Readonly<Record<UniversalPhotoFramePres
 
 export const getUniversalPhotoFramePreset = (id: UniversalPhotoFramePresetId) =>
   universalPhotoFramePresets[id];
+
+export const getUniversalPhotoApertureAspectRatio = (id: UniversalPhotoFramePresetId) => {
+  const preset = getUniversalPhotoFramePreset(id);
+  return (preset.source.width * preset.aperture.width) / (preset.source.height * preset.aperture.height);
+};

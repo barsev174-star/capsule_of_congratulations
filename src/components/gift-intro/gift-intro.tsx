@@ -26,6 +26,7 @@ type GiftIntroProps = {
 };
 
 const INTRO_DURATION = 4800;
+const FINAL_REVEAL_DELAY = 3550;
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
 const subscribeReducedMotion = (callback: () => void) => {
@@ -146,18 +147,13 @@ export const GiftIntro = ({
 
     clearTimers();
     setIsFinalCardRevealed(false);
-    if (prefersReducedMotion) {
-      setState("done");
-      onIntroDoneRef.current?.();
-      return;
-    }
     setState("playing");
-    schedule(() => setIsFinalCardRevealed(true), 3550);
+    schedule(() => setIsFinalCardRevealed(true), FINAL_REVEAL_DELAY);
     schedule(() => {
       setState("done");
       onIntroDoneRef.current?.();
     }, INTRO_DURATION);
-  }, [state, prefersReducedMotion, clearTimers, schedule]);
+  }, [state, clearTimers, schedule]);
 
   const handleSkip = useCallback(() => {
     clearTimers();

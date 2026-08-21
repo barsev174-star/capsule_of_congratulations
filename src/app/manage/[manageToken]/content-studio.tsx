@@ -23,6 +23,7 @@ type Props = {
   mediaAssets: CardMediaAsset[];
   mediaLayout: FinalCardMessageMediaLayout;
   messagePhotosEnabled: boolean;
+  useUniversalFrameAperture: boolean;
   momentsEnabled: boolean;
   occasionText: string;
   cardId: string;
@@ -131,6 +132,7 @@ export const ContentStudio = ({
   mediaAssets,
   mediaLayout,
   messagePhotosEnabled,
+  useUniversalFrameAperture,
   momentsEnabled,
   occasionText,
   cardId,
@@ -181,6 +183,7 @@ export const ContentStudio = ({
                 mediaLayout={mediaLayout}
                 messagePhotosEnabled={messagePhotosEnabled}
                 initialMomentsEnabled={momentsEnabled}
+                useUniversalFrameAperture={useUniversalFrameAperture}
               />
             </section>
           )}

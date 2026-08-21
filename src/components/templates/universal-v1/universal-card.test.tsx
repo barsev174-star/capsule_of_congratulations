@@ -194,6 +194,7 @@ describe("UniversalTemplateCard", () => {
 
     expect(photo.style.objectPosition).toBe(`${model.messagePhotos[0].crop.x * 100}% ${model.messagePhotos[0].crop.y * 100}%`);
     expect(photo.style.transform).toBe(`scale(${model.messagePhotos[0].crop.zoom})`);
+    expect(photo.style.transformOrigin).toBe(`${model.messagePhotos[0].crop.x * 100}% ${model.messagePhotos[0].crop.y * 100}%`);
     expect(caption.textContent).toHaveLength(45);
     expect(caption.textContent).not.toContain("…");
     expect(caption.style.getPropertyValue("--uv1-caption-scale")).toBe(String(profile.assets.photoFrames.messagePortrait.caption.minScale));
@@ -225,9 +226,35 @@ describe("UniversalTemplateCard", () => {
     const { container } = render(<UniversalTemplateCard profile={profile} model={model} debugSafeAreas />);
 
     expect(container.querySelector('[data-text-preset="recipient-name"]')).toHaveAttribute("data-max-lines", "2");
-    expect(container.querySelector('[data-text-preset="message-card"]')).toHaveAttribute("data-max-lines", "5");
+    expect(container.querySelector('[data-text-preset="message-card"]')).toHaveAttribute("data-max-chars", "280");
     expect(container.querySelector('[data-text-preset="photo-caption"]')).toHaveAttribute("data-max-lines", "2");
     expect(container.querySelectorAll("[data-text-boundary]").length).toBeGreaterThan(10);
+  });
+
+  it("shows an ordinary greeting through the honest layout limit and keeps overflow in the full dialog", async () => {
+    const user = userEvent.setup();
+    const model = buildUniversalFixtureViewModel("full-card-default", {
+      templateId: profile.id,
+      scenario: "grid-2",
+      photoCount: 0
+    });
+    const withinLimit = `Тёплые слова ${"для прекрасного праздника ".repeat(12)}`.slice(0, 280);
+    const overLimit = `${withinLimit} и полный текст сверх лимита`;
+    model.contributions = model.contributions.map((contribution, index) => index === 0
+      ? { ...contribution, message: withinLimit }
+      : index === 1
+        ? { ...contribution, message: overLimit }
+        : contribution);
+
+    const { container } = render(<UniversalTemplateCard profile={profile} model={model} />);
+    const cards = container.querySelectorAll<HTMLElement>("[data-message-card]");
+    expect(cards[0]).toHaveTextContent(withinLimit);
+    expect(cards[0]).not.toHaveAttribute("data-message-over-limit");
+    expect(cards[1]).toHaveAttribute("data-message-over-limit", "true");
+    expect(cards[1]).not.toHaveTextContent(overLimit);
+
+    await user.click(screen.getByRole("button", { name: "12 поздравлений" }));
+    expect(within(screen.getByRole("dialog", { name: "Все поздравления" })).getByText(overLimit)).toBeVisible();
   });
 
   it("puts a Russian first name and patronymic on separate hero lines", () => {

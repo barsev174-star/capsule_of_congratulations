@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import type { Contribution } from "@/lib/cards/types";
 import {
   CONTRIBUTION_MESSAGE_MAX_LENGTH,
-  CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH
+  CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH,
+  MAIN_GREETING_MAX_LENGTH
 } from "@/lib/contributions/limits";
 import { AiHelper } from "@/app/card/[publicSlug]/ai-helper";
 import {
@@ -30,10 +31,10 @@ type Props = {
   onDeleted: () => void;
 };
 
-type RequiredField = "authorName" | "authorRole" | "message";
+type RequiredField = "authorName" | "message";
 type FieldFlags = Record<RequiredField, boolean>;
 
-const emptyFieldFlags: FieldFlags = { authorName: false, authorRole: false, message: false };
+const emptyFieldFlags: FieldFlags = { authorName: false, message: false };
 
 const initialState = { ok: false, message: "" };
 
@@ -110,18 +111,17 @@ export const ContributionEditor = ({
     aiGenerationIds
   });
   const isDirty = currentSnapshot !== initialSnapshot;
+  const messageMaxLength = isMain ? MAIN_GREETING_MAX_LENGTH : CONTRIBUTION_MESSAGE_MAX_LENGTH;
   const fieldValidity: FieldFlags = {
     authorName: authorName.trim().length >= 2,
-    authorRole: authorRole.trim().length > 0,
-    message: message.trim().length >= 20
+    message: message.trim().length >= 20 && message.length <= messageMaxLength
   };
-  const canSubmit = fieldValidity.authorName && fieldValidity.authorRole && fieldValidity.message;
+  const canSubmit = fieldValidity.authorName && fieldValidity.message;
   const shouldShowFieldError = (field: RequiredField, value: string) => (
     !fieldValidity[field]
     && (submitAttempted || blurredFields[field] || (editedFields[field] && value.trim().length === 0))
   );
   const authorNameError = shouldShowFieldError("authorName", authorName);
-  const authorRoleError = shouldShowFieldError("authorRole", authorRole);
   const messageError = shouldShowFieldError("message", message);
   const title = contribution ? "Редактировать поздравление" : "Добавить поздравление";
 
@@ -254,27 +254,16 @@ export const ContributionEditor = ({
                   {authorNameError ? "Укажите имя автора." : "\u00a0"}
                 </span>
               </label>
-              <label className={authorRoleError ? styles.contributionEditorFieldInvalid : undefined}>
-                <span>Роль или подпись</span>
+              <label>
+                <span>Роль или подпись — необязательно</span>
                 <input
                   name="authorRole"
                   value={authorRole}
-                  onChange={(event) => { setAuthorRole(event.target.value); markEdited("authorRole"); }}
-                  onBlur={() => markBlurredAfterEdit("authorRole")}
-                  aria-invalid={authorRoleError}
-                  aria-describedby={authorRoleError ? "contribution-author-role-error" : undefined}
+                  onChange={(event) => setAuthorRole(event.target.value)}
                   placeholder="Например, коллега"
-                  required
                   maxLength={80}
                 />
-                <span
-                  id="contribution-author-role-error"
-                  className={`${styles.contributionEditorFieldError} ${authorRoleError ? "" : styles.contributionEditorFieldErrorReserved}`}
-                  role={authorRoleError ? "alert" : undefined}
-                  aria-hidden={authorRoleError ? undefined : true}
-                >
-                  {authorRoleError ? "Укажите роль или подпись." : "\u00a0"}
-                </span>
+                <span className={`${styles.contributionEditorFieldError} ${styles.contributionEditorFieldErrorReserved}`} aria-hidden="true">{"\u00a0"}</span>
               </label>
             </div>
 
@@ -304,7 +293,7 @@ export const ContributionEditor = ({
                 <span className={styles.contributionEditorLabelRow}>
                   <label htmlFor="contribution-editor-message">Текст поздравления</label>
                   <span className={styles.contributionEditorCounter}>
-                    {message.length} / {CONTRIBUTION_MESSAGE_MAX_LENGTH}
+                    {message.length} / {messageMaxLength}
                   </span>
                 </span>
                 <textarea
@@ -316,11 +305,17 @@ export const ContributionEditor = ({
                   aria-describedby={messageError ? "contribution-message-error" : undefined}
                   placeholder="Напишите тёплые слова…"
                   minLength={20}
-                  maxLength={CONTRIBUTION_MESSAGE_MAX_LENGTH}
+                  maxLength={messageMaxLength}
                   rows={8}
                   required
                 />
-                {messageError ? <span id="contribution-message-error" className={styles.contributionEditorFieldError} role="alert">Напишите текст поздравления.</span> : null}
+                {messageError ? (
+                  <span id="contribution-message-error" className={styles.contributionEditorFieldError} role="alert">
+                    {message.length > messageMaxLength
+                      ? `Сократите главное поздравление до ${MAIN_GREETING_MAX_LENGTH} символов.`
+                      : "Напишите текст поздравления."}
+                  </span>
+                ) : null}
                 {hasAiReplacement && contribution ? (
                   <span className={styles.contributionEditorAiUndo} role="status">
                     <span>AI-вариант подставлен, но ещё не сохранён.</span>
@@ -348,6 +343,7 @@ export const ContributionEditor = ({
                   cardId={cardId}
                   manageToken={manageToken}
                   occasionText={occasionText}
+                  relationshipContext={authorRole}
                   messageLimit={CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH}
                   onUseText={(text, generationId) => {
                     setMessage(text);

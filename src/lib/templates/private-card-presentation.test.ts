@@ -104,4 +104,19 @@ describe("buildPrivateCardPresentation", () => {
     if (!presentation || presentation.kind !== "legacy") return;
     expect(presentation.model.style).toBe("paper-birthday");
   });
+
+  it("keeps the full selected main greeting in a universal template", () => {
+    const longGreeting = `Главное поздравление ${"с очень важными и тёплыми словами ".repeat(18)}`.slice(0, 700);
+    const selectedContributions = [{ ...contributions[0], message: longGreeting }];
+    const presentation = buildPrivateCardPresentation({
+      ...card,
+      finalMainGreetingSettings: { contributionId: contributions[0].id }
+    }, selectedContributions);
+
+    expect(presentation?.kind).toBe("universal-v1");
+    if (!presentation || presentation.kind !== "universal-v1") return;
+    expect(longGreeting.length).toBeGreaterThan(500);
+    expect(presentation.model.mainGreeting).toBe(longGreeting.trim());
+    expect(presentation.model.contributions).toHaveLength(0);
+  });
 });

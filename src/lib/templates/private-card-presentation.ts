@@ -1,6 +1,7 @@
 import type { CardDraft, CardMediaAsset, Contribution } from "@/lib/cards/types";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
 import { dispatchTemplateRenderer } from "@/lib/templates/dispatcher";
+import { resolveMainGreetingContribution } from "@/lib/final-card/main-greeting";
 import type {
   UniversalTemplatePhoto,
   UniversalTemplateViewModel
@@ -47,6 +48,7 @@ export const buildPrivateCardPresentation = (
   const messageScenario = finalModel.messageLayoutMode === "column-media"
     ? finalModel.messageMediaLayout
     : finalModel.messageLayoutMode;
+  const mainGreeting = resolveMainGreetingContribution(card, contributions);
   const model: UniversalTemplateViewModel = {
     templateId: dispatch.registration.id,
     recipientName: finalModel.recipientName,
@@ -57,7 +59,7 @@ export const buildPrivateCardPresentation = (
     participantCount: finalModel.participantCount,
     publicPhotoCount: null,
     summaryTitle: finalModel.summaryTitle,
-    mainGreeting: finalModel.summaryText,
+    mainGreeting: mainGreeting?.message.trim() ?? finalModel.summaryText,
     mainGreetingAuthorName: finalModel.mainGreetingAuthorName,
     qualities: finalModel.qualities,
     contributions: finalModel.contributions.map((contribution) => ({

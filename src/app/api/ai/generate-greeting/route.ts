@@ -8,6 +8,7 @@ import {
   listAllContributionsByCardId
 } from "@/lib/cards/repository";
 import { getFinalCardMessageLayoutProfile } from "@/lib/final-card/message-layout-rules";
+import { MAIN_GREETING_MAX_LENGTH } from "@/lib/contributions/limits";
 import { logger } from "@/lib/logger";
 import { hasPaidAiEntitlement } from "@/lib/ai/repository";
 import { reportCriticalError } from "@/lib/telemetry";
@@ -109,7 +110,7 @@ export async function POST(request: Request) {
       .map((item) => item.message)
   );
   const messageLimit = sourceContribution?.id && sourceContribution.id === card.finalMainGreetingSettings?.contributionId
-    ? 500
+    ? MAIN_GREETING_MAX_LENGTH
     : layoutProfile.maxChars;
 
   try {

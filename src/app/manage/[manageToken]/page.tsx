@@ -674,6 +674,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
             mediaAssets={mediaAssets}
             mediaLayout={mediaLayout}
             messagePhotosEnabled={messagePhotosEnabled}
+            useUniversalFrameAperture={selectedTemplateDispatch?.kind === "universal-v1"}
             momentsEnabled={momentsEnabled}
             occasionText={occasionText}
             cardId={card.id}

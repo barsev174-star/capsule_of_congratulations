@@ -69,7 +69,7 @@ import {
   getAiUsageSummary,
   saveAiCardQuoteSelection
 } from "@/lib/ai/repository";
-import { ContributionLimitReachedError } from "@/lib/contributions/limits";
+import { ContributionLimitReachedError, MAIN_GREETING_MAX_LENGTH } from "@/lib/contributions/limits";
 import {
   closeGiftPoll,
   getGiftPollForManage,
@@ -746,6 +746,13 @@ export async function saveOrganizerContributionAction(
     return { ok: false, message: validation.issues[0]?.message ?? "Проверьте заполненные поля." };
   }
 
+  if (requestedMainGreeting && validation.data.message.length > MAIN_GREETING_MAX_LENGTH) {
+    return {
+      ok: false,
+      message: `Главное поздравление должно быть не длиннее ${MAIN_GREETING_MAX_LENGTH} символов.`
+    };
+  }
+
   if (contributionId) {
     const existing = (await listAllContributionsByCardId(card.id)).find((item) => item.id === contributionId);
     if (!existing) return { ok: false, message: "Поздравление не найдено." };
@@ -960,6 +967,16 @@ export async function updateContributionMessageAction(
     return { ok: false, message: issues[0]?.message ?? "Текст нужно поправить." };
   }
 
+  if (
+    card.finalMainGreetingSettings?.contributionId === contributionId
+    && message.length > MAIN_GREETING_MAX_LENGTH
+  ) {
+    return {
+      ok: false,
+      message: `Главное поздравление должно быть не длиннее ${MAIN_GREETING_MAX_LENGTH} символов.`
+    };
+  }
+
   const updated = await updateContributionMessage(contributionId, message);
   if (!updated || updated.cardId !== card.id) {
     return { ok: false, message: "Поздравление не найдено." };
@@ -1141,6 +1158,17 @@ export async function updateFinalPresentationSettingsAction(
   };
   const mainGreetingContributionIdValue = String(formData.get("mainGreetingContributionId") ?? "");
   const validVisibleContributionIds = new Set(visibleContributions.map((contribution) => contribution.id));
+  const requestedMainGreetingContribution = visibleContributions.find(
+    (contribution) => contribution.id === mainGreetingContributionIdValue
+  );
+  const appointsNewMainGreeting = requestedMainGreetingContribution
+    && requestedMainGreetingContribution.id !== card.finalMainGreetingSettings?.contributionId;
+  if (appointsNewMainGreeting && requestedMainGreetingContribution.message.length > MAIN_GREETING_MAX_LENGTH) {
+    return {
+      ok: false,
+      message: `Сократите выбранное поздравление до ${MAIN_GREETING_MAX_LENGTH} символов, прежде чем назначать его главным.`
+    };
+  }
   const finalMainGreetingSettings = {
     contributionId: validVisibleContributionIds.has(mainGreetingContributionIdValue)
       ? mainGreetingContributionIdValue
@@ -1227,6 +1255,13 @@ export async function setMainGreetingAction(formData: FormData) {
   const visibleContributions = await listContributionsByCardId(card.id);
   const selectedContribution = visibleContributions.find((contribution) => contribution.id === contributionId);
 
+  if (selectedContribution && selectedContribution.message.length > MAIN_GREETING_MAX_LENGTH) {
+    return {
+      ok: false,
+      message: `Сократите выбранное поздравление до ${MAIN_GREETING_MAX_LENGTH} символов, прежде чем назначать его главным.`
+    };
+  }
+
   await updateCardMainGreetingSettings(card.id, {
     contributionId: selectedContribution?.id ?? null
   });
@@ -1237,6 +1272,7 @@ export async function setMainGreetingAction(formData: FormData) {
   });
 
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+  return { ok: true, message: "Главное поздравление выбрано." };
 }
 
 export async function saveCardMediaAction(

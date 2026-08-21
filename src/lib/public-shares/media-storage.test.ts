@@ -1,6 +1,6 @@
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
-import { preparePublicSharePhotoResponse } from "./media-storage";
+import { preparePublicSharePhotoResponse, sanitizePublicSharePhoto } from "./media-storage";
 
 const image = () => sharp({
   create: {
@@ -9,6 +9,21 @@ const image = () => sharp({
     channels: 4,
     background: { r: 233, g: 101, b: 47, alpha: 0.7 }
   }
+});
+
+describe("sanitizePublicSharePhoto", () => {
+  it("normalizes EXIF orientation for universal derivatives and removes the orientation tag", async () => {
+    const source = await sharp({
+      create: { width: 3, height: 2, channels: 3, background: "#ffffff" }
+    }).withMetadata({ orientation: 6 }).jpeg().toBuffer();
+
+    const sanitized = await sanitizePublicSharePhoto(source, "image/jpeg", true);
+    const metadata = await sharp(sanitized).metadata();
+
+    expect(metadata.width).toBe(2);
+    expect(metadata.height).toBe(3);
+    expect(metadata.orientation).toBeUndefined();
+  });
 });
 
 describe("preparePublicSharePhotoResponse", () => {

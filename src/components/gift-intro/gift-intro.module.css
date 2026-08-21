@@ -848,7 +848,7 @@
 }
 
 .ctaButton:active {
-  transform: translateY(0) scale(0.97);
+  transform: translateY(0) scale(0.96);
 }
 
 .ctaButton:focus-visible {
@@ -2033,6 +2033,38 @@
 
 .finalRevealReady {
   animation: finalFadeIn 650ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/* The primary CTA is an explicit request to play the one-shot opening sequence.
+   Keep ambient motion reduced, but do not let the global accessibility reset
+   collapse this requested timeline to 0.01ms. The adjacent “Пропустить” action
+   remains the immediate path to the card. */
+@media (prefers-reduced-motion: reduce) {
+  .playing.page,
+  .playing .envelope,
+  .playing .closedEnvelope,
+         .playing .openEnvelopeBack,
+         .playing .openEnvelopePocket,
+         .playing .envelopeCard,
+         .playing .envelopeCardFold,
+         .playing .envelopeGlow {
+           animation-duration: 4800ms !important;
+         }
+
+  .playing .giftKicker,
+  .playing .textGroup,
+  .playing .envelopeFlower,
+  .playing .introHeart {
+    animation-duration: 460ms !important;
+  }
+
+         .playing .envelopeScene::before {
+           animation-duration: 900ms !important;
+         }
+
+  .finalRevealReady {
+    animation-duration: 650ms !important;
+  }
 }
 
 @keyframes introChromeExitV2 {

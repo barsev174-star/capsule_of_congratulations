@@ -63,8 +63,8 @@ export const validateContributionFormData = (
     pushIssue(issues, "authorName", "Имя автора должно быть от 2 до 80 символов.");
   }
 
-  if (!authorRole || authorRole.length > 80) {
-    pushIssue(issues, "authorRole", "Укажите роль или подпись длиной до 80 символов.");
+  if (authorRole.length > 80) {
+    pushIssue(issues, "authorRole", "Роль или подпись должна быть не длиннее 80 символов.");
   }
 
   validateMessageAgainstRules(issues, message, options);

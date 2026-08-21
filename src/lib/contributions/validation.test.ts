@@ -65,7 +65,7 @@ describe("validateContributionFormData", () => {
     }
   });
 
-  it("requires an author role", () => {
+  it("allows an empty author role", () => {
     const result = validateContributionFormData(
       buildFormData({
         cardId: "card_123",
@@ -75,8 +75,8 @@ describe("validateContributionFormData", () => {
       })
     );
 
-    expect(result.success).toBe(false);
-    if (!result.success) expect(result.issues.some((issue) => issue.field === "authorRole")).toBe(true);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.authorRole).toBe("");
   });
 
   it("preserves a full message over the compact card recommendation", () => {

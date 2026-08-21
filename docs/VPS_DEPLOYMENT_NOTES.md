@@ -1,6 +1,6 @@
 # VPS deployment notes
 
-Актуально на 20 августа 2026 года. Это основной документ по production-инфраструктуре Slovesto.
+Актуально на 21 августа 2026 года. Это основной документ по production-инфраструктуре Slovesto.
 
 ## Текущий production-статус
 
@@ -8,7 +8,7 @@
 - Проект на VPS: `/home/deploy/capsule`.
 - Docker Compose project: `capsule`.
 - На VPS не должно быть других прикладных Docker-проектов.
-- Production commit после выделения собственного ingress: `7e4819f`.
+- Текущий release-набор: пакет замечаний №3 и восстановление заставки открытки от 21.08.2026. Точный развернутый commit проверяется на VPS командой `git rev-parse --short HEAD`.
 
 Рабочие контейнеры:
 

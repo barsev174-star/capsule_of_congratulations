@@ -13,12 +13,14 @@ vi.mock("@/app/card/[publicSlug]/ai-helper", () => ({
   AiHelper: ({
     sourceContributionId,
     sourceText,
+    relationshipContext,
     initialDraft,
     onDraftChange,
     onUseText
   }: {
     sourceContributionId?: string;
     sourceText?: string;
+    relationshipContext?: string;
     initialDraft?: string;
     onDraftChange?: (draft: string) => void;
     onUseText: (text: string, generationId: string) => void;
@@ -27,6 +29,7 @@ vi.mock("@/app/card/[publicSlug]/ai-helper", () => ({
       <span>{sourceContributionId}</span>
       <p>{sourceText}</p>
       <p>{sourceContributionId ? "Только безопасные операции" : "Все операции"}</p>
+      <p data-testid="ai-relationship-context">{relationshipContext}</p>
       <label>AI-черновик<input aria-label="AI-черновик" value={initialDraft ?? ""} onChange={(event) => onDraftChange?.(event.target.value)} /></label>
       <button type="button" onClick={() => onUseText("Новый AI-вариант поздравления с тёплыми словами.", "generation-1")}>Выбрать AI-вариант</button>
     </div>
@@ -100,6 +103,25 @@ describe("ContributionEditor AI editing", () => {
     await userEvent.click(screen.getByRole("tab", { name: "Написать самому" }));
     expect(screen.getByRole("textbox", { name: "Текст поздравления" })).toHaveValue(`${manualDraft} Ещё одна мысль.`);
   });
+
+  it("передаёт необязательную роль в AI-контекст нового поздравления", async () => {
+    const user = userEvent.setup();
+    render(
+      <ContributionEditor
+        cardId="card-1"
+        manageToken="manage-1"
+        occasionText="С днём рождения!"
+        isMainGreeting={false}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+        onDeleted={vi.fn()}
+      />
+    );
+
+    await user.type(screen.getByRole("textbox", { name: "Роль или подпись — необязательно" }), "мама ученика");
+    await user.click(screen.getByRole("tab", { name: /помочь с текстом/i }));
+    expect(screen.getByTestId("ai-relationship-context")).toHaveTextContent("мама ученика");
+  });
 });
 
 describe("ContributionEditor form states", () => {
@@ -140,17 +162,12 @@ describe("ContributionEditor form states", () => {
     expect(screen.getByText("Сначала выберите другое главное поздравление.")).toBeInTheDocument();
   });
 
-  it("keeps reserved error rows mounted before and after validation", async () => {
+  it("allows the optional role to be cleared", async () => {
     const user = userEvent.setup();
     renderEditor(contribution);
-    const errorSlot = document.getElementById("contribution-author-role-error");
-    expect(errorSlot).toBeInTheDocument();
-    expect(errorSlot).toHaveAttribute("aria-hidden", "true");
-
-    const roleInput = screen.getByRole("textbox", { name: "Роль или подпись" });
+    const roleInput = screen.getByRole("textbox", { name: "Роль или подпись — необязательно" });
     await user.clear(roleInput);
-    expect(document.getElementById("contribution-author-role-error")).toBe(errorSlot);
-    expect(errorSlot).toHaveTextContent("Укажите роль или подпись.");
-    expect(errorSlot).not.toHaveAttribute("aria-hidden");
+    expect(roleInput).toHaveValue("");
+    expect(roleInput).not.toBeRequired();
   });
 });

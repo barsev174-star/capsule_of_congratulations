@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ParticipantLinkCard } from "./participant-link-card";
 
 vi.mock("./close-collection-button", () => ({
-  CloseCollectionButton: () => <button type="button">Закрыть сбор</button>
+  CloseCollectionButton: ({ label = "Закрыть сбор" }: { label?: string }) => <button type="button">{label}</button>
 }));
 
 vi.mock("./payment-checkout-button", () => ({
@@ -28,6 +28,7 @@ describe("ParticipantLinkCard", () => {
     expect(screen.getByText("7 поздравлений")).toBeVisible();
     expect(screen.getByRole("button", { name: "Поделиться ссылкой для участников" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Скопировать ссылку для участников" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Закрыть сбор и перейти к проверке" })).toBeVisible();
     const helpTrigger = screen.getByRole("button", { name: "Как работает сбор" });
     expect(helpTrigger).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByText("Участникам — в общий чат")).not.toBeVisible();
@@ -58,11 +59,11 @@ describe("ParticipantLinkCard", () => {
     const paymentTrigger = screen.getByRole("button", { name: "Оплата открытки, 399 ₽" });
     expect(managementTrigger).toHaveAttribute("aria-expanded", "false");
     expect(paymentTrigger).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("button", { name: "Закрыть сбор" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Закрыть сбор и перейти к проверке" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Оплатить" })).not.toBeInTheDocument();
 
     await user.click(managementTrigger);
-    expect(screen.getByRole("button", { name: "Закрыть сбор" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Закрыть сбор" })).not.toBeInTheDocument();
 
     await user.click(paymentTrigger);
     expect(screen.getByText(/Сбор останется открытым/)).toBeVisible();

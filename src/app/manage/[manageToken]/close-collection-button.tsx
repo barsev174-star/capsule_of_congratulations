@@ -6,9 +6,10 @@ import styles from "./manage-page.module.css";
 
 type Props = {
   manageToken: string;
+  label?: string;
 };
 
-export const CloseCollectionButton = ({ manageToken }: Props) => {
+export const CloseCollectionButton = ({ manageToken, label = "Закрыть сбор" }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -63,7 +64,7 @@ export const CloseCollectionButton = ({ manageToken }: Props) => {
         className={styles.closeCollectionTrigger}
         onClick={() => setIsOpen(true)}
       >
-        Закрыть сбор
+        {label}
       </button>
       {isOpen ? (
         <div

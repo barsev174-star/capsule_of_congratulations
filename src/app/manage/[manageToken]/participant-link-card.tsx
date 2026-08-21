@@ -107,6 +107,10 @@ export const ParticipantLinkCard = ({
         />
       </div>
 
+      <div className={styles.participantCloseCollectionAction}>
+        <CloseCollectionButton manageToken={manageToken} label="Закрыть сбор и перейти к проверке" />
+      </div>
+
       <div className={styles.participantDisclosures}>
         <ParticipantDisclosure title="Как работает сбор">
           <LinkPurposeList
@@ -130,7 +134,6 @@ export const ParticipantLinkCard = ({
               не смогут ничего добавлять, а вы перейдёте к финальной проверке и
               передаче открытки.
             </p>
-            <CloseCollectionButton manageToken={manageToken} />
           </div>
         </ParticipantDisclosure>
 
