@@ -1,4 +1,9 @@
 import { randomUUID } from "node:crypto";
+import {
+  getConfiguredCriticalAlertChannels,
+  logMissingCriticalAlertChannels
+} from "@/lib/critical-alerts/notifications";
+import { enqueueCriticalAlert } from "@/lib/critical-alerts/repository";
 import { logger, sanitizeLogContext, type LogContext } from "@/lib/logger";
 import { recordTelemetryEvent, type TelemetryKind } from "@/lib/telemetry-repository";
 
@@ -86,13 +91,14 @@ export const parseClientTelemetry = (input: unknown): { event: ClientTelemetryEv
 const persistSafely = async (kind: TelemetryKind, event: string, context?: LogContext, errorId?: string) => {
   const safeContext = sanitizeLogContext(context) ?? {};
   try {
-    await recordTelemetryEvent({
+    return await recordTelemetryEvent({
       kind, event, context: safeContext,
       cardId: typeof safeContext.cardId === "string" ? safeContext.cardId : null,
       errorId: errorId ?? null
     });
   } catch {
     logger.warn("telemetry.persistence_failed", "Telemetry event could not be persisted", { event });
+    return null;
   }
 };
 
@@ -109,6 +115,21 @@ export const reportCriticalError = async (area: CriticalArea, error: unknown, co
     errorId,
     errorType: error instanceof Error ? error.name : "UnknownError"
   });
-  await persistSafely(area === "client" ? "client_error" : "critical", event, context, errorId);
+  const persisted = await persistSafely(area === "client" ? "client_error" : "critical", event, context, errorId);
+  if (area !== "client" && persisted) {
+    const channels = getConfiguredCriticalAlertChannels();
+    if (channels.length === 0) {
+      logMissingCriticalAlertChannels(event);
+    } else {
+      try {
+        await enqueueCriticalAlert({ errorId, event, context: persisted.context, channels });
+      } catch {
+        logger.warn("critical_alert.enqueue_failed", "Critical error was persisted but external alert enqueue failed", {
+          event,
+          errorId
+        });
+      }
+    }
+  }
   return errorId;
 };

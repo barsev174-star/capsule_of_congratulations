@@ -156,13 +156,13 @@ Production-скрипты:
 
 ```bash
 cd /home/deploy/capsule
-BACKUP_DIR=/var/backups/capsule bash infra/scripts/run-nightly-backup.sh
+BACKUP_DIR=/home/deploy/capsule/backups bash infra/scripts/run-nightly-backup.sh
 ```
 
 Рекомендуемый cron:
 
 ```cron
-35 3 * * * cd /home/deploy/capsule && BACKUP_DIR=/var/backups/capsule RETENTION_DAYS=14 bash infra/scripts/run-nightly-backup.sh >> /var/log/capsule-backup.log 2>&1
+35 3 * * * cd /home/deploy/capsule && BACKUP_DIR=/home/deploy/capsule/backups RETENTION_DAYS=14 bash infra/scripts/run-nightly-backup.sh >> /var/log/capsule-backup.log 2>&1
 ```
 
 Минимальный комплект восстановления:
@@ -171,6 +171,15 @@ BACKUP_DIR=/var/backups/capsule bash infra/scripts/run-nightly-backup.sh
 2. Архив uploads и checksum.
 3. Копия `.env.production` вне Git.
 4. Рабочий commit и предыдущий Docker image Slovesto.
+
+Контрольное восстановление выполняется в отдельную временную PostgreSQL-базу и временный каталог; рабочая база и uploads не изменяются:
+
+```bash
+cd /home/deploy/capsule
+BACKUP_DIR=/home/deploy/capsule/backups bash infra/scripts/verify-backup-restore.sh
+```
+
+21.08.2026 проверены SHA-256 свежих `postgres`- и `uploads`-архивов, восстановление базы с 31 применённой миграцией и распаковка uploads. Проверка завершилась успешно, временные данные были автоматически удалены.
 
 ## Данные и очистка Docker
 
@@ -199,6 +208,32 @@ Retention запускается после backup:
 ```
 
 Перед добавлением или изменением cron нужно один раз вызвать соответствующий скрипт вручную и проверить лог. Текущий пользовательский crontab также содержит отправку event reminders из `/home/deploy/capsule`.
+
+## Внешние оповещения о критических ошибках
+
+Миграция `0032_critical_alert_deliveries.sql` добавляет надёжную PostgreSQL-очередь. `reportCriticalError` сначала сохраняет событие в телеметрии, затем ставит доставку в очередь; ошибка внешнего провайдера не ломает пользовательский сценарий.
+
+Каналы:
+
+- email: нужны `RESEND_API_KEY` и `EMAIL_FROM`; адрес берётся из `CRITICAL_ALERT_EMAIL`, затем из `SUPPORT_NOTIFICATION_EMAIL`;
+- Telegram: дополнительно и только при наличии `TELEGRAM_BOT_TOKEN` и `TELEGRAM_SUPPORT_CHAT_ID`.
+
+В сообщении разрешён только технический контекст: `errorId`, событие, операция, маршрут, компонент, шаг, шаблон и технические идентификаторы. Имена, email пользователей, тексты поздравлений, фотографии, токены и секреты не отправляются.
+
+Ручная доставка очереди:
+
+```bash
+cd /home/deploy/capsule
+bash infra/scripts/send-critical-alerts.sh
+```
+
+Production cron запускает короткий batch каждую минуту; `flock` исключает параллельные запуски:
+
+```cron
+* * * * * cd /home/deploy/capsule && bash infra/scripts/send-critical-alerts.sh >> /home/deploy/capsule/logs/critical-alerts.log 2>&1
+```
+
+Одинаковая критическая ошибка в пределах 15 минут не создаёт новый набор сообщений. Неуспешная доставка получает до пяти попыток с увеличивающейся задержкой; состояние очереди не логируется через `reportCriticalError`, чтобы исключить рекурсию alerts.
 
 ## Rollback
 

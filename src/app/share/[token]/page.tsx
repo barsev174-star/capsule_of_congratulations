@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { TemplateCardRenderer } from "@/components/templates/template-card-renderer";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
 import { getPublicSharePayload, getPublicSharePresentation } from "@/lib/public-shares/service";
+import { buildPublicShareMetadata } from "@/lib/public-shares/metadata";
 import { ShareActions } from "./share-actions";
 import styles from "./page.module.css";
 
@@ -11,9 +12,7 @@ type Props = { params: Promise<{ token: string }> };
 export const generateMetadata = async ({ params }: Props): Promise<Metadata> => {
   const { token } = await params;
   const payload = await getPublicSharePayload(token);
-  if (!payload) return { robots: { index: false, follow: false }, title: "Открытка недоступна — Slovesto" };
-  const title = `${payload.share.displayName!} делится открыткой — Slovesto`;
-  return { title, description: "Тёплая публичная часть подарка от Slovesto.", robots: { index: false, follow: false }, openGraph: { title, description: "Тёплая публичная часть подарка от Slovesto.", ...(payload.version === 1 ? { images: [`/share/${encodeURIComponent(token)}/image/og`] } : {}) } };
+  return buildPublicShareMetadata(token, payload);
 };
 
 export default async function PublicSharePage({ params }: Props) {

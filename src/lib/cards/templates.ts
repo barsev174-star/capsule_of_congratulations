@@ -27,7 +27,7 @@ export const cardTemplates: CardTemplate[] = catalogTemplateRegistrations.map((e
   description: entry.catalog.description,
   recommendedFor: entry.catalog.recommendedFor,
   accent: entry.catalog.accent,
-  preview: entry.family === "universal-v1" ? entry.profile.metadata.preview.src : undefined,
+  preview: entry.family === "universal-v1" ? entry.profile.metadata.preview.src : entry.catalog.preview,
   introKicker: entry.family === "universal-v1" ? entry.profile.intro.kicker : undefined,
   introPreset: entry.family === "universal-v1"
     ? entry.profile.intro.preset ?? "default"

@@ -49,11 +49,12 @@ export const recordTelemetryEvent = async (input: Omit<TelemetryEvent, "id" | "c
        VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7)`,
       [item.id, item.kind, item.event, item.cardId, JSON.stringify(item.context), item.errorId, item.createdAt]
     );
-    return;
+    return item;
   }
   const items = await readJson();
   items.push(item);
   await writeJson(items);
+  return item;
 };
 
 export const getTelemetrySummary = async (days: number): Promise<TelemetrySummary> => {

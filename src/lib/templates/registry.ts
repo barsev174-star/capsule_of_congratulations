@@ -35,6 +35,7 @@ export type TemplateCatalogMetadata = {
   description: string;
   recommendedFor: TemplateOccasionId[];
   accent: string;
+  preview?: `/${string}`;
   availability: "studio" | "product";
 };
 
@@ -99,6 +100,7 @@ export const templateRegistry = createTemplateRegistry([
     description: "Праздничная открытка с бумажными листами, скотчем, полароидами и рукописным настроением.",
     recommendedFor: ["personal", "celebration", "colleague"],
     accent: "#df4f73",
+    preview: "/assets/example/template-paper-thumb.png",
     availability: "product"
   }),
   legacy("route-adventure", {
@@ -106,6 +108,7 @@ export const templateRegistry = createTemplateRegistry([
     description: "Приключенческая открытка с тёмным лесным фоном, крафтом, картами и воспоминаниями о пути.",
     recommendedFor: ["personal", "team", "celebration", "colleague"],
     accent: "#b08a4a",
+    preview: "/assets/landing/template-route-adventure-preview.png",
     availability: "product"
   }),
   ...generatedUniversalTemplateRegistrations
