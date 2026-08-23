@@ -28,6 +28,8 @@ export type UniversalTemplateViewModel = {
   fromLabel: string;
   heroDescription: string;
   participantCount: number;
+  /** Private aggregate count of unique source photos; layouts may reuse a photo in several blocks. */
+  privatePhotoCount?: number | null;
   /** Public-only aggregate count; selected public photos remain a separate safe list. */
   publicPhotoCount?: number | null;
   summaryTitle: string;
@@ -130,12 +132,13 @@ export const buildUniversalFixtureViewModel = (
     occasion: fixture.occasion,
     eventDate: fixture.eventDate,
     fromLabel: fixture.fromLabel,
-    heroDescription: "Тёплые слова, яркие моменты и пожелания специально для тебя.",
+    heroDescription: fixture.heroDescription ?? "Тёплые слова, яркие моменты и пожелания специально для тебя.",
     participantCount: fixture.contributions.length,
+    privatePhotoCount: sourcePhotos.length,
     publicPhotoCount: null,
-    summaryTitle: "Главное о тебе",
+    summaryTitle: fixture.summaryTitle ?? "Главное о тебе",
     mainGreeting,
-    mainGreetingAuthorName: contributions[0]?.authorName ?? null,
+    mainGreetingAuthorName: fixture.mainGreetingAuthorName ?? contributions[0]?.authorName ?? null,
     qualities: optionalBlocks ? fixture.qualities : [],
     contributions,
     messageScenario: scenario,

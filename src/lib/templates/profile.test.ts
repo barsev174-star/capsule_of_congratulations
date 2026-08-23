@@ -54,7 +54,12 @@ const validProfile = (): TemplateProfile => ({
         asset: asset("mark"),
         anchor: "hero",
         rect: { x: 0.05, y: 0.05, width: 0.2, height: 0.2 },
-        visibleOn: ["desktop", "mobile", "export"]
+        visibleOn: ["desktop", "mobile", "export"],
+        exportVariants: {
+          story: { rect: { x: 0.05, y: 0.05, width: 0.2, height: 0.2 } },
+          post: { rect: { x: 0.05, y: 0.05, width: 0.2, height: 0.2 } },
+          a4: { rect: { x: 0.05, y: 0.05, width: 0.2, height: 0.2 } }
+        }
       }
     ]
   },
@@ -136,6 +141,35 @@ describe("TemplateProfile", () => {
     profile.assets.decor[0].rect = { x: -0.1, y: 0.05, width: 0.25, height: 0.2 };
 
     expect(validateTemplateProfile(profile)).toEqual({ ok: true, profile, issues: [] });
+  });
+
+  it("поддерживает независимую геометрию экспортного декора для Story, Post и A4", () => {
+    const profile = validProfile();
+    profile.assets.decor[0].exportVariants = {
+      story: { rect: { x: -0.1, y: 0.05, width: 0.4, height: 1 } },
+      post: { rect: { x: -0.1, y: 0.05, width: 0.4, height: 1.45 }, rotation: -5 },
+      a4: { rect: { x: -0.1, y: 0.05, width: 0.4, height: 1.6 }, opacity: 0.9 }
+    };
+
+    expect(validateTemplateProfile(profile)).toEqual({ ok: true, profile, issues: [] });
+
+    profile.assets.decor[0].exportVariants.a4.rect.height = 3.1;
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "assets.decor.0.exportVariants.a4.rect.height" }));
+    }
+  });
+
+  it("требует форматные варианты у каждого слоя, включённого в экспорт", () => {
+    const profile = validProfile();
+    delete profile.assets.decor[0].exportVariants;
+
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "assets.decor.0.exportVariants" }));
+    }
   });
 
   it("отклоняет повторяющиеся ID и неизвестные режимы видимости декора", () => {
@@ -247,10 +281,13 @@ describe("TemplateProfile", () => {
     profile.intro.preset = "scrapbook";
     profile.intro.decor = [asset("intro-boy"), asset("intro-girl")];
     profile.export.counters = {
-      congratulations: { text: "#1859bd", surface: "#fff0a8" },
-      photos: { text: "#0b7278", surface: "#d9f3ef" }
+      preset: "classic-label",
+      congratulations: { text: "#1859bd", surface: "#fff0a8", outline: "#1859bd" },
+      photos: { text: "#0b7278", surface: "#d9f3ef", outline: "#0b7278" }
     };
+    profile.export.heroDescriptionMaxWidth = { story: 520, post: 520, a4: 600 };
     profile.assets.sections.closing = defineSectionUnderlay(asset("closing"), "cover", {
+      exportRendering: "horizontal-slice",
       exportHorizontalSliceEdgeRatio: 0.25
     });
 
@@ -262,6 +299,16 @@ describe("TemplateProfile", () => {
     if (!result.ok) {
       expect(result.issues).toContainEqual(expect.objectContaining({
         path: "assets.sections.closing.exportHorizontalSliceEdgeRatio"
+      }));
+    }
+
+    profile.assets.sections.closing.exportHorizontalSliceEdgeRatio = 0.25;
+    profile.export.heroDescriptionMaxWidth.post = 120;
+    const widthResult = validateTemplateProfile(profile);
+    expect(widthResult.ok).toBe(false);
+    if (!widthResult.ok) {
+      expect(widthResult.issues).toContainEqual(expect.objectContaining({
+        path: "export.heroDescriptionMaxWidth.post"
       }));
     }
   });

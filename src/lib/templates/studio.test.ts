@@ -45,6 +45,7 @@ describe("template studio draft", () => {
     expect(layer.asset).not.toBe(draft.profile.metadata.preview);
     expect(layer.anchor).toBe("hero");
     expect(layer.visibleOn).toEqual(["desktop", "mobile", "export"]);
+    expect(Object.keys(layer.exportVariants ?? {})).toEqual(["story", "post", "a4"]);
   });
 
   it("импортирует как полный черновик, так и отдельный профиль", () => {

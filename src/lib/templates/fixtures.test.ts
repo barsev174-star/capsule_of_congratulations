@@ -8,9 +8,10 @@ import {
 } from "@/lib/templates/fixtures";
 
 describe("universal-v1 fixtures", () => {
-  it("содержит все шесть независимых от оформления состояний", () => {
+  it("содержит общие состояния и тематический fixture школьного классического", () => {
     expect(Object.keys(universalTemplateFixtures)).toEqual([
       "full-card-default",
+      "teacher-classic",
       "text-stress",
       "minimal",
       "public-full",

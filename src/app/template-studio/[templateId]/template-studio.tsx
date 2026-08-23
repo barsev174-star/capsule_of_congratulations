@@ -7,11 +7,14 @@ import {
   type UniversalMessageScenario
 } from "@/lib/templates/fixtures";
 import {
+  templateExportDecorFormats,
   universalTemplateBlockOrder,
   validateTemplateProfile,
   type NormalizedRect,
   type TemplateAssetRef,
   type TemplateDecorLayer,
+  type TemplateExportDecorFormat,
+  type TemplateExportDecorVariant,
   type TemplateFontToken,
   type UniversalTemplateFixtureId
 } from "@/lib/templates/profile";
@@ -131,21 +134,24 @@ function RectEditor({
   value,
   step,
   allowOverflow = false,
+  allowExtendedSize = false,
   onChange
 }: {
   label: string;
   value: NormalizedRect;
   step: number;
   allowOverflow?: boolean;
+  allowExtendedSize?: boolean;
   onChange: (value: NormalizedRect) => void;
 }) {
   return <fieldset className={styles.rectEditor}><legend>{label}</legend><div className={styles.fieldGrid}>
     {(["x", "y", "width", "height"] as const).map((key) => {
       const minimum = allowOverflow && (key === "x" || key === "y") ? -1 : 0;
+      const maximum = allowExtendedSize && (key === "width" || key === "height") ? 3 : 1;
       return <label key={key}><span>{key}</span><input
       type="number"
       min={minimum}
-      max="1"
+      max={maximum}
       step={step}
       value={value[key]}
       onChange={(event) => onChange({ ...value, [key]: Number(event.target.value) })}
@@ -153,7 +159,7 @@ function RectEditor({
         if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
         event.preventDefault();
         const direction = event.key === "ArrowUp" ? 1 : -1;
-        const nextValue = Math.min(1, Math.max(minimum, Number((value[key] + direction * step).toFixed(3))));
+        const nextValue = Math.min(maximum, Math.max(minimum, Number((value[key] + direction * step).toFixed(3))));
         onChange({ ...value, [key]: nextValue });
       }}
     /></label>;
@@ -204,6 +210,13 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
   const selectedUnderlayPreset = selectedUnderlay ? getUniversalSectionUnderlayPreset(selectedUnderlay.preset) : null;
   const resolvedDecorIndex = Math.min(selectedDecorIndex, Math.max(0, draft.profile.assets.decor.length - 1));
   const selectedDecorLayer = draft.profile.assets.decor[resolvedDecorIndex];
+  const selectedDecorExportFormat = format === "web" ? null : format;
+  const selectedDecorVariant = selectedDecorLayer && selectedDecorExportFormat
+    ? selectedDecorLayer.exportVariants?.[selectedDecorExportFormat]
+    : null;
+  const selectedDecorRect = selectedDecorVariant?.rect ?? selectedDecorLayer?.rect;
+  const selectedDecorOpacity = selectedDecorVariant?.opacity ?? selectedDecorLayer?.opacity ?? 1;
+  const selectedDecorRotation = selectedDecorVariant?.rotation ?? selectedDecorLayer?.rotation ?? 0;
   const templateOptions = [...inspectionTemplateOptions, ...registeredTemplateOptions];
   const currentTemplateListed = templateOptions.some((option) => option.id === draft.profile.id);
   const routeReferenceUrl = `/internal/template-baseline?template=route-adventure&surface=${surface}&scenario=${scenario}`;
@@ -273,6 +286,25 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
       updater(updated);
       return updated;
     });
+  });
+  const updateDecorPlacement = (patch: Partial<{ rect: NormalizedRect; opacity: number; rotation: number }>) => updateDecorLayer((layer) => {
+    if (!selectedDecorExportFormat) {
+      if (patch.rect) layer.rect = patch.rect;
+      if (patch.opacity !== undefined) layer.opacity = patch.opacity;
+      if (patch.rotation !== undefined) layer.rotation = patch.rotation;
+      return;
+    }
+    const fallback = {
+      rect: clone(layer.rect),
+      opacity: layer.opacity ?? 1,
+      rotation: layer.rotation ?? 0
+    };
+    const variants = Object.fromEntries(templateExportDecorFormats.map((entry) => [
+      entry,
+      clone(layer.exportVariants?.[entry] ?? fallback)
+    ])) as Record<TemplateExportDecorFormat, TemplateExportDecorVariant>;
+    variants[selectedDecorExportFormat] = { ...variants[selectedDecorExportFormat], ...patch };
+    layer.exportVariants = variants;
   });
   const addDecorLayer = () => {
     const nextIndex = draft.profile.assets.decor.length;
@@ -513,13 +545,17 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
             </div>
             <label><span>Готовая позиция</span><select value="" onChange={(event) => {
               const preset = decorPlacementPresets.find((entry) => entry.id === event.target.value);
-              if (preset) updateDecorLayer((layer) => { layer.anchor = preset.anchor; layer.rect = clone(preset.rect); });
+              if (preset) {
+                updateDecorLayer((layer) => { layer.anchor = preset.anchor; });
+                updateDecorPlacement({ rect: clone(preset.rect) });
+              }
             }}><option value="">Выберите позицию…</option>{decorPlacementPresets.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}</select></label>
-            <RectEditor label="Положение относительно привязки" value={selectedDecorLayer.rect} step={draft.inspector.gridStep} allowOverflow onChange={(value) => updateDecorLayer((layer) => { layer.rect = value; })} />
+            <RectEditor label={`Положение относительно привязки · ${selectedDecorExportFormat ? formatLabels[selectedDecorExportFormat] : "Web"}`} value={selectedDecorRect ?? selectedDecorLayer.rect} step={draft.inspector.gridStep} allowOverflow allowExtendedSize={Boolean(selectedDecorExportFormat)} onChange={(value) => updateDecorPlacement({ rect: value })} />
             <div className={styles.fieldGrid}>
-              <label><span>Прозрачность</span><input type="number" min="0" max="1" step="0.05" value={selectedDecorLayer.opacity ?? 1} onChange={(event) => updateDecorLayer((layer) => { layer.opacity = Number(event.target.value); })} /></label>
-              <label><span>Поворот, °</span><input type="number" min="-360" max="360" step="1" value={selectedDecorLayer.rotation ?? 0} onChange={(event) => updateDecorLayer((layer) => { layer.rotation = Number(event.target.value); })} /></label>
+              <label><span>Прозрачность · {selectedDecorExportFormat ? formatLabels[selectedDecorExportFormat] : "Web"}</span><input type="number" min="0" max="1" step="0.05" value={selectedDecorOpacity} onChange={(event) => updateDecorPlacement({ opacity: Number(event.target.value) })} /></label>
+              <label><span>Поворот, ° · {selectedDecorExportFormat ? formatLabels[selectedDecorExportFormat] : "Web"}</span><input type="number" min="-360" max="360" step="1" value={selectedDecorRotation} onChange={(event) => updateDecorPlacement({ rotation: Number(event.target.value) })} /></label>
             </div>
+            {selectedDecorExportFormat ? <p className={styles.inspectorHint}>Story, Post и A4 сохраняют независимые координаты, масштаб, прозрачность и поворот. Размер до 3× позволяет декору выходить из шапки, оставаясь внутри экспортного холста.</p> : null}
             <fieldset className={styles.decorVisibility}><legend>Показывать</legend><div className={styles.toggleGroup}>{(["desktop", "mobile", "export"] as const).map((target) => {
               const visible = selectedDecorLayer.visibleOn?.includes(target) ?? true;
               return <label key={target}><input type="checkbox" checked={visible} onChange={(event) => updateDecorLayer((layer) => {

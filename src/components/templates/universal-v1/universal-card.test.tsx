@@ -6,6 +6,7 @@ import type { CardBlockReadinessView } from "@/lib/manage/card-design-readiness"
 import { universalTemplateBlockOrder } from "@/lib/templates/profile";
 import { createTemplateStudioProfile } from "@/lib/templates/studio";
 import { getUniversalPhotoFramePreset } from "@/lib/templates/photo-frame-presets";
+import { school_classicProfile } from "@/templates/school-classic/profile";
 import {
   buildUniversalFixtureViewModel,
   universalScenarioCardCount,
@@ -17,6 +18,22 @@ import { UniversalTemplateIntroPreview } from "./universal-intro-preview";
 const profile = createTemplateStudioProfile("universal-renderer-test");
 
 describe("UniversalTemplateCard", () => {
+  it("uses the school-classic counter labels in the card itself", () => {
+    const model = buildUniversalFixtureViewModel("teacher-classic", { templateId: school_classicProfile.id });
+    model.publicPhotoCount = 3;
+    const { container } = render(<UniversalTemplateCard profile={school_classicProfile} model={model} surface="public" />);
+
+    const page = container.querySelector<HTMLElement>('[data-template-id="school-classic"]');
+    const congratulations = container.querySelector<HTMLElement>('[data-hero-stat="congratulations"]');
+    const photos = container.querySelector<HTMLElement>('[data-hero-stat="photos"]');
+
+    expect(page).toHaveAttribute("data-counter-preset", "classic-label");
+    expect(page?.style.getPropertyValue("--uv1-counter-congratulations-surface")).toBe("#fffaf0");
+    expect(page?.style.getPropertyValue("--uv1-counter-photos-surface")).toBe("#eef3ed");
+    expect(congratulations).toHaveTextContent("20 поздравлений");
+    expect(photos).toHaveTextContent("3 фото");
+  });
+
   it("renders the canonical private and public block orders", () => {
     const model = buildUniversalFixtureViewModel("full-card-default", { templateId: profile.id });
     const { container, rerender } = render(<UniversalTemplateCard profile={profile} model={model} />);

@@ -22,6 +22,7 @@
     "template:northern-light:source": "node scripts/build-northern-light-source-assets.mjs",
     "template:daylight-proof:source": "node scripts/build-daylight-proof-source-assets.mjs",
     "template:school-scrapbook:source": "node scripts/build-school-scrapbook-source-assets.mjs",
+    "template:school-classic:source": "node scripts/build-school-classic-source-assets.mjs",
     "start": "next start",
     "lint": "eslint . && npm run ui:colors && npm run ui:contrast",
     "ui:colors": "node scripts/check-ui-colors.mjs",

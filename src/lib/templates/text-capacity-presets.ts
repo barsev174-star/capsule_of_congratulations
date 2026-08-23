@@ -48,6 +48,7 @@ export const getUniversalRecipientNameLines = (value: string): readonly string[]
 export const getUniversalRecipientNameTier = (value: string): UniversalRecipientNameTier => {
   const length = value.trim().length;
   if (length > 40) return "very-long";
+  if (getUniversalRecipientNameLines(value).length > 1) return "long";
   if (length > 18) return "long";
   return "default";
 };

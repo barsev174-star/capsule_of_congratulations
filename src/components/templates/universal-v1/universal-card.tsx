@@ -503,7 +503,7 @@ function MessagesBlock({
 
   return (
     <>
-      <div className={styles.sectionHeadingRow}>
+      <div className={styles.sectionHeadingRow} data-has-media={hasMedia ? "true" : "false"}>
         <h2>Поздравления</h2>
         <button
           type="button"
@@ -668,7 +668,7 @@ export function UniversalTemplateCard({
   const layoutPreset = getUniversalLayoutPreset(profile.layoutPreset);
   const eventDate = formatUniversalEventDate(model.eventDate);
   const quotes = surface === "private" ? model.privateQuotes : model.publicQuotes;
-  const privatePhotoCount = model.messagePhotos.length + model.memoryPhotos.length;
+  const privatePhotoCount = model.privatePhotoCount ?? model.messagePhotos.length + model.memoryPhotos.length;
   const photoCount = surface === "public" ? model.publicPhotoCount : privatePhotoCount;
   const resolvedActionContext = actionContext ?? (surface === "private" ? "private" : "demo");
   const recipientNameTier = getUniversalRecipientNameTier(model.recipientName);
@@ -700,6 +700,12 @@ export function UniversalTemplateCard({
     "--uv1-body-weight": profile.typography.body.weight,
     "--uv1-handwritten-font": profile.typography.handwritten.family,
     "--uv1-handwritten-weight": profile.typography.handwritten.weight,
+    "--uv1-counter-congratulations-text": profile.export.counters?.congratulations.text ?? profile.colors.muted,
+    "--uv1-counter-congratulations-surface": profile.export.counters?.congratulations.surface ?? profile.colors.surface,
+    "--uv1-counter-congratulations-outline": profile.export.counters?.congratulations.outline ?? profile.colors.text,
+    "--uv1-counter-photos-text": profile.export.counters?.photos.text ?? profile.colors.muted,
+    "--uv1-counter-photos-surface": profile.export.counters?.photos.surface ?? profile.colors.surface,
+    "--uv1-counter-photos-outline": profile.export.counters?.photos.outline ?? profile.colors.text,
     "--uv1-shell-max-width": `${layoutPreset.geometry.shellMaxWidth}px`,
     "--uv1-shell-padding-max": `${layoutPreset.geometry.shellPaddingMax}px`,
     "--uv1-section-gap": `${layoutPreset.geometry.sectionGap}px`,
@@ -746,6 +752,7 @@ export function UniversalTemplateCard({
       data-surface={surface}
       data-viewport={viewport}
       data-motion-preset={profile.motion?.preset ?? "calm"}
+      data-counter-preset={profile.export.counters?.preset}
       data-photo-viewer-enabled={photoViewerEnabled ? "true" : undefined}
       style={rootStyle}
     >
@@ -785,8 +792,11 @@ export function UniversalTemplateCard({
           if (block === "qualities") return <SectionSurface key={block} id="qualities" profile={profile} viewport={viewport}>
             <h2>За что тебя ценят</h2><div className={styles.qualitiesGrid} data-motion-stagger>{model.qualities.map((quality, index) => {
               const card = profile.assets.qualityCards[index % Math.max(1, profile.assets.qualityCards.length)];
-              const textArea = card ? getUniversalTextCardPreset(card.preset).textArea : null;
-              return <article key={`${quality}-${index}`} className={styles.qualityCard} data-text-card>{card ? <Image src={card.asset.src} alt="" fill sizes="18vw" aria-hidden="true" /> : null}<strong data-safe-text data-text-boundary data-text-preset="quality-card" data-max-lines={universalTextCapacityPresets.qualityCard.maxLines} style={textArea ? normalizedRectStyle(textArea) : undefined} title={quality}><span>{quality}</span></strong></article>;
+              const preset = card ? getUniversalTextCardPreset(card.preset) : null;
+              const textStyle = preset
+                ? { ...normalizedRectStyle(preset.textArea), ...(card?.textColor ? { color: card.textColor } : {}) }
+                : undefined;
+              return <article key={`${quality}-${index}`} className={styles.qualityCard} data-text-card data-text-card-rendering={preset?.rendering}>{card ? <Image src={card.asset.src} alt="" fill sizes="18vw" aria-hidden="true" /> : null}<strong data-safe-text data-text-boundary data-text-preset="quality-card" data-max-lines={universalTextCapacityPresets.qualityCard.maxLines} style={textStyle} title={quality}><span>{quality}</span></strong></article>;
             })}</div>
           </SectionSurface>;
 
@@ -797,12 +807,12 @@ export function UniversalTemplateCard({
           if (block === "quotes") return <SectionSurface key={block} id="quotes" profile={profile} viewport={viewport}>
             <h2>Лучшие фразы</h2><div className={styles.quotesGrid} data-motion-stagger>{quotes.slice(0, 3).map((quote, index) => {
               const card = profile.assets.quoteCards[index % Math.max(1, profile.assets.quoteCards.length)];
-              const textArea = card ? getUniversalTextCardPreset(card.preset).textArea : null;
+              const preset = card ? getUniversalTextCardPreset(card.preset) : null;
               const quoteStyle = {
-                ...(textArea ? normalizedRectStyle(textArea) : {}),
+                ...(preset ? normalizedRectStyle(preset.textArea) : {}),
                 "--uv1-quote-scale": getUniversalQuoteLengthScale(quote)
               } as CSSProperties;
-              return <blockquote key={`${quote}-${index}`} className={styles.quoteCard} data-text-card>{card ? <Image src={card.asset.src} alt="" fill sizes="28vw" aria-hidden="true" /> : null}<span aria-hidden="true">“</span><p data-safe-text data-text-boundary data-text-preset="quote-card" data-max-lines={universalTextCapacityPresets.quoteCard.maxLines} style={quoteStyle} title={quote}>{quote}</p></blockquote>;
+              return <blockquote key={`${quote}-${index}`} className={styles.quoteCard} data-text-card data-text-card-rendering={preset?.rendering}>{card ? <Image src={card.asset.src} alt="" fill sizes="28vw" aria-hidden="true" /> : null}{preset?.renderLeadingQuote !== false ? <span aria-hidden="true">“</span> : null}<p data-safe-text data-text-boundary data-text-preset="quote-card" data-max-lines={universalTextCapacityPresets.quoteCard.maxLines} style={quoteStyle} title={quote}>{quote}</p></blockquote>;
             })}</div>
           </SectionSurface>;
 

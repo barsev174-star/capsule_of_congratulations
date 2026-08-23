@@ -66,7 +66,8 @@ export function TemplatePreview({
       heroDescription: surface === "public"
         ? draft.profile.public.heroDescription?.trim() || DEFAULT_UNIVERSAL_PUBLIC_HERO_DESCRIPTION
         : fixtureModel.heroDescription,
-      publicPhotoCount: fixtureModel.messagePhotos.length + fixtureModel.memoryPhotos.length
+      publicPhotoCount: fixtureModel.privatePhotoCount
+        ?? fixtureModel.messagePhotos.length + fixtureModel.memoryPhotos.length
     };
   }, [
     draft.profile.id,

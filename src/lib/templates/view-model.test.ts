@@ -61,6 +61,13 @@ describe("UniversalTemplateViewModel", () => {
     expect(model.memoryPhotos).toHaveLength(3);
   });
 
+  it("считает уникальные исходные фотографии, а не повторные размещения", () => {
+    const model = buildUniversalFixtureViewModel("teacher-classic", { photoCount: 3 });
+
+    expect(model.privatePhotoCount).toBe(4);
+    expect(new Set([...model.messagePhotos, ...model.memoryPhotos].map((photo) => photo.id)).size).toBe(4);
+  });
+
   it("форматирует дату события единым русским formatter", () => {
     expect(formatUniversalEventDate("2026-01-01")).toBe("01 января 2026");
     expect(formatUniversalEventDate(null)).toBeNull();

@@ -345,6 +345,27 @@
   color: inherit;
 }
 
+.page[data-counter-preset="classic-label"] .heroStats span {
+  padding: 7px 11px;
+  border-radius: 7px;
+  color: var(--uv1-counter-congratulations-text);
+  background: var(--uv1-counter-congratulations-surface);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--uv1-counter-congratulations-outline) 50%, transparent), 0 4px 10px rgba(24, 50, 76, 0.12);
+  font-weight: 700;
+  rotate: -0.825deg;
+}
+
+.page[data-counter-preset="classic-label"] .heroStats span:nth-child(2) {
+  color: var(--uv1-counter-photos-text);
+  background: var(--uv1-counter-photos-surface);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--uv1-counter-photos-outline) 50%, transparent), 0 4px 10px rgba(24, 50, 76, 0.12);
+  rotate: 0.825deg;
+}
+
+.page[data-counter-preset="classic-label"] .heroStats strong {
+  color: inherit;
+}
+
 .mainGreeting {
   max-width: 840px;
   margin: 0;
@@ -412,6 +433,14 @@
   box-shadow: none;
 }
 
+.qualityCard[data-text-card-rendering="artwork"],
+.quoteCard[data-text-card-rendering="artwork"] {
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .sectionHeadingRow {
   display: flex;
   align-items: center;
@@ -438,6 +467,21 @@
 .page[data-template-id="school-scrapbook"][data-viewport="desktop"] .messages .sectionHeadingRow .countBadge {
   justify-self: end;
 }
+
+.page[data-template-id="school-classic"][data-viewport="desktop"] .messages .sectionHeadingRow[data-has-media="true"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.72fr);
+}
+
+.page[data-template-id="school-classic"][data-viewport="desktop"] .messages .sectionHeadingRow[data-has-media="false"] {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.page[data-template-id="school-classic"][data-viewport="desktop"] .messages .sectionHeadingRow[data-has-media="true"] h2 { text-align: center; }
+.page[data-template-id="school-classic"][data-viewport="desktop"] .messages .sectionHeadingRow[data-has-media="true"] .countBadge { justify-self: end; }
+.page[data-template-id="school-classic"][data-viewport="desktop"] .messages .sectionHeadingRow[data-has-media="false"] h2 { grid-column: 2; text-align: center; }
+.page[data-template-id="school-classic"][data-viewport="desktop"] .messages .sectionHeadingRow[data-has-media="false"] .countBadge { grid-column: 3; justify-self: end; }
 
 .messagesComposition {
   display: grid;
@@ -834,6 +878,7 @@
   column-gap: 14px;
   row-gap: 18px;
 }
+.page[data-template-id="school-classic"] .memoriesPhotos { column-gap: 10px; row-gap: 14px; }
 .memoriesIntro { grid-area: intro; align-self: start; padding-inline: 12px; text-align: left; }
 .memoriesIntro h2 { margin-bottom: 10px; font-size: clamp(24px, 3vw, var(--uv1-section-heading-max)); }
 .memoriesIntro p { margin: 0; color: var(--uv1-muted); font-size: clamp(16px, 1.7vw, 18px); line-height: 1.45; }
@@ -908,6 +953,15 @@
 .page[data-template-id="school-scrapbook"] .closingActionSecondary:hover {
   background: color-mix(in srgb, var(--uv1-accent) 7%, #fff);
 }
+.page[data-template-id="school-classic"] .closingActionPrimary {
+  border-color: #18324c;
+  color: #fffaf0;
+  background: #18324c;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+}
+.page[data-template-id="school-classic"] .closingActionPrimary:hover { border-color: #10283f; background: #10283f; }
+.page[data-template-id="school-classic"] .closingActionSecondary { border-color: rgba(24, 50, 76, 0.42); color: #18324c; background: rgba(255, 250, 240, 0.96); }
+.page[data-template-id="school-classic"] .closingActionSecondary:hover { background: #e8edf1; }
 .closingBrand { display: grid; justify-items: center; margin-top: 8px; color: var(--uv1-muted); }
 .closingBrand a { display: inline-flex; min-height: 40px; align-items: center; padding-inline: 8px; color: inherit; font-size: 14px; font-weight: 700; text-underline-offset: 3px; }
 .closingBrand small { margin-top: -7px; font-size: 12px; line-height: 1.35; }
@@ -964,7 +1018,13 @@
 .messagesDialog > header button:active { scale: 0.96; }
 .dialogMessages { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 18px; }
 .dialogMessages .messageCard { height: auto; min-height: 0; }
-.dialogMessages .messageCardContent { padding: 18px; }
+.dialogMessages .messageCardContent {
+  padding:
+    max(18px, var(--uv1-message-safe-top, 0px))
+    max(18px, var(--uv1-message-safe-right, 0px))
+    max(18px, var(--uv1-message-safe-bottom, 0px))
+    max(18px, var(--uv1-message-safe-left, 0px));
+}
 .dialogMessages .messageCardContent > p { display: block; flex: none; margin-top: 14px; overflow: visible; line-height: 1.5; }
 
 .dialogBackdrop[data-viewport="mobile"] {
@@ -1148,6 +1208,8 @@
 .page[data-viewport="mobile"] .memories > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"],
 .page[data-viewport="mobile"] .closingSection > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"] { display: block; }
 .page[data-viewport="mobile"] .messages .sectionHeadingRow { align-items: flex-start; flex-direction: column; gap: 10px; }
+.page[data-template-id="school-classic"][data-viewport="mobile"] .messages .sectionHeadingRow { align-items: center; }
+.page[data-template-id="school-classic"][data-viewport="mobile"] .messages .sectionHeadingRow h2 { width: 100%; text-align: center; }
 .page[data-viewport="mobile"] .messageCard { height: auto; min-height: 200px; }
 .page[data-viewport="mobile"] .qualitiesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .page[data-viewport="mobile"] .qualityCard:last-child {
@@ -1166,6 +1228,12 @@
 .page[data-viewport="mobile"] .mobileAllMessagesButton { display: inline-flex; align-items: center; gap: 0.3em; }
 .page[data-viewport="mobile"] .memoriesPhotos { grid-template-columns: 1fr; grid-template-areas: "intro" "primary" "secondary" "tertiary"; }
 .page[data-viewport="mobile"] .memoriesIntro { padding-inline: 0; text-align: center; }
+.page[data-template-id="school-classic"][data-viewport="mobile"] .memoriesIntro {
+  padding: 12px 12px 16px;
+  border-radius: 14px;
+  background: rgba(255, 250, 240, 0.97);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 6px 16px rgba(0, 0, 0, 0.06);
+}
 .page[data-viewport="mobile"] .closingActions,
 .page[data-viewport="mobile"] .closingAction { width: 100%; }
 .page[data-viewport="mobile"] .quotesGrid { grid-template-columns: 1fr; }
@@ -1189,6 +1257,8 @@
   .page[data-viewport="auto"] .memories > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"],
   .page[data-viewport="auto"] .closingSection > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"] { display: block; }
   .page[data-viewport="auto"] .messages .sectionHeadingRow { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow { align-items: center; }
+  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow h2 { width: 100%; text-align: center; }
   .page[data-viewport="auto"] .messageCard { height: auto; min-height: 200px; }
   .page[data-viewport="auto"] .qualitiesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .page[data-viewport="auto"] .qualityCard:last-child {
@@ -1207,6 +1277,12 @@
   .page[data-viewport="auto"] .mobileAllMessagesButton { display: inline-flex; align-items: center; gap: 0.3em; }
   .page[data-viewport="auto"] .memoriesPhotos { grid-template-columns: 1fr; grid-template-areas: "intro" "primary" "secondary" "tertiary"; }
   .page[data-viewport="auto"] .memoriesIntro { padding-inline: 0; text-align: center; }
+  .page[data-template-id="school-classic"][data-viewport="auto"] .memoriesIntro {
+    padding: 12px 12px 16px;
+    border-radius: 14px;
+    background: rgba(255, 250, 240, 0.97);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 6px 16px rgba(0, 0, 0, 0.06);
+  }
   .page[data-viewport="auto"] .closingActions,
   .page[data-viewport="auto"] .closingAction { width: 100%; }
   .page[data-viewport="auto"] .quotesGrid { grid-template-columns: 1fr; }
@@ -1220,6 +1296,18 @@
 }
 
 @media (min-width: 641px) {
+  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="true"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.72fr);
+  }
+  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="false"] {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+  }
+  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="true"] h2 { width: auto; text-align: center; }
+  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="true"] .countBadge { justify-self: end; }
+  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="false"] h2 { grid-column: 2; width: auto; text-align: center; }
+  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="false"] .countBadge { grid-column: 3; justify-self: end; }
   .page[data-viewport="auto"] .decorLayer[data-visible-on]:not([data-visible-on*="desktop"]) {
     display: none;
   }

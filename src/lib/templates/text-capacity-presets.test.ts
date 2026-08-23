@@ -19,6 +19,7 @@ describe("universal text capacity presets", () => {
     expect(getUniversalRecipientNameTier("x".repeat(19))).toBe("long");
     expect(getUniversalRecipientNameTier("x".repeat(40))).toBe("long");
     expect(getUniversalRecipientNameTier("x".repeat(41))).toBe("very-long");
+    expect(getUniversalRecipientNameTier("Анна Сергеевна")).toBe("long");
   });
 
   it("puts a Russian first name and patronymic on separate lines", () => {

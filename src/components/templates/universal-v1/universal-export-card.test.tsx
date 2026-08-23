@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { createTemplateStudioProfile } from "@/lib/templates/studio";
 import { buildUniversalFixtureViewModel } from "@/lib/templates/view-model";
+import { school_classicProfile } from "@/templates/school-classic/profile";
 import { school_scrapbookProfile } from "@/templates/school-scrapbook/profile";
 import { UniversalTemplateExportCard, universalExportFormats } from "./universal-export-card";
 
@@ -186,6 +187,59 @@ describe("UniversalTemplateExportCard", () => {
     expect(container.querySelector("[data-export-hero-description]")?.textContent).toContain("моменты\nи пожелания");
   });
 
+  it.each(["story", "post", "a4"] as const)("keeps the school-classic hero copy and painted quote marks intact in the %s export", (format) => {
+    const model = buildUniversalFixtureViewModel("teacher-classic", { templateId: school_classicProfile.id });
+    model.publicPhotoCount = 3;
+    const { container } = render(<UniversalTemplateExportCard profile={school_classicProfile} model={model} format={format} />);
+    const description = container.querySelector<HTMLElement>("[data-export-hero-description]");
+    const quoteUnderlays = Array.from(container.querySelectorAll<HTMLImageElement>('[data-export-quote-card] [data-export-asset-underlay="nine-slice"]'));
+    const quoteText = container.querySelector<HTMLElement>('[data-export-quote-card] [data-text-preset="quote-card"]');
+    const hero = container.querySelector<HTMLElement>('[data-universal-export-block="hero"]');
+    const leftDecor = container.querySelector<HTMLElement>('[data-decor-layer="hero-left-classic-export"]');
+    const leftVariant = school_classicProfile.assets.decor.find(({ id }) => id === "hero-left-classic-export")?.exportVariants?.[format];
+    const heroHeight = { story: 380, post: 210, a4: 310 }[format];
+    const closingSlice = container.querySelector<HTMLImageElement>('[data-universal-export-block="closing"] [data-export-asset-underlay="horizontal-slice"]');
+    const closingContent = container.querySelector<HTMLElement>('[data-export-closing-content]');
+    const closingHeading = container.querySelector<HTMLElement>('[data-export-closing-heading]');
+    const closingBrand = container.querySelector<HTMLElement>('[data-export-closing-brand]');
+    const congratulationsCounter = container.querySelector<HTMLElement>('[data-export-counter="congratulations"]');
+    const photosCounter = container.querySelector<HTMLElement>('[data-export-counter="photos"]');
+
+    expect(description).toHaveStyle({
+      width: "100%",
+      maxWidth: format === "a4" ? "480px" : "520px"
+    });
+    expect(quoteUnderlays.length).toBeGreaterThanOrEqual(2);
+    expect(quoteUnderlays.every(({ src }) => src.includes("nine%3A0.38%2C0.2%2C0.14%2C0.28"))).toBe(true);
+    expect(quoteText).toHaveStyle({
+      fontFamily: school_classicProfile.typography.body.family,
+      lineHeight: "1.18"
+    });
+    expect(hero).toHaveAttribute("data-decor-overflow", "visible");
+    expect(hero).toHaveStyle({ overflow: "visible" });
+    expect(leftDecor).toHaveAttribute("data-export-decor-format", format);
+    expect(Number.parseFloat(leftDecor?.style.height ?? "0")).toBeCloseTo((leftVariant?.rect.height ?? 0) * heroHeight, 4);
+    expect(leftDecor).toHaveStyle({ transform: `rotate(${leftVariant?.rotation ?? 0}deg)` });
+    expect(closingSlice).toHaveAttribute("src", expect.stringContaining("slices=horizontal%3A0.46"));
+    expect(closingContent).toHaveStyle({ width: format === "story" ? "58%" : "70%", background: "" });
+    expect(closingHeading).toHaveStyle({ whiteSpace: format === "story" ? "normal" : "nowrap" });
+    expect(closingBrand).toHaveStyle({ transform: `translateY(${format === "story" ? -4 : -10}px)` });
+    expect(congratulationsCounter).toHaveAttribute("data-export-counter-preset", "classic-label");
+    expect(congratulationsCounter).toHaveStyle({
+      color: "#18324c",
+      background: "#fffaf0",
+      borderRadius: "7px",
+      transform: "rotate(-0.825deg)"
+    });
+    expect(photosCounter).toHaveStyle({
+      color: "#365b4c",
+      background: "#eef3ed",
+      borderRadius: "7px",
+      transform: "rotate(0.825deg)"
+    });
+    expect(container.innerHTML).toContain("/templates/school-classic/page-v2.webp");
+  });
+
   it.each(["story", "post", "a4"] as const)("puts a Russian patronymic on a dedicated line in the %s export", (format) => {
     const model = buildUniversalFixtureViewModel("public-full", { templateId: profile.id });
     model.recipientName = "Наталья Афанасьевна";
@@ -200,7 +254,12 @@ describe("UniversalTemplateExportCard", () => {
     overflowProfile.assets.decor[0] = {
       ...overflowProfile.assets.decor[0],
       anchor: "closing",
-      rect: { x: 0.9, y: 0.1, width: 0.2, height: 0.3 }
+      rect: { x: 0.9, y: 0.1, width: 0.2, height: 0.3 },
+      exportVariants: {
+        story: { rect: { x: 0.9, y: 0.1, width: 0.2, height: 0.3 } },
+        post: { rect: { x: 0.9, y: 0.1, width: 0.2, height: 0.3 } },
+        a4: { rect: { x: 0.9, y: 0.1, width: 0.2, height: 0.3 } }
+      }
     };
     const model = buildUniversalFixtureViewModel("public-full", { templateId: profile.id });
     const { container } = render(<UniversalTemplateExportCard profile={overflowProfile} model={model} format="story" />);

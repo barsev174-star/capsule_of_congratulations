@@ -174,7 +174,7 @@ try {
           width: rect?.width ?? null,
           height: rect?.height ?? null,
           pageUnderlay: Boolean(document.querySelector("[data-export-page-underlay]")),
-          closingSlice: Boolean(document.querySelector('[data-universal-export-block="closing"] [data-export-raster-slice]')),
+          closingArtwork: Boolean(document.querySelector('[data-universal-export-block="closing"] img')),
           rawTemplateAssets: imageSources.filter((src) => new URL(src, location.href).pathname.startsWith("/templates/")),
           transformedTemplateAssets: imageSources.filter((src) => new URL(src, location.href).pathname === "/api/template-export-asset").length,
           brokenImages: [...document.images].filter((image) => image.complete && image.naturalWidth === 0).map((image) => image.currentSrc || image.src)
@@ -191,7 +191,7 @@ try {
       if (metrics.format !== format) caseFailures.push(`unexpected format ${metrics.format ?? "missing"}`);
       if (metrics.width !== viewport.width || metrics.height !== viewport.height) caseFailures.push(`canvas ${metrics.width}x${metrics.height}, expected ${viewport.width}x${viewport.height}`);
       if (!metrics.pageUnderlay) caseFailures.push("page underlay is missing");
-      if (!metrics.closingSlice) caseFailures.push("closing slice is missing");
+      if (!metrics.closingArtwork) caseFailures.push("closing artwork is missing");
       if (metrics.rawTemplateAssets.length > 0) caseFailures.push(`${metrics.rawTemplateAssets.length} raw template assets bypass the transform route`);
       if (metrics.transformedTemplateAssets === 0) caseFailures.push("transformed template assets are missing");
       if (metrics.brokenImages.length > 0) caseFailures.push(`${metrics.brokenImages.length} broken images`);

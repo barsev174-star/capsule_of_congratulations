@@ -90,6 +90,10 @@ describe("school-scrapbook studio template", () => {
       { id: "hero-student-doodle-mobile", anchor: "hero", visibleOn: ["mobile"] },
       { id: "hero-student-girl-doodle-mobile", anchor: "hero", visibleOn: ["mobile"] }
     ]);
+    expect(school_scrapbookProfile.assets.decor
+      .filter(({ visibleOn }) => visibleOn?.includes("export"))
+      .every(({ exportVariants }) => exportVariants && Object.keys(exportVariants).join(",") === "story,post,a4"))
+      .toBe(true);
   });
 
   it("keeps the positions exported from the template studio", () => {

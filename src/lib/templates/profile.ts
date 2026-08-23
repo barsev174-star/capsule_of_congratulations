@@ -35,6 +35,7 @@ export type UniversalTemplateBlockId = (typeof universalTemplateBlockOrder)[numb
 export type UniversalPublicBlockId = (typeof universalPublicBlocks)[number];
 export type UniversalTemplateFixtureId =
   | "full-card-default"
+  | "teacher-classic"
   | "text-stress"
   | "minimal"
   | "public-full"
@@ -60,12 +61,14 @@ export const normalizedRectOverflows = (rect: NormalizedRect) =>
 export type TemplateTextCard = {
   asset: TemplateAssetRef;
   preset: UniversalTextCardPresetId;
+  textColor?: string;
 };
 
 export const defineTextCard = (
   asset: TemplateAssetRef,
-  preset: UniversalTextCardPresetId
-): TemplateTextCard => ({ asset, preset });
+  preset: UniversalTextCardPresetId,
+  options: Pick<TemplateTextCard, "textColor"> = {}
+): TemplateTextCard => ({ asset, preset, ...options });
 
 export type UniversalPhotoFrame = {
   preset: UniversalPhotoFramePresetId;
@@ -86,6 +89,15 @@ export type TemplateFontToken = {
   weight: 400 | 500 | 600 | 700 | 800 | 900;
 };
 
+export const templateExportDecorFormats = ["story", "post", "a4"] as const;
+export type TemplateExportDecorFormat = (typeof templateExportDecorFormats)[number];
+
+export type TemplateExportDecorVariant = {
+  rect: NormalizedRect;
+  opacity?: number;
+  rotation?: number;
+};
+
 export type TemplateDecorLayer = {
   id: string;
   asset: TemplateAssetRef;
@@ -94,6 +106,7 @@ export type TemplateDecorLayer = {
   opacity?: number;
   rotation?: number;
   visibleOn?: ReadonlyArray<"desktop" | "mobile" | "export">;
+  exportVariants?: Readonly<Record<TemplateExportDecorFormat, TemplateExportDecorVariant>>;
 };
 
 export type TemplateMotionPreset = "calm" | "playful";
@@ -159,9 +172,15 @@ export type TemplateProfile = {
   };
   export: {
     profile: typeof UNIVERSAL_EXPORT_PROFILE;
+    heroDescriptionMaxWidth?: {
+      story: number;
+      post: number;
+      a4: number;
+    };
     counters?: {
-      congratulations: { text: string; surface: string };
-      photos: { text: string; surface: string };
+      preset?: "soft-pill" | "classic-label";
+      congratulations: { text: string; surface: string; outline?: string };
+      photos: { text: string; surface: string; outline?: string };
     };
   };
   performance: {
@@ -187,6 +206,7 @@ const colorPattern = /^#[0-9a-f]{6}$/i;
 const forbiddenKeyPattern = /(?:component|callback|selector|css|html)/i;
 const fixtureIds = new Set<UniversalTemplateFixtureId>([
   "full-card-default",
+  "teacher-classic",
   "text-stress",
   "minimal",
   "public-full",
@@ -257,7 +277,8 @@ const validateRect = (
   value: unknown,
   path: string,
   issues: TemplateProfileValidationIssue[],
-  allowOverflow = false
+  allowOverflow = false,
+  maximumSize = 1
 ) => {
   if (!isRecord(value)) {
     issues.push({ path, message: "Ожидается нормализованный прямоугольник." });
@@ -268,8 +289,9 @@ const validateRect = (
   for (const key of keys) {
     const coordinate = value[key];
     const minimum = allowOverflow && (key === "x" || key === "y") ? -1 : 0;
-    if (typeof coordinate !== "number" || !Number.isFinite(coordinate) || coordinate < minimum || coordinate > 1) {
-      issues.push({ path: `${path}.${key}`, message: `Координата должна находиться в диапазоне ${minimum}…1.` });
+    const maximum = key === "width" || key === "height" ? maximumSize : 1;
+    if (typeof coordinate !== "number" || !Number.isFinite(coordinate) || coordinate < minimum || coordinate > maximum) {
+      issues.push({ path: `${path}.${key}`, message: `Координата должна находиться в диапазоне ${minimum}…${maximum}.` });
     }
   }
 
@@ -362,6 +384,7 @@ const validateTextCard = (
     return;
   }
   const preset = getUniversalTextCardPreset(value.preset as UniversalTextCardPresetId);
+  if (value.textColor !== undefined) validateColor(value.textColor, `${path}.textColor`, issues);
   if (isRecord(value.asset) && (value.asset.width !== preset.source.width || value.asset.height !== preset.source.height)) {
     issues.push({ path: `${path}.asset`, message: `Ассет preset-а ${preset.id} должен иметь размер ${preset.source.width} × ${preset.source.height}.` });
   }
@@ -403,6 +426,9 @@ const validateSectionUnderlay = (
     value.exportHorizontalSliceEdgeRatio >= 0.5
   )) {
     issues.push({ path: `${path}.exportHorizontalSliceEdgeRatio`, message: "Доля бокового края экспорта должна находиться в диапазоне 0…0.5." });
+  }
+  if (value.exportRendering !== undefined && !["horizontal-slice", "cover"].includes(String(value.exportRendering))) {
+    issues.push({ path: `${path}.exportRendering`, message: "Экспортная подложка поддерживает только horizontal-slice и cover." });
   }
 };
 
@@ -535,6 +561,30 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
             issues.push({ path: `${path}.visibleOn`, message: "Режимы видимости декоративного слоя не должны повторяться." });
           }
         }
+        if (layer.exportVariants !== undefined) {
+          if (!isRecord(layer.exportVariants)) {
+            issues.push({ path: `${path}.exportVariants`, message: "Ожидаются отдельные настройки Story, Post и A4." });
+          } else {
+            for (const format of templateExportDecorFormats) {
+              const variant = layer.exportVariants[format];
+              const variantPath = `${path}.exportVariants.${format}`;
+              if (!isRecord(variant)) {
+                issues.push({ path: variantPath, message: "Ожидаются настройки экспортного декора." });
+                continue;
+              }
+              validateRect(variant.rect, `${variantPath}.rect`, issues, true, 3);
+              if (variant.opacity !== undefined && (typeof variant.opacity !== "number" || variant.opacity < 0 || variant.opacity > 1)) {
+                issues.push({ path: `${variantPath}.opacity`, message: "Прозрачность должна находиться в диапазоне 0…1." });
+              }
+              if (variant.rotation !== undefined && (typeof variant.rotation !== "number" || !Number.isFinite(variant.rotation) || variant.rotation < -360 || variant.rotation > 360)) {
+                issues.push({ path: `${variantPath}.rotation`, message: "Поворот должен находиться в диапазоне −360…360 градусов." });
+              }
+            }
+          }
+        }
+        if (Array.isArray(layer.visibleOn) && layer.visibleOn.includes("export") && layer.exportVariants === undefined) {
+          issues.push({ path: `${path}.exportVariants`, message: "Для экспортного декора обязательны отдельные настройки Story, Post и A4." });
+        }
       });
     }
   }
@@ -634,17 +684,35 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
 
   if (!isRecord(value.export) || value.export.profile !== UNIVERSAL_EXPORT_PROFILE) {
     issues.push({ path: "export.profile", message: `Ожидается профиль ${UNIVERSAL_EXPORT_PROFILE}.` });
-  } else if (value.export.counters !== undefined) {
-    if (!isRecord(value.export.counters)) {
-      issues.push({ path: "export.counters", message: "Ожидаются цвета экспортных счётчиков." });
-    } else {
-      for (const counter of ["congratulations", "photos"] as const) {
-        const palette = value.export.counters[counter];
-        if (!isRecord(palette)) {
-          issues.push({ path: `export.counters.${counter}`, message: "Ожидаются цвета текста и поверхности." });
-        } else {
-          validateColor(palette.text, `export.counters.${counter}.text`, issues);
-          validateColor(palette.surface, `export.counters.${counter}.surface`, issues);
+  } else {
+    if (value.export.heroDescriptionMaxWidth !== undefined) {
+      if (!isRecord(value.export.heroDescriptionMaxWidth)) {
+        issues.push({ path: "export.heroDescriptionMaxWidth", message: "Ожидаются ширины экспортного текста по форматам." });
+      } else {
+        for (const format of ["story", "post", "a4"] as const) {
+          const width = value.export.heroDescriptionMaxWidth[format];
+          if (!Number.isInteger(width) || Number(width) < 200 || Number(width) > 1000) {
+            issues.push({ path: `export.heroDescriptionMaxWidth.${format}`, message: "Ширина должна быть целым числом от 200 до 1000 пикселей." });
+          }
+        }
+      }
+    }
+    if (value.export.counters !== undefined) {
+      if (!isRecord(value.export.counters)) {
+        issues.push({ path: "export.counters", message: "Ожидаются цвета экспортных счётчиков." });
+      } else {
+        if (value.export.counters.preset !== undefined && !["soft-pill", "classic-label"].includes(String(value.export.counters.preset))) {
+          issues.push({ path: "export.counters.preset", message: "Неизвестный стиль экспортных счётчиков." });
+        }
+        for (const counter of ["congratulations", "photos"] as const) {
+          const palette = value.export.counters[counter];
+          if (!isRecord(palette)) {
+            issues.push({ path: `export.counters.${counter}`, message: "Ожидаются цвета текста и поверхности." });
+          } else {
+            validateColor(palette.text, `export.counters.${counter}.text`, issues);
+            validateColor(palette.surface, `export.counters.${counter}.surface`, issues);
+            if (palette.outline !== undefined) validateColor(palette.outline, `export.counters.${counter}.outline`, issues);
+          }
         }
       }
     }

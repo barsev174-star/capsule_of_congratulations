@@ -77,6 +77,8 @@ const rectStyle = (rect: NormalizedRect): CSSProperties => ({
 });
 
 const exportVisible = (layer: TemplateDecorLayer) => !layer.visibleOn || layer.visibleOn.includes("export");
+const exportDecorVariant = (layer: TemplateDecorLayer, format: UniversalExportFormat) =>
+  layer.exportVariants?.[format] ?? layer;
 
 const croppedAssetUrl = (
   resolvedSrc: string,
@@ -115,22 +117,25 @@ const coverCrop = (
 function Decor({
   profile,
   anchor,
+  format,
   width,
   height,
   resolveAsset
 }: {
   profile: TemplateProfile;
   anchor: TemplateDecorLayer["anchor"];
+  format: UniversalExportFormat;
   width: number;
   height: number;
   resolveAsset: (src: `/${string}`) => string;
 }) {
   return <>{profile.assets.decor.filter((layer) => layer.anchor === anchor && exportVisible(layer) && layer.asset.src.startsWith("/")).map((layer) => {
+    const variant = exportDecorVariant(layer, format);
     const box = {
-      left: layer.rect.x * width,
-      top: layer.rect.y * height,
-      width: layer.rect.width * width,
-      height: layer.rect.height * height
+      left: variant.rect.x * width,
+      top: variant.rect.y * height,
+      width: variant.rect.width * width,
+      height: variant.rect.height * height
     };
     const assetAspect = layer.asset.width / layer.asset.height;
     const boxAspect = box.width / box.height;
@@ -140,6 +145,7 @@ function Decor({
       key={layer.id}
       data-decor-layer={layer.id}
       data-decor-asset
+      data-export-decor-format={format}
       src={resolveAsset(layer.asset.src)}
       width={Math.round(renderedWidth)}
       height={Math.round(renderedHeight)}
@@ -149,8 +155,8 @@ function Decor({
         top: box.top + (box.height - renderedHeight) / 2,
         width: renderedWidth,
         height: renderedHeight,
-        opacity: layer.opacity ?? 1,
-        transform: `rotate(${layer.rotation ?? 0}deg)`
+        opacity: variant.opacity ?? layer.opacity ?? 1,
+        transform: `rotate(${variant.rotation ?? layer.rotation ?? 0}deg)`
       }}
     />;
   })}</>;
@@ -159,6 +165,7 @@ function Decor({
 function ExportSection({
   id,
   profile,
+  format,
   width,
   height,
   resolveAsset,
@@ -166,6 +173,7 @@ function ExportSection({
 }: {
   id: UniversalTemplateBlockId;
   profile: TemplateProfile;
+  format: UniversalExportFormat;
   width: number;
   height: number;
   resolveAsset: (src: `/${string}`) => string;
@@ -175,7 +183,7 @@ function ExportSection({
   const underlay = isBare ? undefined : profile.assets.sections[id];
   const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
   const hasOverflowDecor = profile.assets.decor.some((layer) =>
-    layer.anchor === id && exportVisible(layer) && normalizedRectOverflows(layer.rect)
+    layer.anchor === id && exportVisible(layer) && normalizedRectOverflows(exportDecorVariant(layer, format).rect)
   );
   const isMemories = id === "memories";
   const safePadding = safeInsets ? {
@@ -196,11 +204,11 @@ function ExportSection({
     boxShadow: isBare ? "none" : "0 2px 5px rgba(0,0,0,.05), 0 16px 34px rgba(0,0,0,.08)"
   }}>
     {underlay ? <>
-      {id === "closing"
+      {id === "closing" && underlay.exportRendering !== "cover"
         ? <HorizontalSliceAsset asset={underlay.asset} width={width} height={height} edgeRatio={underlay.exportHorizontalSliceEdgeRatio ?? .1} resolveAsset={resolveAsset} />
         : <ExportSectionUnderlay underlay={underlay} width={width} height={height} resolveAsset={resolveAsset} />}
     </> : null}
-    {id === "closing" ? null : <Decor profile={profile} anchor={id} width={width} height={height} resolveAsset={resolveAsset} />}
+    {id === "closing" ? null : <Decor profile={profile} anchor={id} format={format} width={width} height={height} resolveAsset={resolveAsset} />}
     <div style={{
       position: underlay ? "absolute" : "relative",
       ...(underlay ? { left: 0, top: 0 } : {}),
@@ -418,9 +426,9 @@ export function UniversalTemplateExportCard({
   const recipientNameTier = getUniversalRecipientNameTier(model.recipientName);
   const recipientNameLines = getUniversalRecipientNameLines(model.recipientName);
   const recipientNameScale = format === "post"
-    ? { veryLong: .82, long: 1.05, default: 1.58 }
+    ? { veryLong: .82, long: .82, default: 1.58 }
     : format === "a4"
-      ? { veryLong: .9, long: 1.18, default: 1.7 }
+      ? { veryLong: .9, long: 1.05, default: 1.7 }
       : { veryLong: .92, long: 1.22, default: 1.86 };
   const recipientNameFontSize = recipientNameTier === "very-long"
     ? layout.heading * recipientNameScale.veryLong
@@ -430,6 +438,7 @@ export function UniversalTemplateExportCard({
   const heroDescription = format === "story"
     ? model.heroDescription.replace("яркие моменты и пожелания", "яркие моменты\nи пожелания")
     : model.heroDescription;
+  const heroDescriptionMaxWidth = profile.export.heroDescriptionMaxWidth?.[format] ?? 760;
   const congratulationsCounter = profile.export.counters?.congratulations ?? {
     text: profile.colors.accent,
     surface: profile.colors.surfaces.qualities ?? profile.colors.surface
@@ -437,6 +446,32 @@ export function UniversalTemplateExportCard({
   const photosCounter = profile.export.counters?.photos ?? {
     text: profile.colors.text,
     surface: profile.colors.surfaces.memories ?? profile.colors.surface
+  };
+  const counterPreset = profile.export.counters?.preset ?? "soft-pill";
+  const closingUsesHorizontalSlice = profile.assets.sections.closing?.exportRendering === "horizontal-slice";
+  const counterStyle = (palette: { text: string; surface: string; outline?: string }, rotation: number): CSSProperties => {
+    if (counterPreset === "classic-label") return {
+        padding: "5px 11px",
+        borderRadius: 7,
+        color: palette.text,
+        background: palette.surface,
+        boxShadow: `0 0 0 1.5px ${palette.outline ?? palette.text}80, 0 4px 10px rgba(24,50,76,.12)`,
+        fontSize: layout.body - 3,
+        fontVariantNumeric: "tabular-nums",
+        fontWeight: 700,
+        transform: `rotate(${Number((rotation * .55).toFixed(3))}deg)`
+      };
+    return {
+        padding: "5px 10px",
+        borderRadius: 999,
+        color: palette.text,
+        background: palette.surface,
+        boxShadow: `0 0 0 1px ${profile.colors.accent}1f, 0 5px 12px ${profile.colors.accent}21`,
+        fontSize: layout.body - 3,
+        fontVariantNumeric: "tabular-nums",
+        fontWeight: 650,
+      transform: `rotate(${rotation}deg)`
+    };
   };
   const pageSrc = profile.assets.page
     ? croppedAssetUrl(
@@ -460,20 +495,20 @@ export function UniversalTemplateExportCard({
     fontWeight: profile.typography.body.weight
   }}>
     {pageSrc ? <img data-export-page-underlay src={pageSrc} width={spec.width} height={spec.height} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%" }} /> : null}
-    <Decor profile={profile} anchor="templateRoot" width={spec.width} height={spec.height} resolveAsset={resolveAsset} />
+    <Decor profile={profile} anchor="templateRoot" format={format} width={spec.width} height={spec.height} resolveAsset={resolveAsset} />
     <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%", height: "100%", justifyContent: "space-between", gap: availableGap }}>
-      <div data-universal-export-block="hero" data-section-presentation="bare" style={{ position: "relative", display: "flex", width: "100%", height: layout.hero, flexShrink: 0, overflow: "hidden" }}>
-        <Decor profile={profile} anchor="hero" width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset} />
+      <div data-universal-export-block="hero" data-section-presentation="bare" data-decor-overflow="visible" style={{ position: "relative", display: "flex", width: "100%", height: layout.hero, flexShrink: 0, overflow: "visible" }}>
+        <Decor profile={profile} anchor="hero" format={format} width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset} />
         <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: format === "post" ? "8px 78px" : format === "a4" ? "14px 78px" : "20px 78px", boxSizing: "border-box", textAlign: "center" }}>
           {model.occasion ? <span style={{ color: profile.colors.accent, fontSize: format === "story" ? 18 : 14, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>{model.occasion}</span> : null}
           {eventDate ? <span style={{ marginTop: 5, color: profile.colors.muted, fontSize: format === "story" ? 18 : 14 }}>{eventDate}</span> : null}
-          {model.recipientName ? <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: format === "story" ? 150 : format === "post" ? 64 : 100, flexShrink: 0, marginTop: eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          {model.recipientName ? <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: format === "story" ? 150 : format === "post" ? 70 : 100, flexShrink: 0, marginTop: eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
             <span aria-label={model.recipientName} style={{ maxWidth: "100%", fontFamily: profile.typography.heading.family, fontSize: recipientNameFontSize, fontWeight: profile.typography.heading.weight, lineHeight: .98, letterSpacing: "-.04em", textAlign: "center", whiteSpace: "pre-line" }}>{recipientNameLines.join("\n")}</span>
           </div> : null}
-          <span data-export-hero-description style={{ maxWidth: 760, marginTop: 8, color: profile.colors.muted, fontSize: layout.body, lineHeight: 1.25, textAlign: "center", whiteSpace: "pre-line" }}>{heroDescription}</span>
+          <span data-export-hero-description style={{ width: "100%", maxWidth: heroDescriptionMaxWidth, marginTop: 8, color: profile.colors.muted, fontSize: layout.body, lineHeight: 1.25, textAlign: "center", whiteSpace: "pre-line" }}>{heroDescription}</span>
           <div data-export-hero-stats style={{ display: "flex", marginTop: 10, gap: 8 }}>
-            {model.participantCount > 0 ? <span data-export-counter="congratulations" style={{ padding: "5px 10px", borderRadius: 999, color: congratulationsCounter.text, background: congratulationsCounter.surface, boxShadow: `0 0 0 1px ${profile.colors.accent}1f, 0 5px 12px ${profile.colors.accent}21`, fontSize: layout.body - 3, fontVariantNumeric: "tabular-nums", fontWeight: 650, transform: "rotate(-1.5deg)" }}><b>{model.participantCount}</b> поздравлений</span> : null}
-            {shownPhotoCount ? <span data-export-counter="photos" style={{ padding: "5px 10px", borderRadius: 999, color: photosCounter.text, background: photosCounter.surface, boxShadow: `0 0 0 1px ${profile.colors.accent}1f, 0 5px 12px ${profile.colors.accent}21`, fontSize: layout.body - 3, fontVariantNumeric: "tabular-nums", fontWeight: 650, transform: "rotate(1.5deg)" }}><b>{shownPhotoCount}</b> фото в открытке</span> : null}
+            {model.participantCount > 0 ? <span data-export-counter="congratulations" data-export-counter-preset={counterPreset} style={counterStyle(congratulationsCounter, -1.5)}><b>{model.participantCount}</b> поздравлений</span> : null}
+            {shownPhotoCount ? <span data-export-counter="photos" data-export-counter-preset={counterPreset} style={counterStyle(photosCounter, 1.5)}><b>{shownPhotoCount}</b> фото в открытке</span> : null}
           </div>
         </div>
       </div>
@@ -486,51 +521,61 @@ export function UniversalTemplateExportCard({
             const card = qualityCards[index % Math.max(qualityCards.length, 1)];
             return <div key={`${quality}-${index}`} data-export-quality-card style={{ position: "relative", display: "flex", width: qualityCardWidth, minWidth: 0, height: qualityCardHeight, flexShrink: 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
               {card ? <img data-export-quality-asset src={resolveAsset(card.asset.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} /> : null}
-              <b data-safe-text data-text-boundary data-text-preset="quality-card" style={{ position: "absolute", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", overflow: "hidden", ...(card ? rectStyle(getUniversalTextCardPreset(card.preset).textArea) : { inset: 7 }), padding: 3, fontSize: useDedicatedQualityLayout ? dedicatedQualityLayout.fontSize : format === "story" ? 15 : format === "post" ? 12 : 13, lineHeight: 1.04, textAlign: "center" }}>{quality}</b>
+              <b data-safe-text data-text-boundary data-text-preset="quality-card" style={{ position: "absolute", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", overflow: "hidden", ...(card ? rectStyle(getUniversalTextCardPreset(card.preset).textArea) : { inset: 7 }), padding: 3, color: card?.textColor ?? profile.colors.text, fontSize: useDedicatedQualityLayout ? dedicatedQualityLayout.fontSize : format === "story" ? 15 : format === "post" ? 12 : 13, lineHeight: 1.04, textAlign: "center" }}>{quality}</b>
             </div>;
           })}</div>)}</div>
         </div>
       </div> : null}
 
-      {photos.length >= 2 ? <ExportSection id="memories" profile={profile} width={sectionWidth} height={layout.moments} resolveAsset={resolveAsset}><Moments profile={profile} photos={photos} format={format} layout={layout} resolveAsset={resolveAsset} resolvePhoto={resolvePhoto} /></ExportSection> : null}
+      {photos.length >= 2 ? <ExportSection id="memories" profile={profile} format={format} width={sectionWidth} height={layout.moments} resolveAsset={resolveAsset}><Moments profile={profile} photos={photos} format={format} layout={layout} resolveAsset={resolveAsset} resolvePhoto={resolvePhoto} /></ExportSection> : null}
 
       {quotes.length >= 2 ? <div data-universal-export-block="quotes" data-section-presentation="bare" style={{ display: "flex", width: "100%", height: layout.quotes, flexShrink: 0 }}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: "0 28px", boxSizing: "border-box" }}>
           <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, lineHeight: 1.04, textAlign: "center" }}>Особенно тёплые слова</strong>
           <div style={{ display: "flex", width: "100%", marginTop: 10, gap: 10, flexShrink: 0 }}>{quotes.map((quote, index) => {
             const card = profile.assets.quoteCards[index % Math.max(profile.assets.quoteCards.length, 1)];
+            const cardPreset = card ? getUniversalTextCardPreset(card.preset) : null;
             const availableQuoteWidth = sectionWidth - 56;
             const cardWidth = format === "post"
               ? (availableQuoteWidth - 20) / 3
               : (availableQuoteWidth - 10 * (quotes.length - 1)) / quotes.length;
             const cardHeight = format === "story" ? 190 : format === "post" ? 125 : 160;
-            const quoteFontSize = format === "story" ? 25 : format === "post" ? 20 : 22;
-            const quoteTextAreaStyle = format === "post"
+            const artworkCard = cardPreset?.rendering === "artwork";
+            const quoteFontSize = artworkCard
+              ? format === "story" ? 22 : format === "post" ? 16 : 20
+              : format === "story" ? 25 : format === "post" ? 20 : 22;
+            const quoteTextAreaStyle = cardPreset?.exportSlices
+              ? rectStyle(cardPreset.textArea)
+              : format === "post"
               ? { left: "5%", top: "10%", width: "90%", height: "80%" }
-              : card ? rectStyle(getUniversalTextCardPreset(card.preset).textArea) : { inset: 12 };
-            return <div key={`${quote}-${index}`} data-export-quote-card style={{ position: "relative", display: "flex", width: cardWidth, minWidth: 0, height: cardHeight, flexShrink: 0, alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: 16, background: profile.colors.surface }}>
-              {card ? format === "post"
-                ? <NineSliceAsset asset={card.asset} width={cardWidth} height={cardHeight} edges={{ top: .18, right: .12, bottom: .18, left: .12 }} resolveAsset={resolveAsset} />
-                : <img src={resolveAsset(card.asset.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
+              : cardPreset ? rectStyle(cardPreset.textArea) : { inset: 12 };
+            return <div key={`${quote}-${index}`} data-export-quote-card data-text-card-rendering={cardPreset?.rendering} style={{ position: "relative", display: "flex", width: cardWidth, minWidth: 0, height: cardHeight, flexShrink: 0, alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: artworkCard ? 0 : 16, background: artworkCard ? "transparent" : profile.colors.surface }}>
+              {card ? cardPreset?.exportSlices
+                ? <NineSliceAsset asset={card.asset} width={cardWidth} height={cardHeight} edges={cardPreset.exportSlices} resolveAsset={resolveAsset} />
+                : format === "post" && !artworkCard
+                  ? <NineSliceAsset asset={card.asset} width={cardWidth} height={cardHeight} edges={{ top: .18, right: .12, bottom: .18, left: .12 }} resolveAsset={resolveAsset} />
+                : <img src={resolveAsset(card.asset.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
                 : null}
-              <span aria-hidden="true" style={{ position: "absolute", left: 13, top: 5, color: profile.colors.accent, fontFamily: profile.typography.handwritten.family, fontSize: 38 }}>“</span>
-              <span data-safe-text data-text-boundary data-text-preset="quote-card" style={{ position: "absolute", display: "flex", alignItems: "center", boxSizing: "border-box", overflow: "hidden", ...quoteTextAreaStyle, padding: "6px 10px", fontSize: quoteFontSize, lineHeight: format === "post" ? 1.02 : format === "a4" ? 1.08 : 1.1, textAlign: "center" }}>{quote}</span>
+              {cardPreset?.renderLeadingQuote !== false ? <span aria-hidden="true" style={{ position: "absolute", left: 13, top: 5, color: profile.colors.accent, fontFamily: profile.typography.handwritten.family, fontSize: 38 }}>“</span> : null}
+              <span data-safe-text data-text-boundary data-text-preset="quote-card" style={{ position: "absolute", display: "flex", alignItems: "center", boxSizing: "border-box", overflow: "hidden", ...quoteTextAreaStyle, padding: "6px 10px", fontFamily: profile.typography.body.family, fontWeight: profile.typography.body.weight, fontSize: quoteFontSize, lineHeight: 1.18, textAlign: "center" }}>{quote}</span>
             </div>;
           })}</div>
         </div>
       </div> : null}
 
-      <ExportSection id="closing" profile={profile} width={sectionWidth} height={closingSectionHeight} resolveAsset={resolveAsset}>
-        <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: "16px 72px", boxSizing: "border-box", textAlign: "center" }}>
-          <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading * .82, textAlign: "center" }}>В полной открытке — ещё больше тепла</strong>
+      <ExportSection id="closing" profile={profile} format={format} width={sectionWidth} height={closingSectionHeight} resolveAsset={resolveAsset}>
+        <div data-export-closing-content style={{ display: "flex", flexDirection: "column", width: closingUsesHorizontalSlice ? format === "story" ? "58%" : "70%" : "100%", height: "100%", margin: "0 auto", alignItems: "center", justifyContent: "center", padding: closingUsesHorizontalSlice ? "12px 0" : "16px 72px", boxSizing: "border-box", color: profile.colors.text, textAlign: "center" }}>
+          <strong data-export-closing-heading style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading * .82, lineHeight: 1.05, whiteSpace: format === "story" ? "normal" : "nowrap", textAlign: "center" }}>В полной открытке — ещё больше тепла</strong>
           <span style={{ maxWidth: 830, marginTop: 7, color: profile.colors.muted, fontSize: layout.body, lineHeight: 1.2, textAlign: "center" }}>Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для получателя.</span>
-          <img src={resolveAsset("/brand/email-logo.png")} style={{ width: format === "story" ? 160 : format === "a4" ? 150 : 130, height: format === "story" ? 37 : format === "a4" ? 35 : 30, objectFit: "contain", marginTop: 8 }} />
-          <span style={{ marginTop: 3, color: profile.colors.muted, fontSize: layout.body - 4 }}>Место, где слова становятся подарком</span>
+          <div data-export-closing-brand style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: format === "story" ? 8 : 5, transform: `translateY(${format === "story" ? -4 : -10}px)` }}>
+            <img src={resolveAsset("/brand/email-logo.png")} style={{ width: format === "story" ? 160 : format === "a4" ? 150 : 130, height: format === "story" ? 37 : format === "a4" ? 35 : 30, objectFit: "contain" }} />
+            <span style={{ marginTop: 1, color: profile.colors.muted, fontSize: layout.body - 4 }}>Место, где слова становятся подарком</span>
+          </div>
         </div>
       </ExportSection>
     </div>
     <div data-export-closing-decor style={{ position: "absolute", display: "flex", left: layout.padding, top: spec.height - layout.verticalPadding - closingSectionHeight, width: sectionWidth, height: closingSectionHeight }}>
-      <Decor profile={profile} anchor="closing" width={sectionWidth} height={closingSectionHeight} resolveAsset={resolveAsset} />
+      <Decor profile={profile} anchor="closing" format={format} width={sectionWidth} height={closingSectionHeight} resolveAsset={resolveAsset} />
     </div>
   </div>;
 }

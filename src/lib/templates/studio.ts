@@ -1,10 +1,13 @@
 import {
   defineTemplate,
   defineTextCard,
+  templateExportDecorFormats,
   validateTemplateProfile,
   type NormalizedRect,
   type TemplateAssetRef,
   type TemplateDecorLayer,
+  type TemplateExportDecorFormat,
+  type TemplateExportDecorVariant,
   type TemplateProfile,
   type TemplateProfileValidationIssue,
   type UniversalPhotoFrame,
@@ -67,6 +70,14 @@ const hashTemplateStudioBaseline = (draft: TemplateStudioDraft) => {
 export const getTemplateStudioStorageKey = (initialDraft: TemplateStudioDraft) =>
   `slovesto:template-studio:${initialDraft.profile.id}:v7:${hashTemplateStudioBaseline(initialDraft)}`;
 
+const createExportDecorVariants = (
+  rect: NormalizedRect,
+  opacity = 1,
+  rotation = 0
+): Record<TemplateExportDecorFormat, TemplateExportDecorVariant> => Object.fromEntries(
+  templateExportDecorFormats.map((format) => [format, { rect: structuredClone(rect), opacity, rotation }])
+) as Record<TemplateExportDecorFormat, TemplateExportDecorVariant>;
+
 export const createTemplateStudioDecorLayer = (
   profile: TemplateProfile,
   sourceAsset: TemplateAssetRef,
@@ -76,16 +87,19 @@ export const createTemplateStudioDecorLayer = (
   let number = profile.assets.decor.length + 1;
   while (ids.has(`decor-${number}`)) number += 1;
 
+  const rect = anchor === "templateRoot"
+    ? { x: 0.76, y: 0.01, width: 0.22, height: 0.08 }
+    : { x: 0.76, y: 0.04, width: 0.2, height: 0.28 };
+
   return {
     id: `decor-${number}`,
     asset: structuredClone(sourceAsset),
     anchor,
-    rect: anchor === "templateRoot"
-      ? { x: 0.76, y: 0.01, width: 0.22, height: 0.08 }
-      : { x: 0.76, y: 0.04, width: 0.2, height: 0.28 },
+    rect,
     opacity: 1,
     rotation: 0,
-    visibleOn: ["desktop", "mobile", "export"]
+    visibleOn: ["desktop", "mobile", "export"],
+    exportVariants: createExportDecorVariants(rect)
   };
 };
 
@@ -144,7 +158,8 @@ export const createTemplateStudioProfile = (templateId: string): TemplateProfile
         rect: { x: 0.78, y: 0.02, width: 0.18, height: 0.18 },
         opacity: 0.82,
         rotation: 8,
-        visibleOn: ["desktop", "mobile", "export"]
+        visibleOn: ["desktop", "mobile", "export"],
+        exportVariants: createExportDecorVariants({ x: 0.78, y: 0.02, width: 0.18, height: 0.18 }, 0.82, 8)
       }
     ]
   },

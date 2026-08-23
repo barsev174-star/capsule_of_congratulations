@@ -1,4 +1,4 @@
-import { defineTemplate, defineTextCard } from "@/lib/templates/profile";
+import { defineTemplate, defineTextCard, type NormalizedRect, type TemplateExportDecorVariant, type TemplateExportDecorFormat } from "@/lib/templates/profile";
 import { defineSectionUnderlay } from "@/lib/templates/section-underlays";
 
 const asset = (src: `/templates/school-scrapbook/${string}`, width: number, height: number) => ({ src, width, height });
@@ -8,6 +8,15 @@ const frame = (preset: "portrait-polaroid" | "landscape-polaroid", base: `/templ
   overlay: asset(overlay, width, height),
   fit: "cover" as const,
   caption: { maxChars: 45 as const, maxLines: 2 as const, align: "center" as const, fontToken: "handwritten" as const, minScale: 0.7 }
+});
+const exportVariants = (
+  rect: NormalizedRect,
+  opacity = 1,
+  rotation = 0
+): Record<TemplateExportDecorFormat, TemplateExportDecorVariant> => ({
+  story: { rect: { ...rect }, opacity, rotation },
+  post: { rect: { ...rect }, opacity, rotation },
+  a4: { rect: { ...rect }, opacity, rotation }
 });
 
 export const school_scrapbookProfile = defineTemplate({
@@ -39,6 +48,7 @@ export const school_scrapbookProfile = defineTemplate({
       quotes: defineSectionUnderlay(asset("/templates/school-scrapbook/section-quotes.webp", 1200, 670), "adaptive-frame"),
       closing: defineSectionUnderlay(asset("/templates/school-scrapbook/section-closing-finale-desktop-v3.webp", 1200, 480), "cover", {
         mobileAsset: asset("/templates/school-scrapbook/section-closing-finale-mobile-v3.webp", 600, 800),
+        exportRendering: "horizontal-slice",
         exportHorizontalSliceEdgeRatio: 0.25
       })
     },
@@ -87,7 +97,8 @@ export const school_scrapbookProfile = defineTemplate({
         rect: { x: -0.13, y: 0.18, width: 0.45, height: 1 },
         rotation: -4,
         opacity: 0.9,
-        visibleOn: ["export"]
+        visibleOn: ["export"],
+        exportVariants: exportVariants({ x: -0.13, y: 0.18, width: 0.45, height: 1 }, 0.9, -4)
       },
       {
         id: "hero-backpack-cluster",
@@ -105,7 +116,8 @@ export const school_scrapbookProfile = defineTemplate({
         rect: { x: 0.66, y: 0.17, width: 0.52, height: 1 },
         rotation: -4,
         opacity: 0.8,
-        visibleOn: ["export"]
+        visibleOn: ["export"],
+        exportVariants: exportVariants({ x: 0.66, y: 0.17, width: 0.52, height: 1 }, 0.8, -4)
       },
       {
         id: "summary-blue-rays-left",
@@ -113,7 +125,8 @@ export const school_scrapbookProfile = defineTemplate({
         anchor: "summary",
         rect: { x: -0.14, y: 0.245, width: 0.2, height: 0.585 },
         rotation: -133,
-        visibleOn: ["desktop", "export"]
+        visibleOn: ["desktop", "export"],
+        exportVariants: exportVariants({ x: -0.14, y: 0.245, width: 0.2, height: 0.585 }, 1, -133)
       },
       {
         id: "summary-blue-rays-right",
@@ -121,7 +134,8 @@ export const school_scrapbookProfile = defineTemplate({
         anchor: "summary",
         rect: { x: 0.93, y: 0.27, width: 0.24, height: 0.585 },
         rotation: 37,
-        visibleOn: ["desktop", "export"]
+        visibleOn: ["desktop", "export"],
+        exportVariants: exportVariants({ x: 0.93, y: 0.27, width: 0.24, height: 0.585 }, 1, 37)
       },
       {
         id: "closing-grade-5plus",
@@ -130,7 +144,8 @@ export const school_scrapbookProfile = defineTemplate({
         rect: { x: 0.74, y: 0.075, width: 0.275, height: 0.545 },
         rotation: 25,
         opacity: 0.8,
-        visibleOn: ["desktop", "export"]
+        visibleOn: ["desktop", "export"],
+        exportVariants: exportVariants({ x: 0.74, y: 0.075, width: 0.275, height: 0.545 }, 0.8, 25)
       },
       {
         id: "closing-student-doodle",
@@ -148,7 +163,8 @@ export const school_scrapbookProfile = defineTemplate({
         rect: { x: 0.165, y: 0.445, width: 0.09, height: 0.54 },
         rotation: -7,
         opacity: 0.92,
-        visibleOn: ["export"]
+        visibleOn: ["export"],
+        exportVariants: exportVariants({ x: 0.165, y: 0.445, width: 0.09, height: 0.54 }, 0.92, -7)
       },
       {
         id: "closing-student-girl-doodle",
@@ -166,7 +182,8 @@ export const school_scrapbookProfile = defineTemplate({
         rect: { x: 0.7, y: 0.42, width: 0.084, height: 0.54 },
         rotation: 5,
         opacity: 0.92,
-        visibleOn: ["export"]
+        visibleOn: ["export"],
+        exportVariants: exportVariants({ x: 0.7, y: 0.42, width: 0.084, height: 0.54 }, 0.92, 5)
       },
       {
         id: "hero-student-doodle-mobile",

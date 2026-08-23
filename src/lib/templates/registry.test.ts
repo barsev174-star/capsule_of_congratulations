@@ -100,7 +100,8 @@ describe("template registry", () => {
     expect(studioTemplateRegistrations.map((entry) => entry.id)).toEqual([
       "northern-light",
       "daylight-proof",
-      "school-scrapbook"
+      "school-scrapbook",
+      "school-classic"
     ]);
   });
 
