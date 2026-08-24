@@ -3,9 +3,9 @@ import { BrandLogo } from "@/components/brand/brand-logo";
 import { FooterGroup } from "./footer-group";
 import styles from "./footer.module.css";
 
-export function HomeFooter() {
+export function HomeFooter({ variant = "default" }: { variant?: "default" | "neutral" }) {
   return (
-    <footer className={styles.footer}>
+    <footer className={`${styles.footer} ${variant === "neutral" ? styles.neutral : ""}`}>
       <div className={styles.inner}>
         <section className={styles.brandColumn}>
           <BrandLogo />

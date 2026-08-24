@@ -21,6 +21,42 @@
   box-shadow: 0 6px 18px rgba(92, 62, 46, 0.08);
 }
 
+.teacherHeader {
+  background: rgba(255, 255, 255, 0.94);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+.teacherHeader[data-scrolled] {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.teacherHeader .ctaButton {
+  background: #e9652f;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .teacherHeader .ctaButton:hover {
+    background: #df5f2e;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+  }
+}
+
+.teacherHeader .ctaButton:active {
+  background: #c7532a;
+}
+
+.teacherHeader .logo {
+  min-height: 40px;
+}
+
+.teacherHeader .mobileNav {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.14), inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
 .shell {
   display: flex;
   align-items: center;

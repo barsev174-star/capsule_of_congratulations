@@ -1,4 +1,5 @@
 import styles from "./cases-section.module.css";
+import Link from "next/link";
 
 /* Предметные мини-иллюстрации в едином стиле:
    нейтральные поверхности, фирменные оранжевые акценты и мягкие контуры. */
@@ -113,7 +114,7 @@ function EnvelopeHeartIcon() {
 
 const cases = [
   { icon: <CakeIcon />, title: "День рождения коллеги" },
-  { icon: <BookFlowerIcon />, title: "Учителю или воспитателю" },
+  { icon: <BookFlowerIcon />, title: "Учителю или воспитателю", teacherHref: "/gruppovaya-otkrytka/uchitelyu" },
   { icon: <TeamIcon />, title: "От всей команды" },
   { icon: <PolaroidIcon />, title: "Для друга или подруги" },
   { icon: <BalloonIcon />, title: "Юбилей" },
@@ -133,7 +134,12 @@ export function CasesSection() {
           {cases.map((item) => (
             <article key={item.title} className={`${styles.card} js-motion-card`}>
               <span className={styles.icon}>{item.icon}</span>
-              <h3 className={styles.cardTitle}>{item.title}</h3>
+              <div className={styles.cardBody}>
+                <h3 className={styles.cardTitle}>{item.title}</h3>
+                {item.teacherHref ? (
+                  <Link href={item.teacherHref} className={styles.teacherLink}>Открытка учителю от класса</Link>
+                ) : null}
+              </div>
             </article>
           ))}
         </div>

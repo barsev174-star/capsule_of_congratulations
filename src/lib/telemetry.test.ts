@@ -12,6 +12,37 @@ describe("telemetry", () => {
     expect(parseClientTelemetry({ event: "payment.started", context: {} })).toBeNull();
   });
 
+  it("accepts the teacher landing events and safe attribution fields", () => {
+    expect(parseClientTelemetry({
+      event: "seo_create_click",
+      context: {
+        landing_type: "teacher",
+        landing_path: "/gruppovaya-otkrytka/uchitelyu",
+        placement: "hero",
+        template: "school-classic",
+        utm_source: "yandex",
+        utm_medium: "organic",
+        utm_campaign: "teacher",
+        referrer_host: "yandex.ru",
+        first_touch_at: "2026-08-21T08:00:00.000Z",
+        recipientName: "private"
+      }
+    })).toEqual({
+      event: "seo_create_click",
+      context: {
+        landing_type: "teacher",
+        landing_path: "/gruppovaya-otkrytka/uchitelyu",
+        placement: "hero",
+        template: "school-classic",
+        utm_source: "yandex",
+        utm_medium: "organic",
+        utm_campaign: "teacher",
+        referrer_host: "yandex.ru",
+        first_touch_at: "2026-08-21T08:00:00.000Z"
+      }
+    });
+  });
+
   it("keeps safe upload timing fields for photo diagnostics", () => {
     expect(parseClientTelemetry({
       event: "photo_preparation_completed",

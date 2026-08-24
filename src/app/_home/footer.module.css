@@ -1,4 +1,10 @@
 .footer { padding: 54px 24px 22px; background: #f7ece3; color: #202124; }
+.neutral { background: #f7f8fa; }
+.neutral .bottomLine,
+.neutral .group { border-color: rgba(0, 0, 0, .1); }
+.neutral .contactIcon { color: #5f6368; background: #ffffff; }
+.neutral .column a:focus-visible,
+.neutral .groupToggle:focus-visible { outline-color: rgba(233, 101, 47, .32); }
 .inner { width: min(100%, 1240px); margin: 0 auto; display: grid; grid-template-columns: minmax(280px, 1.7fr) 1fr 1.15fr 1fr; gap: 48px; align-items: start; }
 .brandColumn { min-width: 0; }
 .tagline { margin: 14px 0 0; color: #5f6368; font-size: .94rem; line-height: 1.5; text-wrap: pretty; }

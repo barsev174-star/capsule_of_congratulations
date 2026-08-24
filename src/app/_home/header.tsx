@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
-import { startCardFromShowcaseAction } from "../home-actions";
+import { sendClientTelemetry } from "@/lib/client-telemetry";
+import { getTeacherTelemetryContext } from "@/lib/client-landing-attribution";
+import { startCardFromShowcaseAction, startTeacherCardFromShowcaseAction } from "../home-actions";
 import styles from "./header.module.css";
 
-const navItems = [
+const homeNavItems = [
   { href: "#how-it-works", label: "Как это работает" },
   { href: "/example", label: "Примеры" },
   { href: "#ai", label: "ИИ-помощник" },
@@ -14,11 +16,20 @@ const navItems = [
   { href: "/account", label: "Мои открытки" }
 ];
 
-export function HomeHeader() {
+const teacherNavItems = [
+  { href: "#how-it-works", label: "Как это работает" },
+  { href: "/example?template=school-classic", label: "Пример" },
+  { href: "#price", label: "Цена" },
+  { href: "#faq", label: "FAQ" },
+  { href: "/account", label: "Мои открытки" }
+];
+
+export function HomeHeader({ variant = "home" }: { variant?: "home" | "teacher" }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const navRef = useRef<HTMLElement>(null);
+  const navItems = variant === "teacher" ? teacherNavItems : homeNavItems;
 
   useEffect(() => {
     const header = headerRef.current;
@@ -91,7 +102,7 @@ export function HomeHeader() {
   }, [menuOpen]);
 
   return (
-    <header ref={headerRef} className={styles.header}>
+    <header ref={headerRef} className={`${styles.header} ${variant === "teacher" ? styles.teacherHeader : ""}`}>
       <div className={styles.shell}>
         <Link href="/" className={styles.logo}>
           <BrandLogo variant="marketing" />
@@ -129,7 +140,19 @@ export function HomeHeader() {
           </nav>
         ) : null}
 
-        <form action={startCardFromShowcaseAction} className={styles.ctaForm}>
+        <form
+          action={variant === "teacher" ? startTeacherCardFromShowcaseAction : startCardFromShowcaseAction}
+          className={styles.ctaForm}
+          onSubmit={() => {
+            if (variant === "teacher") {
+              sendClientTelemetry("seo_create_click", {
+                ...getTeacherTelemetryContext(),
+                placement: "hero",
+                template: "school-classic"
+              });
+            }
+          }}
+        >
           <button type="submit" className={styles.ctaButton}>
             Создать открытку
           </button>

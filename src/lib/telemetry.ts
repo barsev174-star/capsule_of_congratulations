@@ -27,6 +27,9 @@ export const clientEvents = [
   "demo_card_opened",
   "demo_create_clicked",
   "demo_scroll_step_viewed",
+  "seo_landing_view",
+  "seo_create_click",
+  "seo_example_click",
   "PUBLIC_SHARE_OPENED",
   "PUBLIC_SHARE_NATIVE_SHARED",
   "PUBLIC_SHARE_LINK_COPIED",
@@ -72,7 +75,15 @@ const allowedClientContextKeys = new Set([
   "durationMs",
   "originalBytes",
   "uploadBytes",
-  "optimized"
+  "optimized",
+  "landing_type",
+  "landing_path",
+  "placement",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "referrer_host",
+  "first_touch_at"
 ]);
 
 export const parseClientTelemetry = (input: unknown): { event: ClientTelemetryEvent; context: LogContext } | null => {

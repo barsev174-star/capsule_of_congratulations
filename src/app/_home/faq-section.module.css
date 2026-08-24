@@ -3,6 +3,31 @@
   background: linear-gradient(180deg, var(--surface-peach) 0%, var(--background) 100%);
 }
 
+.neutral {
+  background: #f7f8fa;
+}
+
+.neutral .card {
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .06), 0 2px 4px rgba(0, 0, 0, .04);
+}
+
+.neutral .card.open {
+  background: #ffffff;
+}
+
+.neutral .title {
+  font-family: var(--font-alumni-sans), "Arial Narrow", sans-serif;
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+
+.neutral .trigger:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, .32);
+  outline-offset: -3px;
+}
+
 .shell {
   width: min(100%, 1040px);
   margin: 0 auto;
@@ -129,5 +154,43 @@
   }
   .answer {
     transition: none;
+  }
+}
+
+/* --- Neutral-вариант (teacher landing): спокойная тень на hover/focus и компактные отступы --- */
+
+.neutral .card {
+  transition: background-color 220ms var(--motion-ease-out), box-shadow 220ms var(--motion-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .neutral .card:hover,
+  .neutral .card:focus-within {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .08), 0 6px 16px rgba(0, 0, 0, .07);
+  }
+}
+
+@media (max-width: 640px) {
+  .section.neutral {
+    padding: 52px 18px;
+  }
+
+  .neutral .grid {
+    gap: 8px;
+  }
+
+  .neutral .column {
+    gap: 6px;
+  }
+
+  .neutral .trigger {
+    min-height: 56px;
+    padding: 14px 16px;
+  }
+}
+
+@media (min-width: 641px) {
+  .section.neutral {
+    padding: 72px 24px;
   }
 }
