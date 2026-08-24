@@ -7,7 +7,7 @@ import {
   teacherCardContents,
   teacherDemoStory,
   teacherFaqs,
-  teacherHeroNote,
+  getTeacherHeroNote,
   teacherOccasionScenarios,
   teacherOccasionsCompact,
   teacherSteps
@@ -20,6 +20,8 @@ const landingPath = "/gruppovaya-otkrytka/uchitelyu";
 const landingUrl = `https://slovesto.ru${landingPath}`;
 const title = "Групповая онлайн-открытка учителю от класса — Slovesto";
 const description = "Соберите поздравления учеников и родителей по одной ссылке, добавьте фотографии класса и подарите учителю общую онлайн-открытку. Создание бесплатно, передача — 399 ₽.";
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: { absolute: title },
@@ -92,13 +94,13 @@ const envelopeIcon = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2" /><path d="m3.5 7.5 8.5 6 8.5-6" /></svg>
 );
 
-const heroNoteClasses = [styles.heroNoteStudent, styles.heroNoteParent, styles.heroNoteGraduate];
+const heroNoteClasses = [styles.heroNoteStudent, styles.heroNoteParent, styles.heroNoteStudentSecond];
 
-/* Короткие фрагменты из текстов ученика, родителя и выпускника — только для hero */
+/* Короткие фрагменты учеников и родителя — только для сфокусированного hero */
 const heroNotes = [
   { role: "Ученик", text: "Помогаете не бояться сложных задач" },
   { role: "Родитель", text: "Спасибо за внимание к детям" },
-  { role: "Выпускник", text: "До сих пор вспоминаю ваши уроки" }
+  { role: "Ученица", text: "С Вами хочется стараться" }
 ] as const;
 
 type ChatFragment =
@@ -123,6 +125,8 @@ const participantFlows = [
 ] as const;
 
 export default function TeacherLandingPage() {
+  const teacherHeroNote = getTeacherHeroNote();
+
   return (
     <div className={styles.page} data-teacher-landing>
       <TeacherLandingTracker />
@@ -144,9 +148,9 @@ export default function TeacherLandingPage() {
         <section className={`${styles.section} ${styles.hero}`} aria-labelledby="teacher-landing-title">
           <div className={`${styles.shell} ${styles.heroGrid}`}>
             <div className={styles.heroCopy}>
-              <p className={styles.eyebrow}>Открытка от учеников, родителей и выпускников</p>
+              <p className={styles.eyebrow}>Открытка от учеников и родителей</p>
               <h1 id="teacher-landing-title">Групповая онлайн&#8209;открытка учителю от всего класса</h1>
-              <p className={styles.heroText}>Соберите личные поздравления учеников, родителей и выпускников по одной ссылке, добавьте фотографии класса и превратите всё в одну красивую открытку для учителя.</p>
+              <p className={styles.heroText}>Соберите личные поздравления учеников и родителей по одной ссылке, добавьте фотографии класса и превратите всё в одну красивую открытку для учителя.</p>
               <div className={styles.heroActions}>
                 <TeacherCreateForm placement="hero" buttonClassName={styles.primaryButton}>Собрать открытку учителю</TeacherCreateForm>
                 <TeacherExampleLink className={styles.secondaryButton}>Посмотреть пример</TeacherExampleLink>

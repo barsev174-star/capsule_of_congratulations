@@ -1,12 +1,12 @@
 import type { FaqItem } from "@/app/_home/faq-section";
 
-/* Единая демо-история страницы: открытка Анне Сергеевне ко Всемирному дню учителя,
+/* Единая демо-история страницы: открытка Анне Сергеевне ко Дню учителя,
    20 поздравлений и 4 фотографии от учеников, родителей и выпускников. */
 export const teacherDemoStory = {
   recipient: "Анна Сергеевна",
   recipientDative: "Анне Сергеевне",
   recipientGenitive: "Анны Сергеевны",
-  occasion: "Всемирный день учителя",
+  occasion: "День учителя",
   stats: "20 поздравлений · 4 фото"
 } as const;
 
@@ -25,13 +25,61 @@ export const teacherCardContents = [
   { title: "Цельное оформление", text: "Всё становится одной открыткой, а не списком сообщений в чате." }
 ] as const;
 
-/* Сезонная заметка в hero: сейчас — к 1 сентября. Чтобы позже перейти на День учителя,
-   достаточно заменить значения этого объекта, не трогая разметку секции. */
-export const teacherHeroNote = {
+export type TeacherHeroNote = {
+  title: string;
+  text: string;
+  markers: readonly string[];
+};
+
+const septemberHeroNote: TeacherHeroNote = {
   title: "Успейте к 1 сентября",
   text: "Создайте открытку сейчас, отправьте одну ссылку в чат класса и собирайте пожелания постепенно. Участникам не нужна регистрация, а готовую открытку можно посмотреть заранее.",
   markers: ["День учителя", "Последний звонок", "Выпускной"]
-} as const;
+};
+
+const teacherDayHeroNote: TeacherHeroNote = {
+  title: "Соберите открытку ко Дню учителя",
+  text: "Создайте открытку сейчас, отправьте одну ссылку в чат класса и соберите личные слова к 5 октября. Участникам не нужна регистрация, а готовую открытку можно посмотреть заранее.",
+  markers: ["5 октября", "Последний звонок", "Выпускной"]
+};
+
+const evergreenHeroNote: TeacherHeroNote = {
+  title: "Скажите учителю спасибо всем классом",
+  text: "Создайте открытку сейчас, отправьте одну ссылку в чат класса и собирайте пожелания постепенно. Участникам не нужна регистрация, а готовую открытку можно посмотреть заранее.",
+  markers: ["1 сентября", "День учителя", "Выпускной"]
+};
+
+const teacherLandingTimeZone = "Asia/Yekaterinburg";
+
+const getLocalMonthDay = (date: Date) => {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: teacherLandingTimeZone,
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  if (!month || !day) {
+    throw new Error("Не удалось определить локальную дату сезонного блока");
+  }
+
+  return `${month}-${day}`;
+};
+
+export const getTeacherHeroNote = (date = new Date()): TeacherHeroNote => {
+  const monthDay = getLocalMonthDay(date);
+
+  if (monthDay >= "07-01" && monthDay <= "09-01") {
+    return septemberHeroNote;
+  }
+
+  if (monthDay >= "09-02" && monthDay <= "10-05") {
+    return teacherDayHeroNote;
+  }
+
+  return evergreenHeroNote;
+};
 
 export const teacherOccasionScenarios = [
   { title: "1 сентября", text: "Пожелания учителю и классному руководителю к началу учебного года." },
