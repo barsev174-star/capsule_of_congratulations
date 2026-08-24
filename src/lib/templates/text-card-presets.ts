@@ -5,6 +5,8 @@ export const universalTextCardPresetIds = [
   "quality-pill-export",
   "quality-plaque-artwork",
   "quality-plaque-export-artwork",
+  "quality-doodle-poster",
+  "quality-doodle-export",
   "quote-panel",
   "quote-panel-compact",
   "quote-panel-artwork"
@@ -20,6 +22,8 @@ export type UniversalTextCardPreset = {
   rendering: "surface" | "artwork";
   renderLeadingQuote: boolean;
   exportSlices?: { top: number; right: number; bottom: number; left: number };
+  exportDecorCrop?: NormalizedRect;
+  exportDecorArea?: NormalizedRect;
 };
 
 export const universalTextCardPresets: Readonly<Record<UniversalTextCardPresetId, UniversalTextCardPreset>> = {
@@ -59,6 +63,24 @@ export const universalTextCardPresets: Readonly<Record<UniversalTextCardPresetId
     rendering: "artwork",
     renderLeadingQuote: false
   },
+  "quality-doodle-poster": {
+    id: "quality-doodle-poster",
+    label: "Высокая карточка качества с рисунком",
+    description: "Бумажная карточка 480 × 330: рисунок занимает верхнюю часть, качество центрируется в нижней.",
+    source: { width: 480, height: 330 },
+    textArea: { x: 0.1, y: 0.57, width: 0.8, height: 0.27 },
+    rendering: "artwork",
+    renderLeadingQuote: false
+  },
+  "quality-doodle-export": {
+    id: "quality-doodle-export",
+    label: "Горизонтальная карточка качества с рисунком",
+    description: "Бумажная карточка 720 × 180: рисунок слева, качество центрируется справа.",
+    source: { width: 720, height: 180 },
+    textArea: { x: 0.24, y: 0.16, width: 0.68, height: 0.68 },
+    rendering: "artwork",
+    renderLeadingQuote: false
+  },
   "quote-panel": {
     id: "quote-panel",
     label: "Карточка цитаты",
@@ -85,7 +107,9 @@ export const universalTextCardPresets: Readonly<Record<UniversalTextCardPresetId
     textArea: { x: 0.23, y: 0.27, width: 0.69, height: 0.64 },
     rendering: "artwork",
     renderLeadingQuote: false,
-    exportSlices: { top: 0.38, right: 0.2, bottom: 0.14, left: 0.28 }
+    exportSlices: { top: 0.38, right: 0.2, bottom: 0.14, left: 0.28 },
+    exportDecorCrop: { x: 0.04, y: 0.42, width: 0.2, height: 0.28 },
+    exportDecorArea: { x: 0.055, y: 0.24, width: 0.16, height: 0.52 }
   }
 };
 

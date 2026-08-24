@@ -8,10 +8,11 @@ import {
 } from "@/lib/templates/fixtures";
 
 describe("universal-v1 fixtures", () => {
-  it("содержит общие состояния и тематический fixture школьного классического", () => {
+  it("содержит общие состояния и тематические fixtures педагога и воспитателя", () => {
     expect(Object.keys(universalTemplateFixtures)).toEqual([
       "full-card-default",
       "teacher-classic",
+      "kindergarten-demo",
       "text-stress",
       "minimal",
       "public-full",
@@ -22,6 +23,19 @@ describe("universal-v1 fixtures", () => {
     Object.values(universalTemplateFixtures).forEach((fixture) => {
       expect(validateUniversalTemplateFixture(fixture)).toEqual([]);
     });
+  });
+
+  it("фиксирует демонстрацию воспитателю с двумя фото и отдельными тремя моментами", () => {
+    const fixture = getUniversalTemplateFixture("kindergarten-demo");
+
+    expect(fixture.recipientName).toBe("Елизавета Степановна");
+    expect(fixture.contributions).toHaveLength(15);
+    expect(fixture.photos.slice(0, 2).every((photo) => photo.width > photo.height)).toBe(true);
+    expect(fixture.memoryPhotoIds).toEqual([
+      "kindergarten-photo-create-together",
+      "kindergarten-photo-small-discoveries",
+      "kindergarten-photo-friendly-group"
+    ]);
   });
 
   it("фиксирует утверждённые граничные значения 45/100/500", () => {

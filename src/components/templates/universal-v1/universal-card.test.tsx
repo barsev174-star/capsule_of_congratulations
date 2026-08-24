@@ -148,6 +148,23 @@ describe("UniversalTemplateCard", () => {
     expect(container).not.toHaveTextContent("Собрано из поздравлений");
   });
 
+  it("renders a single dedicated mobile image for an adaptive-frame underlay", () => {
+    const mobileProfile = structuredClone(profile);
+    mobileProfile.assets.sections.messages = {
+      ...mobileProfile.assets.sections.messages,
+      mobileAsset: { src: "/templates/test/messages-mobile.webp", width: 600, height: 1000 }
+    };
+    const model = buildUniversalFixtureViewModel("full-card-default", { templateId: mobileProfile.id });
+    const { container } = render(<UniversalTemplateCard profile={mobileProfile} model={model} viewport="mobile" />);
+    const underlay = container.querySelector('[data-universal-block="messages"] > [data-underlay-preset="adaptive-frame"]');
+    const mobileImage = underlay?.querySelector<HTMLImageElement>('[data-underlay-variant="mobile"]');
+
+    expect(underlay).toHaveAttribute("data-has-mobile-asset", "true");
+    expect(underlay?.querySelector('[data-underlay-variant="desktop"] [data-underlay-layer="standard"]')).toBeInTheDocument();
+    expect(mobileImage).toHaveAttribute("src", "/templates/test/messages-mobile.webp");
+    expect(mobileImage).toHaveStyle({ objectFit: "fill" });
+  });
+
   it("keeps overflowing decor attached to its semantic section", () => {
     const overflowProfile = structuredClone(profile);
     overflowProfile.assets.decor[0] = {

@@ -4,6 +4,7 @@ import { createTemplateStudioProfile } from "@/lib/templates/studio";
 import { buildUniversalFixtureViewModel } from "@/lib/templates/view-model";
 import { school_classicProfile } from "@/templates/school-classic/profile";
 import { school_scrapbookProfile } from "@/templates/school-scrapbook/profile";
+import { kindergarten_doodlesProfile } from "@/templates/kindergarten-doodles/profile";
 import { UniversalTemplateExportCard, universalExportFormats } from "./universal-export-card";
 
 const profile = createTemplateStudioProfile("universal-export-test");
@@ -134,6 +135,21 @@ describe("UniversalTemplateExportCard", () => {
 
     expect(container.querySelector('[data-universal-export-block="memories"]')).toBeInTheDocument();
     expect(container.querySelectorAll("[data-export-photo]")).toHaveLength(3);
+  });
+
+  it.each(["story", "post", "a4"] as const)("keeps quote drawings, the footer surface and saved decor in the kindergarten %s export", (format) => {
+    const model = buildUniversalFixtureViewModel("kindergarten-demo", { templateId: kindergarten_doodlesProfile.id });
+    const { container } = render(<UniversalTemplateExportCard profile={kindergarten_doodlesProfile} model={model} format={format} />);
+    const quoteDecors = Array.from(container.querySelectorAll<HTMLImageElement>("[data-export-quote-decor]"));
+    const heroDecor = kindergarten_doodlesProfile.assets.decor.filter(({ anchor, visibleOn }) => anchor === "hero" && visibleOn?.includes("export"));
+
+    expect(quoteDecors).toHaveLength(format === "story" ? 2 : 3);
+    expect(quoteDecors.every(({ src }) => src.includes("quote-card-") && src.includes("crop="))).toBe(true);
+    expect(container.querySelector('[data-universal-export-block="closing"] [data-export-asset-underlay="horizontal-slice"]'))
+      .toHaveAttribute("src", expect.stringContaining("section-closing-desktop-v7.webp"));
+    for (const layer of heroDecor) {
+      expect(container.querySelector(`[data-decor-layer="${layer.id}"]`)).toBeInTheDocument();
+    }
   });
 
   it.each(["story", "post", "a4"] as const)("keeps the colorful school counters in the %s export", (format) => {

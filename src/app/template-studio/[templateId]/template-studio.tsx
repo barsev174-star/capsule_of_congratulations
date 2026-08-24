@@ -172,11 +172,11 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
   const [draft, setDraft] = useState(initialDraft);
   const [ready, setReady] = useState(false);
   const [fixtureId, setFixtureId] = useState<UniversalTemplateFixtureId>(initialDraft.profile.demo.fixture);
-  const [scenario, setScenario] = useState<UniversalMessageScenario>("landscape-trio");
+  const [scenario, setScenario] = useState<UniversalMessageScenario>(initialDraft.profile.demo.scenario ?? "landscape-trio");
   const [surface, setSurface] = useState<TemplateStudioSurface>("private");
   const [viewport, setViewport] = useState<TemplateStudioViewport>("desktop");
   const [format, setFormat] = useState<TemplateStudioFormat>("web");
-  const [photoCount, setPhotoCount] = useState<0 | 1 | 2 | 3>(3);
+  const [photoCount, setPhotoCount] = useState<0 | 1 | 2 | 3>(initialDraft.profile.demo.photoCount ?? 3);
   const [longName, setLongName] = useState(false);
   const [textMode, setTextMode] = useState<TemplateStudioTextMode>("default");
   const [optionalBlocks, setOptionalBlocks] = useState(true);

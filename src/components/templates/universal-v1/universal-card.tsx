@@ -203,6 +203,7 @@ function UniversalPhoto({
       className={`${styles.photoFrame} ${className}`.trim()}
       style={{ aspectRatio: framePreset.aspectRatio }}
       data-photo-frame
+      data-caption-layout={frame.caption.layout ?? "standard"}
     >
       {frame.base ? <Image className={styles.frameBase} src={frame.base.src} alt="" fill sizes="40vw" aria-hidden="true" /> : null}
       {onOpen ? (
@@ -227,6 +228,7 @@ function UniversalPhoto({
         data-text-preset="photo-caption"
         data-max-lines={universalTextCapacityPresets.photoCaption.maxLines}
         data-photo-caption-area
+        data-caption-paper={frame.caption.paper}
         title={photo.caption}
       >
         <span>{photo.caption}</span>
@@ -315,6 +317,7 @@ function AllMessagesDialog({
     "--uv1-text": profile.colors.text,
     "--uv1-muted": profile.colors.muted,
     "--uv1-accent": profile.colors.accent,
+    "--uv1-occasion": profile.colors.occasion ?? profile.colors.accent,
     "--uv1-surface": profile.colors.surface,
     "--uv1-heading-font": profile.typography.heading.family,
     "--uv1-body-font": profile.typography.body.family
@@ -504,7 +507,7 @@ function MessagesBlock({
   return (
     <>
       <div className={styles.sectionHeadingRow} data-has-media={hasMedia ? "true" : "false"}>
-        <h2>Поздравления</h2>
+        <h2>{profile.copy?.messagesTitle ?? "Поздравления"}</h2>
         <button
           type="button"
           className={`${styles.countBadge} ${styles.allMessagesButton}`}
@@ -790,7 +793,7 @@ export function UniversalTemplateCard({
           </SectionSurface>;
 
           if (block === "qualities") return <SectionSurface key={block} id="qualities" profile={profile} viewport={viewport}>
-            <h2>За что тебя ценят</h2><div className={styles.qualitiesGrid} data-motion-stagger>{model.qualities.map((quality, index) => {
+            <h2>{profile.copy?.qualitiesTitle ?? "За что тебя ценят"}</h2><div className={styles.qualitiesGrid} data-motion-stagger>{model.qualities.map((quality, index) => {
               const card = profile.assets.qualityCards[index % Math.max(1, profile.assets.qualityCards.length)];
               const preset = card ? getUniversalTextCardPreset(card.preset) : null;
               const textStyle = preset
@@ -805,7 +808,7 @@ export function UniversalTemplateCard({
           if (block === "memories") return <SectionSurface key={block} id="memories" profile={profile} viewport={viewport}><MemoriesBlock profile={profile} model={model} onPhotoOpen={photoViewerEnabled ? openPhotoViewer : undefined} /></SectionSurface>;
 
           if (block === "quotes") return <SectionSurface key={block} id="quotes" profile={profile} viewport={viewport}>
-            <h2>Лучшие фразы</h2><div className={styles.quotesGrid} data-motion-stagger>{quotes.slice(0, 3).map((quote, index) => {
+            <h2>{profile.copy?.quotesTitle ?? "Лучшие фразы"}</h2><div className={styles.quotesGrid} data-motion-stagger>{quotes.slice(0, 3).map((quote, index) => {
               const card = profile.assets.quoteCards[index % Math.max(1, profile.assets.quoteCards.length)];
               const preset = card ? getUniversalTextCardPreset(card.preset) : null;
               const quoteStyle = {

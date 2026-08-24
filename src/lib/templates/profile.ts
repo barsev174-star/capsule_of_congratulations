@@ -36,6 +36,7 @@ export type UniversalPublicBlockId = (typeof universalPublicBlocks)[number];
 export type UniversalTemplateFixtureId =
   | "full-card-default"
   | "teacher-classic"
+  | "kindergarten-demo"
   | "text-stress"
   | "minimal"
   | "public-full"
@@ -81,6 +82,8 @@ export type UniversalPhotoFrame = {
     align: "left" | "center" | "right";
     fontToken: "body" | "handwritten";
     minScale: number;
+    layout?: "standard" | "expanded";
+    paper?: "yellow-blue" | "mint-coral";
   };
 };
 
@@ -152,6 +155,7 @@ export type TemplateProfile = {
     text: string;
     muted: string;
     accent: string;
+    occasion?: string;
     surface: string;
     surfaces: Partial<Record<UniversalTemplateBlockId, string>>;
   };
@@ -166,6 +170,11 @@ export type TemplateProfile = {
     decor?: readonly TemplateAssetRef[];
   };
   motion?: TemplateMotionProfile;
+  copy?: {
+    qualitiesTitle?: string;
+    messagesTitle?: string;
+    quotesTitle?: string;
+  };
   public: {
     blocks: readonly UniversalPublicBlockId[];
     heroDescription?: string;
@@ -198,6 +207,8 @@ export type TemplateProfile = {
   };
   demo: {
     fixture: UniversalTemplateFixtureId;
+    scenario?: "grid-2" | "carousel-1" | "carousel-2" | "portrait" | "landscape-pair" | "landscape-trio";
+    photoCount?: 0 | 1 | 2 | 3;
   };
 };
 
@@ -216,6 +227,7 @@ const forbiddenKeyPattern = /(?:component|callback|selector|css|html)/i;
 const fixtureIds = new Set<UniversalTemplateFixtureId>([
   "full-card-default",
   "teacher-classic",
+  "kindergarten-demo",
   "text-stress",
   "minimal",
   "public-full",
@@ -375,6 +387,12 @@ const validatePhotoFrame = (
   }
   if (typeof value.caption.minScale !== "number" || value.caption.minScale < 0.5 || value.caption.minScale > 1) {
     issues.push({ path: `${path}.caption.minScale`, message: "Минимальный масштаб подписи должен находиться в диапазоне 0.5…1." });
+  }
+  if (value.caption.layout !== undefined && !["standard", "expanded"].includes(String(value.caption.layout))) {
+    issues.push({ path: `${path}.caption.layout`, message: "Поддерживаются только стандартная и расширенная геометрия подписи." });
+  }
+  if (value.caption.paper !== undefined && !["yellow-blue", "mint-coral"].includes(String(value.caption.paper))) {
+    issues.push({ path: `${path}.caption.paper`, message: "Неизвестный стиль бумажной подписи." });
   }
 };
 
@@ -612,6 +630,7 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
     for (const key of ["page", "text", "muted", "accent", "surface"] as const) {
       validateColor(value.colors[key], `colors.${key}`, issues);
     }
+    if (value.colors.occasion !== undefined) validateColor(value.colors.occasion, "colors.occasion", issues);
     if (!isRecord(value.colors.surfaces)) {
       issues.push({ path: "colors.surfaces", message: "Ожидается карта цветов поверхностей." });
     } else {
@@ -661,6 +680,18 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
       for (const key of ["revealSections", "photoViewer"] as const) {
         if (typeof value.motion[key] !== "boolean") {
           issues.push({ path: "motion." + key, message: "Ожидается логическое значение." });
+        }
+      }
+    }
+  }
+
+  if (value.copy !== undefined) {
+    if (!isRecord(value.copy)) {
+      issues.push({ path: "copy", message: "Текстовые токены должны быть объектом." });
+    } else {
+      for (const key of ["qualitiesTitle", "messagesTitle", "quotesTitle"] as const) {
+        if (value.copy[key] !== undefined && (typeof value.copy[key] !== "string" || String(value.copy[key]).trim().length === 0 || String(value.copy[key]).length > 80)) {
+          issues.push({ path: `copy.${key}`, message: "Заголовок должен содержать от 1 до 80 символов." });
         }
       }
     }
@@ -758,6 +789,14 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
   }
   if (!isRecord(value.demo) || !fixtureIds.has(value.demo.fixture as UniversalTemplateFixtureId)) {
     issues.push({ path: "demo.fixture", message: "Неизвестный общий fixture." });
+  } else {
+    const scenarios = new Set(["grid-2", "carousel-1", "carousel-2", "portrait", "landscape-pair", "landscape-trio"]);
+    if (value.demo.scenario !== undefined && !scenarios.has(String(value.demo.scenario))) {
+      issues.push({ path: "demo.scenario", message: "Неизвестная схема фотографий демонстрации." });
+    }
+    if (value.demo.photoCount !== undefined && (!Number.isInteger(value.demo.photoCount) || Number(value.demo.photoCount) < 0 || Number(value.demo.photoCount) > 3)) {
+      issues.push({ path: "demo.photoCount", message: "Демонстрация поддерживает от 0 до 3 фотографий в поздравлениях." });
+    }
   }
 
   return issues.length > 0

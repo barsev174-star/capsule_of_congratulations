@@ -94,13 +94,8 @@ export function SectionUnderlay({
         borderImageSource: `url("${src}")`,
         borderImageWidth: 1
       } as CSSProperties;
-      return (
-        <span
-          className={className}
-          aria-hidden="true"
-          data-underlay-preset={underlay.preset}
-          style={rootStyle}
-        >
+      const frameLayers = (
+        <>
           <span
             data-underlay-layer="standard"
             style={{
@@ -117,6 +112,29 @@ export function SectionUnderlay({
               borderImageRepeat: "stretch round"
             }}
           />
+        </>
+      );
+      return (
+        <span
+          className={className}
+          aria-hidden="true"
+          data-underlay-preset={underlay.preset}
+          data-has-mobile-asset={mobileSrc ? "true" : undefined}
+          style={rootStyle}
+        >
+          {mobileSrc ? <span data-underlay-variant="desktop">{frameLayers}</span> : frameLayers}
+          {mobileSrc ? <img
+            src={mobileSrc}
+            alt=""
+            data-underlay-variant="mobile"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "fill"
+            }}
+          /> : null}
         </span>
       );
     }

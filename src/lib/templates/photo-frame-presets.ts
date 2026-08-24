@@ -2,7 +2,9 @@ import type { NormalizedRect } from "@/lib/templates/profile";
 
 export const universalPhotoFramePresetIds = [
   "portrait-polaroid",
-  "landscape-polaroid"
+  "landscape-polaroid",
+  "portrait-caption-paper",
+  "landscape-caption-paper"
 ] as const;
 
 export type UniversalPhotoFramePresetId = (typeof universalPhotoFramePresetIds)[number];
@@ -35,6 +37,24 @@ export const universalPhotoFramePresets: Readonly<Record<UniversalPhotoFramePres
     aspectRatio: 1122 / 802,
     aperture: { x: 0.08, y: 0.07, width: 0.84, height: 0.7 },
     captionArea: { x: 0.08, y: 0.8, width: 0.84, height: 0.14 }
+  },
+  "portrait-caption-paper": {
+    id: "portrait-caption-paper",
+    label: "Вертикальное фото с бумажной подписью",
+    description: "Фото без внешней рамки; подпись размещается на отдельном цветном клочке бумаги.",
+    source: { width: 802, height: 1122 },
+    aspectRatio: 802 / 1122,
+    aperture: { x: 0.025, y: 0.025, width: 0.95, height: 0.79 },
+    captionArea: { x: 0.075, y: 0.755, width: 0.85, height: 0.22 }
+  },
+  "landscape-caption-paper": {
+    id: "landscape-caption-paper",
+    label: "Горизонтальное фото с бумажной подписью",
+    description: "Широкое фото без внешней рамки; подпись размещается на отдельном цветном клочке бумаги.",
+    source: { width: 1122, height: 802 },
+    aspectRatio: 1122 / 802,
+    aperture: { x: 0.025, y: 0.03, width: 0.95, height: 0.74 },
+    captionArea: { x: 0.075, y: 0.72, width: 0.85, height: 0.25 }
   }
 };
 

@@ -2,12 +2,12 @@ import { defineTemplate, defineTextCard } from "@/lib/templates/profile";
 import { defineSectionUnderlay } from "@/lib/templates/section-underlays";
 
 const asset = (src: `/templates/school-classic/${string}`, width: number, height: number) => ({ src, width, height });
-const frame = (preset: "portrait-polaroid" | "landscape-polaroid", base: `/templates/school-classic/${string}`, overlay: `/templates/school-classic/${string}`, width: number, height: number) => ({
+const frame = (preset: "portrait-polaroid" | "landscape-polaroid", base: `/templates/school-classic/${string}`, overlay: `/templates/school-classic/${string}`, width: number, height: number, layout?: "standard" | "expanded") => ({
   preset,
   base: asset(base, width, height),
   overlay: asset(overlay, width, height),
   fit: "cover" as const,
-  caption: { maxChars: 45 as const, maxLines: 2 as const, align: "center" as const, fontToken: "handwritten" as const, minScale: 0.7 }
+  caption: { maxChars: 45 as const, maxLines: 2 as const, align: "center" as const, fontToken: "handwritten" as const, minScale: 0.7, ...(layout ? { layout } : {}) }
 });
 
 export const school_classicProfile = defineTemplate({
@@ -59,7 +59,7 @@ export const school_classicProfile = defineTemplate({
     photoFrames: {
       messagePortrait: frame("portrait-polaroid", "/templates/school-classic/photo-frame-portrait-v2-base.webp", "/templates/school-classic/photo-frame-portrait-v2-overlay.webp", 802, 1122),
       messageLandscape: frame("landscape-polaroid", "/templates/school-classic/photo-frame-landscape-v2-base.webp", "/templates/school-classic/photo-frame-landscape-v2-overlay.webp", 1122, 802),
-      memory: frame("landscape-polaroid", "/templates/school-classic/photo-frame-landscape-v2-base.webp", "/templates/school-classic/photo-frame-landscape-v2-overlay.webp", 1122, 802)
+      memory: frame("landscape-polaroid", "/templates/school-classic/photo-frame-landscape-v2-base.webp", "/templates/school-classic/photo-frame-landscape-v2-overlay.webp", 1122, 802, "expanded")
     },
     decor: [
       { id: "hero-left-classic-desktop", asset: asset("/templates/school-classic/decor-hero-left-v4.webp", 720, 900), anchor: "hero", rect: { x: -0.09, y: 0.09, width: 0.35, height: 0.9 }, opacity: 1, rotation: -7, visibleOn: ["desktop"] },

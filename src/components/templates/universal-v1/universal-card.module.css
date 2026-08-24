@@ -50,10 +50,13 @@
 }
 
 .sectionUnderlay [data-underlay-layer="mobile-variable-frame"] { display: none; }
-.sectionUnderlay [data-underlay-variant="mobile"] { display: none; }
+.sectionUnderlay > [data-underlay-variant="mobile"],
+.messageCardUnderlay > [data-underlay-variant="mobile"] { display: none; }
 
-.page[data-viewport="mobile"] .sectionUnderlay[data-has-mobile-asset="true"] > [data-underlay-variant="desktop"] { display: none; }
-.page[data-viewport="mobile"] .sectionUnderlay[data-has-mobile-asset="true"] > [data-underlay-variant="mobile"] { display: block; }
+.page[data-viewport="mobile"] [data-underlay-preset][data-has-mobile-asset="true"] > [data-underlay-variant="desktop"] { display: none; }
+.page[data-viewport="mobile"] [data-underlay-preset][data-has-mobile-asset="true"] > [data-underlay-variant="mobile"] { display: block; }
+.dialogBackdrop[data-viewport="mobile"] [data-underlay-preset][data-has-mobile-asset="true"] > [data-underlay-variant="desktop"] { display: none; }
+.dialogBackdrop[data-viewport="mobile"] [data-underlay-preset][data-has-mobile-asset="true"] > [data-underlay-variant="mobile"] { display: block; }
 
 .shell {
   position: relative;
@@ -257,6 +260,10 @@
   text-transform: uppercase;
 }
 
+.heroOccasion { color: var(--uv1-occasion, var(--uv1-accent)); }
+
+.page[data-template-id="kindergarten-doodles"] .heroOccasion { color: #3f7f95; }
+
 .eventDate {
   margin-top: 8px;
   color: var(--uv1-muted);
@@ -378,6 +385,14 @@
 .summary .sectionContent { width: min(100%, var(--uv1-summary-content-max-width)); margin-inline: auto; padding: max(var(--uv1-summary-padding-block), var(--uv1-safe-top)) max(var(--uv1-summary-padding-inline), var(--uv1-safe-right)) max(var(--uv1-summary-padding-block), var(--uv1-safe-bottom)) max(var(--uv1-summary-padding-inline), var(--uv1-safe-left)); }
 .summaryAuthor { margin: 14px 0 0; color: var(--uv1-muted); font-size: 14px; font-weight: 700; text-align: right; }
 
+.page[data-template-id="kindergarten-doodles"] .summary {
+  width: 100%;
+  min-height: 360px;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+}
+
 .qualities .sectionContent { padding: max(var(--uv1-qualities-padding-top), var(--uv1-safe-top)) max(var(--uv1-qualities-padding-inline), var(--uv1-safe-right)) max(var(--uv1-qualities-padding-bottom), var(--uv1-safe-bottom)) max(var(--uv1-qualities-padding-inline), var(--uv1-safe-left)); text-align: center; }
 .qualitiesGrid {
   display: grid;
@@ -441,10 +456,13 @@
   box-shadow: none;
 }
 
+.page[data-template-id="kindergarten-doodles"] .qualitiesGrid { gap: 14px; }
+.page[data-template-id="kindergarten-doodles"] .qualityCard { min-height: 104px; }
+
 .sectionHeadingRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 18px;
 }
 
@@ -452,36 +470,14 @@
   padding: max(var(--uv1-messages-padding-block), var(--uv1-safe-top)) max(var(--uv1-messages-padding-inline), var(--uv1-safe-right)) max(var(--uv1-messages-padding-block), var(--uv1-safe-bottom)) max(var(--uv1-messages-padding-inline), var(--uv1-safe-left));
 }
 
-.sectionHeadingRow h2 { margin-bottom: 0; }
+.sectionHeadingRow[data-has-media="true"] {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.72fr);
+}
+.sectionHeadingRow h2 { grid-column: 2; margin-bottom: 0; text-align: center; }
+.sectionHeadingRow .countBadge { grid-column: 3; justify-self: end; }
+.sectionHeadingRow[data-has-media="true"] h2 { grid-column: 1; }
+.sectionHeadingRow[data-has-media="true"] .countBadge { grid-column: 2; }
 .countBadge { flex: 0 0 auto; color: var(--uv1-text); }
-
-.page[data-template-id="school-scrapbook"][data-viewport="desktop"] .messages .sectionHeadingRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.72fr);
-}
-
-.page[data-template-id="school-scrapbook"][data-viewport="desktop"] .messages .sectionHeadingRow h2 {
-  text-align: center;
-}
-
-.page[data-template-id="school-scrapbook"][data-viewport="desktop"] .messages .sectionHeadingRow .countBadge {
-  justify-self: end;
-}
-
-.page[data-template-id="school-classic"][data-viewport="desktop"] .messages .sectionHeadingRow[data-has-media="true"] {
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.72fr);
-}
-
-.page[data-template-id="school-classic"][data-viewport="desktop"] .messages .sectionHeadingRow[data-has-media="false"] {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-}
-
-.page[data-template-id="school-classic"][data-viewport="desktop"] .messages .sectionHeadingRow[data-has-media="true"] h2 { text-align: center; }
-.page[data-template-id="school-classic"][data-viewport="desktop"] .messages .sectionHeadingRow[data-has-media="true"] .countBadge { justify-self: end; }
-.page[data-template-id="school-classic"][data-viewport="desktop"] .messages .sectionHeadingRow[data-has-media="false"] h2 { grid-column: 2; text-align: center; }
-.page[data-template-id="school-classic"][data-viewport="desktop"] .messages .sectionHeadingRow[data-has-media="false"] .countBadge { grid-column: 3; justify-self: end; }
 
 .messagesComposition {
   display: grid;
@@ -574,6 +570,56 @@
 }
 
 .messageCardUnderlay { z-index: 0; }
+
+.page[data-template-id="kindergarten-doodles"] .messageCard,
+.dialogBackdrop[data-template-id="kindergarten-doodles"] .messageCard {
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.page[data-template-id="kindergarten-doodles"] .messageCardUnderlay,
+.dialogBackdrop[data-template-id="kindergarten-doodles"] .messageCardUnderlay {
+  transform: none;
+}
+
+.page[data-template-id="kindergarten-doodles"] .messagesComposition[data-has-media="true"] .messageGrid {
+  overflow-x: clip;
+  scrollbar-color: #75bfe5 transparent;
+}
+
+.page[data-template-id="kindergarten-doodles"] .messagesComposition[data-has-media="true"] .messageGrid::-webkit-scrollbar {
+  width: 8px;
+  height: 0;
+}
+
+.page[data-template-id="kindergarten-doodles"] .messagesComposition[data-has-media="true"] .messageGrid::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: #75bfe5;
+  background-clip: padding-box;
+}
+
+.page[data-template-id="kindergarten-doodles"] .messages .allMessagesButton {
+  border-color: #76a9c0;
+  color: #315e76;
+  background: #e8f3f6;
+  box-shadow:
+    0 0 0 1px rgba(49, 94, 118, 0.06),
+    0 2px 5px rgba(49, 94, 118, 0.1);
+}
+
+.page[data-template-id="kindergarten-doodles"] .messages .allMessagesButton:hover {
+  background: #d9ebf0;
+  box-shadow:
+    0 0 0 1px rgba(49, 94, 118, 0.08),
+    0 5px 13px rgba(49, 94, 118, 0.14);
+}
+
+.page[data-template-id="kindergarten-doodles"] .messages .allMessagesButton strong {
+  color: #315e76;
+}
 
 .page[data-template-id="school-scrapbook"] .messageCard,
 .dialogBackdrop[data-template-id="school-scrapbook"] .messageCard {
@@ -879,7 +925,7 @@
   row-gap: 18px;
 }
 .page[data-template-id="school-classic"] .memoriesPhotos { column-gap: 10px; row-gap: 14px; }
-.page[data-template-id="school-classic"] .memoriesPhotos .photoCaption {
+.photoFrame[data-caption-layout="expanded"] .photoCaption {
   top: 76.5% !important;
   height: 22% !important;
   padding-inline: 2.5%;
@@ -888,6 +934,31 @@
 .memoriesIntro { grid-area: intro; align-self: start; padding-inline: 12px; text-align: left; }
 .memoriesIntro h2 { margin-bottom: 10px; font-size: clamp(24px, 3vw, var(--uv1-section-heading-max)); }
 .memoriesIntro p { margin: 0; color: var(--uv1-muted); font-size: clamp(16px, 1.7vw, 18px); line-height: 1.45; }
+.page[data-template-id="kindergarten-doodles"] .memoriesIntro {
+  position: relative;
+  margin: 4px 8px 0;
+  padding: 18px 22px 20px;
+  clip-path: polygon(1% 5%, 24% 1%, 49% 4%, 74% 0, 99% 5%, 97% 96%, 70% 99%, 43% 96%, 18% 100%, 2% 94%);
+  border-radius: 0;
+  background-color: #fff0bd;
+  background-image: radial-gradient(circle at 8px 8px, rgba(117, 191, 229, 0.18) 1.5px, transparent 1.7px);
+  background-size: 24px 24px;
+  box-shadow: none;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.13));
+  rotate: -0.8deg;
+}
+.page[data-template-id="kindergarten-doodles"] .memoriesIntro::before {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 72px;
+  height: 20px;
+  border-radius: 3px;
+  background: rgba(244, 200, 74, 0.72);
+  content: "";
+  rotate: 1.8deg;
+  translate: -50% 0;
+}
 .memoryPrimary { grid-area: primary; align-self: end; }
 .memorySecondary { grid-area: secondary; }
 .memoryTertiary { grid-area: tertiary; }
@@ -929,6 +1000,69 @@
   padding-inline: 2.5%;
 }
 
+.page[data-template-id="kindergarten-doodles"] .photoFrame {
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.photoCaption[data-caption-paper] {
+  overflow: visible;
+  background: transparent;
+  filter: none;
+}
+
+.photoCaption[data-caption-paper]::after {
+  position: absolute;
+  z-index: 0;
+  inset: 5% 0 0;
+  clip-path: polygon(2% 10%, 23% 2%, 49% 8%, 76% 0, 98% 9%, 96% 91%, 72% 98%, 45% 92%, 20% 100%, 3% 88%);
+  background-color: #f6e4a5;
+  background-image: radial-gradient(circle at 7px 7px, rgba(63, 127, 149, 0.15) 1.3px, transparent 1.5px);
+  background-size: 22px 22px;
+  content: "";
+  filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.14));
+}
+
+.photoCaption[data-caption-paper="mint-coral"]::after {
+  background-color: #dceee2;
+  background-image: radial-gradient(circle at 7px 7px, rgba(63, 127, 149, 0.14) 1.3px, transparent 1.5px);
+}
+
+.photoCaption[data-caption-paper]::before {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 50%;
+  width: 30%;
+  height: 19%;
+  clip-path: polygon(2% 13%, 96% 0, 100% 88%, 4% 100%);
+  background: rgba(117, 191, 229, 0.8);
+  content: "";
+  rotate: -2deg;
+  translate: -50% 0;
+}
+
+.photoCaption[data-caption-paper="mint-coral"]::before {
+  top: -4%;
+  width: 34%;
+  height: 25%;
+  background: rgba(239, 118, 101, 0.72);
+  rotate: 1.5deg;
+}
+
+.photoCaption[data-caption-paper] > span {
+  position: relative;
+  z-index: 3;
+}
+
+.photoCaption[data-caption-paper="mint-coral"] {
+  top: 73.5% !important;
+  height: 25% !important;
+  padding-inline: 4%;
+}
+
 .page[data-template-id="school-scrapbook"] .handwrittenCaption {
   line-height: 0.86;
 }
@@ -941,8 +1075,61 @@
 .closingAction:active { scale: 0.96; }
 .closingActionPrimary { border: 1px solid #e9652f; color: #fff; background: #e9652f; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); }
 .closingActionPrimary:hover { border-color: #df5f2e; background: #df5f2e; }
+.closingActionPrimary:active { border-color: #c7532a; background: #c7532a; }
 .closingActionSecondary { border: 1px solid #e9652f; color: #e9652f; background: #fff; }
 .closingActionSecondary:hover { background: #f7f8fa; }
+
+.page[data-template-id="kindergarten-doodles"] .closingActionPrimary {
+  border-color: #3f7f95;
+  background: #3f7f95;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 8px 18px rgba(0, 0, 0, 0.16);
+}
+
+.page[data-template-id="kindergarten-doodles"] .closingActionPrimary:hover {
+  border-color: #356e83;
+  background: #356e83;
+}
+
+.page[data-template-id="kindergarten-doodles"] .closingActionPrimary:active {
+  border-color: #2c5c6e;
+  background: #2c5c6e;
+}
+
+.page[data-template-id="kindergarten-doodles"] .closingActionSecondary {
+  border-color: #3f7f95;
+  color: #3f7f95;
+  background: rgba(255, 248, 237, 0.96);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.page[data-template-id="kindergarten-doodles"] .closingActionSecondary:hover {
+  background: #e8f2f5;
+}
+
+.page[data-template-id="kindergarten-doodles"] .closingSection .sectionContent {
+  min-height: 185px;
+  padding-block: 20px;
+}
+
+.page[data-template-id="kindergarten-doodles"][data-viewport="desktop"] .closingSection .sectionContent {
+  padding-inline: clamp(250px, 28vw, 330px);
+}
+
+.page[data-template-id="kindergarten-doodles"][data-viewport="mobile"] .closingSection .sectionContent {
+  padding-inline: 18px;
+}
+
+@media (min-width: 641px) {
+  .page[data-template-id="kindergarten-doodles"][data-viewport="auto"] .closingSection .sectionContent {
+    padding-inline: clamp(250px, 28vw, 330px);
+  }
+}
+
+@media (max-width: 640px) {
+  .page[data-template-id="kindergarten-doodles"][data-viewport="auto"] .closingSection .sectionContent {
+    padding-inline: 18px;
+  }
+}
 .page[data-template-id="school-scrapbook"] .closingActionPrimary {
   border-color: var(--uv1-accent);
   background: var(--uv1-accent);
@@ -1213,9 +1400,9 @@
 .page[data-viewport="mobile"] .messages > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"],
 .page[data-viewport="mobile"] .memories > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"],
 .page[data-viewport="mobile"] .closingSection > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"] { display: block; }
-.page[data-viewport="mobile"] .messages .sectionHeadingRow { align-items: flex-start; flex-direction: column; gap: 10px; }
-.page[data-template-id="school-classic"][data-viewport="mobile"] .messages .sectionHeadingRow { align-items: center; }
-.page[data-template-id="school-classic"][data-viewport="mobile"] .messages .sectionHeadingRow h2 { width: 100%; text-align: center; }
+.page[data-viewport="mobile"] .messages .sectionHeadingRow { grid-template-columns: 1fr; justify-items: center; gap: 10px; }
+.page[data-viewport="mobile"] .messages .sectionHeadingRow h2,
+.page[data-viewport="mobile"] .messages .sectionHeadingRow .countBadge { grid-column: 1; justify-self: center; }
 .page[data-viewport="mobile"] .messageCard { height: auto; min-height: 200px; }
 .page[data-viewport="mobile"] .qualitiesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .page[data-viewport="mobile"] .qualityCard:last-child {
@@ -1233,6 +1420,11 @@
 .page[data-viewport="mobile"] .messagesComposition[data-media-distribution] .messagePhotoGrid > .photoFrame { width: 100%; max-height: none; transform: none; justify-self: stretch; }
 .page[data-viewport="mobile"] .mobileAllMessagesButton { display: inline-flex; align-items: center; gap: 0.3em; }
 .page[data-viewport="mobile"] .memoriesPhotos { grid-template-columns: 1fr; grid-template-areas: "intro" "primary" "secondary" "tertiary"; }
+.page[data-template-id="kindergarten-doodles"][data-viewport="mobile"] .memoriesPhotos > .photoFrame {
+  width: calc(100% + 20px);
+  margin-inline: -10px;
+  justify-self: center;
+}
 .page[data-viewport="mobile"] .memoriesIntro { padding-inline: 0; text-align: center; }
 .page[data-template-id="school-classic"][data-viewport="mobile"] .memoriesIntro {
   padding: 12px 12px 16px;
@@ -1243,8 +1435,10 @@
 .page[data-viewport="mobile"] .dialogMessages { grid-template-columns: 1fr; }
 
 @media (max-width: 640px) {
-  .page[data-viewport="auto"] .sectionUnderlay[data-has-mobile-asset="true"] > [data-underlay-variant="desktop"] { display: none; }
-  .page[data-viewport="auto"] .sectionUnderlay[data-has-mobile-asset="true"] > [data-underlay-variant="mobile"] { display: block; }
+  .page[data-viewport="auto"] [data-underlay-preset][data-has-mobile-asset="true"] > [data-underlay-variant="desktop"] { display: none; }
+  .page[data-viewport="auto"] [data-underlay-preset][data-has-mobile-asset="true"] > [data-underlay-variant="mobile"] { display: block; }
+  .dialogBackdrop[data-viewport="auto"] [data-underlay-preset][data-has-mobile-asset="true"] > [data-underlay-variant="desktop"] { display: none; }
+  .dialogBackdrop[data-viewport="auto"] [data-underlay-preset][data-has-mobile-asset="true"] > [data-underlay-variant="mobile"] { display: block; }
   .page[data-viewport="auto"] .decorLayer[data-visible-on]:not([data-visible-on*="mobile"]) { display: none; }
   .page[data-viewport="auto"] .shell { width: min(100% - 20px, 520px); padding: 18px 0; }
   .page[data-viewport="auto"] .section,
@@ -1259,9 +1453,9 @@
   .page[data-viewport="auto"] .messages > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"],
   .page[data-viewport="auto"] .memories > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"],
   .page[data-viewport="auto"] .closingSection > .sectionUnderlay [data-underlay-layer="mobile-variable-frame"] { display: block; }
-  .page[data-viewport="auto"] .messages .sectionHeadingRow { align-items: flex-start; flex-direction: column; gap: 10px; }
-  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow { align-items: center; }
-  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow h2 { width: 100%; text-align: center; }
+.page[data-viewport="auto"] .messages .sectionHeadingRow { grid-template-columns: 1fr; justify-items: center; gap: 10px; }
+.page[data-viewport="auto"] .messages .sectionHeadingRow h2,
+.page[data-viewport="auto"] .messages .sectionHeadingRow .countBadge { grid-column: 1; justify-self: center; }
   .page[data-viewport="auto"] .messageCard { height: auto; min-height: 200px; }
   .page[data-viewport="auto"] .qualitiesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .page[data-viewport="auto"] .qualityCard:last-child {
@@ -1279,6 +1473,11 @@
   .page[data-viewport="auto"] .messagesComposition[data-media-distribution] .messagePhotoGrid > .photoFrame { width: 100%; max-height: none; transform: none; justify-self: stretch; }
   .page[data-viewport="auto"] .mobileAllMessagesButton { display: inline-flex; align-items: center; gap: 0.3em; }
   .page[data-viewport="auto"] .memoriesPhotos { grid-template-columns: 1fr; grid-template-areas: "intro" "primary" "secondary" "tertiary"; }
+  .page[data-template-id="kindergarten-doodles"][data-viewport="auto"] .memoriesPhotos > .photoFrame {
+    width: calc(100% + 20px);
+    margin-inline: -10px;
+    justify-self: center;
+  }
   .page[data-viewport="auto"] .memoriesIntro { padding-inline: 0; text-align: center; }
   .page[data-template-id="school-classic"][data-viewport="auto"] .memoriesIntro {
     padding: 12px 12px 16px;
@@ -1296,18 +1495,12 @@
 }
 
 @media (min-width: 641px) {
-  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="true"] {
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.72fr);
-  }
-  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="false"] {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-  }
-  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="true"] h2 { width: auto; text-align: center; }
-  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="true"] .countBadge { justify-self: end; }
-  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="false"] h2 { grid-column: 2; width: auto; text-align: center; }
-  .page[data-template-id="school-classic"][data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="false"] .countBadge { grid-column: 3; justify-self: end; }
+  .page[data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="true"] { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.72fr); }
+  .page[data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="false"] { grid-template-columns: 1fr auto 1fr; }
+  .page[data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="true"] h2 { grid-column: 1; }
+  .page[data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="true"] .countBadge { grid-column: 2; justify-self: end; }
+  .page[data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="false"] h2 { grid-column: 2; }
+  .page[data-viewport="auto"] .messages .sectionHeadingRow[data-has-media="false"] .countBadge { grid-column: 3; justify-self: end; }
   .page[data-viewport="auto"] .decorLayer[data-visible-on]:not([data-visible-on*="desktop"]) {
     display: none;
   }

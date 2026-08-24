@@ -257,17 +257,27 @@ function ExportPhoto({
     photo.caption,
     frame.caption.minScale
   );
+  const paperCaption = frame.caption.paper;
+  const paperColor = paperCaption === "mint-coral" ? "#dceee2" : "#f6e4a5";
+  const tapeColor = paperCaption === "mint-coral" ? "rgba(239,118,101,.72)" : "rgba(117,191,229,.8)";
   const alignItems = frame.caption.align === "left" ? "flex-start" : frame.caption.align === "right" ? "flex-end" : "center";
-  const captionAreaStyle = width <= 360
-    ? { ...rectStyle(framePreset.captionArea), top: "78%", height: "18%" }
-    : rectStyle(framePreset.captionArea);
+  const captionAreaStyle = paperCaption === "mint-coral"
+    ? { ...rectStyle(framePreset.captionArea), top: "73.5%", height: "25%" }
+    : frame.caption.layout === "expanded"
+      ? { ...rectStyle(framePreset.captionArea), top: "76.5%", height: "22%" }
+    : width <= 360
+      ? { ...rectStyle(framePreset.captionArea), top: "78%", height: "18%" }
+      : rectStyle(framePreset.captionArea);
   return <div data-export-photo={photo.id} data-export-photo-rotation={rotation} style={{ position: "relative", display: "flex", width, height, flexShrink: 0, overflow: "hidden", transform: `rotate(${rotation}deg)`, boxShadow: "0 8px 18px rgba(0,0,0,.16)" }}>
     {frame.base ? <img src={resolveAsset(frame.base.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
     <div style={{ position: "absolute", display: "flex", overflow: "hidden", ...rectStyle(framePreset.aperture) }}>
       <img data-export-photo-image src={resolvePhoto(photo.src)} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: `${photo.crop.x * 100}% ${photo.crop.y * 100}%`, transform: `scale(${photo.crop.zoom})` }} />
     </div>
     {frame.overlay ? <img src={resolveAsset(frame.overlay.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
-    <div data-safe-text data-text-boundary data-text-preset="photo-caption" style={{ position: "absolute", display: "flex", flexDirection: "column", justifyContent: "center", alignItems, ...captionAreaStyle, overflow: "hidden", color: textColor, fontFamily, fontSize: resolvedCaptionFontSize, fontWeight: 600, lineHeight: width < 400 ? .88 : .96, textAlign: frame.caption.align }}>{photo.caption}</div>
+    <div data-safe-text data-text-boundary data-text-preset="photo-caption" data-caption-paper={paperCaption} style={{ position: "absolute", display: "flex", flexDirection: "column", justifyContent: "center", alignItems, ...captionAreaStyle, overflow: paperCaption ? "visible" : "hidden", color: textColor, fontFamily, fontSize: resolvedCaptionFontSize, fontWeight: 600, lineHeight: width < 400 ? .88 : .96, textAlign: frame.caption.align }}>
+      {paperCaption ? <><span aria-hidden style={{ position: "absolute", zIndex: 0, inset: "5% 0 0", clipPath: "polygon(2% 10%,23% 2%,49% 8%,76% 0,98% 9%,96% 91%,72% 98%,45% 92%,20% 100%,3% 88%)", backgroundColor: paperColor, backgroundImage: "radial-gradient(circle at 7px 7px, rgba(63,127,149,.14) 1.3px, transparent 1.5px)", backgroundSize: "22px 22px", filter: "drop-shadow(0 5px 5px rgba(0,0,0,.14))" }} /><span aria-hidden style={{ position: "absolute", zIndex: 2, top: paperCaption === "mint-coral" ? "-4%" : 0, left: paperCaption === "mint-coral" ? "33%" : "35%", width: paperCaption === "mint-coral" ? "34%" : "30%", height: paperCaption === "mint-coral" ? "25%" : "19%", clipPath: "polygon(2% 13%,96% 0,100% 88%,4% 100%)", background: tapeColor, transform: `rotate(${paperCaption === "mint-coral" ? 1.5 : -2}deg)` }} /></> : null}
+      <span style={{ position: "relative", zIndex: paperCaption ? 3 : 1 }}>{photo.caption}</span>
+    </div>
   </div>;
 }
 
@@ -510,7 +520,7 @@ export function UniversalTemplateExportCard({
       <div data-universal-export-block="hero" data-section-presentation="bare" data-decor-overflow="visible" style={{ position: "relative", display: "flex", width: "100%", height: layout.hero, flexShrink: 0, overflow: "visible" }}>
         <Decor profile={profile} anchor="hero" format={format} width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset} />
         <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: format === "post" ? "8px 78px" : format === "a4" ? "14px 78px" : "20px 78px", boxSizing: "border-box", textAlign: "center" }}>
-          {model.occasion ? <span style={{ color: profile.colors.accent, fontSize: format === "story" ? 18 : 14, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>{model.occasion}</span> : null}
+          {model.occasion ? <span style={{ color: profile.colors.occasion ?? profile.colors.accent, fontSize: format === "story" ? 18 : 14, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>{model.occasion}</span> : null}
           {eventDate ? <span style={{ marginTop: 5, color: profile.colors.muted, fontSize: format === "story" ? 18 : 14 }}>{eventDate}</span> : null}
           {model.recipientName ? <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: format === "story" ? 150 : format === "post" ? 70 : 100, flexShrink: 0, marginTop: eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
             <span aria-label={model.recipientName} style={{ maxWidth: "100%", fontFamily: profile.typography.heading.family, fontSize: recipientNameFontSize, fontWeight: profile.typography.heading.weight, lineHeight: .98, letterSpacing: "-.04em", textAlign: "center", whiteSpace: "pre-line" }}>{recipientNameLines.join("\n")}</span>
@@ -525,7 +535,7 @@ export function UniversalTemplateExportCard({
 
       {qualities.length > 0 ? <div data-universal-export-block="qualities" data-section-presentation="bare" style={{ display: "flex", width: "100%", height: qualitySectionHeight, flexShrink: 0 }}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: useDedicatedQualityLayout ? "6px 28px" : "16px 28px", boxSizing: "border-box" }}>
-          <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, textAlign: "center" }}>За что тебя ценят</strong>
+          <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, textAlign: "center" }}>{profile.copy?.qualitiesTitle ?? "За что тебя ценят"}</strong>
           <div data-export-quality-grid="2-1-2" style={{ display: "flex", flexDirection: "column", width: "100%", alignItems: "center", marginTop: useDedicatedQualityLayout ? 5 : format === "story" ? 10 : 8, gap: useDedicatedQualityLayout ? 4 : format === "story" ? 7 : 6 }}>{qualityRows.map((row, rowIndex) => <div key={rowIndex} data-export-quality-row={rowIndex + 1} style={{ display: "flex", width: row.length === 2 ? qualityCardWidth * 3 : qualityCardWidth, justifyContent: row.length === 2 ? "space-between" : "center" }}>{row.map((index) => {
             const quality = qualities[index];
             const card = qualityCards[index % Math.max(qualityCards.length, 1)];
@@ -541,7 +551,7 @@ export function UniversalTemplateExportCard({
 
       {quotes.length >= 2 ? <div data-universal-export-block="quotes" data-section-presentation="bare" style={{ display: "flex", width: "100%", height: layout.quotes, flexShrink: 0 }}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: "0 28px", boxSizing: "border-box" }}>
-          <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, lineHeight: 1.04, textAlign: "center" }}>Особенно тёплые слова</strong>
+          <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, lineHeight: 1.04, textAlign: "center" }}>{profile.copy?.quotesTitle ?? "Особенно тёплые слова"}</strong>
           <div style={{ display: "flex", width: "100%", marginTop: 10, gap: 10, flexShrink: 0 }}>{quotes.map((quote, index) => {
             const card = profile.assets.quoteCards[index % Math.max(profile.assets.quoteCards.length, 1)];
             const cardPreset = card ? getUniversalTextCardPreset(card.preset) : null;
@@ -566,6 +576,19 @@ export function UniversalTemplateExportCard({
                   ? <NineSliceAsset asset={card.asset} width={cardWidth} height={cardHeight} edges={{ top: .18, right: .12, bottom: .18, left: .12 }} resolveAsset={resolveAsset} />
                 : <img src={resolveAsset(card.asset.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
                 : null}
+              {card && cardPreset?.exportDecorCrop && cardPreset.exportDecorArea ? <img
+                data-export-quote-decor
+                src={croppedAssetUrl(resolveAsset(card.asset.src), {
+                  x: cardPreset.exportDecorCrop.x * card.asset.width,
+                  y: cardPreset.exportDecorCrop.y * card.asset.height,
+                  width: cardPreset.exportDecorCrop.width * card.asset.width,
+                  height: cardPreset.exportDecorCrop.height * card.asset.height
+                }, {
+                  width: cardPreset.exportDecorArea.width * cardWidth,
+                  height: cardPreset.exportDecorArea.height * cardHeight
+                })}
+                style={{ position: "absolute", ...rectStyle(cardPreset.exportDecorArea), objectFit: "contain" }}
+              /> : null}
               {cardPreset?.renderLeadingQuote !== false ? <span aria-hidden="true" style={{ position: "absolute", left: 13, top: 5, color: profile.colors.accent, fontFamily: profile.typography.handwritten.family, fontSize: 38 }}>“</span> : null}
               <span data-safe-text data-text-boundary data-text-preset="quote-card" style={{ position: "absolute", display: "flex", alignItems: "center", boxSizing: "border-box", overflow: "hidden", ...quoteTextAreaStyle, padding: "6px 10px", fontFamily: profile.typography.body.family, fontWeight: profile.typography.body.weight, fontSize: quoteFontSize, lineHeight: 1.18, textAlign: "center" }}>{quote}</span>
             </div>;
