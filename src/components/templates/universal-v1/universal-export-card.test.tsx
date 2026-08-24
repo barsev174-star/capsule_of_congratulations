@@ -201,7 +201,10 @@ describe("UniversalTemplateExportCard", () => {
     const closingSlice = container.querySelector<HTMLImageElement>('[data-universal-export-block="closing"] [data-export-asset-underlay="horizontal-slice"]');
     const closingContent = container.querySelector<HTMLElement>('[data-export-closing-content]');
     const closingHeading = container.querySelector<HTMLElement>('[data-export-closing-heading]');
+    const closingBody = container.querySelector<HTMLElement>('[data-export-closing-body]');
     const closingBrand = container.querySelector<HTMLElement>('[data-export-closing-brand]');
+    const closingLogo = container.querySelector<HTMLElement>('[data-export-closing-logo]');
+    const closingTagline = container.querySelector<HTMLElement>('[data-export-closing-tagline]');
     const congratulationsCounter = container.querySelector<HTMLElement>('[data-export-counter="congratulations"]');
     const photosCounter = container.querySelector<HTMLElement>('[data-export-counter="photos"]');
 
@@ -221,9 +224,21 @@ describe("UniversalTemplateExportCard", () => {
     expect(Number.parseFloat(leftDecor?.style.height ?? "0")).toBeCloseTo((leftVariant?.rect.height ?? 0) * heroHeight, 4);
     expect(leftDecor).toHaveStyle({ transform: `rotate(${leftVariant?.rotation ?? 0}deg)` });
     expect(closingSlice).toHaveAttribute("src", expect.stringContaining("slices=horizontal%3A0.46"));
-    expect(closingContent).toHaveStyle({ width: format === "story" ? "58%" : "70%", background: "" });
-    expect(closingHeading).toHaveStyle({ whiteSpace: format === "story" ? "normal" : "nowrap" });
-    expect(closingBrand).toHaveStyle({ transform: `translateY(${format === "story" ? -4 : -10}px)` });
+    expect(closingContent).toHaveStyle({ width: format === "story" ? "64%" : format === "post" ? "76%" : "72%", background: "" });
+    expect(closingHeading).toHaveStyle({
+      fontSize: `${format === "story" ? 30 : format === "post" ? 28 : 31}px`,
+      whiteSpace: "nowrap"
+    });
+    expect(closingBody).toHaveStyle({ fontSize: `${format === "story" ? 21 : format === "post" ? 17 : 19}px` });
+    expect(closingBrand).toHaveStyle({
+      marginTop: `${format === "story" ? 10 : 8}px`,
+      transform: ""
+    });
+    expect(closingLogo).toHaveStyle({
+      width: `${format === "story" ? 132 : format === "post" ? 110 : 130}px`,
+      height: `${format === "story" ? 30 : format === "post" ? 25 : 30}px`
+    });
+    expect(closingTagline).toHaveStyle({ fontSize: `${format === "story" ? 17 : format === "post" ? 14 : 16}px` });
     expect(congratulationsCounter).toHaveAttribute("data-export-counter-preset", "classic-label");
     expect(congratulationsCounter).toHaveStyle({
       color: "#18324c",
@@ -238,6 +253,23 @@ describe("UniversalTemplateExportCard", () => {
       transform: "rotate(0.825deg)"
     });
     expect(container.innerHTML).toContain("/templates/school-classic/page-v2.webp");
+  });
+
+  it.each([
+    ["post", [16, 13, 16]],
+    ["a4", [20, 16, 20]]
+  ] as const)("fits a long school-classic quote inside the %s artwork card", (format, expectedFontSizes) => {
+    const model = buildUniversalFixtureViewModel("teacher-classic", { templateId: school_classicProfile.id });
+    model.publicQuotes = [
+      "Спасибо за интересные уроки, терпение и поддержку каждый день.",
+      "Спасибо, что всегда объясняете спокойно и понятно, даже если с первого раза не получилось.",
+      "Спасибо Вам за доброту, справедливость и умение поддержать."
+    ];
+    const { container } = render(<UniversalTemplateExportCard profile={school_classicProfile} model={model} format={format} />);
+    const quoteFontSizes = Array.from(container.querySelectorAll<HTMLElement>('[data-text-preset="quote-card"]'))
+      .map((quote) => Number.parseFloat(quote.style.fontSize));
+
+    expect(quoteFontSizes).toEqual(expectedFontSizes);
   });
 
   it.each(["story", "post", "a4"] as const)("puts a Russian patronymic on a dedicated line in the %s export", (format) => {

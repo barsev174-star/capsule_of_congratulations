@@ -95,8 +95,9 @@ describe("school-classic product template", () => {
     });
   });
 
-  it("keeps orange as the interface action accent", () => {
-    expect(school_classicProfile.colors.accent).toBe("#e9652f");
-    expect(school_classicProfile.metadata.accent).toBe("#e9652f");
+  it("uses the classic burgundy accent across the template", () => {
+    expect(school_classicProfile.colors.accent).toBe("#7a1f2b");
+    expect(school_classicProfile.metadata.accent).toBe("#7a1f2b");
+    expect(school_classicProfile.intro.accent).toBe("#7a1f2b");
   });
 });

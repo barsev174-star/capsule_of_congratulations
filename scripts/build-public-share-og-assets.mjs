@@ -24,7 +24,7 @@ const cards = [
   {
     id: "school-classic",
     name: "Школьный классический",
-    preview: "public/templates/school-classic/preview-v3.webp"
+    preview: "public/templates/school-classic/preview-v6.webp"
   }
 ];
 

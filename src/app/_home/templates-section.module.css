@@ -269,6 +269,7 @@
   color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .availableBadge,
@@ -366,6 +367,49 @@
   .card {
     padding: 14px 14px 24px;
   }
+
+  .featuredCard {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas:
+      "preview title"
+      "preview copy"
+      "preview badge"
+      "preview link";
+    column-gap: 28px;
+    align-content: center;
+    padding: 14px;
+  }
+
+  .featuredCard .assetPreview {
+    grid-area: preview;
+    height: 320px;
+    margin-bottom: 0;
+  }
+
+  .featuredCard .cardTitle {
+    grid-area: title;
+    align-self: end;
+    margin: 0 10px 8px;
+    font-size: 1.35rem;
+    text-wrap: balance;
+  }
+
+  .featuredCard .cardText {
+    grid-area: copy;
+    align-self: start;
+    margin-bottom: 4px;
+    font-size: 0.96rem;
+  }
+
+  .featuredCard .availableBadge {
+    grid-area: badge;
+    align-self: start;
+    justify-self: start;
+  }
+  .featuredCard .demoLink { grid-area: link; margin-bottom: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

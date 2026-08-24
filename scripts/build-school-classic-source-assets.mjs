@@ -41,6 +41,30 @@ const writePageBackground = async () => {
     .toFile(source("page-v2.png"));
 };
 
+const writeMemoriesUnderlay = async () => {
+  const album = await sharp(source("memories-album-master-v3.png"))
+    .resize(1200, 670, { fit: "cover", position: "center" })
+    .png()
+    .toBuffer();
+  const paperTexture = await sharp(album)
+    .extract({ left: 350, top: 170, width: 500, height: 160 })
+    .resize(1020, 160, { fit: "fill" })
+    .png()
+    .toBuffer();
+  const paperEdge = await sharp(album)
+    .extract({ left: 100, top: 330, width: 1030, height: 50 })
+    .png()
+    .toBuffer();
+
+  await sharp(album)
+    .composite([
+      { input: paperTexture, left: 105, top: 320 },
+      { input: paperEdge, left: 100, top: 470 }
+    ])
+    .png({ compressionLevel: 9 })
+    .toFile(source("section-memories-v10.png"));
+};
+
 const writeNormalizedCrop = async (input, output, width, height, crop) => {
   const metadata = await sharp(input).metadata();
   if (!metadata.width || !metadata.height) throw new Error(`Cannot read dimensions for ${input}`);
@@ -164,7 +188,7 @@ await writePageBackground();
 await writeNormalizedCrop(source("summary-letter-desktop-master-v5.png"), "section-summary-desktop-v5.png", 1200, 360, { x: 0, y: 0.1, width: 1, height: 0.64 });
 await writeOpaque(source("summary-letter-mobile-master-v4.png"), "section-summary-mobile-v5.png", 600, 800);
 await writeOpaque(source("messages-ledger-master-v2.png"), "section-messages-v2.png", 1200, 900);
-await writeOpaque(source("memories-album-master-v3.png"), "section-memories-v5.png", 1200, 670);
+await writeMemoriesUnderlay();
 await writeOpaque(source("closing-desk-desktop-master-v4.png"), "section-closing-desktop-v4.png", 1200, 480);
 await writeOpaque(source("closing-desk-mobile-master-v4.png"), "section-closing-mobile-v5.png", 600, 800);
 
@@ -201,12 +225,11 @@ await writeFrame(
 );
 
 const previewBackground = await sharp(source("page-v2.png")).resize(1200, 630, { fit: "cover" }).png().toBuffer();
-const heroLeft = await sharp(source("decor-hero-left-v4.png")).resize(285, 356, { fit: "contain", background: transparent }).png().toBuffer();
-const heroRight = await sharp(source("decor-hero-right-v3.png")).resize(285, 356, { fit: "contain", background: transparent }).png().toBuffer();
+const heroLeft = await sharp(await trimmed(source("decor-hero-left-master-v4.png"))).resize(330, 413, { fit: "contain", background: transparent }).png().toBuffer();
+const heroRight = await sharp(source("decor-hero-right-v3.png")).resize(330, 413, { fit: "contain", background: transparent }).png().toBuffer();
 await sharp(previewBackground).composite([
-  { input: heroLeft, left: 15, top: 180 },
-  { input: heroRight, left: 900, top: 180 },
-  { input: Buffer.from(`<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg"><path d="M390 220H810" stroke="${palette.gold}" stroke-width="3"/><circle cx="600" cy="220" r="6" fill="${palette.goldLight}"/><path d="M440 420H760" stroke="${palette.navy}" stroke-opacity=".42" stroke-width="2"/></svg>`) }
-]).png({ compressionLevel: 9 }).toFile(source("catalog-preview-v2.png"));
+  { input: heroLeft, left: 250, top: 108 },
+  { input: heroRight, left: 620, top: 108 }
+]).png({ compressionLevel: 9 }).toFile(source("catalog-preview-v3.png"));
 
-console.log("SCHOOL_CLASSIC_SOURCE_ASSETS_BUILT_V8");
+console.log("SCHOOL_CLASSIC_SOURCE_ASSETS_BUILT_V14");

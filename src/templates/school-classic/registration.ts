@@ -9,7 +9,7 @@ export const school_classicRegistration = {
     name: "Школьный классический",
     description: "Классическая открытка для учителя с предметной школьной композицией, архивной бумагой и золотыми фотоуголками.",
     recommendedFor: ["teacher", "celebration"],
-    accent: "#e9652f",
+    accent: "#7a1f2b",
     availability: "product"
   }
 } satisfies UniversalTemplateRegistration;

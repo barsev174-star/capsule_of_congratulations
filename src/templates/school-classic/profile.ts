@@ -17,8 +17,8 @@ export const school_classicProfile = defineTemplate({
   metadata: {
     name: "Школьный классический",
     description: "Классическая открытка учителю с предметной школьной композицией, архивной бумагой и золотыми фотоуголками.",
-    accent: "#e9652f",
-    preview: asset("/templates/school-classic/preview-v3.webp", 1200, 630)
+    accent: "#7a1f2b",
+    preview: asset("/templates/school-classic/preview-v6.webp", 1200, 630)
   },
   assets: {
     page: asset("/templates/school-classic/page-v2.webp", 1536, 1024),
@@ -27,7 +27,7 @@ export const school_classicProfile = defineTemplate({
       summary: defineSectionUnderlay(asset("/templates/school-classic/section-summary-desktop-v5.webp", 1200, 360), "cover", { mobileAsset: asset("/templates/school-classic/section-summary-mobile-v5.webp", 600, 800), safeArea: { x: 0.14, y: 0.07, width: 0.72, height: 0.84 } }),
       qualities: defineSectionUnderlay(asset("/templates/school-classic/page-v2.webp", 1536, 1024), "cover"),
       messages: defineSectionUnderlay(asset("/templates/school-classic/section-messages-v2.webp", 1200, 900), "adaptive-frame", { safeArea: { x: 0.105, y: 0.055, width: 0.83, height: 0.89 } }),
-      memories: defineSectionUnderlay(asset("/templates/school-classic/section-memories-v5.webp", 1200, 670), "adaptive-frame", { safeArea: { x: 0.05, y: 0.08, width: 0.9, height: 0.84 } }),
+      memories: defineSectionUnderlay(asset("/templates/school-classic/section-memories-v10.webp", 1200, 670), "adaptive-frame", { safeArea: { x: 0.05, y: 0.08, width: 0.9, height: 0.84 } }),
       quotes: defineSectionUnderlay(asset("/templates/school-classic/page-v2.webp", 1536, 1024), "cover"),
       closing: defineSectionUnderlay(asset("/templates/school-classic/section-closing-desktop-v4.webp", 1200, 480), "cover", { mobileAsset: asset("/templates/school-classic/section-closing-mobile-v5.webp", 600, 800), safeArea: { x: 0.08, y: 0.08, width: 0.84, height: 0.78 }, focalPoint: { x: 0.5, y: 1 }, exportRendering: "horizontal-slice", exportHorizontalSliceEdgeRatio: 0.46 })
     },
@@ -97,11 +97,11 @@ export const school_classicProfile = defineTemplate({
   },
   typography: { heading: { family: "PT Sans", weight: 700 }, body: { family: "PT Sans", weight: 400 }, handwritten: { family: "Caveat", weight: 600 } },
   colors: {
-    page: "#fffaf0", text: "#18324c", muted: "#5f6f68", accent: "#e9652f", surface: "#fffaf0",
+    page: "#fffaf0", text: "#18324c", muted: "#5f6f68", accent: "#7a1f2b", surface: "#fffaf0",
     surfaces: { hero: "#fffaf0", summary: "#eef2e9", qualities: "#f7f1df", messages: "#edf2f5", memories: "#eef3ed", quotes: "#f4ebed", closing: "#fffaf0" }
   },
   intro: {
-    surface: "#fffaf0", text: "#18324c", accent: "#e9652f", preset: "classic", kicker: "Открытка учителю",
+    surface: "#fffaf0", text: "#18324c", accent: "#7a1f2b", preset: "classic", kicker: "Открытка учителю",
     decor: [asset("/templates/school-classic/decor-hero-left-v4.webp", 720, 900), asset("/templates/school-classic/decor-hero-right-v3.webp", 720, 900)]
   },
   motion: { preset: "calm", revealSections: true, photoViewer: true },
@@ -113,6 +113,11 @@ export const school_classicProfile = defineTemplate({
       preset: "classic-label",
       congratulations: { text: "#18324c", surface: "#fffaf0", outline: "#b58a3a" },
       photos: { text: "#365b4c", surface: "#eef3ed", outline: "#365b4c" }
+    },
+    closingLayout: {
+      story: { contentWidthPercent: 64, headingFontSize: 30, bodyFontSize: 21, brandMarginTop: 10, logoWidth: 132, logoHeight: 30, taglineFontSize: 17 },
+      post: { contentWidthPercent: 76, headingFontSize: 28, bodyFontSize: 17, brandMarginTop: 8, logoWidth: 110, logoHeight: 25, taglineFontSize: 14 },
+      a4: { contentWidthPercent: 72, headingFontSize: 31, bodyFontSize: 19, brandMarginTop: 8, logoWidth: 130, logoHeight: 30, taglineFontSize: 16 }
     }
   },
   performance: { networkBudget: 8_000_000, decodedMemoryBudget: 72_000_000 },

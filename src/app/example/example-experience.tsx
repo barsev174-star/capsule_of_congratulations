@@ -384,7 +384,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
               >
                 <div className={styles.templateCardThumb}>
                   <Image
-                    src="/templates/school-classic/preview-v3.webp"
+                    src="/templates/school-classic/preview-v6.webp"
                     alt=""
                     fill
                     sizes="(max-width: 640px) 92vw, (max-width: 900px) 45vw, 25vw"

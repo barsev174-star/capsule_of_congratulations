@@ -28,7 +28,7 @@ const templates = [
     id: "school-classic" as const,
     name: "Школьный классический",
     description: "Классическая открытка учителю",
-    preview: "/templates/school-classic/preview-v3.webp"
+    preview: "/templates/school-classic/preview-v6.webp"
   }
 ];
 
@@ -96,7 +96,7 @@ describe("TemplateSettingsForm", () => {
     const classicCard = screen.getByRole("radio", { name: /Школьный классический/ }).closest("label");
     expect(classicCard?.querySelector("img")).toHaveAttribute(
       "src",
-      "/templates/school-classic/preview-v3.webp"
+      "/templates/school-classic/preview-v6.webp"
     );
     expect(container.querySelectorAll('img[src="/templates/warm-classic-preview.png"]')).toHaveLength(1);
   });

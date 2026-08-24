@@ -63,6 +63,15 @@ const layouts: Record<UniversalExportFormat, FormatLayout> = {
   a4: { padding: 38, verticalPadding: 18, gap: 6, hero: 310, qualities: 235, moments: 650, quotes: 220, closing: 268, heading: 43, body: 22 }
 };
 
+const getArtworkQuoteFontSize = (format: UniversalExportFormat, quote: string) => {
+  const baseFontSize = format === "story" ? 22 : format === "post" ? 16 : 20;
+  const length = quote.trim().replace(/\s+/g, " ").length;
+
+  if (format === "story" || length <= 80) return baseFontSize;
+  if (length > 94) return format === "post" ? 12 : 15;
+  return format === "post" ? 13 : 16;
+};
+
 const dedicatedQualityLayouts = {
   story: { sectionHeight: 295, cardHeight: 70, fontSize: 24 },
   post: { sectionHeight: 248, cardHeight: 60, fontSize: 20 },
@@ -449,6 +458,7 @@ export function UniversalTemplateExportCard({
   };
   const counterPreset = profile.export.counters?.preset ?? "soft-pill";
   const closingUsesHorizontalSlice = profile.assets.sections.closing?.exportRendering === "horizontal-slice";
+  const closingLayout = profile.export.closingLayout?.[format];
   const counterStyle = (palette: { text: string; surface: string; outline?: string }, rotation: number): CSSProperties => {
     if (counterPreset === "classic-label") return {
         padding: "5px 11px",
@@ -542,7 +552,7 @@ export function UniversalTemplateExportCard({
             const cardHeight = format === "story" ? 190 : format === "post" ? 125 : 160;
             const artworkCard = cardPreset?.rendering === "artwork";
             const quoteFontSize = artworkCard
-              ? format === "story" ? 22 : format === "post" ? 16 : 20
+              ? getArtworkQuoteFontSize(format, quote)
               : format === "story" ? 25 : format === "post" ? 20 : 22;
             const quoteTextAreaStyle = cardPreset?.exportSlices
               ? rectStyle(cardPreset.textArea)
@@ -564,12 +574,12 @@ export function UniversalTemplateExportCard({
       </div> : null}
 
       <ExportSection id="closing" profile={profile} format={format} width={sectionWidth} height={closingSectionHeight} resolveAsset={resolveAsset}>
-        <div data-export-closing-content style={{ display: "flex", flexDirection: "column", width: closingUsesHorizontalSlice ? format === "story" ? "58%" : "70%" : "100%", height: "100%", margin: "0 auto", alignItems: "center", justifyContent: "center", padding: closingUsesHorizontalSlice ? "12px 0" : "16px 72px", boxSizing: "border-box", color: profile.colors.text, textAlign: "center" }}>
-          <strong data-export-closing-heading style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading * .82, lineHeight: 1.05, whiteSpace: format === "story" ? "normal" : "nowrap", textAlign: "center" }}>В полной открытке — ещё больше тепла</strong>
-          <span style={{ maxWidth: 830, marginTop: 7, color: profile.colors.muted, fontSize: layout.body, lineHeight: 1.2, textAlign: "center" }}>Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для получателя.</span>
-          <div data-export-closing-brand style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: format === "story" ? 8 : 5, transform: `translateY(${format === "story" ? -4 : -10}px)` }}>
-            <img src={resolveAsset("/brand/email-logo.png")} style={{ width: format === "story" ? 160 : format === "a4" ? 150 : 130, height: format === "story" ? 37 : format === "a4" ? 35 : 30, objectFit: "contain" }} />
-            <span style={{ marginTop: 1, color: profile.colors.muted, fontSize: layout.body - 4 }}>Место, где слова становятся подарком</span>
+        <div data-export-closing-content style={{ display: "flex", flexDirection: "column", width: closingLayout ? `${closingLayout.contentWidthPercent}%` : closingUsesHorizontalSlice ? format === "story" ? "58%" : "70%" : "100%", height: "100%", margin: "0 auto", alignItems: "center", justifyContent: "center", padding: closingUsesHorizontalSlice ? "12px 0" : "16px 72px", boxSizing: "border-box", color: profile.colors.text, textAlign: "center" }}>
+          <strong data-export-closing-heading style={{ fontFamily: profile.typography.heading.family, fontSize: closingLayout?.headingFontSize ?? layout.heading * .82, lineHeight: 1.05, whiteSpace: closingLayout ? "nowrap" : format === "story" ? "normal" : "nowrap", textAlign: "center" }}>В полной открытке — ещё больше тепла</strong>
+          <span data-export-closing-body style={{ maxWidth: 830, marginTop: 7, color: profile.colors.muted, fontSize: closingLayout?.bodyFontSize ?? layout.body, lineHeight: 1.2, textAlign: "center" }}>Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для получателя.</span>
+          <div data-export-closing-brand style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: closingLayout?.brandMarginTop ?? (format === "story" ? 8 : 5), ...(closingLayout ? {} : { transform: `translateY(${format === "story" ? -4 : -10}px)` }) }}>
+            <img data-export-closing-logo src={resolveAsset("/brand/email-logo.png")} style={{ width: closingLayout?.logoWidth ?? (format === "story" ? 160 : format === "a4" ? 150 : 130), height: closingLayout?.logoHeight ?? (format === "story" ? 37 : format === "a4" ? 35 : 30), objectFit: "contain" }} />
+            <span data-export-closing-tagline style={{ marginTop: 1, color: profile.colors.muted, fontSize: closingLayout?.taglineFontSize ?? layout.body - 4 }}>Место, где слова становятся подарком</span>
           </div>
         </div>
       </ExportSection>

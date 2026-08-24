@@ -182,6 +182,15 @@ export type TemplateProfile = {
       congratulations: { text: string; surface: string; outline?: string };
       photos: { text: string; surface: string; outline?: string };
     };
+    closingLayout?: Record<TemplateExportDecorFormat, {
+      contentWidthPercent: number;
+      headingFontSize: number;
+      bodyFontSize: number;
+      brandMarginTop: number;
+      logoWidth: number;
+      logoHeight: number;
+      taglineFontSize: number;
+    }>;
   };
   performance: {
     networkBudget: number;
@@ -712,6 +721,27 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
             validateColor(palette.text, `export.counters.${counter}.text`, issues);
             validateColor(palette.surface, `export.counters.${counter}.surface`, issues);
             if (palette.outline !== undefined) validateColor(palette.outline, `export.counters.${counter}.outline`, issues);
+          }
+        }
+      }
+    }
+    if (value.export.closingLayout !== undefined) {
+      if (!isRecord(value.export.closingLayout)) {
+        issues.push({ path: "export.closingLayout", message: "Ожидаются параметры экспортного подвала по форматам." });
+      } else {
+        for (const format of templateExportDecorFormats) {
+          const layout = value.export.closingLayout[format];
+          if (!isRecord(layout)) {
+            issues.push({ path: `export.closingLayout.${format}`, message: "Отсутствуют параметры формата." });
+            continue;
+          }
+          for (const key of ["contentWidthPercent", "headingFontSize", "bodyFontSize", "logoWidth", "logoHeight", "taglineFontSize"] as const) {
+            if (typeof layout[key] !== "number" || layout[key] <= 0) {
+              issues.push({ path: `export.closingLayout.${format}.${key}`, message: "Значение должно быть положительным числом." });
+            }
+          }
+          if (typeof layout.brandMarginTop !== "number" || layout.brandMarginTop < 0) {
+            issues.push({ path: `export.closingLayout.${format}.brandMarginTop`, message: "Отступ должен быть неотрицательным числом." });
           }
         }
       }

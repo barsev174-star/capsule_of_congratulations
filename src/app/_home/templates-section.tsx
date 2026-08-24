@@ -54,11 +54,15 @@ export async function TemplatesSection() {
 
         <div className={styles.grid}>
           {cardTemplates.map((template) => (
-            <article key={template.id} className={`${styles.card} js-motion-card ${styles.active}`}>
+            <article
+              key={template.id}
+              className={`${styles.card} js-motion-card ${styles.active} ${template.id === "school-classic" ? styles.featuredCard : ""}`.trim()}
+              data-template-id={template.id}
+            >
               <TemplateMiniature templateId={template.id} accent={template.accent} preview={template.preview} />
               <h3 className={styles.cardTitle}>{template.name}</h3>
               <p className={styles.cardText}>{template.description}</p>
-              <span className={styles.availableBadge}>Доступен</span>
+              <span className={styles.availableBadge}>{template.id === "school-classic" ? "Новый · доступен" : "Доступен"}</span>
               {template.id === "paper-birthday" || template.id === "route-adventure" || template.id === "school-scrapbook" || template.id === "school-classic" ? (
                 <Link className={styles.demoLink} href={`/example?template=${template.id}`}>
                   Открыть интерактивный пример
