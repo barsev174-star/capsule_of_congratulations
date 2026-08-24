@@ -6,15 +6,16 @@ import { createTemplateStudioDraft, validateTemplateStudioDraft } from "@/lib/te
 import { school_classicProfile } from "./profile";
 import { school_classicRegistration } from "./registration";
 
-describe("school-classic studio template", () => {
-  it("uses the accepted universal atelier contract and stays studio-only", () => {
+describe("school-classic product template", () => {
+  it("uses the accepted universal atelier contract and is product-ready", () => {
     const dispatch = dispatchTemplateRenderer("school-classic");
     const draft = createTemplateStudioDraft(school_classicProfile);
 
     expect(validateTemplateProfile(school_classicProfile)).toEqual(expect.objectContaining({ ok: true, issues: [] }));
     expect(dispatch?.kind).toBe("universal-v1");
     expect(dispatch?.registration.id).toBe("school-classic");
-    expect(school_classicRegistration.catalog.availability).toBe("studio");
+    expect(school_classicRegistration.catalog.availability).toBe("product");
+    expect(school_classicProfile.intro.preset).toBe("classic");
     expect(validateTemplateStudioDraft(draft)).toEqual({ ok: true, issues: [] });
     expect(Object.keys(school_classicProfile.assets.sections)).toEqual(["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"]);
   });

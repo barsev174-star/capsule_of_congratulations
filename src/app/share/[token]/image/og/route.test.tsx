@@ -33,7 +33,8 @@ describe("public share Open Graph image", () => {
   it.each([
     ["paper-birthday", baseV1],
     ["route-adventure", { ...baseV1, card: { ...baseV1.card, templateId: "route-adventure" } }],
-    ["school-scrapbook", schoolV2]
+    ["school-scrapbook", schoolV2],
+    ["school-classic", { ...schoolV2, card: { ...schoolV2.card, templateId: "school-classic" } }]
   ])("serves a static 1200x630 PNG with crawler-compatible headers for %s", async (_templateId, payload) => {
     mocks.getPayload.mockResolvedValue(payload);
     const response = await GET(new Request("http://localhost:3000/share/token/image/og"), { params: Promise.resolve({ token: "token" }) });

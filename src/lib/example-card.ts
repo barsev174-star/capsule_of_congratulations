@@ -1,6 +1,6 @@
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type { FinalCardViewModel } from "@/lib/final-card/view-model";
-import type { UniversalTemplatePhoto, UniversalTemplateViewModel } from "@/lib/templates/view-model";
+import { buildUniversalFixtureViewModel, type UniversalTemplatePhoto, type UniversalTemplateViewModel } from "@/lib/templates/view-model";
 
 const createdAt = "2026-07-03T00:00:00.000Z";
 
@@ -216,6 +216,12 @@ export const schoolScrapbookDemoCardModel: UniversalTemplateViewModel = (() => {
     privateSignature: "С любовью и верой в тебя — твоя семья."
   };
 })();
+
+export const schoolClassicDemoCardModel: UniversalTemplateViewModel = buildUniversalFixtureViewModel("teacher-classic", {
+  templateId: "school-classic",
+  scenario: "portrait",
+  photoCount: 1
+});
 
 const routeContributions: Contribution[] = [
   contribution(

@@ -1,7 +1,7 @@
 import { FinalCard } from "@/components/final-card/final-card";
 import type { Metadata } from "next";
 import { TemplateCardRenderer } from "@/components/templates/template-card-renderer";
-import { exampleCardModel, routeAdventureDemoCardModel, schoolScrapbookDemoCardModel } from "@/lib/example-card";
+import { exampleCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel } from "@/lib/example-card";
 import { requireTemplateRenderer } from "@/lib/templates/dispatcher";
 import { ExampleExperience, type DemoTemplateId } from "./example-experience";
 
@@ -18,7 +18,9 @@ const templateAliases: Record<string, DemoTemplateId> = {
   route: "route-adventure",
   "route-adventure": "route-adventure",
   school: "school-scrapbook",
-  "school-scrapbook": "school-scrapbook"
+  "school-scrapbook": "school-scrapbook",
+  classic: "school-classic",
+  "school-classic": "school-classic"
 };
 
 type ExamplePageProps = {
@@ -30,8 +32,12 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
   const rawTemplate = Array.isArray(template) ? template[0] : template;
   const initialTemplateId = rawTemplate ? templateAliases[rawTemplate] : undefined;
   const schoolDispatch = requireTemplateRenderer("school-scrapbook");
+  const schoolClassicDispatch = requireTemplateRenderer("school-classic");
   if (schoolDispatch.kind !== "universal-v1") {
     throw new Error("Шаблон school-scrapbook должен использовать универсальный рендерер.");
+  }
+  if (schoolClassicDispatch.kind !== "universal-v1") {
+    throw new Error("Школьный классический шаблон должен использовать универсальный рендерер.");
   }
 
   return (
@@ -39,6 +45,7 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
       initialTemplateId={initialTemplateId}
       routeChildren={<FinalCard model={routeAdventureDemoCardModel} />}
       schoolChildren={<TemplateCardRenderer dispatch={schoolDispatch} model={schoolScrapbookDemoCardModel} surface="private" />}
+      schoolClassicChildren={<TemplateCardRenderer dispatch={schoolClassicDispatch} model={schoolClassicDemoCardModel} surface="private" />}
     >
       <FinalCard model={exampleCardModel} />
     </ExampleExperience>

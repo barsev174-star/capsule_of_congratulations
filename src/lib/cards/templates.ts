@@ -17,7 +17,7 @@ export type CardTemplate = {
   accent: string;
   preview?: string;
   introKicker?: string;
-  introPreset?: "default" | "route" | "scrapbook";
+  introPreset?: "default" | "route" | "scrapbook" | "classic";
   introDecor?: string[];
 };
 

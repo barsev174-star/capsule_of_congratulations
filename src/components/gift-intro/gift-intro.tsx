@@ -75,6 +75,18 @@ const LightweightCardPreview = ({
           ><Image src={src} alt="" width={54} height={78} /></span>)}
         </>
       ) : null}
+      {preset === "classic" ? (
+        <>
+          <span className={styles.classicPreviewFrame} aria-hidden="true" />
+          <span className={styles.classicPreviewRule} aria-hidden="true" />
+          {decor.slice(0, 2).map((src, index) => <span
+            key={`${src}-${index}`}
+            className={`${styles.classicPreviewDecor} ${index === 0 ? styles.classicPreviewDecorLeft : styles.classicPreviewDecorRight}`}
+            data-classic-preview-decor={index === 0 ? "board" : "bouquet"}
+            aria-hidden="true"
+          ><Image src={src} alt="" width={72} height={90} /></span>)}
+        </>
+      ) : null}
       <span className={styles.lightweightCardKicker}>{kicker}</span>
       <strong>{recipientName}</strong>
       <span className={styles.lightweightCardRule} />

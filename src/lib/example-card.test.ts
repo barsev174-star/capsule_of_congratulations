@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { exampleCardModel, schoolScrapbookDemoCardModel } from "./example-card";
+import { exampleCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel } from "./example-card";
 
 describe("example card", () => {
   it("uses the agreed photo groups", () => {
@@ -74,5 +74,24 @@ describe("school scrapbook demo card", () => {
 
   it("uses the agreed private signature", () => {
     expect(schoolScrapbookDemoCardModel.privateSignature).toBe("С любовью и верой в тебя — твоя семья.");
+  });
+});
+
+describe("school classic demo card", () => {
+  it("uses the accepted teacher fixture in the school-classic template", () => {
+    expect(schoolClassicDemoCardModel.templateId).toBe("school-classic");
+    expect(schoolClassicDemoCardModel.recipientName).toBe("Анна Сергеевна");
+    expect(schoolClassicDemoCardModel.contributions).toHaveLength(20);
+    expect(schoolClassicDemoCardModel.qualities).toHaveLength(5);
+    expect(schoolClassicDemoCardModel.messageScenario).toBe("portrait");
+    expect(schoolClassicDemoCardModel.messagePhotos).toHaveLength(1);
+    expect(schoolClassicDemoCardModel.messagePhotos[0].caption).toBe("С Вами хочется узнавать больше");
+    expect(schoolClassicDemoCardModel.memoryPhotos).toHaveLength(3);
+    expect(schoolClassicDemoCardModel.memoryPhotos.map((photo) => photo.caption)).toEqual([
+      "Когда сложное становится понятным",
+      "Начало ещё одной общей истории",
+      "Те, ради кого всё это"
+    ]);
+    expect(schoolClassicDemoCardModel.privateQuotes).toHaveLength(3);
   });
 });

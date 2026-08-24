@@ -80,7 +80,8 @@ describe("template registry", () => {
     expect(catalogTemplateRegistrations.map((entry) => entry.id)).toEqual([
       "paper-birthday",
       "route-adventure",
-      "school-scrapbook"
+      "school-scrapbook",
+      "school-classic"
     ]);
   });
 
@@ -93,6 +94,7 @@ describe("template registry", () => {
     expect(isProductTemplateId("daylight-proof")).toBe(false);
     expect(isProductTemplateId("route-adventure")).toBe(true);
     expect(isProductTemplateId("school-scrapbook")).toBe(true);
+    expect(isProductTemplateId("school-classic")).toBe(true);
     expect(isRegisteredTemplateId("unknown")).toBe(false);
   });
 

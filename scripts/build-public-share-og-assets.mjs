@@ -20,6 +20,11 @@ const cards = [
     id: "school-scrapbook",
     name: "Школьный коллаж",
     preview: "public/templates/school-scrapbook/preview.webp"
+  },
+  {
+    id: "school-classic",
+    name: "Школьный классический",
+    preview: "public/templates/school-classic/preview-v3.webp"
   }
 ];
 

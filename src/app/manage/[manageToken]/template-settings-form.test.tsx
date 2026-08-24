@@ -23,6 +23,12 @@ const templates = [
     name: "Школьный коллаж",
     description: "Школьные воспоминания",
     preview: "/templates/school-scrapbook/preview.webp"
+  },
+  {
+    id: "school-classic" as const,
+    name: "Школьный классический",
+    description: "Классическая открытка учителю",
+    preview: "/templates/school-classic/preview-v3.webp"
   }
 ];
 
@@ -78,7 +84,7 @@ describe("TemplateSettingsForm", () => {
       <TemplateSettingsForm
         manageToken="manage-token"
         templates={templates}
-        currentTemplateId="school-scrapbook"
+        currentTemplateId="school-classic"
       />
     );
 
@@ -86,6 +92,11 @@ describe("TemplateSettingsForm", () => {
     expect(schoolCard?.querySelector("img")).toHaveAttribute(
       "src",
       "/templates/school-scrapbook/preview.webp"
+    );
+    const classicCard = screen.getByRole("radio", { name: /Школьный классический/ }).closest("label");
+    expect(classicCard?.querySelector("img")).toHaveAttribute(
+      "src",
+      "/templates/school-classic/preview-v3.webp"
     );
     expect(container.querySelectorAll('img[src="/templates/warm-classic-preview.png"]')).toHaveLength(1);
   });

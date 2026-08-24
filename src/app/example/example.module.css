@@ -363,7 +363,7 @@
 /* Template grid */
 .templateGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -392,6 +392,10 @@
 
 .templateCardSelectable:hover {
   box-shadow: 0 20px 40px rgba(93, 63, 33, 0.16);
+}
+
+.templateCardSelectable:active {
+  transform: translateY(-1px) scale(0.96);
 }
 
 .templateCardSelectable:focus-visible {
@@ -1435,4 +1439,3 @@
     transform: none;
   }
 }
-

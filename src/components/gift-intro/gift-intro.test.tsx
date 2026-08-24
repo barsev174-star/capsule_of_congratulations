@@ -56,6 +56,31 @@ describe("GiftIntro rendering budget", () => {
     expect(screen.queryByText("Открытка для")).not.toBeInTheDocument();
   });
 
+  it("показывает классическую школьную миниатюру без коллажного скотча и значка 5+", () => {
+    render(
+      <GiftIntro
+        recipientName="Анна Сергеевна"
+        previewKicker="Открытка учителю"
+        previewPreset="classic"
+        previewDecor={[
+          "/templates/school-classic/decor-hero-left-v4.webp",
+          "/templates/school-classic/decor-hero-right-v3.webp"
+        ]}
+        templateId="school-classic"
+      >
+        <div>Полная открытка</div>
+      </GiftIntro>
+    );
+
+    expect(document.querySelectorAll('[data-template-id="school-classic"]')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-preview-preset="classic"]')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-classic-preview-decor="board"]')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-classic-preview-decor="bouquet"]')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-school-preview-decor]')).toHaveLength(0);
+    expect(screen.getAllByText("Открытка учителю")).toHaveLength(2);
+    expect(screen.queryByText("5+")).not.toBeInTheDocument();
+  });
+
   it("повторно запускает ту же заставку", () => {
     vi.useFakeTimers();
     render(

@@ -218,10 +218,10 @@ export const universalTemplateFixtures: Readonly<Record<UniversalTemplateFixture
     organizerQuoteIds: ["teacher-quote-1", "teacher-quote-2", "teacher-quote-3"],
     recipientQuoteIds: ["teacher-quote-1", "teacher-quote-2", "teacher-quote-3"],
     photos: [
-      { id: "teacher-photo-portrait", src: "/examples/school-classic/teacher-portrait.png", width: 1024, height: 1536, caption: "Учиться интересно", crop: { x: 0.5, y: 0.46, zoom: 1 } },
-      { id: "teacher-photo-lesson", src: "/examples/school-classic/lesson.png", width: 1536, height: 1024, caption: "Понятный урок", crop: { x: 0.5, y: 0.48, zoom: 1 } },
-      { id: "teacher-photo-year", src: "/examples/school-classic/school-year.png", width: 1536, height: 1024, caption: "Начало общего года", crop: { x: 0.5, y: 0.48, zoom: 1 } },
-      { id: "teacher-photo-class", src: "/examples/school-classic/class-together.png", width: 1536, height: 1024, caption: "Наш класс — это люди", crop: { x: 0.5, y: 0.48, zoom: 1 } }
+      { id: "teacher-photo-portrait", src: "/examples/school-classic/teacher-portrait.png", width: 1024, height: 1536, caption: "С Вами хочется узнавать больше", crop: { x: 0.5, y: 0.46, zoom: 1 } },
+      { id: "teacher-photo-lesson", src: "/examples/school-classic/lesson.png", width: 1536, height: 1024, caption: "Когда сложное становится понятным", crop: { x: 0.5, y: 0.48, zoom: 1 } },
+      { id: "teacher-photo-year", src: "/examples/school-classic/school-year.png", width: 1536, height: 1024, caption: "Начало ещё одной общей истории", crop: { x: 0.5, y: 0.48, zoom: 1 } },
+      { id: "teacher-photo-class", src: "/examples/school-classic/class-together.png", width: 1536, height: 1024, caption: "Те, ради кого всё это", crop: { x: 0.5, y: 0.48, zoom: 1 } }
     ],
     memoryPhotoIds: ["teacher-photo-lesson", "teacher-photo-year", "teacher-photo-class"],
     memoryTitle: "Моменты, которые хочется сохранить",

@@ -159,7 +159,7 @@ export type TemplateProfile = {
     surface: string;
     text: string;
     accent: string;
-    preset?: "default" | "scrapbook";
+    preset?: "default" | "scrapbook" | "classic";
     kicker?: string;
     mark?: TemplateAssetRef;
     pattern?: TemplateAssetRef;
@@ -622,7 +622,7 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
     validateColor(value.intro.surface, "intro.surface", issues);
     validateColor(value.intro.text, "intro.text", issues);
     validateColor(value.intro.accent, "intro.accent", issues);
-    if (value.intro.preset !== undefined && !["default", "scrapbook"].includes(String(value.intro.preset))) {
+    if (value.intro.preset !== undefined && !["default", "scrapbook", "classic"].includes(String(value.intro.preset))) {
       issues.push({ path: "intro.preset", message: "Неизвестный preset облегчённой заставки." });
     }
     if (value.intro.kicker !== undefined && (
