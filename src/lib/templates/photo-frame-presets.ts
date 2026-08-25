@@ -4,7 +4,10 @@ export const universalPhotoFramePresetIds = [
   "portrait-polaroid",
   "landscape-polaroid",
   "portrait-caption-paper",
-  "landscape-caption-paper"
+  "landscape-caption-paper",
+  "portrait-shadow-frame",
+  "landscape-shadow-frame",
+  "landscape-shadow-frame-feature"
 ] as const;
 
 export type UniversalPhotoFramePresetId = (typeof universalPhotoFramePresetIds)[number];
@@ -55,6 +58,33 @@ export const universalPhotoFramePresets: Readonly<Record<UniversalPhotoFramePres
     aspectRatio: 1122 / 802,
     aperture: { x: 0.025, y: 0.03, width: 0.95, height: 0.74 },
     captionArea: { x: 0.075, y: 0.72, width: 0.85, height: 0.25 }
+  },
+  "portrait-shadow-frame": {
+    id: "portrait-shadow-frame",
+    label: "Вертикальная белая рамка с тенью",
+    description: "Тонкая белая рамка с мягкой тенью и компактной подписью под фотографией.",
+    source: { width: 802, height: 1122 },
+    aspectRatio: 802 / 1122,
+    aperture: { x: 0.04, y: 0.03, width: 0.92, height: 0.82 },
+    captionArea: { x: 0.05, y: 0.855, width: 0.9, height: 0.125 }
+  },
+  "landscape-shadow-frame": {
+    id: "landscape-shadow-frame",
+    label: "Горизонтальная белая рамка с тенью",
+    description: "Широкое фото в чистой белой рамке с мягкой тенью и подписью снизу.",
+    source: { width: 1122, height: 802 },
+    aspectRatio: 1122 / 802,
+    aperture: { x: 0.035, y: 0.05, width: 0.93, height: 0.75 },
+    captionArea: { x: 0.045, y: 0.805, width: 0.91, height: 0.17 }
+  },
+  "landscape-shadow-frame-feature": {
+    id: "landscape-shadow-frame-feature",
+    label: "Увеличенная белая рамка для моментов",
+    description: "Белая рамка с увеличенным окном фотографии и компактной подписью снизу.",
+    source: { width: 1122, height: 802 },
+    aspectRatio: 1122 / 802,
+    aperture: { x: 0.025, y: 0.035, width: 0.95, height: 0.8 },
+    captionArea: { x: 0.035, y: 0.835, width: 0.93, height: 0.145 }
   }
 };
 

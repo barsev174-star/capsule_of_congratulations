@@ -190,6 +190,7 @@ function ExportSection({
 }) {
   const isBare = isUniversalBareSection(id);
   const underlay = isBare ? undefined : profile.assets.sections[id];
+  const sectionColors = profile.colors.sections?.[id];
   const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
   const hasOverflowDecor = profile.assets.decor.some((layer) =>
     layer.anchor === id && exportVisible(layer) && normalizedRectOverflows(exportDecorVariant(layer, format).rect)
@@ -210,6 +211,7 @@ function ExportSection({
     overflow: isBare || hasOverflowDecor ? "visible" : "hidden",
     borderRadius: isBare ? 0 : 28,
     background: isBare ? "transparent" : profile.colors.surfaces[id] ?? profile.colors.surface,
+    color: sectionColors?.text ?? profile.colors.text,
     boxShadow: isBare ? "none" : "0 2px 5px rgba(0,0,0,.05), 0 16px 34px rgba(0,0,0,.08)"
   }}>
     {underlay ? <>
@@ -253,7 +255,7 @@ function ExportPhoto({
 }) {
   const framePreset = getUniversalPhotoFramePreset(frame.preset);
   const height = Math.round(width / framePreset.aspectRatio);
-  const resolvedCaptionFontSize = fontSize * getUniversalPhotoCaptionScale(
+  const resolvedCaptionFontSize = fontSize * (frame.caption.fontScale ?? 1) * getUniversalPhotoCaptionScale(
     photo.caption,
     frame.caption.minScale
   );
@@ -273,7 +275,7 @@ function ExportPhoto({
       <img data-export-photo-image src={resolvePhoto(photo.src)} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: `${photo.crop.x * 100}% ${photo.crop.y * 100}%`, transform: `scale(${photo.crop.zoom})` }} />
     </div>
     {frame.overlay ? <img src={resolveAsset(frame.overlay.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
-    <div data-safe-text data-text-boundary data-text-preset="photo-caption" data-caption-paper={paperCaption} style={{ position: "absolute", display: "flex", flexDirection: "column", justifyContent: "center", alignItems, ...captionAreaStyle, overflow: paperCaption ? "visible" : "hidden", color: textColor, fontFamily, fontSize: resolvedCaptionFontSize, fontWeight: 600, lineHeight: width < 400 ? .88 : .96, textAlign: frame.caption.align }}>
+    <div data-safe-text data-text-boundary data-text-preset="photo-caption" data-caption-paper={paperCaption} style={{ position: "absolute", display: "flex", flexDirection: "column", justifyContent: "center", alignItems, ...captionAreaStyle, overflow: paperCaption ? "visible" : "hidden", color: textColor, fontFamily, fontSize: resolvedCaptionFontSize, fontStyle: frame.caption.fontStyle ?? "normal", fontWeight: frame.caption.fontToken === "body" ? 500 : 600, lineHeight: frame.caption.fontToken === "body" ? 1.05 : width < 400 ? .88 : .96, textAlign: frame.caption.align }}>
       {exportCaptionUnderlay ? <img data-export-caption-paper-underlay src={resolveAsset(exportCaptionUnderlay.src)} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", objectFit: "fill" }} /> : null}
       <span style={{ position: "relative", display: "flex", width: "100%", justifyContent: alignItems }}>{photo.caption}</span>
     </div>
@@ -372,6 +374,7 @@ function Moments({
   if (photos.length < 2 || photos.length > 3) return null;
   const frame = profile.assets.photoFrames.memory;
   const captionFont = frame.caption.fontToken === "handwritten" ? profile.typography.handwritten.family : profile.typography.body.family;
+  const sansCaption = frame.caption.fontToken === "body";
   const sectionWidth = universalExportFormats[format].width - layouts[format].padding * 2;
   const underlay = profile.assets.sections.memories;
   const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : { left: 0, right: 0 };
@@ -385,17 +388,19 @@ function Moments({
     contentWidth * (format === "post" ? .4 : .39),
     format === "post" ? 380 : format === "story" ? 360 : 375
   ));
-  const captionSize = format === "post" ? 36 : 38;
+  const captionSize = sansCaption ? format === "post" ? 18 : 20 : format === "post" ? 36 : 38;
   const columnGap = format === "post" ? 10 : 12;
   const sideGap = format === "story" ? 8 : 6;
-  const sideCaptionSize = (caption: string) => caption.length > 42 ? 28 : 29;
+  const sideCaptionSize = (caption: string) => sansCaption ? caption.length > 42 ? 14 : 15 : caption.length > 42 ? 28 : 29;
   const headingUnderlay = profile.export.memoriesHeadingUnderlay;
+  const memoriesColors = profile.colors.sections?.memories;
+  const memoriesMuted = memoriesColors?.muted ?? profile.colors.muted;
   const paperHeading = Boolean(headingUnderlay);
   const paperHeadingHeight = format === "post" ? 134 : format === "story" ? 148 : 142;
   const heading = <div data-export-moments-heading data-export-moments-paper={paperHeading ? "true" : undefined} style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: paperHeading ? format === "post" ? "118%" : "104%" : undefined, height: paperHeading ? paperHeadingHeight : undefined, minHeight: paperHeading ? paperHeadingHeight : format === "post" ? 82 : 94, padding: paperHeading ? "20px 32px 22px" : "0 8px", boxSizing: "border-box", textAlign: "center" }}>
     {headingUnderlay ? <img data-export-moments-paper-underlay src={resolveAsset(headingUnderlay.src)} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", objectFit: "fill" }} /> : null}
     <strong style={{ position: "relative", display: "flex", fontFamily: profile.typography.heading.family, fontSize: layout.heading, lineHeight: 1.04, textAlign: "center" }}>Моменты</strong>
-    <span style={{ position: "relative", display: "flex", marginTop: 5, color: profile.colors.muted, fontFamily: profile.typography.handwritten.family, fontSize: format === "story" ? 28 : format === "a4" ? 26 : 22, fontWeight: profile.typography.handwritten.weight, lineHeight: 1.08, textAlign: "center" }}>Фото, которыми хочется поделиться</span>
+    <span style={{ position: "relative", display: "flex", marginTop: 5, color: memoriesMuted, fontFamily: profile.typography.handwritten.family, fontSize: format === "story" ? 28 : format === "a4" ? 26 : 22, fontWeight: profile.typography.handwritten.weight, lineHeight: 1.08, textAlign: "center" }}>Фото, которыми хочется поделиться</span>
   </div>;
 
   return <div data-export-memories-layout="feature-stack" style={{ display: "flex", width: "100%", height: "100%", padding: format === "post" ? "8px 6px" : "10px 8px", boxSizing: "border-box", alignItems: "center", justifyContent: "center" }}>

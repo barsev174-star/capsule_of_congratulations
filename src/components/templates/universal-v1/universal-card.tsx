@@ -129,6 +129,7 @@ function SectionSurface({
   const isBare = isUniversalBareSection(id);
   const underlay = isBare ? undefined : profile.assets.sections[id];
   const surfaceColor = profile.colors.surfaces[id] ?? profile.colors.surface;
+  const sectionColors = profile.colors.sections?.[id];
   const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
   const revealProps = useScrollReveal<HTMLElement>({
     disabled: !profile.motion?.revealSections
@@ -151,6 +152,8 @@ function SectionSurface({
       data-motion-section={profile.motion?.revealSections ? "true" : undefined}
       style={{
         "--uv1-section-surface": surfaceColor,
+        "--uv1-text": sectionColors?.text ?? profile.colors.text,
+        "--uv1-muted": sectionColors?.muted ?? profile.colors.muted,
         "--uv1-safe-top": safeInsets ? `${safeInsets.top * 100}cqw` : "0px",
         "--uv1-safe-right": safeInsets ? `${safeInsets.right * 100}cqw` : "0px",
         "--uv1-safe-bottom": safeInsets ? `${safeInsets.bottom * 100}cqw` : "0px",
@@ -181,6 +184,9 @@ function UniversalPhoto({
   const framePreset = getUniversalPhotoFramePreset(frame.preset);
   const captionStyle = {
     ...normalizedRectStyle(framePreset.captionArea),
+    fontStyle: frame.caption.fontStyle ?? "normal",
+    ...(frame.caption.fontToken === "body" ? { fontWeight: 500 } : {}),
+    "--uv1-caption-size-scale": frame.caption.fontScale ?? 1,
     "--uv1-caption-scale": getUniversalPhotoCaptionScale(photo.caption, frame.caption.minScale)
   } as CSSProperties;
   const apertureStyle = normalizedRectStyle(framePreset.aperture);
@@ -317,6 +323,7 @@ function AllMessagesDialog({
     "--uv1-text": profile.colors.text,
     "--uv1-muted": profile.colors.muted,
     "--uv1-accent": profile.colors.accent,
+    "--uv1-action": profile.colors.action ?? "#e9652f",
     "--uv1-occasion": profile.colors.occasion ?? profile.colors.accent,
     "--uv1-surface": profile.colors.surface,
     "--uv1-heading-font": profile.typography.heading.family,
@@ -696,6 +703,7 @@ export function UniversalTemplateCard({
     "--uv1-text": profile.colors.text,
     "--uv1-muted": profile.colors.muted,
     "--uv1-accent": profile.colors.accent,
+    "--uv1-action": profile.colors.action ?? "#e9652f",
     "--uv1-surface": profile.colors.surface,
     "--uv1-heading-font": profile.typography.heading.family,
     "--uv1-heading-weight": profile.typography.heading.weight,

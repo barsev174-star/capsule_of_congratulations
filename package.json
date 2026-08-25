@@ -24,6 +24,7 @@
     "template:school-scrapbook:source": "node scripts/build-school-scrapbook-source-assets.mjs",
     "template:school-classic:source": "node scripts/build-school-classic-source-assets.mjs",
     "template:kindergarten-doodles:source": "node scripts/build-kindergarten-doodles-source-assets.mjs",
+    "template:team-editorial:source": "node scripts/build-team-editorial-source-assets.mjs",
     "start": "next start",
     "lint": "eslint . && npm run ui:colors && npm run ui:contrast",
     "ui:colors": "node scripts/check-ui-colors.mjs",

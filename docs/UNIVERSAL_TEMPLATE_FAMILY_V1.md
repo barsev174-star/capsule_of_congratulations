@@ -120,18 +120,19 @@ type NormalizedRect = {
 };
 
 type UniversalPhotoFrame = {
-  aspectRatio: number;
+  preset: UniversalPhotoFramePresetId;
   base?: AssetRef;
-  aperture: NormalizedRect;
   overlay?: AssetRef;
-  captionArea: NormalizedRect;
   fit: "cover";
   caption: {
     maxChars: 45;
     maxLines: 2;
     align: "left" | "center" | "right";
     fontToken: "body" | "handwritten";
+    fontStyle?: "normal" | "italic";
+    fontScale?: number; // 0.75…1.5
     minScale: number;
+    layout?: "standard" | "expanded";
   };
 };
 
@@ -143,6 +144,8 @@ type UniversalPhotoCrop = {
 ```
 
 Один и тот же `UniversalPhotoCrop` передаётся в private, public и export. Преобразование текущих процентов `0…100` выполняется в одном legacy-адаптере и не дублируется по поверхностям.
+
+`aperture`, `captionArea`, исходный размер ассета и `aspectRatio` принадлежат общему preset-у и не дублируются в профиле. `fontScale` меняет базовый кегль подписи, а `minScale` ограничивает shrink-to-fit у предельного текста. Оба коэффициента одинаково исполняются Web- и Export-renderer-ами; подпись длиной 45 символов должна полностью помещаться в две строки без многоточия.
 
 Для `memories` профиль не задаёт произвольное количество карточек. Каноническое состояние содержит ровно три фото:
 

@@ -81,6 +81,8 @@ export type UniversalPhotoFrame = {
     maxLines: 2;
     align: "left" | "center" | "right";
     fontToken: "body" | "handwritten";
+    fontStyle?: "normal" | "italic";
+    fontScale?: number;
     minScale: number;
     layout?: "standard" | "expanded";
     paper?: "yellow-blue" | "mint-coral";
@@ -157,8 +159,13 @@ export type TemplateProfile = {
     muted: string;
     accent: string;
     occasion?: string;
+    action?: string;
     surface: string;
     surfaces: Partial<Record<UniversalTemplateBlockId, string>>;
+    sections?: Partial<Record<UniversalTemplateBlockId, {
+      text?: string;
+      muted?: string;
+    }>>;
   };
   intro: {
     surface: string;
@@ -386,6 +393,16 @@ const validatePhotoFrame = (
   }
   if (!["body", "handwritten"].includes(String(value.caption.fontToken))) {
     issues.push({ path: `${path}.caption.fontToken`, message: "Недопустимый типографический токен подписи." });
+  }
+  if (value.caption.fontStyle !== undefined && !["normal", "italic"].includes(String(value.caption.fontStyle))) {
+    issues.push({ path: `${path}.caption.fontStyle`, message: "Поддерживаются только normal и italic для подписи." });
+  }
+  if (value.caption.fontScale !== undefined && (
+    typeof value.caption.fontScale !== "number" ||
+    value.caption.fontScale < 0.75 ||
+    value.caption.fontScale > 1.5
+  )) {
+    issues.push({ path: `${path}.caption.fontScale`, message: "Масштаб шрифта подписи должен находиться в диапазоне 0.75…1.5." });
   }
   if (typeof value.caption.minScale !== "number" || value.caption.minScale < 0.5 || value.caption.minScale > 1) {
     issues.push({ path: `${path}.caption.minScale`, message: "Минимальный масштаб подписи должен находиться в диапазоне 0.5…1." });
@@ -634,6 +651,7 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
       validateColor(value.colors[key], `colors.${key}`, issues);
     }
     if (value.colors.occasion !== undefined) validateColor(value.colors.occasion, "colors.occasion", issues);
+    if (value.colors.action !== undefined) validateColor(value.colors.action, "colors.action", issues);
     if (!isRecord(value.colors.surfaces)) {
       issues.push({ path: "colors.surfaces", message: "Ожидается карта цветов поверхностей." });
     } else {
@@ -644,6 +662,22 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
           validateColor(color, `colors.surfaces.${key}`, issues);
         }
       });
+    }
+    if (value.colors.sections !== undefined) {
+      if (!isRecord(value.colors.sections)) {
+        issues.push({ path: "colors.sections", message: "Ожидается карта локальных цветов текста." });
+      } else {
+        Object.entries(value.colors.sections).forEach(([key, palette]) => {
+          if (!universalTemplateBlockOrder.includes(key as UniversalTemplateBlockId)) {
+            issues.push({ path: `colors.sections.${key}`, message: "Неизвестный семантический блок." });
+          } else if (!isRecord(palette)) {
+            issues.push({ path: `colors.sections.${key}`, message: "Ожидаются локальные цвета текста." });
+          } else {
+            if (palette.text !== undefined) validateColor(palette.text, `colors.sections.${key}.text`, issues);
+            if (palette.muted !== undefined) validateColor(palette.muted, `colors.sections.${key}.muted`, issues);
+          }
+        });
+      }
     }
   }
 

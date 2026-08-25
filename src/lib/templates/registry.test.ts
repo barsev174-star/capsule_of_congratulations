@@ -106,7 +106,8 @@ describe("template registry", () => {
       "daylight-proof",
       "school-scrapbook",
       "school-classic",
-      "kindergarten-doodles"
+      "kindergarten-doodles",
+      "team-editorial"
     ]);
   });
 

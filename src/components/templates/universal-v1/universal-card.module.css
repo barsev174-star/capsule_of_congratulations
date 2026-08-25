@@ -72,6 +72,7 @@
   isolation: isolate;
   margin-bottom: clamp(16px, 2vw, var(--uv1-section-gap));
   overflow: hidden;
+  color: var(--uv1-text);
   border-radius: var(--uv1-section-radius);
   background: var(--uv1-section-surface, var(--uv1-surface));
   box-shadow:
@@ -859,10 +860,10 @@
   overflow: hidden;
   padding-inline: var(--uv1-photo-caption-inline-padding);
   color: #202124;
-  font-size: calc(clamp(13px, 1.4vw, var(--uv1-photo-caption-font-max)) * var(--uv1-caption-scale));
+  font-size: calc(clamp(13px, 1.4vw, var(--uv1-photo-caption-font-max)) * var(--uv1-caption-size-scale, 1) * var(--uv1-caption-scale));
   font-weight: 600;
   line-height: 1.05;
-  text-wrap: balance;
+  text-wrap: pretty;
 }
 
 .photoCaption > span {
@@ -1073,11 +1074,11 @@
 .closingActions form { display: contents; }
 .closingAction { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; box-sizing: border-box; padding: 9px 18px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 750; line-height: 1.2; text-decoration: none; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out, box-shadow 150ms ease-out, scale 150ms ease-out; }
 .closingAction:active { scale: 0.96; }
-.closingActionPrimary { border: 1px solid #e9652f; color: #fff; background: #e9652f; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); }
-.closingActionPrimary:hover { border-color: #df5f2e; background: #df5f2e; }
-.closingActionPrimary:active { border-color: #c7532a; background: #c7532a; }
-.closingActionSecondary { border: 1px solid #e9652f; color: #e9652f; background: #fff; }
-.closingActionSecondary:hover { background: #f7f8fa; }
+.closingActionPrimary { border: 1px solid var(--uv1-action); color: #fff; background: var(--uv1-action); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); }
+.closingActionPrimary:hover { border-color: color-mix(in srgb, var(--uv1-action) 90%, black); background: color-mix(in srgb, var(--uv1-action) 90%, black); }
+.closingActionPrimary:active { border-color: color-mix(in srgb, var(--uv1-action) 80%, black); background: color-mix(in srgb, var(--uv1-action) 80%, black); }
+.closingActionSecondary { border: 1px solid var(--uv1-action); color: var(--uv1-action); background: #fff; }
+.closingActionSecondary:hover { background: color-mix(in srgb, var(--uv1-action) 6%, #fff); }
 
 .page[data-template-id="kindergarten-doodles"] .closingActionPrimary {
   border-color: #3f7f95;
