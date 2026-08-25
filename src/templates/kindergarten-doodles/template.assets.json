@@ -37,6 +37,8 @@
     { "id": "quote-card-3", "source": "quote-card-3.png", "output": "quote-card-3-v3.webp", "width": 800, "height": 640, "alpha": "transparent", "fit": "fill" },
     { "id": "photo-frame-landscape-base", "source": "photo-frame-landscape-base.png", "output": "photo-frame-landscape-base-v2.webp", "width": 1122, "height": 802, "alpha": "transparent", "fit": "contain" },
     { "id": "photo-frame-landscape-overlay", "source": "photo-frame-landscape-overlay.png", "output": "photo-frame-landscape-overlay-v2.webp", "width": 1122, "height": 802, "alpha": "transparent", "fit": "contain" },
+    { "id": "memories-heading-underlay-export", "source": "memories-heading-underlay-export.png", "output": "memories-heading-underlay-export-v1.webp", "width": 320, "height": 80, "alpha": "transparent", "fit": "fill" },
+    { "id": "memory-caption-underlay-export", "source": "memory-caption-underlay-export.png", "output": "memory-caption-underlay-export-v1.webp", "width": 400, "height": 120, "alpha": "transparent", "fit": "fill" },
     { "id": "decor-hero-drawing", "source": "decor-hero-drawing-v5.png", "output": "decor-hero-drawing-v5.webp", "width": 720, "height": 1080, "alpha": "transparent", "fit": "contain" },
     { "id": "decor-hero-still-life", "source": "decor-hero-still-life.png", "output": "decor-hero-still-life.webp", "width": 720, "height": 900, "alpha": "transparent", "fit": "contain" }
   ]

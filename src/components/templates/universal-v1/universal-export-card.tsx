@@ -258,11 +258,10 @@ function ExportPhoto({
     frame.caption.minScale
   );
   const paperCaption = frame.caption.paper;
-  const paperColor = paperCaption === "mint-coral" ? "#dceee2" : "#f6e4a5";
-  const tapeColor = paperCaption === "mint-coral" ? "rgba(239,118,101,.72)" : "rgba(117,191,229,.8)";
+  const exportCaptionUnderlay = frame.caption.exportUnderlay;
   const alignItems = frame.caption.align === "left" ? "flex-start" : frame.caption.align === "right" ? "flex-end" : "center";
   const captionAreaStyle = paperCaption === "mint-coral"
-    ? { ...rectStyle(framePreset.captionArea), top: "73.5%", height: "25%" }
+    ? { ...rectStyle(framePreset.captionArea), left: "2%", top: "69%", width: "96%", height: "30%" }
     : frame.caption.layout === "expanded"
       ? { ...rectStyle(framePreset.captionArea), top: "76.5%", height: "22%" }
     : width <= 360
@@ -275,8 +274,8 @@ function ExportPhoto({
     </div>
     {frame.overlay ? <img src={resolveAsset(frame.overlay.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
     <div data-safe-text data-text-boundary data-text-preset="photo-caption" data-caption-paper={paperCaption} style={{ position: "absolute", display: "flex", flexDirection: "column", justifyContent: "center", alignItems, ...captionAreaStyle, overflow: paperCaption ? "visible" : "hidden", color: textColor, fontFamily, fontSize: resolvedCaptionFontSize, fontWeight: 600, lineHeight: width < 400 ? .88 : .96, textAlign: frame.caption.align }}>
-      {paperCaption ? <><span aria-hidden style={{ position: "absolute", zIndex: 0, inset: "5% 0 0", clipPath: "polygon(2% 10%,23% 2%,49% 8%,76% 0,98% 9%,96% 91%,72% 98%,45% 92%,20% 100%,3% 88%)", backgroundColor: paperColor, backgroundImage: "radial-gradient(circle at 7px 7px, rgba(63,127,149,.14) 1.3px, transparent 1.5px)", backgroundSize: "22px 22px", filter: "drop-shadow(0 5px 5px rgba(0,0,0,.14))" }} /><span aria-hidden style={{ position: "absolute", zIndex: 2, top: paperCaption === "mint-coral" ? "-4%" : 0, left: paperCaption === "mint-coral" ? "33%" : "35%", width: paperCaption === "mint-coral" ? "34%" : "30%", height: paperCaption === "mint-coral" ? "25%" : "19%", clipPath: "polygon(2% 13%,96% 0,100% 88%,4% 100%)", background: tapeColor, transform: `rotate(${paperCaption === "mint-coral" ? 1.5 : -2}deg)` }} /></> : null}
-      <span style={{ position: "relative", zIndex: paperCaption ? 3 : 1 }}>{photo.caption}</span>
+      {exportCaptionUnderlay ? <img data-export-caption-paper-underlay src={resolveAsset(exportCaptionUnderlay.src)} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", objectFit: "fill" }} /> : null}
+      <span style={{ position: "relative", display: "flex", width: "100%", justifyContent: alignItems }}>{photo.caption}</span>
     </div>
   </div>;
 }
@@ -390,9 +389,13 @@ function Moments({
   const columnGap = format === "post" ? 10 : 12;
   const sideGap = format === "story" ? 8 : 6;
   const sideCaptionSize = (caption: string) => caption.length > 42 ? 28 : 29;
-  const heading = <div data-export-moments-heading style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: format === "post" ? 82 : 94, padding: "0 8px", boxSizing: "border-box", textAlign: "center" }}>
-    <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, lineHeight: 1.04, textAlign: "center" }}>Моменты</strong>
-    <span style={{ marginTop: 5, color: profile.colors.muted, fontFamily: profile.typography.handwritten.family, fontSize: format === "story" ? 28 : format === "a4" ? 26 : 22, fontWeight: profile.typography.handwritten.weight, lineHeight: 1.08, textAlign: "center" }}>Фото, которыми хочется поделиться</span>
+  const headingUnderlay = profile.export.memoriesHeadingUnderlay;
+  const paperHeading = Boolean(headingUnderlay);
+  const paperHeadingHeight = format === "post" ? 134 : format === "story" ? 148 : 142;
+  const heading = <div data-export-moments-heading data-export-moments-paper={paperHeading ? "true" : undefined} style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: paperHeading ? format === "post" ? "118%" : "104%" : undefined, height: paperHeading ? paperHeadingHeight : undefined, minHeight: paperHeading ? paperHeadingHeight : format === "post" ? 82 : 94, padding: paperHeading ? "20px 32px 22px" : "0 8px", boxSizing: "border-box", textAlign: "center" }}>
+    {headingUnderlay ? <img data-export-moments-paper-underlay src={resolveAsset(headingUnderlay.src)} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", objectFit: "fill" }} /> : null}
+    <strong style={{ position: "relative", display: "flex", fontFamily: profile.typography.heading.family, fontSize: layout.heading, lineHeight: 1.04, textAlign: "center" }}>Моменты</strong>
+    <span style={{ position: "relative", display: "flex", marginTop: 5, color: profile.colors.muted, fontFamily: profile.typography.handwritten.family, fontSize: format === "story" ? 28 : format === "a4" ? 26 : 22, fontWeight: profile.typography.handwritten.weight, lineHeight: 1.08, textAlign: "center" }}>Фото, которыми хочется поделиться</span>
   </div>;
 
   return <div data-export-memories-layout="feature-stack" style={{ display: "flex", width: "100%", height: "100%", padding: format === "post" ? "8px 6px" : "10px 8px", boxSizing: "border-box", alignItems: "center", justifyContent: "center" }}>

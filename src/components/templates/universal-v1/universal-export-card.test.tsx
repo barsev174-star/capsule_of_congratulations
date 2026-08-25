@@ -147,6 +147,19 @@ describe("UniversalTemplateExportCard", () => {
     expect(quoteDecors.every(({ src }) => src.includes("quote-card-") && src.includes("crop="))).toBe(true);
     expect(container.querySelector('[data-universal-export-block="closing"] [data-export-asset-underlay="horizontal-slice"]'))
       .toHaveAttribute("src", expect.stringContaining("section-closing-desktop-v7.webp"));
+    expect(container.querySelector('[data-export-moments-heading]')).toHaveAttribute("data-export-moments-paper", "true");
+    expect(container.querySelector('[data-export-moments-paper-underlay]')).toHaveAttribute("src", "/templates/kindergarten-doodles/memories-heading-underlay-export-v1.webp");
+    expect(container.querySelector('[data-export-moments-heading]')).toHaveStyle({
+      width: format === "post" ? "118%" : "104%",
+      height: `${format === "post" ? 134 : format === "story" ? 148 : 142}px`
+    });
+    expect(container.querySelectorAll('[data-export-caption-paper-underlay]')).toHaveLength(universalExportFormats[format].photoCount);
+    for (const captionUnderlay of Array.from(container.querySelectorAll<HTMLImageElement>('[data-export-caption-paper-underlay]'))) {
+      expect(captionUnderlay).toHaveAttribute("src", "/templates/kindergarten-doodles/memory-caption-underlay-export-v1.webp");
+    }
+    for (const caption of Array.from(container.querySelectorAll<HTMLElement>('[data-text-preset="photo-caption"]'))) {
+      expect(caption).toHaveStyle({ left: "2%", top: "69%", width: "96%", height: "30%" });
+    }
     for (const layer of heroDecor) {
       expect(container.querySelector(`[data-decor-layer="${layer.id}"]`)).toBeInTheDocument();
     }

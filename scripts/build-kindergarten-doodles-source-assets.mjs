@@ -322,20 +322,56 @@ const writeFrames = async () => {
   await sharp(frameOverlaySvg(1122, 802, landscapeAperture)).png({ compressionLevel: 9 }).toFile(source("photo-frame-landscape-overlay.png"));
 };
 
+const exportPaperUnderlaySvg = ({ width, height, fill, tape, tapeWidth }) => Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="-10%" y="-20%" width="120%" height="150%"><feDropShadow dx="0" dy="${Math.max(3, Math.round(height * .045))}" stdDeviation="${Math.max(3, Math.round(height * .045))}" flood-color="#18324c" flood-opacity=".16"/></filter>
+    <pattern id="dots" width="30" height="30" patternUnits="userSpaceOnUse"><circle cx="7" cy="7" r="1.6" fill="${palette.sky}" fill-opacity=".16"/></pattern>
+  </defs>
+  <path d="M${Math.round(width * .025)} ${Math.round(height * .18)}Q${Math.round(width * .22)} ${Math.round(height * .05)} ${Math.round(width * .45)} ${Math.round(height * .14)}T${Math.round(width * .975)} ${Math.round(height * .1)}L${Math.round(width * .985)} ${Math.round(height * .84)}Q${Math.round(width * .73)} ${Math.round(height * .97)} ${Math.round(width * .48)} ${Math.round(height * .86)}T${Math.round(width * .025)} ${Math.round(height * .92)}Z" fill="${fill}" filter="url(#shadow)"/>
+  <path d="M${Math.round(width * .04)} ${Math.round(height * .23)}Q${Math.round(width * .35)} ${Math.round(height * .11)} ${Math.round(width * .96)} ${Math.round(height * .18)}L${Math.round(width * .965)} ${Math.round(height * .78)}Q${Math.round(width * .52)} ${Math.round(height * .91)} ${Math.round(width * .04)} ${Math.round(height * .84)}Z" fill="url(#dots)"/>
+  <rect x="${Math.round((width - tapeWidth) / 2)}" y="${Math.round(height * .02)}" width="${tapeWidth}" height="${Math.round(height * .24)}" rx="5" fill="${tape}" fill-opacity=".76" transform="rotate(1.5 ${width / 2} ${Math.round(height * .14)})"/>
+</svg>`);
+
+const writeExportPaperUnderlays = async () => {
+  await sharp(exportPaperUnderlaySvg({ width: 320, height: 80, fill: "#fff0bd", tape: palette.yellow, tapeWidth: 70 }))
+    .png({ compressionLevel: 9 })
+    .toFile(source("memories-heading-underlay-export.png"));
+  await sharp(exportPaperUnderlaySvg({ width: 400, height: 120, fill: "#dceee2", tape: palette.coral, tapeWidth: 112 }))
+    .png({ compressionLevel: 9 })
+    .toFile(source("memory-caption-underlay-export.png"));
+};
+
 const writeHeroAndPreview = async () => {
   await writeCutout(source("hero-drawing-vertical-master-v5.png"), "decor-hero-drawing-v5.png", 720, 1080);
   await writeCutout(source("hero-still-life-master.png"), "decor-hero-still-life.png", 720, 900);
   await writeCutout(source("closing-still-life-master-v3.png"), "decor-closing-still-life.png", 960, 640);
 
   const background = await sharp(source("page.png")).resize(1200, 630, { fit: "cover" }).png().toBuffer();
-  const left = await sharp(source("decor-hero-drawing-v5.png")).resize(310, 510, { fit: "contain", background: transparent }).rotate(-2, { background: transparent }).png().toBuffer();
-  const right = await sharp(source("decor-hero-still-life.png")).resize(390, 488, { fit: "contain", background: transparent }).png().toBuffer();
-  const center = Buffer.from(`<svg width="500" height="370" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="20" width="480" height="320" rx="52" fill="#fff8ed" fill-opacity=".94"/><path d="M120 288H380" stroke="${palette.coral}" stroke-opacity=".35" stroke-width="4" stroke-linecap="round"/><circle cx="250" cy="124" r="18" fill="${palette.coralSoft}"/><path d="M236 124c0-18 24-22 28-5 4-17 28-13 28 5 0 18-28 34-28 34s-28-16-28-34Z" fill="${palette.coral}" fill-opacity=".76"/></svg>`);
+  const left = await sharp(source("decor-hero-drawing-v5.png")).resize(408, 548, { fit: "contain", background: transparent }).rotate(-2, { background: transparent }).png().toBuffer();
+  const right = await sharp(source("decor-hero-still-life.png")).resize(500, 535, { fit: "contain", background: transparent }).png().toBuffer();
+  const paperCollage = Buffer.from(`<svg width="800" height="560" xmlns="http://www.w3.org/2000/svg">
+    <defs><filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#18324c" flood-opacity=".11"/></filter></defs>
+    <path d="M86 86L355 49L381 214L105 244Z" fill="${palette.skySoft}" filter="url(#shadow)" transform="rotate(-5 230 145)"/>
+    <path d="M424 55L706 93L674 286L400 241Z" fill="${palette.yellowSoft}" filter="url(#shadow)" transform="rotate(4 554 170)"/>
+    <path d="M221 318L596 287L619 496L194 516Z" fill="${palette.mintSoft}" filter="url(#shadow)" transform="rotate(-2 405 402)"/>
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M130 174c38-41 72-41 104 0 31-41 68-41 103 0" stroke="${palette.sky}" stroke-width="13" stroke-opacity=".48"/>
+      <path d="M470 157l31-31 31 31 31-31 31 31" stroke="${palette.yellow}" stroke-width="12" stroke-opacity=".55"/>
+      <path d="M284 408c64-44 124-44 185 0 39-32 75-32 110 0" stroke="${palette.mint}" stroke-width="14" stroke-opacity=".58"/>
+      <path d="M157 202l21 12m-33 7 20 4m434-35 24-7m-15 29 22 8M246 458l-18 14m372-34 22 11" stroke="${palette.coral}" stroke-width="8" stroke-opacity=".55"/>
+    </g>
+  </svg>`);
+  const sun = await sharp(source("doodle-sun.png")).resize(92, 92, { fit: "contain", background: transparent }).png().toBuffer();
+  const flower = await sharp(source("doodle-flower.png")).resize(88, 88, { fit: "contain", background: transparent }).rotate(-7, { background: transparent }).png().toBuffer();
+  const rainbow = await sharp(source("doodle-rainbow.png")).resize(104, 104, { fit: "contain", background: transparent }).rotate(5, { background: transparent }).png().toBuffer();
   await sharp(background)
     .composite([
-      { input: left, left: 12, top: 58 },
-      { input: center, left: 350, top: 120 },
-      { input: right, left: 835, top: 65 }
+      { input: paperCollage, left: 205, top: 34 },
+      { input: left, left: 66, top: 40 },
+      { input: right, left: 686, top: 64 },
+      { input: sun, left: 504, top: 42 },
+      { input: flower, left: 520, top: 484 },
+      { input: rainbow, left: 832, top: 448 }
     ])
     .png({ compressionLevel: 9 })
     .toFile(source("catalog-preview.png"));
@@ -346,6 +382,7 @@ await writeDoodleAtlas();
 await writeSections();
 await writeCards();
 await writeFrames();
+await writeExportPaperUnderlays();
 await writeHeroAndPreview();
 
 console.log("KINDERGARTEN_DOODLES_SOURCE_ASSETS_BUILT_V1");

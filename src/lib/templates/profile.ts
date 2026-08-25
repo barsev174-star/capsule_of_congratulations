@@ -84,6 +84,7 @@ export type UniversalPhotoFrame = {
     minScale: number;
     layout?: "standard" | "expanded";
     paper?: "yellow-blue" | "mint-coral";
+    exportUnderlay?: TemplateAssetRef;
   };
 };
 
@@ -186,6 +187,7 @@ export type TemplateProfile = {
       post: number;
       a4: number;
     };
+    memoriesHeadingUnderlay?: TemplateAssetRef;
     counters?: {
       preset?: "soft-pill" | "classic-label";
       congratulations: { text: string; surface: string; outline?: string };
@@ -394,6 +396,7 @@ const validatePhotoFrame = (
   if (value.caption.paper !== undefined && !["yellow-blue", "mint-coral"].includes(String(value.caption.paper))) {
     issues.push({ path: `${path}.caption.paper`, message: "Неизвестный стиль бумажной подписи." });
   }
+  validateAsset(value.caption.exportUnderlay, `${path}.caption.exportUnderlay`, issues, true);
 };
 
 const validateTextCard = (
@@ -737,6 +740,7 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
         }
       }
     }
+    validateAsset(value.export.memoriesHeadingUnderlay, "export.memoriesHeadingUnderlay", issues, true);
     if (value.export.counters !== undefined) {
       if (!isRecord(value.export.counters)) {
         issues.push({ path: "export.counters", message: "Ожидаются цвета экспортных счётчиков." });

@@ -2,10 +2,10 @@ import { defineTemplate, defineTextCard } from "@/lib/templates/profile";
 import { defineSectionUnderlay } from "@/lib/templates/section-underlays";
 
 const asset = (src: `/templates/kindergarten-doodles/${string}`, width: number, height: number) => ({ src, width, height });
-const captionPaperFrame = (preset: "portrait-caption-paper" | "landscape-caption-paper", minScale = 0.7, paper: "yellow-blue" | "mint-coral" = "yellow-blue") => ({
+const captionPaperFrame = (preset: "portrait-caption-paper" | "landscape-caption-paper", minScale = 0.7, paper: "yellow-blue" | "mint-coral" = "yellow-blue", exportUnderlay?: ReturnType<typeof asset>) => ({
   preset,
   fit: "cover" as const,
-  caption: { maxChars: 45 as const, maxLines: 2 as const, align: "center" as const, fontToken: "handwritten" as const, minScale, layout: "standard" as const, paper }
+  caption: { maxChars: 45 as const, maxLines: 2 as const, align: "center" as const, fontToken: "handwritten" as const, minScale, layout: "standard" as const, paper, exportUnderlay }
 });
 
 export const kindergarten_doodlesProfile = defineTemplate({
@@ -56,7 +56,7 @@ export const kindergarten_doodlesProfile = defineTemplate({
     photoFrames: {
       messagePortrait: captionPaperFrame("portrait-caption-paper"),
       messageLandscape: captionPaperFrame("landscape-caption-paper"),
-      memory: captionPaperFrame("landscape-caption-paper", 0.55, "mint-coral")
+      memory: captionPaperFrame("landscape-caption-paper", 0.55, "mint-coral", asset("/templates/kindergarten-doodles/memory-caption-underlay-export-v1.webp", 400, 120))
     },
     decor: [
       { id: "hero-drawing-desktop", asset: asset("/templates/kindergarten-doodles/decor-hero-drawing-v5.webp", 720, 1080), anchor: "hero", rect: { x: -0.035, y: 0.025, width: 0.335, height: 0.96 }, rotation: -2, opacity: 0.99, visibleOn: ["desktop"] },
@@ -101,6 +101,7 @@ export const kindergarten_doodlesProfile = defineTemplate({
   public: { blocks: ["hero", "qualities", "memories", "quotes"], heroDescription: "Тёплая публичная часть подарка воспитателю:\nдобрые слова, детские улыбки и общие моменты." },
   export: {
     profile: "universal-export-v1",
+    memoriesHeadingUnderlay: asset("/templates/kindergarten-doodles/memories-heading-underlay-export-v1.webp", 320, 80),
     heroDescriptionMaxWidth: { story: 500, post: 500, a4: 470 },
     counters: {
       preset: "classic-label",
