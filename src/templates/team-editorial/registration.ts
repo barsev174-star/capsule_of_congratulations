@@ -10,6 +10,6 @@ export const team_editorialRegistration = {
     description: "Универсальная открытка с журнальной типографикой, тактильной бумагой и сдержанными предметными акцентами.",
     recommendedFor: ["personal", "team", "colleague", "celebration"],
     accent: "#2f6f70",
-    availability: "studio"
+    availability: "product"
   }
 } satisfies UniversalTemplateRegistration;

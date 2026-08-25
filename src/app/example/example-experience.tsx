@@ -6,12 +6,12 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { GiftIntro } from "@/components/gift-intro/gift-intro";
 import { ScrollReveal, useScrollReveal } from "@/components/scroll-reveal/scroll-reveal";
-import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel } from "@/lib/example-card";
+import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel, teamEditorialDemoCardModel } from "@/lib/example-card";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
 import { startCardFromShowcaseAction } from "../home-actions";
 import styles from "./example.module.css";
 
-export type DemoTemplateId = "paper-birthday" | "route-adventure" | "school-scrapbook" | "school-classic" | "kindergarten-doodles";
+export type DemoTemplateId = "paper-birthday" | "route-adventure" | "school-scrapbook" | "school-classic" | "kindergarten-doodles" | "team-editorial";
 
 type Props = {
   children: ReactNode;
@@ -19,6 +19,7 @@ type Props = {
   schoolChildren: ReactNode;
   schoolClassicChildren: ReactNode;
   kindergartenDoodlesChildren: ReactNode;
+  teamEditorialChildren: ReactNode;
   initialTemplateId?: DemoTemplateId;
 };
 
@@ -39,7 +40,7 @@ const previewFeatures = [
 
 const previewContributions = exampleCardModel.contributions.slice(0, 2);
 
-export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, initialTemplateId }: Props) => {
+export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, initialTemplateId }: Props) => {
   const [started, setStarted] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<DemoTemplateId>(initialTemplateId ?? "paper-birthday");
   const [activeStep, setActiveStep] = useState<DemoStepId>("template");
@@ -48,14 +49,16 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     "route-adventure": routeAdventureDemoCardModel,
     "school-scrapbook": schoolScrapbookDemoCardModel,
     "school-classic": schoolClassicDemoCardModel,
-    "kindergarten-doodles": kindergartenDoodlesDemoCardModel
+    "kindergarten-doodles": kindergartenDoodlesDemoCardModel,
+    "team-editorial": teamEditorialDemoCardModel
   };
   const demoChildrenByTemplate: Record<DemoTemplateId, ReactNode> = {
     "paper-birthday": children,
     "route-adventure": routeChildren,
     "school-scrapbook": schoolChildren,
     "school-classic": schoolClassicChildren,
-    "kindergarten-doodles": kindergartenDoodlesChildren
+    "kindergarten-doodles": kindergartenDoodlesChildren,
+    "team-editorial": teamEditorialChildren
   };
   const demoIntroByTemplate: Record<DemoTemplateId, {
     subtitle: string;
@@ -94,6 +97,16 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
       decor: [
         "/templates/kindergarten-doodles/decor-hero-drawing-v5.webp",
         "/templates/kindergarten-doodles/decor-hero-still-life.webp"
+      ]
+    },
+    "team-editorial": {
+      subtitle: "для тебя собрали коллеги",
+      accent: "#2f6f70",
+      kicker: "Открытка от команды",
+      preset: "classic",
+      decor: [
+        "/templates/team-editorial/hero-left-v2.webp",
+        "/templates/team-editorial/hero-right-v2.webp"
       ]
     }
   };
@@ -289,7 +302,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
             <span className={styles.blockNumber}>1</span>
             <div className={styles.blockHeaderText}>
               <h2 id="template-heading">Выберите пример открытки</h2>
-              <p>Все пять примеров уже доступны: выберите настроение, которое подходит вашему подарку.</p>
+              <p>Все шесть примеров уже доступны: выберите настроение, которое подходит вашему подарку.</p>
             </div>
           </div>
 
@@ -349,13 +362,13 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
             <ScrollReveal variant="slide-right" duration={560} delay={240}>
               <button
                 type="button"
-                className={`${styles.templateCard} ${styles.templateCardSelectable} ${selectedTemplateId === "school-scrapbook" ? styles.templateCardActive : ""}`}
-                onClick={() => selectTemplate("school-scrapbook")}
-                aria-pressed={selectedTemplateId === "school-scrapbook"}
+                className={`${styles.templateCard} ${styles.templateCardSelectable} ${selectedTemplateId === "team-editorial" ? styles.templateCardActive : ""}`}
+                onClick={() => selectTemplate("team-editorial")}
+                aria-pressed={selectedTemplateId === "team-editorial"}
               >
                 <div className={styles.templateCardThumb}>
                   <Image
-                    src="/templates/school-scrapbook/preview.webp"
+                    src="/templates/team-editorial/preview-v4.webp"
                     alt=""
                     fill
                     sizes="(max-width: 640px) 92vw, (max-width: 900px) 45vw, 33vw"
@@ -363,11 +376,11 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
                   />
                 </div>
                 <div className={styles.templateCardMeta}>
-                  <span className={selectedTemplateId === "school-scrapbook" ? styles.badgeTemplateSelected : styles.badgeTemplateAvailable}>
-                    {selectedTemplateId === "school-scrapbook" ? "✓ Выбрано" : "Выбрать"}
+                  <span className={selectedTemplateId === "team-editorial" ? styles.badgeTemplateSelected : styles.badgeTemplateAvailable}>
+                    {selectedTemplateId === "team-editorial" ? "✓ Выбрано" : "Выбрать"}
                   </span>
-                  <strong>Школьный коллаж</strong>
-                  <span>Первое сентября, школа, семья и друзья</span>
+                  <strong>Вместе</strong>
+                  <span>Повышение, важный этап или благодарность от команды</span>
                 </div>
               </button>
             </ScrollReveal>
@@ -399,6 +412,32 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
             </ScrollReveal>
 
             <ScrollReveal variant="slide-right" duration={560} delay={400}>
+              <button
+                type="button"
+                className={`${styles.templateCard} ${styles.templateCardSelectable} ${selectedTemplateId === "school-scrapbook" ? styles.templateCardActive : ""}`}
+                onClick={() => selectTemplate("school-scrapbook")}
+                aria-pressed={selectedTemplateId === "school-scrapbook"}
+              >
+                <div className={styles.templateCardThumb}>
+                  <Image
+                    src="/templates/school-scrapbook/preview.webp"
+                    alt=""
+                    fill
+                    sizes="(max-width: 640px) 92vw, (max-width: 900px) 45vw, 33vw"
+                    className={styles.templateThumbImage}
+                  />
+                </div>
+                <div className={styles.templateCardMeta}>
+                  <span className={selectedTemplateId === "school-scrapbook" ? styles.badgeTemplateSelected : styles.badgeTemplateAvailable}>
+                    {selectedTemplateId === "school-scrapbook" ? "✓ Выбрано" : "Выбрать"}
+                  </span>
+                  <strong>Школьный коллаж</strong>
+                  <span>Первое сентября, школа, семья и друзья</span>
+                </div>
+              </button>
+            </ScrollReveal>
+
+            <ScrollReveal variant="slide-right" duration={560} delay={480}>
               <button
                 type="button"
                 className={`${styles.templateCard} ${styles.templateCardSelectable} ${selectedTemplateId === "kindergarten-doodles" ? styles.templateCardActive : ""}`}

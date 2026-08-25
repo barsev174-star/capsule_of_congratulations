@@ -13,6 +13,7 @@ describe("universal-v1 fixtures", () => {
       "full-card-default",
       "teacher-classic",
       "kindergarten-demo",
+      "team-editorial-demo",
       "text-stress",
       "minimal",
       "public-full",
@@ -35,6 +36,20 @@ describe("universal-v1 fixtures", () => {
       "kindergarten-photo-create-together",
       "kindergarten-photo-small-discoveries",
       "kindergarten-photo-friendly-group"
+    ]);
+  });
+
+  it("фиксирует демонстрацию повышения с двадцатью поздравлениями и шестью разными фото", () => {
+    const fixture = getUniversalTemplateFixture("team-editorial-demo");
+
+    expect(fixture.recipientName).toBe("Егор Дмитриевич");
+    expect(fixture.contributions).toHaveLength(20);
+    expect(fixture.photos).toHaveLength(6);
+    expect(fixture.photos.every((photo) => photo.width > photo.height)).toBe(true);
+    expect(fixture.memoryPhotoIds).toEqual([
+      "team-photo-energy",
+      "team-photo-path",
+      "team-photo-good-news"
     ]);
   });
 

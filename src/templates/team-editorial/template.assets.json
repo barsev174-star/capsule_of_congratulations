@@ -2,10 +2,10 @@
   "version": 1,
   "templateId": "team-editorial",
   "budgets": { "networkBytes": 8000000, "decodedMemoryBytes": 84000000, "individualBytes": 2000000 },
-  "preview": { "sourceAssetId": "catalog-preview", "output": "preview-v3.webp", "width": 1200, "height": 630 },
+  "preview": { "sourceAssetId": "catalog-preview-v2", "output": "preview-v4.webp", "width": 1200, "height": 630 },
   "assets": [
     { "id": "page", "source": "page.png", "output": "page.webp", "width": 1536, "height": 1024, "alpha": "opaque", "fit": "cover" },
-    { "id": "catalog-preview", "source": "catalog-preview.png", "output": "catalog-preview.webp", "width": 1200, "height": 630, "alpha": "opaque", "fit": "cover" },
+    { "id": "catalog-preview-v2", "source": "catalog-preview-v2.png", "output": "catalog-preview-v2.webp", "width": 1200, "height": 630, "alpha": "opaque", "fit": "cover" },
     { "id": "section-summary", "source": "section-summary.png", "output": "section-summary.webp", "width": 1200, "height": 420, "alpha": "either", "fit": "cover" },
     { "id": "section-messages", "source": "section-messages.png", "output": "section-messages.webp", "width": 1200, "height": 900, "alpha": "either", "fit": "cover" },
     { "id": "section-messages-mobile", "source": "section-messages-mobile.png", "output": "section-messages-mobile.webp", "width": 600, "height": 900, "alpha": "either", "fit": "cover" },

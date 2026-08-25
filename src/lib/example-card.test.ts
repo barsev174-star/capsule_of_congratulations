@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { exampleCardModel, kindergartenDoodlesDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel } from "./example-card";
+import { exampleCardModel, kindergartenDoodlesDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel, teamEditorialDemoCardModel } from "./example-card";
 
 describe("example card", () => {
   it("uses the agreed photo groups", () => {
@@ -106,5 +106,19 @@ describe("kindergarten doodles demo card", () => {
     expect(kindergartenDoodlesDemoCardModel.messagePhotos).toHaveLength(2);
     expect(kindergartenDoodlesDemoCardModel.memoryPhotos).toHaveLength(3);
     expect(kindergartenDoodlesDemoCardModel.privateQuotes).toHaveLength(3);
+  });
+});
+
+describe("team editorial demo card", () => {
+  it("uses the promotion fixture in the Together template", () => {
+    expect(teamEditorialDemoCardModel.templateId).toBe("team-editorial");
+    expect(teamEditorialDemoCardModel.recipientName).toBe("Егор Дмитриевич");
+    expect(teamEditorialDemoCardModel.occasion).toBe("С повышением!");
+    expect(teamEditorialDemoCardModel.contributions).toHaveLength(20);
+    expect(teamEditorialDemoCardModel.qualities).toHaveLength(5);
+    expect(teamEditorialDemoCardModel.messageScenario).toBe("landscape-trio");
+    expect(teamEditorialDemoCardModel.messagePhotos).toHaveLength(3);
+    expect(teamEditorialDemoCardModel.memoryPhotos).toHaveLength(3);
+    expect(teamEditorialDemoCardModel.privateQuotes).toHaveLength(3);
   });
 });

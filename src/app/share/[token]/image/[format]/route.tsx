@@ -171,7 +171,11 @@ const rendererOrigin = (request: Request) => process.env.NODE_ENV === "productio
   : new URL(request.url).origin;
 const exportFonts = async () => Promise.all([
   readFile(join(process.cwd(), "public", "fonts", "Caveat-Cyrillic-600.woff")),
-  readFile(join(process.cwd(), "public", "fonts", "PTSans-Full-400.ttf"))
+  readFile(join(process.cwd(), "public", "fonts", "PTSans-Regular.ttf")),
+  readFile(join(process.cwd(), "public", "fonts", "PTSans-Bold.ttf")),
+  readFile(join(process.cwd(), "public", "fonts", "Inter-Regular.ttf")),
+  readFile(join(process.cwd(), "public", "fonts", "Inter-MediumItalic.ttf")),
+  readFile(join(process.cwd(), "public", "fonts", "Inter-ExtraBold.ttf"))
 ]);
 
 export const resolveUniversalExportAsset = (origin: string, src: `/${string}`) => {
@@ -410,17 +414,36 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
         photos: model.memoryPhotos.map((photo, index) => ({ id: photo.id, url: `/examples/kristina/${index + 1}.jpg`, width: photo.width, height: photo.height, caption: photo.caption, crop: photo.crop }))
       };
     }
+    if (!payload && token === "team-editorial-export-baseline") {
+      const { teamEditorialDemoCardModel: model } = await import("@/lib/example-card");
+      payload = {
+        version: 2,
+        family: "universal-v1",
+        share: { displayName: model.recipientName, headlinePreset: "GIFTED_CARD", showOccasion: true, showEventDate: false, showGreetingCount: true, showPhotoCount: true },
+        card: { templateId: model.templateId, occasionText: model.occasion, eventDate: model.eventDate, fromLabel: model.fromLabel, greetingCount: model.participantCount, photoCount: model.memoryPhotos.length },
+        qualities: [...model.qualities],
+        phrases: [
+          "Очень радостно видеть, как Ваш труд приводит к заслуженному результату.",
+          "Спасибо за умение держать курс даже в сложные периоды и оставаться внимательным к людям.",
+          "Пусть в новом статусе сохраняются Ваша точность в решениях и умение видеть ситуацию шире."
+        ],
+        photos: model.memoryPhotos.map((photo) => ({ id: photo.id, url: photo.src, width: photo.width, height: photo.height, caption: photo.caption, crop: photo.crop }))
+      };
+    }
   }
   payload ??= await getPublicSharePayload(token);
   if (!payload) return new Response(null, { status: 404 });
   const { width, height } = formats[selectedFormat];
-  const [caveat, ptSans] = await exportFonts();
+  const [caveat, ptSans, ptSansBold, inter, interItalic, interExtraBold] = await exportFonts();
   const origin = rendererOrigin(request);
   log("export:assets-loaded", { payloadVersion: payload.version, width, height });
   const fonts = [
     { name: "Caveat", data: caveat, weight: 600 as const, style: "normal" as const },
     { name: "PT Sans", data: ptSans, weight: 400 as const, style: "normal" as const },
-    { name: "Inter", data: ptSans, weight: 400 as const, style: "normal" as const }
+    { name: "PT Sans", data: ptSansBold, weight: 700 as const, style: "normal" as const },
+    { name: "Inter", data: inter, weight: 400 as const, style: "normal" as const },
+    { name: "Inter", data: interItalic, weight: 500 as const, style: "italic" as const },
+    { name: "Inter", data: interExtraBold, weight: 800 as const, style: "normal" as const }
   ];
   let image: ImageResponse;
   if (payload.version === 2) {
@@ -450,7 +473,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   try {
     png = Buffer.from(await withRenderTimeout(renderPromise));
   } catch (error) {
-    log("export:failed", { stage: "image-rendered", error: error instanceof Error ? error.message : String(error) });
+    log("export:failed", {
+      stage: "image-rendered",
+      error: error instanceof Error ? error.message : String(error),
+      ...(error instanceof Error && error.stack ? { stack: error.stack } : {})
+    });
     if (error instanceof ExportRenderTimeoutError) {
       releaseWhenRenderSettles = true;
       void renderPromise.finally(() => { activeExports -= 1; }).catch(() => undefined);

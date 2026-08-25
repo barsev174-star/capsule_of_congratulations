@@ -1,7 +1,7 @@
 import { FinalCard } from "@/components/final-card/final-card";
 import type { Metadata } from "next";
 import { TemplateCardRenderer } from "@/components/templates/template-card-renderer";
-import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel } from "@/lib/example-card";
+import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel, teamEditorialDemoCardModel } from "@/lib/example-card";
 import { requireTemplateRenderer } from "@/lib/templates/dispatcher";
 import { ExampleExperience, type DemoTemplateId } from "./example-experience";
 
@@ -23,7 +23,10 @@ const templateAliases: Record<string, DemoTemplateId> = {
   "school-classic": "school-classic",
   kindergarten: "kindergarten-doodles",
   caregiver: "kindergarten-doodles",
-  "kindergarten-doodles": "kindergarten-doodles"
+  "kindergarten-doodles": "kindergarten-doodles",
+  together: "team-editorial",
+  team: "team-editorial",
+  "team-editorial": "team-editorial"
 };
 
 type ExamplePageProps = {
@@ -37,6 +40,7 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
   const schoolDispatch = requireTemplateRenderer("school-scrapbook");
   const schoolClassicDispatch = requireTemplateRenderer("school-classic");
   const kindergartenDoodlesDispatch = requireTemplateRenderer("kindergarten-doodles");
+  const teamEditorialDispatch = requireTemplateRenderer("team-editorial");
   if (schoolDispatch.kind !== "universal-v1") {
     throw new Error("Шаблон school-scrapbook должен использовать универсальный рендерер.");
   }
@@ -46,6 +50,9 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
   if (kindergartenDoodlesDispatch.kind !== "universal-v1") {
     throw new Error("Шаблон воспитателю должен использовать универсальный рендерер.");
   }
+  if (teamEditorialDispatch.kind !== "universal-v1") {
+    throw new Error("Шаблон «Вместе» должен использовать универсальный рендерер.");
+  }
 
   return (
     <ExampleExperience
@@ -54,6 +61,7 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
       schoolChildren={<TemplateCardRenderer dispatch={schoolDispatch} model={schoolScrapbookDemoCardModel} surface="private" />}
       schoolClassicChildren={<TemplateCardRenderer dispatch={schoolClassicDispatch} model={schoolClassicDemoCardModel} surface="private" />}
       kindergartenDoodlesChildren={<TemplateCardRenderer dispatch={kindergartenDoodlesDispatch} model={kindergartenDoodlesDemoCardModel} surface="private" />}
+      teamEditorialChildren={<TemplateCardRenderer dispatch={teamEditorialDispatch} model={teamEditorialDemoCardModel} surface="private" />}
     >
       <FinalCard model={exampleCardModel} />
     </ExampleExperience>

@@ -13,7 +13,16 @@ const templateStyleMap: Record<string, string> = {
   "route-adventure": styles.routeAdventure
 };
 
-const featuredTemplateIds = new Set(["school-classic", "kindergarten-doodles"]);
+const featuredTemplateIds = new Set(["school-classic", "kindergarten-doodles", "team-editorial"]);
+const homepageTemplateOrder = [
+  "paper-birthday",
+  "route-adventure",
+  "team-editorial",
+  "school-classic",
+  "school-scrapbook",
+  "kindergarten-doodles"
+] as const;
+const homepageTemplateOrderIndex = new Map<string, number>(homepageTemplateOrder.map((templateId, index) => [templateId, index]));
 
 function TemplateMiniature({ templateId, accent, preview }: { templateId: string; accent: string; preview?: string }) {
   const imageSrc = preview ?? getTemplateAsset(templateId);
@@ -45,20 +54,25 @@ function TemplateMiniature({ templateId, accent, preview }: { templateId: string
 
 export async function TemplatesSection() {
   const cardTemplates = await getCardTemplates();
+  const orderedTemplates = [...cardTemplates].sort(
+    (left, right) =>
+      (homepageTemplateOrderIndex.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+      (homepageTemplateOrderIndex.get(right.id) ?? Number.MAX_SAFE_INTEGER)
+  );
 
   return (
     <section id="templates" className={styles.section}>
       <div className={styles.shell}>
         <div className={styles.heading}>
           <h2 className={`${styles.title} text-balance`}>Выберите настроение открытки</h2>
-          <p className={styles.subtitle}>Выберите один из пяти тщательно проработанных шаблонов. Новые стили появятся позже.</p>
+          <p className={styles.subtitle}>Выберите один из шести тщательно проработанных шаблонов. Новые стили появятся позже.</p>
         </div>
 
         <div className={styles.grid}>
-          {cardTemplates.map((template) => (
+          {orderedTemplates.map((template) => (
             <article
               key={template.id}
-              className={`${styles.card} js-motion-card ${styles.active} ${template.id === "school-classic" ? styles.secondRowStart : ""}`.trim()}
+              className={`${styles.card} js-motion-card ${styles.active}`}
               data-template-id={template.id}
             >
               <TemplateMiniature templateId={template.id} accent={template.accent} preview={template.preview} />

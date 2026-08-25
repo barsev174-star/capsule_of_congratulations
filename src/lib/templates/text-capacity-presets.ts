@@ -28,7 +28,7 @@ export const universalTextCapacityPresets = {
   quoteCard: {
     maxChars: 100,
     maxLines: 4,
-    overflow: "ellipsis"
+    overflow: "clip"
   }
 } as const satisfies Record<string, UniversalTextCapacityPreset>;
 
@@ -54,9 +54,10 @@ export const getUniversalRecipientNameTier = (value: string): UniversalRecipient
 };
 
 export const getUniversalQuoteLengthScale = (value: string) => {
-  const length = value.trim().length;
-  if (length > 90) return .86;
-  if (length > 80) return .93;
+  const length = value.trim().replace(/\s+/g, " ").length;
+  if (length > 90) return .72;
+  if (length > 80) return .78;
+  if (length > 65) return .88;
   return 1;
 };
 

@@ -229,6 +229,12 @@ export const kindergartenDoodlesDemoCardModel: UniversalTemplateViewModel = buil
   photoCount: 2
 });
 
+export const teamEditorialDemoCardModel: UniversalTemplateViewModel = buildUniversalFixtureViewModel("team-editorial-demo", {
+  templateId: "team-editorial",
+  scenario: "landscape-trio",
+  photoCount: 3
+});
+
 const routeContributions: Contribution[] = [
   contribution(
     "route-ivan",

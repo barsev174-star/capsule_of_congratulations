@@ -7,6 +7,7 @@ import { universalTemplateBlockOrder } from "@/lib/templates/profile";
 import { createTemplateStudioProfile } from "@/lib/templates/studio";
 import { getUniversalPhotoFramePreset } from "@/lib/templates/photo-frame-presets";
 import { school_classicProfile } from "@/templates/school-classic/profile";
+import { team_editorialProfile } from "@/templates/team-editorial/profile";
 import {
   buildUniversalFixtureViewModel,
   universalScenarioCardCount,
@@ -18,6 +19,20 @@ import { UniversalTemplateIntroPreview } from "./universal-intro-preview";
 const profile = createTemplateStudioProfile("universal-renderer-test");
 
 describe("UniversalTemplateCard", () => {
+  it("shrinks long editorial quotes instead of marking them for ellipsis", () => {
+    const model = buildUniversalFixtureViewModel("team-editorial-demo", { templateId: team_editorialProfile.id });
+    model.privateQuotes = [
+      "Очень радостно видеть, как Ваш труд приводит к заслуженному результату.",
+      "Спасибо за умение держать курс даже в сложные периоды и оставаться внимательным к людям.",
+      "Пусть в новом статусе сохраняются Ваша точность в решениях и умение видеть ситуацию шире."
+    ];
+    const { container } = render(<UniversalTemplateCard profile={team_editorialProfile} model={model} surface="private" />);
+    const quotes = Array.from(container.querySelectorAll<HTMLElement>('[data-text-preset="quote-card"]'));
+
+    expect(quotes.map((quote) => quote.style.getPropertyValue("--uv1-quote-scale"))).toEqual(["0.88", "0.78", "0.78"]);
+    expect(quotes.every((quote) => quote.textContent && !quote.textContent.includes("…"))).toBe(true);
+  });
+
   it("uses the school-classic counter labels in the card itself", () => {
     const model = buildUniversalFixtureViewModel("teacher-classic", { templateId: school_classicProfile.id });
     model.publicPhotoCount = 3;

@@ -37,6 +37,7 @@ export type UniversalTemplateFixtureId =
   | "full-card-default"
   | "teacher-classic"
   | "kindergarten-demo"
+  | "team-editorial-demo"
   | "text-stress"
   | "minimal"
   | "public-full"
@@ -238,6 +239,7 @@ const fixtureIds = new Set<UniversalTemplateFixtureId>([
   "full-card-default",
   "teacher-classic",
   "kindergarten-demo",
+  "team-editorial-demo",
   "text-stress",
   "minimal",
   "public-full",

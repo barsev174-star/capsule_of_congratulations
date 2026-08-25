@@ -974,6 +974,7 @@
 .quoteCard {
   position: relative;
   isolation: isolate;
+  container-type: inline-size;
   min-width: 0;
   min-height: var(--uv1-quote-card-height);
   margin: 0;
@@ -989,7 +990,7 @@
 .quoteCard > span,
 .quoteCard > p { position: absolute; z-index: 1; box-sizing: border-box; }
 .quoteCard > span { left: 0; top: 0; display: block; height: 28px; padding: 13px 18px 0; color: var(--uv1-accent); font-family: Georgia, serif; font-size: 38px; line-height: 1; }
-.quoteCard > p { display: -webkit-box; margin: 0; overflow: hidden; padding: 6px 10px; font-size: calc(clamp(16px, 1.5vw, var(--uv1-quote-text-font-max)) * var(--uv1-quote-scale, 1)); font-weight: 600; line-height: 1.18; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
+.quoteCard > p { display: flex; align-items: center; justify-content: center; margin: 0; overflow: hidden; padding: 6px 10px; font-size: calc(clamp(16px, 5.2cqw, var(--uv1-quote-text-font-max)) * var(--uv1-quote-scale, 1)); font-weight: 600; line-height: 1.18; overflow-wrap: break-word; text-wrap: pretty; }
 
 .page[data-template-id="school-scrapbook"] .quoteCard > p {
   text-align: center;

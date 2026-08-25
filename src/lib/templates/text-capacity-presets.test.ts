@@ -29,9 +29,11 @@ describe("universal text capacity presets", () => {
   });
 
   it("scales only near-limit quotes inside the fixed four-line area", () => {
-    expect(getUniversalQuoteLengthScale("x".repeat(80))).toBe(1);
-    expect(getUniversalQuoteLengthScale("x".repeat(81))).toBe(.93);
-    expect(getUniversalQuoteLengthScale("x".repeat(100))).toBe(.86);
+    expect(getUniversalQuoteLengthScale("x".repeat(65))).toBe(1);
+    expect(getUniversalQuoteLengthScale("x".repeat(66))).toBe(.88);
+    expect(getUniversalQuoteLengthScale("x".repeat(81))).toBe(.78);
+    expect(getUniversalQuoteLengthScale("x".repeat(100))).toBe(.72);
+    expect(universalTextCapacityPresets.quoteCard.overflow).toBe("clip");
   });
 
   it("keeps short captions full-size and approaches minScale only near the hard limit", () => {

@@ -67,9 +67,9 @@ const getArtworkQuoteFontSize = (format: UniversalExportFormat, quote: string) =
   const baseFontSize = format === "story" ? 22 : format === "post" ? 16 : 20;
   const length = quote.trim().replace(/\s+/g, " ").length;
 
-  if (format === "story" || length <= 80) return baseFontSize;
-  if (length > 94) return format === "post" ? 12 : 15;
-  return format === "post" ? 13 : 16;
+  if (length <= 65) return baseFontSize;
+  if (length <= 90) return format === "story" ? 19 : format === "post" ? 13 : 16;
+  return format === "story" ? 17 : format === "post" ? 12 : 15;
 };
 
 const dedicatedQualityLayouts = {
@@ -397,7 +397,7 @@ function Moments({
   const memoriesMuted = memoriesColors?.muted ?? profile.colors.muted;
   const paperHeading = Boolean(headingUnderlay);
   const paperHeadingHeight = format === "post" ? 134 : format === "story" ? 148 : 142;
-  const heading = <div data-export-moments-heading data-export-moments-paper={paperHeading ? "true" : undefined} style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: paperHeading ? format === "post" ? "118%" : "104%" : undefined, height: paperHeading ? paperHeadingHeight : undefined, minHeight: paperHeading ? paperHeadingHeight : format === "post" ? 82 : 94, padding: paperHeading ? "20px 32px 22px" : "0 8px", boxSizing: "border-box", textAlign: "center" }}>
+  const heading = <div data-export-moments-heading data-export-moments-paper={paperHeading ? "true" : undefined} style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", ...(paperHeading ? { width: format === "post" ? "118%" : "104%", height: paperHeadingHeight } : {}), minHeight: paperHeading ? paperHeadingHeight : format === "post" ? 82 : 94, padding: paperHeading ? "20px 32px 22px" : "0 8px", boxSizing: "border-box", textAlign: "center" }}>
     {headingUnderlay ? <img data-export-moments-paper-underlay src={resolveAsset(headingUnderlay.src)} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", objectFit: "fill" }} /> : null}
     <strong style={{ position: "relative", display: "flex", fontFamily: profile.typography.heading.family, fontSize: layout.heading, lineHeight: 1.04, textAlign: "center" }}>Моменты</strong>
     <span style={{ position: "relative", display: "flex", marginTop: 5, color: memoriesMuted, fontFamily: profile.typography.handwritten.family, fontSize: format === "story" ? 28 : format === "a4" ? 26 : 22, fontWeight: profile.typography.handwritten.weight, lineHeight: 1.08, textAlign: "center" }}>Фото, которыми хочется поделиться</span>
@@ -575,7 +575,7 @@ export function UniversalTemplateExportCard({
             const quoteFontSize = artworkCard
               ? getArtworkQuoteFontSize(format, quote)
               : format === "story" ? 25 : format === "post" ? 20 : 22;
-            const quoteTextAreaStyle = cardPreset?.exportSlices
+            const quoteTextAreaStyle = artworkCard && cardPreset
               ? rectStyle(cardPreset.textArea)
               : format === "post"
               ? { left: "5%", top: "10%", width: "90%", height: "80%" }

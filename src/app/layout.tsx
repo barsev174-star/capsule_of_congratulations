@@ -1,28 +1,37 @@
 import type { Metadata } from "next";
-import { Alumni_Sans, Caveat, Inter, PT_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { ClientErrorMonitor } from "@/components/telemetry/client-error-monitor";
 
-const inter = Inter({
-  subsets: ["latin", "cyrillic"],
+const inter = localFont({
+  src: [
+    { path: "../../public/fonts/Inter-Variable.ttf", style: "normal", weight: "100 900" },
+    { path: "../../public/fonts/Inter-Italic-Variable.ttf", style: "italic", weight: "100 900" }
+  ],
+  display: "swap",
   variable: "--font-inter"
 });
 
-const caveat = Caveat({
-  subsets: ["latin", "cyrillic"],
-  weight: ["600"],
+const caveat = localFont({
+  src: "../../public/fonts/Caveat-Variable.ttf",
+  display: "swap",
+  weight: "400 700",
   variable: "--font-caveat"
 });
 
-const alumniSans = Alumni_Sans({
-  subsets: ["latin", "cyrillic"],
-  weight: ["600", "700"],
+const alumniSans = localFont({
+  src: "../../public/fonts/AlumniSans-Variable.ttf",
+  display: "swap",
+  weight: "100 900",
   variable: "--font-alumni-sans"
 });
 
-const ptSans = PT_Sans({
-  subsets: ["latin", "cyrillic"],
-  weight: ["400", "700"],
+const ptSans = localFont({
+  src: [
+    { path: "../../public/fonts/PTSans-Regular.ttf", weight: "400", style: "normal" },
+    { path: "../../public/fonts/PTSans-Bold.ttf", weight: "700", style: "normal" }
+  ],
+  display: "swap",
   variable: "--font-pt-sans"
 });
 

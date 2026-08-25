@@ -65,7 +65,7 @@ Production-ограничения:
 - client abort — 85 секунд;
 - при proxy timeout worker останавливается и будет создан заново;
 - изображения и fonts загружаются через внутренний origin, без публичного DNS round-trip;
-- PT Sans и Caveat читаются из `public/fonts`;
+- PT Sans, Caveat и статические начертания Inter читаются из `public/fonts`;
 - `/api/template-export-asset` использует ограниченный in-memory cache и дедупликацию параллельных преобразований;
 - временные export-файлы не создаются: результат передаётся из memory buffers.
 

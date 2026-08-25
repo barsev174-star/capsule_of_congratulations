@@ -5,6 +5,7 @@ import { buildUniversalFixtureViewModel } from "@/lib/templates/view-model";
 import { school_classicProfile } from "@/templates/school-classic/profile";
 import { school_scrapbookProfile } from "@/templates/school-scrapbook/profile";
 import { kindergarten_doodlesProfile } from "@/templates/kindergarten-doodles/profile";
+import { team_editorialProfile } from "@/templates/team-editorial/profile";
 import { UniversalTemplateExportCard, universalExportFormats } from "./universal-export-card";
 
 const profile = createTemplateStudioProfile("universal-export-test");
@@ -315,6 +316,25 @@ describe("UniversalTemplateExportCard", () => {
       .map((quote) => Number.parseFloat(quote.style.fontSize));
 
     expect(quoteFontSizes).toEqual(expectedFontSizes);
+  });
+
+  it.each([
+    ["post", [13, 13, 13]],
+    ["a4", [16, 16, 16]]
+  ] as const)("fits the promotion-card quotes evenly inside the %s artwork cards", (format, expectedFontSizes) => {
+    const model = buildUniversalFixtureViewModel("team-editorial-demo", { templateId: team_editorialProfile.id });
+    model.publicQuotes = [
+      "Очень радостно видеть, как Ваш труд приводит к заслуженному результату.",
+      "Спасибо за умение держать курс даже в сложные периоды и оставаться внимательным к людям.",
+      "Пусть в новом статусе сохраняются Ваша точность в решениях и умение видеть ситуацию шире."
+    ];
+    const { container } = render(<UniversalTemplateExportCard profile={team_editorialProfile} model={model} format={format} />);
+    const quoteFontSizes = Array.from(container.querySelectorAll<HTMLElement>('[data-text-preset="quote-card"]'))
+      .map((quote) => Number.parseFloat(quote.style.fontSize));
+    const quoteTextAreas = Array.from(container.querySelectorAll<HTMLElement>('[data-text-preset="quote-card"]'));
+
+    expect(quoteFontSizes).toEqual(expectedFontSizes);
+    expect(quoteTextAreas.every((quote) => quote.style.left === "16%" && quote.style.width === "76%")).toBe(true);
   });
 
   it.each(["story", "post", "a4"] as const)("puts a Russian patronymic on a dedicated line in the %s export", (format) => {

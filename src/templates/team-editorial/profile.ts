@@ -34,7 +34,7 @@ export const team_editorialProfile = defineTemplate({
     name: "Вместе",
     description: "Универсальная редакционная открытка с тактильной бумагой, строгим тёмно-синим и тёплыми предметными акцентами.",
     accent: "#2f6f70",
-    preview: asset("/templates/team-editorial/preview-v3.webp", 1200, 630)
+    preview: asset("/templates/team-editorial/preview-v4.webp", 1200, 630)
   },
   assets: {
     page: asset("/templates/team-editorial/page.webp", 1536, 1024),
@@ -160,5 +160,5 @@ export const team_editorialProfile = defineTemplate({
     }
   },
   performance: { networkBudget: 8_000_000, decodedMemoryBudget: 82_000_000 },
-  demo: { fixture: "full-card-default", scenario: "landscape-trio", photoCount: 3 }
+  demo: { fixture: "team-editorial-demo", scenario: "landscape-trio", photoCount: 3 }
 });

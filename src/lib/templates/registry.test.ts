@@ -82,7 +82,8 @@ describe("template registry", () => {
       "route-adventure",
       "school-scrapbook",
       "school-classic",
-      "kindergarten-doodles"
+      "kindergarten-doodles",
+      "team-editorial"
     ]);
   });
 
@@ -97,6 +98,7 @@ describe("template registry", () => {
     expect(isProductTemplateId("school-scrapbook")).toBe(true);
     expect(isProductTemplateId("school-classic")).toBe(true);
     expect(isProductTemplateId("kindergarten-doodles")).toBe(true);
+    expect(isProductTemplateId("team-editorial")).toBe(true);
     expect(isRegisteredTemplateId("unknown")).toBe(false);
   });
 

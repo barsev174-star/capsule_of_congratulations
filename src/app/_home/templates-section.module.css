@@ -363,10 +363,6 @@
     grid-column: span 2;
   }
 
-  .grid > .secondRowStart {
-    grid-column: 2 / span 2;
-  }
-
   .preview,
   .assetPreview {
     height: 320px;

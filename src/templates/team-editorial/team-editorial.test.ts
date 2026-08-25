@@ -7,12 +7,12 @@ import { createTemplateStudioDraft, validateTemplateStudioDraft } from "@/lib/te
 import { team_editorialProfile } from "./profile";
 import { team_editorialRegistration } from "./registration";
 
-describe("team-editorial studio template", () => {
-  it("is registered only in the atelier and uses the shared universal renderer", () => {
+describe("team-editorial product template", () => {
+  it("is released through the shared universal renderer", () => {
     expect(validateTemplateProfile(team_editorialProfile).ok).toBe(true);
     expect(validateTemplateStudioDraft(createTemplateStudioDraft(team_editorialProfile))).toEqual({ ok: true, issues: [] });
     expect(dispatchTemplateRenderer("team-editorial")?.kind).toBe("universal-v1");
-    expect(team_editorialRegistration.catalog.availability).toBe("studio");
+    expect(team_editorialRegistration.catalog.availability).toBe("product");
   });
 
   it("keeps the editorial palette and automatic surface contract declarative", () => {
