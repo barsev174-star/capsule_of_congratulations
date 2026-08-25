@@ -52,4 +52,13 @@ describe("universal section underlays", () => {
       left: 0.18
     });
   });
+
+  it("supports artwork-specific nine-slice edges", () => {
+    const slices = { top: 0.34, right: 0.13, bottom: 0.12, left: 0.12 };
+    expect(defineSectionUnderlay(asset, "adaptive-frame", { slices })).toEqual({
+      asset,
+      preset: "adaptive-frame",
+      slices
+    });
+  });
 });

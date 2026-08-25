@@ -340,7 +340,7 @@ function ExportSectionUnderlay({
 }) {
   const preset = getUniversalSectionUnderlayPreset(underlay.preset);
   if (preset.rendering === "nine-slice") {
-    return <NineSliceAsset asset={underlay.asset} width={width} height={height} edges={preset.slices!} resolveAsset={resolveAsset} inFlow opacity={underlay.opacity ?? 1} />;
+    return <NineSliceAsset asset={underlay.asset} width={width} height={height} edges={underlay.slices ?? preset.slices!} resolveAsset={resolveAsset} inFlow opacity={underlay.opacity ?? 1} />;
   }
 
   const focalPoint = underlay.focalPoint ?? { x: .5, y: .5 };
@@ -432,6 +432,9 @@ export function UniversalTemplateExportCard({
   const qualityCards = profile.assets.exportQualityCards?.length === 5
     ? profile.assets.exportQualityCards
     : profile.assets.qualityCards;
+  const quoteCards = profile.assets.exportQuoteCards?.length === 3
+    ? profile.assets.exportQuoteCards
+    : profile.assets.quoteCards;
   const hasDedicatedExportQualityCards = qualityCards === profile.assets.exportQualityCards;
   const useDedicatedQualityLayout = hasDedicatedExportQualityCards && qualities.length > 0;
   const dedicatedQualityLayout = dedicatedQualityLayouts[format];
@@ -561,7 +564,7 @@ export function UniversalTemplateExportCard({
         <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: "0 28px", boxSizing: "border-box" }}>
           <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, lineHeight: 1.04, textAlign: "center" }}>{profile.copy?.quotesTitle ?? "Особенно тёплые слова"}</strong>
           <div style={{ display: "flex", width: "100%", marginTop: 10, gap: 10, flexShrink: 0 }}>{quotes.map((quote, index) => {
-            const card = profile.assets.quoteCards[index % Math.max(profile.assets.quoteCards.length, 1)];
+            const card = quoteCards[index % Math.max(quoteCards.length, 1)];
             const cardPreset = card ? getUniversalTextCardPreset(card.preset) : null;
             const availableQuoteWidth = sectionWidth - 56;
             const cardWidth = format === "post"
@@ -582,7 +585,7 @@ export function UniversalTemplateExportCard({
                 ? <NineSliceAsset asset={card.asset} width={cardWidth} height={cardHeight} edges={cardPreset.exportSlices} resolveAsset={resolveAsset} />
                 : format === "post" && !artworkCard
                   ? <NineSliceAsset asset={card.asset} width={cardWidth} height={cardHeight} edges={{ top: .18, right: .12, bottom: .18, left: .12 }} resolveAsset={resolveAsset} />
-                : <img src={resolveAsset(card.asset.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
+                : <img data-export-quote-asset src={resolveAsset(card.asset.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
                 : null}
               {card && cardPreset?.exportDecorCrop && cardPreset.exportDecorArea ? <img
                 data-export-quote-decor

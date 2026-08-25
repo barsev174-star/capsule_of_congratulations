@@ -137,6 +137,22 @@ describe("UniversalTemplateExportCard", () => {
     expect(container.querySelectorAll("[data-export-photo]")).toHaveLength(3);
   });
 
+  it.each(["story", "post", "a4"] as const)("prefers complete dedicated quote artwork in the %s export", (format) => {
+    const dedicatedProfile = structuredClone(profile);
+    dedicatedProfile.assets.exportQuoteCards = Array.from({ length: 3 }, (_, index) => ({
+      asset: { src: `/templates/test/quote-export-${index + 1}.webp` as const, width: 720, height: 180 },
+      preset: "quote-panel-export-artwork" as const
+    }));
+    const model = buildUniversalFixtureViewModel("public-full", { templateId: dedicatedProfile.id });
+    const { container } = render(<UniversalTemplateExportCard profile={dedicatedProfile} model={model} format={format} />);
+    const quoteAssets = Array.from(container.querySelectorAll<HTMLImageElement>("[data-export-quote-asset]"));
+
+    expect(quoteAssets).toHaveLength(format === "story" ? 2 : 3);
+    expect(quoteAssets[0]).toHaveAttribute("src", "/templates/test/quote-export-1.webp");
+    expect(container.querySelector('[data-export-quote-card] [data-export-asset-underlay="nine-slice"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-export-quote-card] [data-export-quote-decor]')).not.toBeInTheDocument();
+  });
+
   it.each(["story", "post", "a4"] as const)("keeps quote drawings, the footer surface and saved decor in the kindergarten %s export", (format) => {
     const model = buildUniversalFixtureViewModel("kindergarten-demo", { templateId: kindergarten_doodlesProfile.id });
     const { container } = render(<UniversalTemplateExportCard profile={kindergarten_doodlesProfile} model={model} format={format} />);

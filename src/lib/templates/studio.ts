@@ -350,6 +350,7 @@ export const listTemplateProfileAssets = (profile: TemplateProfile): TemplateStu
   profile.assets.qualityCards.forEach((value, index) => push(`assets.qualityCards.${index}.asset`, `Карточка качества ${index + 1}`, value.asset));
   profile.assets.exportQualityCards?.forEach((value, index) => push(`assets.exportQualityCards.${index}.asset`, `Карточка качества для экспорта ${index + 1}`, value.asset));
   profile.assets.quoteCards.forEach((value, index) => push(`assets.quoteCards.${index}.asset`, `Карточка фразы ${index + 1}`, value.asset));
+  profile.assets.exportQuoteCards?.forEach((value, index) => push(`assets.exportQuoteCards.${index}.asset`, `Карточка фразы для экспорта ${index + 1}`, value.asset));
   Object.entries(profile.assets.photoFrames).forEach(([frameId, frame]) => {
     push(`assets.photoFrames.${frameId}.base`, `Фоторамка ${frameId}: основа`, frame.base);
     push(`assets.photoFrames.${frameId}.overlay`, `Фоторамка ${frameId}: верхний слой`, frame.overlay);

@@ -196,9 +196,9 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
   const variant = draft.inspector.variants[inspectorVariant];
   const frame = draft.profile.assets.photoFrames[draft.inspector.selectedFrame];
   const framePreset = getUniversalPhotoFramePreset(frame.preset);
-  const selectedTextCardMatch = /^assets\.(qualityCards|exportQualityCards|quoteCards)\.(\d+)\.asset$/.exec(selectedAsset.path);
+  const selectedTextCardMatch = /^assets\.(qualityCards|exportQualityCards|quoteCards|exportQuoteCards)\.(\d+)\.asset$/.exec(selectedAsset.path);
   const selectedTextCard = selectedTextCardMatch
-    ? draft.profile.assets[selectedTextCardMatch[1] as "qualityCards" | "exportQualityCards" | "quoteCards"]?.[Number(selectedTextCardMatch[2])]
+    ? draft.profile.assets[selectedTextCardMatch[1] as "qualityCards" | "exportQualityCards" | "quoteCards" | "exportQuoteCards"]?.[Number(selectedTextCardMatch[2])]
     : null;
   const selectedGreetingCardMatch = /^assets\.greetingCards\.(\d+)\.asset$/.exec(selectedAsset.path);
   const selectedGreetingCard = selectedGreetingCardMatch

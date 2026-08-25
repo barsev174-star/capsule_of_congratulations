@@ -1,7 +1,7 @@
 {
   "version": 1,
   "templateId": "team-editorial",
-  "budgets": { "networkBytes": 8000000, "decodedMemoryBytes": 82000000, "individualBytes": 2000000 },
+  "budgets": { "networkBytes": 8000000, "decodedMemoryBytes": 84000000, "individualBytes": 2000000 },
   "preview": { "sourceAssetId": "catalog-preview", "output": "preview-v3.webp", "width": 1200, "height": 630 },
   "assets": [
     { "id": "page", "source": "page.png", "output": "page.webp", "width": 1536, "height": 1024, "alpha": "opaque", "fit": "cover" },
@@ -32,6 +32,9 @@
     { "id": "quote-card-1", "source": "quote-card-1.png", "output": "quote-card-1.webp", "width": 800, "height": 640, "alpha": "transparent", "fit": "contain" },
     { "id": "quote-card-2", "source": "quote-card-2.png", "output": "quote-card-2.webp", "width": 800, "height": 640, "alpha": "transparent", "fit": "contain" },
     { "id": "quote-card-3", "source": "quote-card-3.png", "output": "quote-card-3.webp", "width": 800, "height": 640, "alpha": "transparent", "fit": "contain" },
+    { "id": "quote-card-1-export", "source": "quote-card-1-export.png", "output": "quote-card-1-export-v3.webp", "width": 720, "height": 180, "alpha": "transparent", "fit": "contain" },
+    { "id": "quote-card-2-export", "source": "quote-card-2-export.png", "output": "quote-card-2-export-v3.webp", "width": 720, "height": 180, "alpha": "transparent", "fit": "contain" },
+    { "id": "quote-card-3-export", "source": "quote-card-3-export.png", "output": "quote-card-3-export-v3.webp", "width": 720, "height": 180, "alpha": "transparent", "fit": "contain" },
     { "id": "photo-frame-portrait-base", "source": "photo-frame-portrait-base.png", "output": "photo-frame-portrait-base-v3.webp", "width": 802, "height": 1122, "alpha": "transparent", "fit": "cover" },
     { "id": "photo-frame-portrait-overlay", "source": "photo-frame-portrait-overlay.png", "output": "photo-frame-portrait-overlay-v3.webp", "width": 802, "height": 1122, "alpha": "transparent", "fit": "cover" },
     { "id": "photo-frame-landscape-base", "source": "photo-frame-landscape-base.png", "output": "photo-frame-landscape-base-v3.webp", "width": 1122, "height": 802, "alpha": "transparent", "fit": "cover" },

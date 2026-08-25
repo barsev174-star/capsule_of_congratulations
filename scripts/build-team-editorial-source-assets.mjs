@@ -133,6 +133,13 @@ for (let index = 1; index <= 3; index += 1) {
     <rect x="610" y="88" width="102" height="96" fill="url(#dots)"/>
     <path d="M590 540H704" stroke="${quoteAccents[index - 1]}" stroke-width="5"/>
   `);
+  await writeSvg(`quote-card-${index}-export.png`, 720, 180, `
+    <rect x="18" y="18" width="684" height="144" rx="18" fill="${palette.paper}" filter="url(#softShadow)"/>
+    <path d="M36 18H100V162H36C26.059 162 18 153.941 18 144V36C18 26.059 26.059 18 36 18Z" fill="${quoteAccents[index - 1]}"/>
+    <path d="M54 62C33 62 31 42 43 29C54 18 76 18 92 20M54 62V98H100V62H54Z" fill="${palette.paper}" fill-opacity=".94"/>
+    <rect x="630" y="42" width="54" height="54" fill="url(#dots)" opacity=".58"/>
+    <path d="M630 137H680" stroke="${quoteAccents[index - 1]}" stroke-width="4"/>
+  `);
 }
 
 const frameSvg = (width, height, aperture, caption) => {

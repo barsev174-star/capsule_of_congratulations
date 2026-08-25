@@ -140,6 +140,7 @@ export type TemplateProfile = {
     qualityCards: readonly TemplateTextCard[];
     exportQualityCards?: readonly TemplateTextCard[];
     quoteCards: readonly TemplateTextCard[];
+    exportQuoteCards?: readonly TemplateTextCard[];
     photoFrames: {
       messagePortrait: UniversalPhotoFrame;
       messageLandscape: UniversalPhotoFrame;
@@ -467,6 +468,24 @@ const validateSectionUnderlay = (
     }
   }
   if (value.safeArea !== undefined) validateRect(value.safeArea, `${path}.safeArea`, issues);
+  if (value.slices !== undefined) {
+    if (!isRecord(value.slices)) {
+      issues.push({ path: `${path}.slices`, message: "Ожидаются нормализованные границы nine-slice." });
+    } else {
+      for (const key of ["top", "right", "bottom", "left"] as const) {
+        const edge = value.slices[key];
+        if (typeof edge !== "number" || edge <= 0 || edge >= 0.5) {
+          issues.push({ path: `${path}.slices.${key}`, message: "Граница должна находиться в диапазоне 0…0.5." });
+        }
+      }
+      if (Number(value.slices.top) + Number(value.slices.bottom) >= 1) {
+        issues.push({ path: `${path}.slices`, message: "Вертикальные границы не должны пересекаться." });
+      }
+      if (Number(value.slices.left) + Number(value.slices.right) >= 1) {
+        issues.push({ path: `${path}.slices`, message: "Горизонтальные границы не должны пересекаться." });
+      }
+    }
+  }
   if (value.exportHorizontalSliceEdgeRatio !== undefined && (
     typeof value.exportHorizontalSliceEdgeRatio !== "number" ||
     value.exportHorizontalSliceEdgeRatio <= 0 ||
@@ -552,6 +571,17 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
           issues.push({ path: "assets.exportQualityCards", message: "Экспортный набор должен содержать ровно 5 карточек качеств." });
         }
         cards.forEach((card, index) => validateTextCard(card, `assets.exportQualityCards.${index}`, issues));
+      }
+    }
+    if (value.assets.exportQuoteCards !== undefined) {
+      const cards = value.assets.exportQuoteCards;
+      if (!Array.isArray(cards)) {
+        issues.push({ path: "assets.exportQuoteCards", message: "Ожидается массив экспортных карточек фраз." });
+      } else {
+        if (cards.length !== 3) {
+          issues.push({ path: "assets.exportQuoteCards", message: "Экспортный набор должен содержать ровно 3 карточки фраз." });
+        }
+        cards.forEach((card, index) => validateTextCard(card, `assets.exportQuoteCards.${index}`, issues));
       }
     }
     if (!isRecord(value.assets.sections)) {

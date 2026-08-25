@@ -12,6 +12,7 @@ describe("universal text card presets", () => {
       "quality-doodle-export",
       "quote-panel",
       "quote-panel-compact",
+      "quote-panel-export-artwork",
       "quote-panel-artwork"
     ]);
     expect(getUniversalTextCardPreset("quality-pill")).toMatchObject({
@@ -39,6 +40,12 @@ describe("universal text card presets", () => {
     expect(getUniversalTextCardPreset("quote-panel-compact")).toMatchObject({
       source: { width: 800, height: 640 },
       textArea: { x: 0.055, y: 0.28, width: 0.89, height: 0.62 }
+    });
+    expect(getUniversalTextCardPreset("quote-panel-export-artwork")).toMatchObject({
+      source: { width: 720, height: 180 },
+      textArea: { x: 0.16, y: 0.16, width: 0.76, height: 0.68 },
+      rendering: "artwork",
+      renderLeadingQuote: false
     });
     expect(getUniversalTextCardPreset("quote-panel-artwork")).toMatchObject({
       source: { width: 800, height: 640 },

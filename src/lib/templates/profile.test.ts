@@ -261,6 +261,23 @@ describe("TemplateProfile", () => {
     }
   });
 
+  it("принимает только полный набор из трёх экспортных карточек фраз", () => {
+    const profile = validProfile();
+    profile.assets.exportQuoteCards = Array.from({ length: 3 }, (_, index) => defineTextCard({
+      src: `/templates/test/quote-export-${index + 1}.webp`,
+      width: 720,
+      height: 180
+    }, "quote-panel-export-artwork"));
+    expect(validateTemplateProfile(profile)).toEqual({ ok: true, profile, issues: [] });
+
+    profile.assets.exportQuoteCards = profile.assets.exportQuoteCards.slice(0, 2);
+    const result = validateTemplateProfile(profile);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual(expect.objectContaining({ path: "assets.exportQuoteCards" }));
+    }
+  });
+
   it("фиксирует полный вывод подписи ровно до 45 символов", () => {
     const profile = validProfile() as unknown as {
       assets: { photoFrames: { memory: { caption: { maxChars: number } } } };

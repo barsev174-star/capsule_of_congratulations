@@ -23,7 +23,7 @@ const nineSlices = (
   targetSize: { width: number; height: number }
 ): Slice[] => {
   const preset = getUniversalSectionUnderlayPreset(underlay.preset);
-  const edges = preset.slices ?? { top: 0, right: 0, bottom: 0, left: 0 };
+  const edges = underlay.slices ?? preset.slices ?? { top: 0, right: 0, bottom: 0, left: 0 };
   const sourceXs = [0, edges.left, 1 - edges.right, 1];
   const sourceYs = [0, edges.top, 1 - edges.bottom, 1];
   const horizontalScale = targetSize.width / underlay.asset.width;
@@ -82,7 +82,7 @@ export function SectionUnderlay({
 
   if (preset.rendering === "nine-slice") {
     if (!targetSize) {
-      const slices = preset.slices!;
+      const slices = underlay.slices ?? preset.slices!;
       const borderWidth = `${slices.top * underlay.asset.height / underlay.asset.width * 100}cqw ${slices.right * 100}cqw ${slices.bottom * underlay.asset.height / underlay.asset.width * 100}cqw ${slices.left * 100}cqw`;
       const borderImageSlice = `${slices.top * 100}% ${slices.right * 100}% ${slices.bottom * 100}% ${slices.left * 100}%`;
       const frameLayerStyle = {

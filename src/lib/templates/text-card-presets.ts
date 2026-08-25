@@ -9,6 +9,7 @@ export const universalTextCardPresetIds = [
   "quality-doodle-export",
   "quote-panel",
   "quote-panel-compact",
+  "quote-panel-export-artwork",
   "quote-panel-artwork"
 ] as const;
 export type UniversalTextCardPresetId = (typeof universalTextCardPresetIds)[number];
@@ -98,6 +99,15 @@ export const universalTextCardPresets: Readonly<Record<UniversalTextCardPresetId
     textArea: { x: 0.055, y: 0.28, width: 0.89, height: 0.62 },
     rendering: "surface",
     renderLeadingQuote: true
+  },
+  "quote-panel-export-artwork": {
+    id: "quote-panel-export-artwork",
+    label: "Художественная цитатная карточка для экспорта",
+    description: "Горизонтальная карточка 720 × 180 с цельной декоративной вкладкой и безопасной областью для фразы.",
+    source: { width: 720, height: 180 },
+    textArea: { x: 0.16, y: 0.16, width: 0.76, height: 0.68 },
+    rendering: "artwork",
+    renderLeadingQuote: false
   },
   "quote-panel-artwork": {
     id: "quote-panel-artwork",

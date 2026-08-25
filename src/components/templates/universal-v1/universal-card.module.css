@@ -49,7 +49,8 @@
   border-radius: inherit;
 }
 
-.sectionUnderlay [data-underlay-layer="mobile-variable-frame"] { display: none; }
+.sectionUnderlay [data-underlay-layer="mobile-variable-frame"],
+.messageCardUnderlay [data-underlay-layer="mobile-variable-frame"] { display: none; }
 .sectionUnderlay > [data-underlay-variant="mobile"],
 .messageCardUnderlay > [data-underlay-variant="mobile"] { display: none; }
 
