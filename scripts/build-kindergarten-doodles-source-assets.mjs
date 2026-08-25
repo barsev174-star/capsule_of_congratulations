@@ -196,7 +196,7 @@ const qualityPaperSvg = (width, height, fill, accent, horizontal = false) => Buf
   <defs><filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="9" stdDeviation="9" flood-color="#000" flood-opacity=".15"/></filter><pattern id="dots" width="34" height="34" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="2" fill="${accent}" fill-opacity=".12"/></pattern></defs>
   <path d="M30 38Q${Math.round(width * .22)} 22 ${Math.round(width * .42)} 34T${width - 30} 30L${width - 22} ${height - 34}Q${Math.round(width * .7)} ${height - 18} ${Math.round(width * .45)} ${height - 30}T26 ${height - 26}Z" fill="${fill}" filter="url(#shadow)"/>
   <path d="M38 48Q${Math.round(width * .4)} 33 ${width - 38} 43L${width - 34} ${height - 45}Q${Math.round(width * .5)} ${height - 29} 38 ${height - 40}Z" fill="url(#dots)"/>
-  <rect x="${horizontal ? 82 : Math.round(width * .34)}" y="18" width="${horizontal ? 122 : Math.round(width * .32)}" height="42" rx="5" fill="${accent}" fill-opacity=".68" transform="rotate(${horizontal ? -3 : 2} ${width / 2} 38)"/>
+  ${horizontal ? "" : `<rect x="${Math.round(width * .34)}" y="18" width="${Math.round(width * .32)}" height="42" rx="5" fill="${accent}" fill-opacity=".68" transform="rotate(2 ${width / 2} 38)"/>`}
   <path d="M${horizontal ? 176 : 72} ${height - 54}H${width - 54}" stroke="${accent}" stroke-opacity=".32" stroke-width="4" stroke-linecap="round" stroke-dasharray="8 11"/>
 </svg>`);
 

@@ -1,7 +1,7 @@
 import { FinalCard } from "@/components/final-card/final-card";
 import type { Metadata } from "next";
 import { TemplateCardRenderer } from "@/components/templates/template-card-renderer";
-import { exampleCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel } from "@/lib/example-card";
+import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel } from "@/lib/example-card";
 import { requireTemplateRenderer } from "@/lib/templates/dispatcher";
 import { ExampleExperience, type DemoTemplateId } from "./example-experience";
 
@@ -20,7 +20,10 @@ const templateAliases: Record<string, DemoTemplateId> = {
   school: "school-scrapbook",
   "school-scrapbook": "school-scrapbook",
   classic: "school-classic",
-  "school-classic": "school-classic"
+  "school-classic": "school-classic",
+  kindergarten: "kindergarten-doodles",
+  caregiver: "kindergarten-doodles",
+  "kindergarten-doodles": "kindergarten-doodles"
 };
 
 type ExamplePageProps = {
@@ -33,11 +36,15 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
   const initialTemplateId = rawTemplate ? templateAliases[rawTemplate] : undefined;
   const schoolDispatch = requireTemplateRenderer("school-scrapbook");
   const schoolClassicDispatch = requireTemplateRenderer("school-classic");
+  const kindergartenDoodlesDispatch = requireTemplateRenderer("kindergarten-doodles");
   if (schoolDispatch.kind !== "universal-v1") {
     throw new Error("Шаблон school-scrapbook должен использовать универсальный рендерер.");
   }
   if (schoolClassicDispatch.kind !== "universal-v1") {
     throw new Error("Школьный классический шаблон должен использовать универсальный рендерер.");
+  }
+  if (kindergartenDoodlesDispatch.kind !== "universal-v1") {
+    throw new Error("Шаблон воспитателю должен использовать универсальный рендерер.");
   }
 
   return (
@@ -46,6 +53,7 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
       routeChildren={<FinalCard model={routeAdventureDemoCardModel} />}
       schoolChildren={<TemplateCardRenderer dispatch={schoolDispatch} model={schoolScrapbookDemoCardModel} surface="private" />}
       schoolClassicChildren={<TemplateCardRenderer dispatch={schoolClassicDispatch} model={schoolClassicDemoCardModel} surface="private" />}
+      kindergartenDoodlesChildren={<TemplateCardRenderer dispatch={kindergartenDoodlesDispatch} model={kindergartenDoodlesDemoCardModel} surface="private" />}
     >
       <FinalCard model={exampleCardModel} />
     </ExampleExperience>

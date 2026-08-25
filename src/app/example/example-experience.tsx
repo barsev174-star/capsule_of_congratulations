@@ -6,18 +6,19 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { GiftIntro } from "@/components/gift-intro/gift-intro";
 import { ScrollReveal, useScrollReveal } from "@/components/scroll-reveal/scroll-reveal";
-import { exampleCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel } from "@/lib/example-card";
+import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel } from "@/lib/example-card";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
 import { startCardFromShowcaseAction } from "../home-actions";
 import styles from "./example.module.css";
 
-export type DemoTemplateId = "paper-birthday" | "route-adventure" | "school-scrapbook" | "school-classic";
+export type DemoTemplateId = "paper-birthday" | "route-adventure" | "school-scrapbook" | "school-classic" | "kindergarten-doodles";
 
 type Props = {
   children: ReactNode;
   routeChildren: ReactNode;
   schoolChildren: ReactNode;
   schoolClassicChildren: ReactNode;
+  kindergartenDoodlesChildren: ReactNode;
   initialTemplateId?: DemoTemplateId;
 };
 
@@ -38,7 +39,7 @@ const previewFeatures = [
 
 const previewContributions = exampleCardModel.contributions.slice(0, 2);
 
-export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, initialTemplateId }: Props) => {
+export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, initialTemplateId }: Props) => {
   const [started, setStarted] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<DemoTemplateId>(initialTemplateId ?? "paper-birthday");
   const [activeStep, setActiveStep] = useState<DemoStepId>("template");
@@ -46,13 +47,15 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     "paper-birthday": exampleCardModel,
     "route-adventure": routeAdventureDemoCardModel,
     "school-scrapbook": schoolScrapbookDemoCardModel,
-    "school-classic": schoolClassicDemoCardModel
+    "school-classic": schoolClassicDemoCardModel,
+    "kindergarten-doodles": kindergartenDoodlesDemoCardModel
   };
   const demoChildrenByTemplate: Record<DemoTemplateId, ReactNode> = {
     "paper-birthday": children,
     "route-adventure": routeChildren,
     "school-scrapbook": schoolChildren,
-    "school-classic": schoolClassicChildren
+    "school-classic": schoolClassicChildren,
+    "kindergarten-doodles": kindergartenDoodlesChildren
   };
   const demoIntroByTemplate: Record<DemoTemplateId, {
     subtitle: string;
@@ -81,6 +84,16 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
       decor: [
         "/templates/school-classic/decor-hero-left-v4.webp",
         "/templates/school-classic/decor-hero-right-v3.webp"
+      ]
+    },
+    "kindergarten-doodles": {
+      subtitle: "для вас собрали дети, родители и коллеги",
+      accent: "#ef7665",
+      kicker: "Открытка воспитателю",
+      preset: "scrapbook",
+      decor: [
+        "/templates/kindergarten-doodles/decor-hero-drawing-v5.webp",
+        "/templates/kindergarten-doodles/decor-hero-still-life.webp"
       ]
     }
   };
@@ -276,7 +289,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
             <span className={styles.blockNumber}>1</span>
             <div className={styles.blockHeaderText}>
               <h2 id="template-heading">Выберите пример открытки</h2>
-              <p>Все четыре примера уже доступны: выберите настроение, которое подходит вашему подарку.</p>
+              <p>Все пять примеров уже доступны: выберите настроение, которое подходит вашему подарку.</p>
             </div>
           </div>
 
@@ -381,6 +394,32 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
                   </span>
                   <strong>Школьный классический</strong>
                   <span>Благодарность учителю от учеников и родителей</span>
+                </div>
+              </button>
+            </ScrollReveal>
+
+            <ScrollReveal variant="slide-right" duration={560} delay={400}>
+              <button
+                type="button"
+                className={`${styles.templateCard} ${styles.templateCardSelectable} ${selectedTemplateId === "kindergarten-doodles" ? styles.templateCardActive : ""}`}
+                onClick={() => selectTemplate("kindergarten-doodles")}
+                aria-pressed={selectedTemplateId === "kindergarten-doodles"}
+              >
+                <div className={styles.templateCardThumb}>
+                  <Image
+                    src="/templates/kindergarten-doodles/preview.webp"
+                    alt=""
+                    fill
+                    sizes="(max-width: 640px) 92vw, (max-width: 900px) 45vw, 33vw"
+                    className={styles.templateThumbImage}
+                  />
+                </div>
+                <div className={styles.templateCardMeta}>
+                  <span className={selectedTemplateId === "kindergarten-doodles" ? styles.badgeTemplateSelected : styles.badgeTemplateAvailable}>
+                    {selectedTemplateId === "kindergarten-doodles" ? "✓ Выбрано" : "Выбрать"}
+                  </span>
+                  <strong>Детство в рисунках</strong>
+                  <span>Благодарность воспитателю от детей, родителей и коллег</span>
                 </div>
               </button>
             </ScrollReveal>

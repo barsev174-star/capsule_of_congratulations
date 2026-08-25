@@ -223,6 +223,12 @@ export const schoolClassicDemoCardModel: UniversalTemplateViewModel = buildUnive
   photoCount: 1
 });
 
+export const kindergartenDoodlesDemoCardModel: UniversalTemplateViewModel = buildUniversalFixtureViewModel("kindergarten-demo", {
+  templateId: "kindergarten-doodles",
+  scenario: "landscape-pair",
+  photoCount: 2
+});
+
 const routeContributions: Contribution[] = [
   contribution(
     "route-ivan",

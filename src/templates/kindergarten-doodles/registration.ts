@@ -10,6 +10,6 @@ export const kindergarten_doodlesRegistration = {
     description: "Тёплая открытка воспитателю с детскими рисунками, мягкой акварелью и фотографиями группы.",
     recommendedFor: ["caregiver", "teacher"],
     accent: "#ef7665",
-    availability: "studio"
+    availability: "product"
   }
 } satisfies UniversalTemplateRegistration;

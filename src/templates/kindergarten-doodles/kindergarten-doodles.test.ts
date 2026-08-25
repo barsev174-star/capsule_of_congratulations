@@ -7,15 +7,15 @@ import { buildUniversalFixtureViewModel } from "@/lib/templates/view-model";
 import { kindergarten_doodlesProfile } from "./profile";
 import { kindergarten_doodlesRegistration } from "./registration";
 
-describe("kindergarten-doodles studio template", () => {
-  it("uses the universal atelier contract and stays studio-only", () => {
+describe("kindergarten-doodles product template", () => {
+  it("uses the universal atelier contract and is available in the product", () => {
     const dispatch = dispatchTemplateRenderer("kindergarten-doodles");
     const draft = createTemplateStudioDraft(kindergarten_doodlesProfile);
 
     expect(validateTemplateProfile(kindergarten_doodlesProfile)).toEqual(expect.objectContaining({ ok: true, issues: [] }));
     expect(dispatch?.kind).toBe("universal-v1");
     expect(dispatch?.registration.id).toBe("kindergarten-doodles");
-    expect(kindergarten_doodlesRegistration.catalog.availability).toBe("studio");
+    expect(kindergarten_doodlesRegistration.catalog.availability).toBe("product");
     expect(validateTemplateStudioDraft(draft)).toEqual({ ok: true, issues: [] });
     expect(Object.keys(kindergarten_doodlesProfile.assets.sections)).toEqual(["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"]);
   });
@@ -44,7 +44,13 @@ describe("kindergarten-doodles studio template", () => {
     expect(kindergarten_doodlesProfile.assets.qualityCards.every(({ preset }) => preset === "quality-doodle-poster")).toBe(true);
     expect(kindergarten_doodlesProfile.assets.exportQualityCards?.every(({ preset }) => preset === "quality-doodle-export")).toBe(true);
     expect(kindergarten_doodlesProfile.assets.qualityCards[4]?.asset.src).toBe("/templates/kindergarten-doodles/quality-card-5-v4.webp");
-    expect(kindergarten_doodlesProfile.assets.exportQualityCards?.[4]?.asset.src).toBe("/templates/kindergarten-doodles/quality-card-5-export-v4.webp");
+    expect(kindergarten_doodlesProfile.assets.exportQualityCards?.map(({ asset }) => asset.src)).toEqual([
+      "/templates/kindergarten-doodles/quality-card-1-export-v3.webp",
+      "/templates/kindergarten-doodles/quality-card-2-export-v3.webp",
+      "/templates/kindergarten-doodles/quality-card-3-export-v3.webp",
+      "/templates/kindergarten-doodles/quality-card-4-export-v3.webp",
+      "/templates/kindergarten-doodles/quality-card-5-export-v5.webp"
+    ]);
     expect(kindergarten_doodlesProfile.assets.photoFrames.messagePortrait).toMatchObject({
       preset: "portrait-caption-paper",
       caption: { layout: "standard" }
@@ -67,6 +73,8 @@ describe("kindergarten-doodles studio template", () => {
       ["desktop"], ["desktop"], ["export"], ["export"], ["mobile"], ["mobile"]
     ]);
     expect(kindergarten_doodlesProfile.assets.decor.filter(({ visibleOn }) => visibleOn.includes("export")).every(({ exportVariants }) => Boolean(exportVariants?.story && exportVariants.post && exportVariants.a4))).toBe(true);
+    expect(kindergarten_doodlesProfile.assets.decor.find(({ id }) => id === "hero-drawing-export")?.exportVariants?.post?.rect)
+      .toEqual({ x: 0, y: 0.105, width: 0.22, height: 1.38 });
   });
 
   it("uses one purpose-built mobile underlay for every tall paper surface", () => {

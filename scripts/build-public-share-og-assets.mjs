@@ -25,6 +25,11 @@ const cards = [
     id: "school-classic",
     name: "Школьный классический",
     preview: "public/templates/school-classic/preview-v6.webp"
+  },
+  {
+    id: "kindergarten-doodles",
+    name: "Детство в рисунках",
+    preview: "public/templates/kindergarten-doodles/preview.webp"
   }
 ];
 

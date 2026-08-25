@@ -51,7 +51,7 @@ export const kindergarten_doodlesProfile = defineTemplate({
       defineSectionUnderlay(asset("/templates/kindergarten-doodles/greeting-card-4-v3.webp", 1200, 500), "adaptive-frame", { mobileAsset: asset("/templates/kindergarten-doodles/greeting-card-mobile-4-v2.webp", 540, 630), safeArea: { x: 0.12, y: 0.13, width: 0.76, height: 0.72 } })
     ],
     qualityCards: [1, 2, 3, 4, 5].map((index) => defineTextCard(asset(`/templates/kindergarten-doodles/quality-card-${index}-${index === 5 ? "v4" : "v2"}.webp`, 480, 330), "quality-doodle-poster", { textColor: "#18324c" })),
-    exportQualityCards: [1, 2, 3, 4, 5].map((index) => defineTextCard(asset(`/templates/kindergarten-doodles/quality-card-${index}-export-${index === 5 ? "v4" : "v2"}.webp`, 720, 180), "quality-doodle-export", { textColor: "#18324c" })),
+    exportQualityCards: [1, 2, 3, 4, 5].map((index) => defineTextCard(asset(`/templates/kindergarten-doodles/quality-card-${index}-export-${index === 5 ? "v5" : "v3"}.webp`, 720, 180), "quality-doodle-export", { textColor: "#18324c" })),
     quoteCards: [1, 2, 3].map((index) => defineTextCard(asset(`/templates/kindergarten-doodles/quote-card-${index}-v3.webp`, 800, 640), "quote-panel-artwork", { textColor: "#18324c" })),
     photoFrames: {
       messagePortrait: captionPaperFrame("portrait-caption-paper"),
@@ -68,7 +68,7 @@ export const kindergarten_doodlesProfile = defineTemplate({
         rect: { x: -0.005, y: 0.02, width: 0.29, height: 0.96 }, rotation: -2, opacity: 0.99, visibleOn: ["export"],
         exportVariants: {
           story: { rect: { x: 0, y: 0.02, width: 0.29, height: 0.96 }, opacity: 0.99, rotation: -2 },
-          post: { rect: { x: 0.05, y: 0.105, width: 0.245, height: 1.38 }, opacity: 0.99, rotation: -2 },
+          post: { rect: { x: 0, y: 0.105, width: 0.22, height: 1.38 }, opacity: 0.99, rotation: -2 },
           a4: { rect: { x: -0.05, y: 0.105, width: 0.32, height: 1.33 }, opacity: 0.99, rotation: -2 }
         }
       },
