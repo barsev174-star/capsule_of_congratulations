@@ -1,6 +1,6 @@
 # VPS deployment notes
 
-Актуально на 24 августа 2026 года. Это основной документ по production-инфраструктуре Slovesto.
+Актуально на 25 августа 2026 года. Это основной документ по production-инфраструктуре Slovesto.
 
 ## Текущий production-статус
 
@@ -8,7 +8,7 @@
 - Проект на VPS: `/home/deploy/capsule`.
 - Docker Compose project: `capsule`.
 - На VPS не должно быть других прикладных Docker-проектов.
-- Текущий release-набор: продуктовый `school-classic` и SEO-страница открытки учителю от 24.08.2026. Точный развернутый commit проверяется на VPS командой `git rev-parse --short HEAD`.
+- Текущий release-набор: шесть продуктовых шаблонов, включая «Детство в рисунках» (`kindergarten-doodles`) и «Вместе» (`team-editorial`), их демонстрационные открытки, статические OG-превью, локальные шрифты и Story/Post/A4-экспорты. Точный развернутый commit проверяется на VPS командой `git rev-parse --short HEAD`.
 
 Рабочие контейнеры:
 
