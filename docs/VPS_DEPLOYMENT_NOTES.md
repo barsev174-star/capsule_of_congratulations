@@ -10,6 +10,7 @@
 - На VPS не должно быть других прикладных Docker-проектов.
 - Текущий release-набор: шесть продуктовых шаблонов, включая «Детство в рисунках» (`kindergarten-doodles`) и «Вместе» (`team-editorial`), их демонстрационные открытки, статические OG-превью, локальные шрифты и Story/Post/A4-экспорты. В составе сайта есть отдельные SEO-страницы для учителя и воспитателя; маршрут воспитателю — `/gruppovaya-otkrytka/vospitatelyu`, его CTA и пример используют `kindergarten-doodles`. Точный развернутый commit проверяется на VPS командой `git rev-parse --short HEAD`.
 - Security baseline от 26 августа 2026 года: Next.js `16.3.3`, sharp `0.35.3`, PostCSS `8.5.23`, nanoid `3.3.18`; `npm audit` и `npm audit --omit=dev` возвращают `0 vulnerabilities`. Sharp объявлен прямой production-зависимостью, поскольку используется runtime-маршрутами фотографий, OG и экспортов.
+- 26 августа опубликована третья SEO-страница `/gruppovaya-otkrytka/kollege` (код `a459323`) с шаблоном «Вместе», анимациями и компактными SEO-ссылками главной. Web/PostgreSQL healthy; публичные страницы, OG, canonical и sitemap проверены.
 
 Рабочие контейнеры:
 
@@ -29,7 +30,7 @@
 
 ## Релиз SEO-страницы коллеге от 26 августа
 
-Подготовлен маршрут `/gruppovaya-otkrytka/kollege` с оформлением `team-editorial`, статическим OG `/landing/colleague/og-team-editorial.jpg`, sitemap и ссылками с главной. В этот же релиз входят анимации страницы, сохранение шаблона при создании из примера и уплотнение блока «Для каких случаев». Детали: `COLLEAGUE_SEO_LANDING_2026-08-26.md`.
+Опубликован маршрут `/gruppovaya-otkrytka/kollege` с оформлением `team-editorial`, статическим OG `/landing/colleague/og-team-editorial.jpg`, sitemap и ссылками с главной. В этот же релиз входят анимации страницы, сохранение шаблона при создании из примера и уплотнение блока «Для каких случаев». Детали: `COLLEAGUE_SEO_LANDING_2026-08-26.md`.
 
 Миграции и переменные окружения не добавляются. Достаточно пересобрать и заменить сервис `web`; PostgreSQL, Caddy, их volumes и bind mounts не пересоздаются. После выпуска проверить новый маршрут, его canonical/OG, sitemap и прежние страницы учителю/воспитателю. Фактический commit сверяется через `git rev-parse HEAD` на VPS.
 
