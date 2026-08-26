@@ -61,18 +61,14 @@ export const getTelemetrySummary = async (days: number): Promise<TelemetrySummar
   const safeDays = days === 30 ? 30 : 7;
   let items: TelemetryEvent[];
   if (isPostgresConfigured()) {
-    const result = await getPostgresPool().query<{
-      id: string; kind: TelemetryKind; event: string; card_id: string | null; context: LogContext;
-      error_id: string | null; created_at: Date | string;
-    }>(`SELECT id, kind, event, card_id, context, error_id, created_at
-        FROM telemetry_events WHERE created_at >= now() - ($1 * interval '1 day') ORDER BY created_at DESC LIMIT 10000`, [safeDays]);
-    items = result.rows.map((row) => ({
-      id: row.id, kind: row.kind, event: row.event, cardId: row.card_id, context: row.context,
-      errorId: row.error_id, createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at
-    }));
+    const result = await getPostgresPool().query<{ summary: TelemetrySummary }>(telemetrySummarySql, [safeDays]);
+    return result.rows[0].summary;
   } else {
     const since = Date.now() - safeDays * 86_400_000;
-    items = (await readJson()).filter((item) => new Date(item.createdAt).getTime() >= since).reverse();
+    items = (await readJson()).filter((item) => {
+      const timestamp = new Date(item.createdAt).getTime();
+      return timestamp >= since && timestamp <= Date.now();
+    }).reverse();
   }
 
   const counts = new Map<string, number>();
@@ -96,3 +92,33 @@ export const getTelemetrySummary = async (days: number): Promise<TelemetrySummar
     }
   };
 };
+
+// Aggregate the complete period in the database; only the error detail list is capped.
+export const telemetrySummarySql = `
+WITH period AS MATERIALIZED (
+  SELECT * FROM telemetry_events
+  WHERE created_at >= now() - ($1 * interval '1 day') AND created_at <= now()
+), ai AS (
+  SELECT card_id, (context->>'totalCostRub')::numeric AS cost FROM period
+  WHERE event = 'ai.two_stage_generation' AND jsonb_typeof(context->'totalCostRub') = 'number'
+), funnel AS (
+  SELECT event, count(*) AS count FROM period WHERE kind = 'funnel' GROUP BY event
+), recent AS (
+  SELECT id, kind, event, card_id AS "cardId", '{}'::jsonb AS context,
+    error_id AS "errorId", created_at AS "createdAt"
+  FROM period WHERE kind <> 'funnel' ORDER BY created_at DESC, id LIMIT 30
+)
+SELECT jsonb_build_object(
+  'totalEvents', (SELECT count(*) FROM period),
+  'uniqueCards', (SELECT count(DISTINCT card_id) FROM period),
+  'criticalErrors', (SELECT count(*) FROM period WHERE kind <> 'funnel'),
+  'funnel', COALESCE((SELECT jsonb_agg(f) FROM funnel f), '[]'::jsonb),
+  'recentCritical', COALESCE((SELECT jsonb_agg(r ORDER BY r."createdAt" DESC, r.id) FROM recent r), '[]'::jsonb),
+  'aiCost', (SELECT jsonb_build_object(
+    'generations', count(*), 'cards', count(DISTINCT card_id),
+    'totalRub', round(COALESCE(sum(cost), 0), 6),
+    'averageGenerationRub', round(COALESCE(avg(cost), 0), 6),
+    'averageCardRub', round(COALESCE(sum(cost) / NULLIF(count(DISTINCT card_id), 0), 0), 6)
+  ) FROM ai)
+) AS summary
+`;
