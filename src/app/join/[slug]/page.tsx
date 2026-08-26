@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
+import { buildParticipantLinkMetadata } from "@/lib/participants/metadata";
 import Image from "next/image";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
@@ -18,6 +20,23 @@ type Props = {
     slug: string;
   }>;
 };
+
+const getJoinCard = cache(async (slug: string) => {
+  const [card, lifecycle] = await Promise.all([getCardDraftByPublicSlug(slug), getCardLifecycleByPublicSlug(slug)]);
+  if (!card || !lifecycle || lifecycle.collectionStatus === "DRAFT" || lifecycle.purgedAt !== null || lifecycle.deletedAt !== null || lifecycle.isHidden) {
+    return null;
+  }
+  return { card, lifecycle };
+});
+
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params;
+  const data = await getJoinCard(slug);
+  return buildParticipantLinkMetadata(
+    slug, data ? data.card.templateId ?? "paper-birthday" : null,
+    Boolean(data && (data.lifecycle.collectionStatus !== "OPEN" || data.lifecycle.deliveryStatus === "DELIVERED"))
+  );
+}
 
 const formatCount = (count: number) => {
   const lastTwo = count % 100;
@@ -40,11 +59,11 @@ const formatCount = (count: number) => {
 
 export default async function JoinCardPage({ params }: Props) {
   const { slug } = await params;
-  const [card, lifecycle] = await Promise.all([getCardDraftByPublicSlug(slug), getCardLifecycleByPublicSlug(slug)]);
-
-  if (!card || !lifecycle || lifecycle.collectionStatus === "DRAFT" || lifecycle.purgedAt !== null) {
+  const data = await getJoinCard(slug);
+  if (!data) {
     notFound();
   }
+  const { card, lifecycle } = data;
 
   const [contributions, allContributions] = await Promise.all([
     listContributionsByCardId(card.id),

@@ -4,6 +4,7 @@ import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { cardTemplates } from "@/lib/cards/templates";
 import { buildPublicShareMetadata, getPublicShareOgTemplate } from "./metadata";
+import { buildParticipantLinkMetadata } from "@/lib/participants/metadata";
 import type { PublicSharePayloadV2 } from "./types";
 
 const payload: PublicSharePayloadV2 = {
@@ -58,5 +59,24 @@ describe("public share metadata", () => {
     const file = path.join(process.cwd(), "public", socialImage.slice(1));
     await expect(access(file)).resolves.toBeUndefined();
     await expect(sharp(file).metadata()).resolves.toMatchObject({ format: "png", width: 1200, height: 630 });
+  });
+
+  it.each(cardTemplates)("uses the $id artwork for participant invitations too", ({ id }) => {
+    const metadata = buildParticipantLinkMetadata("participant slug", id);
+    expect(metadata.openGraph?.images).toEqual([expect.objectContaining({
+      url: `/assets/share-og/${id}-v1.png`, width: 1200, height: 630
+    })]);
+    expect(metadata.twitter?.card).toBe("summary_large_image");
+    expect(metadata.alternates?.canonical).toBe("/join/participant%20slug");
+    expect(metadata.robots).toEqual({ index: false, follow: false });
+    expect(JSON.stringify(metadata)).not.toContain("/manage/");
+    expect(JSON.stringify(metadata)).not.toContain("/gift/");
+  });
+
+  it("does not inherit a template image for an unavailable invitation", () => {
+    const metadata = buildParticipantLinkMetadata("missing", null);
+    expect(metadata.openGraph?.images).toEqual([]);
+    expect(metadata.twitter?.images).toEqual([]);
+    expect(metadata.alternates).toBeUndefined();
   });
 });
