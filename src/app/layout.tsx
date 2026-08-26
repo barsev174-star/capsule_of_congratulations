@@ -55,6 +55,9 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
   },
+  verification: {
+    google: "so0EBZVqU-NlGXl8N6u_jTcRVkQlspeCmVMn98mFrGM"
+  },
   manifest: "/manifest.webmanifest"
 };
 
