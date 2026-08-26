@@ -5,10 +5,11 @@ node_modules
 coverage
 screenshots
 data/*.json
+data/public-share-media
 public/uploads
-.env
-.env.local
-.env.*.local
-.env.production
+backups
+logs
+output
+.env*
 *.log
 tsconfig.tsbuildinfo
