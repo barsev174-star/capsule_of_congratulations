@@ -8,7 +8,8 @@ import { GiftIntro } from "@/components/gift-intro/gift-intro";
 import { ScrollReveal, useScrollReveal } from "@/components/scroll-reveal/scroll-reveal";
 import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel, teamEditorialDemoCardModel } from "@/lib/example-card";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
-import { startCardFromShowcaseAction, startColleagueCardFromShowcaseAction } from "../home-actions";
+import { birthdayExampleCardModel } from "@/lib/birthday-example";
+import { startBirthdayCardFromShowcaseAction, startCardFromShowcaseAction, startColleagueCardFromShowcaseAction } from "../home-actions";
 import styles from "./example.module.css";
 
 export type DemoTemplateId = "paper-birthday" | "route-adventure" | "school-scrapbook" | "school-classic" | "kindergarten-doodles" | "team-editorial";
@@ -21,6 +22,7 @@ type Props = {
   kindergartenDoodlesChildren: ReactNode;
   teamEditorialChildren: ReactNode;
   initialTemplateId?: DemoTemplateId;
+  birthdayScenario?: boolean;
 };
 
 type DemoStepId = "template" | "animation" | "recipient_view";
@@ -40,12 +42,12 @@ const previewFeatures = [
 
 const previewContributions = exampleCardModel.contributions.slice(0, 2);
 
-export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, initialTemplateId }: Props) => {
-  const [started, setStarted] = useState(false);
+export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, initialTemplateId, birthdayScenario = false }: Props) => {
+  const [started, setStarted] = useState(birthdayScenario);
   const [selectedTemplateId, setSelectedTemplateId] = useState<DemoTemplateId>(initialTemplateId ?? "paper-birthday");
   const [activeStep, setActiveStep] = useState<DemoStepId>("template");
   const demoModelByTemplate: Record<DemoTemplateId, typeof exampleCardModel | typeof schoolScrapbookDemoCardModel> = {
-    "paper-birthday": exampleCardModel,
+    "paper-birthday": birthdayScenario ? birthdayExampleCardModel : exampleCardModel,
     "route-adventure": routeAdventureDemoCardModel,
     "school-scrapbook": schoolScrapbookDemoCardModel,
     "school-classic": schoolClassicDemoCardModel,
@@ -113,7 +115,9 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
   const selectedDemoModel = demoModelByTemplate[selectedTemplateId];
   const createAction = selectedTemplateId === "team-editorial"
     ? startColleagueCardFromShowcaseAction
-    : startCardFromShowcaseAction;
+    : birthdayScenario && selectedTemplateId === "paper-birthday"
+      ? startBirthdayCardFromShowcaseAction
+      : startCardFromShowcaseAction;
 
   const viewedStepsRef = useRef<Set<DemoStepId>>(new Set());
 

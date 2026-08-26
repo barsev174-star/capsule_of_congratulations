@@ -4,6 +4,8 @@ import { TemplateCardRenderer } from "@/components/templates/template-card-rende
 import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel, teamEditorialDemoCardModel } from "@/lib/example-card";
 import { requireTemplateRenderer } from "@/lib/templates/dispatcher";
 import { ExampleExperience, type DemoTemplateId } from "./example-experience";
+import { birthdayExampleCardModel } from "@/lib/birthday-example";
+import { isBirthdayExample } from "@/lib/birthday-scenario";
 
 export const metadata: Metadata = {
   title: "Пример групповой онлайн-открытки",
@@ -34,8 +36,9 @@ type ExamplePageProps = {
 };
 
 export default async function ExamplePage({ searchParams }: ExamplePageProps) {
-  const { template } = await searchParams;
+  const { template, scenario } = await searchParams;
   const rawTemplate = Array.isArray(template) ? template[0] : template;
+  const birthdayScenario = isBirthdayExample(rawTemplate, Array.isArray(scenario) ? scenario[0] : scenario);
   const initialTemplateId = rawTemplate ? templateAliases[rawTemplate] : undefined;
   const schoolDispatch = requireTemplateRenderer("school-scrapbook");
   const schoolClassicDispatch = requireTemplateRenderer("school-classic");
@@ -56,6 +59,7 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
 
   return (
     <ExampleExperience
+      birthdayScenario={birthdayScenario}
       initialTemplateId={initialTemplateId}
       routeChildren={<FinalCard model={routeAdventureDemoCardModel} />}
       schoolChildren={<TemplateCardRenderer dispatch={schoolDispatch} model={schoolScrapbookDemoCardModel} surface="private" />}
@@ -63,7 +67,7 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
       kindergartenDoodlesChildren={<TemplateCardRenderer dispatch={kindergartenDoodlesDispatch} model={kindergartenDoodlesDemoCardModel} surface="private" />}
       teamEditorialChildren={<TemplateCardRenderer dispatch={teamEditorialDispatch} model={teamEditorialDemoCardModel} surface="private" />}
     >
-      <FinalCard model={exampleCardModel} />
+      <FinalCard model={birthdayScenario ? birthdayExampleCardModel : exampleCardModel} creationScenario={birthdayScenario ? "birthday" : undefined} />
     </ExampleExperience>
   );
 }

@@ -1,5 +1,6 @@
 import type { CardMediaAsset, Contribution } from "@/lib/cards/types";
 import type { FinalCardViewModel } from "@/lib/final-card/view-model";
+import { kristinaExamplePhotos } from "@/lib/kristina-example-photos";
 import { buildUniversalFixtureViewModel, type UniversalTemplatePhoto, type UniversalTemplateViewModel } from "@/lib/templates/view-model";
 
 const createdAt = "2026-07-03T00:00:00.000Z";
@@ -18,15 +19,6 @@ const contribution = (id: string, authorName: string, authorRole: string, messag
   updatedAt: createdAt
 });
 
-const captions = [
-  "Вечер, который хочется запомнить",
-  "Маленький знак внимания",
-  "Тёплая прогулка после встречи",
-  "Когда всё собрано с любовью",
-  "Самый сладкий момент",
-  "Цветы, открытка и немного тепла"
-];
-
 const slotByPhoto = {
   1: "landscape-a",
   2: "memory-a",
@@ -36,20 +28,20 @@ const slotByPhoto = {
   6: "memory-c"
 } as const;
 
-const mediaAssets: CardMediaAsset[] = captions.map((caption, index) => {
+const mediaAssets: CardMediaAsset[] = kristinaExamplePhotos.map((photo, index) => {
   const photoNumber = (index + 1) as keyof typeof slotByPhoto;
 
   return {
     id: `example-photo-${photoNumber}`,
     cardId: "example-kristina",
     slot: slotByPhoto[photoNumber],
-    publicUrl: `/examples/kristina/${photoNumber}.jpg`,
-    storagePath: `public/examples/kristina/${photoNumber}.jpg`,
-    fileName: `${photoNumber}.jpg`,
-    mimeType: "image/jpeg",
+    publicUrl: photo.src,
+    storagePath: `public${photo.src}`,
+    fileName: photo.src.split("/").pop()!,
+    mimeType: "image/webp",
     sizeBytes: 0,
-    captionTitle: caption,
-    captionSubtitle: caption,
+    captionTitle: photo.caption,
+    captionSubtitle: photo.caption,
     createdAt,
     updatedAt: createdAt
   };

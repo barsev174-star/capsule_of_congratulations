@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { startCardFromShowcaseAction } from "@/app/home-actions";
+import { startBirthdayCardFromShowcaseAction, startCardFromShowcaseAction } from "@/app/home-actions";
+import { getBirthdayTelemetryContext } from "@/lib/client-landing-attribution";
+import { sendClientTelemetry } from "@/lib/client-telemetry";
 import styles from "./final-card.module.css";
 
 const ShareIcon = () => (
@@ -26,7 +28,7 @@ export type PublicShareFooterAction = {
   active: boolean;
 };
 
-export const FinalCardActions = ({ publicShare }: { publicShare?: PublicShareFooterAction }) => {
+export const FinalCardActions = ({ publicShare, creationScenario }: { publicShare?: PublicShareFooterAction; creationScenario?: "birthday" }) => {
   return (
     <div className={styles.recipientFooterActions}>
       {publicShare?.active ? (
@@ -42,7 +44,11 @@ export const FinalCardActions = ({ publicShare }: { publicShare?: PublicShareFoo
             {publicShare.label}
           </Link>
         ) : null}
-        <form action={startCardFromShowcaseAction}>
+        <form action={creationScenario === "birthday" ? startBirthdayCardFromShowcaseAction : startCardFromShowcaseAction} onSubmit={() => {
+          if (creationScenario === "birthday") {
+            sendClientTelemetry("seo_create_click", { ...getBirthdayTelemetryContext(), template: "paper-birthday", placement: "example" });
+          }
+        }}>
           <button type="submit" className={`${styles.button} ${styles.secondaryButton} ${styles.routeFooterCreateButton}`}>
             <SparkleIcon />
             Создать такую же открытку

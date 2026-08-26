@@ -3,6 +3,7 @@ export const FIRST_TOUCH_MAX_AGE_SECONDS = 60 * 60 * 24 * 90;
 export const TEACHER_LANDING_PATH = "/gruppovaya-otkrytka/uchitelyu";
 export const CAREGIVER_LANDING_PATH = "/gruppovaya-otkrytka/vospitatelyu";
 export const COLLEAGUE_LANDING_PATH = "/gruppovaya-otkrytka/kollege";
+export const BIRTHDAY_LANDING_PATH = "/gruppovaya-otkrytka/den-rozhdeniya";
 
 const MAX_COOKIE_LENGTH = 2_048;
 const MAX_VALUE_LENGTH = 100;
@@ -30,7 +31,12 @@ export type ColleagueLandingAttribution = LandingAttributionFields & {
   landing_path: typeof COLLEAGUE_LANDING_PATH;
 };
 
-export type LandingAttribution = TeacherLandingAttribution | CaregiverLandingAttribution | ColleagueLandingAttribution;
+export type BirthdayLandingAttribution = LandingAttributionFields & {
+  landing_type: "birthday";
+  landing_path: typeof BIRTHDAY_LANDING_PATH;
+};
+
+export type LandingAttribution = TeacherLandingAttribution | CaregiverLandingAttribution | ColleagueLandingAttribution | BirthdayLandingAttribution;
 
 type BuildLandingAttributionInput = {
   pathname: string;
@@ -73,7 +79,8 @@ const buildLandingAttribution = ({
   const landingPath = {
     teacher: TEACHER_LANDING_PATH,
     caregiver: CAREGIVER_LANDING_PATH,
-    colleague: COLLEAGUE_LANDING_PATH
+    colleague: COLLEAGUE_LANDING_PATH,
+    birthday: BIRTHDAY_LANDING_PATH
   }[landingType];
   if (pathname !== landingPath) return null;
 
@@ -118,6 +125,9 @@ export const buildCaregiverLandingAttribution = (input: BuildLandingAttributionI
 export const buildColleagueLandingAttribution = (input: BuildLandingAttributionInput): ColleagueLandingAttribution | null =>
   buildLandingAttribution(input, "colleague") as ColleagueLandingAttribution | null;
 
+export const buildBirthdayLandingAttribution = (input: BuildLandingAttributionInput): BirthdayLandingAttribution | null =>
+  buildLandingAttribution(input, "birthday") as BirthdayLandingAttribution | null;
+
 export const serializeLandingAttribution = (value: LandingAttribution) =>
   encodeURIComponent(JSON.stringify(value));
 
@@ -130,8 +140,9 @@ export const parseLandingAttribution = (rawValue: string | null | undefined): La
     const isTeacher = value.landing_type === "teacher" && value.landing_path === TEACHER_LANDING_PATH;
     const isCaregiver = value.landing_type === "caregiver" && value.landing_path === CAREGIVER_LANDING_PATH;
     const isColleague = value.landing_type === "colleague" && value.landing_path === COLLEAGUE_LANDING_PATH;
+    const isBirthday = value.landing_type === "birthday" && value.landing_path === BIRTHDAY_LANDING_PATH;
     if (
-      (!isTeacher && !isCaregiver && !isColleague) ||
+      (!isTeacher && !isCaregiver && !isColleague && !isBirthday) ||
       typeof value.first_touch_at !== "string" ||
       !Number.isFinite(Date.parse(value.first_touch_at))
     ) {
@@ -144,8 +155,8 @@ export const parseLandingAttribution = (rawValue: string | null | undefined): La
     const referrerHost = sanitizeValue(typeof value.referrer_host === "string" ? normalizeHost(value.referrer_host) : undefined);
 
     return {
-      landing_type: isTeacher ? "teacher" : isCaregiver ? "caregiver" : "colleague",
-      landing_path: isTeacher ? TEACHER_LANDING_PATH : isCaregiver ? CAREGIVER_LANDING_PATH : COLLEAGUE_LANDING_PATH,
+      landing_type: isTeacher ? "teacher" : isCaregiver ? "caregiver" : isColleague ? "colleague" : "birthday",
+      landing_path: isTeacher ? TEACHER_LANDING_PATH : isCaregiver ? CAREGIVER_LANDING_PATH : isColleague ? COLLEAGUE_LANDING_PATH : BIRTHDAY_LANDING_PATH,
       first_touch_at: value.first_touch_at,
       ...(utmSource ? { utm_source: utmSource } : {}),
       ...(utmMedium ? { utm_medium: utmMedium } : {}),

@@ -49,8 +49,9 @@ describe("acquisition report UI", () => {
     expect(within(journey).getAllByText("50% от созданных")).toHaveLength(2);
     expect(within(journey).getAllByText("100% от созданных")).toHaveLength(2);
     expect(screen.queryByText(/от шага выше/)).not.toBeInTheDocument();
-    const seo = screen.getByRole("region", { name: "Три SEO-страницы" });
-    expect(within(seo).getAllByRole("link")).toHaveLength(3);
+    const seo = screen.getByRole("region", { name: "SEO-страницы" });
+    expect(within(seo).getAllByRole("link")).toHaveLength(4);
+    expect(within(seo).getByRole("link", { name: "День рождения" })).toHaveAttribute("href", "/gruppovaya-otkrytka/den-rozhdeniya");
     expect(within(seo).getByText(/не уникальные посетители/)).toBeInTheDocument();
     expect(screen.getByText("Без SEO-атрибуции")).toBeInTheDocument();
     expect(screen.getByText(/не точное число людей/)).toBeInTheDocument();

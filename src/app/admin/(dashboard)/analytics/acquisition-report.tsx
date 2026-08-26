@@ -54,7 +54,7 @@ export function AcquisitionReport({ report, days }: { report: AcquisitionAnalyti
       </section>
 
       <section className={`${styles.panel} ${styles.analyticsPanel}`} aria-labelledby="seo-report-title">
-        <h2 className={styles.panelTitle} id="seo-report-title">Три SEO-страницы</h2>
+        <h2 className={styles.panelTitle} id="seo-report-title">SEO-страницы</h2>
         <p className={styles.analyticsNote}>Просмотры и нажатия — события за {days} дней, не уникальные посетители. Создания и оплаты относятся к выбранным открыткам и их первому SEO-источнику. Делить эти события друг на друга для расчёта конверсии нельзя.</p>
         <div className={styles.tableWrap} role="region" aria-label="Результаты SEO-страниц, таблица с горизонтальной прокруткой" tabIndex={0}>
           <table className={`${styles.table} ${styles.analyticsTable}`}>

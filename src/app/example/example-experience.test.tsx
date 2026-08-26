@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const actions = vi.hoisted(() => ({
+  startBirthdayCardFromShowcaseAction: vi.fn(),
   startCardFromShowcaseAction: vi.fn(),
   startColleagueCardFromShowcaseAction: vi.fn()
 }));
@@ -16,8 +17,9 @@ vi.mock("@/components/scroll-reveal/scroll-reveal", () => ({
 
 import { ExampleExperience, type DemoTemplateId } from "./example-experience";
 
-const demo = (initialTemplateId: DemoTemplateId) => (
+const demo = (initialTemplateId: DemoTemplateId, birthdayScenario = false) => (
   <ExampleExperience
+    birthdayScenario={birthdayScenario}
     initialTemplateId={initialTemplateId}
     routeChildren={null}
     schoolChildren={null}
@@ -30,7 +32,7 @@ const demo = (initialTemplateId: DemoTemplateId) => (
 describe("example creation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true })));
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
     vi.stubGlobal("IntersectionObserver", class {
       observe() {}
       disconnect() {}
@@ -52,5 +54,12 @@ describe("example creation", () => {
     fireEvent.submit(screen.getByRole("button", { name: "Создать такую же", exact: true }).closest("form")!);
     await waitFor(() => expect(actions.startCardFromShowcaseAction).toHaveBeenCalledTimes(1));
     expect(actions.startColleagueCardFromShowcaseAction).not.toHaveBeenCalled();
+  });
+
+  it("opens the birthday envelope directly with the family sender", () => {
+    render(demo("paper-birthday", true));
+    expect(screen.getByRole("button", { name: "Посмотреть, что внутри" })).toBeInTheDocument();
+    expect(screen.getAllByText("от друзей и семьи").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("heading", { name: "Выберите пример открытки" })).not.toBeInTheDocument();
   });
 });

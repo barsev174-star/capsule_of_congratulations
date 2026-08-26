@@ -1,0 +1,152 @@
+.birthdayPage { font-variant-numeric: tabular-nums; }
+.hero { padding-top: clamp(28px, 4vw, 56px); }
+.heroCopy h1 { max-width: none; font-size: clamp(2.7rem, 5.2vw, 4.5rem); line-height: 0.98; }
+.heroCopy h1 span { display: block; }
+.heroGrid { align-items: center; }
+.heroVisual { min-width: 0; }
+.productStage { position: relative; padding: 36px 16px 80px; }
+.productPreview,
+.examplePreview { position: relative; display: block; overflow: hidden; background: #f7f8fa; border-radius: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 18px 48px rgba(0, 0, 0, 0.12); transition: transform 220ms ease, box-shadow 220ms ease; }
+.productPreview { transform: rotate(-2deg); }
+.productPreview img,
+.examplePreview img { display: block; width: 100%; height: auto; outline: 1px solid rgba(0, 0, 0, 0.1); outline-offset: -1px; border-radius: inherit; }
+.previewHint { position: absolute; display: flex; align-items: center; justify-content: center; gap: 10px; bottom: 16px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 24px); padding: 12px 18px; border-radius: 999px; background: #ffffff; color: #e9652f; font-size: 0.84rem; font-weight: 750; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12); }
+.floatingNote { position: absolute; width: 182px; padding: 14px 16px; border-radius: 16px; background: #ffffff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 12px 28px rgba(0, 0, 0, 0.09); pointer-events: none; }
+.floatingNote > span { color: #e9652f; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 800; }
+.floatingNote p { margin: 6px 0 0; color: #202124; font-size: 0.84rem; line-height: 1.5; }
+.noteFriend { top: 0; right: -2px; transform: rotate(3deg); }
+.noteFamily { bottom: 22px; right: 0; transform: rotate(2deg); }
+.heroPhoto { position: absolute; bottom: 0; left: 8px; width: 150px; margin: 0; padding: 7px 7px 10px; border-radius: 12px; background: #ffffff; transform: rotate(5deg); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14); pointer-events: none; }
+.heroPhoto img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 5px; outline: 1px solid rgba(0, 0, 0, 0.1); outline-offset: -1px; }
+.heroPhoto figcaption { margin-top: 8px; color: #5f6368; text-align: center; font-size: 0.7rem; }
+.productCaption { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; padding: 14px 16px; border-radius: 14px; background: #f7f8fa; color: #5f6368; font-size: 0.76rem; }
+.productCaption strong { color: #202124; }
+.chatToGift { display: grid; align-items: center; grid-template-columns: 1fr auto 1fr; max-width: 920px; gap: 24px; margin: 28px auto 42px; }
+.chatMessages { display: grid; gap: 10px; }
+.chatMessages p { margin: 0; padding: 12px 16px; border-radius: 16px 16px 16px 4px; background: #ffffff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); font-size: 0.9rem; }
+.chatMessages p:last-child { margin-left: 32px; }
+.chatMessages span { display: block; margin-bottom: 4px; color: #5f6368; font-size: 0.72rem; }
+.flowArrow { display: grid; place-items: center; color: #e9652f; }
+.flowArrow svg { width: 30px; height: 30px; }
+.oneGift { display: flex; align-items: center; gap: 18px; padding: 24px; border-radius: 22px; background: #ffffff; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05); }
+.oneGift strong { font-size: 1rem; }
+.oneGift p { margin: 8px 0 0; color: #5f6368; font-size: 0.88rem; line-height: 1.6; }
+.giftMark { color: #e9652f; font-size: 2.5rem; }
+.exampleGrid { display: grid; align-items: center; gap: clamp(28px, 5vw, 64px); }
+.examplePreview { max-width: 620px; }
+.demoLabel { display: block; margin-top: 16px; color: #5f6368; font-size: 0.84rem; line-height: 1.6; }
+.voicesGrid { display: grid; gap: 16px; }
+.voiceCard { display: flex; flex-direction: column; margin: 0; padding: 24px; border-radius: 24px; background: #ffffff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 6px 24px rgba(0, 0, 0, 0.04); }
+.voiceCard figcaption { display: flex; align-items: center; gap: 12px; }
+.avatar { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 50%; background: #f7f8fa; color: #e9652f; font-weight: 750; }
+.voiceCard figcaption strong { display: block; font-size: 0.92rem; }
+.voiceCard figcaption span span { display: block; margin-top: 3px; color: #5f6368; font-size: 0.76rem; }
+.voiceCard blockquote { margin: 22px 0; font-size: 1.05rem; line-height: 1.6; }
+.voiceCard > p { margin: auto 0 0; color: #5f6368; font-size: 0.82rem; line-height: 1.5; }
+.sectionNote { margin: 20px 0 0; color: #5f6368; text-align: center; font-size: 0.8rem; }
+.momentsGrid { display: grid; gap: 20px; }
+.momentCard { min-width: 0; margin: 0; padding: 8px; border-radius: 20px; background: #ffffff; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05); }
+.momentCard img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; outline: 1px solid rgba(0, 0, 0, 0.1); outline-offset: -1px; }
+.momentCard figcaption { padding: 14px 8px 10px; color: #202124; font-size: 0.88rem; line-height: 1.5; }
+.remoteBand { display: flex; align-items: flex-start; gap: 18px; margin-top: 28px; padding: 24px; border-radius: 24px; background: #ffffff; }
+.remoteIcon { color: #e9652f; font-size: 2rem; line-height: 1; }
+.remoteBand h3 { margin: 0; font-size: 1.08rem; }
+.remoteBand p { margin: 8px 0 0; max-width: 86ch; color: #5f6368; font-size: 0.92rem; line-height: 1.65; }
+.alternative,
+.related { margin: 24px auto 0; color: #5f6368; text-align: center; font-size: 0.88rem; line-height: 1.6; }
+.related { width: min(100% - 32px, 1180px); }
+.alternative a,
+.related a { display: inline-flex; align-items: center; min-height: 40px; gap: 6px; color: #e9652f; text-decoration: underline; text-underline-offset: 4px; }
+.productPreview:focus-visible,
+.examplePreview:focus-visible,
+.alternative a:focus-visible,
+.related a:focus-visible { outline: 3px solid #e9652f; outline-offset: 5px; }
+.revealCard { display: grid; min-width: 0; }
+.birthdayPage .action { transition: transform 160ms ease, background-color 160ms ease, box-shadow 180ms ease; }
+.voiceCard,
+.momentCard { transition: transform 220ms ease, box-shadow 220ms ease; }
+.floatingNote,
+.heroPhoto { transition: transform 240ms cubic-bezier(0.2, 0, 0, 1), box-shadow 240ms ease; }
+.previewHint > span { display: inline-block; transition: transform 180ms ease; }
+.alternative a > span { transition: transform 180ms ease; }
+/* First-screen copy stays visible; only supporting visuals enter on load. */
+.birthdayPage[data-birthday-landing][data-motion-ready] [data-teacher-reveal]:focus-within { opacity: 1; filter: none; transform: none; transition-delay: 0ms; }
+@media (min-width: 600px) {
+  .voicesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .momentsGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 860px) {
+  .heroGrid { grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); gap: 44px; }
+  .exampleGrid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); }
+}
+@media (min-width: 1100px) {
+  .voicesGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 599px) {
+  .heroCopy h1 { max-width: 22ch; font-size: clamp(2.45rem, 10.4vw, 3.3rem); }
+  .heroCopy > p:nth-of-type(2) { font-size: 0.98rem; }
+  .heroCopy > p:first-child { font-size: 0.68rem; }
+  .productStage { padding: 28px 6px 64px; }
+  .productPreview .previewHint { left: auto; right: 10px; transform: none; font-size: 0.74rem; padding: 10px 12px; }
+  .heroPhoto { width: 110px; left: 4px; }
+  .floatingNote { width: 150px; padding: 10px 12px; }
+  .floatingNote p { font-size: 0.74rem; }
+  .noteFamily { bottom: 6px; }
+  .productCaption { flex-direction: column; }
+  .chatToGift { grid-template-columns: 1fr; gap: 14px; }
+  .flowArrow { transform: rotate(90deg); }
+  .oneGift { padding: 18px; }
+  .voiceCard { padding: 20px; }
+  .voiceCard blockquote { margin: 16px 0; }
+  .remoteBand { padding: 20px; gap: 12px; }
+  .alternative { text-align: left; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .productPreview:hover { transform: rotate(0) translateY(-3px); }
+  .examplePreview:hover { transform: translateY(-4px); }
+  .productPreview:hover,
+  .examplePreview:hover { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 24px 48px rgba(0, 0, 0, 0.15); }
+  .productStage:has(.productPreview:hover) .noteFriend { transform: translateY(-4px) rotate(1deg); }
+  .productStage:has(.productPreview:hover) .noteFamily { transform: translateY(-3px) rotate(0); }
+  .productStage:has(.productPreview:hover) .heroPhoto { transform: translateY(-5px) rotate(2deg); }
+  .voiceCard:hover,
+  .momentCard:hover { transform: translateY(-4px); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 12px 26px rgba(0, 0, 0, 0.1); }
+  .productPreview:hover .previewHint > span,
+  .examplePreview:hover .previewHint > span,
+  .alternative a:hover > span { transform: translateX(3px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .productPreview:focus-visible { transform: rotate(0) translateY(-3px); }
+  .examplePreview:focus-visible { transform: translateY(-4px); }
+  .productPreview:active,
+  .examplePreview:active { transform: scale(0.96); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .birthdayPage[data-birthday-landing][data-motion-ready] [data-teacher-reveal],
+  .birthdayPage [data-teacher-reveal] { opacity: 1; transform: none; filter: none; transition: none; }
+  .birthdayPage .action,
+  .voiceCard,
+  .momentCard,
+  .floatingNote,
+  .heroPhoto,
+  .previewHint > span,
+  .alternative a > span,
+  .productPreview,
+  .examplePreview { transition: none; }
+  .productPreview { transform: none; }
+  .birthdayPage .action:is(:hover, :active),
+  .productPreview:is(:hover, :active, :focus-visible),
+  .examplePreview:is(:hover, :active, :focus-visible),
+  .voiceCard:hover,
+  .momentCard:hover,
+  .productPreview:hover .previewHint > span,
+  .examplePreview:hover .previewHint > span,
+  .alternative a:hover > span { transform: none; }
+  .productStage:has(.productPreview:hover) .noteFriend { transform: rotate(3deg); }
+  .productStage:has(.productPreview:hover) .noteFamily { transform: rotate(2deg); }
+  .productStage:has(.productPreview:hover) .heroPhoto { transform: rotate(5deg); }
+}
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .birthdayPage .action:hover { transform: translateY(-2px); }
+  .birthdayPage .action:active { transform: scale(0.96); }
+}

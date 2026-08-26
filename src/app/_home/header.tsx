@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
-import { getCaregiverTelemetryContext, getColleagueTelemetryContext, getTeacherTelemetryContext } from "@/lib/client-landing-attribution";
+import { getBirthdayTelemetryContext, getCaregiverTelemetryContext, getColleagueTelemetryContext, getTeacherTelemetryContext } from "@/lib/client-landing-attribution";
+import { BIRTHDAY_EXAMPLE_PATH } from "@/lib/birthday-scenario";
 import {
+  startBirthdayCardFromShowcaseAction,
   startCardFromShowcaseAction,
   startCaregiverCardFromShowcaseAction,
   startColleagueCardFromShowcaseAction,
@@ -45,7 +47,15 @@ const colleagueNavItems = [
   { href: "/account", label: "Мои открытки" }
 ];
 
-type HeaderVariant = "home" | "teacher" | "caregiver" | "colleague";
+const birthdayNavItems = [
+  { href: "#how-it-works", label: "Как это работает" },
+  { href: BIRTHDAY_EXAMPLE_PATH, label: "Пример" },
+  { href: "#price", label: "Цена" },
+  { href: "#faq", label: "FAQ" },
+  { href: "/account", label: "Мои открытки" }
+];
+
+type HeaderVariant = "home" | "teacher" | "caregiver" | "colleague" | "birthday";
 
 export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -58,7 +68,9 @@ export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
       ? caregiverNavItems
       : variant === "colleague"
         ? colleagueNavItems
-      : homeNavItems;
+        : variant === "birthday"
+          ? birthdayNavItems
+          : homeNavItems;
   const isSeoLanding = variant !== "home";
   const createAction = variant === "teacher"
     ? startTeacherCardFromShowcaseAction
@@ -66,7 +78,9 @@ export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
       ? startCaregiverCardFromShowcaseAction
       : variant === "colleague"
         ? startColleagueCardFromShowcaseAction
-      : startCardFromShowcaseAction;
+        : variant === "birthday"
+          ? startBirthdayCardFromShowcaseAction
+          : startCardFromShowcaseAction;
 
   useEffect(() => {
     const header = headerRef.current;
@@ -147,7 +161,11 @@ export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
 
         <nav className={styles.nav} aria-label="Главная навигация">
           {navItems.map((item) => (
-            <a key={item.href} href={item.href} className={styles.navLink}>
+            <a key={item.href} href={item.href} className={styles.navLink} onClick={() => {
+              if (variant === "birthday" && item.href === BIRTHDAY_EXAMPLE_PATH) {
+                sendClientTelemetry("seo_example_click", { ...getBirthdayTelemetryContext(), template: "paper-birthday", placement: "header" });
+              }
+            }}>
               {item.label}
             </a>
           ))}
@@ -170,7 +188,12 @@ export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
         {menuOpen ? (
           <nav ref={navRef} id="mobile-nav" aria-label="Мобильная навигация" className={styles.mobileNav}>
             {navItems.map((item) => (
-              <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>
+              <a key={item.href} href={item.href} onClick={() => {
+                setMenuOpen(false);
+                if (variant === "birthday" && item.href === BIRTHDAY_EXAMPLE_PATH) {
+                  sendClientTelemetry("seo_example_click", { ...getBirthdayTelemetryContext(), template: "paper-birthday", placement: "header" });
+                }
+              }}>
                 {item.label}
               </a>
             ))}
@@ -198,6 +221,12 @@ export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
                 ...getColleagueTelemetryContext(),
                 placement: "header",
                 template: "team-editorial"
+              });
+            } else if (variant === "birthday") {
+              sendClientTelemetry("seo_create_click", {
+                ...getBirthdayTelemetryContext(),
+                placement: "header",
+                template: "paper-birthday"
               });
             }
           }}

@@ -1,4 +1,6 @@
 import {
+  BIRTHDAY_LANDING_PATH,
+  buildBirthdayLandingAttribution,
   CAREGIVER_LANDING_PATH,
   COLLEAGUE_LANDING_PATH,
   FIRST_TOUCH_COOKIE_NAME,
@@ -111,6 +113,14 @@ describe("landing attribution", () => {
       landing_path: TEACHER_LANDING_PATH,
       first_touch_at: now.toISOString()
     })))).toBeNull();
+  });
+
+  it("round-trips birthday attribution and rejects a mismatched route", () => {
+    const attribution = buildBirthdayLandingAttribution({ pathname: BIRTHDAY_LANDING_PATH, search: "?utm_campaign=birthday", now });
+    expect(attribution).toMatchObject({ landing_type: "birthday", landing_path: BIRTHDAY_LANDING_PATH, utm_campaign: "birthday" });
+    expect(parseLandingAttribution(serializeLandingAttribution(attribution!))).toEqual(attribution);
+    expect(buildBirthdayLandingAttribution({ pathname: COLLEAGUE_LANDING_PATH, search: "", now })).toBeNull();
+    expect(parseLandingAttribution(encodeURIComponent(JSON.stringify({ ...attribution, landing_path: COLLEAGUE_LANDING_PATH })))).toBeNull();
   });
 
   it("round-trips the safe cookie payload and drops extra fields", () => {

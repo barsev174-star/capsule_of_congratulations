@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  startBirthdayCardFromShowcaseAction: vi.fn(),
+  getBirthdayTelemetryContext: vi.fn(() => ({ landing_type: "birthday", landing_path: "/gruppovaya-otkrytka/den-rozhdeniya" })),
   startCardFromShowcaseAction: vi.fn(),
   startCaregiverCardFromShowcaseAction: vi.fn(),
   startColleagueCardFromShowcaseAction: vi.fn(),
@@ -21,6 +23,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("../home-actions", () => ({
+  startBirthdayCardFromShowcaseAction: mocks.startBirthdayCardFromShowcaseAction,
   startCardFromShowcaseAction: mocks.startCardFromShowcaseAction,
   startCaregiverCardFromShowcaseAction: mocks.startCaregiverCardFromShowcaseAction,
   startColleagueCardFromShowcaseAction: mocks.startColleagueCardFromShowcaseAction,
@@ -30,6 +33,7 @@ vi.mock("@/lib/client-telemetry", () => ({
   sendClientTelemetry: mocks.sendClientTelemetry
 }));
 vi.mock("@/lib/client-landing-attribution", () => ({
+  getBirthdayTelemetryContext: mocks.getBirthdayTelemetryContext,
   getCaregiverTelemetryContext: mocks.getCaregiverTelemetryContext,
   getColleagueTelemetryContext: mocks.getColleagueTelemetryContext,
   getTeacherTelemetryContext: mocks.getTeacherTelemetryContext
@@ -66,6 +70,16 @@ describe("HomeHeader teacher variant", () => {
       .toHaveAttribute("href", "/example");
     fireEvent.submit(screen.getByRole("button", { name: "Создать открытку" }).closest("form")!);
     expect(mocks.sendClientTelemetry).not.toHaveBeenCalled();
+  });
+
+  it("opens the family scenario and tracks birthday creation from the header", () => {
+    render(<HomeHeader variant="birthday" />);
+    const example = screen.getByRole("link", { name: "Пример" });
+    expect(example).toHaveAttribute("href", "/example?template=paper-birthday&scenario=birthday");
+    fireEvent.click(example);
+    expect(mocks.sendClientTelemetry).toHaveBeenCalledWith("seo_example_click", expect.objectContaining({ landing_type: "birthday", placement: "header" }));
+    fireEvent.submit(screen.getByRole("button", { name: "Создать открытку" }).closest("form")!);
+    expect(mocks.sendClientTelemetry).toHaveBeenCalledWith("seo_create_click", expect.objectContaining({ landing_type: "birthday", template: "paper-birthday", placement: "header" }));
   });
 
   it("uses the kindergarten example and caregiver telemetry", () => {

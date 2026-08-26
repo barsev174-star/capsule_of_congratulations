@@ -1,13 +1,19 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/app/home-actions", () => ({
-  startCardFromShowcaseAction: vi.fn()
-}));
+const actions = vi.hoisted(() => ({ startCardFromShowcaseAction: vi.fn(), startBirthdayCardFromShowcaseAction: vi.fn() }));
+vi.mock("@/app/home-actions", () => actions);
+vi.mock("@/lib/client-telemetry", () => ({ sendClientTelemetry: vi.fn() }));
 
 import { FinalCardActions } from "./final-card-actions";
 
 describe("FinalCardActions", () => {
+  it("preserves the birthday scenario when creating from the opened example", async () => {
+    render(<FinalCardActions creationScenario="birthday" />);
+    fireEvent.submit(screen.getByRole("button", { name: "Создать такую же открытку" }).closest("form")!);
+    await waitFor(() => expect(actions.startBirthdayCardFromShowcaseAction).toHaveBeenCalledTimes(1));
+    expect(actions.startCardFromShowcaseAction).not.toHaveBeenCalled();
+  });
   it("shows the active public-share state and keeps management inside the private-card footer", () => {
     render(<FinalCardActions publicShare={{
       href: "/gift/final-1/share",

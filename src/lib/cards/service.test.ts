@@ -67,4 +67,13 @@ describe("empty card draft creation", () => {
     expect(mocks.saveCardDraft.mock.invocationCallOrder[0])
       .toBeLessThan(mocks.trackFunnel.mock.invocationCallOrder[0]);
   });
+
+  it("persists the birthday inscription without adding example names or greetings", async () => {
+    const result = await createEmptyCardDraft({}, { templateId: "paper-birthday", occasionText: "С днём рождения!" });
+    expect(mocks.saveCardDraft).toHaveBeenCalledWith(expect.objectContaining({
+      templateId: "paper-birthday", occasionText: "С днём рождения!", recipientName: "", fromLabel: ""
+    }));
+    expect(result.chatMessage).toContain("С днём рождения!");
+    expect((await createEmptyCardDraft()).card.occasionText).toBe("");
+  });
 });

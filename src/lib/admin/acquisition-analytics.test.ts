@@ -146,6 +146,7 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
     const week = (await getAcquisitionAnalytics(7))!;
     expect(week.sources).toEqual([{ ...emptyAcquisitionCounts(), created: 2, landing: null, source: null, medium: null, campaign: null }]);
     expect(week.landings).toEqual([
+      { landing: "birthday", views: 0, exampleClicks: 0, createClicks: 0 },
       { landing: "caregiver", views: 0, exampleClicks: 1, createClicks: 0 },
       { landing: "colleague", views: 0, exampleClicks: 0, createClicks: 1 },
       { landing: "teacher", views: 2, exampleClicks: 0, createClicks: 0 }
@@ -169,6 +170,18 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
     expect(summary.criticalErrors).toBe(35);
     expect(summary.recentCritical).toHaveLength(30);
     expect(summary.aiCost).toEqual({ generations: 2, cards: 1, totalRub: 0.75, averageGenerationRub: 0.375, averageCardRub: 0.75 });
+  });
+
+  it("attributes birthday cards and activity to their own landing", async () => {
+    const id = await card();
+    const birthday = { ...attribution("birthday"), utm_campaign: "birthday" };
+    await event("funnel.card_created", id, birthday);
+    for (const name of ["seo_landing_view", "seo_example_click", "seo_create_click"]) {
+      await event(name, null, birthday);
+    }
+    const result = (await getAcquisitionAnalytics(7))!;
+    expect(result.sources).toEqual([expect.objectContaining({ landing: "birthday", campaign: "birthday", created: 1 })]);
+    expect(result.landings.find((landing) => landing.landing === "birthday")).toEqual({ landing: "birthday", views: 1, exampleClicks: 1, createClicks: 1 });
   });
 
   it("returns explicit empty aggregates", async () => {

@@ -113,7 +113,7 @@ function EnvelopeHeartIcon() {
 }
 
 const cases = [
-  { icon: <CakeIcon />, title: "День рождения коллеги", href: "/gruppovaya-otkrytka/kollege", linkLabel: "Открытка коллеге от команды" },
+  { icon: <CakeIcon />, title: "День рождения", href: "/gruppovaya-otkrytka/den-rozhdeniya", linkLabel: "Открытка от друзей и близких" },
   {
     icon: <BookFlowerIcon />,
     title: "Учителю или воспитателю",
@@ -121,7 +121,7 @@ const cases = [
     caregiverHref: "/gruppovaya-otkrytka/vospitatelyu"
   },
   { icon: <TeamIcon />, title: "От всей команды", href: "/gruppovaya-otkrytka/kollege", linkLabel: "Собрать слова коллег" },
-  { icon: <PolaroidIcon />, title: "Для друга или подруги" },
+  { icon: <PolaroidIcon />, title: "Для друга или подруги", href: "/gruppovaya-otkrytka/den-rozhdeniya", linkLabel: "На день рождения от близких" },
   { icon: <BalloonIcon />, title: "Юбилей" },
   { icon: <EnvelopeHeartIcon />, title: "Благодарность или прощание" }
 ];

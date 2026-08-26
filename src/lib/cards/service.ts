@@ -93,6 +93,7 @@ export const createCardDraft = async (input: CreateCardInput): Promise<CreateCar
 
 type CreateEmptyCardDraftOptions = {
   templateId?: CardTemplateId | null;
+  occasionText?: string;
 };
 
 export const createEmptyCardDraft = async (
@@ -109,7 +110,7 @@ export const createEmptyCardDraft = async (
     finalSlug: slug(6),
     recipientName: "",
     occasion,
-    occasionText: "",
+    occasionText: options.occasionText ?? "",
     fromLabel: "",
     organizerName: "",
     organizerEmail: "",

@@ -1,4 +1,7 @@
 import {
+  BIRTHDAY_LANDING_PATH,
+  buildBirthdayLandingAttribution,
+  type BirthdayLandingAttribution,
   CAREGIVER_LANDING_PATH,
   COLLEAGUE_LANDING_PATH,
   FIRST_TOUCH_COOKIE_NAME,
@@ -56,6 +59,15 @@ export const ensureCaregiverFirstTouch = (): CaregiverLandingAttribution | null 
 
 export const ensureColleagueFirstTouch = (): ColleagueLandingAttribution | null =>
   ensureFirstTouch(COLLEAGUE_LANDING_PATH, buildColleagueLandingAttribution);
+
+export const ensureBirthdayFirstTouch = (): BirthdayLandingAttribution | null =>
+  ensureFirstTouch(BIRTHDAY_LANDING_PATH, buildBirthdayLandingAttribution);
+
+export const getBirthdayTelemetryContext = (): Record<string, string> =>
+  ensureBirthdayFirstTouch() ?? {
+    landing_type: "birthday",
+    landing_path: BIRTHDAY_LANDING_PATH
+  };
 
 export const getTeacherTelemetryContext = (): Record<string, string> => {
   const attribution = ensureTeacherFirstTouch();

@@ -1,10 +1,50 @@
 import { describe, expect, it } from "vitest";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import sharp from "sharp";
 import { exampleCardModel, kindergartenDoodlesDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel, teamEditorialDemoCardModel } from "./example-card";
+import { birthdayExampleCardModel } from "./birthday-example";
+import { isBirthdayExample } from "./birthday-scenario";
+import { kristinaExamplePhotos } from "./kristina-example-photos";
 
 describe("example card", () => {
+  it("keeps family birthday content separate from the original paper example", () => {
+    expect(exampleCardModel.fromLabel).toBe("от друзей и коллег");
+    expect(birthdayExampleCardModel.style).toBe(exampleCardModel.style);
+    expect(birthdayExampleCardModel.fromLabel).toBe("от друзей и семьи");
+    expect(birthdayExampleCardModel.participantCount).toBe(birthdayExampleCardModel.contributions.length);
+    expect(birthdayExampleCardModel.contributions.some((item) => item.authorRole === "коллега")).toBe(false);
+    expect(birthdayExampleCardModel.contributions.some((item) => item.authorRole === "мама")).toBe(true);
+    for (const quote of birthdayExampleCardModel.quotes) {
+      const [text, author] = quote.split("\n— ");
+      expect(birthdayExampleCardModel.contributions.find((item) => item.authorName === author)?.message).toContain(text);
+    }
+    expect(birthdayExampleCardModel.mediaAssets).toHaveLength(6);
+  });
+
+  it("selects the birthday scenario only for the existing paper template", () => {
+    expect(isBirthdayExample("paper-birthday", "birthday")).toBe(true);
+    expect(isBirthdayExample(undefined, "birthday")).toBe(true);
+    expect(isBirthdayExample("paper", "birthday")).toBe(true);
+    expect(isBirthdayExample("team-editorial", "birthday")).toBe(false);
+    expect(isBirthdayExample("paper-birthday", "other")).toBe(false);
+  });
   it("uses the agreed photo groups", () => {
-    expect(exampleCardModel.messageMediaAssets.map((asset) => asset.fileName)).toEqual(["1.jpg", "3.jpg", "5.jpg"]);
-    expect(exampleCardModel.memoryMediaAssets.map((asset) => asset.fileName)).toEqual(["2.jpg", "4.jpg", "6.jpg"]);
+    expect(exampleCardModel.messageMediaAssets.map((asset) => asset.fileName)).toEqual(["birthday-with-friends-v1.webp", "summer-walk-v1.webp", "breakfast-together-v1.webp"]);
+    expect(exampleCardModel.memoryMediaAssets.map((asset) => asset.fileName)).toEqual(["tea-with-mum-v1.webp", "lake-with-brother-v1.webp", "celebration-with-grandma-v1.webp"]);
+  });
+
+  it("shares complete dedicated Kristina photos between the paper and birthday demos", async () => {
+    for (const model of [exampleCardModel, birthdayExampleCardModel]) {
+      expect(model.mediaAssets.map((asset) => asset.publicUrl)).toEqual(kristinaExamplePhotos.map((photo) => photo.src));
+      expect(model.mediaAssets.every((asset) => asset.mimeType === "image/webp")).toBe(true);
+    }
+    for (const photo of kristinaExamplePhotos) {
+      expect(photo.src).toMatch(/^\/examples\/kristina-birthday\//);
+      const file = await readFile(path.join(process.cwd(), "public", photo.src));
+      const metadata = await sharp(file).metadata();
+      expect(metadata).toMatchObject({ format: "webp", width: photo.width, height: photo.height });
+    }
   });
 
   it("contains the complete demonstration content", () => {

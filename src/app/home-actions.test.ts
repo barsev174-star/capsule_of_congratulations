@@ -24,6 +24,7 @@ vi.mock("@/lib/landing-attribution", () => ({
 }));
 
 import {
+  startBirthdayCardFromShowcaseAction,
   startCardFromShowcaseAction,
   startCardFromTemplateAction,
   startCaregiverCardFromShowcaseAction,
@@ -58,6 +59,16 @@ describe("landing card creation actions", () => {
       ...attribution
     });
     expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution);
+    expect(mocks.redirect).toHaveBeenCalledWith("/manage/manage-token");
+  });
+
+  it("starts a birthday draft with the fixed template, occasion and first touch", async () => {
+    const birthdayAttribution = { ...attribution, landing_type: "birthday", landing_path: "/gruppovaya-otkrytka/den-rozhdeniya" };
+    mocks.parseLandingAttribution.mockReturnValue(birthdayAttribution);
+    await startBirthdayCardFromShowcaseAction();
+    expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(birthdayAttribution, {
+      templateId: "paper-birthday", occasionText: "С днём рождения!"
+    });
     expect(mocks.redirect).toHaveBeenCalledWith("/manage/manage-token");
   });
 

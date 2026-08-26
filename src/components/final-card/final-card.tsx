@@ -22,6 +22,7 @@ type Props = {
   manageToken?: string;
   publicShare?: PublicShareFooterAction;
   blockReadiness?: CardBlockReadinessView[];
+  creationScenario?: "birthday";
 };
 
 const styleClassMap = {
@@ -166,7 +167,7 @@ const getQuoteAssetId = (index: number) => {
   return cycle[index % cycle.length];
 };
 
-export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageToken, publicShare, blockReadiness = [] }: Props) => {
+export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageToken, publicShare, blockReadiness = [], creationScenario }: Props) => {
   const isPreview = mode === "preview";
   const isPublic = mode === "public" || mode === "draft-preview";
   const isPaperBirthday = model.style === "paper-birthday";
@@ -622,7 +623,7 @@ export const FinalCard = ({ model, debugAssets = false, mode = "gift", manageTok
                   <p className={styles.closingSignature}>{model.footerSignature}</p>
                 )}
               </div>
-              <FinalCardActions publicShare={publicShare} />
+              <FinalCardActions publicShare={publicShare} creationScenario={creationScenario} />
               {isRouteAdventure || isPaperBirthday ? (
                 <>
                   <span className={styles.routeFooterTagLabel}>На память</span>

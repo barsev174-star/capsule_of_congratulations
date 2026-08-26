@@ -3,11 +3,13 @@ import { describe, expect, it } from "vitest";
 import { CasesSection } from "./cases-section";
 
 describe("CasesSection", () => {
-  it("keeps all six occasions and the four SEO entry links", () => {
+  it("keeps all six occasions and separates family birthdays from colleagues", () => {
     render(<CasesSection />);
     expect(screen.getAllByRole("article")).toHaveLength(6);
-    expect(screen.getAllByRole("link")).toHaveLength(4);
-    expect(screen.getByRole("link", { name: "Открытка коллеге от команды" })).toHaveAttribute("href", "/gruppovaya-otkrytka/kollege");
+    expect(screen.getAllByRole("link")).toHaveLength(5);
+    expect(screen.getByRole("link", { name: "На день рождения от близких" })).toHaveAttribute("href", "/gruppovaya-otkrytka/den-rozhdeniya");
+    const birthdayCard = screen.getByRole("heading", { name: "День рождения", exact: true }).closest("article")!;
+    expect(within(birthdayCard).getByRole("link", { name: "Открытка от друзей и близких" })).toHaveAttribute("href", "/gruppovaya-otkrytka/den-rozhdeniya");
     expect(screen.getByRole("link", { name: "Собрать слова коллег" })).toHaveAttribute("href", "/gruppovaya-otkrytka/kollege");
   });
 

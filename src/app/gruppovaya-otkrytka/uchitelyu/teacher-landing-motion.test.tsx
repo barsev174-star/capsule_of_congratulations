@@ -14,7 +14,7 @@ class IntersectionObserverMock {
   readonly rootMargin = "0px";
   readonly thresholds = [0];
 
-  constructor() {
+  constructor(readonly callback: IntersectionObserverCallback) {
     IntersectionObserverMock.instances.push(this);
   }
 }
@@ -36,7 +36,60 @@ describe("TeacherLandingMotion", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it("reveals only intersecting blocks and then stops observing them", () => {
+    const { container } = render(<main data-teacher-landing><section data-teacher-reveal>Первый</section><section data-teacher-reveal>Второй</section><TeacherLandingMotion /></main>);
+    const targets = container.querySelectorAll("[data-teacher-reveal]");
+    const observer = IntersectionObserverMock.instances[0];
+    observer.callback([
+      { target: targets[0], isIntersecting: true } as IntersectionObserverEntry,
+      { target: targets[1], isIntersecting: false } as IntersectionObserverEntry
+    ], observer as unknown as IntersectionObserver);
+    expect(targets[0]).toHaveAttribute("data-teacher-revealed", "true");
+    expect(targets[1]).not.toHaveAttribute("data-teacher-revealed");
+    expect(observer.unobserve).toHaveBeenCalledExactlyOnceWith(targets[0]);
+  });
+
+  it("reveals birthday FAQ questions individually instead of hiding entire columns", () => {
+    const { container } = render(<main data-teacher-landing><section id="faq"><div className="heading">FAQ</div><div className="column"><article>Первый</article><article>Второй</article></div></section><TeacherLandingMotion faqReveal="items" /></main>);
+    const questions = container.querySelectorAll("article");
+    expect(container.querySelector(".column")).not.toHaveAttribute("data-teacher-reveal");
+    expect(questions[0]).toHaveAttribute("data-teacher-reveal");
+    expect(questions[1]).toHaveStyle("--reveal-delay: 80ms");
+    expect(IntersectionObserverMock.instances[0].observe).toHaveBeenCalledWith(questions[1]);
+  });
+
+  it("keeps content visible when IntersectionObserver is unavailable", () => {
+    vi.stubGlobal("IntersectionObserver", undefined);
+    const { container } = render(<main data-teacher-landing><section data-teacher-reveal>Контент</section><TeacherLandingMotion /></main>);
+    expect(container.querySelector("main")).not.toHaveAttribute("data-motion-ready");
+  });
+
+  it("skips motion when reduced motion is already enabled", () => {
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: true } as MediaQueryList);
+    const { container } = render(<main data-teacher-landing><section data-teacher-reveal>Контент</section><TeacherLandingMotion /></main>);
+    expect(container.querySelector("main")).not.toHaveAttribute("data-motion-ready");
+    expect(IntersectionObserverMock.instances).toHaveLength(0);
+  });
+
+  it("immediately shows all content if reduced motion is enabled after loading", () => {
+    const { container, unmount } = render(<main data-teacher-landing><section data-teacher-reveal>Контент</section><TeacherLandingMotion /></main>);
+    const preference = vi.mocked(window.matchMedia).mock.results[0].value;
+    const changeHandler = preference.addEventListener.mock.calls[0][1];
+    changeHandler({ matches: true });
+    expect(container.querySelector("main")).not.toHaveAttribute("data-motion-ready");
+    expect(container.querySelector("section")).toHaveAttribute("data-teacher-revealed", "true");
+    unmount();
+    expect(preference.removeEventListener).toHaveBeenCalledWith("change", changeHandler);
+  });
+
+  it("reveals a keyboard-focused link and its containing block", () => {
+    const { container } = render(<main data-teacher-landing><section data-teacher-reveal><a href="#example">Пример</a></section><TeacherLandingMotion /></main>);
+    fireEvent.focusIn(container.querySelector("a")!);
+    expect(container.querySelector("section")).toHaveAttribute("data-teacher-revealed", "true");
   });
 
   it("reveals all content when the page is restored from browser history", () => {

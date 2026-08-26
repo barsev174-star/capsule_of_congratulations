@@ -8,7 +8,7 @@ import { reportCriticalError, trackFunnel } from "@/lib/telemetry";
 import { FIRST_TOUCH_COOKIE_NAME, parseLandingAttribution } from "@/lib/landing-attribution";
 import { isProductTemplateId, type CardTemplateId } from "@/lib/cards/templates";
 
-const startCardFromLanding = async (templateId: CardTemplateId | null = null) => {
+const startCardFromLanding = async (templateId: CardTemplateId | null = null, occasionText?: string) => {
   const cookieStore = await cookies();
   const attribution = parseLandingAttribution(cookieStore.get(FIRST_TOUCH_COOKIE_NAME)?.value);
   const attributionContext = attribution ?? {};
@@ -20,7 +20,7 @@ const startCardFromLanding = async (templateId: CardTemplateId | null = null) =>
   let result;
   try {
     result = templateId
-      ? await createEmptyCardDraft(attributionContext, { templateId })
+      ? await createEmptyCardDraft(attributionContext, { templateId, ...(occasionText ? { occasionText } : {}) })
       : await createEmptyCardDraft(attributionContext);
   } catch (error) {
     await reportCriticalError("database", error, {
@@ -54,4 +54,8 @@ export async function startCaregiverCardFromShowcaseAction() {
 
 export async function startColleagueCardFromShowcaseAction() {
   return startCardFromLanding("team-editorial");
+}
+
+export async function startBirthdayCardFromShowcaseAction() {
+  return startCardFromLanding("paper-birthday", "С днём рождения!");
 }
