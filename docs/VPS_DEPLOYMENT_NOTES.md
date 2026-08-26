@@ -36,7 +36,9 @@
 
 ## Накопленный релиз дня рождения — 26 августа
 
-Для накопленного birthday-релиза 26 августа используется тот же порядок: backup с контрольным восстановлением, сохранение rollback-образа, fast-forward `main`, сборка и `up -d --no-deps web`. В релиз входят также аналитика и превью `/join`; новых миграций и env нет. Состав: `BIRTHDAY_SEO_LANDING_2026-08-26.md`. Фактический результат — в `DELIVERY_LOG.md`.
+Накопленный birthday-релиз `e0b9c22` опубликован 26 августа: backup с контрольным восстановлением, сохранение rollback-образа, fast-forward `main`, сборка и `up -d --no-deps web`. В релиз вошли также аналитика и превью `/join`; новых миграций и env нет. Состав: `BIRTHDAY_SEO_LANDING_2026-08-26.md`. Фактический результат — в `DELIVERY_LOG.md`.
+
+Backup-пара: `/home/deploy/capsule/backups/postgres-20260826-140113.sql.gz` и `uploads-20260826-140113.tar.gz`; SHA-256 и изолированное восстановление прошли (32 миграции). Rollback-образ: `capsule-web:rollback-before-birthday-20260826`. Новый web-образ: `sha256:8096e3bc37a66a906e1692e7dc33cc945c563420044fb6c1fe168179dec7132b`, код `e0b9c22`. Web/PostgreSQL healthy; публичные HTTP, SEO metadata, фото, sitemap, www redirect, SQL аналитики 7/30 и OG приглашения проверены. Последующее обновление документации не требует пересборки этого образа.
 
 ## Caddy принадлежит Slovesto
 
