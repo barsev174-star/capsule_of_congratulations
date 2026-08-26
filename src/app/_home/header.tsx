@@ -4,8 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
-import { getTeacherTelemetryContext } from "@/lib/client-landing-attribution";
-import { startCardFromShowcaseAction, startTeacherCardFromShowcaseAction } from "../home-actions";
+import { getCaregiverTelemetryContext, getTeacherTelemetryContext } from "@/lib/client-landing-attribution";
+import {
+  startCardFromShowcaseAction,
+  startCaregiverCardFromShowcaseAction,
+  startTeacherCardFromShowcaseAction
+} from "../home-actions";
 import styles from "./header.module.css";
 
 const homeNavItems = [
@@ -24,12 +28,32 @@ const teacherNavItems = [
   { href: "/account", label: "Мои открытки" }
 ];
 
-export function HomeHeader({ variant = "home" }: { variant?: "home" | "teacher" }) {
+const caregiverNavItems = [
+  { href: "#how-it-works", label: "Как это работает" },
+  { href: "/example?template=kindergarten-doodles", label: "Пример" },
+  { href: "#price", label: "Цена" },
+  { href: "#faq", label: "FAQ" },
+  { href: "/account", label: "Мои открытки" }
+];
+
+type HeaderVariant = "home" | "teacher" | "caregiver";
+
+export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const navRef = useRef<HTMLElement>(null);
-  const navItems = variant === "teacher" ? teacherNavItems : homeNavItems;
+  const navItems = variant === "teacher"
+    ? teacherNavItems
+    : variant === "caregiver"
+      ? caregiverNavItems
+      : homeNavItems;
+  const isSeoLanding = variant !== "home";
+  const createAction = variant === "teacher"
+    ? startTeacherCardFromShowcaseAction
+    : variant === "caregiver"
+      ? startCaregiverCardFromShowcaseAction
+      : startCardFromShowcaseAction;
 
   useEffect(() => {
     const header = headerRef.current;
@@ -102,7 +126,7 @@ export function HomeHeader({ variant = "home" }: { variant?: "home" | "teacher" 
   }, [menuOpen]);
 
   return (
-    <header ref={headerRef} className={`${styles.header} ${variant === "teacher" ? styles.teacherHeader : ""}`}>
+    <header ref={headerRef} className={`${styles.header} ${isSeoLanding ? styles.teacherHeader : ""}`}>
       <div className={styles.shell}>
         <Link href="/" className={styles.logo}>
           <BrandLogo variant="marketing" />
@@ -141,7 +165,7 @@ export function HomeHeader({ variant = "home" }: { variant?: "home" | "teacher" 
         ) : null}
 
         <form
-          action={variant === "teacher" ? startTeacherCardFromShowcaseAction : startCardFromShowcaseAction}
+          action={createAction}
           className={styles.ctaForm}
           onSubmit={() => {
             if (variant === "teacher") {
@@ -149,6 +173,12 @@ export function HomeHeader({ variant = "home" }: { variant?: "home" | "teacher" 
                 ...getTeacherTelemetryContext(),
                 placement: "hero",
                 template: "school-classic"
+              });
+            } else if (variant === "caregiver") {
+              sendClientTelemetry("seo_create_click", {
+                ...getCaregiverTelemetryContext(),
+                placement: "header",
+                template: "kindergarten-doodles"
               });
             }
           }}

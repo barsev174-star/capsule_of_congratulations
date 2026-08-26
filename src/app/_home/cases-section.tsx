@@ -114,7 +114,12 @@ function EnvelopeHeartIcon() {
 
 const cases = [
   { icon: <CakeIcon />, title: "День рождения коллеги" },
-  { icon: <BookFlowerIcon />, title: "Учителю или воспитателю", teacherHref: "/gruppovaya-otkrytka/uchitelyu" },
+  {
+    icon: <BookFlowerIcon />,
+    title: "Учителю или воспитателю",
+    teacherHref: "/gruppovaya-otkrytka/uchitelyu",
+    caregiverHref: "/gruppovaya-otkrytka/vospitatelyu"
+  },
   { icon: <TeamIcon />, title: "От всей команды" },
   { icon: <PolaroidIcon />, title: "Для друга или подруги" },
   { icon: <BalloonIcon />, title: "Юбилей" },
@@ -137,7 +142,12 @@ export function CasesSection() {
               <div className={styles.cardBody}>
                 <h3 className={styles.cardTitle}>{item.title}</h3>
                 {item.teacherHref ? (
-                  <Link href={item.teacherHref} className={styles.teacherLink}>Открытка учителю от класса</Link>
+                  <>
+                    <Link href={item.teacherHref} className={styles.teacherLink}>Учителю от класса</Link>
+                    {item.caregiverHref ? (
+                      <Link href={item.caregiverHref} className={styles.teacherLink}>Воспитателю от группы</Link>
+                    ) : null}
+                  </>
                 ) : null}
               </div>
             </article>

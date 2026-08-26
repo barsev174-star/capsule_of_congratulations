@@ -25,6 +25,7 @@ vi.mock("@/lib/landing-attribution", () => ({
 
 import {
   startCardFromShowcaseAction,
+  startCaregiverCardFromShowcaseAction,
   startTeacherCardFromShowcaseAction
 } from "@/app/home-actions";
 
@@ -71,6 +72,23 @@ describe("landing card creation actions", () => {
     });
     expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution, {
       templateId: "school-classic"
+    });
+    expect(mocks.redirect).toHaveBeenCalledWith("/manage/manage-token");
+  });
+
+  it("hard-codes kindergarten-doodles for the caregiver action", async () => {
+    const untrustedFormData = new FormData();
+    untrustedFormData.set("templateId", "paper-birthday");
+
+    await (startCaregiverCardFromShowcaseAction as unknown as (data: FormData) => Promise<void>)(untrustedFormData);
+
+    expect(mocks.trackFunnel).toHaveBeenCalledWith("funnel.card_creation_started", {
+      source: "landing",
+      ...attribution,
+      templateId: "kindergarten-doodles"
+    });
+    expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution, {
+      templateId: "kindergarten-doodles"
     });
     expect(mocks.redirect).toHaveBeenCalledWith("/manage/manage-token");
   });

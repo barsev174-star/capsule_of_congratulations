@@ -40,3 +40,7 @@ export async function startCardFromShowcaseAction() {
 export async function startTeacherCardFromShowcaseAction() {
   return startCardFromLanding("school-classic");
 }
+
+export async function startCaregiverCardFromShowcaseAction() {
+  return startCardFromLanding("kindergarten-doodles");
+}

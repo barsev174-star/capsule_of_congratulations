@@ -1,6 +1,8 @@
 import {
+  CAREGIVER_LANDING_PATH,
   FIRST_TOUCH_COOKIE_NAME,
   TEACHER_LANDING_PATH,
+  buildCaregiverLandingAttribution,
   buildTeacherLandingAttribution,
   parseLandingAttribution,
   serializeLandingAttribution
@@ -57,6 +59,35 @@ describe("landing attribution", () => {
 
   it("does not create teacher attribution for another route", () => {
     expect(buildTeacherLandingAttribution({ pathname: "/", search: "", now })).toBeNull();
+  });
+
+  it("captures a separate first touch for the caregiver landing", () => {
+    const attribution = buildCaregiverLandingAttribution({
+      pathname: CAREGIVER_LANDING_PATH,
+      search: "?utm_source=yandex&utm_medium=organic&utm_campaign=caregiver_day",
+      referrer: "https://yandex.ru/search/?text=otkrytka-vospitatelyu",
+      siteHost: "slovesto.ru",
+      now
+    });
+
+    expect(attribution).toEqual({
+      landing_type: "caregiver",
+      landing_path: CAREGIVER_LANDING_PATH,
+      first_touch_at: now.toISOString(),
+      utm_source: "yandex",
+      utm_medium: "organic",
+      utm_campaign: "caregiver_day",
+      referrer_host: "yandex.ru"
+    });
+    expect(parseLandingAttribution(serializeLandingAttribution(attribution!))).toEqual(attribution);
+  });
+
+  it("rejects a landing type paired with another landing path", () => {
+    expect(parseLandingAttribution(encodeURIComponent(JSON.stringify({
+      landing_type: "caregiver",
+      landing_path: TEACHER_LANDING_PATH,
+      first_touch_at: now.toISOString()
+    })))).toBeNull();
   });
 
   it("round-trips the safe cookie payload and drops extra fields", () => {
