@@ -1,0 +1,66 @@
+.banner {
+  position: fixed;
+  z-index: 2200;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  width: min(680px, calc(100% - 36px));
+  padding: 20px;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #202124;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 10px 28px rgba(0, 0, 0, 0.13),
+    0 24px 60px rgba(0, 0, 0, 0.1);
+}
+
+.copy { min-width: 0; }
+.copy h2 { margin: 0; font-size: 1.05rem; line-height: 1.3; text-wrap: balance; }
+.copy p { margin: 6px 0 0; color: #5f6368; font-size: .86rem; line-height: 1.5; text-wrap: pretty; }
+.copy a { color: #e9652f; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.copy a:hover { color: #df5f2e; }
+.copy a:focus-visible { outline: 3px solid rgba(233, 101, 47, .28); outline-offset: 3px; border-radius: 4px; }
+
+.actions { display: flex; gap: 10px; align-items: center; }
+.actions button {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: .86rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition-property: scale, background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+.actions button:active { scale: .96; }
+.actions button:focus-visible { outline: 3px solid rgba(233, 101, 47, .3); outline-offset: 3px; }
+.primary { border: 1px solid #e9652f; background: #e9652f; color: #ffffff; }
+.primary:hover { border-color: #df5f2e; background: #df5f2e; }
+.primary:active { border-color: #c7532a; background: #c7532a; }
+.secondary { border: 1px solid rgba(233, 101, 47, .44); background: #ffffff; color: #e9652f; }
+.secondary:hover { border-color: #e9652f; background: #f7f8fa; color: #df5f2e; }
+.secondary:active { border-color: #c7532a; color: #c7532a; }
+
+@media (max-width: 640px) {
+  .banner {
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: calc(100% - 24px);
+    padding: 18px;
+    border-radius: 20px;
+  }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .actions button { width: 100%; padding-inline: 12px; }
+}
+
+@media (max-width: 380px) {
+  .actions { grid-template-columns: 1fr; }
+}

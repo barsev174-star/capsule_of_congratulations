@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
+import { AnalyticsPreferencesButton, YandexMetrikaConsent } from "@/components/analytics/yandex-metrika-consent";
 import { FooterGroup } from "./footer-group";
 import styles from "./footer.module.css";
 
@@ -39,6 +40,7 @@ export function HomeFooter({ variant = "default" }: { variant?: "default" | "neu
             <Link href="/offer">Публичная оферта</Link>
             <Link href="/privacy">Политика обработки данных</Link>
             <Link href="/refunds">Правила возврата</Link>
+            <AnalyticsPreferencesButton className={styles.analyticsButton} />
           </nav>
         </FooterGroup>
       </div>
@@ -46,6 +48,7 @@ export function HomeFooter({ variant = "default" }: { variant?: "default" | "neu
         <span>© 2026 Slovesto</span>
         <span>Место, где слова становятся подарком</span>
       </div>
+      <YandexMetrikaConsent />
     </footer>
   );
 }

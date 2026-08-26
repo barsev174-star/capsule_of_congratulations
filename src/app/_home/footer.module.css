@@ -11,10 +11,15 @@
 .details { margin: 20px 0 0; color: #5f6368; font-size: .8rem; line-height: 1.65; text-wrap: pretty; }
 .column { display: grid; align-content: start; gap: 5px; min-width: 0; }
 .column h2 { margin: 2px 0 9px; color: #202124; font-size: .88rem; font-weight: 800; letter-spacing: .01em; text-wrap: balance; }
-.column a { min-height: 40px; display: inline-flex; align-items: center; width: fit-content; max-width: 100%; color: #202124; font-size: .88rem; line-height: 1.35; text-decoration: none; transition-property: color, transform; transition-duration: 150ms; }
-.column a:hover { color: #e9652f; }
-.column a:active { transform: scale(.96); }
-.column a:focus-visible { outline: 3px solid rgba(191, 108, 71, .24); outline-offset: 3px; border-radius: 6px; }
+.column a,
+.analyticsButton { min-height: 40px; display: inline-flex; align-items: center; width: fit-content; max-width: 100%; color: #202124; font-size: .88rem; line-height: 1.35; text-decoration: none; transition-property: color, transform; transition-duration: 150ms; }
+.analyticsButton { margin: 0; padding: 0; border: 0; background: transparent; font: inherit; cursor: pointer; }
+.column a:hover,
+.analyticsButton:hover { color: #e9652f; }
+.column a:active,
+.analyticsButton:active { transform: scale(.96); }
+.column a:focus-visible,
+.analyticsButton:focus-visible { outline: 3px solid rgba(233, 101, 47, .28); outline-offset: 3px; border-radius: 6px; }
 .contactLink { gap: 12px; }
 .contactIcon { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; color: #665a6e; background: rgba(255, 255, 255, .64); border-radius: 14px; transition-property: color, background-color, transform; transition-duration: 150ms; }
 .contactIcon svg { width: 19px; height: 19px; }
