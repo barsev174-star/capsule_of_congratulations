@@ -8,7 +8,7 @@ import { GiftIntro } from "@/components/gift-intro/gift-intro";
 import { ScrollReveal, useScrollReveal } from "@/components/scroll-reveal/scroll-reveal";
 import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel, teamEditorialDemoCardModel } from "@/lib/example-card";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
-import { startCardFromShowcaseAction } from "../home-actions";
+import { startCardFromShowcaseAction, startColleagueCardFromShowcaseAction } from "../home-actions";
 import styles from "./example.module.css";
 
 export type DemoTemplateId = "paper-birthday" | "route-adventure" | "school-scrapbook" | "school-classic" | "kindergarten-doodles" | "team-editorial";
@@ -111,6 +111,9 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     }
   };
   const selectedDemoModel = demoModelByTemplate[selectedTemplateId];
+  const createAction = selectedTemplateId === "team-editorial"
+    ? startColleagueCardFromShowcaseAction
+    : startCardFromShowcaseAction;
 
   const viewedStepsRef = useRef<Set<DemoStepId>>(new Set());
 
@@ -268,7 +271,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
                   <span aria-hidden="true">▶</span>
                   Открыть демонстрационную открытку
                 </button>
-                <form action={startCardFromShowcaseAction} onSubmit={() => trackCreateClicked("hero")}>
+                <form action={createAction} onSubmit={() => trackCreateClicked("hero")}>
                   <button type="submit" className={styles.secondaryButton}>
                     Создать такую же
                   </button>
@@ -606,7 +609,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
             <h2 id="bottom-cta-title">Хотите собрать такую же открытку?</h2>
             <p>Создайте открытку, отправьте ссылку друзьям — и получите готовый подарок от всех.</p>
           </div>
-          <form action={startCardFromShowcaseAction} onSubmit={() => trackCreateClicked("bottom_cta")}>
+          <form action={createAction} onSubmit={() => trackCreateClicked("bottom_cta")}>
             <button type="submit" className={styles.primaryButton}>
               Создать открытку
               <span aria-hidden="true">♡</span>

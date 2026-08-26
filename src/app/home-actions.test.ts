@@ -25,7 +25,9 @@ vi.mock("@/lib/landing-attribution", () => ({
 
 import {
   startCardFromShowcaseAction,
+  startCardFromTemplateAction,
   startCaregiverCardFromShowcaseAction,
+  startColleagueCardFromShowcaseAction,
   startTeacherCardFromShowcaseAction
 } from "@/app/home-actions";
 
@@ -59,6 +61,17 @@ describe("landing card creation actions", () => {
     expect(mocks.redirect).toHaveBeenCalledWith("/manage/manage-token");
   });
 
+  it("preserves a published template from the opened card", async () => {
+    await startCardFromTemplateAction("team-editorial");
+    expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution, { templateId: "team-editorial" });
+    expect(mocks.redirect).toHaveBeenCalledWith("/manage/manage-token");
+  });
+
+  it.each(["unknown-template", "../../admin", ""])("rejects unavailable template %s", async (templateId) => {
+    await expect(startCardFromTemplateAction(templateId)).rejects.toThrow("Этот шаблон недоступен");
+    expect(mocks.createEmptyCardDraft).not.toHaveBeenCalled();
+  });
+
   it("hard-codes school-classic for the teacher action", async () => {
     const untrustedFormData = new FormData();
     untrustedFormData.set("templateId", "paper-birthday");
@@ -89,6 +102,23 @@ describe("landing card creation actions", () => {
     });
     expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution, {
       templateId: "kindergarten-doodles"
+    });
+    expect(mocks.redirect).toHaveBeenCalledWith("/manage/manage-token");
+  });
+
+  it("hard-codes team-editorial for the colleague action", async () => {
+    const untrustedFormData = new FormData();
+    untrustedFormData.set("templateId", "paper-birthday");
+
+    await (startColleagueCardFromShowcaseAction as unknown as (data: FormData) => Promise<void>)(untrustedFormData);
+
+    expect(mocks.trackFunnel).toHaveBeenCalledWith("funnel.card_creation_started", {
+      source: "landing",
+      ...attribution,
+      templateId: "team-editorial"
+    });
+    expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution, {
+      templateId: "team-editorial"
     });
     expect(mocks.redirect).toHaveBeenCalledWith("/manage/manage-token");
   });

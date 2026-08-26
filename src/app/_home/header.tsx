@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
-import { getCaregiverTelemetryContext, getTeacherTelemetryContext } from "@/lib/client-landing-attribution";
+import { getCaregiverTelemetryContext, getColleagueTelemetryContext, getTeacherTelemetryContext } from "@/lib/client-landing-attribution";
 import {
   startCardFromShowcaseAction,
   startCaregiverCardFromShowcaseAction,
+  startColleagueCardFromShowcaseAction,
   startTeacherCardFromShowcaseAction
 } from "../home-actions";
 import styles from "./header.module.css";
@@ -36,7 +37,15 @@ const caregiverNavItems = [
   { href: "/account", label: "Мои открытки" }
 ];
 
-type HeaderVariant = "home" | "teacher" | "caregiver";
+const colleagueNavItems = [
+  { href: "#how-it-works", label: "Как это работает" },
+  { href: "/example?template=team-editorial", label: "Пример" },
+  { href: "#price", label: "Цена" },
+  { href: "#faq", label: "FAQ" },
+  { href: "/account", label: "Мои открытки" }
+];
+
+type HeaderVariant = "home" | "teacher" | "caregiver" | "colleague";
 
 export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -47,12 +56,16 @@ export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
     ? teacherNavItems
     : variant === "caregiver"
       ? caregiverNavItems
+      : variant === "colleague"
+        ? colleagueNavItems
       : homeNavItems;
   const isSeoLanding = variant !== "home";
   const createAction = variant === "teacher"
     ? startTeacherCardFromShowcaseAction
     : variant === "caregiver"
       ? startCaregiverCardFromShowcaseAction
+      : variant === "colleague"
+        ? startColleagueCardFromShowcaseAction
       : startCardFromShowcaseAction;
 
   useEffect(() => {
@@ -179,6 +192,12 @@ export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
                 ...getCaregiverTelemetryContext(),
                 placement: "header",
                 template: "kindergarten-doodles"
+              });
+            } else if (variant === "colleague") {
+              sendClientTelemetry("seo_create_click", {
+                ...getColleagueTelemetryContext(),
+                placement: "header",
+                template: "team-editorial"
               });
             }
           }}

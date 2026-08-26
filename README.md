@@ -25,6 +25,7 @@
 - `docs/UI_COLOR_RULES.md` — обязательная нейтрально-оранжевая палитра интерфейса без коричневого цвета.
 - `docs/SUPPORT_NOTIFICATIONS_VPS_CRON.md` — настройка email/Telegram-уведомлений о новых обращениях и обработчика очереди на VPS.
 - `docs/VPS_DEPLOYMENT_NOTES.md` — актуальная production-архитектура VPS, собственный Caddy Slovesto, deploy, monitoring, backup и rollback.
+- `docs/COLLEAGUE_SEO_LANDING_2026-08-26.md` — SEO-страница коллеге, шаблон «Вместе», атрибуция, анимации и компактные ссылки на главной.
 - `docs/PUBLIC_SHARE_EXPORTS.md` — публичная открытка, Story/Post/A4, изолированный export-worker, timeout и обязательный smoke-check.
 - `docs/PRODUCTION_INCIDENT_2026-08-20.md` — postmortem перегрузки VPS, удаления «Прогнозиста» и контрольные показатели после восстановления.
 

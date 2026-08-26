@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   startCardFromShowcaseAction: vi.fn(),
   startCaregiverCardFromShowcaseAction: vi.fn(),
+  startColleagueCardFromShowcaseAction: vi.fn(),
   startTeacherCardFromShowcaseAction: vi.fn(),
   sendClientTelemetry: vi.fn(),
   getTeacherTelemetryContext: vi.fn(() => ({
@@ -12,12 +13,17 @@ const mocks = vi.hoisted(() => ({
   getCaregiverTelemetryContext: vi.fn(() => ({
     landing_type: "caregiver",
     landing_path: "/gruppovaya-otkrytka/vospitatelyu"
+  })),
+  getColleagueTelemetryContext: vi.fn(() => ({
+    landing_type: "colleague",
+    landing_path: "/gruppovaya-otkrytka/kollege"
   }))
 }));
 
 vi.mock("../home-actions", () => ({
   startCardFromShowcaseAction: mocks.startCardFromShowcaseAction,
   startCaregiverCardFromShowcaseAction: mocks.startCaregiverCardFromShowcaseAction,
+  startColleagueCardFromShowcaseAction: mocks.startColleagueCardFromShowcaseAction,
   startTeacherCardFromShowcaseAction: mocks.startTeacherCardFromShowcaseAction
 }));
 vi.mock("@/lib/client-telemetry", () => ({
@@ -25,6 +31,7 @@ vi.mock("@/lib/client-telemetry", () => ({
 }));
 vi.mock("@/lib/client-landing-attribution", () => ({
   getCaregiverTelemetryContext: mocks.getCaregiverTelemetryContext,
+  getColleagueTelemetryContext: mocks.getColleagueTelemetryContext,
   getTeacherTelemetryContext: mocks.getTeacherTelemetryContext
 }));
 
@@ -73,6 +80,21 @@ describe("HomeHeader teacher variant", () => {
       landing_path: "/gruppovaya-otkrytka/vospitatelyu",
       placement: "header",
       template: "kindergarten-doodles"
+    });
+  });
+
+  it("uses the team-editorial example and colleague telemetry", () => {
+    render(<HomeHeader variant="colleague" />);
+
+    expect(screen.getByRole("link", { name: "Пример" }))
+      .toHaveAttribute("href", "/example?template=team-editorial");
+    fireEvent.submit(screen.getByRole("button", { name: "Создать открытку" }).closest("form")!);
+
+    expect(mocks.sendClientTelemetry).toHaveBeenCalledWith("seo_create_click", {
+      landing_type: "colleague",
+      landing_path: "/gruppovaya-otkrytka/kollege",
+      placement: "header",
+      template: "team-editorial"
     });
   });
 });

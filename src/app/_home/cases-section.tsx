@@ -113,14 +113,14 @@ function EnvelopeHeartIcon() {
 }
 
 const cases = [
-  { icon: <CakeIcon />, title: "День рождения коллеги" },
+  { icon: <CakeIcon />, title: "День рождения коллеги", href: "/gruppovaya-otkrytka/kollege", linkLabel: "Открытка коллеге от команды" },
   {
     icon: <BookFlowerIcon />,
     title: "Учителю или воспитателю",
     teacherHref: "/gruppovaya-otkrytka/uchitelyu",
     caregiverHref: "/gruppovaya-otkrytka/vospitatelyu"
   },
-  { icon: <TeamIcon />, title: "От всей команды" },
+  { icon: <TeamIcon />, title: "От всей команды", href: "/gruppovaya-otkrytka/kollege", linkLabel: "Собрать слова коллег" },
   { icon: <PolaroidIcon />, title: "Для друга или подруги" },
   { icon: <BalloonIcon />, title: "Юбилей" },
   { icon: <EnvelopeHeartIcon />, title: "Благодарность или прощание" }
@@ -141,13 +141,12 @@ export function CasesSection() {
               <span className={styles.icon}>{item.icon}</span>
               <div className={styles.cardBody}>
                 <h3 className={styles.cardTitle}>{item.title}</h3>
-                {item.teacherHref ? (
-                  <>
-                    <Link href={item.teacherHref} className={styles.teacherLink}>Учителю от класса</Link>
-                    {item.caregiverHref ? (
-                      <Link href={item.caregiverHref} className={styles.teacherLink}>Воспитателю от группы</Link>
-                    ) : null}
-                  </>
+                {item.teacherHref || item.href ? (
+                  <div className={styles.seoLinks}>
+                    {item.teacherHref ? <Link href={item.teacherHref} className={styles.teacherLink}>Учителю от класса</Link> : null}
+                    {item.caregiverHref ? <Link href={item.caregiverHref} className={styles.teacherLink}>Воспитателю от группы</Link> : null}
+                    {item.href ? <Link href={item.href} className={styles.teacherLink}>{item.linkLabel}</Link> : null}
+                  </div>
                 ) : null}
               </div>
             </article>

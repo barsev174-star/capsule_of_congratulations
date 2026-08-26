@@ -1,13 +1,16 @@
 import {
   CAREGIVER_LANDING_PATH,
+  COLLEAGUE_LANDING_PATH,
   FIRST_TOUCH_COOKIE_NAME,
   FIRST_TOUCH_MAX_AGE_SECONDS,
   TEACHER_LANDING_PATH,
   buildCaregiverLandingAttribution,
+  buildColleagueLandingAttribution,
   buildTeacherLandingAttribution,
   parseLandingAttribution,
   serializeLandingAttribution,
   type CaregiverLandingAttribution,
+  type ColleagueLandingAttribution,
   type LandingAttribution,
   type TeacherLandingAttribution
 } from "@/lib/landing-attribution";
@@ -51,6 +54,9 @@ export const ensureTeacherFirstTouch = (): TeacherLandingAttribution | null =>
 export const ensureCaregiverFirstTouch = (): CaregiverLandingAttribution | null =>
   ensureFirstTouch(CAREGIVER_LANDING_PATH, buildCaregiverLandingAttribution);
 
+export const ensureColleagueFirstTouch = (): ColleagueLandingAttribution | null =>
+  ensureFirstTouch(COLLEAGUE_LANDING_PATH, buildColleagueLandingAttribution);
+
 export const getTeacherTelemetryContext = (): Record<string, string> => {
   const attribution = ensureTeacherFirstTouch();
   return attribution ?? {
@@ -64,5 +70,13 @@ export const getCaregiverTelemetryContext = (): Record<string, string> => {
   return attribution ?? {
     landing_type: "caregiver",
     landing_path: CAREGIVER_LANDING_PATH
+  };
+};
+
+export const getColleagueTelemetryContext = (): Record<string, string> => {
+  const attribution = ensureColleagueFirstTouch();
+  return attribution ?? {
+    landing_type: "colleague",
+    landing_path: COLLEAGUE_LANDING_PATH
   };
 };

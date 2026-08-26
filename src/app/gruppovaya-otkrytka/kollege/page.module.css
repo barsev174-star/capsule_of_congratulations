@@ -1,0 +1,328 @@
+.colleaguePage {
+  --colleague-canvas: #f7f8fa;
+}
+
+/* Separate translate from the shared reveal transform: hover stays immediate,
+   even on cards that entered with a staggered delay. */
+.colleaguePage [data-colleague-lift],
+.heroPreview {
+  transition-property: translate, box-shadow;
+  transition-duration: 220ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.colleaguePage[data-colleague-landing][data-motion-ready] [data-teacher-reveal] {
+  transition-property: opacity, transform, filter, translate, box-shadow;
+  transition-duration: 520ms, 520ms, 520ms, 220ms, 220ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.colleaguePage[data-colleague-landing][data-motion-ready] [data-teacher-revealed] {
+  transition-delay: var(--reveal-delay, 0ms), var(--reveal-delay, 0ms), var(--reveal-delay, 0ms), 0ms, 0ms;
+}
+
+.contentItem {
+  transition: translate 220ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .colleaguePage [data-colleague-lift]:hover,
+  .colleaguePage [data-colleague-lift]:focus-visible,
+  .heroPreview:hover {
+    translate: 0 -6px;
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.08),
+      0 6px 12px rgba(0, 0, 0, 0.06),
+      0 22px 44px rgba(0, 0, 0, 0.12);
+  }
+
+  .contentItem:hover {
+    translate: 4px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .colleaguePage [data-colleague-lift],
+  .colleaguePage[data-colleague-landing][data-motion-ready] [data-teacher-reveal],
+  .heroPreview,
+  .contentItem {
+    transition: none;
+    translate: none;
+  }
+
+  .colleaguePage[data-colleague-landing][data-motion-ready] [data-teacher-reveal] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.storyGrid,
+.momentGrid,
+.promptGrid,
+.occasionGrid {
+  display: grid;
+  gap: 18px;
+}
+
+.storyGrid,
+.momentWrap,
+.occasionGrid {
+  max-width: 1040px;
+  margin-inline: auto;
+}
+
+.storyCard,
+.promptCard {
+  padding: clamp(20px, 3vw, 28px);
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 14px 34px rgba(0, 0, 0, 0.06);
+}
+
+.storyIndex {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  background: rgba(233, 101, 47, 0.09);
+  color: #e9652f;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.storyCard h3,
+.promptCard h3,
+.occasionCard h3,
+.remoteCopy h2 {
+  margin: 18px 0 0;
+  color: #202124;
+  text-wrap: balance;
+}
+
+.storyCard p,
+.promptCard p,
+.occasionCard p,
+.remoteCopy p {
+  margin: 9px 0 0;
+  color: #5f6368;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.storyClosing {
+  max-width: 760px;
+  margin: 24px auto 0;
+  color: #202124;
+  font-weight: 720;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.heroProductMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #f7f8fa;
+  color: #202124;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.heroProductMeta span:last-child {
+  color: #5f6368;
+  font-weight: 650;
+}
+
+.heroProductImage {
+  aspect-ratio: 1200 / 630;
+  object-fit: cover;
+}
+
+.occasionStrip {
+  display: flex;
+  justify-content: center;
+  padding: 14px 16px;
+  gap: 8px 14px;
+  background: #f7f8fa;
+  color: #5f6368;
+  font-size: 0.82rem;
+  font-weight: 750;
+  flex-wrap: wrap;
+}
+
+.occasionStrip span:not(:last-child)::after {
+  content: "·";
+  margin-left: 14px;
+  color: #e9652f;
+}
+
+.exampleImage {
+  aspect-ratio: 1200 / 630;
+  object-fit: cover;
+}
+
+.momentGrid {
+  margin-top: 24px;
+}
+
+.momentCard {
+  overflow: hidden;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 12px 30px rgba(0, 0, 0, 0.07);
+}
+
+.momentCard img {
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+
+.momentCard figcaption {
+  padding: 14px 16px 17px;
+  color: #202124;
+  font-size: 0.88rem;
+  font-weight: 750;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.promptGrid {
+  margin-top: 20px;
+}
+
+.promptCard {
+  border-radius: 18px;
+}
+
+.promptCard > span {
+  color: #e9652f;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.promptCard h3 {
+  margin-top: 10px;
+  font-size: 1.02rem;
+}
+
+.promptCard p {
+  font-size: 0.9rem;
+}
+
+.occasionCard {
+  padding: 22px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 10px 28px rgba(0, 0, 0, 0.05);
+}
+
+.occasionCard h3 {
+  display: flex;
+  margin-top: 0;
+  align-items: center;
+  font-size: 1.04rem;
+  gap: 10px;
+}
+
+.occasionDot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: #e9652f;
+  box-shadow: 0 0 0 4px rgba(233, 101, 47, 0.1);
+}
+
+.remoteBand {
+  display: grid;
+  max-width: 1040px;
+  margin-inline: auto;
+  padding: clamp(24px, 4vw, 36px);
+  border-radius: 30px;
+  align-items: center;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 16px 40px rgba(0, 0, 0, 0.07);
+  gap: 22px;
+}
+
+.remoteIcon {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border-radius: 20px;
+  background: rgba(233, 101, 47, 0.09);
+  color: #e9652f;
+}
+
+.remoteIcon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.remoteCopy h2 {
+  margin-top: 0;
+  font-family: var(--font-alumni-sans), "Arial Narrow", sans-serif;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  line-height: 1;
+}
+
+@media (min-width: 700px) {
+  .storyGrid,
+  .momentGrid,
+  .promptGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .occasionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .remoteBand {
+    grid-template-columns: auto 1fr;
+  }
+}
+
+@media (max-width: 699px) {
+  .heroProductMeta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .momentGrid {
+    grid-template-columns: repeat(3, minmax(250px, 82vw));
+    overflow-x: auto;
+    padding: 1px 1px 12px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .momentCard {
+    scroll-snap-align: start;
+  }
+
+  .remoteBand {
+    border-radius: 24px;
+  }
+}

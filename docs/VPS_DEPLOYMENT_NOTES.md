@@ -1,6 +1,6 @@
 # VPS deployment notes
 
-Актуально на 25 августа 2026 года. Это основной документ по production-инфраструктуре Slovesto.
+Актуально на 26 августа 2026 года. Это основной документ по production-инфраструктуре Slovesto.
 
 ## Текущий production-статус
 
@@ -26,6 +26,12 @@
 - Caddy volumes: `capsule_caddy_data`, `capsule_caddy_config`.
 - Загруженные файлы: bind mount `/home/deploy/capsule/public/uploads`.
 - Медиа публичных версий: bind mount `/home/deploy/capsule/data/public-share-media`.
+
+## Релиз SEO-страницы коллеге от 26 августа
+
+Подготовлен маршрут `/gruppovaya-otkrytka/kollege` с оформлением `team-editorial`, статическим OG `/landing/colleague/og-team-editorial.jpg`, sitemap и ссылками с главной. В этот же релиз входят анимации страницы, сохранение шаблона при создании из примера и уплотнение блока «Для каких случаев». Детали: `COLLEAGUE_SEO_LANDING_2026-08-26.md`.
+
+Миграции и переменные окружения не добавляются. Достаточно пересобрать и заменить сервис `web`; PostgreSQL, Caddy, их volumes и bind mounts не пересоздаются. После выпуска проверить новый маршрут, его canonical/OG, sitemap и прежние страницы учителю/воспитателю. Фактический commit сверяется через `git rev-parse HEAD` на VPS.
 
 ## Caddy принадлежит Slovesto
 

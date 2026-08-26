@@ -1,6 +1,6 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { universalMessageScenarios } from "@/lib/templates/fixtures";
 import type { CardBlockReadinessView } from "@/lib/manage/card-design-readiness";
 import { universalTemplateBlockOrder } from "@/lib/templates/profile";
@@ -16,9 +16,23 @@ import {
 import { UniversalTemplateCard } from "./universal-card";
 import { UniversalTemplateIntroPreview } from "./universal-intro-preview";
 
+const creationActions = vi.hoisted(() => ({
+  startCardFromTemplateAction: vi.fn()
+}));
+vi.mock("@/app/home-actions", () => creationActions);
+
 const profile = createTemplateStudioProfile("universal-renderer-test");
 
 describe("UniversalTemplateCard", () => {
+  it("preserves the team template when creating from the opened demo", async () => {
+    creationActions.startCardFromTemplateAction.mockClear();
+    const model = buildUniversalFixtureViewModel("team-editorial-demo", { templateId: team_editorialProfile.id });
+    render(<UniversalTemplateCard profile={team_editorialProfile} model={model} surface="private" actionContext="demo" />);
+    fireEvent.submit(screen.getByRole("button", { name: "Создать такую же открытку" }).closest("form")!);
+    await waitFor(() => expect(creationActions.startCardFromTemplateAction).toHaveBeenCalledTimes(1));
+    expect(creationActions.startCardFromTemplateAction).toHaveBeenCalledWith("team-editorial", expect.any(FormData));
+  });
+
   it("shrinks long editorial quotes instead of marking them for ellipsis", () => {
     const model = buildUniversalFixtureViewModel("team-editorial-demo", { templateId: team_editorialProfile.id });
     model.privateQuotes = [

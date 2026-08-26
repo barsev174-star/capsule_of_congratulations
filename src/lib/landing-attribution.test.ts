@@ -1,8 +1,10 @@
 import {
   CAREGIVER_LANDING_PATH,
+  COLLEAGUE_LANDING_PATH,
   FIRST_TOUCH_COOKIE_NAME,
   TEACHER_LANDING_PATH,
   buildCaregiverLandingAttribution,
+  buildColleagueLandingAttribution,
   buildTeacherLandingAttribution,
   parseLandingAttribution,
   serializeLandingAttribution
@@ -77,6 +79,27 @@ describe("landing attribution", () => {
       utm_source: "yandex",
       utm_medium: "organic",
       utm_campaign: "caregiver_day",
+      referrer_host: "yandex.ru"
+    });
+    expect(parseLandingAttribution(serializeLandingAttribution(attribution!))).toEqual(attribution);
+  });
+
+  it("captures a separate first touch for the colleague landing", () => {
+    const attribution = buildColleagueLandingAttribution({
+      pathname: COLLEAGUE_LANDING_PATH,
+      search: "?utm_source=yandex&utm_medium=organic&utm_campaign=colleague_farewell",
+      referrer: "https://yandex.ru/search/?text=gruppovaya-otkrytka-kollege",
+      siteHost: "slovesto.ru",
+      now
+    });
+
+    expect(attribution).toEqual({
+      landing_type: "colleague",
+      landing_path: COLLEAGUE_LANDING_PATH,
+      first_touch_at: now.toISOString(),
+      utm_source: "yandex",
+      utm_medium: "organic",
+      utm_campaign: "colleague_farewell",
       referrer_host: "yandex.ru"
     });
     expect(parseLandingAttribution(serializeLandingAttribution(attribution!))).toEqual(attribution);
