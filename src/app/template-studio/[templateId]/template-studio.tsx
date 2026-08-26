@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useRouter } from "next/navigation";
 import {
   universalMessageScenarios,
   universalTemplateFixtures,
@@ -168,6 +169,7 @@ function RectEditor({
 }
 
 export function TemplateStudio({ initialDraft, registeredTemplateOptions }: TemplateStudioProps) {
+  const router = useRouter();
   const draftStorageKey = useMemo(() => getTemplateStudioStorageKey(initialDraft), [initialDraft]);
   const [draft, setDraft] = useState(initialDraft);
   const [ready, setReady] = useState(false);
@@ -405,7 +407,7 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
     </header>
 
     <section className={styles.matrixPanel} aria-label="Матрица состояний">
-      <label><span>Шаблон</span><select value={draft.profile.id} onChange={(event) => { window.location.href = `/template-studio/${event.target.value}`; }}>
+      <label><span>Шаблон</span><select value={draft.profile.id} onChange={(event) => router.push(`/template-studio/${event.target.value}`)}>
         {!currentTemplateListed ? <option value={draft.profile.id}>{draft.profile.id}</option> : null}
         {templateOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
       </select></label>

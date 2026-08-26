@@ -9,6 +9,7 @@
 - Docker Compose project: `capsule`.
 - На VPS не должно быть других прикладных Docker-проектов.
 - Текущий release-набор: шесть продуктовых шаблонов, включая «Детство в рисунках» (`kindergarten-doodles`) и «Вместе» (`team-editorial`), их демонстрационные открытки, статические OG-превью, локальные шрифты и Story/Post/A4-экспорты. В составе сайта есть отдельные SEO-страницы для учителя и воспитателя; маршрут воспитателю — `/gruppovaya-otkrytka/vospitatelyu`, его CTA и пример используют `kindergarten-doodles`. Точный развернутый commit проверяется на VPS командой `git rev-parse --short HEAD`.
+- Security baseline от 26 августа 2026 года: Next.js `16.3.3`, sharp `0.35.3`, PostCSS `8.5.23`, nanoid `3.3.18`; `npm audit` и `npm audit --omit=dev` возвращают `0 vulnerabilities`. Sharp объявлен прямой production-зависимостью, поскольку используется runtime-маршрутами фотографий, OG и экспортов.
 
 Рабочие контейнеры:
 
