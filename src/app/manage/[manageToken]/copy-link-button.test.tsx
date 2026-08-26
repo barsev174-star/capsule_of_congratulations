@@ -3,13 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildInvitationCopyText,
+  CopyLinkButton,
   INVITATION_SHARE_TEXT,
   INVITATION_SHARE_TITLE,
   ShareLinkButton
 } from "./copy-link-button";
 
 const joinPath = "/join/public-token";
-const absoluteJoinUrl = "http://localhost:3000/join/public-token";
+const absoluteJoinUrl = "http://localhost:3000/join/public-token?preview=join-v2";
 
 describe("ShareLinkButton", () => {
   const copiedValues: string[] = [];
@@ -93,5 +94,27 @@ describe("ShareLinkButton", () => {
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
+  });
+});
+
+describe("CopyLinkButton", () => {
+  it("copies a versioned participant URL but leaves private gift URLs unchanged", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(window, "isSecureContext", { configurable: true, value: true });
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText }
+    });
+
+    const { rerender } = render(<CopyLinkButton value="/join/public-token?source=card" />);
+    await user.click(screen.getByRole("button", { name: "Копировать ссылку" }));
+    expect(writeText).toHaveBeenLastCalledWith(
+      "http://localhost:3000/join/public-token?source=card&preview=join-v2"
+    );
+
+    rerender(<CopyLinkButton key="gift" value="/gift/private-token" />);
+    await user.click(screen.getByRole("button", { name: "Копировать ссылку" }));
+    expect(writeText).toHaveBeenLastCalledWith("http://localhost:3000/gift/private-token");
   });
 });

@@ -18,6 +18,24 @@ const assert = (condition, message) => {
 const browser = await chromium.launch({ executablePath: chromePath, headless: true });
 
 try {
+  const createData = new FormData();
+  createData.set("recipientName", `Smoke ${stamp}`);
+  createData.set("fromLabel", "От автоматической проверки");
+  createData.set("occasionText", "С днём рождения!");
+  createData.set("occasion", "personal");
+  createData.set("organizerName", "Smoke Test");
+  createData.set("organizerEmail", email);
+  createData.set("templateId", "paper-birthday");
+  const createResponse = await fetch(`${baseUrl}/api/cards`, { method: "POST", body: createData });
+  assert(createResponse.ok, `Card creation failed: ${createResponse.status}`);
+  const createPayload = await createResponse.json();
+  const { card, manageLink: manageUrl, participantLink: joinUrl, finalLink: giftUrl } = createPayload.result ?? {};
+  assert(card?.id && card?.manageToken && manageUrl && joinUrl && giftUrl, "Create API did not expose all card routes.");
+  createdCardId = card.id;
+
+  const openResponse = await fetch(`${baseUrl}/api/cards/${card.manageToken}/collection/open`, { method: "POST" });
+  assert(openResponse.ok, `Collection opening failed: ${openResponse.status}`);
+
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const page = await context.newPage();
   page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
@@ -25,35 +43,20 @@ try {
     if (message.type() === "error") errors.push(`console: ${message.text()}`);
   });
 
-  await page.goto(`${baseUrl}/create`, { waitUntil: "domcontentloaded" });
-  await page.getByLabel("Имя получателя", { exact: true }).fill(`Smoke ${stamp}`);
-  await page.getByLabel("От кого открытка", { exact: true }).fill("От автоматической проверки");
-  await page.getByLabel("Надпись события", { exact: true }).fill("С днём рождения!");
-  await page.getByLabel("Имя организатора", { exact: true }).fill("Smoke Test");
-  await page.getByLabel("Email организатора", { exact: true }).fill(email);
-  await page.getByRole("button", { name: "Создать открытку", exact: true }).click();
-
-  const result = page.locator("[aria-live='polite']");
-  await result.getByText("Черновик готов", { exact: true }).waitFor({ state: "visible" });
-  const resultText = await result.innerText();
-  const manageUrl = resultText.match(/https?:\/\/[^\s]+\/manage\/[a-z0-9]+/i)?.[0];
-  const joinUrl = resultText.match(/https?:\/\/[^\s]+\/join\/[a-z0-9]+/i)?.[0];
-  const giftUrl = resultText.match(/https?:\/\/[^\s]+\/gift\/[a-z0-9]+/i)?.[0];
-  assert(manageUrl && joinUrl && giftUrl, "Create result did not expose all card routes.");
-
   const localize = (url) => `${baseUrl}${new URL(url).pathname}`;
   await page.goto(localize(joinUrl), { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
-  createdCardId = await page.locator("input[name='cardId']").inputValue();
+  assert(await page.locator("input[name='cardId']").inputValue() === createdCardId, "Join page exposes an unexpected card id.");
   await page.getByPlaceholder("Например, Ольга", { exact: true }).fill("Smoke participant");
   await page
     .getByPlaceholder("Напишите несколько теплых слов: что цените, за что благодарны, какой момент хочется вспомнить...", { exact: true })
     .fill("Желаю радости, вдохновения и прекрасных моментов каждый день!");
+  await page.getByRole("checkbox", { name: /Я согласен на обработку моего имени и поздравления/ }).check();
   await page.getByRole("button", { name: "Подарить слова", exact: true }).click();
   await page.waitForTimeout(1200);
   const joinResultText = await page.locator("body").innerText();
   assert(
-    joinResultText.includes("Поздравление добавлено в открытку."),
+    joinResultText.includes("Поздравление добавлено"),
     `Contribution was not accepted. Page state: ${joinResultText.slice(0, 1800)}`
   );
 
@@ -61,21 +64,46 @@ try {
   await page.waitForLoadState("networkidle");
   assert(await page.getByText("Бумажный классический", { exact: true }).count(), "Default template is not visible.");
 
-  await page.goto(`${localize(manageUrl)}?tab=content`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${localize(manageUrl)}?tab=photos`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
-  await page.getByRole("button", { name: "Загрузить фото", exact: true }).click();
+  await page.getByRole("button", { name: /^Добавить фото, позиция/ }).first().click();
   await page.locator("input[type='file']").setInputFiles({
     name: "smoke.png",
     mimeType: "image/png",
     buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64")
   });
+  await page.getByRole("checkbox", { name: /Подтверждаю, что имею право использовать/ }).check();
   await page.getByRole("button", { name: "Добавить фото", exact: true }).click();
-  await page.getByText("Фото сохранено.", { exact: true }).waitFor({ state: "visible" });
+  await page.getByText("Фото добавлено", { exact: true }).waitFor({ state: "visible" });
 
-  await page.goto(localize(manageUrl), { waitUntil: "domcontentloaded" });
-  await page.waitForLoadState("networkidle");
-  await page.getByRole("button", { name: "Опубликовать открытку", exact: true }).click();
-  await page.waitForURL(`**/gift/**`);
+  if (process.env.DATABASE_URL) {
+    const database = new pg.Client({ connectionString: process.env.DATABASE_URL });
+    await database.connect();
+    try {
+      const admin = await database.query("SELECT id FROM admin_users ORDER BY created_at ASC LIMIT 1");
+      assert(admin.rows[0]?.id, "Local admin is required for a QA access grant.");
+      const grantId = randomUUID();
+      await database.query(
+        `INSERT INTO card_access_grants (id, card_id, status, reason_code, comment, granted_by_admin_id)
+         VALUES ($1, $2, 'ACTIVE', 'QA_TEST', 'Automated local smoke test', $3)`,
+        [grantId, createdCardId, admin.rows[0].id]
+      );
+      await database.query(
+        `UPDATE cards
+         SET active_access_grant_id = $2,
+             collection_status = 'CLOSED',
+             collection_closed_at = COALESCE(collection_closed_at, now()),
+             delivery_status = 'DELIVERED',
+             delivered_at = now(),
+             updated_at = now()
+         WHERE id = $1`,
+        [createdCardId, grantId]
+      );
+    } finally {
+      await database.end();
+    }
+  }
+  await page.goto(localize(giftUrl), { waitUntil: "domcontentloaded" });
   const skipIntro = page.getByRole("button", { name: "Пропустить", exact: true });
   if (await skipIntro.isVisible()) await skipIntro.click();
   await page.waitForFunction(() => document.body.innerText.includes("Smoke participant"), null, { timeout: 15000 });
@@ -137,6 +165,8 @@ try {
     await database.connect();
     try {
       await database.query("DELETE FROM organizer_magic_links WHERE email = $1", [email]);
+      await database.query("UPDATE cards SET active_access_grant_id = NULL WHERE id = $1", [createdCardId]);
+      await database.query("DELETE FROM card_access_grants WHERE card_id = $1", [createdCardId]);
       await database.query("DELETE FROM cards WHERE id = $1", [createdCardId]);
     } finally {
       await database.end();

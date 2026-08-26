@@ -11,6 +11,7 @@
     "share:og-assets": "node scripts/build-public-share-og-assets.mjs",
     "route:assets": "node scripts/optimize-route-assets.mjs",
     "route:check": "node scripts/check-route-assets.mjs",
+    "seo:indexing:check": "node scripts/check-seo-indexing.mjs",
     "landing:caregiver-assets": "node scripts/build-caregiver-landing-assets.mjs",
     "template:legacy-assets": "node scripts/check-legacy-template-assets.mjs",
     "template:legacy-baseline": "node scripts/check-legacy-template-baseline.mjs",

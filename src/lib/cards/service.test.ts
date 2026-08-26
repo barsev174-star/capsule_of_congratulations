@@ -74,6 +74,8 @@ describe("empty card draft creation", () => {
       templateId: "paper-birthday", occasionText: "С днём рождения!", recipientName: "", fromLabel: ""
     }));
     expect(result.chatMessage).toContain("С днём рождения!");
+    expect(result.participantLink).toMatch(/\/join\/[^?]+\?preview=join-v2$/);
+    expect(result.chatMessage).toContain(result.participantLink);
     expect((await createEmptyCardDraft()).card.occasionText).toBe("");
   });
 });

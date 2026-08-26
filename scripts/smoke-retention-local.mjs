@@ -52,7 +52,7 @@ try {
   const inactiveDraftId = await createCard("Inactive draft smoke");
   const activeDraftId = await createCard("Recently active draft smoke");
   await database.query(
-    "UPDATE cards SET deleted_at = now() - interval '31 days', purge_after = now() - interval '1 day' WHERE id = $1",
+    "UPDATE cards SET deleted_at = now() - interval '31 days', purge_at = now() - interval '1 day' WHERE id = $1",
     [deletedCardId]
   );
   await database.query(
@@ -79,10 +79,18 @@ try {
   }
 
   const purgedRemaining = await database.query(
-    "SELECT count(*)::text AS count FROM cards WHERE id = ANY($1::uuid[])",
+    `SELECT count(*)::text AS count
+     FROM cards
+     WHERE id = ANY($1::uuid[])
+       AND purged_at IS NOT NULL
+       AND public_slug IS NULL
+       AND manage_token IS NULL
+       AND final_slug IS NULL
+       AND recipient_name IS NULL
+       AND organizer_email IS NULL`,
     [[deletedCardId, inactiveDraftId]]
   );
-  if (Number(purgedRemaining.rows[0]?.count ?? 0) !== 0) throw new Error("Retention cards were not permanently removed.");
+  if (Number(purgedRemaining.rows[0]?.count ?? 0) !== 2) throw new Error("Retention cards were not reduced to safe tombstones.");
   const activeRemaining = await database.query("SELECT count(*)::text AS count FROM cards WHERE id = $1", [activeDraftId]);
   if (Number(activeRemaining.rows[0]?.count ?? 0) !== 1) throw new Error("Recent contribution activity did not protect its draft.");
   console.log("RETENTION_SMOKE_OK deleted recovery-expiry inactive-draft recent-activity-protection");

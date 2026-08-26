@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
+import { versionInvitationUrl } from "@/lib/routes/card-links";
 import styles from "./manage-page.module.css";
 
 export const INVITATION_SHARE_TITLE = "Приглашение в общую открытку";
@@ -71,7 +72,7 @@ export const CopyLinkButton = ({
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    const absoluteUrl = new URL(value, window.location.origin).toString();
+    const absoluteUrl = versionInvitationUrl(new URL(value, window.location.origin).toString());
     const ok = await copyWithFallback(absoluteUrl);
 
     if (!ok) {
@@ -153,7 +154,7 @@ export const ShareLinkButton = ({
   }, [closeFallback, isFallbackOpen]);
 
   const handleShare = async () => {
-    const absoluteUrl = new URL(value, window.location.origin).toString();
+    const absoluteUrl = versionInvitationUrl(new URL(value, window.location.origin).toString());
     if ("share" in navigator) {
       try {
         await navigator.share({
@@ -178,13 +179,13 @@ export const ShareLinkButton = ({
   };
 
   const copyInvitation = async () => {
-    const absoluteUrl = new URL(value, window.location.origin).toString();
+    const absoluteUrl = versionInvitationUrl(new URL(value, window.location.origin).toString());
     const copied = await copyWithFallback(buildInvitationCopyText(absoluteUrl));
     setCopyStatus(copied ? "Приглашение скопировано" : "Скопируйте приглашение вручную");
   };
 
   const copyOnlyLink = async () => {
-    const absoluteUrl = new URL(value, window.location.origin).toString();
+    const absoluteUrl = versionInvitationUrl(new URL(value, window.location.origin).toString());
     const copied = await copyWithFallback(absoluteUrl);
     setCopyStatus(copied ? "Ссылка скопирована" : "Скопируйте ссылку вручную");
   };

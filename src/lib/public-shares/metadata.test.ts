@@ -68,6 +68,8 @@ describe("public share metadata", () => {
     })]);
     expect(metadata.twitter?.card).toBe("summary_large_image");
     expect(metadata.alternates?.canonical).toBe("/join/participant%20slug");
+    expect(metadata.openGraph?.url).toBe("/join/participant%20slug");
+    expect(JSON.stringify(metadata)).not.toContain("preview=join-v2");
     expect(metadata.robots).toEqual({ index: false, follow: false });
     expect(JSON.stringify(metadata)).not.toContain("/manage/");
     expect(JSON.stringify(metadata)).not.toContain("/gift/");

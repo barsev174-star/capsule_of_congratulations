@@ -218,6 +218,8 @@ export const softDeleteCard = async (cardId: string) => {
     ...cards[index],
     deletedAt: now.toISOString(),
     purgeAfter: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    isHidden: true,
+    hiddenAt: cards[index].hiddenAt ?? now.toISOString(),
     updatedAt: now.toISOString()
   };
   cards[index] = updated;
@@ -230,7 +232,14 @@ export const restoreDeletedCard = async (cardId: string) => {
   const cards = await readCards();
   const index = cards.findIndex((card) => card.id === cardId && card.deletedAt);
   if (index === -1 || !cards[index].purgeAfter || Date.parse(cards[index].purgeAfter) <= Date.now()) return null;
-  const updated = { ...cards[index], deletedAt: null, purgeAfter: null, updatedAt: new Date().toISOString() };
+  const updated = {
+    ...cards[index],
+    deletedAt: null,
+    purgeAfter: null,
+    isHidden: false,
+    hiddenAt: null,
+    updatedAt: new Date().toISOString()
+  };
   cards[index] = updated;
   await writeFile(cardsFilePath, JSON.stringify(cards, null, 2), "utf8");
   return updated;

@@ -317,7 +317,7 @@ export const softDeleteCard = async (cardId: string) => {
 export const restoreDeletedCard = async (cardId: string) => {
   const result = await getPostgresPool().query<CardRow>(
     `UPDATE cards
-     SET deleted_at = NULL, purge_at = NULL, updated_at = now()
+     SET deleted_at = NULL, purge_at = NULL, is_hidden = false, hidden_at = NULL, updated_at = now()
      WHERE id = $1 AND deleted_at IS NOT NULL AND purge_at > now() AND purged_at IS NULL
      RETURNING *`,
     [cardId]

@@ -10,6 +10,7 @@ import { defaultGiftPollCopy, isSystemDefaultPollQuestion, isSystemDefaultPollTi
 import { cleanImportedDescription, sanitizeGiftPollText } from "@/lib/gift-polls/text-sanitization";
 import { emptyImportedGiftFields, importWouldOverwriteUserEdits, isSafeHttpUrl, isUsableImportResult, mergeImportedDraft, type GiftFieldSources, type ImportedGiftFields } from "@/lib/gift-polls/import-draft";
 import { compressImageFile } from "@/lib/media/image-compression";
+import { versionInvitationUrl } from "@/lib/routes/card-links";
 import { closeGiftPollAction, enableGiftPollAction, openGiftPollAction, reopenGiftPollAction, saveGiftPollAction, saveGiftPollSettingsAction, selectGiftPollOptionAction, type GiftPollFormState } from "./actions";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { useModalFocus } from "./use-modal-focus";
@@ -766,7 +767,7 @@ export const GiftPollSettingsForm = ({ manageToken, recipientName, publicSlug, p
   const hasInvalidLinks = options.some((option) => Boolean(option.productUrl) && !option.productUrl.startsWith("https://"));
   const saveState = pending ? "saving" : state.message && !state.ok ? "error" : state.ok || Boolean(poll) ? "saved" : "idle";
   const isPollReady = poll.title.trim().length > 0 && poll.question.trim().length > 0 && validOptions.length >= 2 && !hasInvalidLinks && saveState === "saved";
-  const participantUrl = `/join/${publicSlug}`;
+  const participantUrl = versionInvitationUrl(`/join/${publicSlug}`);
 
   const copyParticipantLink = async () => {
     try {
