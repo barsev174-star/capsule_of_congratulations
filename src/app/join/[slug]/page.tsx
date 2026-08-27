@@ -14,6 +14,7 @@ import styles from "@/app/card/[publicSlug]/participant-page.module.css";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
 import { CARD_CONTRIBUTION_LIMIT } from "@/lib/contributions/limits";
 import { getCardLifecycleByPublicSlug } from "@/lib/cards/lifecycle-repository";
+import { buildContributionPreview } from "./contribution-preview";
 
 type Props = {
   params: Promise<{
@@ -76,6 +77,42 @@ export default async function JoinCardPage({ params }: Props) {
   const occasionText = card.occasionText || "повод пока уточняется";
   const isClosed = lifecycle.collectionStatus !== "OPEN" || lifecycle.deliveryStatus === "DELIVERED";
   const isLimitReached = contributionCount >= CARD_CONTRIBUTION_LIMIT;
+  const contributionSection = (
+    <section className={styles.contribStrip} aria-labelledby="contrib-strip-title">
+      <div className={styles.contribStripHead}>
+        <div className={styles.cardHeader}>
+          <span className={`${styles.cardIcon} ${styles.contribPeopleIcon}`} aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" focusable="false">
+              <circle cx="9" cy="8" r="3.25" />
+              <path d="M3.75 19c.4-3.1 2.35-5.05 5.25-5.05s4.85 1.95 5.25 5.05" />
+              <circle cx="17" cy="9" r="2.5" />
+              <path d="M15.1 14.35c.57-.27 1.2-.4 1.9-.4 2.15 0 3.72 1.35 4.05 3.6" />
+            </svg>
+          </span>
+          <div>
+            <h2 id="contrib-strip-title" className={styles.sectionTitle}>Уже добавили</h2>
+            <p className={styles.hint}>Другие уже оставляют свои слова. Присоединяйтесь!</p>
+          </div>
+        </div>
+        {contributions.length > 0 ? (
+          <span className={styles.contribStripCount}>{formatCount(contributions.length)}</span>
+        ) : null}
+      </div>
+
+      {contributions.length === 0 ? (
+        <p className={styles.empty}><strong>Будьте первым, кто добавит несколько тёплых слов.</strong></p>
+      ) : (
+        <ContributionsStrip
+          items={contributions.map((contribution) => ({
+            id: contribution.id,
+            authorName: contribution.authorName,
+            authorRole: contribution.authorRole,
+            preview: buildContributionPreview(contribution.message)
+          }))}
+        />
+      )}
+    </section>
+  );
 
   return (
     <main className={styles.page}>
@@ -149,43 +186,11 @@ export default async function JoinCardPage({ params }: Props) {
               messageLimit={layoutProfile.maxChars}
               variant="join"
               greetingMode={process.env.AI_GREETING_MODE === "ladder" ? "ladder" : process.env.AI_GREETING_MODE === "matrix" ? "matrix" : "classic"}
+              socialProof={contributionSection}
             />
           )}
 
-          <section className={styles.contribStrip} aria-labelledby="contrib-strip-title">
-            <div className={styles.contribStripHead}>
-              <div className={styles.cardHeader}>
-                <span className={`${styles.cardIcon} ${styles.contribPeopleIcon}`} aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" focusable="false">
-                    <circle cx="9" cy="8" r="3.25" />
-                    <path d="M3.75 19c.4-3.1 2.35-5.05 5.25-5.05s4.85 1.95 5.25 5.05" />
-                    <circle cx="17" cy="9" r="2.5" />
-                    <path d="M15.1 14.35c.57-.27 1.2-.4 1.9-.4 2.15 0 3.72 1.35 4.05 3.6" />
-                  </svg>
-                </span>
-                <div>
-                  <h2 id="contrib-strip-title" className={styles.sectionTitle}>Уже добавили</h2>
-                  <p className={styles.hint}>Открытка постепенно наполняется тёплыми словами.</p>
-                </div>
-              </div>
-              {contributions.length > 0 ? (
-                <span className={styles.contribStripCount}>{formatCount(contributions.length)}</span>
-              ) : null}
-            </div>
-
-            {contributions.length === 0 ? (
-              <p className={styles.empty}>Пока никто не добавил поздравление. Ваше может быть первым.</p>
-            ) : (
-              <ContributionsStrip
-                items={contributions.map((contribution) => ({
-                  id: contribution.id,
-                  authorName: contribution.authorName,
-                  authorRole: contribution.authorRole,
-                  message: contribution.message
-                }))}
-              />
-            )}
-          </section>
+          {isClosed || isLimitReached ? contributionSection : null}
 
           <section className={styles.valuePreview} aria-labelledby="value-preview-title">
             <div className={styles.valuePreviewCopy}>

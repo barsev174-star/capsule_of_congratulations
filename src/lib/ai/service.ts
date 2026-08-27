@@ -843,6 +843,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
           warmer: { id: "warm" as const, label: "Теплее" },
           creative: { id: "style" as const, label: "Творческий" },
           alternative: { id: "style" as const, label: "Ещё вариант" },
+          expand: { id: "short" as const, label: "Подробнее" },
           shorten: { id: "short" as const, label: "Короче" }
         }[input.joinAction];
         variants = [{ ...presentation, text: singleText }];

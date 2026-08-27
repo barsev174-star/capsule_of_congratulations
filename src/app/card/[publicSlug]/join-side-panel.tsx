@@ -1,27 +1,81 @@
 "use client";
 
-import { useState } from "react";
-import type { AiJoinAction, AiJoinResultMode, AiVariant } from "@/lib/ai/types";
+import { useState, type KeyboardEvent } from "react";
+import type { AiJoinOperation, AiVariant, AiVariantFamily } from "@/lib/ai/types";
+import { AI_REQUIRED_DETAIL_LIMIT, countCharacters } from "@/lib/ai/validation";
 import { GREETING_HINTS, type GreetingHint, type GreetingHintId } from "./greeting-hints";
 import styles from "./participant-page.module.css";
 
 export type JoinSidePanelState = "idle" | "loading" | "result" | "error";
 
 const LOADING_STEPS = ["Сохраняем смысл", "Собираем текст", "Проверяем детали"];
+const FAMILY_ORDER: AiVariantFamily[] = ["main", "warm", "creative"];
 
-const actionLabels: Record<AiJoinAction, string> = {
-  initial: "Собираем основной текст",
-  warmer: "Делаем текст теплее",
-  creative: "Готовим творческую версию",
-  alternative: "Собираем ещё один вариант",
-  shorten: "Сокращаем текст"
+const hintIcons: Record<GreetingHintId, string> = {
+  gratitude: "♡",
+  qualities: "✦",
+  memory: "○",
+  wishes: "↑"
 };
 
-const modeLabels: Record<AiJoinResultMode, string> = {
-  initial: "Основной",
-  warmer: "Теплее",
-  creative: "Творческий",
-  shorten: "Короче"
+const familyLabels: Record<AiVariantFamily, string> = {
+  main: "Основной",
+  warm: "Теплее",
+  creative: "Творческий"
+};
+
+const operationLabels: Record<AiJoinOperation, string> = {
+  initial: "Создаём основной текст…",
+  warmer: "Создаём тёплый вариант…",
+  creative: "Создаём творческий вариант…",
+  alternative: "Создаём другой вариант…",
+  expand: "Раскрываем текст подробнее…",
+  shorten: "Сокращаем текст…",
+  add_detail: "Добавляем ваши детали…"
+};
+
+const actionDefinitions: Record<Exclude<AiJoinOperation, "initial" | "add_detail">, {
+  icon: string;
+  title: string;
+  summary: string;
+  explanation: string;
+  cta: string;
+}> = {
+  warmer: {
+    icon: "♡",
+    title: "Теплее",
+    summary: "Больше личного тепла и благодарности.",
+    explanation: "Текст станет теплее и личнее. Ваши мысли и пожелания сохранятся.",
+    cta: "Создать тёплый вариант"
+  },
+  creative: {
+    icon: "✦",
+    title: "Творческий",
+    summary: "Свободнее композиция и выразительнее формулировки.",
+    explanation: "Подача станет свободнее и образнее. Ваши факты и пожелания сохранятся.",
+    cta: "Создать творческий вариант"
+  },
+  alternative: {
+    icon: "↔",
+    title: "Другой вариант",
+    summary: "Те же мысли, но другой порядок и формулировки.",
+    explanation: "Получится ещё один основной вариант с теми же мыслями, но в другой формулировке.",
+    cta: "Создать другой вариант"
+  },
+  expand: {
+    icon: "+",
+    title: "Раскрыть подробнее",
+    summary: "Добавим связности, сохранив ключевые мысли.",
+    explanation: "Свяжем мысли плавнее и раскроем их чуть подробнее, сохранив ваш смысл.",
+    cta: "Раскрыть текст подробнее"
+  },
+  shorten: {
+    icon: "−",
+    title: "Сделать короче",
+    summary: "Уберём лишние слова и повторы, сохранив главное.",
+    explanation: "Уберём повторы и лишние слова, сохранив главное.",
+    cta: "Сделать текст короче"
+  }
 };
 
 const hintAriaLabel = (hint: GreetingHint) =>
@@ -37,80 +91,82 @@ const formatAttemptsLeft = (count: number) => {
 
 type ResultProps = {
   result: AiVariant;
-  mode: AiJoinResultMode;
-  availableModes: AiJoinResultMode[];
+  family: AiVariantFamily;
+  availableFamilies: AiVariantFamily[];
+  familyCounts: Record<AiVariantFamily, number>;
   historyIndex: number;
   historyCount: number;
   generationId: string;
   isPending: boolean;
-  pendingAction: AiJoinAction | null;
+  pendingOperation: AiJoinOperation | null;
   limitReached: boolean;
   remaining: number | null;
   issues: string[];
+  canRetry: boolean;
   messageLimit: number;
   onUseResult: (text: string) => void;
-  onModeSelect: (mode: AiJoinResultMode) => void;
-  onAnother: () => void;
+  onFamilySelect: (family: AiVariantFamily) => void;
+  onRequest: (operation: AiJoinOperation) => void;
   onAddDetail: (detail: string) => void;
   onPrevious: () => void;
   onNext: () => void;
+  onRetry: () => void;
 };
 
 const JoinResult = ({
   result,
-  mode,
-  availableModes,
+  family,
+  availableFamilies,
+  familyCounts,
   historyIndex,
   historyCount,
   generationId,
   isPending,
-  pendingAction,
+  pendingOperation,
   limitReached,
   remaining,
   issues,
+  canRetry,
   messageLimit,
   onUseResult,
-  onModeSelect,
-  onAnother,
+  onFamilySelect,
+  onRequest,
   onAddDetail,
   onPrevious,
-  onNext
+  onNext,
+  onRetry
 }: ResultProps) => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [inserted, setInserted] = useState(false);
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [openTool, setOpenTool] = useState<AiJoinOperation | "details" | null>(null);
   const [detail, setDetail] = useState("");
+  const detailLength = countCharacters(detail);
   const panelId = `join-ai-result-${generationId || "result"}`;
-  const canShorten = Array.from(result.text).length > Math.min(220, Math.floor(messageLimit * 0.75));
+  const resultLength = Array.from(result.text).length;
+  const lengthAction: "expand" | "shorten" | null = resultLength <= Math.floor(messageLimit * 0.45)
+    ? "expand"
+    : resultLength >= Math.floor(messageLimit * 0.8)
+      ? "shorten"
+      : null;
+  const actions: Array<Exclude<AiJoinOperation, "initial" | "add_detail">> = [
+    "warmer",
+    "creative",
+    "alternative",
+    ...(lengthAction ? [lengthAction] : [])
+  ];
 
-  const applyResult = () => {
-    onUseResult(result.text);
-    setInserted(true);
-    if (window.matchMedia("(max-width: 959px)").matches) setCollapsed(true);
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentFamily: AiVariantFamily) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;
+    event.preventDefault();
+    const currentIndex = availableFamilies.indexOf(currentFamily);
+    const nextIndex = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? availableFamilies.length - 1
+        : (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + availableFamilies.length) % availableFamilies.length;
+    const nextFamily = availableFamilies[nextIndex];
+    onFamilySelect(nextFamily);
+    const tabs = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("[role='tab']");
+    tabs?.[nextIndex]?.focus();
   };
-
-  if (collapsed) {
-    return (
-      <div className={styles.variantCollapsedStack}>
-        {isPending ? (
-          <div className={styles.aiGenerationProgress} role="status">
-            <span className={styles.aiSpinner} aria-hidden="true" />
-            <span><strong>{actionLabels[pendingAction ?? "alternative"]}</strong>Вставленный текст останется без изменений.</span>
-          </div>
-        ) : null}
-        <div className={styles.variantCollapsedRow}>
-          <span>Текст вставлен</span>
-          <button type="button" className={styles.variantCollapsedButton} aria-expanded={false} aria-controls={panelId} onClick={() => setCollapsed(false)}>
-            Показать результат
-            <span className={styles.variantCollapsedIcon} aria-hidden="true">▾</span>
-          </button>
-        </div>
-        {remaining === 0 ? (
-          <p className={styles.aiLimitNotice} role="status">AI-попытки закончились. Поэтому варианты изменения сейчас недоступны.</p>
-        ) : null}
-      </div>
-    );
-  }
 
   return (
     <div className={styles.panelState} id={panelId}>
@@ -122,113 +178,155 @@ const JoinResult = ({
         {!isPending && issues.length === 0 ? <span className={styles.aiGenerationReady} role="status">Готово</span> : null}
       </div>
 
-      {isPending ? (
-        <div className={styles.aiGenerationProgress} role="status">
-          <span className={styles.aiSpinner} aria-hidden="true" />
-          <span><strong>{actionLabels[pendingAction ?? "alternative"]}</strong>Текущий текст останется на экране до готовности нового.</span>
-        </div>
-      ) : null}
-      {!isPending && issues.length > 0 ? (
-        <div className={styles.aiRetainedError} role="alert">
-          <strong>Новая версия не подготовилась</strong>
-          <span>{issues[0]} Текущий текст сохранён.</span>
-        </div>
-      ) : null}
+      <div className={styles.familyTabs} role="tablist" aria-label="Созданные варианты текста">
+        {FAMILY_ORDER.filter((item) => availableFamilies.includes(item)).map((item) => (
+          <button
+            key={item}
+            type="button"
+            role="tab"
+            aria-selected={family === item}
+            aria-controls={`${panelId}-content`}
+            tabIndex={family === item ? 0 : -1}
+            className={family === item ? styles.familyTabActive : undefined}
+            onClick={() => onFamilySelect(item)}
+            onKeyDown={(event) => handleTabKeyDown(event, item)}
+          >
+            {familyLabels[item]}{familyCounts[item] > 1 ? ` · ${familyCounts[item]}` : ""}
+          </button>
+        ))}
+      </div>
 
-      <article className={`${styles.variantCard} ${styles.singleResultCard}`}>
-        <span className={styles.resultModeLabel}>{modeLabels[mode]}</span>
+      <article id={`${panelId}-content`} role="tabpanel" className={`${styles.variantCard} ${styles.singleResultCard}`}>
         <div key={generationId} className={styles.variantCardContent}>
           <p className={styles.message}>{result.text}</p>
         </div>
-        <button type="button" className={`${styles.useButton} ${styles.joinUseButton}`} onClick={applyResult}>
-          <span aria-hidden="true">↓</span>
-          Использовать текст
-        </button>
+        <div className={styles.resultCardFooter}>
+          {historyCount > 1 ? (
+            <div className={styles.resultHistoryNav} aria-label={`Варианты категории «${familyLabels[family]}»`}>
+              <button type="button" aria-label="Предыдущий вариант" disabled={isPending || historyIndex === 0} onClick={onPrevious}>‹</button>
+              <span>{historyIndex + 1} из {historyCount}</span>
+              <button type="button" aria-label="Следующий вариант" disabled={isPending || historyIndex >= historyCount - 1} onClick={onNext}>›</button>
+            </div>
+          ) : <span />}
+          <button type="button" className={`${styles.useButton} ${styles.joinUseButton}`} onClick={() => onUseResult(result.text)}>
+            <span aria-hidden="true">↓</span>
+            Использовать текст
+          </button>
+        </div>
       </article>
+
+      {isPending ? (
+        <p className={styles.aiInlineProgress} role="status">
+          <span className={styles.aiSpinner} aria-hidden="true" />
+          {operationLabels[pendingOperation ?? "alternative"]} Текущий текст остаётся на экране.
+        </p>
+      ) : null}
+
+      {issues.length > 0 ? (
+        <div className={styles.aiRetainedError} role="alert">
+          <span><strong>Не получилось создать вариант.</strong> {issues[0]} Текущий текст сохранён.</span>
+          {canRetry ? <button type="button" disabled={isPending} onClick={onRetry}>Повторить</button> : null}
+        </div>
+      ) : null}
 
       <section className={styles.resultTools} aria-label="Изменить готовый текст">
         <div className={styles.resultToolsHead}>
           <h3>Хотите изменить подачу?</h3>
-          <p>Каждое действие создаёт одну новую версию.</p>
+          <p>Выберите, каким сделать текст.</p>
         </div>
-        <div className={styles.resultActionGrid} role="tablist" aria-label="Режим текста">
-          {(["initial", "warmer", "creative"] as const).map((item) => (
-            <button
-              key={item}
-              type="button"
-              role="tab"
-              aria-selected={mode === item}
-              className={mode === item ? styles.resultActionActive : undefined}
-              disabled={isPending || (limitReached && !availableModes.includes(item))}
-              onClick={() => onModeSelect(item)}
-            >
-              {modeLabels[item]}
-            </button>
-          ))}
-          {canShorten || availableModes.includes("shorten") ? (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === "shorten"}
-              className={mode === "shorten" ? styles.resultActionActive : undefined}
-              disabled={isPending || (limitReached && !availableModes.includes("shorten"))}
-              onClick={() => onModeSelect("shorten")}
-            >
-              Короче
-            </button>
+
+        <div className={styles.aiActionList}>
+          {actions.map((operation) => {
+            const definition = actionDefinitions[operation];
+            const isOpen = openTool === operation;
+            const isThisPending = isPending && pendingOperation === operation;
+            const detailsId = `${panelId}-${operation}-details`;
+            return (
+              <div key={operation} className={`${styles.aiActionCard} ${isOpen ? styles.aiActionCardOpen : ""}`}>
+                <button
+                  type="button"
+                  className={styles.aiActionRow}
+                  aria-expanded={isOpen}
+                  aria-controls={detailsId}
+                  disabled={isPending}
+                  onClick={() => setOpenTool((current) => current === operation ? null : operation)}
+                >
+                  <span className={styles.aiActionIcon} aria-hidden="true">{definition.icon}</span>
+                  <span className={styles.aiActionCopy}>
+                    <strong>{definition.title}</strong>
+                    <span>{definition.summary}</span>
+                  </span>
+                  <span className={styles.aiActionChevron} aria-hidden="true">›</span>
+                </button>
+                {isOpen ? (
+                  <div className={styles.aiActionDetails} id={detailsId}>
+                    <p>{definition.explanation}</p>
+                    <button type="button" disabled={isPending || limitReached} onClick={() => onRequest(operation)}>
+                      {isThisPending ? operationLabels[operation] : definition.cta}
+                    </button>
+                    <span>1 AI-попытка</span>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className={`${styles.detailTool} ${openTool === "details" ? styles.aiActionCardOpen : ""}`}>
+          <button
+            type="button"
+            className={styles.detailToolToggle}
+            aria-expanded={openTool === "details"}
+            aria-controls={`${panelId}-details`}
+            disabled={isPending}
+            onClick={() => setOpenTool((current) => current === "details" ? null : "details")}
+          >
+            <span>
+              <strong>Добавить свои детали</strong>
+              <small>Дополните тем, что важно упомянуть.</small>
+            </span>
+            <span className={`${styles.aiActionChevron} ${openTool === "details" ? styles.detailToolChevronOpen : ""}`} aria-hidden="true">›</span>
+          </button>
+          {openTool === "details" ? (
+            <div className={styles.resultDetailForm} id={`${panelId}-details`}>
+              <label htmlFor={`${panelId}-detail`}>Что ещё важно упомянуть?</label>
+              <textarea
+                id={`${panelId}-detail`}
+                value={detail}
+                aria-describedby={`${panelId}-detail-note ${panelId}-detail-count`}
+                placeholder="Например: помог с переездом, дружим со школы, всегда поддерживает."
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  if (countCharacters(nextValue) <= AI_REQUIRED_DETAIL_LIMIT) setDetail(nextValue);
+                }}
+              />
+              <p className={styles.detailVersionNote} id={`${panelId}-detail-note`}>
+                Новые детали появятся в отдельном основном варианте. Текущие версии сохранятся.
+              </p>
+              <div className={styles.detailFormFooter}>
+                <span id={`${panelId}-detail-count`}>{detailLength} / {AI_REQUIRED_DETAIL_LIMIT}</span>
+                <button
+                  type="button"
+                  disabled={isPending || limitReached || detail.trim().length === 0}
+                  onClick={() => {
+                    onAddDetail(detail.trim());
+                    setDetail("");
+                    setOpenTool(null);
+                  }}
+                >
+                  {isPending && pendingOperation === "add_detail" ? operationLabels.add_detail : "Создать вариант с деталями"}
+                </button>
+              </div>
+            </div>
           ) : null}
         </div>
-        <button type="button" className={styles.anotherResultButton} disabled={isPending || limitReached} onClick={onAnother}>
-          Ещё вариант «{modeLabels[mode]}»
-        </button>
-        <div className={styles.resultActionGrid}>
-          <button type="button" className={detailOpen ? styles.resultActionActive : undefined} aria-expanded={detailOpen} disabled={isPending || limitReached} onClick={() => setDetailOpen((current) => !current)}>
-            Добавить детали
-          </button>
-        </div>
-        <p className={styles.creativeNote}>«Творческий» может добавить одну образную деталь, но сохранит ваши основные мысли.</p>
-
-        {detailOpen ? (
-          <div className={styles.resultDetailForm}>
-            <label htmlFor={`${panelId}-detail`}>Какую деталь добавить?</label>
-            <textarea id={`${panelId}-detail`} value={detail} maxLength={300} placeholder="Например: он помог мне с переездом" onChange={(event) => setDetail(event.target.value)} />
-            <button
-              type="button"
-              disabled={isPending || limitReached || detail.trim().length < 5}
-              onClick={() => {
-                onAddDetail(detail.trim());
-                setDetailOpen(false);
-                setDetail("");
-              }}
-            >
-              Добавить и обновить текст
-            </button>
-          </div>
-        ) : null}
-
-        {historyCount > 1 ? (
-          <div className={styles.resultHistoryNav} aria-label={`Варианты режима «${modeLabels[mode]}»`}>
-            <button type="button" className={styles.restoreResultButton} disabled={isPending || historyIndex === 0} onClick={onPrevious}>← Предыдущий</button>
-            <span>{historyIndex + 1} из {historyCount}</span>
-            <button type="button" className={styles.restoreResultButton} disabled={isPending || historyIndex >= historyCount - 1} onClick={onNext}>Следующий →</button>
-          </div>
-        ) : null}
 
         {remaining === 0 ? (
-          <p className={styles.aiLimitNotice} role="status">AI-попытки закончились. Поэтому создание новых вариантов и добавление деталей недоступны.</p>
+          <p className={styles.aiLimitNotice} role="status">AI-попытки закончились. Созданные варианты по-прежнему доступны.</p>
         ) : remaining !== null ? (
           <p className={styles.aiAttemptsNotice}>{formatAttemptsLeft(remaining)}</p>
         ) : null}
       </section>
-
-      <footer className={styles.panelFooter}>
-        <p className={styles.panelFooterNote}>
-          {inserted
-            ? "Текст уже добавлен в поле слева. Его можно свободно отредактировать перед отправкой."
-            : "Текст не отправится автоматически. Сначала добавьте его в поле поздравления."}
-        </p>
-        {remaining !== null ? <span className={styles.panelFooterCounter}>{remaining > 0 ? formatAttemptsLeft(remaining) : "Лимит AI-попыток исчерпан"}</span> : null}
-      </footer>
     </div>
   );
 };
@@ -236,15 +334,17 @@ const JoinResult = ({
 type Props = {
   state: JoinSidePanelState;
   result: AiVariant | null;
-  mode: AiJoinResultMode;
-  availableModes: AiJoinResultMode[];
+  family: AiVariantFamily;
+  availableFamilies: AiVariantFamily[];
+  familyCounts: Record<AiVariantFamily, number>;
   historyIndex: number;
   historyCount: number;
   generationId: string;
   isPending: boolean;
-  pendingAction: AiJoinAction | null;
+  pendingOperation: AiJoinOperation | null;
   limitReached: boolean;
   issues: string[];
+  canRetry: boolean;
   remaining: number | null;
   messageLimit: number;
   activeHintId: GreetingHintId | null;
@@ -255,8 +355,8 @@ type Props = {
   onHintSelect: (hint: GreetingHint) => void;
   onHideHintExample: () => void;
   onUseResult: (text: string) => void;
-  onModeSelect: (mode: AiJoinResultMode) => void;
-  onAnother: () => void;
+  onFamilySelect: (family: AiVariantFamily) => void;
+  onRequest: (operation: AiJoinOperation) => void;
   onAddDetail: (detail: string) => void;
   onPrevious: () => void;
   onNext: () => void;
@@ -266,15 +366,17 @@ type Props = {
 export const JoinSidePanel = ({
   state,
   result,
-  mode,
-  availableModes,
+  family,
+  availableFamilies,
+  familyCounts,
   historyIndex,
   historyCount,
   generationId,
   isPending,
-  pendingAction,
+  pendingOperation,
   limitReached,
   issues,
+  canRetry,
   remaining,
   messageLimit,
   activeHintId,
@@ -285,8 +387,8 @@ export const JoinSidePanel = ({
   onHintSelect,
   onHideHintExample,
   onUseResult,
-  onModeSelect,
-  onAnother,
+  onFamilySelect,
+  onRequest,
   onAddDetail,
   onPrevious,
   onNext,
@@ -303,7 +405,7 @@ export const JoinSidePanel = ({
               <span className={styles.sidePanelWand} aria-hidden="true" />
               <div>
                 <h2 className={styles.sectionTitle}>О чём можно написать</h2>
-                <p className={styles.hint}>Напишите мысли в поле поздравления. ИИ сохранит главное и соберёт один готовый текст.</p>
+                <p className={styles.hint}>Напишите мысли в поле поздравления. AI сохранит главное и соберёт один готовый текст.</p>
               </div>
             </div>
 
@@ -318,7 +420,7 @@ export const JoinSidePanel = ({
                 return (
                   <li key={hint.id}>
                     <button type="button" className={`${styles.promptButton} ${isActive ? styles.promptButtonActive : ""}`} aria-pressed={isActive} aria-controls={exampleBlockId} aria-label={hintAriaLabel(hint)} onClick={() => onHintSelect(hint)}>
-                      <span className={styles.promptIcon} aria-hidden="true">{hint.icon}</span>
+                      <span className={styles.promptIcon} aria-hidden="true">{hintIcons[hint.id]}</span>
                       <span>{hint.title}</span>
                     </button>
                   </li>
@@ -364,7 +466,7 @@ export const JoinSidePanel = ({
                 </li>
               ))}
             </ul>
-            <footer className={styles.panelFooter}><p className={styles.panelFooterNote}><span aria-hidden="true">⏳</span> Обычно это занимает несколько секунд.</p></footer>
+            <footer className={styles.panelFooter}><p className={styles.panelFooterNote}>Обычно это занимает несколько секунд.</p></footer>
           </div>
         ) : null}
 
@@ -374,34 +476,37 @@ export const JoinSidePanel = ({
               <span className={styles.sidePanelWand} aria-hidden="true" />
               <div>
                 <h2 className={styles.sectionTitle}>Не получилось подготовить текст</h2>
-                <p className={styles.hint}>Ваши мысли остались в поле. Попробуйте ещё раз через несколько секунд.</p>
+                <p className={styles.hint}>Ваши мысли остались в поле.</p>
               </div>
             </div>
             {issues.length > 0 ? <ul className={styles.panelErrorList}>{issues.map((issue) => <li key={issue}>{issue}</li>)}</ul> : null}
-            <div><button type="button" className={styles.panelRetryButton} disabled={isPending} onClick={onRetry}>Повторить</button></div>
+            {canRetry ? <div><button type="button" className={styles.panelRetryButton} disabled={isPending} onClick={onRetry}>Повторить</button></div> : null}
           </div>
         ) : null}
 
         {state === "result" && result ? (
           <JoinResult
             result={result}
-            mode={mode}
-            availableModes={availableModes}
+            family={family}
+            availableFamilies={availableFamilies}
+            familyCounts={familyCounts}
             historyIndex={historyIndex}
             historyCount={historyCount}
             generationId={generationId}
             isPending={isPending}
-            pendingAction={pendingAction}
+            pendingOperation={pendingOperation}
             limitReached={limitReached}
             remaining={remaining}
             issues={issues}
+            canRetry={canRetry}
             messageLimit={messageLimit}
             onUseResult={onUseResult}
-            onModeSelect={onModeSelect}
-            onAnother={onAnother}
+            onFamilySelect={onFamilySelect}
+            onRequest={onRequest}
             onAddDetail={onAddDetail}
             onPrevious={onPrevious}
             onNext={onNext}
+            onRetry={onRetry}
           />
         ) : null}
       </section>

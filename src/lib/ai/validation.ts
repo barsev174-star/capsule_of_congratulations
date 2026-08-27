@@ -4,6 +4,7 @@ export const AI_DRAFT_LIMIT = 700;
 export const AI_SHORTEN_DRAFT_LIMIT = 1500;
 export const AI_DRAFT_MIN_LENGTH = 20;
 export const AI_JOIN_SOURCE_LIMIT = 1500;
+export const AI_REQUIRED_DETAIL_LIMIT = 300;
 
 export type AiValidationIssue = {
   field: string;
@@ -17,7 +18,7 @@ export type AiValidationResult =
 const styles: AiStyle[] = ["warm-simple", "short-no-pathos", "humor", "touching", "respectful"];
 const modes: AiGenerationMode[] = ["compose", "improve", "shorten"];
 const editInstructions: AiEditInstruction[] = ["shorten", "warmer", "formal", "proofread", "detail", "alternative"];
-const joinActions: AiJoinAction[] = ["initial", "warmer", "creative", "alternative", "shorten"];
+const joinActions: AiJoinAction[] = ["initial", "warmer", "creative", "alternative", "expand", "shorten"];
 const participantSafeEditInstructions: AiEditInstruction[] = ["shorten", "proofread"];
 
 export const isParticipantSafeEditInstruction = (instruction: AiEditInstruction | undefined) =>
@@ -150,8 +151,8 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
 
   if (requiredDetail && (!joinAction || joinAction !== "initial" || !publicSlug)) {
     issues.push({ field: "requiredDetail", message: "Дополнительную деталь можно добавить только к тексту участника." });
-  } else if (countCharacters(requiredDetail) > 300) {
-    issues.push({ field: "requiredDetail", message: "Дополнительная деталь должна быть не длиннее 300 символов." });
+  } else if (countCharacters(requiredDetail) > AI_REQUIRED_DETAIL_LIMIT) {
+    issues.push({ field: "requiredDetail", message: `Дополнительная деталь должна быть не длиннее ${AI_REQUIRED_DETAIL_LIMIT} символов.` });
   }
 
   if (mode === "compose" && editInstruction) {

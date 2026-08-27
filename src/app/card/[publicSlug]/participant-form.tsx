@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { AI_DRAFT_LIMIT } from "@/lib/ai/validation";
-import type { AiJoinAction, AiJoinResultMode, AiVariant } from "@/lib/ai/types";
+import { AI_DRAFT_LIMIT, AI_REQUIRED_DETAIL_LIMIT } from "@/lib/ai/validation";
+import type { AiJoinAction, AiJoinOperation, AiVariant, AiVariantFamily } from "@/lib/ai/types";
 import { AiHelper } from "./ai-helper";
 import { TextAssistIcon } from "@/components/icons/text-assist-icon";
 import { GiftPollVote } from "./gift-poll-vote";
@@ -25,16 +25,33 @@ type Props = {
   messageLimit: number;
   variant?: "default" | "join";
   greetingMode?: "classic" | "matrix" | "ladder";
+  socialProof?: ReactNode;
 };
 
 const DEFAULT_MESSAGE_PLACEHOLDER =
   "Напишите несколько теплых слов: что цените, за что благодарны, какой момент хочется вспомнить...";
 
-type StoredJoinResult = { variant: AiVariant; generationId: string };
-type JoinResultHistory = Record<AiJoinResultMode, StoredJoinResult[]>;
-type JoinResultIndexes = Record<AiJoinResultMode, number>;
-const emptyJoinResultHistory = (): JoinResultHistory => ({ initial: [], warmer: [], creative: [], shorten: [] });
-const initialJoinResultIndexes: JoinResultIndexes = { initial: 0, warmer: 0, creative: 0, shorten: 0 };
+type StoredJoinResult = { variant: AiVariant; generationId: string; family: AiVariantFamily };
+type JoinResultHistory = Record<AiVariantFamily, StoredJoinResult[]>;
+type JoinResultIndexes = Record<AiVariantFamily, number>;
+
+const appendAiDetail = (current: string, addition: string) => {
+  const normalizedCurrent = current.trim();
+  const normalizedAddition = addition.trim();
+  if (!normalizedCurrent) return normalizedAddition;
+  return `${normalizedCurrent}${/[.!?…]$/u.test(normalizedCurrent) ? " " : ". "}${normalizedAddition}`;
+};
+type AiRequestOptions = { addedDetail?: string; resetSource?: boolean; requestId?: string };
+type FailedAiRequest = { operation: AiJoinOperation; options?: AiRequestOptions };
+const emptyJoinResultHistory = (): JoinResultHistory => ({ main: [], warm: [], creative: [] });
+const initialJoinResultIndexes: JoinResultIndexes = { main: 0, warm: 0, creative: 0 };
+
+const getTargetFamily = (operation: AiJoinOperation, activeFamily: AiVariantFamily): AiVariantFamily => {
+  if (operation === "warmer") return "warm";
+  if (operation === "creative") return "creative";
+  if (operation === "expand" || operation === "shorten") return activeFamily;
+  return "main";
+};
 
 export const ParticipantForm = ({
   cardId,
@@ -43,7 +60,8 @@ export const ParticipantForm = ({
   occasionText,
   messageLimit,
   variant = "default",
-  greetingMode = "classic"
+  greetingMode = "classic",
+  socialProof
 }: Props) => {
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
@@ -57,14 +75,16 @@ export const ParticipantForm = ({
   const [isPending, startTransition] = useTransition();
   const isJoin = variant === "join";
   const [aiResults, setAiResults] = useState<JoinResultHistory>(emptyJoinResultHistory);
-  const [aiActiveMode, setAiActiveMode] = useState<AiJoinResultMode>("initial");
+  const [aiActiveFamily, setAiActiveFamily] = useState<AiVariantFamily>("main");
   const [aiResultIndexes, setAiResultIndexes] = useState<JoinResultIndexes>(initialJoinResultIndexes);
   const [aiSourceDraft, setAiSourceDraft] = useState("");
-  const [aiPendingAction, setAiPendingAction] = useState<AiJoinAction | null>(null);
+  const [aiPendingAction, setAiPendingAction] = useState<AiJoinOperation | null>(null);
   const [aiIssues, setAiIssues] = useState<string[]>([]);
   const [aiRemaining, setAiRemaining] = useState<number | null>(null);
   const [aiLimitReached, setAiLimitReached] = useState(false);
   const [aiUndoDraft, setAiUndoDraft] = useState<string | null>(null);
+  const [aiDetails, setAiDetails] = useState("");
+  const [failedAiRequest, setFailedAiRequest] = useState<FailedAiRequest | null>(null);
   const [isAiPending, startAiTransition] = useTransition();
   const pendingAiRequestId = useRef<string | null>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
@@ -81,8 +101,8 @@ export const ParticipantForm = ({
   const isOverLimit = message.length > messageLimit;
   const activeHint = GREETING_HINTS.find((hint) => hint.id === activeHintId) ?? null;
   const activeHintExample = activeHint ? activeHint.examples[hintIndexes[activeHint.id]] : null;
-  const activeAiHistory = aiResults[aiActiveMode];
-  const activeAiResultIndex = Math.min(aiResultIndexes[aiActiveMode], Math.max(0, activeAiHistory.length - 1));
+  const activeAiHistory = aiResults[aiActiveFamily];
+  const activeAiResultIndex = Math.min(aiResultIndexes[aiActiveFamily], Math.max(0, activeAiHistory.length - 1));
   const activeAiResult = activeAiHistory[activeAiResultIndex] ?? null;
   const aiPanelState =
     activeAiResult ? "result" : aiIssues.length > 0 ? "error" : isAiPending ? "loading" : "idle";
@@ -149,7 +169,7 @@ export const ParticipantForm = ({
     setAiGenerationIds([]);
     setAiResetSignal((current) => current + 1);
     setAiResults(emptyJoinResultHistory());
-    setAiActiveMode("initial");
+    setAiActiveFamily("main");
     setAiResultIndexes(initialJoinResultIndexes);
     setAiSourceDraft("");
     setAiPendingAction(null);
@@ -157,31 +177,46 @@ export const ParticipantForm = ({
     setAiRemaining(null);
     setAiLimitReached(false);
     setAiUndoDraft(null);
+    setAiDetails("");
+    setFailedAiRequest(null);
     router.refresh();
   };
 
-  const handleAiGenerate = async (
-    action: AiJoinResultMode = "initial",
-    options?: { addedDetail?: string; resetSource?: boolean }
-  ) => {
-    const requestId = pendingAiRequestId.current ?? crypto.randomUUID();
+  const handleAiGenerate = async (operation: AiJoinOperation = "initial", options?: AiRequestOptions) => {
+    if (pendingAiRequestId.current) return;
+    const requestId = options?.requestId ?? crypto.randomUUID();
     pendingAiRequestId.current = requestId;
     setAiIssues([]);
-    setAiPendingAction(action);
-    const baseDraft = options?.resetSource ? message : aiSourceDraft || message;
-    const detailSuffix = options?.addedDetail ? `\n\nЕщё одна важная деталь: ${options.addedDetail}` : "";
-    const draftBudget = Math.max(0, AI_DRAFT_LIMIT - Array.from(detailSuffix).length);
-    const generationDraft = `${Array.from(baseDraft).slice(0, draftBudget).join("")}${detailSuffix}`;
-    const latestMainResult = aiResults.initial.at(-1)?.variant.text;
+    setAiPendingAction(operation);
+    const generationDraft = options?.resetSource ? message.trim() : (aiSourceDraft || message).trim();
+    const nextDetails = options?.addedDetail ? appendAiDetail(aiDetails, options.addedDetail) : aiDetails;
+
+    if (Array.from(generationDraft).length > AI_DRAFT_LIMIT) {
+      setAiIssues([`AI-помощник принимает до ${AI_DRAFT_LIMIT} символов. Сократите черновик и попробуйте снова.`]);
+      pendingAiRequestId.current = null;
+      return;
+    }
+    if (Array.from(nextDetails).length > AI_REQUIRED_DETAIL_LIMIT) {
+      setAiIssues([`Дополнительные детали должны быть не длиннее ${AI_REQUIRED_DETAIL_LIMIT} символов.`]);
+      pendingAiRequestId.current = null;
+      return;
+    }
+
+    const action: AiJoinAction = operation === "add_detail" ? "initial" : operation;
+    const latestMainResult = aiResults.main.at(-1)?.variant.text;
     const sourceText = action === "initial"
       ? undefined
-      : action === "shorten"
-        ? activeAiResult?.variant.text ?? latestMainResult
-        : latestMainResult ?? activeAiResult?.variant.text;
+      : action === "alternative"
+        ? latestMainResult ?? activeAiResult?.variant.text
+        : activeAiResult?.variant.text ?? latestMainResult;
+    const targetFamily = getTargetFamily(operation, aiActiveFamily);
+    const requestSnapshot: FailedAiRequest = {
+      operation,
+      options: { ...options, requestId }
+    };
 
-    let response: Response;
     try {
-      response = await fetch("/api/ai/generate-greeting", {
+      const response = await fetch("/api/ai/generate-greeting", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -193,88 +228,79 @@ export const ParticipantForm = ({
           relationshipContext: authorRole,
           joinAction: action,
           sourceText,
-          requiredDetail: options?.addedDetail
+          requiredDetail: operation === "add_detail" ? nextDetails : undefined
         })
       });
+      const payload = await response.json();
+      if (!response.ok) {
+        setAiLimitReached(response.status === 429);
+        if (response.status === 429) setAiRemaining(0);
+        setAiIssues(
+          payload.issues
+            ? payload.issues.map((issue: { message: string }) => issue.message)
+            : [payload.message ?? "Не удалось получить текст."]
+        );
+        setFailedAiRequest(response.status === 429 ? null : requestSnapshot);
+        return;
+      }
+
+      const nextResult = payload.result.variants[0] as AiVariant;
+      const shouldResetAll = Boolean(options?.resetSource);
+      const nextHistoryLength = shouldResetAll ? 1 : aiResults[targetFamily].length + 1;
+      setAiResults((current) => {
+        const base = shouldResetAll ? emptyJoinResultHistory() : current;
+        return {
+          ...base,
+          [targetFamily]: [...base[targetFamily], { variant: nextResult, generationId: payload.result.generationId, family: targetFamily }]
+        };
+      });
+      setAiActiveFamily(targetFamily);
+      setAiResultIndexes((current) => ({
+        ...(shouldResetAll ? initialJoinResultIndexes : current),
+        [targetFamily]: nextHistoryLength - 1
+      }));
+      if (options?.resetSource) {
+        setAiSourceDraft(generationDraft);
+        setAiDetails("");
+      } else if (operation === "add_detail") {
+        setAiDetails(nextDetails);
+      }
+      setAiGenerationIds((current) =>
+        current.includes(payload.result.generationId) ? current : [...current, payload.result.generationId]
+      );
+      setAiRemaining(payload.result.usage.remaining);
+      setAiLimitReached(payload.result.usage.remaining === 0);
+      setFailedAiRequest(null);
     } catch {
       setAiIssues(["Не удалось связаться с AI-помощником. Проверьте соединение и попробуйте ещё раз."]);
-      return;
+      setFailedAiRequest(requestSnapshot);
     } finally {
       pendingAiRequestId.current = null;
     }
-
-    const payload = await response.json();
-    if (!response.ok) {
-      setAiLimitReached(response.status === 429);
-      if (response.status === 429) setAiRemaining(0);
-      setAiIssues(
-        payload.issues
-          ? payload.issues.map((issue: { message: string }) => issue.message)
-          : [payload.message ?? "Не удалось получить текст."]
-      );
-      return;
-    }
-
-    const nextResult = payload.result.variants[0] as AiVariant;
-    const shouldResetAll = Boolean(options?.resetSource);
-    const shouldResetDerived = Boolean(options?.addedDetail);
-    const nextHistoryLength = shouldResetAll
-      ? 1
-      : action === "initial"
-        ? aiResults.initial.length + 1
-        : aiResults[action].length + 1;
-    setAiResults((current) => {
-      const base = shouldResetAll
-        ? emptyJoinResultHistory()
-        : shouldResetDerived
-          ? { ...current, warmer: [], creative: [], shorten: [] }
-          : current;
-      return {
-        ...base,
-        [action]: [...base[action], { variant: nextResult, generationId: payload.result.generationId }]
-      };
-    });
-    setAiActiveMode(action);
-    setAiResultIndexes((current) => ({
-      ...(shouldResetAll ? initialJoinResultIndexes : shouldResetDerived ? { ...current, warmer: 0, creative: 0, shorten: 0 } : current),
-      [action]: nextHistoryLength - 1
-    }));
-    if (options?.resetSource || options?.addedDetail) setAiSourceDraft(generationDraft);
-    setAiGenerationIds((current) =>
-      current.includes(payload.result.generationId) ? current : [...current, payload.result.generationId]
-    );
-    setAiRemaining(payload.result.usage.remaining);
-    setAiLimitReached(payload.result.usage.remaining === 0);
   };
 
-  const generateAiResult = (
-    action: AiJoinResultMode = "initial",
-    options?: { addedDetail?: string; resetSource?: boolean }
-  ) => {
+  const generateAiResult = (operation: AiJoinOperation = "initial", options?: AiRequestOptions) => {
     startAiTransition(async () => {
       try {
-        await handleAiGenerate(action, options);
+        await handleAiGenerate(operation, options);
       } finally {
         setAiPendingAction(null);
       }
     });
   };
 
-  const handleAiModeSelect = (mode: AiJoinResultMode) => {
-    const history = aiResults[mode];
+  const handleAiFamilySelect = (family: AiVariantFamily) => {
+    const history = aiResults[family];
     setAiIssues([]);
     if (history.length > 0) {
-      setAiActiveMode(mode);
-      setAiResultIndexes((current) => ({ ...current, [mode]: history.length - 1 }));
-      return;
+      setAiActiveFamily(family);
     }
-    generateAiResult(mode);
   };
 
   const moveAiHistory = (direction: -1 | 1) => {
     setAiResultIndexes((current) => ({
       ...current,
-      [aiActiveMode]: Math.max(0, Math.min(activeAiHistory.length - 1, current[aiActiveMode] + direction))
+      [aiActiveFamily]: Math.max(0, Math.min(activeAiHistory.length - 1, current[aiActiveFamily] + direction))
     }));
     setAiIssues([]);
   };
@@ -409,7 +435,7 @@ export const ParticipantForm = ({
                 name="message"
                 placeholder={DEFAULT_MESSAGE_PLACEHOLDER}
                 required
-                maxLength={1500}
+                maxLength={AI_DRAFT_LIMIT}
                 value={message}
                 onChange={(event) => handleMessageChange(event.target.value)}
               />
@@ -465,17 +491,19 @@ export const ParticipantForm = ({
           </section>
         )
       ) : (
-        <form
-          className={styles.formShell}
-          action={(formData) => {
-            formData.set("cardId", cardId);
+        <div className={styles.participantWorkspace}>
+          <div className={styles.participantLeftColumn}>
+            <form
+              className={styles.formShell}
+              action={(formData) => {
+                formData.set("cardId", cardId);
 
-            startTransition(async () => {
-              await handleSubmit(formData);
-            });
-          }}
-        >
-          <div className={styles.formMainSurface}>
+                startTransition(async () => {
+                  await handleSubmit(formData);
+                });
+              }}
+            >
+              <div className={styles.formMainSurface}>
           <section className={`${styles.formCard} ${styles.formCardMain}`}>
             <div className={styles.form}>
               <div className={styles.cardHeader}>
@@ -549,7 +577,7 @@ export const ParticipantForm = ({
                     ref={messageRef}
                     placeholder={DEFAULT_MESSAGE_PLACEHOLDER}
                     required
-                    maxLength={1500}
+                    maxLength={AI_DRAFT_LIMIT}
                     value={message}
                     aria-describedby="join-editor-limit"
                     onChange={(event) => handleMessageChange(event.target.value)}
@@ -612,20 +640,29 @@ export const ParticipantForm = ({
               </div>
             </div>
           </section>
+              </div>
+            </form>
+            {socialProof}
           </div>
 
           <JoinSidePanel
             state={aiPanelState}
             result={activeAiResult?.variant ?? null}
-            mode={aiActiveMode}
-            availableModes={(Object.keys(aiResults) as AiJoinResultMode[]).filter((mode) => aiResults[mode].length > 0)}
+            family={aiActiveFamily}
+            availableFamilies={(Object.keys(aiResults) as AiVariantFamily[]).filter((family) => aiResults[family].length > 0)}
+            familyCounts={{
+              main: aiResults.main.length,
+              warm: aiResults.warm.length,
+              creative: aiResults.creative.length
+            }}
             historyIndex={activeAiResultIndex}
             historyCount={activeAiHistory.length}
             generationId={activeAiResult?.generationId ?? ""}
             isPending={isAiPending}
-            pendingAction={aiPendingAction}
+            pendingOperation={aiPendingAction}
             limitReached={aiLimitReached}
             issues={aiIssues}
+            canRetry={Boolean(failedAiRequest)}
             remaining={aiRemaining}
             messageLimit={messageLimit}
             activeHintId={activeHintId}
@@ -636,14 +673,16 @@ export const ParticipantForm = ({
             onHintSelect={handleHintSelect}
             onHideHintExample={() => setHintBlockVisible(false)}
             onUseResult={handleUseVariant}
-            onModeSelect={handleAiModeSelect}
-            onAnother={() => generateAiResult(aiActiveMode)}
-            onAddDetail={(detail) => generateAiResult("initial", { addedDetail: detail })}
+            onFamilySelect={handleAiFamilySelect}
+            onRequest={(operation) => generateAiResult(operation)}
+            onAddDetail={(detail) => generateAiResult("add_detail", { addedDetail: detail })}
             onPrevious={() => moveAiHistory(-1)}
             onNext={() => moveAiHistory(1)}
-            onRetry={() => generateAiResult("initial", { resetSource: !aiSourceDraft })}
+            onRetry={() => {
+              if (failedAiRequest) generateAiResult(failedAiRequest.operation, failedAiRequest.options);
+            }}
           />
-        </form>
+        </div>
       )}
       <GiftPollVote
         key={hasSubmitted ? "participant-submitted" : "participant-new"}
@@ -652,6 +691,7 @@ export const ParticipantForm = ({
         inviteToReveal
         showGreetingSuccess={isJoin}
       />
+      {hasSubmitted ? socialProof : null}
     </>
   );
 };

@@ -6,7 +6,7 @@ const items: ContributionStripItem[] = Array.from({ length: 7 }, (_, index) => (
   id: `contribution-${index + 1}`,
   authorName: `Участник ${index + 1}`,
   authorRole: index === 0 ? "мама Миши" : null,
-  message: `Тёплое поздравление номер ${index + 1}`
+  preview: `Тёплое поздравление номер ${index + 1}`
 }));
 
 beforeEach(() => {
@@ -29,11 +29,11 @@ describe("ContributionsStrip", () => {
     const { container } = render(<ContributionsStrip items={items} />);
 
     const cards = container.querySelectorAll("li");
-    expect(cards).toHaveLength(15);
-    expect(cards[4]).toHaveTextContent("Участник 1");
-    expect(cards[10]).toHaveTextContent("Участник 7");
+    expect(cards).toHaveLength(13);
+    expect(cards[3]).toHaveTextContent("Участник 1");
+    expect(cards[9]).toHaveTextContent("Участник 7");
     expect(cards[0]).toHaveAttribute("aria-hidden", "true");
-    expect(cards[11]).toHaveAttribute("aria-hidden", "true");
+    expect(cards[10]).toHaveAttribute("aria-hidden", "true");
   });
 
   it("даёт карусели и стрелкам доступные имена", () => {
@@ -55,7 +55,7 @@ describe("ContributionsStrip", () => {
   });
 
   it("не показывает навигацию, когда на desktop помещаются все карточки", () => {
-    render(<ContributionsStrip items={items.slice(0, 4)} />);
+    render(<ContributionsStrip items={items.slice(0, 3)} />);
 
     expect(screen.queryByRole("button", { name: "Показать предыдущее поздравление" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Показать следующее поздравление" })).not.toBeInTheDocument();
@@ -109,6 +109,20 @@ describe("ContributionsStrip", () => {
     act(() => { vi.advanceTimersByTime(5000); });
 
     expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ behavior: "auto" }));
+    vi.useRealTimers();
+  });
+
+  it("автоматически меняет поздравления и на мобильном экране", () => {
+    vi.useFakeTimers();
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+    const scrollBy = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollBy", { configurable: true, value: scrollBy });
+    Object.defineProperty(HTMLElement.prototype, "scrollTo", { configurable: true, value: vi.fn() });
+
+    render(<ContributionsStrip items={items} />);
+    act(() => { vi.advanceTimersByTime(5_000); });
+
+    expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ behavior: "smooth" }));
     vi.useRealTimers();
   });
 });

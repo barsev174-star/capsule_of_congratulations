@@ -218,6 +218,22 @@ describe("validateAiGenerationFormData", () => {
     if (result.success) expect(result.data.sourceText).toContain("Спасибо за поддержку");
   });
 
+  it("accepts expanding the active join result", () => {
+    const result = validateAiGenerationFormData(
+      buildFormData({
+        cardId: "card_1",
+        publicSlug: "card-slug",
+        draftNotes: "Спасибо за поддержку и добрые слова в важный момент.",
+        sourceText: "Спасибо за поддержку. Желаю радостных дней.",
+        style: "touching",
+        joinAction: "expand"
+      })
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.joinAction).toBe("expand");
+  });
+
   it("accepts a required detail only for the initial join result", () => {
     const result = validateAiGenerationFormData(
       buildFormData({

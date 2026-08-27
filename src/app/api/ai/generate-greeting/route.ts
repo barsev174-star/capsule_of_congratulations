@@ -133,7 +133,10 @@ export async function POST(request: Request) {
       messageLimit,
       existingMessages,
       mode: input.mode,
-      editInstruction: input.editInstruction
+      editInstruction: input.editInstruction,
+      joinAction: input.joinAction,
+      sourceText: input.sourceText,
+      requiredDetail: input.requiredDetail
     });
 
     return NextResponse.json({ ok: true, result }, { status: 200 });

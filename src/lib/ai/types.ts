@@ -10,8 +10,9 @@ export type AiMatrixVariantType = "short" | "warm" | AiStyle;
 export type AiProviderName = "mock" | "gigachat" | "openai";
 export type AiGenerationMode = "compose" | "improve" | "shorten";
 export type AiEditInstruction = "shorten" | "warmer" | "formal" | "proofread" | "detail" | "alternative";
-export type AiJoinAction = "initial" | "warmer" | "creative" | "alternative" | "shorten";
-export type AiJoinResultMode = Exclude<AiJoinAction, "alternative">;
+export type AiVariantFamily = "main" | "warm" | "creative";
+export type AiJoinAction = "initial" | "warmer" | "creative" | "alternative" | "expand" | "shorten";
+export type AiJoinOperation = AiJoinAction | "add_detail";
 export type AiGenerationType = "participant_message" | "best_quotes" | "qualities";
 export type AiCardInsightType = "quotes" | "qualities";
 

@@ -128,6 +128,16 @@ describe("two-stage greeting generation", () => {
     expect(creative.user).toContain("Текущий готовый текст");
   });
 
+  it("expands only the active text without inventing new details", () => {
+    const source = "Спасибо за поддержку. Желаю здоровья.";
+    const expanded = buildSingleComposerPrompt(input, plan, "expand", source);
+
+    expect(expanded.system).toContain("подробнее раскрой уже названные мысли");
+    expect(expanded.system).toContain("Не добавляй новых фактов");
+    expect(expanded.user).toContain(source);
+    expect(expanded.user).toContain("не более 77 символов");
+  });
+
   it("validates a single result with the same semantic safeguards", () => {
     vi.stubEnv("AI_GREETING_PROMPT_PROFILE", "yandex");
     const result = validateSingleComposerText(

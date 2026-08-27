@@ -7,7 +7,7 @@ export type ContributionStripItem = {
   id: string;
   authorName: string;
   authorRole: string | null;
-  message: string;
+  preview: string;
 };
 
 const AUTOPLAY_DELAY = 5000;
@@ -15,7 +15,6 @@ const AUTOPLAY_DELAY = 5000;
 const getInitial = (name: string) => name.trim().charAt(0).toUpperCase() || "Д";
 
 const getVisibleSlots = () => {
-  if (window.innerWidth >= 1180) return 4;
   if (window.innerWidth >= 720) return 3;
   return 1;
 };
@@ -159,6 +158,7 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
       className={`${styles.contribCarousel} ${!canNavigate ? styles.contribCarouselStatic : ""}`}
       aria-roledescription="carousel"
       aria-label="Поздравления участников"
+      aria-live="off"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onFocusCapture={() => setHasFocus(true)}
@@ -185,7 +185,7 @@ export const ContributionsStrip = ({ items }: { items: ContributionStripItem[] }
                 <span className={styles.contribCardBody}>
                   <span className={styles.contribAuthorName} title={item.authorName}>{item.authorName}</span>
                   <span className={styles.contribCardRole} title={item.authorRole ?? undefined}>{item.authorRole ?? ""}</span>
-                  <span className={styles.contribCardText}>{item.message}</span>
+                  <span className={styles.contribCardText}>{item.preview}</span>
                 </span>
               </li>
             );

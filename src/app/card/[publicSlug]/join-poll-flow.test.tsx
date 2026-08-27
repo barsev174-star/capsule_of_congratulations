@@ -41,15 +41,17 @@ const budgetPoll = {
 
 const panelProps = {
   result: null,
-  mode: "initial" as const,
-  availableModes: ["initial" as const],
+  family: "main" as const,
+  availableFamilies: ["main" as const],
+  familyCounts: { main: 1, warm: 0, creative: 0 },
   historyIndex: 0,
   historyCount: 1,
   generationId: "",
   isPending: false,
-  pendingAction: null,
+  pendingOperation: null,
   limitReached: false,
   issues: [],
+  canRetry: false,
   remaining: null,
   messageLimit: 280,
   activeHintId: null,
@@ -59,8 +61,8 @@ const panelProps = {
   onHintSelect: vi.fn(),
   onHideHintExample: vi.fn(),
   onUseResult: vi.fn(),
-  onModeSelect: vi.fn(),
-  onAnother: vi.fn(),
+  onFamilySelect: vi.fn(),
+  onRequest: vi.fn(),
   onAddDetail: vi.fn(),
   onPrevious: vi.fn(),
   onNext: vi.fn(),
@@ -113,19 +115,20 @@ describe("JoinSidePanel — приоритет состояний", () => {
     render(<JoinSidePanel {...panelProps} state="result" result={result} hasActivePoll={true} />);
 
     expect(screen.getByText("Готовый текст")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Теплее" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Творческий" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Ещё вариант «Основной»/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Основной" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Теплее" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Творческий/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Другой вариант/ })).toBeInTheDocument();
     expect(screen.queryByText(/выбрать подарок/i)).not.toBeInTheDocument();
   });
 
   it("при преобразовании сохраняет готовый текст и показывает выбранное действие", () => {
     const result = { id: "short" as const, label: "Готовый текст", text: "Вариант один" };
-    render(<JoinSidePanel {...panelProps} state="result" result={result} isPending pendingAction="creative" />);
+    render(<JoinSidePanel {...panelProps} state="result" result={result} isPending pendingOperation="creative" />);
 
     expect(screen.getByText("Вариант один")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("Готовим творческую версию");
-    expect(screen.getByRole("tab", { name: "Творческий" })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Создаём творческий вариант");
+    expect(screen.getByRole("button", { name: /Творческий/ })).toBeDisabled();
   });
 
   it("при ошибке преобразования не скрывает прежний результат", () => {
@@ -136,29 +139,59 @@ describe("JoinSidePanel — приоритет состояний", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Текущий текст сохранён");
   });
 
-  it("запрашивает выбранное преобразование и принимает новую деталь", async () => {
-    const onModeSelect = vi.fn();
+  it("держит открытым только один accordion-пункт и принимает новую деталь", async () => {
+    const onRequest = vi.fn();
     const onAddDetail = vi.fn();
     const result = { id: "short" as const, label: "Готовый текст", text: "Спасибо за поддержку. Желаю здоровья и радостных дней." };
-    render(<JoinSidePanel {...panelProps} state="result" result={result} onModeSelect={onModeSelect} onAddDetail={onAddDetail} />);
+    render(<JoinSidePanel {...panelProps} state="result" result={result} onRequest={onRequest} onAddDetail={onAddDetail} />);
 
-    await userEvent.click(screen.getByRole("tab", { name: "Творческий" }));
-    expect(onModeSelect).toHaveBeenCalledWith("creative");
+    await userEvent.click(screen.getByRole("button", { name: /Творческий/ }));
+    expect(onRequest).not.toHaveBeenCalled();
+    expect(screen.getByText(/Подача станет свободнее и образнее/)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Добавить детали" }));
-    await userEvent.type(screen.getByLabelText("Какую деталь добавить?"), "Он помог мне с переездом");
-    await userEvent.click(screen.getByRole("button", { name: "Добавить и обновить текст" }));
+    await userEvent.click(screen.getByRole("button", { name: /Добавить свои детали/ }));
+    expect(screen.queryByText(/Подача станет свободнее и образнее/)).not.toBeInTheDocument();
+    expect(screen.getByText(/отдельном основном варианте.*версии сохранятся/iu)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Создать вариант с деталями" })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("button", { name: /Добавить свои детали/ }));
+    expect(screen.queryByLabelText("Что ещё важно упомянуть?")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /Творческий/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Создать творческий вариант" }));
+    expect(onRequest).toHaveBeenCalledWith("creative");
+
+    await userEvent.click(screen.getByRole("button", { name: /Добавить свои детали/ }));
+    await userEvent.type(screen.getByLabelText("Что ещё важно упомянуть?"), "Он помог мне с переездом");
+    expect(screen.getByText("24 / 300")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Создать вариант с деталями" }));
     expect(onAddDetail).toHaveBeenCalledWith("Он помог мне с переездом");
+    expect(screen.queryByLabelText("Что ещё важно упомянуть?")).not.toBeInTheDocument();
+  });
+
+  it("считает Unicode-символы и не активирует детали из одних пробелов", async () => {
+    const result = { id: "short" as const, label: "Готовый текст", text: "Спасибо за поддержку. Желаю здоровья и радостных дней." };
+    render(<JoinSidePanel {...panelProps} state="result" result={result} />);
+
+    await userEvent.click(screen.getByRole("button", { name: /Добавить свои детали/ }));
+    const detailField = screen.getByLabelText("Что ещё важно упомянуть?");
+    const createButton = screen.getByRole("button", { name: "Создать вариант с деталями" });
+    await userEvent.type(detailField, "   ");
+    expect(createButton).toBeDisabled();
+    await userEvent.type(detailField, "🙂");
+    expect(screen.getByText("4 / 300")).toBeInTheDocument();
+    expect(createButton).toBeEnabled();
   });
 
   it("показывает сокращение только для достаточно длинного результата", () => {
     const shortResult = { id: "short" as const, label: "Готовый текст", text: "Спасибо за поддержку. Желаю здоровья." };
     const { rerender } = render(<JoinSidePanel {...panelProps} state="result" result={shortResult} />);
-    expect(screen.queryByRole("tab", { name: "Короче" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Сделать короче/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Раскрыть подробнее/ })).toBeInTheDocument();
 
     const longResult = { ...shortResult, text: "Спасибо за поддержку и помощь в самых разных ситуациях. ".repeat(5) };
     rerender(<JoinSidePanel {...panelProps} state="result" result={longResult} />);
-    expect(screen.getByRole("tab", { name: "Короче" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Сделать короче/ })).toBeInTheDocument();
   });
 
   it("перелистывает историю только внутри выбранного режима", async () => {
@@ -170,8 +203,9 @@ describe("JoinSidePanel — приоритет состояний", () => {
         {...panelProps}
         state="result"
         result={result}
-        mode="warmer"
-        availableModes={["initial", "warmer"]}
+        family="warm"
+        availableFamilies={["main", "warm"]}
+        familyCounts={{ main: 1, warm: 2, creative: 0 }}
         historyIndex={1}
         historyCount={2}
         onPrevious={onPrevious}
@@ -180,17 +214,18 @@ describe("JoinSidePanel — приоритет состояний", () => {
     );
 
     expect(screen.getByText("2 из 2")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "← Предыдущий" }));
+    await userEvent.click(screen.getByRole("button", { name: "Предыдущий вариант" }));
     expect(onPrevious).toHaveBeenCalledOnce();
-    expect(screen.getByRole("button", { name: "Следующий →" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Следующий вариант" })).toBeDisabled();
   });
 
-  it("явно объясняет отключённые действия после окончания попыток", () => {
+  it("явно объясняет отключённые действия после окончания попыток", async () => {
     const result = { id: "short" as const, label: "Готовый текст", text: "Спасибо за поддержку. Желаю здоровья." };
     render(<JoinSidePanel {...panelProps} state="result" result={result} remaining={0} limitReached />);
 
-    expect(screen.getByText(/AI-попытки закончились.*создание новых вариантов/u)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Ещё вариант «Основной»/ })).toBeDisabled();
+    expect(screen.getByText(/AI-попытки закончились.*созданные варианты/iu)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Другой вариант/ }));
+    expect(screen.getByRole("button", { name: "Создать другой вариант" })).toBeDisabled();
     expect(screen.getByRole("tab", { name: "Основной" })).toBeEnabled();
   });
 

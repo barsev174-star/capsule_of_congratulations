@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "npm run db:migrate && next dev",
     "build": "next build",
+    "typecheck": "tsc --noEmit",
     "brand:assets": "node scripts/build-brand-assets.mjs",
     "brand:check": "node scripts/check-brand-layouts.mjs",
     "share:og-assets": "node scripts/build-public-share-og-assets.mjs",
