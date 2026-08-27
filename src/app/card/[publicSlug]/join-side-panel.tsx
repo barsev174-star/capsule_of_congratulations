@@ -1,71 +1,92 @@
 "use client";
 
 import { useState } from "react";
-import type { AiVariant } from "@/lib/ai/types";
+import type { AiJoinAction, AiJoinResultMode, AiVariant } from "@/lib/ai/types";
 import { GREETING_HINTS, type GreetingHint, type GreetingHintId } from "./greeting-hints";
 import styles from "./participant-page.module.css";
 
-export type JoinSidePanelState = "idle" | "loading" | "variants" | "error";
+export type JoinSidePanelState = "idle" | "loading" | "result" | "error";
 
-const LOADING_STEPS = ["Аккуратно", "Теплее", "Живее"];
+const LOADING_STEPS = ["Сохраняем смысл", "Собираем текст", "Проверяем детали"];
+
+const actionLabels: Record<AiJoinAction, string> = {
+  initial: "Собираем основной текст",
+  warmer: "Делаем текст теплее",
+  creative: "Готовим творческую версию",
+  alternative: "Собираем ещё один вариант",
+  shorten: "Сокращаем текст"
+};
+
+const modeLabels: Record<AiJoinResultMode, string> = {
+  initial: "Основной",
+  warmer: "Теплее",
+  creative: "Творческий",
+  shorten: "Короче"
+};
 
 const hintAriaLabel = (hint: GreetingHint) =>
   `Показать пример: ${hint.title.charAt(0).toLowerCase()}${hint.title.slice(1).replace(/\?$/, "")}`;
 
-const formatGenerationsLeft = (count: number) => {
+const formatAttemptsLeft = (count: number) => {
   const mod10 = count % 10;
   const mod100 = count % 100;
-
-  if (mod10 === 1 && mod100 !== 11) {
-    return `Осталась ${count} генерация`;
-  }
-
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return `Осталось ${count} генерации`;
-  }
-
-  return `Осталось ${count} генераций`;
+  if (mod10 === 1 && mod100 !== 11) return `Осталась ${count} AI-попытка`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `Осталось ${count} AI-попытки`;
+  return `Осталось ${count} AI-попыток`;
 };
 
-type VariantsProps = {
-  variants: AiVariant[];
+type ResultProps = {
+  result: AiVariant;
+  mode: AiJoinResultMode;
+  availableModes: AiJoinResultMode[];
+  historyIndex: number;
+  historyCount: number;
   generationId: string;
   isPending: boolean;
+  pendingAction: AiJoinAction | null;
   limitReached: boolean;
   remaining: number | null;
   issues: string[];
-  onUseVariant: (text: string) => void;
-  onRetry: () => void;
+  messageLimit: number;
+  onUseResult: (text: string) => void;
+  onModeSelect: (mode: AiJoinResultMode) => void;
+  onAnother: () => void;
+  onAddDetail: (detail: string) => void;
+  onPrevious: () => void;
+  onNext: () => void;
 };
 
-const JoinVariants = ({
-  variants,
+const JoinResult = ({
+  result,
+  mode,
+  availableModes,
+  historyIndex,
+  historyCount,
   generationId,
   isPending,
+  pendingAction,
   limitReached,
   remaining,
   issues,
-  onUseVariant,
-  onRetry
-}: VariantsProps) => {
-  const [activeVariantIndex, setActiveVariantIndex] = useState(0);
+  messageLimit,
+  onUseResult,
+  onModeSelect,
+  onAnother,
+  onAddDetail,
+  onPrevious,
+  onNext
+}: ResultProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const [inserted, setInserted] = useState(false);
-  const activeVariant = variants[activeVariantIndex] ?? variants[0];
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detail, setDetail] = useState("");
+  const panelId = `join-ai-result-${generationId || "result"}`;
+  const canShorten = Array.from(result.text).length > Math.min(220, Math.floor(messageLimit * 0.75));
 
-  if (!activeVariant) {
-    return null;
-  }
-
-  const panelId = `join-ai-variants-${generationId || "result"}`;
-  const tabId = (index: number) => `${panelId}-tab-${index}`;
-
-  const applyVariant = (text: string) => {
-    onUseVariant(text);
+  const applyResult = () => {
+    onUseResult(result.text);
     setInserted(true);
-    if (window.matchMedia("(max-width: 959px)").matches) {
-      setCollapsed(true);
-    }
+    if (window.matchMedia("(max-width: 959px)").matches) setCollapsed(true);
   };
 
   if (collapsed) {
@@ -74,97 +95,139 @@ const JoinVariants = ({
         {isPending ? (
           <div className={styles.aiGenerationProgress} role="status">
             <span className={styles.aiSpinner} aria-hidden="true" />
-            <span><strong>Готовим ещё три варианта</strong>Вставленный текст останется без изменений.</span>
-          </div>
-        ) : null}
-        {issues.length > 0 ? (
-          <div className={styles.aiRetainedError} role="alert">
-            <strong>Новые варианты не подготовились</strong>
-            <span>{issues[0]} Текущий текст сохранён.</span>
+            <span><strong>{actionLabels[pendingAction ?? "alternative"]}</strong>Вставленный текст останется без изменений.</span>
           </div>
         ) : null}
         <div className={styles.variantCollapsedRow}>
-          <span>Вариант вставлен</span>
-          <button
-            type="button"
-            className={styles.variantCollapsedButton}
-            aria-expanded={false}
-            aria-controls={panelId}
-            onClick={() => setCollapsed(false)}
-          >
-            Показать остальные
+          <span>Текст вставлен</span>
+          <button type="button" className={styles.variantCollapsedButton} aria-expanded={false} aria-controls={panelId} onClick={() => setCollapsed(false)}>
+            Показать результат
             <span className={styles.variantCollapsedIcon} aria-hidden="true">▾</span>
           </button>
         </div>
+        {remaining === 0 ? (
+          <p className={styles.aiLimitNotice} role="status">AI-попытки закончились. Поэтому варианты изменения сейчас недоступны.</p>
+        ) : null}
       </div>
     );
   }
 
   return (
-    <div className={styles.panelState}>
-      <h2 className={styles.sectionTitle}>Выберите вариант</h2>
+    <div className={styles.panelState} id={panelId}>
+      <div className={styles.resultHeadingRow}>
+        <div>
+          <h2 className={styles.sectionTitle}>Готовый текст</h2>
+          <p className={styles.hint}>Близко к вашим мыслям — можно использовать сразу или изменить подачу.</p>
+        </div>
+        {!isPending && issues.length === 0 ? <span className={styles.aiGenerationReady} role="status">Готово</span> : null}
+      </div>
+
       {isPending ? (
         <div className={styles.aiGenerationProgress} role="status">
           <span className={styles.aiSpinner} aria-hidden="true" />
-          <span><strong>Готовим ещё три варианта</strong>Текущие варианты останутся на экране до готовности новых.</span>
+          <span><strong>{actionLabels[pendingAction ?? "alternative"]}</strong>Текущий текст останется на экране до готовности нового.</span>
         </div>
       ) : null}
       {!isPending && issues.length > 0 ? (
         <div className={styles.aiRetainedError} role="alert">
-          <strong>Новые варианты не подготовились</strong>
-          <span>{issues[0]} Прежние варианты сохранены.</span>
+          <strong>Новая версия не подготовилась</strong>
+          <span>{issues[0]} Текущий текст сохранён.</span>
         </div>
       ) : null}
-      {!isPending && issues.length === 0 ? <p className={styles.aiGenerationReady} role="status">Три варианта готовы</p> : null}
-      <div className={`${styles.variants} ${styles.sidePanelVariants}`}>
-        <div className={styles.variantTabs} role="tablist" aria-label="Варианты поздравления">
-          {variants.map((item, index) => (
+
+      <article className={`${styles.variantCard} ${styles.singleResultCard}`}>
+        <span className={styles.resultModeLabel}>{modeLabels[mode]}</span>
+        <div key={generationId} className={styles.variantCardContent}>
+          <p className={styles.message}>{result.text}</p>
+        </div>
+        <button type="button" className={`${styles.useButton} ${styles.joinUseButton}`} onClick={applyResult}>
+          <span aria-hidden="true">↓</span>
+          Использовать текст
+        </button>
+      </article>
+
+      <section className={styles.resultTools} aria-label="Изменить готовый текст">
+        <div className={styles.resultToolsHead}>
+          <h3>Хотите изменить подачу?</h3>
+          <p>Каждое действие создаёт одну новую версию.</p>
+        </div>
+        <div className={styles.resultActionGrid} role="tablist" aria-label="Режим текста">
+          {(["initial", "warmer", "creative"] as const).map((item) => (
             <button
-              key={item.id}
+              key={item}
               type="button"
               role="tab"
-              id={tabId(index)}
-              aria-selected={index === activeVariantIndex}
-              aria-controls={panelId}
-              className={`${styles.variantTab} ${index === activeVariantIndex ? styles.variantTabActive : ""}`}
-              onClick={() => setActiveVariantIndex(index)}
+              aria-selected={mode === item}
+              className={mode === item ? styles.resultActionActive : undefined}
+              disabled={isPending || (limitReached && !availableModes.includes(item))}
+              onClick={() => onModeSelect(item)}
             >
-              {item.label}
+              {modeLabels[item]}
             </button>
           ))}
+          {canShorten || availableModes.includes("shorten") ? (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "shorten"}
+              className={mode === "shorten" ? styles.resultActionActive : undefined}
+              disabled={isPending || (limitReached && !availableModes.includes("shorten"))}
+              onClick={() => onModeSelect("shorten")}
+            >
+              Короче
+            </button>
+          ) : null}
         </div>
-        <article
-          className={styles.variantCard}
-          role="tabpanel"
-          id={panelId}
-          aria-labelledby={tabId(activeVariantIndex)}
-        >
-          <div key={activeVariant.id} className={styles.variantCardContent}>
-            <p className={styles.message}>{activeVariant.text}</p>
-          </div>
-          <div className={styles.variantActions}>
-            <button type="button" className={styles.useButton} onClick={() => applyVariant(activeVariant.text)}>
-              <span aria-hidden="true">↓</span>
-              Использовать вариант
+        <button type="button" className={styles.anotherResultButton} disabled={isPending || limitReached} onClick={onAnother}>
+          Ещё вариант «{modeLabels[mode]}»
+        </button>
+        <div className={styles.resultActionGrid}>
+          <button type="button" className={detailOpen ? styles.resultActionActive : undefined} aria-expanded={detailOpen} disabled={isPending || limitReached} onClick={() => setDetailOpen((current) => !current)}>
+            Добавить детали
+          </button>
+        </div>
+        <p className={styles.creativeNote}>«Творческий» может добавить одну образную деталь, но сохранит ваши основные мысли.</p>
+
+        {detailOpen ? (
+          <div className={styles.resultDetailForm}>
+            <label htmlFor={`${panelId}-detail`}>Какую деталь добавить?</label>
+            <textarea id={`${panelId}-detail`} value={detail} maxLength={300} placeholder="Например: он помог мне с переездом" onChange={(event) => setDetail(event.target.value)} />
+            <button
+              type="button"
+              disabled={isPending || limitReached || detail.trim().length < 5}
+              onClick={() => {
+                onAddDetail(detail.trim());
+                setDetailOpen(false);
+                setDetail("");
+              }}
+            >
+              Добавить и обновить текст
             </button>
-            <button type="button" className={styles.retryButton} disabled={isPending || limitReached} onClick={onRetry}>
-              {isPending ? <span className={styles.aiSpinner} aria-hidden="true" /> : <span aria-hidden="true">↻</span>}
-              {isPending ? "Готовим ещё…" : "Получить ещё"}
-            </button>
           </div>
-        </article>
-      </div>
+        ) : null}
+
+        {historyCount > 1 ? (
+          <div className={styles.resultHistoryNav} aria-label={`Варианты режима «${modeLabels[mode]}»`}>
+            <button type="button" className={styles.restoreResultButton} disabled={isPending || historyIndex === 0} onClick={onPrevious}>← Предыдущий</button>
+            <span>{historyIndex + 1} из {historyCount}</span>
+            <button type="button" className={styles.restoreResultButton} disabled={isPending || historyIndex >= historyCount - 1} onClick={onNext}>Следующий →</button>
+          </div>
+        ) : null}
+
+        {remaining === 0 ? (
+          <p className={styles.aiLimitNotice} role="status">AI-попытки закончились. Поэтому создание новых вариантов и добавление деталей недоступны.</p>
+        ) : remaining !== null ? (
+          <p className={styles.aiAttemptsNotice}>{formatAttemptsLeft(remaining)}</p>
+        ) : null}
+      </section>
+
       <footer className={styles.panelFooter}>
         <p className={styles.panelFooterNote}>
           {inserted
-            ? "Выбранный текст уже добавлен в поле слева. Его можно свободно отредактировать перед отправкой."
-            : "Текст не отправится автоматически. После выбора его можно отредактировать слева."}
+            ? "Текст уже добавлен в поле слева. Его можно свободно отредактировать перед отправкой."
+            : "Текст не отправится автоматически. Сначала добавьте его в поле поздравления."}
         </p>
-        {remaining !== null ? (
-          <span className={styles.panelFooterCounter}>
-            {remaining > 0 ? formatGenerationsLeft(remaining) : "Лимит AI-вариантов исчерпан"}
-          </span>
-        ) : null}
+        {remaining !== null ? <span className={styles.panelFooterCounter}>{remaining > 0 ? formatAttemptsLeft(remaining) : "Лимит AI-попыток исчерпан"}</span> : null}
       </footer>
     </div>
   );
@@ -172,12 +235,18 @@ const JoinVariants = ({
 
 type Props = {
   state: JoinSidePanelState;
-  variants: AiVariant[];
+  result: AiVariant | null;
+  mode: AiJoinResultMode;
+  availableModes: AiJoinResultMode[];
+  historyIndex: number;
+  historyCount: number;
   generationId: string;
   isPending: boolean;
+  pendingAction: AiJoinAction | null;
   limitReached: boolean;
   issues: string[];
   remaining: number | null;
+  messageLimit: number;
   activeHintId: GreetingHintId | null;
   activeHintExample: string | null;
   hintExampleVisible: boolean;
@@ -185,18 +254,29 @@ type Props = {
   hasActivePoll?: boolean;
   onHintSelect: (hint: GreetingHint) => void;
   onHideHintExample: () => void;
-  onUseVariant: (text: string) => void;
+  onUseResult: (text: string) => void;
+  onModeSelect: (mode: AiJoinResultMode) => void;
+  onAnother: () => void;
+  onAddDetail: (detail: string) => void;
+  onPrevious: () => void;
+  onNext: () => void;
   onRetry: () => void;
 };
 
 export const JoinSidePanel = ({
   state,
-  variants,
+  result,
+  mode,
+  availableModes,
+  historyIndex,
+  historyCount,
   generationId,
   isPending,
+  pendingAction,
   limitReached,
   issues,
   remaining,
+  messageLimit,
   activeHintId,
   activeHintExample,
   hintExampleVisible,
@@ -204,7 +284,12 @@ export const JoinSidePanel = ({
   hasActivePoll = false,
   onHintSelect,
   onHideHintExample,
-  onUseVariant,
+  onUseResult,
+  onModeSelect,
+  onAnother,
+  onAddDetail,
+  onPrevious,
+  onNext,
   onRetry
 }: Props) => {
   const [promptsOpen, setPromptsOpen] = useState(false);
@@ -218,18 +303,11 @@ export const JoinSidePanel = ({
               <span className={styles.sidePanelWand} aria-hidden="true" />
               <div>
                 <h2 className={styles.sectionTitle}>О чём можно написать</h2>
-                <p className={styles.hint}>
-                  Напишите мысли в поле поздравления. ИИ сохранит главное и предложит три варианта в лимите открытки.
-                </p>
+                <p className={styles.hint}>Напишите мысли в поле поздравления. ИИ сохранит главное и соберёт один готовый текст.</p>
               </div>
             </div>
 
-            <button
-              type="button"
-              className={styles.promptsToggle}
-              aria-expanded={promptsOpen}
-              onClick={() => setPromptsOpen((current) => !current)}
-            >
+            <button type="button" className={styles.promptsToggle} aria-expanded={promptsOpen} onClick={() => setPromptsOpen((current) => !current)}>
               <span>Не знаете, с чего начать?</span>
               <span className={`${styles.promptsToggleIcon} ${promptsOpen ? styles.promptsToggleIconOpen : ""}`} aria-hidden="true" />
             </button>
@@ -239,14 +317,7 @@ export const JoinSidePanel = ({
                 const isActive = hint.id === activeHintId;
                 return (
                   <li key={hint.id}>
-                    <button
-                      type="button"
-                      className={`${styles.promptButton} ${isActive ? styles.promptButtonActive : ""}`}
-                      aria-pressed={isActive}
-                      aria-controls={exampleBlockId}
-                      aria-label={hintAriaLabel(hint)}
-                      onClick={() => onHintSelect(hint)}
-                    >
+                    <button type="button" className={`${styles.promptButton} ${isActive ? styles.promptButtonActive : ""}`} aria-pressed={isActive} aria-controls={exampleBlockId} aria-label={hintAriaLabel(hint)} onClick={() => onHintSelect(hint)}>
                       <span className={styles.promptIcon} aria-hidden="true">{hint.icon}</span>
                       <span>{hint.title}</span>
                     </button>
@@ -259,39 +330,18 @@ export const JoinSidePanel = ({
               <div className={styles.panelExample} id={exampleBlockId} aria-live="polite">
                 <div className={styles.panelExampleHead}>
                   <span className={styles.panelExampleLabel}>Например:</span>
-                  <button
-                    type="button"
-                    className={styles.panelExampleHide}
-                    aria-label="Скрыть пример"
-                    onClick={onHideHintExample}
-                  >
-                    ×
-                  </button>
+                  <button type="button" className={styles.panelExampleHide} aria-label="Скрыть пример" onClick={onHideHintExample}>×</button>
                 </div>
-                <p key={activeHintExample} className={styles.panelExampleText}>
-                  {activeHintExample}
-                </p>
-                <span className={styles.panelExampleNote}>
-                  Нажмите на подсказку ещё раз, чтобы увидеть другой пример.
-                </span>
+                <p key={activeHintExample} className={styles.panelExampleText}>{activeHintExample}</p>
+                <span className={styles.panelExampleNote}>Нажмите на подсказку ещё раз, чтобы увидеть другой пример.</span>
               </div>
             ) : null}
 
-            {hasActivePoll ? (
-              <p className={styles.panelPollTeaser}>
-                <span aria-hidden="true">🎁</span>
-                После поздравления можно помочь выбрать подарок
-              </p>
-            ) : null}
+            {hasActivePoll ? <p className={styles.panelPollTeaser}><span aria-hidden="true">🎁</span>После поздравления можно помочь выбрать подарок</p> : null}
 
             <footer className={styles.panelFooter}>
-              <p className={styles.panelFooterNote}>
-                Пример не вставляется автоматически — напишите мысль своими словами.
-              </p>
-              <p className={styles.privacyLock}>
-                <span aria-hidden="true">🔒</span>
-                Черновик и варианты хранятся только до отправки.
-              </p>
+              <p className={styles.panelFooterNote}>Пример не вставляется автоматически — напишите мысль своими словами.</p>
+              <p className={styles.privacyLock}><span aria-hidden="true">🔒</span>Черновик и результаты хранятся только до отправки.</p>
             </footer>
           </div>
         ) : null}
@@ -301,27 +351,20 @@ export const JoinSidePanel = ({
             <div className={styles.sidePanelHead}>
               <span className={styles.sidePanelWand} aria-hidden="true" />
               <div>
-                <h2 className={styles.sectionTitle}>Готовим три варианта</h2>
+                <h2 className={styles.sectionTitle}>Готовим текст</h2>
                 <p className={styles.hint}>Сохраняем ваши мысли и укладываем текст в формат открытки.</p>
               </div>
             </div>
-            <span className={styles.loadingTrack} aria-hidden="true">
-              <span className={styles.loadingLine} />
-            </span>
+            <span className={styles.loadingTrack} aria-hidden="true"><span className={styles.loadingLine} /></span>
             <ul className={styles.loadingSkeletons} aria-hidden="true">
               {LOADING_STEPS.map((label, index) => (
                 <li key={label} className={styles.loadingSkeleton} style={{ animationDelay: `${index * 180}ms` }}>
                   <span className={styles.loadingSkeletonLabel}>{label}</span>
                   <span className={styles.loadingSkeletonBar} />
-                  <span className={`${styles.loadingSkeletonBar} ${styles.loadingSkeletonBarShort}`} />
                 </li>
               ))}
             </ul>
-            <footer className={styles.panelFooter}>
-              <p className={styles.panelFooterNote}>
-                <span aria-hidden="true">⏳</span> Обычно это занимает несколько секунд.
-              </p>
-            </footer>
+            <footer className={styles.panelFooter}><p className={styles.panelFooterNote}><span aria-hidden="true">⏳</span> Обычно это занимает несколько секунд.</p></footer>
           </div>
         ) : null}
 
@@ -330,38 +373,35 @@ export const JoinSidePanel = ({
             <div className={styles.sidePanelHead}>
               <span className={styles.sidePanelWand} aria-hidden="true" />
               <div>
-                <h2 className={styles.sectionTitle}>Не получилось подготовить варианты</h2>
-                <p className={styles.hint}>
-                  Ваш текст остался в поле. Попробуйте ещё раз через несколько секунд.
-                </p>
+                <h2 className={styles.sectionTitle}>Не получилось подготовить текст</h2>
+                <p className={styles.hint}>Ваши мысли остались в поле. Попробуйте ещё раз через несколько секунд.</p>
               </div>
             </div>
-            {issues.length > 0 ? (
-              <ul className={styles.panelErrorList}>
-                {issues.map((issue) => (
-                  <li key={issue}>{issue}</li>
-                ))}
-              </ul>
-            ) : null}
-            <div>
-              <button type="button" className={styles.panelRetryButton} disabled={isPending} onClick={onRetry}>
-                Повторить
-              </button>
-            </div>
+            {issues.length > 0 ? <ul className={styles.panelErrorList}>{issues.map((issue) => <li key={issue}>{issue}</li>)}</ul> : null}
+            <div><button type="button" className={styles.panelRetryButton} disabled={isPending} onClick={onRetry}>Повторить</button></div>
           </div>
         ) : null}
 
-        {state === "variants" ? (
-          <JoinVariants
-            key={generationId}
-            variants={variants}
+        {state === "result" && result ? (
+          <JoinResult
+            result={result}
+            mode={mode}
+            availableModes={availableModes}
+            historyIndex={historyIndex}
+            historyCount={historyCount}
             generationId={generationId}
             isPending={isPending}
+            pendingAction={pendingAction}
             limitReached={limitReached}
             remaining={remaining}
             issues={issues}
-            onUseVariant={onUseVariant}
-            onRetry={onRetry}
+            messageLimit={messageLimit}
+            onUseResult={onUseResult}
+            onModeSelect={onModeSelect}
+            onAnother={onAnother}
+            onAddDetail={onAddDetail}
+            onPrevious={onPrevious}
+            onNext={onNext}
           />
         ) : null}
       </section>

@@ -11,6 +11,7 @@ import {
   YANDEX_METRIKA_ID,
   YandexMetrikaConsent
 } from "./yandex-metrika-consent";
+import { readAnalyticsConsent, saveAnalyticsConsent } from "@/lib/client-analytics-consent";
 
 type TestWindow = Window & {
   ym?: ((...args: unknown[]) => void) & { a?: unknown[][] };
@@ -28,6 +29,8 @@ describe("YandexMetrikaConsent", () => {
     delete testWindow().ym;
     delete testWindow().__slovestoMetrikaInitialized;
     delete testWindow().disableYaCounter111957811;
+    document.cookie = "slv_first_touch=; Max-Age=0; Path=/";
+    document.cookie = "_ym_uid=; Max-Age=0; Path=/";
   });
 
   afterEach(cleanup);
@@ -43,7 +46,7 @@ describe("YandexMetrikaConsent", () => {
     const user = userEvent.setup();
     render(<YandexMetrikaConsent />);
     await user.click(await screen.findByRole("button", { name: "Не использовать" }));
-    expect(window.localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY)).toBe("declined");
+    expect(readAnalyticsConsent()).toBe("declined");
     expect(document.querySelector("script[data-yandex-metrika]")).toBeNull();
     expect(testWindow().disableYaCounter111957811).toBe(true);
   });
@@ -56,7 +59,12 @@ describe("YandexMetrikaConsent", () => {
     await waitFor(() => expect(document.querySelector("script[data-yandex-metrika]")).not.toBeNull());
     const script = document.querySelector("script[data-yandex-metrika]") as HTMLScriptElement;
     expect(script.src).toBe(`https://mc.yandex.ru/metrika/tag.js?id=${YANDEX_METRIKA_ID}`);
-    expect(window.localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY)).toBe("accepted");
+    expect(readAnalyticsConsent()).toBe("accepted");
+    expect(JSON.parse(window.localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY) ?? "{}")).toMatchObject({
+      decision: "accepted",
+      consentVersion: "2026-08-26",
+      privacyVersion: "2026-08-26"
+    });
     expect(testWindow().disableYaCounter111957811).toBe(false);
     expect(testWindow().ym?.a).toEqual(expect.arrayContaining([
       [YANDEX_METRIKA_ID, "init", expect.objectContaining({
@@ -73,7 +81,7 @@ describe("YandexMetrikaConsent", () => {
 
   it("never offers or loads analytics outside the public marketing pages", async () => {
     navigation.pathname = "/join/private-slug";
-    window.localStorage.setItem(ANALYTICS_CONSENT_STORAGE_KEY, "accepted");
+    saveAnalyticsConsent("accepted");
     render(<YandexMetrikaConsent />);
     await waitFor(() => expect(testWindow().disableYaCounter111957811).toBe(true));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -82,12 +90,26 @@ describe("YandexMetrikaConsent", () => {
 
   it("reopens preferences and lets a visitor revoke a previous choice", async () => {
     const user = userEvent.setup();
-    window.localStorage.setItem(ANALYTICS_CONSENT_STORAGE_KEY, "accepted");
+    saveAnalyticsConsent("accepted");
     render(<YandexMetrikaConsent />);
     await waitFor(() => expect(document.querySelector("script[data-yandex-metrika]")).not.toBeNull());
+    document.cookie = "slv_first_touch=test; Path=/";
+    document.cookie = "_ym_uid=test; Path=/";
+    window.localStorage.setItem("_ym_test", "test");
     window.dispatchEvent(new Event(ANALYTICS_PREFERENCES_EVENT));
     await user.click(await screen.findByRole("button", { name: "Не использовать" }));
-    expect(window.localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY)).toBe("declined");
+    expect(readAnalyticsConsent()).toBe("declined");
     expect(testWindow().disableYaCounter111957811).toBe(true);
+    expect(document.querySelector("script[data-yandex-metrika]")).toBeNull();
+    expect(document.cookie).not.toContain("slv_first_touch=");
+    expect(document.cookie).not.toContain("_ym_uid=");
+    expect(window.localStorage.getItem("_ym_test")).toBeNull();
+  });
+
+  it("does not trust the legacy unversioned consent value", async () => {
+    window.localStorage.setItem("slovesto_analytics_consent_v1", "accepted");
+    render(<YandexMetrikaConsent />);
+    expect(await screen.findByRole("heading", { name: "Помочь нам улучшать Slovesto?" })).toBeInTheDocument();
+    expect(document.querySelector("script[data-yandex-metrika]")).toBeNull();
   });
 });

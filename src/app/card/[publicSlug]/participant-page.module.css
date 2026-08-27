@@ -3542,3 +3542,317 @@
     transition: none;
   }
 }
+
+/* Join: one primary AI result with explicit transformations */
+.resultHeadingRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.singleResultCard {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 1px 2px -1px rgba(0, 0, 0, 0.06),
+    0 8px 22px rgba(0, 0, 0, 0.05);
+}
+
+.singleResultCard .variantCardContent {
+  min-height: 0;
+}
+
+.singleResultCard .message {
+  margin-top: 0;
+}
+
+.resultModeLabel {
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #f1f3f4;
+  color: #5f6368;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.sidePanelCard .joinUseButton {
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  background: #e9652f;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+  transition-property: transform, background-color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.sidePanelCard .joinUseButton:active {
+  transform: scale(0.96);
+}
+
+.resultTools {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  background: #f7f8fa;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.resultToolsHead {
+  display: grid;
+  gap: 3px;
+}
+
+.resultToolsHead h3,
+.resultToolsHead p,
+.creativeNote {
+  margin: 0;
+}
+
+.resultToolsHead h3 {
+  color: #202124;
+  font-size: 1rem;
+  text-wrap: balance;
+}
+
+.resultToolsHead p,
+.creativeNote {
+  color: #5f6368;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.resultActionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.resultActionGrid button,
+.resultDetailForm button,
+.restoreResultButton,
+.anotherResultButton {
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #e9652f;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.3);
+  transition-property: transform, background-color, box-shadow, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.resultActionGrid button:active,
+.resultDetailForm button:active,
+.restoreResultButton:active,
+.anotherResultButton:active {
+  transform: scale(0.96);
+}
+
+.resultActionGrid button:disabled,
+.resultDetailForm button:disabled,
+.restoreResultButton:disabled,
+.anotherResultButton:disabled {
+  background: #f1f3f4;
+  color: #8a9099;
+  cursor: not-allowed;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+  transform: none;
+}
+
+.resultActionGrid .resultActionActive {
+  background: #fff4ee;
+  color: #c7532a;
+  box-shadow: 0 0 0 2px rgba(233, 101, 47, 0.34);
+}
+
+.resultDetailForm {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.resultDetailForm label {
+  color: #202124;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.resultDetailForm textarea {
+  min-height: 82px;
+  resize: vertical;
+  padding: 11px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 12px;
+  background: #ffffff;
+  color: #202124;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.resultDetailForm textarea:focus-visible {
+  border-color: #e9652f;
+  outline: 3px solid rgba(233, 101, 47, 0.18);
+  outline-offset: 1px;
+}
+
+.resultDetailForm button {
+  padding: 0 14px;
+  background: #fff4ee;
+}
+
+.anotherResultButton {
+  width: 100%;
+  padding: 0 14px;
+  background: #fff4ee;
+}
+
+.restoreResultButton {
+  justify-self: start;
+  padding: 0 12px;
+  background: transparent;
+  color: #5f6368;
+  box-shadow: none;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.resultHistoryNav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.resultHistoryNav > span {
+  color: #5f6368;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.resultHistoryNav .restoreResultButton:last-child {
+  justify-self: end;
+}
+
+.aiAttemptsNotice,
+.aiLimitNotice {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.aiAttemptsNotice {
+  background: #ffffff;
+  color: #5f6368;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.aiLimitNotice {
+  background: #fff4ee;
+  color: #c7532a;
+  box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.28);
+}
+
+.aiAttemptsInline {
+  color: #5f6368;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.aiAttemptsInlineEmpty {
+  color: #c7532a;
+}
+
+.editorToolbarActions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.resultActionGrid button:focus-visible,
+.resultDetailForm button:focus-visible,
+.restoreResultButton:focus-visible,
+.anotherResultButton:focus-visible,
+.sidePanelCard .joinUseButton:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.26);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sidePanelCard .joinUseButton:hover {
+    background: #df5f2e;
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.15);
+  }
+
+  .resultActionGrid button:hover:not(:disabled),
+  .resultDetailForm button:hover:not(:disabled),
+  .anotherResultButton:hover:not(:disabled) {
+    background: #fff4ee;
+    color: #c7532a;
+    box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.46);
+  }
+
+  .restoreResultButton:hover:not(:disabled) {
+    background: #ffffff;
+    color: #202124;
+  }
+}
+
+@media (max-width: 480px) {
+  .resultActionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .resultHeadingRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .resultHistoryNav {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .resultHistoryNav > span {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: center;
+  }
+
+  .resultHistoryNav .restoreResultButton {
+    grid-row: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidePanelCard .joinUseButton,
+  .resultActionGrid button,
+  .resultDetailForm button,
+  .restoreResultButton,
+  .anotherResultButton {
+    transition: none;
+  }
+}

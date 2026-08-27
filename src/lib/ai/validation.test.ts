@@ -171,4 +171,66 @@ describe("validateAiGenerationFormData", () => {
     expect(result.success).toBe(false);
     if (!result.success) expect(result.issues.some((issue) => issue.field === "editInstruction")).toBe(true);
   });
+
+  it("accepts a single initial result request for join", () => {
+    const result = validateAiGenerationFormData(
+      buildFormData({
+        cardId: "card_1",
+        publicSlug: "card-slug",
+        draftNotes: "Спасибо за поддержку и добрые слова в важный момент.",
+        style: "touching",
+        joinAction: "initial"
+      })
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.joinAction).toBe("initial");
+  });
+
+  it("requires the current result for a join transformation", () => {
+    const result = validateAiGenerationFormData(
+      buildFormData({
+        cardId: "card_1",
+        publicSlug: "card-slug",
+        draftNotes: "Спасибо за поддержку и добрые слова в важный момент.",
+        style: "touching",
+        joinAction: "creative"
+      })
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.issues.some((issue) => issue.field === "sourceText")).toBe(true);
+  });
+
+  it("accepts a join transformation with the source result", () => {
+    const result = validateAiGenerationFormData(
+      buildFormData({
+        cardId: "card_1",
+        publicSlug: "card-slug",
+        draftNotes: "Спасибо за поддержку и добрые слова в важный момент.",
+        sourceText: "Спасибо за поддержку. Желаю радостных дней.",
+        style: "touching",
+        joinAction: "warmer"
+      })
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.sourceText).toContain("Спасибо за поддержку");
+  });
+
+  it("accepts a required detail only for the initial join result", () => {
+    const result = validateAiGenerationFormData(
+      buildFormData({
+        cardId: "card_1",
+        publicSlug: "card-slug",
+        draftNotes: "Спасибо за поддержку и добрые слова в важный момент.",
+        requiredDetail: "Хочу видеться с ним чаще",
+        style: "touching",
+        joinAction: "initial"
+      })
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.requiredDetail).toBe("Хочу видеться с ним чаще");
+  });
 });

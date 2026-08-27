@@ -34,8 +34,8 @@ import { ensureLadderVariantAddress, fitLadderVariantToLimit, validateLadderVari
 import { buildTwoStepComposePrompt, buildTwoStepPlanPrompt, buildTwoStepRepairPrompt } from "@/lib/ai/greeting-two-step";
 import { buildSemanticPrompt, buildSemanticRepairPrompt, GREETING_PROMPT_VERSION, validateSemanticVariants } from "@/lib/ai/greeting-semantic";
 import { generateSemanticGreetingWithOpenAi, repairSemanticGreetingWithOpenAi } from "@/lib/ai/openai-semantic-provider";
-import { buildComposerPrompt, buildComposerRepairPrompt, buildExtractorPrompt, getSafeFactCoverageSignal, getSemanticPlanCacheKey, GREETING_COMPOSER_PROMPT_VERSION, GREETING_EXTRACTOR_PROMPT_VERSION, validateComposerVariants } from "@/lib/ai/greeting-two-stage";
-import { composeGreetingVariants, extractGreetingSemantics, repairGreetingVariant } from "@/lib/ai/openai-two-stage-provider";
+import { buildComposerPrompt, buildComposerRepairPrompt, buildExtractorPrompt, buildSingleComposerPrompt, buildSingleComposerRepairPrompt, getGreetingPromptVersions, getSafeFactCoverageSignal, getSemanticPlanCacheKey, normalizeGreetingCoreFacts, stabilizeComposerVariants, stabilizeGreetingSemanticPlan, validateComposerVariants, validateSingleComposerText } from "@/lib/ai/greeting-two-stage";
+import { composeGreetingText, composeGreetingVariants, extractGreetingSemantics, repairGreetingVariant } from "@/lib/ai/openai-two-stage-provider";
 import { estimateAiUsageCost, sumAiUsageCosts } from "@/lib/ai/usage-cost";
 
 let localTemplateGenerationSequence = 0;
@@ -538,11 +538,12 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
   const matrixRequested = process.env.AI_GREETING_MODE === "matrix";
   const ladderRequested = process.env.AI_GREETING_MODE === "ladder";
   const twoStepRequested = process.env.AI_GREETING_EXPERIMENT === "two_step" || process.env.AI_GREETING_EXPERIMENT === "semantic";
+  const joinSingleRequested = Boolean(input.joinAction);
   // The editor's "Улучшить с AI" uses the same source text and needs the
   // same semantic safeguards as a newly composed participant message.
   // Shortening remains a separate, length-focused workflow.
   const supportsSpecialMode = providerName === "openai" && !literalEditInstruction && (input.mode ?? "compose") !== "shorten";
-  const greetingMode = twoStepRequested && supportsSpecialMode
+  const greetingMode = (twoStepRequested || joinSingleRequested) && supportsSpecialMode
     ? "two_step"
     : ladderRequested && supportsSpecialMode
     ? "ladder"
@@ -759,27 +760,136 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
     }
 
     if (greetingMode === "two_step") {
+      const joinPromptProfile = input.joinAction ? "yandex" as const : undefined;
+      const joinExtractorModel = input.joinAction
+        ? process.env.AI_JOIN_EXTRACTOR_MODEL?.trim() || "yandex/gpt-pro-5.1"
+        : undefined;
+      const joinComposerModel = input.joinAction
+        ? process.env.AI_JOIN_COMPOSER_MODEL?.trim() || "yandex/gpt-pro-5.1"
+        : undefined;
       const stageInput = {
         recipientName: input.recipientName, occasionText: input.occasionText, fromLabel: input.fromLabel,
         relationshipContext: input.relationshipContext, draftNotes: input.draftNotes, messageLimit: input.messageLimit,
         existingMessages
       };
-      const cacheKey = getSemanticPlanCacheKey(stageInput);
+      const cacheKey = getSemanticPlanCacheKey(stageInput, joinPromptProfile);
       const cachedPlan = await getCachedSemanticPlan(cacheKey, input.cardId);
-      const extractor = cachedPlan ? null : await extractGreetingSemantics(buildExtractorPrompt(stageInput));
-      const plan = cachedPlan?.plan ?? extractor!.plan;
+      const extractor = cachedPlan ? null : await extractGreetingSemantics(
+        buildExtractorPrompt(stageInput, joinPromptProfile),
+        joinExtractorModel ? { model: joinExtractorModel } : undefined
+      );
+      const stabilizedPlan = cachedPlan?.plan ?? stabilizeGreetingSemanticPlan(stageInput, extractor!.plan);
+      const detailTokens = new Set((input.requiredDetail?.toLocaleLowerCase("ru-RU").match(/[\p{L}]{4,}/gu) ?? []).map((token) => token.slice(0, 4)));
+      const plan = input.requiredDetail
+        ? {
+            ...stabilizedPlan,
+            coreFacts: [
+              ...normalizeGreetingCoreFacts(stabilizedPlan.coreFacts).filter((fact) => {
+                if (detailTokens.size === 0) return true;
+                const factTokens = new Set((fact.text.toLocaleLowerCase("ru-RU").match(/[\p{L}]{4,}/gu) ?? []).map((token) => token.slice(0, 4)));
+                const overlap = [...detailTokens].filter((token) => factTokens.has(token)).length;
+                return overlap < Math.min(2, detailTokens.size);
+              }),
+              { id: "user-detail", text: input.requiredDetail, mustPreserve: true }
+            ]
+          }
+        : stabilizedPlan;
       if (!cachedPlan) await cacheSemanticPlan({ cacheKey, cardId: input.cardId, plan, model: extractor!.model });
+      if (input.joinAction) {
+        const singlePrompt = buildSingleComposerPrompt(stageInput, plan, input.joinAction, input.sourceText, "yandex");
+        const firstResult = await composeGreetingText(singlePrompt, { model: joinComposerModel });
+        let singleText = cleanupGreetingText(
+          stabilizeComposerVariants({
+            safe: { text: firstResult.text },
+            warm: { text: firstResult.text },
+            expressive: { text: firstResult.text }
+          }, plan).safe.text,
+          input
+        );
+        let singleValidation = validateSingleComposerText(singleText, singlePrompt.limit, plan, stageInput.occasionText, "safe", "yandex");
+        const sourceLength = Array.from(input.sourceText ?? "").length;
+        const notShorter = input.joinAction === "shorten" && sourceLength > 0 && Array.from(singleText).length >= sourceLength;
+        const repairError = singleValidation.hardErrors[0] ?? (notShorter ? { type: "safe" as const, code: "NOT_SHORTER" } : null);
+        let repairResult: Awaited<ReturnType<typeof composeGreetingText>> | null = null;
+
+        if (repairError) {
+          repairResult = await composeGreetingText(
+            buildSingleComposerRepairPrompt(
+              singlePrompt,
+              singleText,
+              repairError.code,
+              "detail" in repairError ? repairError.detail : undefined
+            ),
+            { model: joinComposerModel }
+          );
+          singleText = cleanupGreetingText(
+            stabilizeComposerVariants({
+              safe: { text: repairResult.text },
+              warm: { text: repairResult.text },
+              expressive: { text: repairResult.text }
+            }, plan).safe.text,
+            input
+          );
+          singleValidation = validateSingleComposerText(singleText, singlePrompt.limit, plan, stageInput.occasionText, "safe", "yandex");
+        }
+
+        const stillNotShorter = input.joinAction === "shorten" && sourceLength > 0 && Array.from(singleText).length >= sourceLength;
+        if (singleValidation.hardErrors.length > 0 || stillNotShorter) {
+          throw new AiError("AI_VALIDATION_FAILED", "Single greeting quality validation failed.");
+        }
+
+        const presentation = {
+          initial: { id: "short" as const, label: "Готовый текст" },
+          warmer: { id: "warm" as const, label: "Теплее" },
+          creative: { id: "style" as const, label: "Творческий" },
+          alternative: { id: "style" as const, label: "Ещё вариант" },
+          shorten: { id: "short" as const, label: "Короче" }
+        }[input.joinAction];
+        variants = [{ ...presentation, text: singleText }];
+        providerResult = { variants, model: firstResult.model };
+        await completeAiGeneration({ id: generationId, cardId: input.cardId, generationInput: { ...input, existingMessages }, variants, provider: providerName, model: firstResult.model });
+        const extractorCost = extractor ? estimateAiUsageCost(extractor.model, extractor.usage) : null;
+        const composerCost = estimateAiUsageCost(firstResult.model, firstResult.usage);
+        const repairCost = repairResult ? estimateAiUsageCost(repairResult.model, repairResult.usage) : null;
+        const totalCostRub = sumAiUsageCosts(...[extractorCost, composerCost, repairCost].filter((cost): cost is NonNullable<typeof cost> => Boolean(cost)));
+        const promptVersions = getGreetingPromptVersions("yandex");
+        const context = {
+          action: input.joinAction,
+          extractorPromptVersion: promptVersions.extractor,
+          composerPromptVersion: `${promptVersions.composer}-single-v1`,
+          extractorModel: cachedPlan?.model ?? extractor!.model,
+          composerModel: firstResult.model,
+          cacheHit: Boolean(cachedPlan),
+          extractorDurationMs: extractor?.durationMs ?? 0,
+          composerDurationMs: firstResult.durationMs,
+          extractorUsage: extractorCost,
+          composerUsage: composerCost,
+          repairUsage: repairCost,
+          totalCostRub,
+          safeFactCoverage: getSafeFactCoverageSignal(plan, singleText),
+          repairUsed: Boolean(repairResult),
+          repairReason: repairError?.code ?? null,
+          resultLength: Array.from(singleText).length
+        };
+        logger.info("ai.join_single_generation", "Single join greeting generated", { cardId: input.cardId, ...context, requestId: generationId });
+        try { await recordTelemetryEvent({ kind: "funnel", event: "ai.join_single_generation", cardId: input.cardId, errorId: null, context }); } catch { logger.warn("ai.join_single_telemetry_failed", "Single join diagnostics could not be persisted", { cardId: input.cardId }); }
+        return { generationId, variants, usage: reservation.usage, messageLimit: input.messageLimit };
+      }
       const composerPrompt = buildComposerPrompt(stageInput, plan);
       const composer = await composeGreetingVariants(composerPrompt);
-      let composerVariants = composer.variants;
-      let validation = validateComposerVariants(composerVariants, composerPrompt.limits);
-      const repairError = validation.hardErrors[0];
-      let repairUsage: typeof composer.usage;
-      if (repairError) {
-        const repair = await repairGreetingVariant(buildComposerRepairPrompt(composerPrompt, repairError.type, composerVariants[repairError.type].text, repairError.code), repairError.type);
-        composerVariants = { ...composerVariants, [repairError.type]: { text: repair.text } };
-        repairUsage = repair.usage;
-        validation = validateComposerVariants(composerVariants, composerPrompt.limits);
+      const compositionPlans = composer.compositionPlans;
+      let composerVariants = stabilizeComposerVariants(composer.variants, plan);
+      let validation = validateComposerVariants(composerVariants, composerPrompt.limits, plan, stageInput.occasionText, compositionPlans, composerPrompt.planRequirements);
+      const repairAttempts: Array<{ type: keyof typeof composerVariants; code: string; usage: typeof composer.usage }> = [];
+      const repairedTypes = new Set<keyof typeof composerVariants>();
+      while (validation.hardErrors.length > 0 && repairedTypes.size < 3) {
+        const repairError = validation.hardErrors.find((error) => !repairedTypes.has(error.type));
+        if (!repairError) break;
+        const repair = await repairGreetingVariant(buildComposerRepairPrompt(composerPrompt, repairError.type, composerVariants[repairError.type].text, repairError.code, repairError.detail), repairError.type);
+        composerVariants = stabilizeComposerVariants({ ...composerVariants, [repairError.type]: { text: repair.text } }, plan);
+        repairedTypes.add(repairError.type);
+        repairAttempts.push({ type: repairError.type, code: repairError.code, usage: repair.usage });
+        validation = validateComposerVariants(composerVariants, composerPrompt.limits, plan, stageInput.occasionText, compositionPlans, composerPrompt.planRequirements);
       }
       if (validation.hardErrors.length > 0) throw new AiError("AI_VALIDATION_FAILED", "Composer returned an objective format error.");
       variants = (["safe", "warm", "expressive"] as const).map((type) => ({ id: type === "safe" ? "short" : type === "warm" ? "warm" : "style", label: type === "safe" ? "Аккуратно" : type === "warm" ? "Теплее" : "Живее", text: cleanupGreetingText(composerVariants[type].text, input) }));
@@ -788,9 +898,10 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
       await completeAiGeneration({ id: generationId, cardId: input.cardId, generationInput: { ...input, existingMessages }, variants, provider: providerName, model: composer.model });
       const extractorCost = extractor ? estimateAiUsageCost(extractor.model, extractor.usage) : null;
       const composerCost = estimateAiUsageCost(composer.model, composer.usage);
-      const repairCost = repairUsage ? estimateAiUsageCost(composer.model, repairUsage) : null;
-      const totalCostRub = sumAiUsageCosts(...[extractorCost, composerCost, repairCost].filter((cost): cost is NonNullable<typeof cost> => Boolean(cost)));
-      const context = { extractorPromptVersion: GREETING_EXTRACTOR_PROMPT_VERSION, composerPromptVersion: GREETING_COMPOSER_PROMPT_VERSION, extractorModel: cachedPlan?.model ?? extractor!.model, composerModel: composer.model, cacheHit: Boolean(cachedPlan), extractorDurationMs: extractor?.durationMs ?? 0, composerDurationMs: composer.durationMs, extractorUsage: extractorCost, composerUsage: composerCost, repairUsage: repairCost, totalCostRub, safeFactCoverage, repairUsed: Boolean(repairError), repairReason: repairError?.code ?? null, hardErrorCodes: validation.hardErrors.map((item) => item.code), softWarningCodes: validation.softWarnings.map((item) => item.code), variantLengths: validation.entries.map((entry) => ({ type: entry.type, length: Array.from(entry.text).length, limit: composerPrompt.limits[entry.type] })) };
+      const repairCosts = repairAttempts.map((attempt) => estimateAiUsageCost(composer.model, attempt.usage));
+      const totalCostRub = sumAiUsageCosts(...[extractorCost, composerCost, ...repairCosts].filter((cost): cost is NonNullable<typeof cost> => Boolean(cost)));
+      const promptVersions = getGreetingPromptVersions();
+      const context = { extractorPromptVersion: promptVersions.extractor, composerPromptVersion: promptVersions.composer, extractorModel: cachedPlan?.model ?? extractor!.model, composerModel: composer.model, cacheHit: Boolean(cachedPlan), extractorDurationMs: extractor?.durationMs ?? 0, composerDurationMs: composer.durationMs, extractorUsage: extractorCost, composerUsage: composerCost, repairUsage: repairCosts, totalCostRub, safeFactCoverage, compositionPlans, repairUsed: repairAttempts.length > 0, repairReason: repairAttempts.map((attempt) => attempt.code), hardErrorCodes: validation.hardErrors.map((item) => item.code), softWarningCodes: validation.softWarnings.map((item) => item.code), variantLengths: validation.entries.map((entry) => ({ type: entry.type, length: Array.from(entry.text).length, limit: composerPrompt.limits[entry.type] })) };
       logger.info("ai.two_stage_generation", "Two-stage greeting generated", { cardId: input.cardId, ...context, requestId: generationId });
       try { await recordTelemetryEvent({ kind: "funnel", event: "ai.two_stage_generation", cardId: input.cardId, errorId: null, context }); } catch { logger.warn("ai.two_stage_telemetry_failed", "Two-stage diagnostics could not be persisted", { cardId: input.cardId }); }
       return { generationId, variants, usage: reservation.usage, messageLimit: input.messageLimit };

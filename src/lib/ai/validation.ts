@@ -1,8 +1,9 @@
-import type { AiEditInstruction, AiGenerationMode, AiGenerationRequest, AiStyle } from "@/lib/ai/types";
+import type { AiEditInstruction, AiGenerationMode, AiGenerationRequest, AiJoinAction, AiStyle } from "@/lib/ai/types";
 
 export const AI_DRAFT_LIMIT = 700;
 export const AI_SHORTEN_DRAFT_LIMIT = 1500;
 export const AI_DRAFT_MIN_LENGTH = 20;
+export const AI_JOIN_SOURCE_LIMIT = 1500;
 
 export type AiValidationIssue = {
   field: string;
@@ -16,6 +17,7 @@ export type AiValidationResult =
 const styles: AiStyle[] = ["warm-simple", "short-no-pathos", "humor", "touching", "respectful"];
 const modes: AiGenerationMode[] = ["compose", "improve", "shorten"];
 const editInstructions: AiEditInstruction[] = ["shorten", "warmer", "formal", "proofread", "detail", "alternative"];
+const joinActions: AiJoinAction[] = ["initial", "warmer", "creative", "alternative", "shorten"];
 const participantSafeEditInstructions: AiEditInstruction[] = ["shorten", "proofread"];
 
 export const isParticipantSafeEditInstruction = (instruction: AiEditInstruction | undefined) =>
@@ -66,11 +68,17 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
   const style = normalizeText(body.style);
   const requestedMode = normalizeText(body.mode) || "compose";
   const requestedEditInstruction = normalizeText(body.editInstruction);
+  const requestedJoinAction = normalizeText(body.joinAction);
+  const sourceText = normalizeText(body.sourceText);
+  const requiredDetail = normalizeText(body.requiredDetail);
   const mode = modes.includes(requestedMode as AiGenerationMode)
     ? (requestedMode as AiGenerationMode)
     : "compose";
   const editInstruction = editInstructions.includes(requestedEditInstruction as AiEditInstruction)
     ? requestedEditInstruction as AiEditInstruction
+    : undefined;
+  const joinAction = joinActions.includes(requestedJoinAction as AiJoinAction)
+    ? requestedJoinAction as AiJoinAction
     : undefined;
   const draftLength = countCharacters(draftNotes);
   const draftLimit = mode === "compose" ? AI_DRAFT_LIMIT : AI_SHORTEN_DRAFT_LIMIT;
@@ -90,7 +98,7 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
   if (!draftNotes) {
     issues.push({
       field: "draftNotes",
-      message: "Напишите несколько мыслей, а AI соберёт из них варианты поздравления."
+      message: "Напишите несколько мыслей, а AI соберёт из них поздравление."
     });
   } else if (draftLength < AI_DRAFT_MIN_LENGTH) {
     issues.push({
@@ -126,6 +134,26 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
     issues.push({ field: "editInstruction", message: "Не удалось определить задачу редактирования." });
   }
 
+  if (requestedJoinAction && !joinAction) {
+    issues.push({ field: "joinAction", message: "Не удалось определить изменение текста." });
+  }
+
+  if (joinAction && (!publicSlug || manageToken || mode !== "compose")) {
+    issues.push({ field: "joinAction", message: "Изменение текста доступно только участнику открытки." });
+  }
+
+  if (joinAction && joinAction !== "initial" && !sourceText) {
+    issues.push({ field: "sourceText", message: "Не удалось определить текст для изменения." });
+  } else if (sourceText && countCharacters(sourceText) > AI_JOIN_SOURCE_LIMIT) {
+    issues.push({ field: "sourceText", message: `Текст для изменения должен быть не длиннее ${AI_JOIN_SOURCE_LIMIT} символов.` });
+  }
+
+  if (requiredDetail && (!joinAction || joinAction !== "initial" || !publicSlug)) {
+    issues.push({ field: "requiredDetail", message: "Дополнительную деталь можно добавить только к тексту участника." });
+  } else if (countCharacters(requiredDetail) > 300) {
+    issues.push({ field: "requiredDetail", message: "Дополнительная деталь должна быть не длиннее 300 символов." });
+  }
+
   if (mode === "compose" && editInstruction) {
     issues.push({ field: "editInstruction", message: "Операция редактирования доступна только для готового поздравления." });
   }
@@ -152,7 +180,10 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
       draftNotes,
       style: style as AiStyle,
       mode,
-      editInstruction
+      editInstruction,
+      joinAction,
+      sourceText: sourceText || undefined,
+      requiredDetail: requiredDetail || undefined
     }
   };
 };
@@ -168,5 +199,8 @@ export const validateAiGenerationFormData = (formData: FormData): AiValidationRe
     draftNotes: formData.get("draftNotes"),
     style: formData.get("style"),
     mode: formData.get("mode"),
-    editInstruction: formData.get("editInstruction")
+    editInstruction: formData.get("editInstruction"),
+    joinAction: formData.get("joinAction"),
+    sourceText: formData.get("sourceText"),
+    requiredDetail: formData.get("requiredDetail")
   });

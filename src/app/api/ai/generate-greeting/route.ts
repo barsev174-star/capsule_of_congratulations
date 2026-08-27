@@ -45,6 +45,7 @@ export async function POST(request: Request) {
   }
 
   const input = validation.data;
+  const isJoinSingle = Boolean(input.joinAction);
   const isManagerEdit = input.mode === "shorten" || input.mode === "improve";
   const card = isManagerEdit
     ? input.manageToken
@@ -145,8 +146,8 @@ export async function POST(request: Request) {
     }
     if (error instanceof AiError && error.code === "LIMIT_REACHED") {
       const isPaid = await hasPaidAiEntitlement(card.id);
-      const paidMessage = "AI-варианты закончились для этой открытки.";
-      const freeMessage = "Лимит AI-вариантов для этой открытки исчерпан.";
+      const paidMessage = isJoinSingle ? "AI-операции закончились для этой открытки." : "AI-варианты закончились для этой открытки.";
+      const freeMessage = isJoinSingle ? "Лимит AI-операций для этой открытки исчерпан." : "Лимит AI-вариантов для этой открытки исчерпан.";
       return NextResponse.json(
         { ok: false, code: error.code, message: isPaid ? paidMessage : freeMessage },
         { status: 429 }
@@ -166,7 +167,9 @@ export async function POST(request: Request) {
         {
           ok: false,
           code: error.code,
-          message: "Не получилось собрать хорошие варианты. Попробуйте добавить пару личных деталей и повторить попытку."
+          message: isJoinSingle
+            ? "Не получилось собрать хороший текст. Попробуйте добавить пару личных деталей и повторить попытку."
+            : "Не получилось собрать хорошие варианты. Попробуйте добавить пару личных деталей и повторить попытку."
         },
         { status: 502 }
       );
@@ -188,7 +191,9 @@ export async function POST(request: Request) {
         {
           ok: false,
           code: error.code,
-          message: "Не получилось собрать хорошие варианты. Попробуйте чуть подробнее описать человека, повод или ваши общие моменты."
+          message: isJoinSingle
+            ? "Не получилось собрать хороший текст. Попробуйте чуть подробнее описать человека, повод или ваши общие моменты."
+            : "Не получилось собрать хорошие варианты. Попробуйте чуть подробнее описать человека, повод или ваши общие моменты."
         },
         { status: 422 }
       );
@@ -196,7 +201,7 @@ export async function POST(request: Request) {
 
     const errorId = await reportCriticalError("ai", error, { cardId: card.id, operation: "participant_generation" });
     return NextResponse.json(
-      { ok: false, message: "Не удалось подготовить варианты. Попробуйте ещё раз через несколько секунд.", errorId },
+      { ok: false, message: isJoinSingle ? "Не удалось подготовить текст. Попробуйте ещё раз через несколько секунд." : "Не удалось подготовить варианты. Попробуйте ещё раз через несколько секунд.", errorId },
       { status: 503 }
     );
   }

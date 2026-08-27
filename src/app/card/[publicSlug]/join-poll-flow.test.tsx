@@ -40,19 +40,30 @@ const budgetPoll = {
 };
 
 const panelProps = {
-  variants: [],
+  result: null,
+  mode: "initial" as const,
+  availableModes: ["initial" as const],
+  historyIndex: 0,
+  historyCount: 1,
   generationId: "",
   isPending: false,
+  pendingAction: null,
   limitReached: false,
   issues: [],
   remaining: null,
+  messageLimit: 280,
   activeHintId: null,
   activeHintExample: null,
   hintExampleVisible: false,
   exampleBlockId: "hint-example",
   onHintSelect: vi.fn(),
   onHideHintExample: vi.fn(),
-  onUseVariant: vi.fn(),
+  onUseResult: vi.fn(),
+  onModeSelect: vi.fn(),
+  onAnother: vi.fn(),
+  onAddDetail: vi.fn(),
+  onPrevious: vi.fn(),
+  onNext: vi.fn(),
   onRetry: vi.fn()
 };
 
@@ -93,51 +104,100 @@ describe("JoinSidePanel — приоритет состояний", () => {
   it("ИИ loading не вытесняется опросом", () => {
     render(<JoinSidePanel {...panelProps} state="loading" hasActivePoll={true} />);
 
-    expect(screen.getByText("Готовим три варианта")).toBeInTheDocument();
+    expect(screen.getByText("Готовим текст")).toBeInTheDocument();
     expect(screen.queryByText(/выбрать подарок/i)).not.toBeInTheDocument();
   });
 
   it("ИИ results не вытесняется опросом", () => {
-    const variants = [
-      { id: "short" as const, label: "Аккуратно", text: "Вариант один" },
-      { id: "warm" as const, label: "Теплее", text: "Вариант два" },
-      { id: "style" as const, label: "Живее", text: "Вариант три" }
-    ];
-    render(<JoinSidePanel {...panelProps} state="variants" variants={variants} hasActivePoll={true} />);
+    const result = { id: "short" as const, label: "Готовый текст", text: "Вариант один" };
+    render(<JoinSidePanel {...panelProps} state="result" result={result} hasActivePoll={true} />);
 
-    expect(screen.getByText("Выберите вариант")).toBeInTheDocument();
+    expect(screen.getByText("Готовый текст")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Теплее" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Творческий" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Ещё вариант «Основной»/ })).toBeInTheDocument();
     expect(screen.queryByText(/выбрать подарок/i)).not.toBeInTheDocument();
   });
 
-  it("при повторе сохраняет готовые варианты и показывает новую подготовку", () => {
-    const variants = [
-      { id: "short" as const, label: "Аккуратно", text: "Вариант один" },
-      { id: "warm" as const, label: "Теплее", text: "Вариант два" },
-      { id: "style" as const, label: "Живее", text: "Вариант три" }
-    ];
-    render(<JoinSidePanel {...panelProps} state="variants" variants={variants} isPending />);
+  it("при преобразовании сохраняет готовый текст и показывает выбранное действие", () => {
+    const result = { id: "short" as const, label: "Готовый текст", text: "Вариант один" };
+    render(<JoinSidePanel {...panelProps} state="result" result={result} isPending pendingAction="creative" />);
 
     expect(screen.getByText("Вариант один")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("Готовим ещё три варианта");
-    expect(screen.getByRole("button", { name: "Готовим ещё…" })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Готовим творческую версию");
+    expect(screen.getByRole("tab", { name: "Творческий" })).toBeDisabled();
   });
 
-  it("при ошибке повтора не скрывает прежние варианты", () => {
-    const variants = [
-      { id: "short" as const, label: "Аккуратно", text: "Вариант один" },
-      { id: "warm" as const, label: "Теплее", text: "Вариант два" },
-      { id: "style" as const, label: "Живее", text: "Вариант три" }
-    ];
-    render(<JoinSidePanel {...panelProps} state="variants" variants={variants} issues={["Проверьте соединение."]} />);
+  it("при ошибке преобразования не скрывает прежний результат", () => {
+    const result = { id: "short" as const, label: "Готовый текст", text: "Вариант один" };
+    render(<JoinSidePanel {...panelProps} state="result" result={result} issues={["Проверьте соединение."]} />);
 
     expect(screen.getByText("Вариант один")).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent("Прежние варианты сохранены");
+    expect(screen.getByRole("alert")).toHaveTextContent("Текущий текст сохранён");
+  });
+
+  it("запрашивает выбранное преобразование и принимает новую деталь", async () => {
+    const onModeSelect = vi.fn();
+    const onAddDetail = vi.fn();
+    const result = { id: "short" as const, label: "Готовый текст", text: "Спасибо за поддержку. Желаю здоровья и радостных дней." };
+    render(<JoinSidePanel {...panelProps} state="result" result={result} onModeSelect={onModeSelect} onAddDetail={onAddDetail} />);
+
+    await userEvent.click(screen.getByRole("tab", { name: "Творческий" }));
+    expect(onModeSelect).toHaveBeenCalledWith("creative");
+
+    await userEvent.click(screen.getByRole("button", { name: "Добавить детали" }));
+    await userEvent.type(screen.getByLabelText("Какую деталь добавить?"), "Он помог мне с переездом");
+    await userEvent.click(screen.getByRole("button", { name: "Добавить и обновить текст" }));
+    expect(onAddDetail).toHaveBeenCalledWith("Он помог мне с переездом");
+  });
+
+  it("показывает сокращение только для достаточно длинного результата", () => {
+    const shortResult = { id: "short" as const, label: "Готовый текст", text: "Спасибо за поддержку. Желаю здоровья." };
+    const { rerender } = render(<JoinSidePanel {...panelProps} state="result" result={shortResult} />);
+    expect(screen.queryByRole("tab", { name: "Короче" })).not.toBeInTheDocument();
+
+    const longResult = { ...shortResult, text: "Спасибо за поддержку и помощь в самых разных ситуациях. ".repeat(5) };
+    rerender(<JoinSidePanel {...panelProps} state="result" result={longResult} />);
+    expect(screen.getByRole("tab", { name: "Короче" })).toBeInTheDocument();
+  });
+
+  it("перелистывает историю только внутри выбранного режима", async () => {
+    const onPrevious = vi.fn();
+    const onNext = vi.fn();
+    const result = { id: "warm" as const, label: "Теплее", text: "Тёплый вариант два" };
+    render(
+      <JoinSidePanel
+        {...panelProps}
+        state="result"
+        result={result}
+        mode="warmer"
+        availableModes={["initial", "warmer"]}
+        historyIndex={1}
+        historyCount={2}
+        onPrevious={onPrevious}
+        onNext={onNext}
+      />
+    );
+
+    expect(screen.getByText("2 из 2")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "← Предыдущий" }));
+    expect(onPrevious).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: "Следующий →" })).toBeDisabled();
+  });
+
+  it("явно объясняет отключённые действия после окончания попыток", () => {
+    const result = { id: "short" as const, label: "Готовый текст", text: "Спасибо за поддержку. Желаю здоровья." };
+    render(<JoinSidePanel {...panelProps} state="result" result={result} remaining={0} limitReached />);
+
+    expect(screen.getByText(/AI-попытки закончились.*создание новых вариантов/u)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Ещё вариант «Основной»/ })).toBeDisabled();
+    expect(screen.getByRole("tab", { name: "Основной" })).toBeEnabled();
   });
 
   it("ИИ error не вытесняется опросом", () => {
     render(<JoinSidePanel {...panelProps} state="error" issues={["Ошибка генерации"]} hasActivePoll={true} />);
 
-    expect(screen.getByText("Не получилось подготовить варианты")).toBeInTheDocument();
+    expect(screen.getByText("Не получилось подготовить текст")).toBeInTheDocument();
     expect(screen.queryByText(/выбрать подарок/i)).not.toBeInTheDocument();
   });
 });

@@ -17,6 +17,7 @@ import {
   type LandingAttribution,
   type TeacherLandingAttribution
 } from "@/lib/landing-attribution";
+import { hasAcceptedAnalyticsConsent } from "@/lib/client-analytics-consent";
 
 const readCookie = (name: string) => {
   const prefix = `${name}=`;
@@ -34,6 +35,7 @@ const ensureFirstTouch = <T extends LandingAttribution>(
   }) => T | null
 ): T | null => {
   if (typeof window === "undefined" || typeof document === "undefined") return null;
+  if (!hasAcceptedAnalyticsConsent()) return null;
 
   const existing = parseLandingAttribution(readCookie(FIRST_TOUCH_COOKIE_NAME));
   if (existing) return existing.landing_path === landingPath ? existing as T : null;
@@ -51,6 +53,12 @@ const ensureFirstTouch = <T extends LandingAttribution>(
   return attribution;
 };
 
+export const removeFirstTouchCookie = () => {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${FIRST_TOUCH_COOKIE_NAME}=; Max-Age=0; Path=/; SameSite=Lax${secure}`;
+};
+
 export const ensureTeacherFirstTouch = (): TeacherLandingAttribution | null =>
   ensureFirstTouch(TEACHER_LANDING_PATH, buildTeacherLandingAttribution);
 
@@ -62,6 +70,15 @@ export const ensureColleagueFirstTouch = (): ColleagueLandingAttribution | null 
 
 export const ensureBirthdayFirstTouch = (): BirthdayLandingAttribution | null =>
   ensureFirstTouch(BIRTHDAY_LANDING_PATH, buildBirthdayLandingAttribution);
+
+export const ensureCurrentLandingFirstTouch = (): LandingAttribution | null => {
+  if (typeof window === "undefined") return null;
+  if (window.location.pathname === TEACHER_LANDING_PATH) return ensureTeacherFirstTouch();
+  if (window.location.pathname === CAREGIVER_LANDING_PATH) return ensureCaregiverFirstTouch();
+  if (window.location.pathname === COLLEAGUE_LANDING_PATH) return ensureColleagueFirstTouch();
+  if (window.location.pathname === BIRTHDAY_LANDING_PATH) return ensureBirthdayFirstTouch();
+  return null;
+};
 
 export const getBirthdayTelemetryContext = (): Record<string, string> =>
   ensureBirthdayFirstTouch() ?? {

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AI_DRAFT_LIMIT } from "@/lib/ai/validation";
-import type { AiVariant } from "@/lib/ai/types";
+import type { AiJoinAction, AiJoinResultMode, AiVariant } from "@/lib/ai/types";
 import { AiHelper } from "./ai-helper";
 import { TextAssistIcon } from "@/components/icons/text-assist-icon";
 import { GiftPollVote } from "./gift-poll-vote";
@@ -30,6 +30,12 @@ type Props = {
 const DEFAULT_MESSAGE_PLACEHOLDER =
   "Напишите несколько теплых слов: что цените, за что благодарны, какой момент хочется вспомнить...";
 
+type StoredJoinResult = { variant: AiVariant; generationId: string };
+type JoinResultHistory = Record<AiJoinResultMode, StoredJoinResult[]>;
+type JoinResultIndexes = Record<AiJoinResultMode, number>;
+const emptyJoinResultHistory = (): JoinResultHistory => ({ initial: [], warmer: [], creative: [], shorten: [] });
+const initialJoinResultIndexes: JoinResultIndexes = { initial: 0, warmer: 0, creative: 0, shorten: 0 };
+
 export const ParticipantForm = ({
   cardId,
   publicSlug,
@@ -50,8 +56,11 @@ export const ParticipantForm = ({
   const [participantConsent, setParticipantConsent] = useState(false);
   const [isPending, startTransition] = useTransition();
   const isJoin = variant === "join";
-  const [aiVariants, setAiVariants] = useState<AiVariant[]>([]);
-  const [aiGenerationId, setAiGenerationId] = useState("");
+  const [aiResults, setAiResults] = useState<JoinResultHistory>(emptyJoinResultHistory);
+  const [aiActiveMode, setAiActiveMode] = useState<AiJoinResultMode>("initial");
+  const [aiResultIndexes, setAiResultIndexes] = useState<JoinResultIndexes>(initialJoinResultIndexes);
+  const [aiSourceDraft, setAiSourceDraft] = useState("");
+  const [aiPendingAction, setAiPendingAction] = useState<AiJoinAction | null>(null);
   const [aiIssues, setAiIssues] = useState<string[]>([]);
   const [aiRemaining, setAiRemaining] = useState<number | null>(null);
   const [aiLimitReached, setAiLimitReached] = useState(false);
@@ -72,8 +81,11 @@ export const ParticipantForm = ({
   const isOverLimit = message.length > messageLimit;
   const activeHint = GREETING_HINTS.find((hint) => hint.id === activeHintId) ?? null;
   const activeHintExample = activeHint ? activeHint.examples[hintIndexes[activeHint.id]] : null;
+  const activeAiHistory = aiResults[aiActiveMode];
+  const activeAiResultIndex = Math.min(aiResultIndexes[aiActiveMode], Math.max(0, activeAiHistory.length - 1));
+  const activeAiResult = activeAiHistory[activeAiResultIndex] ?? null;
   const aiPanelState =
-    aiVariants.length > 0 ? "variants" : aiIssues.length > 0 ? "error" : isAiPending ? "loading" : "idle";
+    activeAiResult ? "result" : aiIssues.length > 0 ? "error" : isAiPending ? "loading" : "idle";
   const clearSuccessOnEdit = () => {
     if (successMessage) {
       setSuccessMessage("");
@@ -136,8 +148,11 @@ export const ParticipantForm = ({
     setMessage("");
     setAiGenerationIds([]);
     setAiResetSignal((current) => current + 1);
-    setAiVariants([]);
-    setAiGenerationId("");
+    setAiResults(emptyJoinResultHistory());
+    setAiActiveMode("initial");
+    setAiResultIndexes(initialJoinResultIndexes);
+    setAiSourceDraft("");
+    setAiPendingAction(null);
     setAiIssues([]);
     setAiRemaining(null);
     setAiLimitReached(false);
@@ -145,10 +160,24 @@ export const ParticipantForm = ({
     router.refresh();
   };
 
-  const handleAiGenerate = async () => {
+  const handleAiGenerate = async (
+    action: AiJoinResultMode = "initial",
+    options?: { addedDetail?: string; resetSource?: boolean }
+  ) => {
     const requestId = pendingAiRequestId.current ?? crypto.randomUUID();
     pendingAiRequestId.current = requestId;
     setAiIssues([]);
+    setAiPendingAction(action);
+    const baseDraft = options?.resetSource ? message : aiSourceDraft || message;
+    const detailSuffix = options?.addedDetail ? `\n\nЕщё одна важная деталь: ${options.addedDetail}` : "";
+    const draftBudget = Math.max(0, AI_DRAFT_LIMIT - Array.from(detailSuffix).length);
+    const generationDraft = `${Array.from(baseDraft).slice(0, draftBudget).join("")}${detailSuffix}`;
+    const latestMainResult = aiResults.initial.at(-1)?.variant.text;
+    const sourceText = action === "initial"
+      ? undefined
+      : action === "shorten"
+        ? activeAiResult?.variant.text ?? latestMainResult
+        : latestMainResult ?? activeAiResult?.variant.text;
 
     let response: Response;
     try {
@@ -159,9 +188,12 @@ export const ParticipantForm = ({
           requestId,
           cardId,
           publicSlug,
-          draftNotes: Array.from(message).slice(0, AI_DRAFT_LIMIT).join(""),
+          draftNotes: generationDraft,
           style: "touching",
-          relationshipContext: authorRole
+          relationshipContext: authorRole,
+          joinAction: action,
+          sourceText,
+          requiredDetail: options?.addedDetail
         })
       });
     } catch {
@@ -174,16 +206,40 @@ export const ParticipantForm = ({
     const payload = await response.json();
     if (!response.ok) {
       setAiLimitReached(response.status === 429);
+      if (response.status === 429) setAiRemaining(0);
       setAiIssues(
         payload.issues
           ? payload.issues.map((issue: { message: string }) => issue.message)
-          : [payload.message ?? "Не удалось получить варианты текста."]
+          : [payload.message ?? "Не удалось получить текст."]
       );
       return;
     }
 
-    setAiVariants(payload.result.variants);
-    setAiGenerationId(payload.result.generationId);
+    const nextResult = payload.result.variants[0] as AiVariant;
+    const shouldResetAll = Boolean(options?.resetSource);
+    const shouldResetDerived = Boolean(options?.addedDetail);
+    const nextHistoryLength = shouldResetAll
+      ? 1
+      : action === "initial"
+        ? aiResults.initial.length + 1
+        : aiResults[action].length + 1;
+    setAiResults((current) => {
+      const base = shouldResetAll
+        ? emptyJoinResultHistory()
+        : shouldResetDerived
+          ? { ...current, warmer: [], creative: [], shorten: [] }
+          : current;
+      return {
+        ...base,
+        [action]: [...base[action], { variant: nextResult, generationId: payload.result.generationId }]
+      };
+    });
+    setAiActiveMode(action);
+    setAiResultIndexes((current) => ({
+      ...(shouldResetAll ? initialJoinResultIndexes : shouldResetDerived ? { ...current, warmer: 0, creative: 0, shorten: 0 } : current),
+      [action]: nextHistoryLength - 1
+    }));
+    if (options?.resetSource || options?.addedDetail) setAiSourceDraft(generationDraft);
     setAiGenerationIds((current) =>
       current.includes(payload.result.generationId) ? current : [...current, payload.result.generationId]
     );
@@ -191,10 +247,36 @@ export const ParticipantForm = ({
     setAiLimitReached(payload.result.usage.remaining === 0);
   };
 
-  const generateAiVariants = () => {
+  const generateAiResult = (
+    action: AiJoinResultMode = "initial",
+    options?: { addedDetail?: string; resetSource?: boolean }
+  ) => {
     startAiTransition(async () => {
-      await handleAiGenerate();
+      try {
+        await handleAiGenerate(action, options);
+      } finally {
+        setAiPendingAction(null);
+      }
     });
+  };
+
+  const handleAiModeSelect = (mode: AiJoinResultMode) => {
+    const history = aiResults[mode];
+    setAiIssues([]);
+    if (history.length > 0) {
+      setAiActiveMode(mode);
+      setAiResultIndexes((current) => ({ ...current, [mode]: history.length - 1 }));
+      return;
+    }
+    generateAiResult(mode);
+  };
+
+  const moveAiHistory = (direction: -1 | 1) => {
+    setAiResultIndexes((current) => ({
+      ...current,
+      [aiActiveMode]: Math.max(0, Math.min(activeAiHistory.length - 1, current[aiActiveMode] + direction))
+    }));
+    setAiIssues([]);
   };
 
   const handleUseVariant = (text: string) => {
@@ -491,12 +573,17 @@ export const ParticipantForm = ({
                       <button
                         type="button"
                         className={styles.aiTrigger}
-                        onClick={generateAiVariants}
+                        onClick={() => generateAiResult("initial", { resetSource: true })}
                         disabled={isAiPending || aiLimitReached}
                       >
                         <TextAssistIcon className={styles.aiTriggerIcon} />
-                        {isAiPending ? "Готовим варианты..." : "Помочь с текстом"}
+                        {isAiPending ? "Готовим текст..." : "Помочь с текстом"}
                       </button>
+                      {aiRemaining !== null ? (
+                        <span className={`${styles.aiAttemptsInline} ${aiRemaining === 0 ? styles.aiAttemptsInlineEmpty : ""}`} role="status">
+                          {aiRemaining > 0 ? `AI-попыток: ${aiRemaining}` : "AI-попытки закончились"}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -529,12 +616,18 @@ export const ParticipantForm = ({
 
           <JoinSidePanel
             state={aiPanelState}
-            variants={aiVariants}
-            generationId={aiGenerationId}
+            result={activeAiResult?.variant ?? null}
+            mode={aiActiveMode}
+            availableModes={(Object.keys(aiResults) as AiJoinResultMode[]).filter((mode) => aiResults[mode].length > 0)}
+            historyIndex={activeAiResultIndex}
+            historyCount={activeAiHistory.length}
+            generationId={activeAiResult?.generationId ?? ""}
             isPending={isAiPending}
+            pendingAction={aiPendingAction}
             limitReached={aiLimitReached}
             issues={aiIssues}
             remaining={aiRemaining}
+            messageLimit={messageLimit}
             activeHintId={activeHintId}
             activeHintExample={activeHintExample}
             hintExampleVisible={hintBlockVisible}
@@ -542,8 +635,13 @@ export const ParticipantForm = ({
             hasActivePoll={hasActivePoll}
             onHintSelect={handleHintSelect}
             onHideHintExample={() => setHintBlockVisible(false)}
-            onUseVariant={handleUseVariant}
-            onRetry={generateAiVariants}
+            onUseResult={handleUseVariant}
+            onModeSelect={handleAiModeSelect}
+            onAnother={() => generateAiResult(aiActiveMode)}
+            onAddDetail={(detail) => generateAiResult("initial", { addedDetail: detail })}
+            onPrevious={() => moveAiHistory(-1)}
+            onNext={() => moveAiHistory(1)}
+            onRetry={() => generateAiResult("initial", { resetSource: !aiSourceDraft })}
           />
         </form>
       )}

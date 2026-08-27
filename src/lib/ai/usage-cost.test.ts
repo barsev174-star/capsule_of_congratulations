@@ -7,7 +7,14 @@ describe("AI usage cost", () => {
       inputTokens: 1_000_000,
       cachedInputTokens: 100_000,
       outputTokens: 1_000_000
-    })).toMatchObject({ inputRub: 22.755, outputRub: 204, totalRub: 226.755 });
+    })).toMatchObject({ inputRub: 24.98008, outputRub: 219.6051, totalRub: 244.58518 });
+  });
+
+  it("estimates YandexGPT 5.1 Pro usage returned by RouterAI", () => {
+    expect(estimateAiUsageCost("yandex/gpt-pro-5.1", {
+      inputTokens: 1_000,
+      outputTokens: 500
+    })).toMatchObject({ inputRub: 0.581954, outputRub: 0.290977, totalRub: 0.87293 });
   });
 
   it("does not invent a cost for an unknown model", () => {

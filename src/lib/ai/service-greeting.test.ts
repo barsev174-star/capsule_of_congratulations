@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   generateBestQuotesWithOpenAi: vi.fn(),
   generateQualitiesWithOpenAi: vi.fn(),
   extractGreetingSemantics: vi.fn(),
+  composeGreetingText: vi.fn(),
   composeGreetingVariants: vi.fn(),
   repairGreetingVariant: vi.fn(),
   completeAiGeneration: vi.fn(),
@@ -45,6 +46,7 @@ vi.mock("@/lib/ai/openai-two-step-provider", () => ({
 
 vi.mock("@/lib/ai/openai-two-stage-provider", () => ({
   extractGreetingSemantics: mocks.extractGreetingSemantics,
+  composeGreetingText: mocks.composeGreetingText,
   composeGreetingVariants: mocks.composeGreetingVariants,
   repairGreetingVariant: mocks.repairGreetingVariant
 }));
@@ -110,6 +112,8 @@ describe("AI greeting service validation flow", () => {
     delete process.env.AI_GREETING_PROVIDER;
     delete process.env.AI_GREETING_MODE;
     delete process.env.AI_GREETING_EXPERIMENT;
+    delete process.env.AI_JOIN_EXTRACTOR_MODEL;
+    delete process.env.AI_JOIN_COMPOSER_MODEL;
     mocks.generateWithGigaChat.mockReset();
     mocks.generateWithOpenAi.mockReset();
     mocks.generateMatrixWithOpenAi.mockReset();
@@ -118,6 +122,10 @@ describe("AI greeting service validation flow", () => {
     mocks.generateTwoStepVariantsWithOpenAi.mockReset();
     mocks.generateBestQuotesWithOpenAi.mockReset();
     mocks.generateQualitiesWithOpenAi.mockReset();
+    mocks.extractGreetingSemantics.mockReset();
+    mocks.composeGreetingText.mockReset();
+    mocks.composeGreetingVariants.mockReset();
+    mocks.repairGreetingVariant.mockReset();
     mocks.completeAiGeneration.mockClear();
     mocks.releaseAiGeneration.mockClear();
   });
@@ -325,7 +333,7 @@ describe("AI greeting service validation flow", () => {
       usage: { totalTokens: 300 },
       durationMs: 5,
       plan: {
-        authorVoice: "WE",
+        authorVoice: "I",
         authorGender: "UNKNOWN",
         addressForm: "VY",
         recipientNumber: "ONE",
@@ -344,8 +352,8 @@ describe("AI greeting service validation flow", () => {
       usage: { totalTokens: 700 },
       durationMs: 8,
       variants: {
-        safe: { text: "Анна Ивановна, с выпускным! Спасибо за помощь во время учёбы. Желаем успехов." },
-        warm: { text: "Анна Ивановна, с выпускным! Спасибо за отзывчивость и помощь во время учёбы. Желаем успехов." },
+        safe: { text: "Анна Ивановна, с выпускным! Благодарю за помощь во время учёбы. Желаю успехов." },
+        warm: { text: "Анна Ивановна, с выпускным! Спасибо за отзывчивость и помощь во время учёбы. Желаю успехов." },
         expressive: { text: "Анна Ивановна, с выпускным! Спасибо за помощь во время учёбы. Пусть впереди будет много удачных дней!" }
       }
     });
@@ -356,6 +364,134 @@ describe("AI greeting service validation flow", () => {
     expect(mocks.extractGreetingSemantics).toHaveBeenCalledOnce();
     expect(mocks.composeGreetingVariants).toHaveBeenCalledOnce();
     expect(mocks.generateLadderWithOpenAi).not.toHaveBeenCalled();
+  });
+
+  it("returns one main result for join and skips the three-variant composer", async () => {
+    process.env.AI_GREETING_PROVIDER = "openai";
+    process.env.AI_GREETING_PROMPT_PROFILE = "yandex";
+    mocks.extractGreetingSemantics.mockResolvedValue({
+      model: "yandex/gpt-pro-5.1",
+      usage: { totalTokens: 300 },
+      durationMs: 5,
+      plan: {
+        authorVoice: "I",
+        authorGender: "UNKNOWN",
+        addressForm: "VY",
+        recipientNumber: "ONE",
+        coreFacts: [{ id: "f1", text: "помощь во время учёбы", mustPreserve: true }],
+        contextFacts: [],
+        appreciation: ["помощь во время учёбы"],
+        wishes: ["успехов"],
+        derivedQualities: [],
+        editorialIntent: { humor: "NONE", humorPlacement: "ANY", warmthRequested: false, expressivenessRequested: false, otherNotes: [] },
+        phrasesWorthPreserving: [],
+        ambiguities: []
+      }
+    });
+    mocks.composeGreetingText.mockResolvedValue({
+      model: "yandex/gpt-pro-5.1",
+      usage: { totalTokens: 450 },
+      durationMs: 7,
+      text: "Анна Ивановна, с выпускным! Благодарю за помощь во время учёбы. Желаю успехов."
+    });
+
+    const result = await generateParticipantMessage({ ...input, joinAction: "initial" });
+
+    expect(result.variants).toEqual([
+      expect.objectContaining({ id: "short", label: "Готовый текст" })
+    ]);
+    expect(mocks.composeGreetingText).toHaveBeenCalledOnce();
+    expect(mocks.extractGreetingSemantics.mock.calls[0][1]).toEqual({ model: "yandex/gpt-pro-5.1" });
+    expect(mocks.composeGreetingText.mock.calls[0][1]).toEqual({ model: "yandex/gpt-pro-5.1" });
+    expect(mocks.composeGreetingVariants).not.toHaveBeenCalled();
+    delete process.env.AI_GREETING_PROMPT_PROFILE;
+  });
+
+  it("makes a user-added join detail an explicit required fact", async () => {
+    process.env.AI_GREETING_PROVIDER = "openai";
+    mocks.extractGreetingSemantics.mockResolvedValue({
+      model: "yandex/gpt-pro-5.1",
+      usage: { totalTokens: 300 },
+      durationMs: 5,
+      plan: {
+        authorVoice: "I",
+        authorGender: "UNKNOWN",
+        addressForm: "VY",
+        recipientNumber: "ONE",
+        coreFacts: [{ id: "f1", text: "помощь во время учёбы", mustPreserve: true }],
+        contextFacts: [],
+        appreciation: ["помощь во время учёбы"],
+        wishes: ["успехов"],
+        derivedQualities: [],
+        editorialIntent: { humor: "NONE", humorPlacement: "ANY", warmthRequested: false, expressivenessRequested: false, otherNotes: [] },
+        phrasesWorthPreserving: [],
+        ambiguities: []
+      }
+    });
+    mocks.composeGreetingText.mockImplementation(async (prompt: { user: string }) => {
+      expect(prompt.user).toContain('"id":"user-detail"');
+      expect(prompt.user).toContain("Хочу видеться с ним чаще");
+      return {
+        model: "yandex/gpt-pro-5.1",
+        usage: { totalTokens: 450 },
+        durationMs: 7,
+        text: "Анна Ивановна, с выпускным! Благодарю за помощь во время учёбы. Хочу видеться с вами чаще. Желаю успехов."
+      };
+    });
+
+    const result = await generateParticipantMessage({
+      ...input,
+      joinAction: "initial",
+      requiredDetail: "Хочу видеться с ним чаще"
+    });
+
+    expect(result.variants[0].text).toContain("видеться с вами чаще");
+    expect(mocks.composeGreetingText).toHaveBeenCalledOnce();
+  });
+
+  it("repairs every invalid two-stage variant once", async () => {
+    process.env.AI_GREETING_PROVIDER = "openai";
+    process.env.AI_GREETING_MODE = "ladder";
+    process.env.AI_GREETING_EXPERIMENT = "two_step";
+    mocks.extractGreetingSemantics.mockResolvedValue({
+      model: "yandex/gpt-pro-5.1",
+      usage: { totalTokens: 300 },
+      durationMs: 5,
+      plan: {
+        authorVoice: "WE",
+        authorGender: "UNKNOWN",
+        addressForm: "VY",
+        recipientNumber: "ONE",
+        coreFacts: ["помогает во время учёбы"],
+        contextFacts: [],
+        appreciation: ["помощь во время учёбы"],
+        wishes: ["успехов"],
+        derivedQualities: [],
+        editorialIntent: { humor: "NONE", humorPlacement: "ANY", warmthRequested: false, expressivenessRequested: false, otherNotes: [] },
+        phrasesWorthPreserving: [],
+        ambiguities: []
+      }
+    });
+    mocks.composeGreetingVariants.mockResolvedValue({
+      model: "yandex/gpt-pro-5.1",
+      usage: { totalTokens: 700 },
+      durationMs: 8,
+      variants: {
+        safe: { text: "Анна Ивановна, с выпускным! Благодарим тебя за помощь и желаем успехов." },
+        warm: { text: "Анна Ивановна, с выпускным! Поздравляю вас и желаю успехов." },
+        expressive: { text: "Анна Ивановна, с выпускным! Благодарим за помощь и желаем успехов." }
+      }
+    });
+    mocks.repairGreetingVariant
+      .mockResolvedValueOnce({ text: "Поздравляем с выпускным, Анна Ивановна! Спасибо за помощь. Желаем успехов.", usage: { totalTokens: 100 } })
+      .mockResolvedValueOnce({ text: "С выпускным, Анна Ивановна! Мы ценим вашу помощь и желаем успехов.", usage: { totalTokens: 100 } });
+
+    const result = await generateParticipantMessage({ ...input, draftNotes: "Спасибо за помощь во время учёбы. Желаем успехов." });
+
+    expect(result.variants).toHaveLength(3);
+    expect(mocks.repairGreetingVariant).toHaveBeenCalledTimes(2);
+    expect(result.variants[0].text).not.toContain("тебя");
+    expect(result.variants[1].text).not.toContain("Поздравляю");
   });
 
   it("retries only a rejected ladder level", async () => {
