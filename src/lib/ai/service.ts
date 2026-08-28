@@ -11,7 +11,7 @@ import {
   saveAiCardInsight
 } from "@/lib/ai/repository";
 import { generateWithGigaChat } from "@/lib/ai/gigachat-provider";
-import { generateBestQuotesWithOpenAi, generateQualitiesWithOpenAi } from "@/lib/ai/openai-insights-provider";
+import { generateBestQuotesWithRouterAi, generateQualitiesWithRouterAi } from "@/lib/ai/routerai-insights-provider";
 import {
   generateMatrixWithOpenAi,
   generateWithOpenAi,
@@ -35,8 +35,9 @@ import { buildTwoStepComposePrompt, buildTwoStepPlanPrompt, buildTwoStepRepairPr
 import { buildSemanticPrompt, buildSemanticRepairPrompt, GREETING_PROMPT_VERSION, validateSemanticVariants } from "@/lib/ai/greeting-semantic";
 import { generateSemanticGreetingWithOpenAi, repairSemanticGreetingWithOpenAi } from "@/lib/ai/openai-semantic-provider";
 import { buildComposerPrompt, buildComposerRepairPrompt, buildExtractorPrompt, buildSingleComposerPrompt, buildSingleComposerRepairPrompt, getGreetingPromptVersions, getSafeFactCoverageSignal, getSemanticPlanCacheKey, normalizeGreetingCoreFacts, stabilizeComposerVariants, stabilizeGreetingSemanticPlan, validateComposerVariants, validateSingleComposerText } from "@/lib/ai/greeting-two-stage";
-import { composeGreetingText, composeGreetingVariants, extractGreetingSemantics, repairGreetingVariant } from "@/lib/ai/openai-two-stage-provider";
+import { composeGreetingText, composeGreetingVariants, extractGreetingSemantics, repairGreetingVariant } from "@/lib/ai/routerai-yandex-provider";
 import { estimateAiUsageCost, sumAiUsageCosts } from "@/lib/ai/usage-cost";
+import { generateLiteralGreetingEditWithRouterAi } from "@/lib/ai/routerai-greeting-edit-provider";
 
 let localTemplateGenerationSequence = 0;
 import { generateLadderWithOpenAi, OPENAI_LADDER_PROMPT_VERSION } from "@/lib/ai/openai-ladder-provider";
@@ -418,13 +419,14 @@ const buildLiteralEditVariant = (
     : proofreadLocally(input.draftNotes)
 });
 
-const getProviderName = (value?: string): AiProviderName =>
-  value === "gigachat" || value === "openai" ? value : "mock";
+const getProviderName = (value?: string): AiProviderName => {
+  const provider = value?.trim() || "mock";
+  if (provider === "routerai" || provider === "mock") return provider;
+  throw new AiError("PROVIDER_CONFIG", `AI provider "${provider}" is no longer supported. Use RouterAI.`);
+};
 
 const getInsightsProviderName = (): AiProviderName =>
-  (process.env.AI_INSIGHTS_PROVIDER ?? (process.env.OPENAI_API_KEY ? "openai" : "mock")) === "openai"
-    ? "openai"
-    : "mock";
+  getProviderName(process.env.AI_INSIGHTS_PROVIDER ?? (process.env.ROUTERAI_API_KEY ? "routerai" : "mock"));
 
 const buildTargetedFeedback = (issues: ProviderVariantValidationIssue[]) => {
   const issue = issues.find((item) => item.severity === "hard")
@@ -535,14 +537,14 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
   const literalEditInstruction = input.editInstruction === "shorten" || input.editInstruction === "proofread"
     ? input.editInstruction
     : null;
-  const matrixRequested = process.env.AI_GREETING_MODE === "matrix";
-  const ladderRequested = process.env.AI_GREETING_MODE === "ladder";
-  const twoStepRequested = process.env.AI_GREETING_EXPERIMENT === "two_step" || process.env.AI_GREETING_EXPERIMENT === "semantic";
+  const matrixRequested = false;
+  const ladderRequested = false;
+  const twoStepRequested = providerName === "routerai";
   const joinSingleRequested = Boolean(input.joinAction);
   // The editor's "Улучшить с AI" uses the same source text and needs the
   // same semantic safeguards as a newly composed participant message.
   // Shortening remains a separate, length-focused workflow.
-  const supportsSpecialMode = providerName === "openai" && !literalEditInstruction && (input.mode ?? "compose") !== "shorten";
+  const supportsSpecialMode = providerName === "routerai" && !literalEditInstruction && (input.mode ?? "compose") !== "shorten";
   const greetingMode = (twoStepRequested || joinSingleRequested) && supportsSpecialMode
     ? "two_step"
     : ladderRequested && supportsSpecialMode
@@ -554,7 +556,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
   const universalMatrix = matrixPromptVersion === OPENAI_MATRIX_PROMPT_VERSION || matrixPromptVersion === OPENAI_MATRIX_PROMPT_V3;
   const cleanupMatrix = matrixPromptVersion === OPENAI_MATRIX_PROMPT_VERSION;
   if (process.env.NODE_ENV !== "production" && (matrixRequested || ladderRequested || twoStepRequested) && greetingMode === "classic") {
-    logger.warn("ai.special_mode_classic_fallback", "Selected greeting mode requires OpenAI compose generation; using classic", {
+    logger.warn("ai.special_mode_classic_fallback", "Selected greeting mode requires RouterAI compose generation; using classic", {
       provider: providerName,
       requestedMode: twoStepRequested ? "two_step" : process.env.AI_GREETING_MODE,
       mode: input.mode ?? "compose"
@@ -608,11 +610,9 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
             validationFeedback: literalIssues,
             requestedVariantTypes: ["style" as const]
           };
-          providerResult = providerName === "gigachat"
-            ? await generateWithGigaChat(providerInput)
-            : providerName === "openai"
-              ? await generateWithOpenAi(providerInput)
-              : {
+          providerResult = providerName === "routerai"
+            ? await generateLiteralGreetingEditWithRouterAi(input, attempt, literalIssues)
+            : {
                   variants: [buildLiteralEditVariant(input, literalEditInstruction)],
                   model: "local-literal-edit-v1"
                 };
@@ -760,13 +760,9 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
     }
 
     if (greetingMode === "two_step") {
-      const joinPromptProfile = input.joinAction ? "yandex" as const : undefined;
-      const joinExtractorModel = input.joinAction
-        ? process.env.AI_JOIN_EXTRACTOR_MODEL?.trim() || "yandex/gpt-pro-5.1"
-        : undefined;
-      const joinComposerModel = input.joinAction
-        ? process.env.AI_JOIN_COMPOSER_MODEL?.trim() || "yandex/gpt-pro-5.1"
-        : undefined;
+      const joinPromptProfile = "yandex" as const;
+      const joinExtractorModel = process.env.YANDEX_GREETING_EXTRACTOR_MODEL?.trim() || "yandex/gpt-pro-5.1";
+      const joinComposerModel = process.env.YANDEX_GREETING_COMPOSER_MODEL?.trim() || "yandex/gpt-pro-5.1";
       const stageInput = {
         recipientName: input.recipientName, occasionText: input.occasionText, fromLabel: input.fromLabel,
         relationshipContext: input.relationshipContext, draftNotes: input.draftNotes, messageLimit: input.messageLimit,
@@ -1344,8 +1340,8 @@ export const generateBestQuotes = async (input: {
     let model = "local-insights-v1";
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const providerResult = providerName === "openai"
-        ? await generateBestQuotesWithOpenAi({
+      const providerResult = providerName === "routerai"
+        ? await generateBestQuotesWithRouterAi({
             recipientName: input.recipientName,
             occasionText: input.occasionText,
             contributions: input.contributions.map(({ id, message }) => ({ id, message })),
@@ -1415,8 +1411,8 @@ export const generateQualities = async (input: {
     let model = "local-insights-v1";
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const providerResult = providerName === "openai"
-        ? await generateQualitiesWithOpenAi({
+      const providerResult = providerName === "routerai"
+        ? await generateQualitiesWithRouterAi({
             recipientName: input.recipientName,
             occasionText: input.occasionText,
             contributions: input.contributions.map(({ id, message }) => ({ id, message })),

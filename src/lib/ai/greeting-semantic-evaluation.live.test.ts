@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { semanticEvaluationFixtures } from "@/lib/ai/greeting-semantic-fixtures";
 import { buildComposerPrompt, buildComposerRepairPrompt, buildComposerReviewPrompt, buildExtractorPrompt, stabilizeComposerVariants, stabilizeGreetingSemanticPlan, validateComposerVariants } from "@/lib/ai/greeting-two-stage";
-import { composeGreetingVariants, extractGreetingSemantics, repairGreetingVariant } from "@/lib/ai/openai-two-stage-provider";
+import { composeGreetingVariants, extractGreetingSemantics, repairGreetingVariant } from "@/lib/ai/routerai-yandex-provider";
 import { estimateAiUsageCost, sumAiUsageCosts } from "@/lib/ai/usage-cost";
 
 const shouldRun = process.env.RUN_GREETING_EVALUATION === "1";

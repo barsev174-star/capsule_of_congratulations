@@ -47,6 +47,7 @@ export async function POST(request: Request) {
   const input = validation.data;
   const isJoinSingle = Boolean(input.joinAction);
   const isManagerEdit = input.mode === "shorten" || input.mode === "improve";
+  const isManagerRequest = Boolean(input.manageToken);
   const card = isManagerEdit
     ? input.manageToken
       ? await getCardDraftByManageToken(input.manageToken)
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Сбор поздравлений для этой открытки уже закрыт." }, { status: 403 });
   }
 
-  if (isManagerEdit) {
+  if (isManagerRequest) {
     try {
       assertCardContentEditable(lifecycle);
     } catch (error) {

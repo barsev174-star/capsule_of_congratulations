@@ -2,14 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   generateParticipantMessage: vi.fn(),
+  getCardDraftByManageToken: vi.fn(),
   getCardDraftByPublicSlug: vi.fn(),
   listAllContributionsByCardId: vi.fn(),
+  getCardLifecycleByManageToken: vi.fn(),
   getCardLifecycleByPublicSlug: vi.fn()
 }));
 
 vi.mock("@/lib/ai/service", () => ({ generateParticipantMessage: mocks.generateParticipantMessage }));
 vi.mock("@/lib/cards/repository", () => ({
-  getCardDraftByManageToken: vi.fn(),
+  getCardDraftByManageToken: mocks.getCardDraftByManageToken,
   getCardDraftByPublicSlug: mocks.getCardDraftByPublicSlug,
   listAllContributionsByCardId: mocks.listAllContributionsByCardId
 }));
@@ -21,7 +23,7 @@ vi.mock("@/lib/ai/repository", () => ({ hasPaidAiEntitlement: vi.fn() }));
 vi.mock("@/lib/telemetry", () => ({ reportCriticalError: vi.fn() }));
 vi.mock("@/lib/cards/lifecycle", () => ({ assertCardContentEditable: vi.fn() }));
 vi.mock("@/lib/cards/lifecycle-repository", () => ({
-  getCardLifecycleByManageToken: vi.fn(),
+  getCardLifecycleByManageToken: mocks.getCardLifecycleByManageToken,
   getCardLifecycleByPublicSlug: mocks.getCardLifecycleByPublicSlug
 }));
 
@@ -38,6 +40,18 @@ describe("POST /api/ai/generate-greeting — join contract", () => {
       finalMessageSettings: null
     });
     mocks.getCardLifecycleByPublicSlug.mockResolvedValue({
+      collectionStatus: "OPEN",
+      deliveryStatus: "PREPARING",
+      purgedAt: null
+    });
+    mocks.getCardDraftByManageToken.mockResolvedValue({
+      id: "card-1",
+      recipientName: "Наталья",
+      fromLabel: "от друзей",
+      occasionText: "С днём рождения!",
+      finalMessageSettings: null
+    });
+    mocks.getCardLifecycleByManageToken.mockResolvedValue({
       collectionStatus: "OPEN",
       deliveryStatus: "PREPARING",
       purgedAt: null
@@ -96,6 +110,30 @@ describe("POST /api/ai/generate-greeting — join contract", () => {
       draftNotes: "Спасибо за поддержку и помощь в важных делах.",
       joinAction: "initial",
       requiredDetail: "Он помог мне с переездом"
+    }));
+  });
+
+  it("разрешает одновариантный контракт организатору по manageToken", async () => {
+    const response = await POST(new Request("http://localhost/api/ai/generate-greeting", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requestId: "123e4567-e89b-42d3-a456-426614174002",
+        cardId: "card-1",
+        manageToken: "manage-1",
+        draftNotes: "Спасибо за поддержку и помощь в важных делах.",
+        relationshipContext: "коллега",
+        style: "touching",
+        joinAction: "alternative",
+        sourceText: "Спасибо за поддержку. Желаю счастливых дней."
+      })
+    }));
+
+    expect(response.status).toBe(200);
+    expect(mocks.getCardDraftByManageToken).toHaveBeenCalledWith("manage-1");
+    expect(mocks.generateParticipantMessage).toHaveBeenCalledWith(expect.objectContaining({
+      joinAction: "alternative",
+      sourceText: "Спасибо за поддержку. Желаю счастливых дней."
     }));
   });
 });

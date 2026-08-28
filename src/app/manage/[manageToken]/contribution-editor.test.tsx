@@ -36,6 +36,33 @@ vi.mock("@/app/card/[publicSlug]/ai-helper", () => ({
   )
 }));
 
+vi.mock("./organizer-ai-helper", () => ({
+  OrganizerAiHelper: ({
+    relationshipContext,
+    initialDraft,
+    onDraftChange,
+    onUseText
+  }: {
+    relationshipContext?: string;
+    initialDraft?: string;
+    onDraftChange?: (draft: string) => void;
+    onUseText: (text: string, generationId: string) => void;
+  }) => (
+    <div>
+      <p data-testid="organizer-ai-relationship-context">{relationshipContext}</p>
+      <label>
+        Что хотите сказать?
+        <input
+          aria-label="Что хотите сказать?"
+          value={initialDraft ?? ""}
+          onChange={(event) => onDraftChange?.(event.target.value)}
+        />
+      </label>
+      <button type="button" onClick={() => onUseText("Новый AI-вариант поздравления с тёплыми словами.", "generation-1")}>Вставить в поздравление</button>
+    </div>
+  )
+}));
+
 import { ContributionEditor } from "./contribution-editor";
 
 const contribution: Contribution = {
@@ -69,7 +96,7 @@ describe("ContributionEditor AI editing", () => {
 
     await userEvent.click(screen.getByRole("tab", { name: /помочь с текстом/i }));
     expect(screen.getByText("contribution-1")).toBeInTheDocument();
-    expect(screen.getByText(contribution.message)).toBeInTheDocument();
+    expect(screen.getAllByText(contribution.message)).toHaveLength(2);
     expect(screen.getByText("Только безопасные операции")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Выбрать AI-вариант" }));
@@ -97,11 +124,15 @@ describe("ContributionEditor AI editing", () => {
     const manualDraft = "Ручной черновик с тёплыми словами для получателя.";
     await userEvent.type(screen.getByRole("textbox", { name: "Текст поздравления" }), manualDraft);
     await userEvent.click(screen.getByRole("tab", { name: /помочь с текстом/i }));
-    expect(screen.getByLabelText("AI-черновик")).toHaveValue(manualDraft);
+    expect(screen.getByLabelText("Что хотите сказать?")).toHaveValue(manualDraft);
 
-    await userEvent.type(screen.getByLabelText("AI-черновик"), " Ещё одна мысль.");
+    await userEvent.type(screen.getByLabelText("Что хотите сказать?"), " Ещё одна мысль.");
     await userEvent.click(screen.getByRole("tab", { name: "Написать самому" }));
-    expect(screen.getByRole("textbox", { name: "Текст поздравления" })).toHaveValue(`${manualDraft} Ещё одна мысль.`);
+    expect(screen.getByRole("textbox", { name: "Текст поздравления" })).toHaveValue(manualDraft);
+
+    await userEvent.click(screen.getByRole("tab", { name: /помочь с текстом/i }));
+    await userEvent.click(screen.getByRole("button", { name: "Вставить в поздравление" }));
+    expect(screen.getByRole("textbox", { name: "Текст поздравления" })).toHaveValue("Новый AI-вариант поздравления с тёплыми словами.");
   });
 
   it("передаёт необязательную роль в AI-контекст нового поздравления", async () => {
@@ -120,7 +151,7 @@ describe("ContributionEditor AI editing", () => {
 
     await user.type(screen.getByRole("textbox", { name: "Роль или подпись — необязательно" }), "мама ученика");
     await user.click(screen.getByRole("tab", { name: /помочь с текстом/i }));
-    expect(screen.getByTestId("ai-relationship-context")).toHaveTextContent("мама ученика");
+    expect(screen.getByTestId("organizer-ai-relationship-context")).toHaveTextContent("мама ученика");
   });
 });
 

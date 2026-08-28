@@ -139,8 +139,8 @@ export const validateAiGenerationRequest = (input: unknown): AiValidationResult 
     issues.push({ field: "joinAction", message: "Не удалось определить изменение текста." });
   }
 
-  if (joinAction && (!publicSlug || manageToken || mode !== "compose")) {
-    issues.push({ field: "joinAction", message: "Изменение текста доступно только участнику открытки." });
+  if (joinAction && ((!publicSlug && !manageToken) || mode !== "compose")) {
+    issues.push({ field: "joinAction", message: "Не удалось подтвердить доступ к изменению текста." });
   }
 
   if (joinAction && joinAction !== "initial" && !sourceText) {

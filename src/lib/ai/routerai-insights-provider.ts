@@ -1,4 +1,3 @@
-import { AiError } from "@/lib/ai/types";
 import {
   BEST_QUOTE_CANDIDATE_COUNT,
   BEST_QUOTE_HARD_MAX_LENGTH,
@@ -6,8 +5,9 @@ import {
   BEST_QUOTE_TARGET_MIN_LENGTH
 } from "@/lib/ai/card-insights";
 import { logger } from "@/lib/logger";
+import { requestRouterAiStructured } from "@/lib/ai/routerai-client";
 
-export const OPENAI_INSIGHTS_PROMPT_VERSION = "card-insights-openai-v2";
+export const YANDEX_INSIGHTS_PROMPT_VERSION = "card-insights-yandex-v1";
 
 type InsightInput = {
   recipientName: string;
@@ -63,11 +63,7 @@ const requestInsights = async (input: InsightInput & {
     };
   }
 
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) throw new AiError("PROVIDER_CONFIG", "OpenAI API key is not configured.");
-  const baseUrl = (process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, "");
-  const model = process.env.OPENAI_MODEL ?? "gpt-5-mini";
-  const timeout = Math.max(1_000, Number(process.env.OPENAI_TIMEOUT_MS ?? 45_000) || 45_000);
+  const model = process.env.YANDEX_INSIGHTS_MODEL ?? "yandex/gpt-pro-5.1";
   const source = input.contributions.map(({ id, message }) => `${id}: ${JSON.stringify(message)}`).join("\n");
   const legacyFeedback = input.attempt > 0
     ? "Предыдущий ответ не прошёл проверку. Строго соблюдай количество, длину, уникальность и используй только существующие sourceContributionId."
@@ -78,71 +74,29 @@ const requestInsights = async (input: InsightInput & {
     : "";
 
   if (process.env.NODE_ENV !== "production") {
-    logger.info("ai.openai_insights_request", "Starting OpenAI card insights generation", {
-      provider: "openai",
+    logger.info("ai.routerai_insights_request", "Starting Yandex card insights generation through RouterAI", {
+      provider: "routerai",
       model,
       kind: input.kind,
-      promptVersion: OPENAI_INSIGHTS_PROMPT_VERSION,
+      promptVersion: YANDEX_INSIGHTS_PROMPT_VERSION,
       attempt: input.attempt + 1,
       sourceCount: input.contributions.length
     });
   }
 
-  let response: Response;
-  try {
-    response = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: input.system },
-          {
-            role: "user",
-            content: `${input.task}\n\nПолучатель: ${input.recipientName}\nПовод: ${input.occasionText}\n\nПоздравления:\n${source}\n\n${feedback}`
-          }
-        ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: `card_${input.kind}`,
-            strict: true,
-            schema: buildSchema(input.kind, input.count)
-          }
-        },
-        reasoning_effort: "low",
-        max_completion_tokens: 1400
-      }),
-      signal: AbortSignal.timeout(timeout)
-    });
-  } catch {
-    throw new AiError("PROVIDER_UNAVAILABLE", "OpenAI insights generation is temporarily unavailable.");
-  }
-  if (!response.ok) throw new AiError("PROVIDER_UNAVAILABLE", `OpenAI returned HTTP ${response.status}.`);
-
-  let payload: { model?: unknown; choices?: Array<{ message?: { content?: unknown } }> };
-  try {
-    payload = await response.json() as typeof payload;
-  } catch {
-    throw new AiError("INVALID_PROVIDER_RESPONSE", "OpenAI returned an unreadable insights response.");
-  }
-  const content = payload.choices?.[0]?.message?.content;
-  if (typeof content !== "string") throw new AiError("INVALID_PROVIDER_RESPONSE", "OpenAI returned an empty insights response.");
-
-  let parsed: Record<string, unknown>;
-  try {
-    parsed = JSON.parse(content) as Record<string, unknown>;
-  } catch {
-    throw new AiError("INVALID_JSON", "OpenAI returned invalid insights JSON.");
-  }
-  return { value: parsed[input.kind], model: typeof payload.model === "string" ? payload.model : model };
+  const result = await requestRouterAiStructured<Record<string, unknown>>({
+    model,
+    system: input.system,
+    user: `${input.task}\n\nПолучатель: ${input.recipientName}\nПовод: ${input.occasionText}\n\nПоздравления:\n${source}\n\n${feedback}`,
+    schema: buildSchema(input.kind, input.count),
+    schemaName: `card_${input.kind}`,
+    maxCompletionTokens: 1400,
+    temperature: 0.2
+  });
+  return { value: result.value[input.kind], model: result.model };
 };
 
-export const generateBestQuotesWithOpenAi = async (input: InsightInput) => {
+export const generateBestQuotesWithRouterAi = async (input: InsightInput) => {
   const result = await requestInsights({
     ...input,
     kind: "quotes",
@@ -161,7 +115,7 @@ export const generateBestQuotesWithOpenAi = async (input: InsightInput) => {
   return { quotes: result.value, model: result.model };
 };
 
-export const generateQualitiesWithOpenAi = async (input: InsightInput) => {
+export const generateQualitiesWithRouterAi = async (input: InsightInput) => {
   const result = await requestInsights({
     ...input,
     kind: "qualities",

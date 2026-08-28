@@ -7,7 +7,7 @@ export type AiStyle =
 
 export type AiVariantType = "short" | "warm" | "style";
 export type AiMatrixVariantType = "short" | "warm" | AiStyle;
-export type AiProviderName = "mock" | "gigachat" | "openai";
+export type AiProviderName = "mock" | "routerai" | "gigachat" | "openai";
 export type AiGenerationMode = "compose" | "improve" | "shorten";
 export type AiEditInstruction = "shorten" | "warmer" | "formal" | "proofread" | "detail" | "alternative";
 export type AiVariantFamily = "main" | "warm" | "creative";

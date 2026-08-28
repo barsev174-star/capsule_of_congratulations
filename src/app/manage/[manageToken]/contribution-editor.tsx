@@ -10,6 +10,7 @@ import {
   MAIN_GREETING_MAX_LENGTH
 } from "@/lib/contributions/limits";
 import { AiHelper } from "@/app/card/[publicSlug]/ai-helper";
+import { OrganizerAiHelper } from "./organizer-ai-helper";
 import {
   deleteContributionAction,
   saveOrganizerContributionAction
@@ -83,6 +84,7 @@ export const ContributionEditor = ({
   const [mode, setMode] = useState<"manual" | "ai">(initialMode);
   const [aiGenerationIds, setAiGenerationIds] = useState<string[]>([]);
   const [aiDraft, setAiDraft] = useState("");
+  const [aiDraftInitialized, setAiDraftInitialized] = useState(initialMode === "ai");
   const [hasAiReplacement, setHasAiReplacement] = useState(false);
   const [isVisible, setIsVisible] = useState(contribution?.status !== "hidden");
   const [isMain, setIsMain] = useState(isMainGreeting);
@@ -282,14 +284,22 @@ export const ContributionEditor = ({
                 role="tab"
                 aria-selected={mode === "ai"}
                 className={mode === "ai" ? styles.contributionEditorModeActive : ""}
-                onClick={() => setMode("ai")}
+                onClick={() => {
+                  if (!aiDraftInitialized) {
+                    setAiDraft(message);
+                    setAiDraftInitialized(true);
+                  }
+                  setMode("ai");
+                }}
               >
                 ✨ Помочь с текстом
               </button>
             </div>
 
-            {mode === "manual" ? (
-              <div className={`${styles.contributionEditorMessage} ${messageError ? styles.contributionEditorFieldInvalid : ""}`}>
+            <div
+              className={`${styles.contributionEditorMessage} ${messageError ? styles.contributionEditorFieldInvalid : ""}`}
+              hidden={mode !== "manual"}
+            >
                 <span className={styles.contributionEditorLabelRow}>
                   <label htmlFor="contribution-editor-message">Текст поздравления</label>
                   <span className={styles.contributionEditorCounter}>
@@ -336,8 +346,9 @@ export const ContributionEditor = ({
                     ? "Поздравление можно сохранить, но для некоторых вариантов оформления его потребуется сократить."
                     : `Лучше всего смотрятся поздравления до ${CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH} символов.`}
                 </span>
-              </div>
-            ) : (
+            </div>
+
+            {contribution && mode === "ai" ? (
               <div className={styles.contributionEditorAiMode}>
                 <AiHelper
                   cardId={cardId}
@@ -373,7 +384,35 @@ export const ContributionEditor = ({
                   sourceText={contribution ? message : undefined}
                 />
               </div>
-            )}
+            ) : null}
+
+            {!contribution && aiDraftInitialized ? (
+              <div className={styles.contributionEditorAiMode} hidden={mode !== "ai"}>
+                <OrganizerAiHelper
+                  cardId={cardId}
+                  manageToken={manageToken}
+                  relationshipContext={authorRole}
+                  initialDraft={aiDraft || message}
+                  onUseText={(text, generationId) => {
+                    setMessage(text);
+                    markEdited("message");
+                    setMode("manual");
+                    setAiGenerationIds((currentIds) =>
+                      currentIds.includes(generationId) ? currentIds : [...currentIds, generationId]
+                    );
+                  }}
+                  onGeneration={(generationId) =>
+                    setAiGenerationIds((currentIds) =>
+                      currentIds.includes(generationId) ? currentIds : [...currentIds, generationId]
+                    )
+                  }
+                  onDraftChange={(draft) => {
+                    setAiDraft(draft);
+                    setAiDraftInitialized(true);
+                  }}
+                />
+              </div>
+            ) : null}
 
             {contribution ? (
               <section className={styles.contributionEditorOptions} aria-label="Настройки поздравления">

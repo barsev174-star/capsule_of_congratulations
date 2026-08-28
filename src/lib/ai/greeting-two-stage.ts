@@ -15,9 +15,11 @@ export const getGreetingPromptProfile = (): GreetingPromptProfile => {
   if (explicitProfile === "yandex") return "yandex";
   if (explicitProfile === "default") return "default";
 
-  const fallbackModel = process.env.OPENAI_MODEL ?? "";
-  const extractorModel = process.env.OPENAI_EXTRACTOR_MODEL ?? fallbackModel;
-  const composerModel = process.env.OPENAI_COMPOSER_MODEL ?? fallbackModel;
+  const runtimeProvider = process.env.AI_GREETING_PROVIDER ?? process.env.AI_PROVIDER;
+  if (runtimeProvider === "routerai") return "yandex";
+
+  const extractorModel = process.env.YANDEX_GREETING_EXTRACTOR_MODEL ?? "";
+  const composerModel = process.env.YANDEX_GREETING_COMPOSER_MODEL ?? "";
   return extractorModel.toLocaleLowerCase("ru-RU").includes("yandex")
     && composerModel.toLocaleLowerCase("ru-RU").includes("yandex")
     ? "yandex"

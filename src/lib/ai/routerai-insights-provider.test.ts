@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { generateBestQuotesWithOpenAi, generateQualitiesWithOpenAi } from "@/lib/ai/openai-insights-provider";
+import { generateBestQuotesWithRouterAi, generateQualitiesWithRouterAi } from "@/lib/ai/routerai-insights-provider";
 
 const input = {
   recipientName: "Анна",
@@ -11,10 +11,10 @@ const input = {
   attempt: 0
 };
 
-describe("OpenAI insights provider", () => {
+describe("RouterAI Yandex insights provider", () => {
   beforeEach(() => {
-    process.env.OPENAI_API_KEY = "test-key";
-    process.env.OPENAI_MODEL = "gpt-5-mini";
+    process.env.ROUTERAI_API_KEY = "test-key";
+    process.env.YANDEX_INSIGHTS_MODEL = "yandex/gpt-pro-5.1";
   });
 
   afterEach(() => {
@@ -23,7 +23,7 @@ describe("OpenAI insights provider", () => {
 
   it("requests six candidate quotes with strict JSON schema", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
-      model: "gpt-5-mini",
+      model: "yandex/gpt-pro-5.1",
       choices: [{ message: { content: JSON.stringify({ quotes: [
         { text: "Спасибо за поддержку и добрые слова.", sourceContributionId: "one" },
         { text: "Твоё чувство юмора делает дни светлее.", sourceContributionId: "two" },
@@ -32,17 +32,20 @@ describe("OpenAI insights provider", () => {
     }), { status: 200, headers: { "Content-Type": "application/json" } }));
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await generateBestQuotesWithOpenAi(input);
+    const result = await generateBestQuotesWithRouterAi(input);
     const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
 
     expect(result.quotes).toHaveLength(3);
+    expect(body.model).toBe("yandex/gpt-pro-5.1");
+    expect(body.max_tokens).toBeGreaterThan(0);
+    expect(body).not.toHaveProperty("max_completion_tokens");
     expect(body.response_format.json_schema.strict).toBe(true);
     expect(body.response_format.json_schema.schema.properties.quotes.minItems).toBe(6);
   });
 
   it("requests exactly five grounded qualities", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
-      model: "gpt-5-mini",
+      model: "yandex/gpt-pro-5.1",
       choices: [{ message: { content: JSON.stringify({ qualities: [
         { text: "поддержка", sourceContributionId: "one" },
         { text: "доброта", sourceContributionId: "one" },
@@ -53,7 +56,7 @@ describe("OpenAI insights provider", () => {
     }), { status: 200, headers: { "Content-Type": "application/json" } }));
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await generateQualitiesWithOpenAi(input);
+    const result = await generateQualitiesWithRouterAi(input);
     const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
 
     expect(result.qualities).toHaveLength(5);
