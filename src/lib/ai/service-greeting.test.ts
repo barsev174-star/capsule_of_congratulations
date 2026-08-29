@@ -146,6 +146,54 @@ describe("direct Yandex greeting service", () => {
     expect(mocks.completeAiGeneration).toHaveBeenCalledWith(expect.objectContaining({ provider: "yandex" }));
   });
 
+  it("repairs all remaining single-result validation issues over multiple passes", async () => {
+    mocks.composeGreetingText
+      .mockResolvedValueOnce({
+        model: "yandex/gpt-pro-5.1",
+        usage: { totalTokens: 300 },
+        durationMs: 4,
+        text: "С выпускным, Анна Ивановна! Поздравляем вас с прекрасным событием."
+      })
+      .mockResolvedValueOnce({
+        model: "yandex/gpt-pro-5.1",
+        usage: { totalTokens: 260 },
+        durationMs: 4,
+        text: "С выпускным, Анна Ивановна! Благодарю вас за помощь во время учёбы."
+      })
+      .mockResolvedValueOnce({
+        model: "yandex/gpt-pro-5.1",
+        usage: { totalTokens: 280 },
+        durationMs: 4,
+        text: "С выпускным, Анна Ивановна! Благодарю вас за помощь во время учёбы. Желаю успехов и радостных дней."
+      });
+
+    const result = await generateParticipantMessage({ ...input, joinAction: "initial" });
+
+    expect(result.variants[0].text).toContain("Желаю успехов и радостных дней");
+    expect(mocks.composeGreetingText).toHaveBeenCalledTimes(3);
+    expect(mocks.composeGreetingText.mock.calls[1][0].user).toContain("AUTHOR_VOICE_MISMATCH");
+    expect(mocks.composeGreetingText.mock.calls[1][0].user).toContain("MISSING_REQUIRED_FACT");
+    expect(mocks.composeGreetingText.mock.calls[1][0].user).toContain("MISSING_WISH");
+    expect(mocks.composeGreetingText.mock.calls[2][0].user).toContain("MISSING_WISH");
+    expect(mocks.completeAiGeneration).toHaveBeenCalledOnce();
+  });
+
+  it("releases a single-result generation after exhausting repair attempts", async () => {
+    mocks.composeGreetingText.mockResolvedValue({
+      model: "yandex/gpt-pro-5.1",
+      usage: { totalTokens: 220 },
+      durationMs: 3,
+      text: "Поздравляем вас с прекрасным событием."
+    });
+
+    await expect(generateParticipantMessage({ ...input, joinAction: "initial" }))
+      .rejects.toMatchObject({ code: "AI_VALIDATION_FAILED" });
+
+    expect(mocks.composeGreetingText).toHaveBeenCalledTimes(4);
+    expect(mocks.completeAiGeneration).not.toHaveBeenCalled();
+    expect(mocks.releaseAiGeneration).toHaveBeenCalledWith(expect.any(String));
+  });
+
   it("keeps the three-result server contract for legacy non-join callers on Yandex", async () => {
     mocks.composeGreetingVariants.mockResolvedValue({
       model: "yandex/gpt-pro-5.1",
