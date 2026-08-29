@@ -135,6 +135,7 @@ export const claimSupportNotifications = async (options: {
          SELECT delivery.id
          FROM support_notification_deliveries AS delivery
          WHERE delivery.attempt_count < $1
+           AND delivery.channel = 'email'
            AND ($3::uuid IS NULL OR delivery.support_request_id = $3)
            AND ($4::uuid IS NULL OR delivery.id = $4)
            AND (
@@ -177,7 +178,8 @@ export const claimSupportNotifications = async (options: {
   const claimedIds = new Set(
     deliveries
       .filter((delivery) =>
-        delivery.attemptCount < maxAttempts
+        delivery.channel === "email"
+        && delivery.attemptCount < maxAttempts
         && (!options.requestId || delivery.supportRequestId === options.requestId)
         && (!options.deliveryId || delivery.id === options.deliveryId)
         && (
@@ -302,11 +304,12 @@ export const listSupportNotificationDeliveries = async (
     const result = await getPostgresPool().query<DeliveryRow>(
       `SELECT * FROM support_notification_deliveries
        WHERE support_request_id = ANY($1::uuid[])
+         AND channel = 'email'
        ORDER BY created_at`,
       [supportRequestIds]
     );
     return result.rows.map(mapDeliveryRow);
   }
   const idSet = new Set(supportRequestIds);
-  return (await readDeliveriesJson()).filter((item) => idSet.has(item.supportRequestId));
+  return (await readDeliveriesJson()).filter((item) => item.channel === "email" && idSet.has(item.supportRequestId));
 };

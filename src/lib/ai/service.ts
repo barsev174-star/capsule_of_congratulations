@@ -11,7 +11,7 @@ import {
   saveAiCardInsight
 } from "@/lib/ai/repository";
 import { generateWithGigaChat } from "@/lib/ai/gigachat-provider";
-import { generateBestQuotesWithOpenAi, generateQualitiesWithOpenAi } from "@/lib/ai/openai-insights-provider";
+import { generateBestQuotesWithRouterAi, generateQualitiesWithRouterAi } from "@/lib/ai/routerai-insights-provider";
 import {
   generateMatrixWithOpenAi,
   generateWithOpenAi,
@@ -34,9 +34,10 @@ import { ensureLadderVariantAddress, fitLadderVariantToLimit, validateLadderVari
 import { buildTwoStepComposePrompt, buildTwoStepPlanPrompt, buildTwoStepRepairPrompt } from "@/lib/ai/greeting-two-step";
 import { buildSemanticPrompt, buildSemanticRepairPrompt, GREETING_PROMPT_VERSION, validateSemanticVariants } from "@/lib/ai/greeting-semantic";
 import { generateSemanticGreetingWithOpenAi, repairSemanticGreetingWithOpenAi } from "@/lib/ai/openai-semantic-provider";
-import { buildComposerPrompt, buildComposerRepairPrompt, buildExtractorPrompt, getSafeFactCoverageSignal, getSemanticPlanCacheKey, GREETING_COMPOSER_PROMPT_VERSION, GREETING_EXTRACTOR_PROMPT_VERSION, validateComposerVariants } from "@/lib/ai/greeting-two-stage";
-import { composeGreetingVariants, extractGreetingSemantics, repairGreetingVariant } from "@/lib/ai/openai-two-stage-provider";
+import { buildComposerPrompt, buildComposerRepairPrompt, buildExtractorPrompt, buildSingleComposerPrompt, buildSingleComposerRepairPrompt, getGreetingPromptVersions, getSafeFactCoverageSignal, getSemanticPlanCacheKey, normalizeGreetingCoreFacts, stabilizeComposerVariants, stabilizeGreetingSemanticPlan, validateComposerVariants, validateSingleComposerText } from "@/lib/ai/greeting-two-stage";
+import { composeGreetingText, composeGreetingVariants, extractGreetingSemantics, repairGreetingVariant } from "@/lib/ai/routerai-yandex-provider";
 import { estimateAiUsageCost, sumAiUsageCosts } from "@/lib/ai/usage-cost";
+import { generateLiteralGreetingEditWithRouterAi } from "@/lib/ai/routerai-greeting-edit-provider";
 
 let localTemplateGenerationSequence = 0;
 import { generateLadderWithOpenAi, OPENAI_LADDER_PROMPT_VERSION } from "@/lib/ai/openai-ladder-provider";
@@ -418,13 +419,18 @@ const buildLiteralEditVariant = (
     : proofreadLocally(input.draftNotes)
 });
 
-const getProviderName = (value?: string): AiProviderName =>
-  value === "gigachat" || value === "openai" ? value : "mock";
+const getProviderName = (value?: string): AiProviderName => {
+  const provider = value?.trim() || "mock";
+  if (process.env.PRODUCTION_PROVIDER_POLICY?.trim() === "russian-only" && provider !== "yandex") {
+    throw new AiError("PROVIDER_CONFIG", `AI provider "${provider}" is forbidden by the production provider policy.`);
+  }
+  if (provider === "yandex" || provider === "routerai" || provider === "mock") return provider;
+  throw new AiError("PROVIDER_CONFIG", `AI provider "${provider}" is no longer supported. Use Yandex AI Studio.`);
+};
 
 const getInsightsProviderName = (): AiProviderName =>
-  (process.env.AI_INSIGHTS_PROVIDER ?? (process.env.OPENAI_API_KEY ? "openai" : "mock")) === "openai"
-    ? "openai"
-    : "mock";
+  getProviderName(process.env.AI_INSIGHTS_PROVIDER
+    ?? (process.env.YANDEX_CLOUD_API_KEY ? "yandex" : process.env.ROUTERAI_API_KEY ? "routerai" : "mock"));
 
 const buildTargetedFeedback = (issues: ProviderVariantValidationIssue[]) => {
   const issue = issues.find((item) => item.severity === "hard")
@@ -532,17 +538,19 @@ const rescueFromMatrixPool = (
 
 export const generateParticipantMessage = async (input: AiGenerationInput): Promise<AiGenerationResult> => {
   const providerName = getProviderName(process.env.AI_GREETING_PROVIDER ?? process.env.AI_PROVIDER);
+  const structuredTransport = providerName === "yandex" ? "yandex" : "routerai";
   const literalEditInstruction = input.editInstruction === "shorten" || input.editInstruction === "proofread"
     ? input.editInstruction
     : null;
-  const matrixRequested = process.env.AI_GREETING_MODE === "matrix";
-  const ladderRequested = process.env.AI_GREETING_MODE === "ladder";
-  const twoStepRequested = process.env.AI_GREETING_EXPERIMENT === "two_step" || process.env.AI_GREETING_EXPERIMENT === "semantic";
+  const matrixRequested = false;
+  const ladderRequested = false;
+  const twoStepRequested = providerName === "routerai" || providerName === "yandex";
+  const joinSingleRequested = Boolean(input.joinAction);
   // The editor's "Улучшить с AI" uses the same source text and needs the
   // same semantic safeguards as a newly composed participant message.
   // Shortening remains a separate, length-focused workflow.
-  const supportsSpecialMode = providerName === "openai" && !literalEditInstruction && (input.mode ?? "compose") !== "shorten";
-  const greetingMode = twoStepRequested && supportsSpecialMode
+  const supportsSpecialMode = (providerName === "routerai" || providerName === "yandex") && !literalEditInstruction && (input.mode ?? "compose") !== "shorten";
+  const greetingMode = (twoStepRequested || joinSingleRequested) && supportsSpecialMode
     ? "two_step"
     : ladderRequested && supportsSpecialMode
     ? "ladder"
@@ -553,7 +561,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
   const universalMatrix = matrixPromptVersion === OPENAI_MATRIX_PROMPT_VERSION || matrixPromptVersion === OPENAI_MATRIX_PROMPT_V3;
   const cleanupMatrix = matrixPromptVersion === OPENAI_MATRIX_PROMPT_VERSION;
   if (process.env.NODE_ENV !== "production" && (matrixRequested || ladderRequested || twoStepRequested) && greetingMode === "classic") {
-    logger.warn("ai.special_mode_classic_fallback", "Selected greeting mode requires OpenAI compose generation; using classic", {
+    logger.warn("ai.special_mode_classic_fallback", "Selected greeting mode requires RouterAI compose generation; using classic", {
       provider: providerName,
       requestedMode: twoStepRequested ? "two_step" : process.env.AI_GREETING_MODE,
       mode: input.mode ?? "compose"
@@ -607,11 +615,9 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
             validationFeedback: literalIssues,
             requestedVariantTypes: ["style" as const]
           };
-          providerResult = providerName === "gigachat"
-            ? await generateWithGigaChat(providerInput)
-            : providerName === "openai"
-              ? await generateWithOpenAi(providerInput)
-              : {
+          providerResult = providerName === "routerai" || providerName === "yandex"
+            ? await generateLiteralGreetingEditWithRouterAi(input, attempt, literalIssues, structuredTransport)
+            : {
                   variants: [buildLiteralEditVariant(input, literalEditInstruction)],
                   model: "local-literal-edit-v1"
                 };
@@ -759,27 +765,133 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
     }
 
     if (greetingMode === "two_step") {
+      const joinPromptProfile = "yandex" as const;
+      const joinExtractorModel = process.env.YANDEX_GREETING_EXTRACTOR_MODEL?.trim() || "yandex/gpt-pro-5.1";
+      const joinComposerModel = process.env.YANDEX_GREETING_COMPOSER_MODEL?.trim() || "yandex/gpt-pro-5.1";
       const stageInput = {
         recipientName: input.recipientName, occasionText: input.occasionText, fromLabel: input.fromLabel,
         relationshipContext: input.relationshipContext, draftNotes: input.draftNotes, messageLimit: input.messageLimit,
         existingMessages
       };
-      const cacheKey = getSemanticPlanCacheKey(stageInput);
+      const cacheKey = getSemanticPlanCacheKey(stageInput, joinPromptProfile);
       const cachedPlan = await getCachedSemanticPlan(cacheKey, input.cardId);
-      const extractor = cachedPlan ? null : await extractGreetingSemantics(buildExtractorPrompt(stageInput));
-      const plan = cachedPlan?.plan ?? extractor!.plan;
+      const extractor = cachedPlan ? null : await extractGreetingSemantics(
+        buildExtractorPrompt(stageInput, joinPromptProfile),
+        { model: joinExtractorModel, transport: structuredTransport }
+      );
+      const stabilizedPlan = cachedPlan?.plan ?? stabilizeGreetingSemanticPlan(stageInput, extractor!.plan);
+      const detailTokens = new Set((input.requiredDetail?.toLocaleLowerCase("ru-RU").match(/[\p{L}]{4,}/gu) ?? []).map((token) => token.slice(0, 4)));
+      const plan = input.requiredDetail
+        ? {
+            ...stabilizedPlan,
+            coreFacts: [
+              ...normalizeGreetingCoreFacts(stabilizedPlan.coreFacts).filter((fact) => {
+                if (detailTokens.size === 0) return true;
+                const factTokens = new Set((fact.text.toLocaleLowerCase("ru-RU").match(/[\p{L}]{4,}/gu) ?? []).map((token) => token.slice(0, 4)));
+                const overlap = [...detailTokens].filter((token) => factTokens.has(token)).length;
+                return overlap < Math.min(2, detailTokens.size);
+              }),
+              { id: "user-detail", text: input.requiredDetail, mustPreserve: true }
+            ]
+          }
+        : stabilizedPlan;
       if (!cachedPlan) await cacheSemanticPlan({ cacheKey, cardId: input.cardId, plan, model: extractor!.model });
+      if (input.joinAction) {
+        const singlePrompt = buildSingleComposerPrompt(stageInput, plan, input.joinAction, input.sourceText, "yandex");
+        const firstResult = await composeGreetingText(singlePrompt, { model: joinComposerModel, transport: structuredTransport });
+        let singleText = cleanupGreetingText(
+          stabilizeComposerVariants({
+            safe: { text: firstResult.text },
+            warm: { text: firstResult.text },
+            expressive: { text: firstResult.text }
+          }, plan).safe.text,
+          input
+        );
+        let singleValidation = validateSingleComposerText(singleText, singlePrompt.limit, plan, stageInput.occasionText, "safe", "yandex");
+        const sourceLength = Array.from(input.sourceText ?? "").length;
+        const notShorter = input.joinAction === "shorten" && sourceLength > 0 && Array.from(singleText).length >= sourceLength;
+        const repairError = singleValidation.hardErrors[0] ?? (notShorter ? { type: "safe" as const, code: "NOT_SHORTER" } : null);
+        let repairResult: Awaited<ReturnType<typeof composeGreetingText>> | null = null;
+
+        if (repairError) {
+          repairResult = await composeGreetingText(
+            buildSingleComposerRepairPrompt(
+              singlePrompt,
+              singleText,
+              repairError.code,
+              "detail" in repairError ? repairError.detail : undefined
+            ),
+            { model: joinComposerModel, transport: structuredTransport }
+          );
+          singleText = cleanupGreetingText(
+            stabilizeComposerVariants({
+              safe: { text: repairResult.text },
+              warm: { text: repairResult.text },
+              expressive: { text: repairResult.text }
+            }, plan).safe.text,
+            input
+          );
+          singleValidation = validateSingleComposerText(singleText, singlePrompt.limit, plan, stageInput.occasionText, "safe", "yandex");
+        }
+
+        const stillNotShorter = input.joinAction === "shorten" && sourceLength > 0 && Array.from(singleText).length >= sourceLength;
+        if (singleValidation.hardErrors.length > 0 || stillNotShorter) {
+          throw new AiError("AI_VALIDATION_FAILED", "Single greeting quality validation failed.");
+        }
+
+        const presentation = {
+          initial: { id: "short" as const, label: "Готовый текст" },
+          warmer: { id: "warm" as const, label: "Теплее" },
+          creative: { id: "style" as const, label: "Творческий" },
+          alternative: { id: "style" as const, label: "Ещё вариант" },
+          expand: { id: "short" as const, label: "Подробнее" },
+          shorten: { id: "short" as const, label: "Короче" }
+        }[input.joinAction];
+        variants = [{ ...presentation, text: singleText }];
+        providerResult = { variants, model: firstResult.model };
+        await completeAiGeneration({ id: generationId, cardId: input.cardId, generationInput: { ...input, existingMessages }, variants, provider: providerName, model: firstResult.model });
+        const extractorCost = extractor ? estimateAiUsageCost(extractor.model, extractor.usage) : null;
+        const composerCost = estimateAiUsageCost(firstResult.model, firstResult.usage);
+        const repairCost = repairResult ? estimateAiUsageCost(repairResult.model, repairResult.usage) : null;
+        const totalCostRub = sumAiUsageCosts(...[extractorCost, composerCost, repairCost].filter((cost): cost is NonNullable<typeof cost> => Boolean(cost)));
+        const promptVersions = getGreetingPromptVersions("yandex");
+        const context = {
+          action: input.joinAction,
+          extractorPromptVersion: promptVersions.extractor,
+          composerPromptVersion: `${promptVersions.composer}-single-v1`,
+          extractorModel: cachedPlan?.model ?? extractor!.model,
+          composerModel: firstResult.model,
+          cacheHit: Boolean(cachedPlan),
+          extractorDurationMs: extractor?.durationMs ?? 0,
+          composerDurationMs: firstResult.durationMs,
+          extractorUsage: extractorCost,
+          composerUsage: composerCost,
+          repairUsage: repairCost,
+          totalCostRub,
+          safeFactCoverage: getSafeFactCoverageSignal(plan, singleText),
+          repairUsed: Boolean(repairResult),
+          repairReason: repairError?.code ?? null,
+          resultLength: Array.from(singleText).length
+        };
+        logger.info("ai.join_single_generation", "Single join greeting generated", { cardId: input.cardId, ...context, requestId: generationId });
+        try { await recordTelemetryEvent({ kind: "funnel", event: "ai.join_single_generation", cardId: input.cardId, errorId: null, context }); } catch { logger.warn("ai.join_single_telemetry_failed", "Single join diagnostics could not be persisted", { cardId: input.cardId }); }
+        return { generationId, variants, usage: reservation.usage, messageLimit: input.messageLimit };
+      }
       const composerPrompt = buildComposerPrompt(stageInput, plan);
-      const composer = await composeGreetingVariants(composerPrompt);
-      let composerVariants = composer.variants;
-      let validation = validateComposerVariants(composerVariants, composerPrompt.limits);
-      const repairError = validation.hardErrors[0];
-      let repairUsage: typeof composer.usage;
-      if (repairError) {
-        const repair = await repairGreetingVariant(buildComposerRepairPrompt(composerPrompt, repairError.type, composerVariants[repairError.type].text, repairError.code), repairError.type);
-        composerVariants = { ...composerVariants, [repairError.type]: { text: repair.text } };
-        repairUsage = repair.usage;
-        validation = validateComposerVariants(composerVariants, composerPrompt.limits);
+      const composer = await composeGreetingVariants(composerPrompt, { model: joinComposerModel, transport: structuredTransport });
+      const compositionPlans = composer.compositionPlans;
+      let composerVariants = stabilizeComposerVariants(composer.variants, plan, { ensureDistinct: true });
+      let validation = validateComposerVariants(composerVariants, composerPrompt.limits, plan, stageInput.occasionText, compositionPlans, composerPrompt.planRequirements);
+      const repairAttempts: Array<{ type: keyof typeof composerVariants; code: string; usage: typeof composer.usage }> = [];
+      const repairedTypes = new Set<keyof typeof composerVariants>();
+      while (validation.hardErrors.length > 0 && repairedTypes.size < 3) {
+        const repairError = validation.hardErrors.find((error) => !repairedTypes.has(error.type));
+        if (!repairError) break;
+        const repair = await repairGreetingVariant(buildComposerRepairPrompt(composerPrompt, repairError.type, composerVariants[repairError.type].text, repairError.code, repairError.detail), repairError.type, { model: joinComposerModel, transport: structuredTransport });
+        composerVariants = stabilizeComposerVariants({ ...composerVariants, [repairError.type]: { text: repair.text } }, plan, { ensureDistinct: true });
+        repairedTypes.add(repairError.type);
+        repairAttempts.push({ type: repairError.type, code: repairError.code, usage: repair.usage });
+        validation = validateComposerVariants(composerVariants, composerPrompt.limits, plan, stageInput.occasionText, compositionPlans, composerPrompt.planRequirements);
       }
       if (validation.hardErrors.length > 0) throw new AiError("AI_VALIDATION_FAILED", "Composer returned an objective format error.");
       variants = (["safe", "warm", "expressive"] as const).map((type) => ({ id: type === "safe" ? "short" : type === "warm" ? "warm" : "style", label: type === "safe" ? "Аккуратно" : type === "warm" ? "Теплее" : "Живее", text: cleanupGreetingText(composerVariants[type].text, input) }));
@@ -788,9 +900,10 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
       await completeAiGeneration({ id: generationId, cardId: input.cardId, generationInput: { ...input, existingMessages }, variants, provider: providerName, model: composer.model });
       const extractorCost = extractor ? estimateAiUsageCost(extractor.model, extractor.usage) : null;
       const composerCost = estimateAiUsageCost(composer.model, composer.usage);
-      const repairCost = repairUsage ? estimateAiUsageCost(composer.model, repairUsage) : null;
-      const totalCostRub = sumAiUsageCosts(...[extractorCost, composerCost, repairCost].filter((cost): cost is NonNullable<typeof cost> => Boolean(cost)));
-      const context = { extractorPromptVersion: GREETING_EXTRACTOR_PROMPT_VERSION, composerPromptVersion: GREETING_COMPOSER_PROMPT_VERSION, extractorModel: cachedPlan?.model ?? extractor!.model, composerModel: composer.model, cacheHit: Boolean(cachedPlan), extractorDurationMs: extractor?.durationMs ?? 0, composerDurationMs: composer.durationMs, extractorUsage: extractorCost, composerUsage: composerCost, repairUsage: repairCost, totalCostRub, safeFactCoverage, repairUsed: Boolean(repairError), repairReason: repairError?.code ?? null, hardErrorCodes: validation.hardErrors.map((item) => item.code), softWarningCodes: validation.softWarnings.map((item) => item.code), variantLengths: validation.entries.map((entry) => ({ type: entry.type, length: Array.from(entry.text).length, limit: composerPrompt.limits[entry.type] })) };
+      const repairCosts = repairAttempts.map((attempt) => estimateAiUsageCost(composer.model, attempt.usage));
+      const totalCostRub = sumAiUsageCosts(...[extractorCost, composerCost, ...repairCosts].filter((cost): cost is NonNullable<typeof cost> => Boolean(cost)));
+      const promptVersions = getGreetingPromptVersions();
+      const context = { extractorPromptVersion: promptVersions.extractor, composerPromptVersion: promptVersions.composer, extractorModel: cachedPlan?.model ?? extractor!.model, composerModel: composer.model, cacheHit: Boolean(cachedPlan), extractorDurationMs: extractor?.durationMs ?? 0, composerDurationMs: composer.durationMs, extractorUsage: extractorCost, composerUsage: composerCost, repairUsage: repairCosts, totalCostRub, safeFactCoverage, compositionPlans, repairUsed: repairAttempts.length > 0, repairReason: repairAttempts.map((attempt) => attempt.code), hardErrorCodes: validation.hardErrors.map((item) => item.code), softWarningCodes: validation.softWarnings.map((item) => item.code), variantLengths: validation.entries.map((entry) => ({ type: entry.type, length: Array.from(entry.text).length, limit: composerPrompt.limits[entry.type] })) };
       logger.info("ai.two_stage_generation", "Two-stage greeting generated", { cardId: input.cardId, ...context, requestId: generationId });
       try { await recordTelemetryEvent({ kind: "funnel", event: "ai.two_stage_generation", cardId: input.cardId, errorId: null, context }); } catch { logger.warn("ai.two_stage_telemetry_failed", "Two-stage diagnostics could not be persisted", { cardId: input.cardId }); }
       return { generationId, variants, usage: reservation.usage, messageLimit: input.messageLimit };
@@ -1232,12 +1345,13 @@ export const generateBestQuotes = async (input: {
     let model = "local-insights-v1";
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const providerResult = providerName === "openai"
-        ? await generateBestQuotesWithOpenAi({
+      const providerResult = providerName === "routerai" || providerName === "yandex"
+        ? await generateBestQuotesWithRouterAi({
             recipientName: input.recipientName,
             occasionText: input.occasionText,
             contributions: input.contributions.map(({ id, message }) => ({ id, message })),
-            attempt
+            attempt,
+            transport: providerName
           })
         : { quotes: buildMockBestQuotes(input.contributions), model };
       model = providerResult.model;
@@ -1303,12 +1417,13 @@ export const generateQualities = async (input: {
     let model = "local-insights-v1";
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const providerResult = providerName === "openai"
-        ? await generateQualitiesWithOpenAi({
+      const providerResult = providerName === "routerai" || providerName === "yandex"
+        ? await generateQualitiesWithRouterAi({
             recipientName: input.recipientName,
             occasionText: input.occasionText,
             contributions: input.contributions.map(({ id, message }) => ({ id, message })),
-            attempt
+            attempt,
+            transport: providerName
           })
         : { qualities: buildMockQualities(input.contributions), model };
       model = providerResult.model;

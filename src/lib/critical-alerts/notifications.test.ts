@@ -36,7 +36,7 @@ describe("critical alert notifications", () => {
     expect(getConfiguredCriticalAlertChannels()).toEqual(["email"]);
     vi.stubEnv("TELEGRAM_BOT_TOKEN", "token");
     vi.stubEnv("TELEGRAM_SUPPORT_CHAT_ID", "174");
-    expect(getConfiguredCriticalAlertChannels()).toEqual(["email", "telegram"]);
+    expect(getConfiguredCriticalAlertChannels()).toEqual(["email"]);
   });
 
   it("keeps only safe operational context", () => {
@@ -59,17 +59,4 @@ describe("critical alert notifications", () => {
     expect(body.html).toContain("#202124");
   });
 
-  it("sends the optional Telegram alert", async () => {
-    vi.stubEnv("TELEGRAM_BOT_TOKEN", "token");
-    vi.stubEnv("TELEGRAM_SUPPORT_CHAT_ID", "174");
-    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await sendCriticalAlert({ ...delivery, channel: "telegram" });
-
-    const body = JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body));
-    expect(body.chat_id).toBe("174");
-    expect(body.text).toContain("critical.publication");
-    expect(body.text).not.toContain("private@example.com");
-  });
 });

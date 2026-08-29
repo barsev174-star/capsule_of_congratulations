@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { randomBytes, randomUUID } from "node:crypto";
 import { sendEventReminderConfirmationEmail, sendEventReminderEmail } from "./email";
+import { hasConfiguredEmailTransport } from "@/lib/email/transport";
 import type { EventReminder } from "./types";
 
 const live = process.env.RUN_REMINDER_EMAIL_LIVE === "1" ? describe : describe.skip;
 
 live("event reminder live email", () => {
-  it("delivers the confirmation and scheduled reminder through Resend", async () => {
+  it("delivers the confirmation and scheduled reminder through the configured transport", async () => {
     const email = process.env.REMINDER_LIVE_EMAIL?.trim() || process.env.ADMIN_EMAIL?.trim();
     expect(email, "REMINDER_LIVE_EMAIL or ADMIN_EMAIL is required").toBeTruthy();
-    expect(process.env.RESEND_API_KEY, "RESEND_API_KEY is required").toBeTruthy();
+    expect(hasConfiguredEmailTransport(), "A Postbox or migration email transport is required").toBe(true);
     expect(process.env.EMAIL_FROM, "EMAIL_FROM is required").toBeTruthy();
 
     const id = randomUUID();

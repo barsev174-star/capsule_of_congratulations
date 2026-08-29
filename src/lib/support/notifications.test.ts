@@ -33,11 +33,11 @@ afterEach(() => {
 });
 
 describe("support notifications", () => {
-  it("always enables email and only enables Telegram with complete config", () => {
+  it("always enables only email even if obsolete Telegram variables exist", () => {
     expect(getConfiguredSupportNotificationChannels()).toEqual(["email"]);
     vi.stubEnv("TELEGRAM_BOT_TOKEN", "token");
     vi.stubEnv("TELEGRAM_SUPPORT_CHAT_ID", "174");
-    expect(getConfiguredSupportNotificationChannels()).toEqual(["email", "telegram"]);
+    expect(getConfiguredSupportNotificationChannels()).toEqual(["email"]);
   });
 
   it("sends the support email to the configured mailbox with a safe reply-to", async () => {
@@ -57,20 +57,4 @@ describe("support notifications", () => {
     expect(body.html).toContain("Не работает &lt;кнопка&gt;");
   });
 
-  it("sends the optional Telegram copy to the configured chat", async () => {
-    vi.stubEnv("TELEGRAM_BOT_TOKEN", "bot-token");
-    vi.stubEnv("TELEGRAM_SUPPORT_CHAT_ID", "174");
-    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await sendSupportNotification({ ...delivery, channel: "telegram" });
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.telegram.org/botbot-token/sendMessage",
-      expect.objectContaining({ method: "POST" })
-    );
-    const body = JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body));
-    expect(body.chat_id).toBe("174");
-    expect(body.text).toContain("Не работает &lt;кнопка&gt;");
-  });
 });

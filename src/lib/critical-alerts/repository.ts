@@ -114,6 +114,7 @@ export const claimCriticalAlerts = async (limit = 25): Promise<CriticalAlertDeli
        SELECT id
        FROM critical_alert_deliveries
        WHERE attempt_count < $1
+         AND channel = 'email'
          AND (
            (status IN ('pending', 'failed') AND next_attempt_at <= NOW())
            OR (status = 'sending' AND (locked_at IS NULL OR locked_at < NOW() - INTERVAL '10 minutes'))
