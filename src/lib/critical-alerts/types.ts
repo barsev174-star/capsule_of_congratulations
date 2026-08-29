@@ -1,6 +1,6 @@
 import type { LogContext } from "@/lib/logger";
 
-export type CriticalAlertChannel = "email" | "telegram";
+export type CriticalAlertChannel = "email";
 export type CriticalAlertStatus = "pending" | "sending" | "sent" | "failed";
 
 export type CriticalAlertDelivery = {

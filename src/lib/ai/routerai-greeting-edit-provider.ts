@@ -1,4 +1,4 @@
-import { requestRouterAiStructured } from "@/lib/ai/routerai-client";
+import { requestStructuredAi, resolveStructuredAiModel, type StructuredAiTransport } from "@/lib/ai/structured-client";
 import { AiError } from "@/lib/ai/types";
 import type { AiGenerationInput, AiProviderResult } from "@/lib/ai/types";
 
@@ -12,7 +12,8 @@ const responseSchema = {
 export const generateLiteralGreetingEditWithRouterAi = async (
   input: AiGenerationInput,
   attempt: number,
-  validationFeedback: string[]
+  validationFeedback: string[],
+  transport: StructuredAiTransport = "routerai"
 ): Promise<AiProviderResult> => {
   const instruction = input.editInstruction === "shorten"
     ? `Сократи текст до ${input.messageLimit} символов или меньше. Результат обязательно должен быть короче исходника.`
@@ -26,10 +27,12 @@ export const generateLiteralGreetingEditWithRouterAi = async (
     attempt > 0 ? "Предыдущий ответ не прошёл программную проверку. Исправь только указанное нарушение." : "",
     validationFeedback.length ? `Замечания проверки: ${validationFeedback.join("; ")}.` : ""
   ].filter(Boolean).join(" ");
-  const model = process.env.YANDEX_GREETING_EDIT_MODEL
-    ?? process.env.YANDEX_GREETING_COMPOSER_MODEL
-    ?? "yandex/gpt-pro-5.1";
-  const result = await requestRouterAiStructured<{ text?: string }>({
+  const model = resolveStructuredAiModel(
+    transport,
+    process.env.YANDEX_GREETING_EDIT_MODEL ?? process.env.YANDEX_GREETING_COMPOSER_MODEL
+  );
+  const result = await requestStructuredAi<{ text?: string }>({
+    transport,
     model,
     system,
     user: `Исходный текст: ${JSON.stringify(input.draftNotes)}\n\nВерни только результат редакторской операции.`,
@@ -39,7 +42,7 @@ export const generateLiteralGreetingEditWithRouterAi = async (
     temperature: 0
   });
   if (!result.value.text?.trim()) {
-    throw new AiError("INVALID_PROVIDER_RESPONSE", "RouterAI returned an empty edited greeting.");
+    throw new AiError("INVALID_PROVIDER_RESPONSE", "AI provider returned an empty edited greeting.");
   }
   return {
     variants: [{

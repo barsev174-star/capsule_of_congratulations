@@ -421,12 +421,16 @@ const buildLiteralEditVariant = (
 
 const getProviderName = (value?: string): AiProviderName => {
   const provider = value?.trim() || "mock";
-  if (provider === "routerai" || provider === "mock") return provider;
-  throw new AiError("PROVIDER_CONFIG", `AI provider "${provider}" is no longer supported. Use RouterAI.`);
+  if (process.env.PRODUCTION_PROVIDER_POLICY?.trim() === "russian-only" && provider !== "yandex") {
+    throw new AiError("PROVIDER_CONFIG", `AI provider "${provider}" is forbidden by the production provider policy.`);
+  }
+  if (provider === "yandex" || provider === "routerai" || provider === "mock") return provider;
+  throw new AiError("PROVIDER_CONFIG", `AI provider "${provider}" is no longer supported. Use Yandex AI Studio.`);
 };
 
 const getInsightsProviderName = (): AiProviderName =>
-  getProviderName(process.env.AI_INSIGHTS_PROVIDER ?? (process.env.ROUTERAI_API_KEY ? "routerai" : "mock"));
+  getProviderName(process.env.AI_INSIGHTS_PROVIDER
+    ?? (process.env.YANDEX_CLOUD_API_KEY ? "yandex" : process.env.ROUTERAI_API_KEY ? "routerai" : "mock"));
 
 const buildTargetedFeedback = (issues: ProviderVariantValidationIssue[]) => {
   const issue = issues.find((item) => item.severity === "hard")
@@ -534,17 +538,18 @@ const rescueFromMatrixPool = (
 
 export const generateParticipantMessage = async (input: AiGenerationInput): Promise<AiGenerationResult> => {
   const providerName = getProviderName(process.env.AI_GREETING_PROVIDER ?? process.env.AI_PROVIDER);
+  const structuredTransport = providerName === "yandex" ? "yandex" : "routerai";
   const literalEditInstruction = input.editInstruction === "shorten" || input.editInstruction === "proofread"
     ? input.editInstruction
     : null;
   const matrixRequested = false;
   const ladderRequested = false;
-  const twoStepRequested = providerName === "routerai";
+  const twoStepRequested = providerName === "routerai" || providerName === "yandex";
   const joinSingleRequested = Boolean(input.joinAction);
   // The editor's "Улучшить с AI" uses the same source text and needs the
   // same semantic safeguards as a newly composed participant message.
   // Shortening remains a separate, length-focused workflow.
-  const supportsSpecialMode = providerName === "routerai" && !literalEditInstruction && (input.mode ?? "compose") !== "shorten";
+  const supportsSpecialMode = (providerName === "routerai" || providerName === "yandex") && !literalEditInstruction && (input.mode ?? "compose") !== "shorten";
   const greetingMode = (twoStepRequested || joinSingleRequested) && supportsSpecialMode
     ? "two_step"
     : ladderRequested && supportsSpecialMode
@@ -610,8 +615,8 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
             validationFeedback: literalIssues,
             requestedVariantTypes: ["style" as const]
           };
-          providerResult = providerName === "routerai"
-            ? await generateLiteralGreetingEditWithRouterAi(input, attempt, literalIssues)
+          providerResult = providerName === "routerai" || providerName === "yandex"
+            ? await generateLiteralGreetingEditWithRouterAi(input, attempt, literalIssues, structuredTransport)
             : {
                   variants: [buildLiteralEditVariant(input, literalEditInstruction)],
                   model: "local-literal-edit-v1"
@@ -772,7 +777,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
       const cachedPlan = await getCachedSemanticPlan(cacheKey, input.cardId);
       const extractor = cachedPlan ? null : await extractGreetingSemantics(
         buildExtractorPrompt(stageInput, joinPromptProfile),
-        joinExtractorModel ? { model: joinExtractorModel } : undefined
+        { model: joinExtractorModel, transport: structuredTransport }
       );
       const stabilizedPlan = cachedPlan?.plan ?? stabilizeGreetingSemanticPlan(stageInput, extractor!.plan);
       const detailTokens = new Set((input.requiredDetail?.toLocaleLowerCase("ru-RU").match(/[\p{L}]{4,}/gu) ?? []).map((token) => token.slice(0, 4)));
@@ -793,7 +798,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
       if (!cachedPlan) await cacheSemanticPlan({ cacheKey, cardId: input.cardId, plan, model: extractor!.model });
       if (input.joinAction) {
         const singlePrompt = buildSingleComposerPrompt(stageInput, plan, input.joinAction, input.sourceText, "yandex");
-        const firstResult = await composeGreetingText(singlePrompt, { model: joinComposerModel });
+        const firstResult = await composeGreetingText(singlePrompt, { model: joinComposerModel, transport: structuredTransport });
         let singleText = cleanupGreetingText(
           stabilizeComposerVariants({
             safe: { text: firstResult.text },
@@ -816,7 +821,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
               repairError.code,
               "detail" in repairError ? repairError.detail : undefined
             ),
-            { model: joinComposerModel }
+            { model: joinComposerModel, transport: structuredTransport }
           );
           singleText = cleanupGreetingText(
             stabilizeComposerVariants({
@@ -873,17 +878,17 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         return { generationId, variants, usage: reservation.usage, messageLimit: input.messageLimit };
       }
       const composerPrompt = buildComposerPrompt(stageInput, plan);
-      const composer = await composeGreetingVariants(composerPrompt);
+      const composer = await composeGreetingVariants(composerPrompt, { model: joinComposerModel, transport: structuredTransport });
       const compositionPlans = composer.compositionPlans;
-      let composerVariants = stabilizeComposerVariants(composer.variants, plan);
+      let composerVariants = stabilizeComposerVariants(composer.variants, plan, { ensureDistinct: true });
       let validation = validateComposerVariants(composerVariants, composerPrompt.limits, plan, stageInput.occasionText, compositionPlans, composerPrompt.planRequirements);
       const repairAttempts: Array<{ type: keyof typeof composerVariants; code: string; usage: typeof composer.usage }> = [];
       const repairedTypes = new Set<keyof typeof composerVariants>();
       while (validation.hardErrors.length > 0 && repairedTypes.size < 3) {
         const repairError = validation.hardErrors.find((error) => !repairedTypes.has(error.type));
         if (!repairError) break;
-        const repair = await repairGreetingVariant(buildComposerRepairPrompt(composerPrompt, repairError.type, composerVariants[repairError.type].text, repairError.code, repairError.detail), repairError.type);
-        composerVariants = stabilizeComposerVariants({ ...composerVariants, [repairError.type]: { text: repair.text } }, plan);
+        const repair = await repairGreetingVariant(buildComposerRepairPrompt(composerPrompt, repairError.type, composerVariants[repairError.type].text, repairError.code, repairError.detail), repairError.type, { model: joinComposerModel, transport: structuredTransport });
+        composerVariants = stabilizeComposerVariants({ ...composerVariants, [repairError.type]: { text: repair.text } }, plan, { ensureDistinct: true });
         repairedTypes.add(repairError.type);
         repairAttempts.push({ type: repairError.type, code: repairError.code, usage: repair.usage });
         validation = validateComposerVariants(composerVariants, composerPrompt.limits, plan, stageInput.occasionText, compositionPlans, composerPrompt.planRequirements);
@@ -1340,12 +1345,13 @@ export const generateBestQuotes = async (input: {
     let model = "local-insights-v1";
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const providerResult = providerName === "routerai"
+      const providerResult = providerName === "routerai" || providerName === "yandex"
         ? await generateBestQuotesWithRouterAi({
             recipientName: input.recipientName,
             occasionText: input.occasionText,
             contributions: input.contributions.map(({ id, message }) => ({ id, message })),
-            attempt
+            attempt,
+            transport: providerName
           })
         : { quotes: buildMockBestQuotes(input.contributions), model };
       model = providerResult.model;
@@ -1411,12 +1417,13 @@ export const generateQualities = async (input: {
     let model = "local-insights-v1";
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const providerResult = providerName === "routerai"
+      const providerResult = providerName === "routerai" || providerName === "yandex"
         ? await generateQualitiesWithRouterAi({
             recipientName: input.recipientName,
             occasionText: input.occasionText,
             contributions: input.contributions.map(({ id, message }) => ({ id, message })),
-            attempt
+            attempt,
+            transport: providerName
           })
         : { qualities: buildMockQualities(input.contributions), model };
       model = providerResult.model;

@@ -5,7 +5,7 @@ import {
   BEST_QUOTE_TARGET_MIN_LENGTH
 } from "@/lib/ai/card-insights";
 import { logger } from "@/lib/logger";
-import { requestRouterAiStructured } from "@/lib/ai/routerai-client";
+import { requestStructuredAi, resolveStructuredAiModel, type StructuredAiTransport } from "@/lib/ai/structured-client";
 
 export const YANDEX_INSIGHTS_PROMPT_VERSION = "card-insights-yandex-v1";
 
@@ -14,6 +14,7 @@ type InsightInput = {
   occasionText: string;
   contributions: Array<{ id: string; message: string }>;
   attempt: number;
+  transport?: StructuredAiTransport;
 };
 
 const itemSchema = {
@@ -63,7 +64,8 @@ const requestInsights = async (input: InsightInput & {
     };
   }
 
-  const model = process.env.YANDEX_INSIGHTS_MODEL ?? "yandex/gpt-pro-5.1";
+  const transport = input.transport ?? "routerai";
+  const model = resolveStructuredAiModel(transport, process.env.YANDEX_INSIGHTS_MODEL);
   const source = input.contributions.map(({ id, message }) => `${id}: ${JSON.stringify(message)}`).join("\n");
   const legacyFeedback = input.attempt > 0
     ? "Предыдущий ответ не прошёл проверку. Строго соблюдай количество, длину, уникальность и используй только существующие sourceContributionId."
@@ -74,8 +76,8 @@ const requestInsights = async (input: InsightInput & {
     : "";
 
   if (process.env.NODE_ENV !== "production") {
-    logger.info("ai.routerai_insights_request", "Starting Yandex card insights generation through RouterAI", {
-      provider: "routerai",
+    logger.info("ai.insights_request", "Starting Yandex card insights generation", {
+      provider: transport,
       model,
       kind: input.kind,
       promptVersion: YANDEX_INSIGHTS_PROMPT_VERSION,
@@ -84,7 +86,8 @@ const requestInsights = async (input: InsightInput & {
     });
   }
 
-  const result = await requestRouterAiStructured<Record<string, unknown>>({
+  const result = await requestStructuredAi<Record<string, unknown>>({
+    transport,
     model,
     system: input.system,
     user: `${input.task}\n\nПолучатель: ${input.recipientName}\nПовод: ${input.occasionText}\n\nПоздравления:\n${source}\n\n${feedback}`,

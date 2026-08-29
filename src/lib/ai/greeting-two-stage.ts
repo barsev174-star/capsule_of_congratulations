@@ -16,7 +16,7 @@ export const getGreetingPromptProfile = (): GreetingPromptProfile => {
   if (explicitProfile === "default") return "default";
 
   const runtimeProvider = process.env.AI_GREETING_PROVIDER ?? process.env.AI_PROVIDER;
-  if (runtimeProvider === "routerai") return "yandex";
+  if (runtimeProvider === "routerai" || runtimeProvider === "yandex") return "yandex";
 
   const extractorModel = process.env.YANDEX_GREETING_EXTRACTOR_MODEL ?? "";
   const composerModel = process.env.YANDEX_GREETING_COMPOSER_MODEL ?? "";
@@ -93,11 +93,47 @@ const neutralizeAuthorSentence = (sentence: string) => {
   const wished = trimmed.replace(/^(?:от\s+всей\s+души\s+)?(?:(?:я|мы)\s+)?(?:желаю|желаем)\s+(?:(?:вам|тебе)\s+)?/iu, "");
   return wished !== trimmed ? capitalizeSentence(wished) : trimmed;
 };
-export const stabilizeComposerVariants = (variants: ComposerVariants, plan: GreetingSemanticPlan): ComposerVariants => {
-  if (plan.authorVoice !== "NEUTRAL" && plan.authorVoice !== "AMBIGUOUS") return variants;
-  return Object.fromEntries(Object.entries(variants).map(([type, variant]) => [type, {
-    text: variant.text.split(/(?<=[.!?])\s+/u).map(neutralizeAuthorSentence).join(" ")
-  }])) as ComposerVariants;
+const normalize = (value: string) => value.toLocaleLowerCase("ru-RU").replace(/ё/g, "е").replace(/\s+/g, " ").trim();
+const mergeSentencePair = (value: string, preferredPair: number) => {
+  const sentences = value.match(/[^.!?]+[.!?]+|[^.!?]+$/gu)?.map((sentence) => sentence.trim()).filter(Boolean) ?? [];
+  if (sentences.length < 2) return value;
+  const pair = Math.min(preferredPair, sentences.length - 2);
+  const first = sentences[pair].replace(/[.!?]+$/u, "").trim();
+  const second = sentences[pair + 1].trim();
+  const loweredSecond = /^(?:С|Со|Желаю|Желаем|Пусть|Спасибо|Ты|Вы|Это|И)(?=\s|$)/u.test(second)
+    ? second.charAt(0).toLocaleLowerCase("ru-RU") + second.slice(1)
+    : second;
+  return [
+    ...sentences.slice(0, pair),
+    `${first} — ${loweredSecond}`,
+    ...sentences.slice(pair + 2)
+  ].join(" ");
+};
+const ensureDistinctComposerVariants = (variants: ComposerVariants): ComposerVariants => {
+  const result: ComposerVariants = {
+    safe: { ...variants.safe },
+    warm: { ...variants.warm },
+    expressive: { ...variants.expressive }
+  };
+  if (normalize(result.warm.text) === normalize(result.safe.text)) {
+    result.warm.text = mergeSentencePair(result.warm.text, 0);
+  }
+  if ([result.safe.text, result.warm.text].some((text) => normalize(text) === normalize(result.expressive.text))) {
+    result.expressive.text = mergeSentencePair(result.expressive.text, 1);
+  }
+  return result;
+};
+export const stabilizeComposerVariants = (
+  variants: ComposerVariants,
+  plan: GreetingSemanticPlan,
+  options?: { ensureDistinct?: boolean }
+): ComposerVariants => {
+  const stabilized = plan.authorVoice !== "NEUTRAL" && plan.authorVoice !== "AMBIGUOUS"
+    ? variants
+    : Object.fromEntries(Object.entries(variants).map(([type, variant]) => [type, {
+        text: variant.text.split(/(?<=[.!?])\s+/u).map(neutralizeAuthorSentence).join(" ")
+      }])) as ComposerVariants;
+  return options?.ensureDistinct ? ensureDistinctComposerVariants(stabilized) : stabilized;
 };
 export const getSemanticPlanCacheKey = (input: LadderRawInput, profile: GreetingPromptProfile = getGreetingPromptProfile()) => {
   const version = getGreetingPromptVersions(profile).extractor;
@@ -304,7 +340,6 @@ export const buildComposerRepairPrompt = (base: ReturnType<typeof buildComposerP
   user: `${base.user}\n\nИсправь только вариант ${type}. Причина: ${code}.${detail ? ` ${detail}` : ""} ${repairInstructions[code] ?? "Устрани указанное нарушение."} Сохрани факты, повод, голос и режим. Верни только исправленный текст по JSON Schema.\nНеудачный текст: ${text}`
 });
 export const greetingLength = (value: string) => Array.from(value).length;
-const normalize = (value: string) => value.toLocaleLowerCase("ru-RU").replace(/ё/g, "е").replace(/\s+/g, " ").trim();
 const meaningfulTokens = (value: string) => normalize(value).match(/[\p{L}]{4,}/gu) ?? [];
 const factText = (fact: GreetingSemanticPlan["coreFacts"][number]) => typeof fact === "string" ? fact : fact.text;
 const factStems = (value: string) => meaningfulTokens(value).map((token) => token.slice(0, 4));
@@ -384,7 +419,15 @@ export const validateComposerVariants = (variants: ComposerVariants, limits: Rec
   const hardErrors: ComposerValidationIssue[] = entries.flatMap(({ type, text }) =>
     validateSingleComposerText(text, limits[type], plan, occasionText, type).hardErrors
   );
-  for (let i=0;i<entries.length;i+=1) for (let j=i+1;j<entries.length;j+=1) if(normalize(entries[i].text)===normalize(entries[j].text)) hardErrors.push({ type:entries[j].type,code:"DUPLICATE" });
+  for (let i=0;i<entries.length;i+=1) for (let j=i+1;j<entries.length;j+=1) {
+    if (normalize(entries[i].text) === normalize(entries[j].text)) {
+      hardErrors.push({
+        type: entries[j].type,
+        code: "DUPLICATE",
+        detail: `Совпадает с вариантом ${entries[i].type}: «${entries[i].text}».`
+      });
+    }
+  }
   const softWarnings: Array<{ type: keyof ComposerVariants; code: string; detail?: string }> = [];
   for (let i=0;i<entries.length;i+=1) for (let j=i+1;j<entries.length;j+=1) {
     const leftTokens = new Set(meaningfulTokens(entries[i].text));

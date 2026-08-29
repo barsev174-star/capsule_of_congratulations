@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { hasConfiguredEmailTransport, sendTransactionalEmail } from "@/lib/email/transport";
 import type { EventReminder } from "./types";
 
 const escapeHtml = (value: string) =>
@@ -7,8 +8,6 @@ const escapeHtml = (value: string) =>
   })[character] ?? character);
 
 const getEmailConfig = () => ({
-  apiKey: process.env.RESEND_API_KEY?.trim(),
-  from: process.env.EMAIL_FROM?.trim(),
   replyTo: process.env.EMAIL_REPLY_TO?.trim(),
   siteUrl: (process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000").replace(/\/$/, "")
 });
@@ -22,8 +21,8 @@ const deliverEmail = async (input: {
   html: string;
   text: string;
 }) => {
-  const { apiKey, from, replyTo } = getEmailConfig();
-  if (!apiKey || !from) {
+  const { replyTo } = getEmailConfig();
+  if (!hasConfiguredEmailTransport()) {
     if (process.env.NODE_ENV !== "production") {
       logger.info("reminder.email_dev", "Event reminder email prepared", {
         reminderId: input.reminder.id,
@@ -34,28 +33,14 @@ const deliverEmail = async (input: {
     throw new Error("Email provider is not configured");
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "Idempotency-Key": input.idempotencyKey,
-      "User-Agent": "slovesto/1.0"
-    },
-    body: JSON.stringify({
-      from,
-      to: [input.reminder.email],
-      ...(replyTo ? { reply_to: replyTo } : {}),
-      subject: input.subject,
-      html: input.html,
-      text: input.text
-    })
+  await sendTransactionalEmail({
+    to: input.reminder.email,
+    replyTo,
+    idempotencyKey: input.idempotencyKey,
+    subject: input.subject,
+    html: input.html,
+    text: input.text
   });
-
-  if (!response.ok) {
-    const details = await response.text();
-    throw new Error(`Email provider returned ${response.status}: ${details.slice(0, 200)}`);
-  }
 };
 
 export const sendEventReminderConfirmationEmail = async (reminder: EventReminder, cancellationToken: string) => {

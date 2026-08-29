@@ -103,11 +103,11 @@ const contributions = [
   { id: "six", message: "Спасибо за заботу и внимание к мелочам, которые на самом деле самые важные.", updatedAt: "2026-01-06" }
 ] as never;
 
-describe("RouterAI Yandex greeting service", () => {
+describe("direct Yandex greeting service", () => {
   beforeEach(() => {
-    process.env.AI_PROVIDER = "routerai";
-    process.env.AI_GREETING_PROVIDER = "routerai";
-    process.env.AI_INSIGHTS_PROVIDER = "routerai";
+    process.env.AI_PROVIDER = "yandex";
+    process.env.AI_GREETING_PROVIDER = "yandex";
+    process.env.AI_INSIGHTS_PROVIDER = "yandex";
     delete process.env.AI_GREETING_MODE;
     delete process.env.AI_GREETING_EXPERIMENT;
     mocks.extractGreetingSemantics.mockReset().mockResolvedValue({
@@ -140,10 +140,10 @@ describe("RouterAI Yandex greeting service", () => {
     expect(result.variants).toEqual([
       expect.objectContaining({ id: "short", label: "Готовый текст" })
     ]);
-    expect(mocks.extractGreetingSemantics).toHaveBeenCalledWith(expect.anything(), { model: "yandex/gpt-pro-5.1" });
-    expect(mocks.composeGreetingText).toHaveBeenCalledWith(expect.anything(), { model: "yandex/gpt-pro-5.1" });
+    expect(mocks.extractGreetingSemantics).toHaveBeenCalledWith(expect.anything(), { model: "yandex/gpt-pro-5.1", transport: "yandex" });
+    expect(mocks.composeGreetingText).toHaveBeenCalledWith(expect.anything(), { model: "yandex/gpt-pro-5.1", transport: "yandex" });
     expect(mocks.composeGreetingVariants).not.toHaveBeenCalled();
-    expect(mocks.completeAiGeneration).toHaveBeenCalledWith(expect.objectContaining({ provider: "routerai" }));
+    expect(mocks.completeAiGeneration).toHaveBeenCalledWith(expect.objectContaining({ provider: "yandex" }));
   });
 
   it("keeps the three-result server contract for legacy non-join callers on Yandex", async () => {
@@ -162,7 +162,7 @@ describe("RouterAI Yandex greeting service", () => {
 
     expect(result.variants.map((variant) => variant.id)).toEqual(["short", "warm", "style"]);
     expect(mocks.composeGreetingVariants).toHaveBeenCalledOnce();
-    expect(mocks.completeAiGeneration).toHaveBeenCalledWith(expect.objectContaining({ provider: "routerai" }));
+    expect(mocks.completeAiGeneration).toHaveBeenCalledWith(expect.objectContaining({ provider: "yandex" }));
   });
 
   it("routes safe editing to Yandex through RouterAI", async () => {
@@ -180,7 +180,7 @@ describe("RouterAI Yandex greeting service", () => {
 
     expect(result.variants).toEqual([expect.objectContaining({ id: "style" })]);
     expect(mocks.generateLiteralGreetingEditWithRouterAi).toHaveBeenCalledOnce();
-    expect(mocks.completeAiGeneration).toHaveBeenCalledWith(expect.objectContaining({ provider: "routerai" }));
+    expect(mocks.completeAiGeneration).toHaveBeenCalledWith(expect.objectContaining({ provider: "yandex" }));
   });
 
   it("routes best quotes and qualities to Yandex through RouterAI", async () => {
@@ -206,8 +206,8 @@ describe("RouterAI Yandex greeting service", () => {
     const quotes = await generateBestQuotes({ cardId: "card-1", recipientName: "Анна", occasionText: "С днём рождения!", contributions });
     const qualities = await generateQualities({ cardId: "card-1", recipientName: "Анна", occasionText: "С днём рождения!", contributions });
 
-    expect(quotes.insight.provider).toBe("routerai");
-    expect(qualities.insight.provider).toBe("routerai");
+    expect(quotes.insight.provider).toBe("yandex");
+    expect(qualities.insight.provider).toBe("yandex");
     expect(mocks.generateBestQuotesWithRouterAi).toHaveBeenCalledOnce();
     expect(mocks.generateQualitiesWithRouterAi).toHaveBeenCalledOnce();
   });

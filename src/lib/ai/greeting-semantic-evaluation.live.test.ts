@@ -22,29 +22,29 @@ const selectedFixtures = requestedFixtureIds.size > 0
 describe.skipIf(!shouldRun)("semantic greeting live evaluation", () => {
   for (const fixture of selectedFixtures) {
     it(fixture.id, async () => {
-      const extractor = await extractGreetingSemantics(buildExtractorPrompt(fixture));
+      const extractor = await extractGreetingSemantics(buildExtractorPrompt(fixture), { transport: "yandex" });
       const plan = stabilizeGreetingSemanticPlan(fixture, extractor.plan);
       const prompt = buildComposerPrompt(fixture, plan);
-      const result = await composeGreetingVariants(prompt);
+      const result = await composeGreetingVariants(prompt, { transport: "yandex" });
       let compositionPlans = result.compositionPlans;
-      let variants = stabilizeComposerVariants(result.variants, plan);
+      let variants = stabilizeComposerVariants(result.variants, plan, { ensureDistinct: true });
       let validation = validateComposerVariants(variants, prompt.limits, plan, fixture.occasionText, compositionPlans, prompt.planRequirements);
       const repairCosts: ReturnType<typeof estimateAiUsageCost>[] = [];
       const repairedTypes = new Set<keyof typeof variants>();
       while (validation.hardErrors.length > 0 && repairedTypes.size < 3) {
         const error = validation.hardErrors.find((item) => !repairedTypes.has(item.type));
         if (!error) break;
-        const repair = await repairGreetingVariant(buildComposerRepairPrompt(prompt, error.type, variants[error.type].text, error.code, error.detail), error.type);
-        variants = stabilizeComposerVariants({ ...variants, [error.type]: { text: repair.text } }, plan);
+        const repair = await repairGreetingVariant(buildComposerRepairPrompt(prompt, error.type, variants[error.type].text, error.code, error.detail), error.type, { transport: "yandex" });
+        variants = stabilizeComposerVariants({ ...variants, [error.type]: { text: repair.text } }, plan, { ensureDistinct: true });
         repairedTypes.add(error.type);
         repairCosts.push(estimateAiUsageCost(repair.model, repair.usage));
         validation = validateComposerVariants(variants, prompt.limits, plan, fixture.occasionText, compositionPlans, prompt.planRequirements);
       }
       const beforeReview = variants;
-      const review = shouldReview ? await composeGreetingVariants(buildComposerReviewPrompt(prompt, variants)) : null;
+      const review = shouldReview ? await composeGreetingVariants(buildComposerReviewPrompt(prompt, variants), { transport: "yandex" }) : null;
       const reviewCost = review ? estimateAiUsageCost(review.model, review.usage) : null;
       if (review) {
-        variants = stabilizeComposerVariants(review.variants, plan);
+        variants = stabilizeComposerVariants(review.variants, plan, { ensureDistinct: true });
         compositionPlans = review.compositionPlans;
         validation = validateComposerVariants(variants, prompt.limits, plan, fixture.occasionText, compositionPlans, prompt.planRequirements);
       }

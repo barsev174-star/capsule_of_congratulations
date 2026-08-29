@@ -165,6 +165,9 @@ describe("two-stage greeting generation", () => {
   it("keeps hard validation objective", () => {
     const result = validateComposerVariants({ safe: { text: "С Днём педагога!" }, warm: { text: "С Днём педагога!" }, expressive: { text: "Текст".repeat(100) } }, { safe: 280, warm: 280, expressive: 280 });
     expect(result.hardErrors.map((item) => item.code)).toEqual(expect.arrayContaining(["DUPLICATE", "TOO_LONG"]));
+    expect(result.hardErrors).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "warm", code: "DUPLICATE", detail: expect.stringContaining("вариантом safe") })
+    ]));
   });
 
   it("detects explicit voice or address mismatches", () => {
@@ -308,6 +311,18 @@ describe("two-stage greeting generation", () => {
     expect(result.safe.text).toBe("С праздником! Спасибо за помощь. Здоровья и сил!");
     expect(result.warm.text).toBe("С праздником! Спасибо за вашу внимательность.");
     expect(result.expressive.text).toBe("С праздником! Пусть будут хорошие перемены!");
+  });
+
+  it("keeps short Yandex variants distinct without inventing new content", () => {
+    const repeated = "Мама всегда поддерживает и умеет успокоить. С днём рождения! Желаю здоровья, сил и больше времени для себя.";
+    const result = stabilizeComposerVariants({
+      safe: { text: "С днём рождения! Мама всегда поддерживает и умеет успокоить. Желаю здоровья, сил и больше времени для себя." },
+      warm: { text: repeated },
+      expressive: { text: repeated }
+    }, plan, { ensureDistinct: true });
+
+    expect(result.expressive.text).toBe("Мама всегда поддерживает и умеет успокоить. С днём рождения — желаю здоровья, сил и больше времени для себя.");
+    expect(validateComposerVariants(result, { safe: 280, warm: 280, expressive: 280 }).hardErrors).toEqual([]);
   });
 
   it("reports fact coverage without rejecting a greeting", () => {

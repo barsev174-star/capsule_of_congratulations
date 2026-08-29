@@ -1,6 +1,6 @@
 export type SupportRequestCategory = "problem" | "suggestion" | "question";
 export type SupportRequestStatus = "new" | "in_progress" | "resolved";
-export type SupportNotificationChannel = "email" | "telegram";
+export type SupportNotificationChannel = "email";
 export type SupportNotificationStatus = "pending" | "sending" | "sent" | "failed";
 
 export type SupportRequest = {
