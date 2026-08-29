@@ -308,12 +308,17 @@ export const buildSingleComposerPrompt = (
 export const buildSingleComposerRepairPrompt = (
   base: SingleComposerPrompt,
   text: string,
-  code: string,
-  detail?: string
-) => ({
-  system: `${base.system}\n\nИсправь только указанное объективное нарушение. Не меняй задачу и не добавляй новый смысл. Верни только JSON с полем text.`,
-  user: `${base.user}\n\nПричина исправления: ${code}.${detail ? ` ${detail}` : ""} ${repairInstructions[code] ?? "Устрани указанное нарушение."}\nНеудачный текст: ${text}`
-});
+  issues: ReadonlyArray<{ code: string; detail?: string }>
+) => {
+  const issueList = issues
+    .map((issue, index) => `${index + 1}. ${issue.code}.${issue.detail ? ` ${issue.detail}` : ""} ${repairInstructions[issue.code] ?? "Устрани указанное нарушение."}`)
+    .join("\n");
+
+  return {
+    system: `${base.system}\n\nИсправь все перечисленные объективные нарушения. Не меняй задачу и не добавляй новый смысл. Верни только JSON с полем text.`,
+    user: `${base.user}\n\nНарушения, которые нужно исправить:\n${issueList}\nНеудачный текст: ${text}`
+  };
+};
 export const buildComposerReviewPrompt = (
   base: ReturnType<typeof buildComposerPrompt>,
   variants: ComposerVariants

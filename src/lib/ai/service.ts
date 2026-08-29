@@ -809,20 +809,25 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         );
         let singleValidation = validateSingleComposerText(singleText, singlePrompt.limit, plan, stageInput.occasionText, "safe", "yandex");
         const sourceLength = Array.from(input.sourceText ?? "").length;
-        const notShorter = input.joinAction === "shorten" && sourceLength > 0 && Array.from(singleText).length >= sourceLength;
-        const repairError = singleValidation.hardErrors[0] ?? (notShorter ? { type: "safe" as const, code: "NOT_SHORTER" } : null);
-        let repairResult: Awaited<ReturnType<typeof composeGreetingText>> | null = null;
+        const repairAttempts: Array<{
+          issues: Array<{ code: string; detail?: string }>;
+          result: Awaited<ReturnType<typeof composeGreetingText>>;
+        }> = [];
+        const collectRepairIssues = () => {
+          const issues: Array<{ code: string; detail?: string }> = singleValidation.hardErrors.map(({ code, detail }) => ({ code, detail }));
+          const notShorter = input.joinAction === "shorten" && sourceLength > 0 && Array.from(singleText).length >= sourceLength;
+          if (notShorter) issues.push({ code: "NOT_SHORTER" });
+          return issues;
+        };
 
-        if (repairError) {
-          repairResult = await composeGreetingText(
-            buildSingleComposerRepairPrompt(
-              singlePrompt,
-              singleText,
-              repairError.code,
-              "detail" in repairError ? repairError.detail : undefined
-            ),
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          const issues = collectRepairIssues();
+          if (issues.length === 0) break;
+          const repairResult = await composeGreetingText(
+            buildSingleComposerRepairPrompt(singlePrompt, singleText, issues),
             { model: joinComposerModel, transport: structuredTransport }
           );
+          repairAttempts.push({ issues, result: repairResult });
           singleText = cleanupGreetingText(
             stabilizeComposerVariants({
               safe: { text: repairResult.text },
@@ -834,8 +839,17 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
           singleValidation = validateSingleComposerText(singleText, singlePrompt.limit, plan, stageInput.occasionText, "safe", "yandex");
         }
 
-        const stillNotShorter = input.joinAction === "shorten" && sourceLength > 0 && Array.from(singleText).length >= sourceLength;
-        if (singleValidation.hardErrors.length > 0 || stillNotShorter) {
+        const remainingIssues = collectRepairIssues();
+        if (remainingIssues.length > 0) {
+          logger.warn("ai.join_single_validation_failed", "Single join greeting failed objective validation", {
+            cardId: input.cardId,
+            action: input.joinAction,
+            cacheHit: Boolean(cachedPlan),
+            repairAttempts: repairAttempts.length,
+            errorCodes: remainingIssues.map((issue) => issue.code),
+            resultLength: Array.from(singleText).length,
+            limit: singlePrompt.limit
+          });
           throw new AiError("AI_VALIDATION_FAILED", "Single greeting quality validation failed.");
         }
 
@@ -852,8 +866,8 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         await completeAiGeneration({ id: generationId, cardId: input.cardId, generationInput: { ...input, existingMessages }, variants, provider: providerName, model: firstResult.model });
         const extractorCost = extractor ? estimateAiUsageCost(extractor.model, extractor.usage) : null;
         const composerCost = estimateAiUsageCost(firstResult.model, firstResult.usage);
-        const repairCost = repairResult ? estimateAiUsageCost(repairResult.model, repairResult.usage) : null;
-        const totalCostRub = sumAiUsageCosts(...[extractorCost, composerCost, repairCost].filter((cost): cost is NonNullable<typeof cost> => Boolean(cost)));
+        const repairCosts = repairAttempts.map(({ result }) => estimateAiUsageCost(result.model, result.usage));
+        const totalCostRub = sumAiUsageCosts(...[extractorCost, composerCost, ...repairCosts].filter((cost): cost is NonNullable<typeof cost> => Boolean(cost)));
         const promptVersions = getGreetingPromptVersions("yandex");
         const context = {
           action: input.joinAction,
@@ -866,11 +880,11 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
           composerDurationMs: firstResult.durationMs,
           extractorUsage: extractorCost,
           composerUsage: composerCost,
-          repairUsage: repairCost,
+          repairUsage: repairCosts,
           totalCostRub,
           safeFactCoverage: getSafeFactCoverageSignal(plan, singleText),
-          repairUsed: Boolean(repairResult),
-          repairReason: repairError?.code ?? null,
+          repairUsed: repairAttempts.length > 0,
+          repairReason: repairAttempts.flatMap((attempt) => attempt.issues.map((issue) => issue.code)),
           resultLength: Array.from(singleText).length
         };
         logger.info("ai.join_single_generation", "Single join greeting generated", { cardId: input.cardId, ...context, requestId: generationId });
