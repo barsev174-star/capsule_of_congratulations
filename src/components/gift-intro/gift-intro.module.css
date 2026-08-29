@@ -305,6 +305,8 @@
 }
 
 .envelopeRig {
+  --envelope-open-y: -66px;
+
   position: absolute;
   z-index: 2;
   left: 50%;
@@ -370,9 +372,6 @@
   animation: idleSceneLight 4.6s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
-.closedEnvelopeArtwork,
-.releasingSealArtwork,
-.openEnvelopeFlap,
 .openEnvelopeBack,
 .envelopePocketMask,
 .openEnvelopeFront {
@@ -385,42 +384,36 @@
   will-change: transform, opacity;
 }
 
-.closedEnvelopeArtwork img,
-.releasingSealArtwork img,
-.openEnvelopeFlap img,
 .openEnvelopeBack img,
-.openEnvelopeFront img {
+.openEnvelopeFlap img,
+.openEnvelopeFront img,
+.closedEnvelopeArtwork img {
   object-fit: contain;
 }
 
 .closedEnvelopeArtwork {
-  z-index: 7;
-  filter: grayscale(0.2) saturate(0.72) brightness(1.02) drop-shadow(0 19px 22px rgba(32, 33, 36, 0.2));
+  position: absolute;
+  z-index: 11;
+  inset: 0;
+  pointer-events: none;
+  filter: grayscale(0.12) saturate(0.82) brightness(1.02) drop-shadow(0 18px 24px rgba(32, 33, 36, 0.18));
   opacity: 1;
-  transform: translateY(2px) translateZ(22px) scale(1.04);
-  transition-duration: 560ms;
-}
-
-.releasingSealArtwork {
-  z-index: 9;
-  clip-path: circle(9.5% at 50% 55%);
-  filter: saturate(0.82) brightness(1.02) drop-shadow(0 5px 6px rgba(32, 33, 36, 0.24));
-  opacity: 0;
-  transform: translateY(2px) translateZ(34px) scale(1.04);
-  transition-duration: 300ms;
+  transform: translateY(2px) translateZ(48px) scale(1.04);
+  transition: opacity 180ms cubic-bezier(0.4, 0, 0.2, 1), filter 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
 }
 
 .sealGlint {
   position: absolute;
-  z-index: 8;
+  z-index: 10;
   left: 50%;
-  top: 55%;
+  top: 69%;
   width: 58px;
   height: 58px;
   overflow: hidden;
   border-radius: 50%;
   opacity: 0;
-  transform: translate(-50%, -50%) translateZ(30px);
+  transform: translate(-50%, -50%) translateY(var(--envelope-open-y)) translateZ(44px) scale(1.04);
   transition-property: opacity;
   transition-duration: 180ms;
 }
@@ -462,33 +455,62 @@
 }
 
 .openEnvelopeFlap {
-  z-index: 0;
-  clip-path: polygon(13% 0, 87% 0, 87% 38%, 13% 38%);
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  clip-path: polygon(0 0, 100% 0, 100% 37.2%, 0 37.2%);
   filter: grayscale(0.16) saturate(0.78) brightness(1.01) drop-shadow(0 5px 6px rgba(32, 33, 36, 0.12));
-  opacity: 0;
-  transform: translateY(-82px) translateZ(4px) rotateX(176deg) scale(1.08);
   transform-origin: 50% 37%;
-  transition-duration: 820ms;
-  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(var(--envelope-open-y)) translateZ(24px) scale(1.04) rotateX(-180deg);
+  opacity: 1;
+  transition-property: transform, opacity;
+  transition-duration: 860ms, 120ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
   backface-visibility: visible;
 }
 
 .openEnvelopeBack {
   z-index: 1;
   filter: grayscale(0.16) saturate(0.78) brightness(1.01) drop-shadow(0 18px 24px rgba(32, 33, 36, 0.18));
-  opacity: 0;
-  transform: translateY(-82px) translateZ(-2px) scale(1.08);
+  opacity: 1;
+  transform: translateY(var(--envelope-open-y)) translateZ(-2px) scale(1.04);
   transition-duration: 680ms;
-  clip-path: polygon(0 35%, 100% 35%, 100% 100%, 0 100%);
+  clip-path: polygon(0 37%, 100% 37%, 100% 100%, 0 100%);
 }
 
 .openEnvelopeFront {
-  z-index: 5;
-  clip-path: polygon(13% 36%, 50% 60%, 87% 36%, 87% 92%, 13% 92%);
+  z-index: 9;
   filter: grayscale(0.12) saturate(0.82) brightness(1.02) drop-shadow(0 -2px 2px rgba(32, 33, 36, 0.12));
-  opacity: 0;
-  transform: translateY(-82px) translateZ(14px) scale(1.08);
+  opacity: 1;
+  transform: translateY(var(--envelope-open-y)) translateZ(14px) scale(1.04);
   transition-duration: 680ms;
+}
+
+.envelopeFrontPocketArtwork {
+  clip-path: polygon(13% 36%, 50% 60%, 87% 36%, 87% 92%, 13% 92%);
+}
+
+.envelopeFrontSealArtwork {
+  clip-path: circle(10.5% at 50% 69%);
+  transform: translateZ(30px);
+}
+
+.idle .openEnvelopeFlap,
+.idle .openEnvelopeBack,
+.idle .openEnvelopeFront,
+.idle .envelopePocketMask,
+.intro .openEnvelopeFlap,
+.intro .openEnvelopeBack,
+.intro .openEnvelopeFront,
+.intro .envelopePocketMask,
+.releasingSeal .openEnvelopeFlap,
+.releasingSeal .openEnvelopeBack,
+.releasingSeal .openEnvelopeFront,
+.releasingSeal .envelopePocketMask {
+  opacity: 0;
 }
 
 .envelopePocketMask {
@@ -503,8 +525,8 @@
   mask-position: center;
   mask-repeat: no-repeat;
   mask-size: contain;
-  opacity: 0;
-  transform: translateY(-82px) translateZ(12px) scale(1.08);
+  opacity: 1;
+  transform: translateY(var(--envelope-open-y)) translateZ(12px) scale(1.04);
   transition-duration: 520ms;
 }
 
@@ -1142,6 +1164,7 @@
   color: #202124;
   background: #ffffff;
   text-align: center;
+  transform: translateY(-12px);
 }
 
 .lightweightCardKicker {
@@ -1944,25 +1967,25 @@
 .idle .letter,
 .intro .letter,
 .releasingSeal .letter {
-  opacity: 0;
-  transform: translateY(-54px) translateZ(4px) rotateZ(-0.6deg) scale(0.94);
-}
-
-.intro .envelopeRig {
-  transform: translate(-50%, calc(-50% - 5px)) rotateX(2deg) rotateZ(-0.6deg) scale(1.012);
-}
-
-.releasingSeal .envelopeRig {
-  transform: translate(-50%, calc(-50% - 7px)) rotateX(1.5deg) rotateY(-0.6deg) rotateZ(-0.4deg) scale(1.014);
-}
-
-.releasingSeal .releasingSealArtwork {
   opacity: 1;
+  transform: translateY(-42px) translateZ(4px) rotateZ(-0.6deg) scale(0.94);
 }
 
-.releasingSeal .releasingSealArtwork {
-  filter: saturate(0.84) brightness(1.04) drop-shadow(0 8px 9px rgba(32, 33, 36, 0.2));
-  transform: translateY(2px) translateZ(56px) rotateX(-3deg) scale(1.045);
+.intro .envelopeRig,
+.releasingSeal .envelopeRig,
+.openingEnvelope .envelopeRig,
+.extractingCard .envelopeRig {
+  transform: translate(-50%, calc(-50% - 5px)) rotateX(2deg) rotateZ(-0.6deg) scale(1.012);
+  transition-duration: 360ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.openingEnvelope .openEnvelopeFlap,
+.extractingCard .openEnvelopeFlap,
+.unfoldingCard .openEnvelopeFlap,
+.assemblingCard .openEnvelopeFlap,
+.handoff .openEnvelopeFlap {
+  transform: translateY(var(--envelope-open-y)) translateZ(-8px) scale(1.04) rotateX(0deg);
 }
 
 .openingEnvelope .closedEnvelopeArtwork,
@@ -1971,35 +1994,19 @@
 .assemblingCard .closedEnvelopeArtwork,
 .handoff .closedEnvelopeArtwork {
   opacity: 0;
-  filter: grayscale(0.16) saturate(0.76) brightness(1.04) drop-shadow(0 10px 14px rgba(32, 33, 36, 0.1));
-  transform: translateY(2px) translateZ(22px) scale(1.025);
+  filter: grayscale(0.12) saturate(0.82) brightness(1.02) drop-shadow(0 10px 14px rgba(32, 33, 36, 0.08));
 }
 
-.openingEnvelope .closedEnvelopeArtwork {
-  transition-duration: 320ms;
+.openingEnvelope .openEnvelopeFlap {
+  z-index: 8;
+  transform: translateY(var(--envelope-open-y)) translateZ(24px) scale(1.04) rotateX(0deg);
 }
 
-.openingEnvelope .releasingSealArtwork {
-  opacity: 0;
-  filter: saturate(0.84) brightness(1.03) drop-shadow(0 5px 6px rgba(32, 33, 36, 0.14));
-  transform: translateY(12px) translateZ(68px) rotateX(-4deg) scale(0.98);
-}
-
-.extractingCard .releasingSealArtwork,
-.unfoldingCard .releasingSealArtwork,
-.assemblingCard .releasingSealArtwork,
-.handoff .releasingSealArtwork {
-  opacity: 0;
-  transform: translateY(109px) translateZ(22px) rotateX(0deg) scale(0.98);
-}
-
-.openingEnvelope .openEnvelopeFlap,
 .extractingCard .openEnvelopeFlap,
 .unfoldingCard .openEnvelopeFlap,
 .assemblingCard .openEnvelopeFlap,
 .handoff .openEnvelopeFlap {
-  opacity: 1;
-  transform: translateY(-82px) translateZ(-8px) rotateX(0deg) scale(1.08);
+  z-index: 0;
 }
 
 .openingEnvelope .openEnvelopeBack,
@@ -2009,21 +2016,13 @@
 .extractingCard .openEnvelopeFront,
 .extractingCard .envelopePocketMask,
 .unfoldingCard .openEnvelopeBack,
-.unfoldingCard .openEnvelopeFlap,
 .unfoldingCard .openEnvelopeFront,
 .assemblingCard .openEnvelopeBack,
-.assemblingCard .openEnvelopeFlap,
 .assemblingCard .openEnvelopeFront,
 .handoff .openEnvelopeBack,
-.handoff .openEnvelopeFlap,
 .handoff .openEnvelopeFront {
   opacity: 1;
-  transform: translateY(-82px) translateZ(-2px) scale(1.08);
-}
-
-.openingEnvelope .openEnvelopeBack,
-.openingEnvelope .openEnvelopeFront {
-  transition-duration: 520ms;
+  transform: translateY(var(--envelope-open-y)) translateZ(-2px) scale(1.04);
 }
 
 .openingEnvelope .openEnvelopeFront,
@@ -2033,22 +2032,14 @@
 .unfoldingCard .openEnvelopeFront,
 .assemblingCard .openEnvelopeFront,
 .handoff .openEnvelopeFront {
-  transform: translateY(-82px) translateZ(14px) scale(1.08);
-}
-
-.openingEnvelope .envelopeRig {
-  transform: translate(-50%, calc(-50% - 9px)) rotateX(1.5deg) rotateZ(-0.5deg) scale(1.012);
+  transform: translateY(var(--envelope-open-y)) translateZ(14px) scale(1.04);
 }
 
 .openingEnvelope .letter {
   opacity: 1;
-  transform: translateY(-54px) translateZ(4px) rotateZ(-0.6deg) scale(0.94);
+  transform: translateY(-42px) translateZ(4px) rotateZ(-0.6deg) scale(0.94);
   transition-delay: 0ms;
-  transition-duration: 140ms;
-}
-
-.extractingCard .envelopeRig {
-  transform: translate(-50%, calc(-50% - 9px)) rotateX(1deg) rotateZ(-0.25deg) scale(1.012);
+  transition-duration: 0ms;
 }
 
 .extractingCard .letter {
@@ -2056,7 +2047,8 @@
   opacity: 1;
   transform: translateY(-166px) translateZ(22px) rotateZ(0.35deg) scale(1.01);
   transition-delay: 0ms;
-  transition-duration: 980ms;
+  transition-duration: 880ms;
+  transition-timing-function: cubic-bezier(0.22, 0, 0.2, 1);
 }
 
 .extractingCard .stageShadow {
@@ -2067,13 +2059,16 @@
 
 .unfoldingCard .envelopeRig {
   transform: translate(-50%, calc(-50% + 34px)) rotateX(0.5deg) rotateZ(-0.1deg) scale(0.86);
+  transition-duration: 1020ms;
+  transition-timing-function: cubic-bezier(0.22, 0, 0.2, 1);
 }
 
 .unfoldingCard .letter {
   z-index: 6;
   opacity: 1;
-  transform: translateY(-154px) translateZ(64px) rotateZ(0deg) scale(1.07);
-  transition-duration: 1050ms;
+  transform: translateY(-166px) translateZ(64px) rotateZ(0deg) scale(1.07);
+  transition-duration: 1020ms;
+  transition-timing-function: cubic-bezier(0.22, 0, 0.2, 1);
 }
 
 .unfoldingCard .cardLid,
@@ -2112,7 +2107,7 @@
 
 .assemblingCard .letter {
   z-index: 6;
-  transform: translateY(-154px) translateZ(84px) scale(1.07) rotateZ(0deg);
+  transform: translateY(-166px) translateZ(84px) scale(1.07) rotateZ(0deg);
 }
 
 .assemblingCard .openEnvelopeBack,
@@ -2312,7 +2307,7 @@
 }
 
 .handoff .letter {
-  transform: translateY(-154px) translateZ(112px) scale(3.45);
+  transform: translateY(-166px) translateZ(112px) scale(3.45);
   transition-duration: 1250ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -2478,6 +2473,8 @@
   }
 
   .envelopeRig {
+    --envelope-open-y: -46px;
+
     top: 54%;
     width: 360px;
     height: 360px;
@@ -2754,7 +2751,7 @@
   }
 
   .unfoldingCard .letter {
-    transform: translateY(-108px) translateZ(60px) scale(1.14) rotateZ(0deg);
+    transform: translateY(-116px) translateZ(60px) scale(1.14) rotateZ(0deg);
   }
 
   .assemblingCard .envelopeRig,
@@ -2763,11 +2760,11 @@
   }
 
   .assemblingCard .letter {
-    transform: translateY(-108px) translateZ(72px) scale(1.14) rotateZ(0deg);
+    transform: translateY(-116px) translateZ(72px) scale(1.14) rotateZ(0deg);
   }
 
   .handoff .letter {
-    transform: translateY(-108px) translateZ(104px) scale(4.8);
+    transform: translateY(-116px) translateZ(104px) scale(4.8);
   }
 
   .letter[data-photo-count="0"] .assemblyHeadline {
@@ -2834,8 +2831,6 @@
   }
 
   .page:not([data-motion-mode="full"]) .envelopeRig,
-  .page:not([data-motion-mode="full"]) .closedEnvelopeArtwork,
-  .page:not([data-motion-mode="full"]) .releasingSealArtwork,
   .page:not([data-motion-mode="full"]) .openEnvelopeFlap,
   .page:not([data-motion-mode="full"]) .openEnvelopeBack,
   .page:not([data-motion-mode="full"]) .openEnvelopeFront,

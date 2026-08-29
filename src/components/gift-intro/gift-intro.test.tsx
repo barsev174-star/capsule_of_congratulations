@@ -42,8 +42,11 @@ describe("GiftIntro", () => {
     expect(document.querySelector('[data-intro-state="idle"]')).toBeInTheDocument();
     expect(screen.queryByTestId("full-final-card")).not.toBeInTheDocument();
     expect(document.querySelectorAll('[data-gift-intro-preview="lightweight"]')).toHaveLength(1);
-    expect(document.querySelectorAll('img[src*="envelope-closed.png"]')).toHaveLength(2);
-    expect(document.querySelectorAll('img[src*="envelope-open.png"]')).toHaveLength(3);
+    expect(document.querySelectorAll('img[src*="envelope-closed.png"]')).toHaveLength(1);
+    expect(document.querySelectorAll('img[src*="envelope-open.png"]')).toHaveLength(4);
+    expect(document.querySelectorAll('[data-closed-envelope-artwork="true"]')).toHaveLength(1);
+    expect(document.querySelectorAll('[data-envelope-flap="true"]')).toHaveLength(1);
+    expect(document.querySelectorAll('[data-envelope-seal-artwork="true"]')).toHaveLength(0);
     expect(document.querySelector('[data-envelope-pocket-mask="true"]')).toBeInTheDocument();
     expect(document.querySelector('[data-seal-glint="true"]')).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Открыть конверт для Анна" })).toBeInTheDocument();
@@ -71,13 +74,13 @@ describe("GiftIntro", () => {
     expect(document.querySelector('[data-intro-state="extracting-card"]')).toBeInTheDocument();
     expect(document.querySelector("[data-photo-count]")).toBe(cardInsideEnvelope);
 
-    act(() => vi.advanceTimersByTime(670));
+    act(() => vi.advanceTimersByTime(880));
     expect(document.querySelector('[data-intro-state="unfolding-card"]')).toBeInTheDocument();
     expect(document.querySelector('[data-fold-panel="upper"]')).toBe(upperFold);
     expect(screen.getByTestId("full-final-card")).toBeInTheDocument();
     expect(screen.getByTestId("full-final-card").parentElement).toHaveAttribute("aria-hidden", "true");
 
-    act(() => vi.advanceTimersByTime(990));
+    act(() => vi.advanceTimersByTime(1020));
     expect(document.querySelector('[data-intro-state="assembling-card"]')).toBeInTheDocument();
     expect(screen.getByTestId("full-final-card")).toBeInTheDocument();
     expect(screen.getByTestId("full-final-card").parentElement).toHaveAttribute("aria-hidden", "true");
@@ -215,10 +218,10 @@ describe("GiftIntro", () => {
     ["intro", 100],
     ["seal release", 300],
     ["envelope opening", 650],
-    ["card extraction", 1250],
-    ["card unfolding", 2050],
-    ["assembly", 3000],
-    ["handoff", 4700]
+    ["card extraction", 1500],
+    ["card unfolding", 2400],
+    ["assembly", 3400],
+    ["handoff", 5300]
   ])("cleans up safely when skipped during %s", (_phase, elapsed) => {
     const onIntroDone = vi.fn();
     render(

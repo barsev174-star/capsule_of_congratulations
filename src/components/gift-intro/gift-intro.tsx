@@ -67,10 +67,10 @@ const FULL_SEQUENCE = [
   ["releasing-seal", 220],
   ["opening-envelope", 430],
   ["extracting-card", 1290],
-  ["unfolding-card", 1960],
-  ["assembling-card", 2950],
-  ["handoff", 4890],
-  ["finished", 6420]
+  ["unfolding-card", 2170],
+  ["assembling-card", 3190],
+  ["handoff", 5130],
+  ["finished", 6660]
 ] as const satisfies readonly (readonly [GiftIntroState, number])[];
 
 const STATE_CLASS: Partial<Record<GiftIntroState, string>> = {
@@ -474,7 +474,7 @@ const GiftIntroAssembled = ({
             <div className={`${styles.giftStage} ${isHoveringCta ? styles.ctaHover : ""}`}>
               <div className={styles.stageShadow} />
               <div className={styles.envelopeRig} aria-hidden="true">
-                <div className={styles.openEnvelopeFlap}>
+                <div className={styles.openEnvelopeFlap} data-envelope-flap="true">
                   <Image src="/assets/gift/envelope-open.png" alt="" fill sizes="520px" priority />
                 </div>
                 <div className={styles.openEnvelopeBack}>
@@ -575,12 +575,24 @@ const GiftIntroAssembled = ({
 
                 <div className={styles.envelopePocketMask} data-envelope-pocket-mask="true" />
                 <div className={styles.openEnvelopeFront}>
-                  <Image src="/assets/gift/envelope-open.png" alt="" fill sizes="520px" priority />
+                  <Image
+                    className={styles.envelopeFrontPocketArtwork}
+                    src="/assets/gift/envelope-open.png"
+                    alt=""
+                    fill
+                    sizes="520px"
+                    priority
+                  />
+                  <Image
+                    className={styles.envelopeFrontSealArtwork}
+                    src="/assets/gift/envelope-open.png"
+                    alt=""
+                    fill
+                    sizes="520px"
+                    priority
+                  />
                 </div>
-                <div className={styles.closedEnvelopeArtwork}>
-                  <Image src="/assets/gift/envelope-closed.png" alt="" fill sizes="520px" priority />
-                </div>
-                <div className={styles.releasingSealArtwork}>
+                <div className={styles.closedEnvelopeArtwork} data-closed-envelope-artwork="true">
                   <Image src="/assets/gift/envelope-closed.png" alt="" fill sizes="520px" priority />
                 </div>
                 <div className={styles.sealGlint} data-seal-glint="true" />
