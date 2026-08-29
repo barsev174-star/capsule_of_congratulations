@@ -334,7 +334,7 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
               <p className={styles.cardHint}>Выбранные фотографии смогут увидеть все, у кого есть ссылка на публичную страницу.</p>
               <label className={styles.consent}>
                 <input type="checkbox" name="photoConsentAccepted" checked={photoConsent} onChange={(event) => setPhotoConsent(event.target.checked)} aria-invalid={consentError} aria-describedby={consentError ? "photo-consent-error" : undefined} />
-                <span>Я подтверждаю, что могу разрешить публичное использование выбранных фотографий.</span>
+                <span>Подтверждаю, что могу разместить выбранные фотографии на странице, доступной по ссылке, и при необходимости получил согласие изображённых лиц.</span>
               </label>
               {consentError ? <p className={styles.consentError} id="photo-consent-error">Без подтверждения нельзя сохранить публичные фотографии.</p> : null}
             </section>

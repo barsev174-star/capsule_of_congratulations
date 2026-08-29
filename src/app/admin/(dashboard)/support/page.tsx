@@ -22,8 +22,7 @@ const categoryLabels: Record<SupportRequestCategory, string> = {
   question: "Вопрос"
 };
 const notificationChannelLabels: Record<SupportNotificationChannel, string> = {
-  email: "Email",
-  telegram: "Telegram"
+  email: "Email"
 };
 const notificationStatusLabels: Record<SupportNotificationStatus, string> = {
   pending: "В очереди",

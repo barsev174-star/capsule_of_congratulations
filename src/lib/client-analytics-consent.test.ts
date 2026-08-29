@@ -20,7 +20,7 @@ describe("analytics consent storage", () => {
     expect(JSON.parse(window.localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY) ?? "{}")).toEqual({
       decision: "accepted",
       consentVersion: "2026-08-26",
-      privacyVersion: "2026-08-26",
+      privacyVersion: "2026-08-28",
       decidedAt: now.toISOString(),
       expiresAt: new Date(now.getTime() + ANALYTICS_CONSENT_TTL_MS).toISOString()
     });

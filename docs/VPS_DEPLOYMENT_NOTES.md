@@ -227,10 +227,7 @@ Retention запускается после backup:
 
 Миграция `0032_critical_alert_deliveries.sql` добавляет надёжную PostgreSQL-очередь. `reportCriticalError` сначала сохраняет событие в телеметрии, затем ставит доставку в очередь; ошибка внешнего провайдера не ломает пользовательский сценарий.
 
-Каналы:
-
-- email: нужны `RESEND_API_KEY` и `EMAIL_FROM`; адрес берётся из `CRITICAL_ALERT_EMAIL`, затем из `SUPPORT_NOTIFICATION_EMAIL`;
-- Telegram: дополнительно и только при наличии `TELEGRAM_BOT_TOKEN` и `TELEGRAM_SUPPORT_CHAT_ID`.
+Единственный внешний канал — email. Нужны `RESEND_API_KEY` и `EMAIL_FROM`; адрес берётся из `CRITICAL_ALERT_EMAIL`, затем из `SUPPORT_NOTIFICATION_EMAIL`. Telegram Bot API удалён из приложения 28.08.2026.
 
 В сообщении разрешён только технический контекст: `errorId`, событие, операция, маршрут, компонент, шаг, шаблон и технические идентификаторы. Имена, email пользователей, тексты поздравлений, фотографии, токены и секреты не отправляются.
 

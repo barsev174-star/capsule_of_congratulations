@@ -12,7 +12,7 @@ import { buildUniversalPublicSharePayload, buildUniversalPublicViewModel, toUniv
 import type { PublicCardShare, PublicCardSharePhoto, PublicShareEditorInput, PublicSharePayload } from "./types";
 import type { CardDraft, CardMediaAsset, Contribution } from "@/lib/cards/types";
 
-export const PUBLIC_PHOTO_CONSENT_VERSION = "public-photo-consent-v1";
+export const PUBLIC_PHOTO_CONSENT_VERSION = "public-photo-consent-v2";
 const publicSharePhotoSlots = new Set(["landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c"]);
 const PUBLIC_SHARE_PHOTO_LIMIT = 3;
 

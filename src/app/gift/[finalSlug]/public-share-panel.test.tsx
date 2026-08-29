@@ -307,7 +307,7 @@ describe("PublicSharePanel: выбор фото", () => {
     expect(screen.getByRole("button", { name: "Создать черновик" })).toBeDisabled();
     expect(screen.getAllByRole("button", { name: "Посмотреть перед публикацией" })[0]).toBeDisabled();
 
-    await user.click(screen.getByRole("checkbox", { name: /подтверждаю, что могу разрешить/i }));
+    await user.click(screen.getByRole("checkbox", { name: /подтверждаю, что могу разместить/i }));
 
     expect(screen.queryByText("Без подтверждения нельзя сохранить публичные фотографии.")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Создать черновик" })).toBeEnabled();
@@ -318,7 +318,7 @@ describe("PublicSharePanel: выбор фото", () => {
     renderPanel({ ...photoProps(), requiresThreePhotos: true });
 
     await user.click(unselectedPhotoCards()[0]);
-    await user.click(screen.getByRole("checkbox", { name: /подтверждаю, что могу разрешить/i }));
+    await user.click(screen.getByRole("checkbox", { name: /подтверждаю, что могу разместить/i }));
 
     expect(screen.getByText("Для блока «Моменты» выберите ровно три фотографии или снимите выбор со всех.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Создать черновик" })).toBeDisabled();

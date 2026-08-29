@@ -29,10 +29,6 @@ export function HomeFooter({ variant = "default" }: { variant?: "default" | "neu
             </a>
           }
         >
-          <a className={styles.contactLink} href="https://t.me/barsev174">
-            <span className={styles.contactIcon} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m20.4 4.7-3 14.1c-.2 1-1 1.3-1.8.8l-4.6-3.4-2.2 2.1c-.2.2-.4.4-.8.4l.3-4.7 8.6-7.8c.4-.3-.1-.5-.5-.2l-10.6 6.7-4.5-1.4c-1-.3-1-1 .2-1.5L19.1 3c.8-.3 1.6.2 1.3 1.7Z" /></svg></span>
-            <span>Telegram</span>
-          </a>
           <p className={styles.replyTime}>Обычно отвечаем в течение рабочего дня</p>
         </FooterGroup>
         <FooterGroup title="Документы">

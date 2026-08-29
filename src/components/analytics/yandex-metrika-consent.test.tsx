@@ -63,7 +63,7 @@ describe("YandexMetrikaConsent", () => {
     expect(JSON.parse(window.localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY) ?? "{}")).toMatchObject({
       decision: "accepted",
       consentVersion: "2026-08-26",
-      privacyVersion: "2026-08-26"
+      privacyVersion: "2026-08-28"
     });
     expect(testWindow().disableYaCounter111957811).toBe(false);
     expect(testWindow().ym?.a).toEqual(expect.arrayContaining([
