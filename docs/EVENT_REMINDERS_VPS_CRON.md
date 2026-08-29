@@ -6,7 +6,7 @@
 
 1. Применить миграции `0011`–`0014` штатной командой проекта.
 2. Установить длинные независимые `CRON_SECRET` и `REMINDER_TOKEN_SECRET` в `.env.production` и передать их контейнеру приложения.
-3. Убедиться, что заданы `RESEND_API_KEY`, `EMAIL_FROM="Slovesto <hello@mail.slovesto.ru>"`, `NEXT_PUBLIC_SITE_URL=https://slovesto.ru` и `REMINDER_TIME_ZONE=Asia/Yekaterinburg`.
+3. Убедиться, что заданы `EMAIL_PROVIDER=postbox`, `YANDEX_POSTBOX_ACCESS_KEY_ID`, `YANDEX_POSTBOX_SECRET_ACCESS_KEY`, `EMAIL_FROM="Slovesto <hello@mail.slovesto.ru>"`, `NEXT_PUBLIC_SITE_URL=https://slovesto.ru` и `REMINDER_TIME_ZONE=Asia/Yekaterinburg`.
 4. После обновления приложения вручную выполнить:
 
 ```bash
