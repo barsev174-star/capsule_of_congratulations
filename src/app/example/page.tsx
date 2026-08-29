@@ -36,8 +36,10 @@ type ExamplePageProps = {
 };
 
 export default async function ExamplePage({ searchParams }: ExamplePageProps) {
-  const { template, scenario } = await searchParams;
+  const { template, scenario, intro, motion } = await searchParams;
   const rawTemplate = Array.isArray(template) ? template[0] : template;
+  const rawIntro = Array.isArray(intro) ? intro[0] : intro;
+  const rawMotion = Array.isArray(motion) ? motion[0] : motion;
   const birthdayScenario = isBirthdayExample(rawTemplate, Array.isArray(scenario) ? scenario[0] : scenario);
   const initialTemplateId = rawTemplate ? templateAliases[rawTemplate] : undefined;
   const schoolDispatch = requireTemplateRenderer("school-scrapbook");
@@ -61,6 +63,8 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
     <ExampleExperience
       birthdayScenario={birthdayScenario}
       initialTemplateId={initialTemplateId}
+      introVariant={rawIntro === "legacy" ? "legacy" : "assembled"}
+      forceFullMotion={rawMotion === "full"}
       routeChildren={<FinalCard model={routeAdventureDemoCardModel} />}
       schoolChildren={<TemplateCardRenderer dispatch={schoolDispatch} model={schoolScrapbookDemoCardModel} surface="private" />}
       schoolClassicChildren={<TemplateCardRenderer dispatch={schoolClassicDispatch} model={schoolClassicDemoCardModel} surface="private" />}

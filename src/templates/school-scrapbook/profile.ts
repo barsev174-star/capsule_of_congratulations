@@ -227,6 +227,7 @@ export const school_scrapbookProfile = defineTemplate({
     text: "#16365c",
     accent: "#1859bd",
     preset: "scrapbook",
+    visualPreset: "school-playful",
     kicker: "Открытка",
     decor: [
       asset("/templates/school-scrapbook/decor-closing-student-doodle-v1.webp", 112, 112),

@@ -139,6 +139,7 @@ export const team_editorialProfile = defineTemplate({
     text: "#14283b",
     accent: "#2f6f70",
     preset: "classic",
+    visualPreset: "editorial",
     kicker: "Открытка для важного человека",
     decor: [asset("/templates/team-editorial/hero-left-v2.webp", 720, 1080), asset("/templates/team-editorial/hero-right-v2.webp", 720, 1080)]
   },

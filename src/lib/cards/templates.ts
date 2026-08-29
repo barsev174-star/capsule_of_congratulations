@@ -5,6 +5,7 @@ import {
   type RegisteredTemplateId,
   type TemplateOccasionId
 } from "@/lib/templates/registry";
+import type { TemplateGiftVisualPreset } from "@/lib/templates/profile";
 
 export type CardTemplateId = RegisteredTemplateId;
 export type OccasionId = TemplateOccasionId;
@@ -18,6 +19,7 @@ export type CardTemplate = {
   preview?: string;
   introKicker?: string;
   introPreset?: "default" | "route" | "scrapbook" | "classic";
+  introVisualPreset?: TemplateGiftVisualPreset;
   introDecor?: string[];
 };
 
@@ -32,6 +34,13 @@ export const cardTemplates: CardTemplate[] = catalogTemplateRegistrations.map((e
   introPreset: entry.family === "universal-v1"
     ? entry.profile.intro.preset ?? "default"
     : entry.id === "route-adventure" ? "route" : "default",
+  introVisualPreset: entry.family === "universal-v1"
+    ? entry.profile.intro.visualPreset
+    : entry.id === "paper-birthday"
+      ? "paper-celebration"
+      : entry.id === "route-adventure"
+        ? "expedition"
+        : undefined,
   introDecor: entry.family === "universal-v1" ? entry.profile.intro.decor?.map(({ src }) => src) : undefined
 }));
 

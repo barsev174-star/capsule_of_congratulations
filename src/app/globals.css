@@ -104,9 +104,9 @@ section[id] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *:not(:where([data-motion-mode="full"], [data-motion-mode="full"] *)),
+  *:not(:where([data-motion-mode="full"], [data-motion-mode="full"] *))::before,
+  *:not(:where([data-motion-mode="full"], [data-motion-mode="full"] *))::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

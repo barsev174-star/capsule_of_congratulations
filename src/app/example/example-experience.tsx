@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { GiftIntro } from "@/components/gift-intro/gift-intro";
+import type { GiftIntroProps, GiftIntroVariant } from "@/components/gift-intro/gift-intro";
 import { ScrollReveal, useScrollReveal } from "@/components/scroll-reveal/scroll-reveal";
 import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel, teamEditorialDemoCardModel } from "@/lib/example-card";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
@@ -23,6 +24,8 @@ type Props = {
   teamEditorialChildren: ReactNode;
   initialTemplateId?: DemoTemplateId;
   birthdayScenario?: boolean;
+  introVariant?: GiftIntroVariant;
+  forceFullMotion?: boolean;
 };
 
 type DemoStepId = "template" | "animation" | "recipient_view";
@@ -42,7 +45,7 @@ const previewFeatures = [
 
 const previewContributions = exampleCardModel.contributions.slice(0, 2);
 
-export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, initialTemplateId, birthdayScenario = false }: Props) => {
+export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, initialTemplateId, birthdayScenario = false, introVariant = "assembled", forceFullMotion = false }: Props) => {
   const [started, setStarted] = useState(birthdayScenario);
   const [selectedTemplateId, setSelectedTemplateId] = useState<DemoTemplateId>(initialTemplateId ?? "paper-birthday");
   const [activeStep, setActiveStep] = useState<DemoStepId>("template");
@@ -67,15 +70,17 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     accent: string;
     kicker?: string;
     preset?: "default" | "route" | "scrapbook" | "classic";
+    visualPreset: NonNullable<GiftIntroProps["visualPreset"]>;
     decor?: readonly string[];
   }> = {
-    "paper-birthday": { subtitle: "для тебя собрали тёплые слова", accent: "#df4f73", preset: "default" },
-    "route-adventure": { subtitle: "для тебя собрали друзья", accent: "#b08a4a", preset: "route" },
+    "paper-birthday": { subtitle: "для тебя собрали тёплые слова", accent: "#df4f73", preset: "default", visualPreset: "paper-celebration" },
+    "route-adventure": { subtitle: "для тебя собрали друзья", accent: "#b08a4a", preset: "route", visualPreset: "expedition" },
     "school-scrapbook": {
       subtitle: "для тебя собрала семья",
       accent: "#1859bd",
       kicker: "Открытка",
       preset: "scrapbook",
+      visualPreset: "school-playful",
       decor: [
         "/templates/school-scrapbook/decor-closing-student-doodle-v1.webp",
         "/templates/school-scrapbook/decor-closing-student-girl-doodle-v3.webp"
@@ -86,6 +91,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
       accent: "#e9652f",
       kicker: "Открытка учителю",
       preset: "classic",
+      visualPreset: "school-formal",
       decor: [
         "/templates/school-classic/decor-hero-left-v4.webp",
         "/templates/school-classic/decor-hero-right-v3.webp"
@@ -96,6 +102,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
       accent: "#ef7665",
       kicker: "Открытка воспитателю",
       preset: "scrapbook",
+      visualPreset: "caregiver-playful",
       decor: [
         "/templates/kindergarten-doodles/decor-hero-drawing-v5.webp",
         "/templates/kindergarten-doodles/decor-hero-still-life.webp"
@@ -106,6 +113,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
       accent: "#2f6f70",
       kicker: "Открытка от команды",
       preset: "classic",
+      visualPreset: "editorial",
       decor: [
         "/templates/team-editorial/hero-left-v2.webp",
         "/templates/team-editorial/hero-right-v2.webp"
@@ -113,6 +121,25 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     }
   };
   const selectedDemoModel = demoModelByTemplate[selectedTemplateId];
+  const selectedDemoPhotos = "mediaAssets" in selectedDemoModel
+    ? selectedDemoModel.mediaAssets.slice(0, 3).map((asset) => ({
+        id: asset.id,
+        src: asset.publicUrl,
+        alt: asset.captionTitle || asset.captionSubtitle || `Фотография для открытки ${selectedDemoModel.recipientName}`,
+        objectPosition: `${asset.cropX ?? 50}% ${asset.cropY ?? 50}%`
+      }))
+    : [...selectedDemoModel.messagePhotos, ...selectedDemoModel.memoryPhotos].slice(0, 3).map((photo) => ({
+        id: photo.id,
+        src: photo.src,
+        alt: photo.alt,
+        objectPosition: `${photo.crop.x * 100}% ${photo.crop.y * 100}%`
+      }));
+  const selectedDemoHeadline = "summaryText" in selectedDemoModel
+    ? selectedDemoModel.summaryText
+    : selectedDemoModel.mainGreeting;
+  const selectedDemoPhrases = "quotes" in selectedDemoModel
+    ? selectedDemoModel.quotes
+    : selectedDemoModel.privateQuotes;
   const createAction = selectedTemplateId === "team-editorial"
     ? startColleagueCardFromShowcaseAction
     : birthdayScenario && selectedTemplateId === "paper-birthday"
@@ -224,14 +251,22 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     return (
       <GiftIntro
         recipientName={selectedDemoModel.recipientName}
+        variant={introVariant}
+        forceFullMotion={forceFullMotion}
         subtitle={demoIntroByTemplate[selectedTemplateId].subtitle}
         fromLabel={selectedDemoModel.fromLabel}
         previewKicker={demoIntroByTemplate[selectedTemplateId].kicker}
         previewPreset={demoIntroByTemplate[selectedTemplateId].preset}
+        visualPreset={demoIntroByTemplate[selectedTemplateId].visualPreset}
         previewDecor={demoIntroByTemplate[selectedTemplateId].decor}
         templateId={selectedTemplateId}
         animationId="envelope"
         accent={demoIntroByTemplate[selectedTemplateId].accent}
+        assemblyPreview={{
+          headline: selectedDemoHeadline,
+          phrases: selectedDemoPhrases.slice(0, 3),
+          photos: selectedDemoPhotos
+        }}
         onIntroDone={() => sendClientTelemetry("demo_card_opened", { route: "/example", template: selectedTemplateId })}
       >
         {demoChildrenByTemplate[selectedTemplateId]}

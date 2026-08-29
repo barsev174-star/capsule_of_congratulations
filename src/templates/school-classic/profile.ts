@@ -101,7 +101,7 @@ export const school_classicProfile = defineTemplate({
     surfaces: { hero: "#fffaf0", summary: "#eef2e9", qualities: "#f7f1df", messages: "#edf2f5", memories: "#eef3ed", quotes: "#f4ebed", closing: "#fffaf0" }
   },
   intro: {
-    surface: "#fffaf0", text: "#18324c", accent: "#7a1f2b", preset: "classic", kicker: "Открытка учителю",
+    surface: "#fffaf0", text: "#18324c", accent: "#7a1f2b", preset: "classic", visualPreset: "school-formal", kicker: "Открытка учителю",
     decor: [asset("/templates/school-classic/decor-hero-left-v4.webp", 720, 900), asset("/templates/school-classic/decor-hero-right-v3.webp", 720, 900)]
   },
   motion: { preset: "calm", revealSections: true, photoViewer: true },

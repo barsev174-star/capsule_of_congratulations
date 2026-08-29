@@ -93,7 +93,7 @@ export const kindergarten_doodlesProfile = defineTemplate({
     surfaces: { hero: "#f8f1e8", summary: "#fffaf4", qualities: "#fbf4e9", messages: "#fbf4e9", memories: "#eaf6fb", quotes: "#f8f1e8", closing: "#f8f1e8" }
   },
   intro: {
-    surface: "#f8f1e8", text: "#18324c", accent: "#ef7665", preset: "scrapbook", kicker: "Открытка воспитателю",
+    surface: "#f8f1e8", text: "#18324c", accent: "#ef7665", preset: "scrapbook", visualPreset: "caregiver-playful", kicker: "Открытка воспитателю",
     decor: [asset("/templates/kindergarten-doodles/decor-hero-drawing-v5.webp", 720, 1080), asset("/templates/kindergarten-doodles/decor-hero-still-life.webp", 720, 900)]
   },
   motion: { preset: "playful", revealSections: true, photoViewer: true },

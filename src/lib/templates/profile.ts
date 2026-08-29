@@ -118,6 +118,14 @@ export type TemplateDecorLayer = {
 
 export type TemplateMotionPreset = "calm" | "playful";
 
+export type TemplateGiftVisualPreset =
+  | "paper-celebration"
+  | "expedition"
+  | "school-playful"
+  | "school-formal"
+  | "caregiver-playful"
+  | "editorial";
+
 export type TemplateMotionProfile = {
   preset: TemplateMotionPreset;
   revealSections: boolean;
@@ -174,6 +182,7 @@ export type TemplateProfile = {
     text: string;
     accent: string;
     preset?: "default" | "scrapbook" | "classic";
+    visualPreset?: TemplateGiftVisualPreset;
     kicker?: string;
     mark?: TemplateAssetRef;
     pattern?: TemplateAssetRef;
@@ -721,6 +730,16 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
     validateColor(value.intro.accent, "intro.accent", issues);
     if (value.intro.preset !== undefined && !["default", "scrapbook", "classic"].includes(String(value.intro.preset))) {
       issues.push({ path: "intro.preset", message: "Неизвестный preset облегчённой заставки." });
+    }
+    if (value.intro.visualPreset !== undefined && ![
+      "paper-celebration",
+      "expedition",
+      "school-playful",
+      "school-formal",
+      "caregiver-playful",
+      "editorial"
+    ].includes(String(value.intro.visualPreset))) {
+      issues.push({ path: "intro.visualPreset", message: "Неизвестный художественный preset открытки из конверта." });
     }
     if (value.intro.kicker !== undefined && (
       typeof value.intro.kicker !== "string" ||

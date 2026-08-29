@@ -1,2372 +1,2874 @@
-:root {
-  --gi-bg: #faf3eb;
-  --gi-bg-top: #faf3eb;
-  --gi-bg-bottom: #f5ece3;
-  --gi-text: #3b2b23;
-  --gi-muted: #7b675d;
-  --gi-accent: #bf6c47;
-  --gi-accent-strong: #8e4f34;
-  --gi-envelope: #f5ebe0;
-  --gi-envelope-dark: #e8dacd;
-  --gi-envelope-darker: #d9ccc0;
-  --gi-card: #fffaf5;
-  --gi-shadow: rgba(72, 49, 37, 0.16);
-  --gi-shadow-soft: rgba(72, 49, 37, 0.08);
-  --gi-serif: Georgia, "Times New Roman", "Noto Serif", serif;
-}
-
-/* Page wrapper */
 .page {
+  --gi-orange: #e9652f;
+  --gi-orange-hover: #df5f2e;
+  --gi-orange-active: #c7532a;
+  --gi-text: #202124;
+  --gi-secondary: #5f6368;
+  --gi-muted: #8a9099;
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 1000;
+  min-height: 100svh;
+  overflow: hidden;
+  color: var(--gi-text);
+  background:
+    radial-gradient(ellipse 94% 76% at 50% 58%, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.32) 56%, transparent 78%),
+    radial-gradient(ellipse 72% 48% at 50% 72%, rgba(233, 101, 47, 0.075) 0%, rgba(233, 101, 47, 0.024) 46%, transparent 76%),
+    #f7f8fa;
+  opacity: 1;
+  transition-property: opacity;
+  transition-duration: 480ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  -webkit-font-smoothing: antialiased;
+}
+
+.page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: url("/templates/scrapbook-clean/bg-paper-texture.png") 50% 42% / auto 130% no-repeat;
+  filter: grayscale(1) contrast(1.12);
+  opacity: 0.032;
+}
+
+.page::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 76% 72% at 50% 48%, transparent 54%, rgba(32, 33, 36, 0.035) 100%);
+}
+
+.sceneLight {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 54% 32% at 50% 24%, rgba(255, 255, 255, 0.84) 0%, rgba(233, 101, 47, 0.025) 52%, transparent 76%),
+    radial-gradient(ellipse 50% 34% at 50% 70%, rgba(233, 101, 47, 0.105) 0%, rgba(233, 101, 47, 0.028) 52%, transparent 78%);
+  opacity: 0.68;
+  transition-property: opacity;
+  transition-duration: 680ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.introHeader {
+  position: absolute;
+  z-index: 20;
+  top: max(18px, env(safe-area-inset-top));
+  left: max(24px, env(safe-area-inset-left));
+  right: max(24px, env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.introBrand {
+  width: auto;
+  flex: 0 0 auto;
+  color: var(--gi-text);
+}
+
+.skipButton,
+.replayButton {
+  min-height: 44px;
+  border: 0;
+  font: inherit;
+  color: var(--gi-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition-property: color, scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.skipButton {
+  padding: 8px 4px 8px 16px;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.skipButton:hover,
+.skipButton:focus-visible,
+.replayButton:hover,
+.replayButton:focus-visible {
+  color: var(--gi-orange);
+}
+
+.skipButton:active,
+.replayButton:active,
+.ctaButton:active {
+  scale: 0.96;
+}
+
+.skipButton:focus-visible,
+.replayButton:focus-visible,
+.ctaButton:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.28);
+  outline-offset: 3px;
+}
+
+.introLayout {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-rows: minmax(180px, 0.68fr) minmax(420px, 1.32fr);
+  width: min(100%, 1000px);
+  height: 100svh;
+  margin: 0 auto;
+  padding: 72px 24px 0;
+}
+
+.sceneCopy {
+  position: relative;
+  z-index: 12;
+  align-self: end;
+  justify-self: center;
+  max-width: 680px;
+  text-align: center;
+  transition-property: opacity, transform, filter;
+  transition-duration: 360ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.giftKicker {
+  margin: 0 0 10px;
+  color: var(--gi-orange);
+  font-size: 13px;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.recipientName {
+  max-width: 680px;
+  margin: 0;
+  color: var(--gi-text);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 52px;
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+.subtitle {
+  max-width: 520px;
+  margin: 12px auto 0;
+  color: var(--gi-secondary);
+  font-size: 17px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.subtitle span {
+  display: block;
+  margin-top: 2px;
+  color: var(--gi-text);
+  font-weight: 650;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.ctaButton {
+  min-height: 52px;
+  padding: 13px 18px 13px 22px;
+  border: 0;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #ffffff;
+  background: var(--gi-orange);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.04),
+    0 7px 18px rgba(0, 0, 0, 0.12);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 720;
+  cursor: pointer;
+  translate: 0 0;
+  transition-property: background-color, box-shadow, scale, translate;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.ctaButton span {
+  font-size: 21px;
+  line-height: 1;
+  transform: translateY(-1px);
+  transition-property: transform;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.ctaButton:hover,
+.ctaButton:focus-visible {
+  background: var(--gi-orange-hover);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.04),
+    0 11px 24px rgba(0, 0, 0, 0.16);
+  translate: 0 -2px;
+}
+
+.ctaButton:hover span,
+.ctaButton:focus-visible span {
+  transform: translate(3px, -1px);
+}
+
+.ctaButton:active {
+  background: var(--gi-orange-active);
+}
+
+.ctaButton:disabled {
+  pointer-events: none;
+}
+
+.fullMotionButton {
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--gi-orange);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+  transition-property: color, background-color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.fullMotionButton:hover {
+  color: var(--gi-orange-hover);
+  background: #f7f8fa;
+}
+
+.fullMotionButton:active {
+  color: var(--gi-orange-active);
+}
+
+.fullMotionButton:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.28);
+  outline-offset: 2px;
+}
+
+.fullMotionButton:disabled {
+  pointer-events: none;
+}
+
+.giftStage {
+  position: relative;
+  align-self: start;
+  justify-self: center;
+  width: min(720px, 96vw);
+  height: min(520px, 57svh);
+  perspective: 1300px;
+  perspective-origin: 50% 42%;
+  transition-property: transform;
+  transition-duration: 720ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.idle .giftStage {
+  transform: translateY(-36px);
+}
+
+.stageShadow {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 64%;
+  width: 430px;
+  height: 82px;
+  border-radius: 50%;
+  background: rgba(32, 33, 36, 0.24);
+  filter: blur(24px);
+  opacity: 0.76;
+  transform: translate(-50%, -50%) rotate(-3deg) scaleX(1);
+  transition-property: opacity, transform, filter;
+  transition-duration: 800ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.envelopeRig {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 53%;
+  width: 520px;
+  height: 520px;
+  transform-style: preserve-3d;
+  transform: translate(-50%, -50%) rotateX(3deg) rotateZ(-1.2deg);
+  transition-property: transform, opacity;
+  transition-duration: 820ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+@keyframes idleEnvelopeBreath {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+
+  50% {
+    translate: 0 -7px;
+    scale: 1.012;
+  }
+}
+
+.idle .envelopeRig {
+  animation: idleEnvelopeBreath 4.6s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+@keyframes idleEnvelopeShadow {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: translate(-50%, -50%) rotate(-3deg) scale(1);
+    filter: blur(24px);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: translate(-50%, -45%) rotate(-2.2deg) scale(1.085, 1.15);
+    filter: blur(31px);
+  }
+}
+
+.idle .stageShadow {
+  animation: idleEnvelopeShadow 4.6s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+@keyframes idleSceneLight {
+  0%,
+  100% {
+    opacity: 0.68;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.idle .sceneLight {
+  animation: idleSceneLight 4.6s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.closedEnvelopeArtwork,
+.releasingSealArtwork,
+.openEnvelopeFlap,
+.openEnvelopeBack,
+.envelopePocketMask,
+.openEnvelopeFront {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  transition-property: opacity, transform, filter;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  will-change: transform, opacity;
+}
+
+.closedEnvelopeArtwork img,
+.releasingSealArtwork img,
+.openEnvelopeFlap img,
+.openEnvelopeBack img,
+.openEnvelopeFront img {
+  object-fit: contain;
+}
+
+.closedEnvelopeArtwork {
+  z-index: 7;
+  filter: grayscale(0.2) saturate(0.72) brightness(1.02) drop-shadow(0 19px 22px rgba(32, 33, 36, 0.2));
+  opacity: 1;
+  transform: translateY(2px) translateZ(22px) scale(1.04);
+  transition-duration: 560ms;
+}
+
+.releasingSealArtwork {
+  z-index: 9;
+  clip-path: circle(9.5% at 50% 55%);
+  filter: saturate(0.82) brightness(1.02) drop-shadow(0 5px 6px rgba(32, 33, 36, 0.24));
+  opacity: 0;
+  transform: translateY(2px) translateZ(34px) scale(1.04);
+  transition-duration: 300ms;
+}
+
+.sealGlint {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  top: 55%;
+  width: 58px;
+  height: 58px;
+  overflow: hidden;
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) translateZ(30px);
+  transition-property: opacity;
+  transition-duration: 180ms;
+}
+
+.sealGlint::after {
+  content: "";
+  position: absolute;
+  inset: -20% -45%;
+  background: linear-gradient(110deg, transparent 39%, rgba(255, 255, 255, 0.44) 49%, transparent 59%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translateX(-58%);
+}
+
+@keyframes sealGlintPass {
+  0%,
+  68%,
+  100% {
+    opacity: 0;
+    transform: translateX(-58%);
+  }
+
+  72% {
+    opacity: 0.32;
+  }
+
+  80% {
+    opacity: 0;
+    transform: translateX(58%);
+  }
+}
+
+.idle .sealGlint {
+  opacity: 1;
+}
+
+.idle .sealGlint::after {
+  animation: sealGlintPass 7.2s cubic-bezier(0.2, 0, 0, 1) infinite;
+}
+
+.openEnvelopeFlap {
+  z-index: 0;
+  clip-path: polygon(13% 0, 87% 0, 87% 38%, 13% 38%);
+  filter: grayscale(0.16) saturate(0.78) brightness(1.01) drop-shadow(0 5px 6px rgba(32, 33, 36, 0.12));
+  opacity: 0;
+  transform: translateY(-82px) translateZ(4px) rotateX(176deg) scale(1.08);
+  transform-origin: 50% 37%;
+  transition-duration: 820ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  backface-visibility: visible;
+}
+
+.openEnvelopeBack {
+  z-index: 1;
+  filter: grayscale(0.16) saturate(0.78) brightness(1.01) drop-shadow(0 18px 24px rgba(32, 33, 36, 0.18));
+  opacity: 0;
+  transform: translateY(-82px) translateZ(-2px) scale(1.08);
+  transition-duration: 680ms;
+  clip-path: polygon(0 35%, 100% 35%, 100% 100%, 0 100%);
+}
+
+.openEnvelopeFront {
+  z-index: 5;
+  clip-path: polygon(13% 36%, 50% 60%, 87% 36%, 87% 92%, 13% 92%);
+  filter: grayscale(0.12) saturate(0.82) brightness(1.02) drop-shadow(0 -2px 2px rgba(32, 33, 36, 0.12));
+  opacity: 0;
+  transform: translateY(-82px) translateZ(14px) scale(1.08);
+  transition-duration: 680ms;
+}
+
+.envelopePocketMask {
+  z-index: 4;
+  clip-path: polygon(13% 36%, 50% 60%, 87% 36%, 87% 92%, 13% 92%);
+  background: #f5e4c6;
+  -webkit-mask-image: url("/assets/gift/envelope-open.png");
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-image: url("/assets/gift/envelope-open.png");
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  opacity: 0;
+  transform: translateY(-82px) translateZ(12px) scale(1.08);
+  transition-duration: 520ms;
+}
+
+.ctaHover .envelopeRig {
+  animation: none;
+  translate: 0 -4px;
+  scale: 1.006;
+  transform: translate(-50%, calc(-50% - 5px)) rotateX(2deg) rotateY(-0.45deg) rotateZ(-0.6deg) scale(1.006);
+}
+
+.ctaHover .stageShadow {
+  animation: none;
+  opacity: 0.58;
+  transform: translate(-50%, -47%) rotate(-2deg) scale(1.07, 1.13);
+  filter: blur(30px);
+}
+
+.scenePrimed .sceneLight {
+  animation-play-state: paused;
+  opacity: 0.8;
+}
+
+.scenePrimed .sealGlint::after {
+  animation-play-state: paused;
+}
+
+.envelopeTrigger {
+  position: absolute;
+  z-index: 10;
+  left: 50%;
+  top: 53%;
+  width: 430px;
+  height: 300px;
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: transparent;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+.envelopeTrigger:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.28);
+  outline-offset: 5px;
+}
+
+.envelopeTrigger:disabled {
+  pointer-events: none;
+}
+
+.letter {
+  position: absolute;
+  z-index: 3;
+  left: 110px;
+  top: 194px;
+  width: 330px;
+  height: 210px;
+  transform-style: preserve-3d;
+  transform-origin: 50% 0;
+  transform: translateY(42px) translateZ(4px) rotateZ(-0.8deg) scale(0.91);
+  transition-property: transform, opacity;
+  transition-duration: 900ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.letterEdge {
+  position: absolute;
+  inset: 5px -5px -7px 5px;
+  z-index: -1;
+  border-radius: 6px;
+  background: #d7dbe1;
+  box-shadow: 0 16px 28px rgba(32, 33, 36, 0.16);
+  transform: translateZ(-3px);
+  transition-property: opacity, transform, filter;
+  transition-duration: 620ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.cardBase,
+.cardLid,
+.cardLidFace {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  transform-style: preserve-3d;
+}
+
+.cardBase {
+  z-index: 1;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 16px 32px rgba(32, 33, 36, 0.14);
+  transition-property: opacity, filter;
+  transition-duration: 360ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.cardLid {
+  z-index: 3;
+  transform: rotateX(0deg) translateZ(2px);
+  transform-origin: 50% 0;
+  transition-property: transform, opacity, filter;
+  transition-duration: 1180ms, 360ms, 360ms;
+  transition-timing-function: cubic-bezier(0.3, 0, 0.2, 1), cubic-bezier(0.2, 0, 0, 1), linear;
+  will-change: transform;
+}
+
+.cardLidFace {
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.cardLidOutside {
+  z-index: 2;
+  transform: translateZ(1px);
+}
+
+.cardLidInside {
+  z-index: 1;
+  transform: rotateX(180deg) translateZ(1px);
+}
+
+.assemblySurface {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  top: -100%;
+  width: 100%;
+  height: 200%;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    0 20px 42px rgba(0, 0, 0, 0.13);
+  opacity: 0;
+  transform: translateZ(3px);
+  transition-property: opacity, transform, border-radius, box-shadow;
+  transition-duration: 340ms, 680ms, 720ms, 720ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.templateFoundation {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, transparent 0 49.1%, rgba(32, 33, 36, 0.055) 49.7%, rgba(255, 255, 255, 0.68) 50%, transparent 50.9%),
+    #fff9f7;
+}
+
+.templateFoundation[data-template-foundation="school-classic"] {
+  background:
+    linear-gradient(180deg, transparent 0 49.1%, rgba(32, 33, 36, 0.05) 49.7%, rgba(255, 255, 255, 0.7) 50%, transparent 50.9%),
+    url("/templates/school-classic/page-v2.webp") center / cover,
+    #fbfcff;
+}
+
+.templateFoundation[data-template-foundation="school-scrapbook"],
+.templateFoundation[data-template-foundation="kindergarten-doodles"] {
+  background:
+    linear-gradient(180deg, transparent 0 49.1%, rgba(32, 33, 36, 0.045) 49.7%, rgba(255, 255, 255, 0.7) 50%, transparent 50.9%),
+    url("/templates/school-scrapbook/page.webp") center / cover,
+    #fffbef;
+}
+
+.templateFoundation[data-template-foundation="kindergarten-doodles"] {
+  background:
+    linear-gradient(180deg, transparent 0 49.1%, rgba(32, 33, 36, 0.045) 49.7%, rgba(255, 255, 255, 0.7) 50%, transparent 50.9%),
+    url("/templates/kindergarten-doodles/page-v6.webp") center / cover,
+    #fff8ef;
+}
+
+.templateFoundation[data-template-foundation="route-adventure"] {
+  background:
+    linear-gradient(180deg, transparent 0 49.1%, rgba(32, 33, 36, 0.05) 49.7%, rgba(255, 255, 255, 0.72) 50%, transparent 50.9%),
+    url("/templates/route-adventure/bg-topographic.webp") center / cover,
+    #f5faf8;
+}
+
+.templateFoundation[data-template-foundation="team-editorial"] {
+  background:
+    linear-gradient(180deg, transparent 0 49.1%, rgba(32, 33, 36, 0.05) 49.7%, rgba(255, 255, 255, 0.72) 50%, transparent 50.9%),
+    url("/templates/team-editorial/page.webp") center / cover,
+    #f7f8fa;
+}
+
+.templateFoundation[data-template-foundation="paper-birthday"] {
+  background:
+    linear-gradient(180deg, transparent 0 49.1%, rgba(83, 70, 59, 0.08) 49.7%, rgba(255, 255, 255, 0.46) 50%, transparent 50.9%),
+    url("/templates/scrapbook-clean/bg-paper-texture.png") center / cover,
+    #f8e8cb;
+}
+
+.paperBirthdaySheet,
+.paperBirthdayDecor,
+.templateArtScene,
+.templateArtLayer {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.templateArtScene {
+  z-index: 2;
+  inset: 0;
+  overflow: hidden;
+  opacity: 1;
+  transition-property: opacity, filter;
+  transition-duration: 520ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.templateArtLayer {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.13));
+}
+
+.foundationRouteMap {
+  left: -46px;
+  top: 44px;
+  width: 265px;
+  height: 190px;
+  background-image: url("/templates/route-adventure/map-scrap.webp");
+  opacity: 0.32;
+  transform: rotate(-7deg);
+}
+
+.foundationRouteCompass {
+  right: -17px;
+  top: 34px;
+  width: 96px;
+  height: 126px;
+  background-image: url("/templates/route-adventure/compass-medallion.webp");
+  opacity: 0.72;
+  transform: rotate(7deg);
+}
+
+.foundationRouteStamp {
+  left: 12px;
+  bottom: 18px;
+  width: 74px;
+  height: 74px;
+  background-image: url("/templates/route-adventure/expedition-stamp.webp");
+  opacity: 0.3;
+  transform: rotate(-8deg);
+}
+
+.foundationRouteCarabiner {
+  right: -27px;
+  bottom: 13px;
+  width: 112px;
+  height: 142px;
+  background-image: url("/templates/route-adventure/carabiner-rope.webp");
+  opacity: 0.5;
+  transform: rotate(4deg);
+}
+
+.foundationSchoolBackpack {
+  left: -15px;
+  top: 49px;
+  width: 106px;
+  height: 94px;
+  background-image: url("/templates/school-scrapbook/decor-hero-backpack-cluster-v1.webp");
+  opacity: 0.82;
+  transform: rotate(-5deg);
+}
+
+.foundationSchoolGlobe {
+  right: -14px;
+  top: 40px;
+  width: 108px;
+  height: 105px;
+  background-image: url("/templates/school-scrapbook/decor-hero-globe-cluster-v1.webp");
+  opacity: 0.8;
+  transform: rotate(4deg);
+}
+
+.foundationSchoolStudent {
+  left: 11px;
+  bottom: 13px;
+  width: 70px;
+  height: 70px;
+  background-image: url("/templates/school-scrapbook/decor-closing-student-doodle-v1.webp");
+  opacity: 0.7;
+  transform: rotate(-4deg);
+}
+
+.foundationSchoolStudentGirl {
+  right: 11px;
+  bottom: 12px;
+  width: 72px;
+  height: 72px;
+  background-image: url("/templates/school-scrapbook/decor-closing-student-girl-doodle-v3.webp");
+  opacity: 0.7;
+  transform: rotate(4deg);
+}
+
+.foundationClassicBoard {
+  left: -21px;
+  top: 41px;
+  width: 137px;
+  height: 174px;
+  background-image: url("/templates/school-classic/decor-hero-left-v4.webp");
+  opacity: 0.5;
+  transform: rotate(-2deg);
+}
+
+.foundationClassicBouquet {
+  right: -29px;
+  top: 52px;
+  width: 157px;
+  height: 184px;
+  background-image: url("/templates/school-classic/decor-hero-right-v3.webp");
+  opacity: 0.52;
+  transform: rotate(2deg);
+}
+
+.foundationClassicRule {
+  left: 90px;
+  right: 90px;
+  top: 100px;
+  height: 1px;
+  background: rgba(144, 111, 52, 0.38);
+  box-shadow: 0 4px 0 rgba(23, 38, 61, 0.12);
+  filter: none;
+}
+
+.foundationClassicSeal {
+  left: 18px;
+  bottom: 20px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #cfb36d 0 24%, #9b7430 25% 29%, #d8c080 30% 47%, #8e6929 48% 52%, #c7a85e 53% 100%);
+  box-shadow: 0 3px 7px rgba(23, 38, 61, 0.18);
+  filter: none;
+  opacity: 0.55;
+}
+
+.foundationKindergartenDrawing {
+  left: -25px;
+  top: 29px;
+  width: 152px;
+  height: 224px;
+  background-image: url("/templates/kindergarten-doodles/decor-hero-drawing-v5.webp");
+  opacity: 0.54;
+  transform: rotate(-4deg);
+}
+
+.foundationKindergartenStillLife {
+  right: -34px;
+  top: 76px;
+  width: 170px;
+  height: 186px;
+  background-image: url("/templates/kindergarten-doodles/decor-hero-still-life.webp");
+  opacity: 0.54;
+  transform: rotate(2deg);
+}
+
+.foundationKindergartenBluePaper,
+.foundationKindergartenYellowPaper {
+  width: 104px;
+  height: 67px;
+  border-radius: 3px;
+  filter: none;
+  opacity: 0.52;
+}
+
+.foundationKindergartenBluePaper {
+  left: 93px;
+  top: 45px;
+  background: #d9eef8;
+  transform: rotate(-8deg);
+}
+
+.foundationKindergartenYellowPaper {
+  right: 68px;
+  bottom: 27px;
+  background: #fff0ad;
+  transform: rotate(7deg);
+}
+
+.foundationEditorialNotebook {
+  left: -18px;
+  top: 56px;
+  width: 144px;
+  height: 232px;
+  background-image: url("/templates/team-editorial/hero-left-v2.webp");
+  opacity: 0.45;
+  transform: rotate(-3deg);
+}
+
+.foundationEditorialEnvelope {
+  right: -21px;
+  top: 65px;
+  width: 154px;
+  height: 218px;
+  background-image: url("/templates/team-editorial/hero-right-v2.webp");
+  opacity: 0.44;
+  transform: rotate(3deg);
+}
+
+.foundationEditorialTealBlock,
+.foundationEditorialOrangeBlock {
+  filter: none;
+  opacity: 0.78;
+}
+
+.foundationEditorialTealBlock {
+  right: 0;
+  top: 0;
+  width: 96px;
+  height: 22px;
+  background: #2f6f70;
+}
+
+.foundationEditorialOrangeBlock {
+  left: 18px;
+  bottom: 17px;
+  width: 34px;
+  height: 34px;
+  background: #d1643d;
+}
+
+.paperBirthdaySheet {
+  z-index: 1;
+  inset: 10px 9px 12px;
+  background: url("/templates/scrapbook-clean/torn-paper-section1.png") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 2px 2px rgba(32, 33, 36, 0.1));
+}
+
+.paperBirthdayDecor {
+  z-index: 2;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  transition-property: opacity, filter;
+  transition-duration: 520ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.paperBirthdayCake {
+  left: -5px;
+  top: 76px;
+  width: 105px;
+  height: 138px;
+  background-image: url("/templates/scrapbook-clean/top-polaroid-cake.png");
+  transform: rotate(-4deg);
+}
+
+.paperBirthdayBouquet {
+  right: -7px;
+  top: 65px;
+  width: 108px;
+  height: 144px;
+  background-image: url("/templates/scrapbook-clean/top-polaroid-bouquet.png");
+  transform: rotate(4deg);
+}
+
+.paperBirthdayConfetti {
+  left: 62px;
+  right: 58px;
+  top: 15px;
+  height: 65px;
+  background-image: url("/templates/scrapbook-clean/confetti-top.svg");
+  opacity: 0.82;
+}
+
+.paperBirthdayFloral {
+  right: -12px;
+  bottom: -5px;
+  width: 94px;
+  height: 130px;
+  background-image: url("/templates/scrapbook-clean/footer-floral-cluster.png");
+  opacity: 0.76;
+}
+
+.templateFoundationUpper,
+.templateFoundationLower {
+  height: 200%;
+}
+
+.templateFoundationUpper {
+  top: 0;
+  bottom: auto;
+}
+
+.templateFoundationLower {
+  top: -100%;
+  bottom: auto;
+}
+
+.templateAccent,
+.templateTitleMark,
+.templateTitleLine,
+.templatePhotoSlot,
+.templateTextSlot {
+  position: absolute;
+  display: block;
+}
+
+.templateDecor {
+  position: absolute;
+  z-index: 2;
+  display: block;
+  width: 76px;
+  height: 96px;
+  opacity: 0.36;
+  transition: opacity 420ms ease;
+}
+
+.templateDecor img {
+  object-fit: contain;
+}
+
+.templateDecor1 {
+  left: -5px;
+  top: 86px;
+}
+
+.templateDecor2 {
+  right: -6px;
+  top: 290px;
+}
+
+.templateAccent {
+  left: 0;
+  top: 0;
+  width: 7px;
+  height: 100%;
+  background: var(--gi-preview-accent);
+  opacity: 0.78;
+}
+
+.templateTitleMark {
+  left: 25px;
+  top: 28px;
+  width: 52px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--gi-preview-accent);
+  opacity: 0.7;
+}
+
+.templateTitleLine {
+  left: 25px;
+  top: 43px;
+  width: 166px;
+  height: 16px;
+  border-radius: 3px;
+  background: rgba(32, 33, 36, 0.14);
+}
+
+.templatePhotoSlot {
+  border: 1px solid rgba(32, 33, 36, 0.18);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.54);
+  box-shadow: 0 4px 10px rgba(32, 33, 36, 0.06);
+}
+
+.templatePhotoSlot1 {
+  left: 28px;
+  top: 112px;
+  width: 118px;
+  height: 142px;
+  transform: rotate(-4deg);
+}
+
+.templatePhotoSlot2 {
+  right: 28px;
+  top: 98px;
+  width: 124px;
+  height: 148px;
+  transform: rotate(4deg);
+}
+
+.templatePhotoSlot3 {
+  left: 101px;
+  top: 218px;
+  width: 128px;
+  height: 90px;
+  transform: rotate(-1deg);
+}
+
+.templateTextSlot {
+  left: 28px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(32, 33, 36, 0.11);
+}
+
+.templateTextSlot1 {
+  top: 335px;
+  width: 272px;
+}
+
+.templateTextSlot2 {
+  top: 351px;
+  width: 238px;
+}
+
+.templateTextSlot3 {
+  top: 367px;
+  width: 190px;
+}
+
+.lightweightCardPreview,
+.assemblyContent {
+  position: absolute;
+  inset: 0;
+  transition-property: opacity, transform, filter;
+  transition-duration: 520ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.lightweightCardPreview {
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: var(--gi-bg);
-  color: var(--gi-text);
-  overflow: hidden;
-  animation: pageFadeIn 0.6s ease-out;
-  transition:
-    opacity 0.6s ease,
-    visibility 0.6s ease;
-}
-
-@keyframes pageFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.revealGift .page,
-.done .page {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.vignette {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(circle at center, transparent 40%, rgba(72, 49, 37, 0.07) 100%);
-  opacity: 0;
-  transition: opacity 0.8s ease;
-}
-
-.press .vignette,
-.sealBreak .vignette,
-.flapOpen .vignette,
-.pause .vignette,
-.cardPull .vignette,
-.cardHero .vignette,
-.revealGift .vignette {
-  opacity: 1;
-}
-
-/* Intro content layout */
-.introContent {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  width: 100%;
-  max-width: 480px;
-  transition:
-    opacity 0.5s ease,
-    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.revealGift .introContent {
-  opacity: 0;
-  transform: scale(0.96);
-}
-
-/* Title block */
-.titleBlock {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  text-align: center;
-}
-
-.nameLine {
-  font-family: var(--gi-serif);
-  font-size: clamp(34px, 6.2vw, 52px);
-  font-weight: 500;
-  line-height: 1.1;
-  color: var(--gi-text);
-  letter-spacing: -0.01em;
-}
-
-.subtitleLine {
-  margin: 0;
-  font-size: clamp(15px, 3.2vw, 18px);
-  font-weight: 400;
-  line-height: 1.45;
-  color: var(--gi-muted);
-  max-width: 440px;
-}
-
-.subtitleAccent {
-  color: #ce6037;
-}
-
-/* Envelope scene */
-.envelopeScene {
-  width: 280px;
-  height: 190px;
-  perspective: 1400px;
-  transform-style: preserve-3d;
-  animation: envelopeFloat 4.2s ease-in-out infinite;
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes envelopeFloat {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-6px) rotate(0.9deg); }
-  50% { transform: translateY(0) rotate(0deg); }
-  75% { transform: translateY(-4px) rotate(-0.7deg); }
-}
-
-.ctaHover .envelopeScene {
-  transform: translateY(-10px) scale(1.03);
-}
-
-.envelope {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  transition:
-    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.45s ease;
-  animation: envelopeBreathe 3.4s ease-in-out infinite;
-}
-
-@keyframes envelopeBreathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-}
-
-.envelopeBack {
-  position: absolute;
-  inset: 0;
-  border-radius: 14px;
-  background: linear-gradient(180deg, var(--gi-envelope) 0%, var(--gi-envelope-dark) 100%);
-  box-shadow:
-    0 24px 64px var(--gi-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  transition: opacity 0.45s ease;
-  transform: translateZ(-20px);
-}
-
-.envelopeGlow {
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  top: 20%;
-  height: 70%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(255, 220, 190, 0.55), transparent 65%);
-  opacity: 0;
-  transition: opacity 0.7s ease;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.flapOpen .envelopeGlow,
-.pause .envelopeGlow,
-.cardPull .envelopeGlow,
-.cardHero .envelopeGlow {
-  opacity: 1;
-}
-
-/* Inner card */
-.envelopeCard {
-  --gi-card-preview-scale: 0.205;
-  position: absolute;
-  left: 5%;
-  bottom: 10%;
-  width: 90%;
-  height: 88%;
-  transform: translateY(10%) translateZ(-6px) scale(0.96);
-  transform-style: preserve-3d;
-  transition:
-    transform 0.82s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.5s ease;
-  z-index: 2;
-  will-change: transform, opacity;
-}
-
-.envelopeCardFront,
-.envelopeCardInside,
-.envelopeCardInsideTop {
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  overflow: hidden;
-  backface-visibility: hidden;
-}
-
-.envelopeCardWhole {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 210%;
-  z-index: 5;
-  overflow: hidden;
-  border-radius: 12px;
-  background: var(--gi-card);
-  box-shadow: 0 10px 28px rgba(88, 57, 37, 0.16);
-  opacity: 0;
-  pointer-events: none;
-  clip-path: inset(0 0 50% 0 round 12px);
-  will-change: opacity, clip-path;
-}
-
-.envelopeCardInside {
-  background: linear-gradient(180deg, #fffdfb 0%, #faf5ee 100%);
-  box-shadow:
-    0 6px 18px var(--gi-shadow-soft),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  z-index: 1;
-}
-
-.cardTemplatePreview {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: var(--gi-card);
-  contain: strict;
-  isolation: isolate;
-  pointer-events: none;
-}
-
-.lightweightCardPreview {
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: grid;
-  width: 100%;
-  height: 200%;
-  box-sizing: border-box;
-  align-content: center;
-  justify-items: center;
-  gap: 10px;
-  padding: 28px 22px;
-  overflow: hidden;
   color: #202124;
-  background:
-    radial-gradient(circle at 82% 14%, color-mix(in srgb, var(--gi-preview-accent) 18%, transparent), transparent 24%),
-    linear-gradient(180deg, #ffffff 0%, #f7f8fa 100%);
+  background: #ffffff;
   text-align: center;
-  pointer-events: none;
-}
-
-.lightweightCardPreview[data-preview-preset="route"] {
-  color: #f7f8fa;
-  background:
-    radial-gradient(circle at 82% 14%, rgba(233, 101, 47, 0.2), transparent 24%),
-    linear-gradient(155deg, #202f2a, #17231f);
-}
-
-.lightweightCardPreview[data-preview-preset="scrapbook"] {
-  color: #16365c;
-  background:
-    radial-gradient(circle at 11% 17%, #ffd43b 0 4px, transparent 5px),
-    radial-gradient(circle at 88% 31%, #ee6aa7 0 3px, transparent 4px),
-    radial-gradient(circle at 13% 74%, #42c7c7 0 3px, transparent 4px),
-    linear-gradient(rgba(24, 89, 189, 0.075) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(24, 89, 189, 0.075) 1px, transparent 1px),
-    #fffaf0;
-  background-size: auto, auto, auto, 22px 22px, 22px 22px, auto;
-}
-
-.lightweightCardPreview[data-preview-preset="classic"] {
-  color: #18324c;
-  background:
-    radial-gradient(circle at 50% 6%, rgba(181, 138, 58, 0.16), transparent 27%),
-    linear-gradient(180deg, #fffaf0 0%, #f7f1df 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.1),
-    inset 0 0 0 7px rgba(255, 255, 255, 0.52);
-}
-
-.cardTemplatePreviewLower .lightweightCardPreview {
-  top: -100%;
 }
 
 .lightweightCardKicker {
-  color: #5f6368;
-  font-size: 0.72rem;
-  font-weight: 800;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 7px;
+  color: var(--gi-preview-accent);
+  font-size: 9px;
+  font-weight: 760;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.lightweightCardPreview[data-preview-preset="route"] .lightweightCardKicker,
-.lightweightCardPreview[data-preview-preset="route"] small {
-  color: #d9e0dd;
-}
-
 .lightweightCardPreview strong {
-  max-width: 100%;
+  position: relative;
+  z-index: 2;
+  max-width: 250px;
   overflow: hidden;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.7rem;
+  color: #202124;
+  font-family: Georgia, serif;
+  font-size: 22px;
+  font-weight: 500;
   line-height: 1.05;
-  text-overflow: ellipsis;
-  text-wrap: balance;
-}
-
-.lightweightCardPreview[data-preview-preset="scrapbook"] strong {
-  position: relative;
-  z-index: 2;
-  max-width: 100%;
-  overflow: visible;
-  color: #16365c;
-  font-family: var(--font-inter), Arial, sans-serif;
-  font-size: clamp(1.4rem, 5.4vw, 1.6rem);
-  font-weight: 900;
-  letter-spacing: -0.045em;
-  text-overflow: clip;
-  text-shadow: 2px 2px 0 rgba(255, 212, 59, 0.55);
-  transform: rotate(-1deg);
-}
-
-.lightweightCardPreview[data-preview-preset="classic"] strong {
-  position: relative;
-  z-index: 3;
-  max-width: 74%;
-  overflow: visible;
-  color: #18324c;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(1.35rem, 5vw, 1.62rem);
-  line-height: 1.02;
-  letter-spacing: -0.025em;
-  text-overflow: clip;
-  text-shadow: 0 1px 0 #ffffff;
-}
-
-.lightweightCardRule {
-  width: 58%;
-  height: 3px;
-  border-radius: 999px;
-  background: var(--gi-preview-accent);
-}
-
-.lightweightCardPreview[data-preview-preset="scrapbook"] .lightweightCardRule {
-  z-index: 2;
-  width: 64%;
-  height: 5px;
-  background: #1859bd;
-  box-shadow: 0 4px 0 #42c7c7;
-  transform: rotate(-1deg);
-}
-
-.lightweightCardPreview[data-preview-preset="classic"] .lightweightCardRule {
-  position: relative;
-  z-index: 3;
-  width: 44%;
-  height: 2px;
-  background: #b58a3a;
-  box-shadow: 0 4px 0 rgba(24, 50, 76, 0.16);
-}
-
-.lightweightCardLine {
-  width: 76%;
-  height: 5px;
-  border-radius: 999px;
-  background: currentColor;
-  opacity: 0.14;
-}
-
-.lightweightCardPreview[data-preview-preset="scrapbook"] .lightweightCardLine {
-  z-index: 2;
-  width: 70%;
-  height: 8px;
-  border-radius: 2px 7px 3px 6px;
-  background: #ffd43b;
-  opacity: 0.82;
-  transform: rotate(1.5deg);
-}
-
-.lightweightCardPreview[data-preview-preset="scrapbook"] .lightweightCardLineShort {
-  width: 48%;
-  background: #42c7c7;
-  transform: rotate(-2deg);
-}
-
-.lightweightCardPreview[data-preview-preset="classic"] .lightweightCardLine {
-  position: relative;
-  z-index: 3;
-  width: 62%;
-  height: 4px;
-  background: #18324c;
-  opacity: 0.14;
-}
-
-.lightweightCardPreview[data-preview-preset="classic"] .lightweightCardLineShort {
-  width: 42%;
-}
-
-.lightweightCardLineShort {
-  width: 52%;
-}
-
-.lightweightCardMark {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border-radius: 50%;
-  color: #ffffff;
-  background: var(--gi-preview-accent);
-  font-size: 1.35rem;
-}
-
-.lightweightCardPreview[data-preview-preset="scrapbook"] .lightweightCardMark {
-  z-index: 2;
-  width: 48px;
-  height: 48px;
-  border: 3px solid #ffffff;
-  border-radius: 38% 62% 44% 56%;
-  color: #16365c;
-  background: #ffd43b;
-  box-shadow: 0 4px 0 #ee6aa7;
-  font-size: 1.5rem;
-  font-weight: 900;
-  transform: rotate(-7deg);
-}
-
-.lightweightCardPreview[data-preview-preset="classic"] .lightweightCardMark {
-  position: relative;
-  z-index: 3;
-  width: 44px;
-  height: 44px;
-  color: #fffaf0;
-  background: #365b4c;
-  box-shadow:
-    0 0 0 3px #fffaf0,
-    0 0 0 5px #b58a3a,
-    0 5px 12px rgba(0, 0, 0, 0.14);
-  font-family: Georgia, "Times New Roman", serif;
-}
-
-.lightweightCardPreview small {
-  max-width: 80%;
-  overflow: hidden;
-  color: #5f6368;
-  font-size: 0.75rem;
-  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.lightweightCardPreview[data-preview-preset="scrapbook"] .lightweightCardKicker,
-.lightweightCardPreview[data-preview-preset="scrapbook"] small {
+.lightweightCardPreview small {
   position: relative;
   z-index: 2;
-  color: #1859bd;
+  margin-top: 11px;
+  color: #5f6368;
+  font-size: 9px;
 }
 
-.lightweightCardPreview[data-preview-preset="classic"] .lightweightCardKicker,
-.lightweightCardPreview[data-preview-preset="classic"] small {
+.lightweightCardRule,
+.lightweightCardLine {
   position: relative;
-  z-index: 3;
-  color: #365b4c;
-}
-
-.lightweightCardPreview[data-preview-preset="classic"] .lightweightCardKicker {
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255, 250, 240, 0.88);
-  box-shadow: 0 0 0 1px rgba(181, 138, 58, 0.36);
-  letter-spacing: 0.11em;
-}
-
-.lightweightCardPreview[data-preview-preset="classic"] small {
-  max-width: 66%;
-  font-family: var(--font-caveat), "Segoe Print", cursive;
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.classicPreviewFrame,
-.classicPreviewRule,
-.classicPreviewDecor {
-  position: absolute;
-  pointer-events: none;
-}
-
-.classicPreviewFrame {
-  inset: 14px;
-  z-index: 1;
-  border: 1px solid rgba(181, 138, 58, 0.58);
-  border-radius: 10px;
-  box-shadow:
-    inset 0 0 0 3px rgba(255, 255, 255, 0.42),
-    0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-.classicPreviewRule {
-  top: 11%;
-  left: 25%;
   z-index: 2;
-  width: 50%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #b58a3a 18% 82%, transparent);
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  background: #e5e7eb;
 }
 
-.classicPreviewDecor {
-  z-index: 2;
-  width: 72px;
-  height: 90px;
-  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.13));
+.lightweightCardRule {
+  width: 28px;
+  height: 2px;
+  margin: 11px 0 9px;
+  background: var(--gi-preview-accent);
+  opacity: 0.62;
 }
 
-.classicPreviewDecor img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.lightweightCardLine {
+  width: 136px;
+  margin-top: 5px;
 }
 
-.classicPreviewDecorLeft {
-  bottom: 4%;
-  left: -4%;
-  transform: rotate(-5deg);
-}
-
-.classicPreviewDecorRight {
-  top: 3%;
-  right: -5%;
-  transform: rotate(3deg);
-}
-
-.lightweightCardPreview[data-preview-preset="scrapbook"] .lightweightCardKicker {
-  padding: 4px 9px;
-  border-radius: 4px;
-  background: rgba(255, 212, 59, 0.72);
-  letter-spacing: 0.1em;
-  transform: rotate(1deg);
-}
-
-.lightweightCardPreview[data-preview-preset="scrapbook"] small {
-  max-width: 68%;
-  font-family: var(--font-caveat), "Segoe Print", cursive;
-  font-size: 0.95rem;
-  font-weight: 800;
-}
-
-.schoolPreviewTape,
-.schoolPreviewSticker,
-.schoolPreviewDoodle {
-  position: absolute;
-  z-index: 1;
-  pointer-events: none;
+.lightweightCardLineShort {
+  width: 92px;
 }
 
 .schoolPreviewTape {
-  top: 3%;
-  left: -7%;
-  width: 60%;
-  height: 22px;
-  background: #42c7c7;
-  clip-path: polygon(0 13%, 8% 0, 18% 19%, 28% 4%, 40% 18%, 51% 2%, 64% 17%, 77% 0, 88% 16%, 100% 5%, 100% 86%, 88% 100%, 76% 82%, 63% 98%, 50% 84%, 36% 100%, 23% 83%, 10% 96%, 0 84%);
-  opacity: 0.88;
-  transform: rotate(-2deg);
+  position: absolute;
+  z-index: 3;
+  left: 22px;
+  top: 14px;
+  width: 48px;
+  height: 14px;
+  background: #dfe9ff;
+  opacity: 0.9;
+  transform: rotate(-7deg);
 }
 
 .schoolPreviewSticker {
-  top: 8%;
-  right: 6%;
+  position: absolute;
+  z-index: 3;
+  right: 24px;
+  top: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   display: grid;
-  width: 44px;
-  height: 42px;
   place-items: center;
-  border: 3px solid #ffffff;
-  border-radius: 44% 56% 51% 49%;
-  color: #ffffff;
-  background: #ee6aa7;
-  box-shadow: 0 3px 0 rgba(22, 54, 92, 0.18);
-  font-family: var(--font-inter), Arial, sans-serif;
-  font-size: 1rem;
-  font-weight: 900;
-  transform: rotate(9deg);
+  color: #202124;
+  background: #ffe6a8;
+  font-size: 11px;
+  font-weight: 800;
+  transform: rotate(6deg);
 }
 
-.schoolPreviewDoodle {
-  top: 72%;
-  width: 54px;
-  height: 78px;
-  filter: drop-shadow(0 3px 0 rgba(22, 54, 92, 0.12));
+.schoolPreviewDoodle,
+.classicPreviewDecor {
+  position: absolute;
+  z-index: 1;
+  opacity: 0.72;
 }
 
-.schoolPreviewDoodle img {
+.schoolPreviewDoodle img,
+.classicPreviewDecor img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
 .schoolPreviewDoodleBoy {
-  left: 6%;
-  transform: rotate(-5deg);
+  left: 8px;
+  bottom: 2px;
+  width: 40px;
+  height: 58px;
 }
 
 .schoolPreviewDoodleGirl {
-  right: 5%;
-  transform: rotate(5deg);
-}
-
-.cardTemplatePreviewCover {
-  z-index: 4;
-}
-
-.envelopeCardFold {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  transform: rotateX(0deg);
-  transform-origin: top center;
-  transform-style: preserve-3d;
-  transition: transform 1.05s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform;
-}
-
-.envelopeCardFront {
-  background:
-    radial-gradient(circle at 14% 20%, rgba(214, 124, 86, 0.1), transparent 21%),
-    radial-gradient(circle at 88% 82%, rgba(122, 82, 53, 0.08), transparent 26%),
-    repeating-linear-gradient(8deg, rgba(102, 70, 46, 0.026) 0 1px, transparent 1px 4px),
-    linear-gradient(145deg, #f5e8d6 0%, #ecd8bd 50%, #e3c7a4 100%);
-  box-shadow:
-    0 12px 28px rgba(88, 57, 37, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.58),
-    inset 0 0 32px rgba(112, 72, 42, 0.07);
-  transform: translateZ(1px);
-  z-index: 2;
-}
-
-.envelopeCardInsideTop {
-  background: linear-gradient(180deg, #fffdfb 0%, #faf5ee 100%);
-  box-shadow:
-    0 6px 18px var(--gi-shadow-soft),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  transform: rotateX(180deg) translateZ(1px);
-  z-index: 1;
-}
-
-.cardFoldLine {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(139, 110, 92, 0.18), transparent);
-  z-index: 2;
-}
-
-.cardPaperLines {
-  position: absolute;
-  inset: 14px;
-  border: 1px solid rgba(132, 83, 55, 0.18);
-  border-radius: 8px;
-  pointer-events: none;
-}
-
-.cardPaperLines::after {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.54);
-  border-radius: 5px;
-}
-
-.cardAccent,
-.cardAccentInside {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  opacity: 0.78;
-}
-
-.cardBackBrand {
-  position: relative;
-  z-index: 2;
-  margin: 0;
-  font-family: var(--gi-serif);
-  font-size: 18px;
-  line-height: 1;
-  color: #9a563e;
-  text-shadow: 0 1px 0 rgba(255, 252, 247, 0.7);
-}
-
-.cardBackBrand {
-  display: block;
+  right: 8px;
+  bottom: 2px;
   width: 40px;
-  height: 40px;
+  height: 58px;
 }
 
-.cardBackCaption {
-  position: relative;
-  z-index: 2;
-  font-size: 10px;
-  line-height: 1;
-  color: rgba(255, 239, 224, 0.84);
-  letter-spacing: 0.04em;
-}
-
-.cardBackSprig {
+.classicPreviewFrame {
   position: absolute;
-  z-index: 1;
-  bottom: 14px;
-  width: 30px;
-  height: 54px;
-  border-left: 1px solid rgba(159, 91, 62, 0.26);
-  border-radius: 50%;
-  opacity: 0.72;
+  inset: 12px;
+  border: 1px solid color-mix(in srgb, var(--gi-preview-accent) 40%, transparent);
 }
 
-.cardBackSprig::before,
-.cardBackSprig::after {
+.classicPreviewRule {
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  width: 44px;
+  height: 2px;
+  background: var(--gi-preview-accent);
+  transform: translateX(-50%);
+}
+
+.classicPreviewDecorLeft {
+  left: 5px;
+  bottom: 1px;
+  width: 50px;
+  height: 66px;
+}
+
+.classicPreviewDecorRight {
+  right: 5px;
+  bottom: 1px;
+  width: 50px;
+  height: 66px;
+}
+
+.assemblyContent {
+  z-index: 3;
+  padding: 28px 26px 22px;
+  opacity: 0;
+  transform: scale(0.98);
+  filter: blur(3px);
+}
+
+.assemblyContent::before {
   content: "";
   position: absolute;
-  width: 8px;
-  height: 13px;
-  border: 1px solid rgba(159, 91, 62, 0.22);
-  border-radius: 70% 30% 70% 30%;
-  background: rgba(255, 250, 244, 0.34);
-}
-
-.cardBackSprig::before {
-  left: -2px;
-  top: 12px;
-  transform: rotate(-34deg);
-}
-
-.cardBackSprig::after {
-  left: 5px;
-  top: 27px;
-  transform: rotate(38deg);
-}
-
-.cardBackSprigLeft {
-  left: 25px;
-  transform: rotate(-31deg);
-}
-
-.cardBackSprigRight {
-  right: 25px;
-  transform: scaleX(-1) rotate(-31deg);
-}
-
-.cardText,
-.cardTextInside {
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  color: var(--gi-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  position: relative;
-  z-index: 1;
-}
-
-.cardHint,
-.cardHintInside {
-  font-size: 12px;
-  color: var(--gi-muted);
-  opacity: 0.7;
-  position: relative;
-  z-index: 1;
-}
-
-/* Envelope sides and front */
-.envelopeLeft,
-.envelopeRight {
-  position: absolute;
+  left: 0;
   top: 0;
-  width: 0;
-  height: 0;
-  z-index: 3;
-  transition: opacity 0.45s ease;
-}
-
-.envelopeLeft {
-  left: 0;
-  border-top: 95px solid transparent;
-  border-bottom: 95px solid transparent;
-  border-left: 140px solid var(--gi-envelope-dark);
-}
-
-.envelopeRight {
-  right: 0;
-  border-top: 95px solid transparent;
-  border-bottom: 95px solid transparent;
-  border-right: 140px solid var(--gi-envelope-dark);
-}
-
-.envelopeBottom {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 0;
-  border-left: 140px solid transparent;
-  border-right: 140px solid transparent;
-  border-bottom: 78px solid var(--gi-envelope-darker);
-  z-index: 4;
-  transition: opacity 0.45s ease;
-}
-
-/* Top flap */
-.envelopeFlap {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 110px;
-  transform-origin: top center;
-  transform: rotateX(0deg);
-  transform-style: preserve-3d;
-  transition:
-    transform 0.72s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.45s ease;
-  z-index: 5;
-  will-change: transform;
-}
-
-.envelopeFlapFront,
-.envelopeFlapBack {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
+  width: 6px;
   height: 100%;
-  background: linear-gradient(180deg, #f8eee4 0%, var(--gi-envelope) 100%);
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
-  backface-visibility: hidden;
-  transform-origin: top center;
-  pointer-events: none;
+  background: var(--gi-preview-accent);
 }
 
-.envelopeFlapFront {
-  filter: drop-shadow(0 3px 5px rgba(72, 49, 37, 0.1));
+.letter:is(
+  [data-visual-preset="paper-celebration"],
+  [data-visual-preset="expedition"],
+  [data-visual-preset="school-playful"],
+  [data-visual-preset="school-formal"],
+  [data-visual-preset="caregiver-playful"],
+  [data-visual-preset="editorial"]
+) .assemblyContent::before {
+  display: none;
 }
 
-.envelopeFlapBack {
-  background: linear-gradient(180deg, #eadbcf 0%, #f4e8dc 100%);
-  transform: rotateX(180deg);
-  filter: drop-shadow(0 -5px 8px rgba(72, 49, 37, 0.1));
-}
-
-/* Seal */
-.envelopeSeal {
+.templateIdentity {
   position: absolute;
-  top: 68px;
-  left: 50%;
-  width: 38px;
-  height: 38px;
-  margin-left: -19px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #c97a58 0%, var(--gi-accent-strong) 100%);
-  box-shadow: 0 4px 12px rgba(140, 80, 55, 0.28);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 19px;
-  color: var(--gi-card);
-  z-index: 6;
-  transition:
-    transform 0.35s ease,
-    opacity 0.35s ease,
-    box-shadow 0.35s ease;
-}
-
-/* Floating hearts */
-.heartFloat1,
-.heartFloat2,
-.heartFloat3 {
-  position: absolute;
-  color: var(--gi-accent);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 7;
-  font-family: serif;
-}
-
-.heartFloat1 {
-  left: -28px;
-  top: 20px;
-  font-size: 18px;
-  animation: heart1 5s ease-in-out infinite;
-}
-
-.heartFloat2 {
-  right: -22px;
-  top: 50px;
-  font-size: 14px;
-  animation: heart2 6s ease-in-out infinite;
-}
-
-.heartFloat3 {
-  right: -36px;
-  bottom: 30px;
-  font-size: 20px;
-  animation: heart3 5.5s ease-in-out infinite;
-}
-
-@keyframes heart1 {
-  0%, 100% { transform: translateY(0) rotate(-8deg); opacity: 0.35; }
-  50% { transform: translateY(-10px) rotate(0deg); opacity: 0.6; }
-}
-
-@keyframes heart2 {
-  0%, 100% { transform: translateY(0) rotate(6deg); opacity: 0.25; }
-  50% { transform: translateY(-8px) rotate(0deg); opacity: 0.45; }
-}
-
-@keyframes heart3 {
-  0%, 100% { transform: translateY(0) rotate(-5deg); opacity: 0.3; }
-  50% { transform: translateY(-12px) rotate(5deg); opacity: 0.55; }
-}
-
-/* Actions */
-.actions {
+  z-index: 5;
+  left: 64px;
+  right: 64px;
+  top: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  opacity: 0;
+  text-align: center;
+  transform: translateY(8px);
+  transition-property: opacity, transform, filter;
+  transition-duration: 520ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  filter: blur(3px);
 }
 
-.ctaButton {
-  appearance: none;
-  border: none;
-  margin: 0;
-  padding: 15px 36px;
+.templateOccasion {
+  padding: 3px 11px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #d67c56 0%, var(--gi-accent) 100%);
-  color: #fffaf5;
-  font-size: 16px;
+  color: #d45575;
+  background: rgba(234, 116, 145, 0.12);
+  font-size: 7px;
+  font-weight: 780;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.templateRecipient {
+  display: -webkit-box;
+  width: 100%;
+  max-width: 214px;
+  overflow: hidden;
+  color: #d45575;
+  font-family: "Segoe Print", "Comic Sans MS", cursive;
+  font-size: 29px;
+  font-weight: 650;
+  line-height: 1.1;
+  text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.templateFrom {
+  max-width: 205px;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #706a65;
+  font-size: 7px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.templateAssemblySummary {
+  position: absolute;
+  z-index: 5;
+  left: 29px;
+  right: 29px;
+  bottom: 69px;
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: #6e6862;
+  font-size: 7px;
+  line-height: 1.35;
+  opacity: 0;
+  text-align: center;
+  transform: translateY(8px);
+  transition-property: opacity, transform, filter;
+  transition-duration: 460ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  filter: blur(3px);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.letter:is(
+  [data-visual-preset="paper-celebration"],
+  [data-visual-preset="expedition"],
+  [data-visual-preset="school-playful"],
+  [data-visual-preset="school-formal"],
+  [data-visual-preset="caregiver-playful"],
+  [data-visual-preset="editorial"]
+) .assemblyPhotos {
+  left: 28px;
+  right: 28px;
+  top: 119px;
+  height: 182px;
+}
+
+.letter[data-visual-preset="paper-celebration"] .assemblyPhoto {
+  border: 6px solid rgba(255, 253, 247, 0.98);
+  border-bottom-width: 14px;
+  border-radius: 1px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 6px 13px rgba(73, 61, 51, 0.16);
+}
+
+.letter:is(
+  [data-visual-preset="paper-celebration"],
+  [data-visual-preset="expedition"],
+  [data-visual-preset="school-playful"],
+  [data-visual-preset="school-formal"],
+  [data-visual-preset="caregiver-playful"],
+  [data-visual-preset="editorial"]
+) .assemblyPhoto1 {
+  left: 5px;
+  top: 8px;
+  width: 106px;
+  height: 139px;
+}
+
+.letter:is(
+  [data-visual-preset="paper-celebration"],
+  [data-visual-preset="expedition"],
+  [data-visual-preset="school-playful"],
+  [data-visual-preset="school-formal"],
+  [data-visual-preset="caregiver-playful"],
+  [data-visual-preset="editorial"]
+) .assemblyPhoto2 {
+  right: 5px;
+  top: 2px;
+  width: 109px;
+  height: 143px;
+}
+
+.letter:is(
+  [data-visual-preset="paper-celebration"],
+  [data-visual-preset="expedition"],
+  [data-visual-preset="school-playful"],
+  [data-visual-preset="school-formal"],
+  [data-visual-preset="caregiver-playful"],
+  [data-visual-preset="editorial"]
+) .assemblyPhoto3 {
+  left: 72px;
+  bottom: 0;
+  width: 127px;
+  height: 88px;
+}
+
+.letter:is(
+  [data-visual-preset="paper-celebration"],
+  [data-visual-preset="expedition"],
+  [data-visual-preset="school-playful"],
+  [data-visual-preset="school-formal"],
+  [data-visual-preset="caregiver-playful"],
+  [data-visual-preset="editorial"]
+) .assemblyPhrases {
+  left: 30px;
+  right: 30px;
+  bottom: 31px;
+  justify-content: center;
+  gap: 3px;
+}
+
+.letter[data-visual-preset="paper-celebration"] .assemblyPhrase {
+  min-width: 76px;
+  max-width: 88px;
+  padding: 6px 8px;
+  border-radius: 0;
+  color: #5b4942;
+  background: url("/templates/scrapbook-clean/paper-tag-short.png") center / 100% 100% no-repeat;
+  font-family: "Segoe Print", "Comic Sans MS", cursive;
+  font-size: 6px;
+  text-align: center;
+}
+
+.letter:is(
+  [data-visual-preset="paper-celebration"],
+  [data-visual-preset="expedition"],
+  [data-visual-preset="school-playful"],
+  [data-visual-preset="school-formal"],
+  [data-visual-preset="caregiver-playful"],
+  [data-visual-preset="editorial"]
+) .assemblySignature {
+  right: 30px;
+  bottom: 11px;
+  color: #766e68;
+}
+
+.letter[data-visual-preset="expedition"] .templateOccasion {
+  color: #f0d399;
+  background: rgba(12, 31, 28, 0.76);
+  box-shadow: 0 0 0 1px rgba(231, 194, 124, 0.28);
+}
+
+.letter[data-visual-preset="expedition"] .templateRecipient {
+  color: #fff5dd;
+  font-family: Georgia, serif;
+  font-size: 24px;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  cursor: pointer;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.42);
+}
+
+.letter[data-visual-preset="expedition"] .templateFrom,
+.letter[data-visual-preset="expedition"] .templateAssemblySummary,
+.letter[data-visual-preset="expedition"] .assemblySignature {
+  color: #f1e7d4;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.56);
+}
+
+.letter[data-visual-preset="expedition"] .assemblyPhoto {
+  border: 6px solid #eee1c4;
+  border-bottom-width: 13px;
+  border-radius: 2px;
   box-shadow:
-    0 8px 26px rgba(191, 108, 71, 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    background 0.18s ease;
-  -webkit-tap-highlight-color: transparent;
+    0 0 0 1px rgba(37, 25, 17, 0.32),
+    0 7px 15px rgba(0, 0, 0, 0.28);
 }
 
-.ctaButton:hover {
-  transform: translateY(-2px);
+.letter[data-visual-preset="expedition"] .assemblyPhrase {
+  min-width: 78px;
+  max-width: 88px;
+  padding: 6px 8px;
+  border-radius: 2px;
+  color: #f2e8d3;
+  background: url("/templates/route-adventure/message-ticket-smoky.webp") center / 100% 100% no-repeat;
+  font-family: Georgia, serif;
+  font-size: 6px;
+  text-align: center;
+}
+
+.letter[data-visual-preset="school-playful"] .templateOccasion {
+  color: #e45e36;
+  background: rgba(255, 248, 219, 0.92);
+}
+
+.letter[data-visual-preset="school-playful"] .templateRecipient {
+  color: #1859bd;
+  font-family: "Segoe Print", "Comic Sans MS", cursive;
+  font-size: 26px;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.88);
+}
+
+.letter[data-visual-preset="school-playful"] .templateFrom {
+  color: #16498d;
+}
+
+.letter[data-visual-preset="school-playful"] .assemblyPhoto {
+  border: 6px solid #ffffff;
+  border-bottom-width: 13px;
+  border-radius: 2px;
   box-shadow:
-    0 12px 32px rgba(191, 108, 71, 0.38),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    0 0 0 1px rgba(24, 89, 189, 0.12),
+    0 6px 13px rgba(24, 68, 132, 0.18);
 }
 
-.ctaButton:active {
-  transform: translateY(0) scale(0.96);
+.letter[data-visual-preset="school-playful"] .assemblyPhrase {
+  min-width: 78px;
+  max-width: 88px;
+  padding: 6px 8px;
+  border-radius: 2px;
+  color: #174a91;
+  background: #fff2a9;
+  box-shadow: 0 2px 5px rgba(24, 68, 132, 0.13);
+  font-family: "Segoe Print", "Comic Sans MS", cursive;
+  font-size: 6px;
+  text-align: center;
 }
 
-.ctaButton:focus-visible {
-  outline: none;
+.letter[data-visual-preset="school-playful"] .assemblyPhrase:nth-child(2) {
+  background: #dff5ef;
+}
+
+.letter[data-visual-preset="school-playful"] .assemblyPhrase:nth-child(3) {
+  background: #dfe9ff;
+}
+
+.letter[data-visual-preset="school-formal"] .templateOccasion {
+  color: #7a1f2b;
+  background: rgba(247, 239, 218, 0.94);
+  box-shadow: 0 0 0 1px rgba(122, 31, 43, 0.16);
+}
+
+.letter[data-visual-preset="school-formal"] .templateRecipient {
+  color: #17263d;
+  font-family: Georgia, serif;
+  font-size: 25px;
+  font-weight: 600;
+}
+
+.letter[data-visual-preset="school-formal"] .templateFrom,
+.letter[data-visual-preset="school-formal"] .templateAssemblySummary,
+.letter[data-visual-preset="school-formal"] .assemblySignature {
+  color: #4c5663;
+}
+
+.letter[data-visual-preset="school-formal"] .assemblyPhoto {
+  border: 7px solid #f8f1df;
+  border-bottom-width: 13px;
+  border-radius: 1px;
   box-shadow:
-    0 0 0 4px rgba(191, 108, 71, 0.35),
-    0 8px 26px rgba(191, 108, 71, 0.32);
+    0 0 0 1px rgba(144, 111, 52, 0.24),
+    0 6px 13px rgba(30, 42, 57, 0.18);
 }
 
-.ctaButton:disabled {
-  cursor: default;
+.letter[data-visual-preset="school-formal"] .assemblyPhrase {
+  min-width: 78px;
+  max-width: 88px;
+  padding: 6px 8px;
+  border-radius: 1px;
+  color: #27364c;
+  background: #f3ead4;
+  box-shadow: inset 0 0 0 1px rgba(144, 111, 52, 0.24);
+  font-family: Georgia, serif;
+  font-size: 6px;
+  text-align: center;
 }
 
-.skipLink {
-  appearance: none;
-  border: none;
-  background: none;
-  padding: 6px 12px;
-  color: var(--gi-muted);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s ease, color 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
+.letter[data-visual-preset="caregiver-playful"] .templateOccasion {
+  color: #d75d50;
+  background: rgba(255, 238, 155, 0.92);
 }
 
-.skipLink:hover,
-.skipLink:focus-visible {
-  opacity: 1;
-  color: var(--gi-accent-strong);
+.letter[data-visual-preset="caregiver-playful"] .templateRecipient {
+  color: #ef7665;
+  font-family: "Segoe Print", "Comic Sans MS", cursive;
+  font-size: 25px;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.9);
 }
 
-.skipLink:focus-visible {
-  outline: none;
+.letter[data-visual-preset="caregiver-playful"] .templateFrom {
+  color: #4e7862;
+}
+
+.letter[data-visual-preset="caregiver-playful"] .assemblyPhoto {
+  border: 6px solid #fffdf7;
+  border-bottom-width: 12px;
   border-radius: 8px;
-  box-shadow: 0 0 0 3px rgba(191, 108, 71, 0.2);
-}
-
-/* Stage animations */
-.idle .envelopeCard,
-.press .envelopeCard,
-.sealBreak .envelopeCard {
-  opacity: 0;
-}
-
-.press .introContent,
-.sealBreak .introContent,
-.flapOpen .introContent,
-.pause .introContent,
-.cardPull .introContent,
-.cardHero .introContent {
-  transform: translateY(82px);
-}
-
-.press .envelopeScene,
-.sealBreak .envelopeScene,
-.flapOpen .envelopeScene,
-.pause .envelopeScene,
-.cardPull .envelopeScene,
-.cardHero .envelopeScene,
-.revealGift .envelopeScene {
-  animation: none;
-}
-
-.press .envelope,
-.sealBreak .envelope,
-.flapOpen .envelope,
-.pause .envelope,
-.cardPull .envelope,
-.cardHero .envelope,
-.revealGift .envelope {
-  animation: none;
-}
-
-.press .envelopeScene {
-  transform: scale(0.98);
-}
-
-.press .envelope {
-  transform: scale(0.96);
-}
-
-.sealBreak .envelopeSeal {
-  transform: scale(1.15) translateY(-4px);
   box-shadow:
-    0 0 20px rgba(191, 108, 71, 0.45),
-    0 4px 12px rgba(140, 80, 55, 0.28);
+    0 0 0 2px #acdcca,
+    0 6px 12px rgba(74, 102, 87, 0.16);
 }
 
-.flapOpen .envelopeSeal,
-.pause .envelopeSeal,
-.cardPull .envelopeSeal,
-.cardHero .envelopeSeal,
-.revealGift .envelopeSeal {
-  transform: scale(0.15);
+.letter[data-visual-preset="caregiver-playful"] .assemblyPhoto2 {
+  box-shadow:
+    0 0 0 2px #ffd36e,
+    0 6px 12px rgba(74, 102, 87, 0.16);
+}
+
+.letter[data-visual-preset="caregiver-playful"] .assemblyPhoto3 {
+  box-shadow:
+    0 0 0 2px #f3a49a,
+    0 6px 12px rgba(74, 102, 87, 0.16);
+}
+
+.letter[data-visual-preset="caregiver-playful"] .assemblyPhrase {
+  min-width: 78px;
+  max-width: 88px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  color: #4c6859;
+  background: #dff4ea;
+  font-family: "Segoe Print", "Comic Sans MS", cursive;
+  font-size: 6px;
+  text-align: center;
+}
+
+.letter[data-visual-preset="caregiver-playful"] .assemblyPhrase:nth-child(2) {
+  background: #fff0b6;
+}
+
+.letter[data-visual-preset="caregiver-playful"] .assemblyPhrase:nth-child(3) {
+  background: #f8d8d3;
+}
+
+.letter[data-visual-preset="editorial"] .templateIdentity {
+  left: 56px;
+  right: 56px;
+}
+
+.letter[data-visual-preset="editorial"] .templateOccasion {
+  color: #f8f4ec;
+  background: #2f6f70;
+  border-radius: 2px;
+}
+
+.letter[data-visual-preset="editorial"] .templateRecipient {
+  color: #183f3d;
+  font-family: Georgia, serif;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.letter[data-visual-preset="editorial"] .templateFrom,
+.letter[data-visual-preset="editorial"] .templateAssemblySummary,
+.letter[data-visual-preset="editorial"] .assemblySignature {
+  color: #405d59;
+}
+
+.letter[data-visual-preset="editorial"] .assemblyPhoto {
+  border: 4px solid #f5f1e9;
+  border-radius: 1px;
+  box-shadow:
+    0 0 0 1px rgba(28, 67, 64, 0.18),
+    0 5px 12px rgba(31, 56, 54, 0.16);
+}
+
+.letter[data-visual-preset="editorial"] .assemblyPhrase {
+  min-width: 78px;
+  max-width: 88px;
+  padding: 6px 8px;
+  border-radius: 1px;
+  color: #234e4b;
+  background: rgba(248, 244, 236, 0.94);
+  box-shadow: inset 0 -2px 0 #2f6f70;
+  font-family: Arial, sans-serif;
+  font-size: 6px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.assemblyKicker {
+  margin: 0;
+  color: var(--gi-orange);
+  font-size: 8px;
+  font-weight: 780;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   opacity: 0;
+  transform: translateY(8px);
+  transition-property: opacity, transform, filter;
+  transition-duration: 460ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  filter: blur(3px);
 }
 
-.flapOpen .envelope {
-  transform: scale(1.02) translateY(2px);
+.assemblyHeadline {
+  display: -webkit-box;
+  max-width: 278px;
+  margin-top: 7px;
+  overflow: hidden;
+  color: #202124;
+  font-family: Georgia, serif;
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.14;
+  opacity: 0;
+  transform: translateY(10px);
+  transition-property: opacity, transform, filter;
+  transition-duration: 520ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  filter: blur(4px);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
-.flapOpen .envelopeCard,
-.pause .envelopeCard {
-  transform: translateY(0) translateZ(-8px) scale(0.96);
+.assemblyPhotos {
+  position: absolute;
+  left: 26px;
+  right: 22px;
+  top: 105px;
+  width: auto;
+  height: 205px;
 }
 
-.flapOpen .envelopeFlap,
-.pause .envelopeFlap,
-.cardPull .envelopeFlap,
-.cardHero .envelopeFlap,
-.revealGift .envelopeFlap {
-  transform: scaleY(-1);
+.assemblyPhotos:empty {
+  display: none;
+}
+
+.assemblyPhoto {
+  position: absolute;
+  display: block;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #f0f2f5;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.1),
+    0 5px 12px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  transition-property: opacity, transform, filter;
+  transition-duration: 560ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  filter: blur(4px);
+}
+
+.assemblyPhoto img {
+  object-fit: cover;
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+
+.assemblyPhoto1 {
   z-index: 1;
+  left: 3px;
+  top: 9px;
+  width: 118px;
+  height: 146px;
+  transform: translate(30px, -16px) rotate(4deg) scale(0.94);
 }
 
-.pause .envelope {
-  transform: scale(1.02) translateY(2px);
+.assemblyPhoto2 {
+  z-index: 2;
+  right: 3px;
+  top: 0;
+  width: 122px;
+  height: 150px;
+  transform: translate(-26px, -12px) rotate(-3deg) scale(0.94);
 }
 
-.cardPull .envelope {
-  transform: scale(0.96) translateY(18px);
+.assemblyPhoto3 {
+  z-index: 3;
+  left: 74px;
+  bottom: 0;
+  width: 132px;
+  height: 92px;
+  transform: translate(12px, 20px) rotate(4deg) scale(0.94);
 }
 
-.cardPull .envelopeCard {
-  transform: translateY(-44px) translateZ(50px) scale(1.06);
-  z-index: 8;
+.letter[data-photo-count="0"] .assemblyHeadline {
+  max-width: 278px;
+  -webkit-line-clamp: 4;
 }
 
-.cardHero .envelope {
-  transform: scale(0.9) translateY(34px);
+.letter[data-photo-count="1"] .assemblyPhoto1 {
+  left: 69px;
+  top: 4px;
+  width: 150px;
+  height: 188px;
+}
+
+.letter[data-photo-count="2"] .assemblyPhoto1 {
+  left: 12px;
+  top: 12px;
+  width: 128px;
+  height: 166px;
+}
+
+.letter[data-photo-count="2"] .assemblyPhoto2 {
+  right: 12px;
+  top: 4px;
+  width: 132px;
+  height: 170px;
+}
+
+.letter[data-phrase-count="0"] .assemblyHeadline {
+  -webkit-line-clamp: 5;
+}
+
+.assemblyPhrases {
+  position: absolute;
+  left: 26px;
+  right: 22px;
+  bottom: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.assemblyPhrase {
+  max-width: 130px;
+  overflow: hidden;
+  padding: 4px 7px;
+  border-radius: 4px;
+  color: #5f6368;
+  background: #f0f2f5;
+  font-size: 7px;
+  line-height: 1.25;
+  opacity: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: translateY(8px);
+  transition-property: opacity, transform, filter;
+  transition-duration: 440ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  filter: blur(3px);
+}
+
+.assemblySignature {
+  position: absolute;
+  right: 22px;
+  bottom: 10px;
+  color: #8a9099;
+  font-size: 7px;
+  opacity: 0;
+  transform: translateY(5px);
+  transition-property: opacity, transform;
+  transition-duration: 380ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.motionCaption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.intro .sceneCopy,
+.releasingSeal .sceneCopy,
+.openingEnvelope .sceneCopy,
+.extractingCard .sceneCopy,
+.unfoldingCard .sceneCopy,
+.assemblingCard .sceneCopy,
+.handoff .sceneCopy {
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-12px);
+  filter: blur(4px);
+}
+
+.intro .giftStage,
+.releasingSeal .giftStage,
+.openingEnvelope .giftStage,
+.extractingCard .giftStage,
+.unfoldingCard .giftStage,
+.assemblingCard .giftStage,
+.handoff .giftStage {
+  transform: translateY(-36px);
+}
+
+.idle .letter,
+.intro .letter,
+.releasingSeal .letter {
+  opacity: 0;
+  transform: translateY(-54px) translateZ(4px) rotateZ(-0.6deg) scale(0.94);
+}
+
+.intro .envelopeRig {
+  transform: translate(-50%, calc(-50% - 5px)) rotateX(2deg) rotateZ(-0.6deg) scale(1.012);
+}
+
+.releasingSeal .envelopeRig {
+  transform: translate(-50%, calc(-50% - 7px)) rotateX(1.5deg) rotateY(-0.6deg) rotateZ(-0.4deg) scale(1.014);
+}
+
+.releasingSeal .releasingSealArtwork {
   opacity: 1;
 }
 
-.cardHero .envelopeCard {
-  transform: translateY(-38px) translateZ(110px) scale(1.26);
-  z-index: 8;
+.releasingSeal .releasingSealArtwork {
+  filter: saturate(0.84) brightness(1.04) drop-shadow(0 8px 9px rgba(32, 33, 36, 0.2));
+  transform: translateY(2px) translateZ(56px) rotateX(-3deg) scale(1.045);
 }
 
-.cardHero .envelopeBack,
-.cardHero .envelopeGlow,
-.cardHero .envelopeLeft,
-.cardHero .envelopeRight,
-.cardHero .envelopeBottom {
+.openingEnvelope .closedEnvelopeArtwork,
+.extractingCard .closedEnvelopeArtwork,
+.unfoldingCard .closedEnvelopeArtwork,
+.assemblingCard .closedEnvelopeArtwork,
+.handoff .closedEnvelopeArtwork {
+  opacity: 0;
+  filter: grayscale(0.16) saturate(0.76) brightness(1.04) drop-shadow(0 10px 14px rgba(32, 33, 36, 0.1));
+  transform: translateY(2px) translateZ(22px) scale(1.025);
+}
+
+.openingEnvelope .closedEnvelopeArtwork {
+  transition-duration: 320ms;
+}
+
+.openingEnvelope .releasingSealArtwork {
+  opacity: 0;
+  filter: saturate(0.84) brightness(1.03) drop-shadow(0 5px 6px rgba(32, 33, 36, 0.14));
+  transform: translateY(12px) translateZ(68px) rotateX(-4deg) scale(0.98);
+}
+
+.extractingCard .releasingSealArtwork,
+.unfoldingCard .releasingSealArtwork,
+.assemblingCard .releasingSealArtwork,
+.handoff .releasingSealArtwork {
+  opacity: 0;
+  transform: translateY(109px) translateZ(22px) rotateX(0deg) scale(0.98);
+}
+
+.openingEnvelope .openEnvelopeFlap,
+.extractingCard .openEnvelopeFlap,
+.unfoldingCard .openEnvelopeFlap,
+.assemblingCard .openEnvelopeFlap,
+.handoff .openEnvelopeFlap {
+  opacity: 1;
+  transform: translateY(-82px) translateZ(-8px) rotateX(0deg) scale(1.08);
+}
+
+.openingEnvelope .openEnvelopeBack,
+.openingEnvelope .openEnvelopeFront,
+.openingEnvelope .envelopePocketMask,
+.extractingCard .openEnvelopeBack,
+.extractingCard .openEnvelopeFront,
+.extractingCard .envelopePocketMask,
+.unfoldingCard .openEnvelopeBack,
+.unfoldingCard .openEnvelopeFlap,
+.unfoldingCard .openEnvelopeFront,
+.assemblingCard .openEnvelopeBack,
+.assemblingCard .openEnvelopeFlap,
+.assemblingCard .openEnvelopeFront,
+.handoff .openEnvelopeBack,
+.handoff .openEnvelopeFlap,
+.handoff .openEnvelopeFront {
+  opacity: 1;
+  transform: translateY(-82px) translateZ(-2px) scale(1.08);
+}
+
+.openingEnvelope .openEnvelopeBack,
+.openingEnvelope .openEnvelopeFront {
+  transition-duration: 520ms;
+}
+
+.openingEnvelope .openEnvelopeFront,
+.openingEnvelope .envelopePocketMask,
+.extractingCard .openEnvelopeFront,
+.extractingCard .envelopePocketMask,
+.unfoldingCard .openEnvelopeFront,
+.assemblingCard .openEnvelopeFront,
+.handoff .openEnvelopeFront {
+  transform: translateY(-82px) translateZ(14px) scale(1.08);
+}
+
+.openingEnvelope .envelopeRig {
+  transform: translate(-50%, calc(-50% - 9px)) rotateX(1.5deg) rotateZ(-0.5deg) scale(1.012);
+}
+
+.openingEnvelope .letter {
+  opacity: 1;
+  transform: translateY(-54px) translateZ(4px) rotateZ(-0.6deg) scale(0.94);
+  transition-delay: 0ms;
+  transition-duration: 140ms;
+}
+
+.extractingCard .envelopeRig {
+  transform: translate(-50%, calc(-50% - 9px)) rotateX(1deg) rotateZ(-0.25deg) scale(1.012);
+}
+
+.extractingCard .letter {
+  z-index: 3;
+  opacity: 1;
+  transform: translateY(-166px) translateZ(22px) rotateZ(0.35deg) scale(1.01);
+  transition-delay: 0ms;
+  transition-duration: 980ms;
+}
+
+.extractingCard .stageShadow {
+  opacity: 0.48;
+  transform: translate(-50%, -42%) rotate(-1deg) scaleX(0.9);
+  filter: blur(26px);
+}
+
+.unfoldingCard .envelopeRig {
+  transform: translate(-50%, calc(-50% + 34px)) rotateX(0.5deg) rotateZ(-0.1deg) scale(0.86);
+}
+
+.unfoldingCard .letter {
+  z-index: 6;
+  opacity: 1;
+  transform: translateY(-154px) translateZ(64px) rotateZ(0deg) scale(1.07);
+  transition-duration: 1050ms;
+}
+
+.unfoldingCard .cardLid,
+.assemblingCard .cardLid,
+.handoff .cardLid {
+  transform: rotateX(180deg) translateZ(2px);
+}
+
+.unfoldingCard .stageShadow {
+  opacity: 0.4;
+  transform: translate(-50%, -34%) scaleX(0.8);
+  filter: blur(28px);
+}
+
+.unfoldingCard .openEnvelopeBack,
+.unfoldingCard .openEnvelopeFlap,
+.unfoldingCard .envelopePocketMask,
+.unfoldingCard .openEnvelopeFront {
+  opacity: 0.38;
+  filter: grayscale(0.1) saturate(0.82) brightness(1.03) blur(0.6px);
+  transform: translateY(-42px) scale(1);
+}
+
+.unfoldingCard .openEnvelopeFront {
+  transform: translateY(-42px) translateZ(14px) scale(1);
+}
+
+.unfoldingCard .envelopePocketMask {
+  transform: translateY(-42px) translateZ(12px) scale(1);
+}
+
+.assemblingCard .envelopeRig,
+.handoff .envelopeRig {
+  transform: translate(-50%, calc(-50% + 34px)) rotateX(0.5deg) rotateZ(-0.1deg) scale(0.86);
+}
+
+.assemblingCard .letter {
+  z-index: 6;
+  transform: translateY(-154px) translateZ(84px) scale(1.07) rotateZ(0deg);
+}
+
+.assemblingCard .openEnvelopeBack,
+.assemblingCard .openEnvelopeFlap,
+.assemblingCard .envelopePocketMask,
+.assemblingCard .openEnvelopeFront,
+.handoff .openEnvelopeBack,
+.handoff .openEnvelopeFlap,
+.handoff .envelopePocketMask,
+.handoff .openEnvelopeFront {
+  opacity: 0;
+  filter: grayscale(0.1) saturate(0.82) brightness(1.03) blur(2px);
+  transform: translateY(30px) scale(0.97);
+}
+
+.assemblingCard .cardBase,
+.handoff .cardBase {
+  opacity: 0;
+  filter: blur(0.8px);
+  transition-delay: 210ms;
+}
+
+.assemblingCard .assemblySurface,
+.handoff .assemblySurface {
+  opacity: 1;
+  transform: translateZ(4px);
+  transition-delay: 170ms;
+}
+
+.assemblingCard .assemblySurface .templateDecor,
+.handoff .assemblySurface .templateDecor {
   opacity: 0.18;
 }
 
-.cardHero .envelopeFlap {
+.assemblingCard .assemblySurface .paperBirthdayCake,
+.assemblingCard .assemblySurface .paperBirthdayBouquet,
+.handoff .assemblySurface .paperBirthdayCake,
+.handoff .assemblySurface .paperBirthdayBouquet {
+  opacity: 0.12;
+  filter: saturate(0.72);
+}
+
+.assemblingCard .assemblySurface .paperBirthdayConfetti,
+.assemblingCard .assemblySurface .paperBirthdayFloral,
+.handoff .assemblySurface .paperBirthdayConfetti,
+.handoff .assemblySurface .paperBirthdayFloral {
   opacity: 0.42;
 }
 
-.cardHero .envelopeCardFold {
-  transform: rotateX(-178deg);
+.assemblingCard .assemblySurface .templateArtScene,
+.handoff .assemblySurface .templateArtScene {
+  opacity: 0.3;
+  filter: saturate(0.82);
 }
 
-.revealGift .envelope {
-  transform: scale(0.84) translateY(48px);
+.assemblingCard .lightweightCardPreview,
+.handoff .lightweightCardPreview {
   opacity: 0;
+  transform: scale(1.015);
+  filter: blur(4px);
 }
 
-.revealGift .envelopeCard {
-  transform: translateY(-42px) translateZ(200px) scale(1.9);
-  opacity: 0;
+.assemblingCard .assemblyContent,
+.handoff .assemblyContent {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+  transition-delay: 190ms;
 }
 
-.revealGift .envelopeCardFold {
-  transform: rotateX(-178deg);
+.assemblingCard .assemblyKicker,
+.handoff .assemblyKicker,
+.assemblingCard .assemblyHeadline,
+.handoff .assemblyHeadline,
+.assemblingCard .templateIdentity,
+.handoff .templateIdentity,
+.assemblingCard .templateAssemblySummary,
+.handoff .templateAssemblySummary,
+.assemblingCard .assemblyPhoto,
+.handoff .assemblyPhoto,
+.assemblingCard .assemblyPhrase,
+.handoff .assemblyPhrase,
+.assemblingCard .assemblySignature,
+.handoff .assemblySignature {
+  opacity: 1;
+  filter: blur(0);
 }
 
-.press .textGroup,
-.sealBreak .textGroup,
-.flapOpen .textGroup,
-.pause .textGroup,
-.cardPull .textGroup,
-.cardHero .textGroup,
-.revealGift .textGroup {
-  opacity: 0;
-  transform: translateY(14px);
+.assemblingCard .assemblyKicker,
+.handoff .assemblyKicker {
+  transform: translateY(0);
+  transition-delay: 250ms;
+}
+
+.assemblingCard .assemblyHeadline,
+.handoff .assemblyHeadline {
+  transform: translateY(0);
+  transition-delay: 390ms;
+}
+
+.assemblingCard .templateIdentity,
+.handoff .templateIdentity {
+  transform: translateY(0);
+  transition-delay: 290ms;
+}
+
+.assemblingCard .assemblyPhoto1,
+.handoff .assemblyPhoto1 {
+  transform: translateY(0) rotate(-7deg) scale(1);
+  transition-delay: 570ms;
+}
+
+.assemblingCard .assemblyPhoto2,
+.handoff .assemblyPhoto2 {
+  transform: translateY(0) rotate(6deg) scale(1);
+  transition-delay: 740ms;
+}
+
+.assemblingCard .assemblyPhoto3,
+.handoff .assemblyPhoto3 {
+  transform: translateY(0) rotate(-1deg) scale(1);
+  transition-delay: 910ms;
+}
+
+.assemblingCard .letter[data-visual-preset="school-formal"] .assemblyPhoto1,
+.handoff .letter[data-visual-preset="school-formal"] .assemblyPhoto1 {
+  transform: translateY(0) rotate(-2deg) scale(1);
+}
+
+.assemblingCard .letter[data-visual-preset="school-formal"] .assemblyPhoto2,
+.handoff .letter[data-visual-preset="school-formal"] .assemblyPhoto2 {
+  transform: translateY(0) rotate(2deg) scale(1);
+}
+
+.assemblingCard .letter[data-visual-preset="school-formal"] .assemblyPhoto3,
+.handoff .letter[data-visual-preset="school-formal"] .assemblyPhoto3,
+.assemblingCard .letter[data-visual-preset="editorial"] .assemblyPhoto3,
+.handoff .letter[data-visual-preset="editorial"] .assemblyPhoto3 {
+  transform: translateY(0) rotate(0deg) scale(1);
+}
+
+.assemblingCard .letter[data-visual-preset="editorial"] .assemblyPhoto1,
+.handoff .letter[data-visual-preset="editorial"] .assemblyPhoto1 {
+  transform: translateY(0) rotate(-1deg) scale(1);
+}
+
+.assemblingCard .letter[data-visual-preset="editorial"] .assemblyPhoto2,
+.handoff .letter[data-visual-preset="editorial"] .assemblyPhoto2 {
+  transform: translateY(0) rotate(1deg) scale(1);
+}
+
+.assemblingCard .templateAssemblySummary,
+.handoff .templateAssemblySummary {
+  transform: translateY(0);
+  transition-delay: 1050ms;
+}
+
+.assemblingCard .assemblyPhrase,
+.handoff .assemblyPhrase,
+.assemblingCard .assemblySignature,
+.handoff .assemblySignature {
+  transform: translateY(0);
+}
+
+.assemblingCard .assemblyPhrase1,
+.handoff .assemblyPhrase1 {
+  transition-delay: 1130ms;
+}
+
+.assemblingCard .assemblyPhrase2,
+.handoff .assemblyPhrase2 {
+  transition-delay: 1270ms;
+}
+
+.assemblingCard .assemblyPhrase3,
+.handoff .assemblyPhrase3 {
+  transition-delay: 1410ms;
+}
+
+.assemblingCard .assemblySignature,
+.handoff .assemblySignature {
+  transition-delay: 1510ms;
+}
+
+.assemblingCard .stageShadow {
+  opacity: 0.34;
+  transform: translate(-50%, -30%) scaleX(0.72);
+  filter: blur(30px);
+}
+
+.handoff {
   pointer-events: none;
+  opacity: 0;
+  transition-delay: 80ms;
+  transition-duration: 1250ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Final card reveal */
-.finalReveal {
-  position: relative;
-  z-index: 0;
-  animation: finalFadeIn 0.65s ease-out forwards;
+.handoff .letter {
+  transform: translateY(-154px) translateZ(112px) scale(3.45);
+  transition-duration: 1250ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes finalFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.handoff .assemblySurface {
+  border-radius: 0;
+  box-shadow: none;
+  transition-delay: 0ms;
 }
 
-/* Replay */
+.handoff .assemblyContent {
+  opacity: 0;
+  transform: scale(1.012);
+  filter: blur(3px);
+  transition-delay: 0ms;
+  transition-duration: 900ms;
+}
+
+.handoff .letterEdge {
+  opacity: 0;
+  filter: blur(5px);
+  transform: translateZ(-3px) scale(1.02);
+}
+
 .giftWrapper {
-  position: relative;
+  min-height: 100svh;
+  background: #ffffff;
+  transition-property: opacity, transform, filter;
+  transition-duration: 1100ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.finalCardHidden {
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.995);
+  filter: blur(3px);
+}
+
+.finalCardVisible {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
 }
 
 .replayBar {
   display: flex;
   justify-content: center;
-  padding: 28px 16px 48px;
-  background:
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.5), transparent 70%),
-    linear-gradient(180deg, transparent, rgba(250, 244, 237, 0.9) 30%);
+  padding: 20px 16px calc(32px + env(safe-area-inset-bottom));
+  background: #ffffff;
 }
 
 .replayButton {
-  appearance: none;
-  border: none;
-  background: none;
-  padding: 10px 18px;
-  color: var(--gi-muted);
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  opacity: 0.75;
-  transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  padding: 8px 14px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  -webkit-tap-highlight-color: transparent;
+  color: #5f6368;
+  font-size: 14px;
+  font-weight: 680;
 }
 
-.replayButton:hover,
-.replayButton:focus-visible {
-  opacity: 1;
-  color: var(--gi-accent-strong);
-  transform: translateY(-1px);
+.replayButton span {
+  color: var(--gi-orange);
+  font-size: 19px;
+  line-height: 1;
 }
 
-.replayButton:focus-visible {
-  outline: none;
-  border-radius: 10px;
-  box-shadow: 0 0 0 3px rgba(191, 108, 71, 0.2);
-}
-
-/* Reduced motion */
-.reducedMotion .envelopeScene {
-  animation: none;
-}
-
-.reducedMotion .envelope {
-  animation: none;
-}
-
-.reducedMotion .heartFloat1,
-.reducedMotion .heartFloat2,
-.reducedMotion .heartFloat3 {
-  animation: none;
-  opacity: 0;
-}
-
-.reducedMotion .envelopeFlap {
-  transition-duration: 0.4s;
-}
-
-.reducedMotion .envelopeCard {
-  transition-duration: 0.45s;
-}
-
-.reducedMotion .envelopeCardFold {
-  transition-duration: 0.45s;
-}
-
-.reducedMotion.flapOpen .envelopeFlap,
-.reducedMotion.pause .envelopeFlap,
-.reducedMotion.cardPull .envelopeFlap,
-.reducedMotion.cardHero .envelopeFlap,
-.reducedMotion.revealGift .envelopeFlap {
-  transform: scaleY(-1);
-}
-
-.reducedMotion.cardPull .envelopeCard,
-.reducedMotion.cardHero .envelopeCard {
-  transform: translateY(-72px) translateZ(50px) scale(1.08);
-}
-
-.reducedMotion.cardHero .envelopeCardFold,
-.reducedMotion.revealGift .envelopeCardFold {
-  transform: rotateX(-178deg);
-}
-
-.reducedMotion.revealGift .introContent {
-  opacity: 0;
-  transform: none;
-}
-
-.reducedMotion.revealGift .envelope {
-  opacity: 0;
-}
-
-/* Placeholder */
 .placeholder {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  min-height: 100svh;
   padding: 24px;
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.7), transparent 35%),
-    radial-gradient(circle at 70% 80%, rgba(255, 248, 240, 0.6), transparent 35%),
-    linear-gradient(180deg, var(--gi-bg-top) 0%, var(--gi-bg-bottom) 100%);
-  color: var(--gi-text);
+  display: grid;
+  place-items: center;
+  color: #202124;
+  background: #f7f8fa;
 }
 
 .placeholderCard {
-  max-width: 420px;
-  text-align: center;
-  padding: 42px 34px;
-  border-radius: 26px;
-  background: rgba(255, 250, 245, 0.78);
+  width: min(100%, 520px);
+  padding: 42px;
+  border-radius: 8px;
+  background: #ffffff;
   box-shadow:
-    0 20px 64px rgba(72, 49, 37, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 16px 36px rgba(0, 0, 0, 0.08);
+  text-align: center;
 }
 
 .placeholderIcon {
-  font-size: 58px;
-  line-height: 1;
-  margin-bottom: 20px;
-  color: var(--gi-accent);
-  opacity: 0.85;
+  margin-bottom: 16px;
+  color: #e9652f;
+  font-size: 32px;
 }
 
 .placeholderTitle {
-  margin: 0 0 12px;
-  font-size: 23px;
-  font-weight: 500;
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.16;
+  letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .placeholderText {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--gi-muted);
-}
-
-/* Mobile */
-@media (max-width: 480px) {
-  .envelopeCard {
-    --gi-card-preview-scale: 0.176;
-  }
-
-  .envelopeScene {
-    width: 240px;
-    height: 162px;
-  }
-
-  .envelopeFlap {
-    height: 94px;
-  }
-
-  .envelopeFlapFront,
-  .envelopeFlapBack {
-    width: 100%;
-    height: 100%;
-  }
-
-  .envelopeLeft,
-  .envelopeRight {
-    border-top-width: 81px;
-    border-bottom-width: 81px;
-  }
-
-  .envelopeLeft {
-    border-left-width: 120px;
-  }
-
-  .envelopeRight {
-    border-right-width: 120px;
-  }
-
-  .envelopeBottom {
-    border-left-width: 120px;
-    border-right-width: 120px;
-    border-bottom-width: 64px;
-  }
-
-  .envelopeSeal {
-    top: 56px;
-    width: 34px;
-    height: 34px;
-    margin-left: -17px;
-    font-size: 17px;
-  }
-
-  .cardText {
-    font-size: 12px;
-  }
-
-  .ctaButton {
-    padding: 14px 28px;
-    font-size: 15px;
-  }
-
-  .nameLine {
-    font-size: clamp(28px, 8vw, 38px);
-  }
-
-  .nameLine::after {
-    right: -18px;
-    top: -4px;
-    font-size: 14px;
-  }
-
-  .press .introContent,
-  .sealBreak .introContent,
-  .flapOpen .introContent,
-  .pause .introContent,
-  .cardPull .introContent,
-  .cardHero .introContent {
-    transform: translateY(68px);
-  }
-
-  .cardPull .envelopeCard {
-    transform: translateY(-36px) translateZ(44px) scale(1.04);
-  }
-
-  .cardHero .envelopeCard {
-    transform: translateY(-28px) translateZ(90px) scale(1.12);
-  }
-
-  .revealGift .envelopeCard {
-    transform: translateY(-32px) translateZ(160px) scale(1.72);
-  }
-}
-
-/* Cinematic two-image envelope. The original CSS construction remains a fallback in markup. */
-.envelopeScene {
-  width: min(460px, 82vw);
-  height: min(460px, 82vw);
-  perspective: none;
-}
-
-.envelope {
-  transform-style: flat;
-}
-
-.envelopeImage {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  pointer-events: none;
-  user-select: none;
-  filter: drop-shadow(0 22px 28px rgba(88, 57, 37, 0.15));
-  transition:
-    opacity 540ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 540ms cubic-bezier(0.22, 1, 0.36, 1),
-    filter 400ms ease;
-  will-change: opacity, transform;
-}
-
-.closedEnvelope {
-  z-index: 6;
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-.openEnvelopeBack,
-.openEnvelopePocket {
-  opacity: 0;
-  transform: translateY(6px) scale(0.985);
-}
-
-.openEnvelopeBack {
-  z-index: 1;
-}
-
-.openEnvelopePocket {
-  z-index: 5;
-  clip-path: polygon(0 37%, 15% 40%, 50% 62%, 85% 40%, 100% 37%, 100% 100%, 0 100%);
-}
-
-.envelopeBack,
-.envelopeLeft,
-.envelopeRight,
-.envelopeBottom,
-.envelopeFlap,
-.envelopeSeal,
-.heartFloat1,
-.heartFloat2,
-.heartFloat3 {
-  display: none;
-}
-
-.envelopeGlow {
-  left: 14%;
-  right: 14%;
-  top: 28%;
-  height: 58%;
-  z-index: 0;
-}
-
-.envelopeCard {
-  --gi-card-preview-scale: 0.258;
-  left: 16.5%;
-  bottom: 38%;
-  width: 67%;
-  height: 43%;
-  z-index: 3;
-  opacity: 0;
-  transform: translateY(15%) scale(0.965);
-  transition:
-    transform 430ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 220ms ease;
-}
-
-.press .closedEnvelope {
-  transform: scale(0.985);
-  filter: drop-shadow(0 26px 34px rgba(88, 57, 37, 0.2));
-}
-
-.sealBreak .closedEnvelope {
-  transform: scale(1.01);
-  filter: drop-shadow(0 26px 36px rgba(191, 108, 71, 0.2));
-}
-
-.flapOpen .closedEnvelope,
-.pause .closedEnvelope,
-.cardPull .closedEnvelope,
-.cardHero .closedEnvelope,
-.revealGift .closedEnvelope {
-  opacity: 0;
-  transform: translateY(-3px) scale(1.01);
-}
-
-.flapOpen .openEnvelopeBack,
-.flapOpen .openEnvelopePocket,
-.pause .openEnvelopeBack,
-.pause .openEnvelopePocket,
-.cardPull .openEnvelopeBack,
-.cardPull .openEnvelopePocket,
-.cardHero .openEnvelopeBack,
-.cardHero .openEnvelopePocket,
-.revealGift .openEnvelopeBack,
-.revealGift .openEnvelopePocket {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-.flapOpen .openEnvelopeBack,
-.flapOpen .openEnvelopePocket {
-  transition-delay: 70ms;
-}
-
-.pause .envelopeCard {
-  opacity: 1;
-  transform: translateY(13%) scale(0.97);
-}
-
-.cardPull .envelopeCard {
-  opacity: 1;
-  transform: translateY(-60%) scale(1.04);
-  z-index: 3;
-}
-
-.cardHero .envelopeCard {
-  opacity: 1;
-  transform: translateY(-72%) scale(1.22);
-  z-index: 7;
-}
-
-.cardHero .openEnvelopeBack,
-.cardHero .openEnvelopePocket {
-  opacity: 0.54;
-  transform: translateY(14px) scale(0.94);
-}
-
-.revealGift .envelopeCard {
-  opacity: 0;
-  transform: translateY(-78%) scale(1.56);
-  z-index: 7;
-}
-
-.revealGift .openEnvelopeBack,
-.revealGift .openEnvelopePocket {
-  opacity: 0;
-  transform: translateY(24px) scale(0.9);
-}
-
-.press .introContent,
-.sealBreak .introContent,
-.flapOpen .introContent,
-.pause .introContent,
-.cardPull .introContent,
-.cardHero .introContent {
-  transform: none;
-}
-
-.reducedMotion .envelopeImage,
-.reducedMotion .envelopeCard {
-  transition: none;
+  margin: 14px 0 0;
+  color: #5f6368;
+  line-height: 1.55;
+  text-wrap: pretty;
 }
 
 @media (max-width: 640px) {
-  .introContent {
-    gap: 18px;
+  .sceneLight {
+    inset: 20% 8%;
   }
 
-  .envelopeScene {
-    width: min(86vw, 360px);
-    height: min(86vw, 360px);
+  .introHeader {
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
   }
 
-  .envelopeCard {
-    --gi-card-preview-scale: 0.202;
-  }
-}
-
-/* The staged state machine owns the handoff to the real card. */
-.finalReveal {
-  animation: finalFadeIn 650ms cubic-bezier(0.2, 0, 0, 1) both;
-}
-
-/* One continuous gift-opening timeline. */
-.playing.page {
-  animation: introPageTimeline 3200ms linear both;
-  pointer-events: none;
-}
-
-.playing .textGroup {
-  animation: introTextExit 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.playing .envelopeScene,
-.playing .envelope {
-  animation: none;
-}
-
-.playing .closedEnvelope {
-  animation: closedEnvelopeTimeline 3200ms linear both;
-}
-
-.playing .openEnvelopeBack,
-.playing .openEnvelopePocket {
-  animation: openEnvelopeTimeline 3200ms linear both;
-}
-
-.playing .envelopeGlow {
-  animation: envelopeGlowTimeline 3200ms ease both;
-}
-
-.playing .envelopeCard {
-  animation: cardJourneyTimeline 2770ms 430ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.playing .envelopeCardFold {
-  animation: cardUnfoldTimeline 1850ms 1080ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.playing + .page,
-.playing .introContent {
-  pointer-events: none;
-}
-
-.finalReveal {
-  animation: finalGiftTimeline 3200ms linear both;
-}
-
-@keyframes introPageTimeline {
-  0%, 72% {
-    opacity: 1;
-    visibility: visible;
-  }
-  100% {
-    opacity: 0;
-    visibility: hidden;
-  }
-}
-
-@keyframes introTextExit {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-}
-
-@keyframes closedEnvelopeTimeline {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  5% {
-    opacity: 1;
-    transform: translateY(0) scale(0.985);
-  }
-  11%, 19% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  30% {
-    opacity: 0;
-    transform: translateY(-3px) scale(1.01);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-3px) scale(1.01);
-  }
-}
-
-@keyframes openEnvelopeTimeline {
-  0%, 12% {
-    opacity: 0;
-    transform: translateY(7px) scale(0.985);
-  }
-  29%, 63% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  84% {
-    opacity: 0.42;
-    transform: translateY(17px) scale(0.94);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(30px) scale(0.88);
-  }
-}
-
-@keyframes envelopeGlowTimeline {
-  0%, 12% { opacity: 0; }
-  34%, 72% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-@keyframes cardJourneyTimeline {
-  0%, 8% {
-    opacity: 0;
-    transform: translateY(13%) scale(0.97);
-  }
-  18%, 30% {
-    opacity: 1;
-    transform: translateY(13%) scale(0.97);
-  }
-  59% {
-    opacity: 1;
-    transform: translateY(-58%) scale(1.04);
-  }
-  76% {
-    opacity: 0.78;
-    transform: translateY(-70%) scale(1.22);
-  }
-  90% {
-    opacity: 0.18;
-    transform: translateY(-72%) scale(1.48);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-74%) scale(1.68);
-  }
-}
-
-@keyframes cardUnfoldTimeline {
-  0%, 22% { transform: rotateX(0deg); }
-  72%, 100% { transform: rotateX(-178deg); }
-}
-
-@keyframes finalGiftTimeline {
-  0%, 70% {
-    opacity: 0;
-    transform: scale(0.985);
-  }
-  94%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.envelopeScene {
-  width: min(460px, 74vw);
-  height: min(460px, 74vw);
-}
-
-.envelopeCard {
-  --gi-card-preview-scale: 0.258;
-}
-
-@media (max-width: 640px) {
-  .envelopeScene {
-    width: min(86vw, 360px);
-    height: min(86vw, 360px);
+  .introBrand {
+    width: 92px;
   }
 
-  .envelopeCard {
-    --gi-card-preview-scale: 0.202;
-  }
-}
-
-@media (min-width: 641px) {
-  .introContent {
-    transform: translateY(2vh);
-  }
-}
-
-@media (max-height: 760px) and (min-width: 641px) {
-  .envelopeScene {
-    width: min(460px, 66vh);
-    height: min(460px, 66vh);
+  .introLayout {
+    grid-template-rows: minmax(228px, 0.88fr) minmax(350px, 1.12fr);
+    padding: 76px 14px 0;
   }
 
-  .envelopeCard {
-    --gi-card-preview-scale: 0.258;
-  }
-
-  .introContent {
-    transform: translateY(1vh);
-  }
-}
-
-/* Gift-like idle composition */
-.introContent {
-  max-width: 640px;
-  gap: 6px;
-}
-
-.giftKicker {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  color: #df693d;
-  transition-property: opacity, transform;
-  transition-duration: 260ms;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.giftKickerIcon {
-  position: relative;
-  width: 26px;
-  height: 26px;
-  color: currentColor;
-}
-
-.giftKickerIcon svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.giftKickerText {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.giftKickerText::before,
-.giftKickerText::after {
-  content: "";
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #f2b18f;
-}
-
-.envelopeScene {
-  position: relative;
-  z-index: 1;
-  margin-block: -22px -10px;
-}
-
-.envelopeScene::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 49%;
-  width: 128%;
-  height: 94%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(ellipse at center, rgba(255, 220, 185, 0.92), rgba(255, 234, 205, 0.5) 46%, rgba(255, 242, 225, 0.14) 64%, transparent 74%);
-  filter: blur(8px);
-  z-index: -1;
-  pointer-events: none;
-}
-
-.envelopeFlower {
-  position: absolute;
-  left: -16%;
-  bottom: 14%;
-  width: 315px;
-  height: auto;
-  z-index: 8;
-  pointer-events: none;
-  transform: rotate(-28deg);
-  opacity: 0.96;
-  filter: drop-shadow(0 8px 18px rgba(88, 57, 37, 0.12));
-}
-
-.botanicalSprig {
-  display: none !important;
-}
-
-.botanicalSprig {
-  position: absolute;
-  left: 2%;
-  bottom: 17%;
-  z-index: 8;
-  width: 112px;
-  height: 120px;
-  border-left: 2px solid rgba(198, 133, 87, 0.42);
-  border-radius: 55% 0 0 55%;
-  transform: rotate(-38deg);
-  transform-origin: bottom left;
-  pointer-events: none;
-}
-
-.botanicalSprig::before,
-.botanicalSprig::after {
-  content: "";
-  position: absolute;
-  left: -1px;
-  width: 72px;
-  height: 1px;
-  background: rgba(198, 133, 87, 0.38);
-  transform-origin: left center;
-}
-
-.botanicalSprig::before {
-  top: 38px;
-  transform: rotate(-26deg);
-}
-
-.botanicalSprig::after {
-  top: 66px;
-  transform: rotate(18deg);
-}
-
-.botanicalSprig i {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #f2ddc5;
-  box-shadow: 0 0 0 3px rgba(255, 248, 238, 0.72);
-}
-
-.botanicalSprig i:nth-child(1) { left: 55px; top: 5px; }
-.botanicalSprig i:nth-child(2) { left: 73px; top: 29px; }
-.botanicalSprig i:nth-child(3) { left: 50px; top: 65px; }
-.botanicalSprig i:nth-child(4) { left: 20px; top: 83px; }
-
-.introHeart {
-  position: absolute;
-  z-index: 8;
-  color: #e58a63;
-  font-family: Georgia, serif;
-  line-height: 1;
-  opacity: 0.72;
-  pointer-events: none;
-}
-
-.introHeartOne { left: 11%; top: 27%; font-size: 20px; transform: rotate(-12deg); }
-.introHeartTwo { right: 8%; top: 48%; font-size: 26px; transform: rotate(11deg); }
-.introHeartThree { right: 17%; top: 72%; font-size: 14px; transform: rotate(-8deg); }
-
-.titleBlock {
-  gap: 6px;
-}
-
-.nameLine {
-  max-width: min(92vw, 700px);
-  font-size: clamp(36px, 5.8vw, 54px);
-  line-height: 1.08;
-  text-wrap: balance;
-}
-
-.nameLine::after {
-  content: none;
-}
-
-.titleDivider {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: #de754d;
-  font-family: Georgia, serif;
-  font-size: 15px;
-  line-height: 1;
-}
-
-.titleDivider i {
-  display: block;
-  width: 28px;
-  height: 1px;
-  background: #efc2a8;
-}
-
-.subtitleLine {
-  max-width: 460px;
-  font-size: clamp(15px, 2.2vw, 18px);
-  text-wrap: balance;
-}
-
-.subtitleAccent {
-  display: block;
-  color: #ce6037;
-  margin-top: 2px;
-}
-
-.fromLine {
-  margin: 0;
-  color: #ce6037;
-  font-size: 17px;
-  line-height: 1.35;
-  text-wrap: balance;
-}
-
-.actions {
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.ctaButton {
-  min-height: 54px;
-  padding: 15px 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f1773f 0%, #df5726 100%);
-  box-shadow:
-    0 15px 30px rgba(207, 83, 37, 0.24),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
-}
-
-.ctaContent {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.ctaSparkle {
-  font-size: 23px;
-  line-height: 1;
-  transform: translateY(-1px);
-}
-
-.skipLink {
-  min-height: 40px;
-  text-decoration: underline;
-  text-decoration-color: rgba(123, 103, 93, 0.22);
-  text-underline-offset: 5px;
-}
-
-.playing .giftKicker {
-  animation: introTextExit 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@media (max-width: 640px) {
   .giftKicker {
-    gap: 6px;
-  }
-
-  .giftKickerIcon {
-    transform: scale(0.88);
-  }
-
-  .giftKickerText {
+    margin-bottom: 8px;
     font-size: 11px;
-    letter-spacing: 0.13em;
   }
 
-  .botanicalSprig {
-    left: 3%;
-    bottom: 18%;
-    transform: rotate(-38deg) scale(0.72);
+  .recipientName {
+    max-width: 94vw;
+    font-size: 36px;
   }
 
-  .envelopeFlower {
-    left: -12%;
-    bottom: 11%;
-    width: 230px;
-    transform: rotate(-28deg);
-  }
-
-  .introHeartTwo {
-    right: 3%;
-  }
-
-  .nameLine {
-    font-size: clamp(32px, 9vw, 42px);
-  }
-
-  .fromLine {
+  .subtitle {
+    max-width: 340px;
+    margin-top: 9px;
     font-size: 15px;
   }
 
+  .actions {
+    margin-top: 16px;
+  }
+
   .ctaButton {
-    width: min(100%, 340px);
-  }
-}
-
-@media (max-height: 760px) {
-  .giftKickerIcon {
-    transform: scale(0.72);
-    margin-block: -4px;
+    width: min(100%, 330px);
+    min-height: 50px;
+    font-size: 15px;
   }
 
-  .giftKickerText {
-    font-size: 10px;
+  .giftStage {
+    width: 100%;
+    height: min(430px, 51svh);
   }
 
-  .fromLine {
+  .idle .giftStage {
+    transform: translateY(-82px);
+  }
+
+  .envelopeRig {
+    top: 54%;
+    width: 360px;
+    height: 360px;
+  }
+
+  .ctaHover .envelopeRig {
+    translate: 0 0;
+    scale: 1;
+    transform: translate(-50%, -50%) rotateX(3deg) rotateZ(-1.2deg);
+  }
+
+  .envelopeTrigger {
+    top: 54%;
+    width: 310px;
+    height: 225px;
+  }
+
+  .letter {
+    left: 65px;
+    top: 134px;
+    width: 230px;
+    height: 147px;
+    transform: translateY(30px) translateZ(2px) rotateZ(-0.6deg) scale(0.92);
+  }
+
+  .lightweightCardPreview {
+    padding: 17px;
+  }
+
+  .lightweightCardPreview strong {
+    max-width: 190px;
+    display: -webkit-box;
+    font-size: 17px;
+    line-height: 1.04;
+    text-wrap: balance;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .lightweightCardKicker,
+  .lightweightCardPreview small {
+    font-size: 7px;
+  }
+
+  .lightweightCardRule {
+    margin: 8px 0 5px;
+  }
+
+  .lightweightCardLine {
+    width: 110px;
+    margin-top: 4px;
+  }
+
+  .lightweightCardLineShort {
+    width: 74px;
+  }
+
+  .schoolPreviewDoodleBoy,
+  .schoolPreviewDoodleGirl {
+    width: 31px;
+    height: 45px;
+  }
+
+  .classicPreviewDecorLeft,
+  .classicPreviewDecorRight {
+    width: 38px;
+    height: 50px;
+  }
+
+  .assemblyContent {
+    padding: 20px 18px 16px;
+  }
+
+  .letter[data-visual-preset] .templateIdentity {
+    left: 22px;
+    right: 22px;
+    top: 13px;
+  }
+
+  .letter[data-visual-preset] .templateOccasion {
+    padding: 2px 8px;
+    font-size: 5px;
+  }
+
+  .letter[data-visual-preset] .templateRecipient {
+    display: -webkit-box;
+    width: 100%;
+    max-width: 100%;
+    max-height: 40px;
+    font-size: 19px;
+    line-height: 1.02;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .letter[data-visual-preset] .templateFrom {
+    max-width: 180px;
+    margin-top: 1px;
+    font-size: 5px;
+  }
+
+  .letter:is(
+    [data-visual-preset="paper-celebration"],
+    [data-visual-preset="expedition"],
+    [data-visual-preset="school-playful"],
+    [data-visual-preset="school-formal"],
+    [data-visual-preset="caregiver-playful"],
+    [data-visual-preset="editorial"]
+  ) .assemblyPhotos {
+    top: 78px;
+  }
+
+  .assemblyHeadline {
+    max-width: 194px;
+    margin-top: 5px;
     font-size: 14px;
   }
+
+  .assemblyPhotos {
+    left: 18px;
+    right: 15px;
+    top: 74px;
+    width: auto;
+    height: 143px;
+  }
+
+  .assemblyPhoto1 {
+    width: 82px;
+    height: 102px;
+  }
+
+  .assemblyPhoto2 {
+    width: 84px;
+    height: 104px;
+  }
+
+  .assemblyPhoto3 {
+    left: 52px;
+    width: 91px;
+    height: 64px;
+  }
+
+  .letter[data-photo-count="1"] .assemblyPhoto1 {
+    left: 48px;
+    width: 104px;
+    height: 131px;
+  }
+
+  .letter[data-photo-count="2"] .assemblyPhoto1 {
+    left: 8px;
+    width: 89px;
+    height: 116px;
+  }
+
+  .letter[data-photo-count="2"] .assemblyPhoto2 {
+    right: 8px;
+    width: 92px;
+    height: 119px;
+  }
+
+  .assemblyPhrases {
+    left: 18px;
+    right: 15px;
+    bottom: 20px;
+    gap: 4px;
+  }
+
+  .assemblyPhrase {
+    max-width: 98px;
+    padding: 3px 5px;
+    font-size: 6px;
+  }
+
+  .assemblySignature {
+    right: 16px;
+    bottom: 8px;
+    font-size: 6px;
+  }
+
+  .templateAccent {
+    width: 5px;
+  }
+
+  .templateTitleMark {
+    left: 18px;
+    top: 20px;
+    width: 36px;
+    height: 4px;
+  }
+
+  .templateTitleLine {
+    left: 18px;
+    top: 31px;
+    width: 116px;
+    height: 11px;
+  }
+
+  .templatePhotoSlot1 {
+    left: 20px;
+    top: 78px;
+    width: 82px;
+    height: 100px;
+  }
+
+  .templatePhotoSlot2 {
+    right: 20px;
+    top: 69px;
+    width: 86px;
+    height: 103px;
+  }
+
+  .templatePhotoSlot3 {
+    left: 70px;
+    top: 152px;
+    width: 90px;
+    height: 63px;
+  }
+
+  .templateTextSlot1 {
+    top: 235px;
+    width: 190px;
+  }
+
+  .templateTextSlot2 {
+    top: 247px;
+    width: 166px;
+  }
+
+  .templateTextSlot3 {
+    top: 259px;
+    width: 132px;
+  }
+
+  .templateDecor {
+    width: 54px;
+    height: 68px;
+  }
+
+  .templateDecor1 {
+    left: -4px;
+    top: 60px;
+  }
+
+  .templateDecor2 {
+    right: -4px;
+    top: 203px;
+  }
+
+  .stageShadow {
+    top: 67%;
+    width: 300px;
+    height: 58px;
+  }
+
+  .intro .giftStage,
+  .releasingSeal .giftStage,
+  .openingEnvelope .giftStage,
+  .extractingCard .giftStage,
+  .unfoldingCard .giftStage,
+  .assemblingCard .giftStage,
+  .handoff .giftStage {
+    transform: translateY(-110px);
+  }
+
+  .extractingCard .letter {
+    transform: translateY(-116px) translateZ(22px) scale(1.01) rotateZ(0.3deg);
+  }
+
+  .unfoldingCard .envelopeRig {
+    transform: translate(-50%, calc(-50% + 46px)) rotateX(0.5deg) rotateZ(-0.1deg) scale(0.84);
+  }
+
+  .unfoldingCard .letter {
+    transform: translateY(-108px) translateZ(60px) scale(1.14) rotateZ(0deg);
+  }
+
+  .assemblingCard .envelopeRig,
+  .handoff .envelopeRig {
+    transform: translate(-50%, calc(-50% + 46px)) rotateX(0.5deg) rotateZ(-0.1deg) scale(0.84);
+  }
+
+  .assemblingCard .letter {
+    transform: translateY(-108px) translateZ(72px) scale(1.14) rotateZ(0deg);
+  }
+
+  .handoff .letter {
+    transform: translateY(-108px) translateZ(104px) scale(4.8);
+  }
+
+  .letter[data-photo-count="0"] .assemblyHeadline {
+    max-width: 190px;
+  }
+
+  .placeholderCard {
+    padding: 32px 24px;
+  }
+
+  .placeholderTitle {
+    font-size: 24px;
+  }
 }
 
-/* Continuous 4.8s recipient reveal: aligned envelope, neutral card back, viewport-safe unfold. */
-.openEnvelopeBack,
-.openEnvelopePocket {
-  left: -2.65%;
-  right: auto;
-  width: 105.3%;
+@media (max-height: 700px) {
+  .introLayout {
+    grid-template-rows: minmax(190px, 0.8fr) minmax(330px, 1.2fr);
+    padding-top: 62px;
+  }
+
+  .recipientName {
+    font-size: 34px;
+  }
+
+  .subtitle {
+    margin-top: 6px;
+    font-size: 14px;
+  }
+
+  .actions {
+    margin-top: 12px;
+  }
+
+  .ctaButton {
+    min-height: 46px;
+  }
+
+  .giftStage {
+    height: min(390px, 50svh);
+  }
+
+  .envelopeRig {
+    transform: translate(-50%, -52%) rotateX(7deg) rotateZ(-3deg) scale(0.9);
+  }
 }
 
-.playing.page {
-  animation: introPageTimelineV2 4800ms linear both;
+@media (max-width: 640px) and (max-height: 700px) {
+  .idle .giftStage {
+    transform: translateY(-62px);
+  }
+
+  .ctaHover .envelopeRig {
+    translate: 0 0;
+    scale: 1;
+    transform: translate(-50%, -52%) rotateX(7deg) rotateZ(-3deg) scale(0.9);
+  }
 }
 
-.playing .giftKicker,
-.playing .textGroup,
-.playing .envelopeFlower,
-.playing .introHeart {
-  animation: introChromeExitV2 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.playing .envelopeScene::before {
-  animation: introGlowExitV2 900ms ease both;
-}
-
-.playing .envelopeScene {
-  animation: none;
-}
-
-.playing .envelope {
-  animation: envelopePositionTimelineV2 4800ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.playing .closedEnvelope {
-  animation: closedEnvelopeTimelineV2 4800ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.playing .openEnvelopeBack,
-.playing .openEnvelopePocket {
-  animation: openEnvelopeTimelineV2 4800ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.playing .envelopeGlow {
-  animation: envelopeGlowTimelineV2 4800ms ease both;
-}
-
-.playing .envelopeCard {
-  animation: cardJourneyTimelineV2 4800ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.playing .envelopeCardFold {
-  animation: cardUnfoldTimelineV2 4800ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.finalReveal {
-  animation: finalGiftTimelineV2 4800ms linear both;
-}
-
-.finalRevealReady {
-  animation: finalFadeIn 650ms cubic-bezier(0.2, 0, 0, 1) both;
-}
-
-/* The primary CTA is an explicit request to play the one-shot opening sequence.
-   Keep ambient motion reduced, but do not let the global accessibility reset
-   collapse this requested timeline to 0.01ms. The adjacent “Пропустить” action
-   remains the immediate path to the card. */
 @media (prefers-reduced-motion: reduce) {
-  .playing.page,
-  .playing .envelope,
-  .playing .closedEnvelope,
-         .playing .openEnvelopeBack,
-         .playing .openEnvelopePocket,
-         .playing .envelopeCard,
-         .playing .envelopeCardFold,
-         .playing .envelopeGlow {
-           animation-duration: 4800ms !important;
-         }
-
-  .playing .giftKicker,
-  .playing .textGroup,
-  .playing .envelopeFlower,
-  .playing .introHeart {
-    animation-duration: 460ms !important;
+  .page:not([data-motion-mode="full"]),
+  .giftWrapper:not([data-motion-mode="full"]) {
+    transition-duration: 360ms;
   }
 
-         .playing .envelopeScene::before {
-           animation-duration: 900ms !important;
-         }
+  .page:not([data-motion-mode="full"]) .envelopeRig,
+  .page:not([data-motion-mode="full"]) .closedEnvelopeArtwork,
+  .page:not([data-motion-mode="full"]) .releasingSealArtwork,
+  .page:not([data-motion-mode="full"]) .openEnvelopeFlap,
+  .page:not([data-motion-mode="full"]) .openEnvelopeBack,
+  .page:not([data-motion-mode="full"]) .openEnvelopeFront,
+  .page:not([data-motion-mode="full"]) .letter,
+  .page:not([data-motion-mode="full"]) .cardBase,
+  .page:not([data-motion-mode="full"]) .cardLid,
+  .page:not([data-motion-mode="full"]) .cardLidFace,
+  .page:not([data-motion-mode="full"]) .assemblySurface,
+  .page:not([data-motion-mode="full"]) .stageShadow,
+  .page:not([data-motion-mode="full"]) .sceneCopy,
+  .page:not([data-motion-mode="full"]) .lightweightCardPreview,
+  .page:not([data-motion-mode="full"]) .assemblyContent,
+  .page:not([data-motion-mode="full"]) .assemblyKicker,
+  .page:not([data-motion-mode="full"]) .assemblyHeadline,
+  .page:not([data-motion-mode="full"]) .assemblyPhoto,
+  .page:not([data-motion-mode="full"]) .assemblyPhrase,
+  .page:not([data-motion-mode="full"]) .assemblySignature {
+    animation: none;
+    transition-duration: 0ms;
+    transition-delay: 0ms;
+  }
 
-  .finalRevealReady {
-    animation-duration: 650ms !important;
+  .page:not([data-motion-mode="full"]) .sceneLight,
+  .page:not([data-motion-mode="full"]) .stageShadow,
+  .page:not([data-motion-mode="full"]) .sealGlint::after {
+    animation: none;
   }
-}
 
-@keyframes introChromeExitV2 {
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(8px); }
-}
+  .page:not([data-motion-mode="full"]) .ctaHover .envelopeRig {
+    transform: translate(-50%, -50%) rotateX(7deg) rotateZ(-3deg);
+  }
 
-@keyframes introGlowExitV2 {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-@keyframes envelopePositionTimelineV2 {
-  0%, 6% {
-    transform: translateY(0) scale(1);
-  }
-  18%, 54% {
-    transform: translateY(clamp(92px, 14vh, 150px)) scale(1);
-  }
-  66% {
-    transform: translateY(clamp(108px, 16vh, 172px)) scale(0.96);
-  }
-  80%, 100% {
-    transform: translateY(clamp(124px, 18vh, 190px)) scale(0.9);
-  }
-}
-
-@keyframes closedEnvelopeTimelineV2 {
-  0%, 7% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  10% {
-    opacity: 1;
-    transform: scale(0.985);
-  }
-  15% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  34%, 100% {
+  .page:not([data-motion-mode="full"]).handoff {
     opacity: 0;
-    transform: scale(1.008);
-  }
-}
-
-@keyframes openEnvelopeTimelineV2 {
-  0%, 12% {
-    opacity: 0;
-    transform: translateY(-13.8%) scale(0.99);
-  }
-  34%, 57% {
-    opacity: 1;
-    transform: translateY(-13.8%) scale(1);
-  }
-  70% {
-    opacity: 0.34;
-    transform: translateY(-11%) scale(0.95);
-  }
-  80%, 100% {
-    opacity: 0;
-    transform: translateY(-8%) scale(0.9);
-  }
-}
-
-@keyframes envelopeGlowTimelineV2 {
-  0%, 18% { opacity: 0; }
-  32%, 58% { opacity: 0.9; }
-  76%, 100% { opacity: 0; }
-}
-
-@keyframes cardJourneyTimelineV2 {
-  0%, 12% {
-    z-index: 3;
-    opacity: 0;
-    transform: translateY(18%) scale(0.97);
-  }
-  18%, 38% {
-    z-index: 3;
-    opacity: 1;
-    transform: translateY(18%) scale(0.97);
-  }
-  52% {
-    z-index: 3;
-    opacity: 1;
-    transform: translateY(-56%) scale(1.03);
-  }
-  55% {
-    z-index: 7;
-    opacity: 1;
-    transform: translateY(-68%) scale(1.06);
-  }
-  64% {
-    z-index: 7;
-    opacity: 1;
-    transform: translateY(-48%) scale(1.11);
-  }
-  79% {
-    z-index: 7;
-    opacity: 1;
-    transform: translateY(-30%) scale(1.14);
-  }
-  91% {
-    z-index: 7;
-    opacity: 0.22;
-    transform: translateY(-26%) scale(1.32);
-  }
-  100% {
-    z-index: 7;
-    opacity: 0;
-    transform: translateY(-24%) scale(1.38);
-  }
-}
-
-@keyframes cardUnfoldTimelineV2 {
-  0%, 55% { transform: rotateX(0deg); }
-  80%, 100% { transform: rotateX(-178deg); }
-}
-
-@keyframes introPageTimelineV2 {
-  0%, 77% {
-    opacity: 1;
-    visibility: visible;
-  }
-  100% {
-    opacity: 0;
-    visibility: hidden;
-  }
-}
-
-@keyframes finalGiftTimelineV2 {
-  0%, 74% {
-    opacity: 0;
-    transform: scale(0.99);
-  }
-  96%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@media (max-width: 640px) {
-  @keyframes envelopePositionTimelineV2 {
-    0%, 6% { transform: translateY(0) scale(1); }
-    18%, 54% { transform: translateY(96px) scale(1); }
-    66% { transform: translateY(110px) scale(0.96); }
-    80%, 100% { transform: translateY(122px) scale(0.9); }
-  }
-
-  @keyframes cardJourneyTimelineV2 {
-    0%, 12% { z-index: 3; opacity: 0; transform: translateY(18%) scale(0.97); }
-    18%, 38% { z-index: 3; opacity: 1; transform: translateY(18%) scale(0.97); }
-    52% { z-index: 3; opacity: 1; transform: translateY(-58%) scale(1.02); }
-    55% { z-index: 7; opacity: 1; transform: translateY(-70%) scale(1.04); }
-    64% { z-index: 7; opacity: 1; transform: translateY(-47%) scale(1.06); }
-    79% { z-index: 7; opacity: 1; transform: translateY(-25%) scale(1.08); }
-    91% { z-index: 7; opacity: 0.2; transform: translateY(-22%) scale(1.2); }
-    100% { z-index: 7; opacity: 0; transform: translateY(-20%) scale(1.26); }
-  }
-}
-
-
-/* Mobile gift wrapper width adjustments */
-@media (max-width: 899px) {
-  .giftWrapper {
-    padding: 0;
-  }
-
-  .replayBar {
-    padding: 20px 12px 36px;
   }
 }
