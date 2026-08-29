@@ -30,6 +30,23 @@ describe("two-stage greeting generation", () => {
     expect(stabilizeGreetingSemanticPlan({ ...input, draftNotes: "Я благодарна за вашу помощь." }, { ...plan, authorGender: "UNKNOWN" }).authorGender).toBe("FEMALE");
   });
 
+  it("uses informal address for one child unless the draft explicitly requests VY", () => {
+    const firstGradeInput = {
+      ...input,
+      recipientName: "Миша",
+      occasionText: "Поступление в первый класс",
+      draftNotes: "Пусть ходит в школу с удовольствием и подружится с одноклассниками."
+    };
+    const childRoleInput = { ...input, recipientName: "Любимая внучка", occasionText: "День рождения", draftNotes: "Желаем радости и новых открытий." };
+    const childAgeInput = { ...input, recipientName: "Лена", occasionText: "Исполнилось 7 лет", draftNotes: "Желаем радости и новых открытий." };
+
+    expect(stabilizeGreetingSemanticPlan(firstGradeInput, { ...plan, addressForm: "VY", recipientNumber: "ONE" }).addressForm).toBe("TY");
+    expect(stabilizeGreetingSemanticPlan(childRoleInput, { ...plan, addressForm: "VY", recipientNumber: "ONE" }).addressForm).toBe("TY");
+    expect(stabilizeGreetingSemanticPlan(childAgeInput, { ...plan, addressForm: "VY", recipientNumber: "ONE" }).addressForm).toBe("TY");
+    expect(stabilizeGreetingSemanticPlan({ ...firstGradeInput, draftNotes: "Миша, желаем вам интересной учёбы в первом классе." }, { ...plan, addressForm: "TY", recipientNumber: "ONE" }).addressForm).toBe("VY");
+    expect(stabilizeGreetingSemanticPlan(firstGradeInput, { ...plan, addressForm: "TY", recipientNumber: "MANY" }).addressForm).toBe("VY");
+  });
+
   it("keeps the existing prompt unchanged under the default profile", () => {
     vi.stubEnv("AI_GREETING_PROMPT_PROFILE", "default");
     const extractor = buildExtractorPrompt(input);

@@ -4,7 +4,7 @@ import type { AiJoinAction } from "@/lib/ai/types";
 
 export const GREETING_EXTRACTOR_PROMPT_VERSION = "semantic-extractor-v3";
 export const GREETING_COMPOSER_PROMPT_VERSION = "semantic-composer-v5";
-export const YANDEX_GREETING_EXTRACTOR_PROMPT_VERSION = "yandex-semantic-extractor-v4";
+export const YANDEX_GREETING_EXTRACTOR_PROMPT_VERSION = "yandex-semantic-extractor-v5";
 export const YANDEX_GREETING_COMPOSER_PROMPT_VERSION = "yandex-semantic-composer-v5";
 export const YANDEX_PLANNED_GREETING_COMPOSER_PROMPT_VERSION = "yandex-semantic-composer-v6-planned";
 
@@ -70,6 +70,15 @@ export type SingleComposerPrompt = {
 export const normalizeGreetingInput = (input: LadderRawInput) => ({ ...input, recipientName: input.recipientName.trim(), occasionText: input.occasionText.trim(), fromLabel: input.fromLabel?.trim(), draftNotes: input.draftNotes.replace(/\r\n?/g, "\n").replace(/\n[\t ]*\n+/g, "\n\n").trim() });
 export const getComposerLimits = (messageLimit: number) => ({ safe: messageLimit, warm: messageLimit, expressive: messageLimit });
 const hasStandalone = (value: string, alternatives: string) => new RegExp(`(?:^|[^\\p{L}])(?:${alternatives})(?=$|[^\\p{L}])`, "iu").test(value);
+const childRecipientRolePattern = /(?:^|[^\p{L}])(?:реб[её]нок|мальчик|девочка|сын|дочка|дочь|внук|внучка|крестник|крестница|племянник|племянница|школьник|школьница|первоклассник|первоклассница)(?=$|[^\p{L}])/iu;
+const childMilestonePattern = /(?:перв(?:ый|ого|ым|ом)\s+класс|ид[её]т\s+в\s+(?:перв(?:ый|ого)\s+)?класс|пойд[её]т\s+в\s+(?:перв(?:ый|ого)\s+)?класс|поступ(?:ает|ил[аи]?)\s+в\s+школу|перв(?:ый|ого)\s+школьн(?:ый|ого)\s+день|первоклассни(?:к|ца|ку|це|ка|цу|ком|цей)|начал(?:о|ом)\s+школьной\s+жизни)/iu;
+const childAgePattern = /(?:исполнил(?:ось|ся|ась)?|исполняется|стукнуло)\s+(?:[1-9]|1[0-7])\s+лет|(?:^|[^\d])(?:[1-9]|1[0-7])[- ]лети(?:е|ем)(?=$|[^\p{L}])/iu;
+const hasClearlyChildRecipientContext = (input: LadderRawInput) => {
+  const context = `${input.occasionText}\n${input.draftNotes}`;
+  return childRecipientRolePattern.test(input.recipientName)
+    || childMilestonePattern.test(context)
+    || childAgePattern.test(context);
+};
 export const stabilizeGreetingSemanticPlan = (input: LadderRawInput, plan: GreetingSemanticPlan): GreetingSemanticPlan => {
   const draft = input.draftNotes;
   const hasSingularAuthor = hasStandalone(draft, "я|мне|меня|мной|желаю|благодарю|поздравляю");
@@ -77,7 +86,17 @@ export const stabilizeGreetingSemanticPlan = (input: LadderRawInput, plan: Greet
   const authorVoice = hasSingularAuthor && hasPluralAuthor ? "AMBIGUOUS" : hasSingularAuthor ? "I" : hasPluralAuthor ? "WE" : plan.authorVoice;
   const hasTy = hasStandalone(draft, "ты|тебе|тебя|тобой|тво[йяеёим][а-яё]*");
   const hasVy = hasStandalone(draft, "вы|вам|вас|вами|ваш[а-яё]*");
-  const addressForm = plan.recipientNumber === "MANY" ? "VY" : hasTy && hasVy ? "AMBIGUOUS" : hasTy ? "TY" : hasVy ? "VY" : plan.addressForm;
+  const addressForm = plan.recipientNumber === "MANY"
+    ? "VY"
+    : hasTy && hasVy
+      ? "AMBIGUOUS"
+      : hasTy
+        ? "TY"
+        : hasVy
+          ? "VY"
+          : plan.recipientNumber === "ONE" && hasClearlyChildRecipientContext(input)
+            ? "TY"
+            : plan.addressForm;
   const hasMaleAuthor = hasStandalone(draft, "благодарен|рад|счастлив|уверен|хотел|решил");
   const hasFemaleAuthor = hasStandalone(draft, "благодарна|рада|счастлива|уверена|хотела|решила");
   const authorGender = hasMaleAuthor === hasFemaleAuthor ? "UNKNOWN" : hasMaleAuthor ? "MALE" : "FEMALE";
@@ -147,7 +166,7 @@ const yandexExtractorRules = `
 Порядок проверки перед ответом:
 1. recipientNumber определяется по полю «Кому» и адресатам в черновике. «Сосед», «мама», одно имя — ONE. «Родители», «выпускники», два имени через «и», семья или группа — MANY. Форма «поздравляем» описывает автора и не делает одного адресата группой.
 2. authorVoice определяется только по словам автора в черновике: «я», «мне», «желаю», «благодарю» — I; «мы», «нас», «желаем», «благодарим», «поздравляем» — WE. Если одновременно есть явные признаки I и WE — AMBIGUOUS. Если признаков нет — NEUTRAL. Не определяй голос по подписи.
-3. addressForm описывает обращение к получателю: «ты/тебе/тебя/твой» — TY; «вы/вам/вас/ваш» — VY. Для нескольких адресатов форма всегда VY. Не путай addressForm с authorVoice.
+3. addressForm описывает обращение к получателю: «ты/тебе/тебя/твой» — TY; «вы/вам/вас/ваш» — VY. Для нескольких адресатов форма всегда VY. Для одного ребёнка, однозначно определённого по роли, детскому возрасту или событию детства, выбирай TY, если черновик явно не требует «вы». Не путай addressForm с authorVoice.
 4. Просьба о юморе — editorialIntent.humor: «лёгкий/немного» означает LIGHT; явная просьба сделать очень смешно — EXPRESSIVE. Сам факт смешного эпизода без просьбы не означает юмор.
 
 Выделяй coreFacts атомарно: один срок, эпизод, поступок, действие или индивидуальная деталь — один факт. Не объединяй разные конкретные детали, если одна из них может потеряться при пересказе.

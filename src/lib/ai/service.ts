@@ -779,7 +779,7 @@ export const generateParticipantMessage = async (input: AiGenerationInput): Prom
         buildExtractorPrompt(stageInput, joinPromptProfile),
         { model: joinExtractorModel, transport: structuredTransport }
       );
-      const stabilizedPlan = cachedPlan?.plan ?? stabilizeGreetingSemanticPlan(stageInput, extractor!.plan);
+      const stabilizedPlan = stabilizeGreetingSemanticPlan(stageInput, cachedPlan?.plan ?? extractor!.plan);
       const detailTokens = new Set((input.requiredDetail?.toLocaleLowerCase("ru-RU").match(/[\p{L}]{4,}/gu) ?? []).map((token) => token.slice(0, 4)));
       const plan = input.requiredDetail
         ? {
