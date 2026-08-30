@@ -25,6 +25,8 @@ export type PublicCardShare = {
   publicPhraseCandidateIds: string[];
   photoConsentVersion: string | null;
   photoConsentAcceptedAt: string | null;
+  publicationConfirmationVersion: string | null;
+  publicationConfirmationAcceptedAt: string | null;
   createdAt: string;
   updatedAt: string;
   activatedAt: string | null;

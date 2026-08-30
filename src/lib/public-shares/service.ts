@@ -12,7 +12,8 @@ import { buildUniversalPublicSharePayload, buildUniversalPublicViewModel, toUniv
 import type { PublicCardShare, PublicCardSharePhoto, PublicShareEditorInput, PublicSharePayload } from "./types";
 import type { CardDraft, CardMediaAsset, Contribution } from "@/lib/cards/types";
 
-export const PUBLIC_PHOTO_CONSENT_VERSION = "public-photo-consent-v2";
+export const PUBLIC_PHOTO_CONSENT_VERSION = "public-photo-consent-v3";
+export const PUBLICATION_CONFIRMATION_VERSION = "public-share-publication-v1";
 const publicSharePhotoSlots = new Set(["landscape-a", "landscape-b", "landscape-c", "memory-a", "memory-b", "memory-c"]);
 const PUBLIC_SHARE_PHOTO_LIMIT = 3;
 
@@ -168,7 +169,9 @@ export const savePublicShare = async (finalSlug: string, submitted: PublicShareE
     showGreetingCount: input.showGreetingCount, showPhotoCount: input.showPhotoCount,
     publicSummary: null, publicQualities: editor.publicQualities, publicPhrases: input.publicPhrases,
     photoConsentVersion: input.photoAssetIds.length ? PUBLIC_PHOTO_CONSENT_VERSION : null,
-    photoConsentAcceptedAt: input.photoAssetIds.length ? new Date().toISOString() : null
+    photoConsentAcceptedAt: input.photoAssetIds.length ? new Date().toISOString() : null,
+    publicationConfirmationVersion: share.status === "ACTIVE" ? PUBLICATION_CONFIRMATION_VERSION : share.publicationConfirmationVersion,
+    publicationConfirmationAcceptedAt: share.status === "ACTIVE" ? new Date().toISOString() : share.publicationConfirmationAcceptedAt
   };
   const allowedAssets = new Map(editor.mediaAssets.map((asset) => [asset.id, asset]));
   const selectedAssets = input.photoAssetIds.map((id) => allowedAssets.get(id)).filter((item): item is NonNullable<typeof item> => Boolean(item));
@@ -221,7 +224,7 @@ export const publishPublicShareForFinalSlug = async (finalSlug: string) => {
   }
   if (editor.share.publicPhrases.length !== 3) throw new Error("Для публикации выберите ровно три тёплые фразы.");
   const token = createPublicShareToken(editor.share.id);
-  const share = await activatePublicShare(editor.share.id, hashPublicShareToken(token));
+  const share = await activatePublicShare(editor.share.id, hashPublicShareToken(token), PUBLICATION_CONFIRMATION_VERSION);
   if (!share) throw new Error("Не удалось опубликовать публичную версию.");
   return { share, token };
 };

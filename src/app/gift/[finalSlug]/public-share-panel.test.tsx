@@ -74,6 +74,8 @@ const makeShare = (status: PublicCardShare["status"]): PublicCardShare => ({
   publicPhraseCandidateIds: [],
   photoConsentVersion: "v1",
   photoConsentAcceptedAt: "2024-01-01T00:00:00.000Z",
+  publicationConfirmationVersion: "publication-v1",
+  publicationConfirmationAcceptedAt: "2024-01-02T00:00:00.000Z",
   createdAt: "2024-01-01T00:00:00.000Z",
   updatedAt: "2024-01-01T00:00:00.000Z",
   activatedAt: status === "ACTIVE" ? "2024-01-02T00:00:00.000Z" : null,
@@ -293,7 +295,7 @@ describe("PublicSharePanel: выбор фото", () => {
   it("скрывает секцию согласия, пока не выбрано ни одного фото", () => {
     renderPanel(photoProps());
 
-    expect(screen.queryByText("Разрешение на публикацию фотографий")).not.toBeInTheDocument();
+    expect(screen.queryByText("Фотографии на странице")).not.toBeInTheDocument();
   });
 
   it("показывает inline-ошибку и блокирует сохранение без галки согласия", async () => {
@@ -302,12 +304,12 @@ describe("PublicSharePanel: выбор фото", () => {
 
     await user.click(unselectedPhotoCards()[0]);
 
-    expect(screen.getByText("Разрешение на публикацию фотографий")).toBeInTheDocument();
+    expect(screen.getByText("Фотографии на странице")).toBeInTheDocument();
     expect(screen.getByText("Без подтверждения нельзя сохранить публичные фотографии.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Создать черновик" })).toBeDisabled();
     expect(screen.getAllByRole("button", { name: "Посмотреть перед публикацией" })[0]).toBeDisabled();
 
-    await user.click(screen.getByRole("checkbox", { name: /подтверждаю, что могу разместить/i }));
+    await user.click(screen.getByRole("checkbox", { name: /подтверждаю, что могу использовать/i }));
 
     expect(screen.queryByText("Без подтверждения нельзя сохранить публичные фотографии.")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Создать черновик" })).toBeEnabled();
@@ -318,7 +320,7 @@ describe("PublicSharePanel: выбор фото", () => {
     renderPanel({ ...photoProps(), requiresThreePhotos: true });
 
     await user.click(unselectedPhotoCards()[0]);
-    await user.click(screen.getByRole("checkbox", { name: /подтверждаю, что могу разместить/i }));
+    await user.click(screen.getByRole("checkbox", { name: /подтверждаю, что могу использовать/i }));
 
     expect(screen.getByText("Для блока «Моменты» выберите ровно три фотографии или снимите выбор со всех.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Создать черновик" })).toBeDisabled();
@@ -384,6 +386,7 @@ describe("PublicSharePanel: DRAFT", () => {
 
     expect(screen.getAllByRole("button", { name: "Опубликовать публичную страницу" })).toHaveLength(1);
     expect(publishPublicShareAction).not.toHaveBeenCalled();
+    expect(screen.getByText("Публикуя страницу, вы подтверждаете право размещать выбранные материалы.")).toBeInTheDocument();
   });
 });
 

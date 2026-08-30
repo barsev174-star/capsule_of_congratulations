@@ -32,6 +32,8 @@ const row = {
   email: input.email,
   source_card_id: input.sourceCardId,
   dedupe_key: input.dedupeKey,
+  consent_version: "2026-09-01",
+  consent_accepted_at: "2026-07-03T10:00:00.000Z",
   cancel_token_hash: "token-hash",
   confirmation_sent_at: null,
   attempt_count: 0,
@@ -54,8 +56,10 @@ describe("event reminder repository", () => {
     expect(result.created).toBe(true);
     expect(result.reminder.schedule).toBe("confirmation_only");
     expect(result.reminder.remindOn).toBeNull();
+    expect(result.reminder.consentVersion).toBe("2026-09-01");
     expect(result.cancellationToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
-    expect(query.mock.calls[0][1]).toEqual(expect.arrayContaining([null, "confirmation_only"]));
+    expect(query.mock.calls[0][0]).toContain("consent_version, consent_accepted_at");
+    expect(query.mock.calls[0][1]).toEqual(expect.arrayContaining([null, "confirmation_only", "2026-09-01"]));
   });
 
   it("returns the existing reminder when the dedupe key already exists", async () => {

@@ -4,5 +4,6 @@ export const LEGAL_VERSIONS = {
   refunds: "2026-07-15",
   analyticsConsent: "2026-08-26",
   participantConsent: "2026-07-15",
+  reminderConsent: "2026-09-01",
   materialRights: "2026-07-15"
 } as const;

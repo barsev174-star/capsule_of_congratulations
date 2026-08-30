@@ -27,6 +27,7 @@ export const extractProductUrl = (rawInput: string) => {
 };
 
 const trackingParamPattern = /^(utm_|yclid|gclid|dclid|fbclid|gbraid|wbraid|mc_cid|mc_eid|igshid|_openstat|ysclid|erid$|srsltid)/i;
+const privateParamPattern = /^(email|e-?mail|phone|tel|first_?name|last_?name|user_?id|uid|access_?token|auth|authorization|password|secret|session_?id)$/i;
 
 // Returns a safe canonical product URL: keeps the path and product-identifying
 // parameters, drops fragments and advertising/analytics parameters.
@@ -36,7 +37,7 @@ export const cleanProductUrl = (value: string) => {
     if (url.protocol !== "http:" && url.protocol !== "https:") return null;
     url.hash = "";
     for (const key of [...url.searchParams.keys()]) {
-      if (trackingParamPattern.test(key)) url.searchParams.delete(key);
+      if (trackingParamPattern.test(key) || privateParamPattern.test(key)) url.searchParams.delete(key);
     }
     return url.toString();
   } catch { return null; }
@@ -139,7 +140,9 @@ const partial = (extractedUrl: string, resolvedUrl: string, fallback: { title: s
 export const previewGiftLink = async (rawInput: string): Promise<GiftLinkPreview> => {
   const extractedUrl = extractProductUrl(rawInput);
   if (!extractedUrl) return { extractedUrl: "", resolvedUrl: "", metadata: { title: null, description: null, imageUrl: null, price: null, storeName: null }, warnings: ["URL_NOT_FOUND"] };
-  let current = new URL(extractedUrl);
+  // Fetch the same public product page without advertising identifiers or
+  // accidentally pasted personal/session parameters.
+  let current = new URL(cleanProductUrl(extractedUrl) ?? extractedUrl);
   const copied = copiedTextFallback(rawInput, extractedUrl);
   try {
     for (let attempt = 0; attempt <= MAX_REDIRECTS; attempt += 1) {

@@ -2,6 +2,7 @@ import { createHash, createHmac, randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { getPostgresPool, isPostgresConfigured } from "@/lib/db/postgres";
+import { LEGAL_VERSIONS } from "@/lib/legal/versions";
 import type {
   CreateEventReminderInput,
   EventReminder,
@@ -30,6 +31,8 @@ type EventReminderRow = {
   email: string;
   source_card_id: string | null;
   dedupe_key: string;
+  consent_version: string | null;
+  consent_accepted_at: Date | string | null;
   cancel_token_hash: string | null;
   confirmation_sent_at: Date | string | null;
   attempt_count: number;
@@ -56,6 +59,8 @@ const mapRow = (row: EventReminderRow): EventReminder => ({
   email: row.email,
   sourceCardId: row.source_card_id,
   dedupeKey: row.dedupe_key,
+  consentVersion: row.consent_version ?? null,
+  consentAcceptedAt: toIso(row.consent_accepted_at ?? null),
   cancellationTokenHash: row.cancel_token_hash,
   confirmationSentAt: toIso(row.confirmation_sent_at),
   attemptCount: row.attempt_count ?? 0,
@@ -75,6 +80,8 @@ const readJson = async (): Promise<EventReminder[]> => {
       schedule: item.schedule ?? "seven_days_before",
       cancellationTokenHash: item.cancellationTokenHash ?? null,
       confirmationSentAt: item.confirmationSentAt ?? null,
+      consentVersion: item.consentVersion ?? null,
+      consentAcceptedAt: item.consentAcceptedAt ?? null,
       attemptCount: item.attemptCount ?? 0,
       lockedAt: item.lockedAt ?? null
     })) as EventReminder[];
@@ -112,6 +119,8 @@ export const createEventReminder = async (
   const item: EventReminder = {
     id,
     ...input,
+    consentVersion: LEGAL_VERSIONS.reminderConsent,
+    consentAcceptedAt: now,
     status: "pending",
     cancellationTokenHash,
     confirmationSentAt: null,
@@ -127,8 +136,8 @@ export const createEventReminder = async (
     const result = await getPostgresPool().query<EventReminderRow>(
       `INSERT INTO event_reminders
         (id, recipient_name, occasion_text, event_date, remind_on, schedule, email, source_card_id, dedupe_key,
-         cancel_token_hash, status, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         consent_version, consent_accepted_at, cancel_token_hash, status, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        ON CONFLICT (dedupe_key) DO NOTHING
        RETURNING *`,
       [
@@ -141,6 +150,8 @@ export const createEventReminder = async (
         item.email,
         item.sourceCardId,
         item.dedupeKey,
+        item.consentVersion,
+        item.consentAcceptedAt,
         item.cancellationTokenHash,
         item.status,
         now,

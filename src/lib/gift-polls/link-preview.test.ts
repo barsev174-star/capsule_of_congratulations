@@ -13,6 +13,10 @@ describe("cleanProductUrl", () => {
     expect(cleanProductUrl("https://example.com/catalog/item?id=42&utm_source=email&yclid=123&gclid=9&fbclid=7#reviews"))
       .toBe("https://example.com/catalog/item?id=42");
   });
+  it("drops accidentally pasted personal and session parameters", () => {
+    expect(cleanProductUrl("https://example.com/p/1?sku=42&email=user%40example.com&session_id=secret&access_token=token"))
+      .toBe("https://example.com/p/1?sku=42");
+  });
   it("keeps a clean URL unchanged", () => {
     expect(cleanProductUrl("https://example.com/p/1")).toBe("https://example.com/p/1");
   });
@@ -64,6 +68,7 @@ describe("previewGiftLink", () => {
     vi.stubGlobal("fetch", fetchMock);
     const preview = await previewGiftLink("https://example.com/catalog/lodki/akva-2900/?utm_source=x#y");
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0].toString()).toBe("https://example.com/catalog/lodki/akva-2900/");
     expect(preview.metadata.title).toBe("Лодка ПВХ Аква 2900 слань-киль");
     expect(preview.metadata.price).toEqual({ amount: 40050, currency: "RUB" });
     expect(preview.metadata.imageUrl).toBe("https://cdn.example.com/products/akva-2900.jpg");

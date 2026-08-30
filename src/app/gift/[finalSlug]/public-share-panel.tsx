@@ -330,11 +330,11 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
           ) : null}
           {mediaAssets.length > 0 && selectedPhotoIds.length > 0 ? (
             <section className={styles.card} aria-labelledby="share-section-consent">
-              <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">5</span><h3 id="share-section-consent">Разрешение на публикацию фотографий</h3></header>
-              <p className={styles.cardHint}>Выбранные фотографии смогут увидеть все, у кого есть ссылка на публичную страницу.</p>
+              <header className={styles.cardHeader}><span className={styles.cardNumber} aria-hidden="true">5</span><h3 id="share-section-consent">Фотографии на странице</h3></header>
+              <p className={styles.cardHint}>Выбранные фотографии увидят все, у кого есть ссылка.</p>
               <label className={styles.consent}>
                 <input type="checkbox" name="photoConsentAccepted" checked={photoConsent} onChange={(event) => setPhotoConsent(event.target.checked)} aria-invalid={consentError} aria-describedby={consentError ? "photo-consent-error" : undefined} />
-                <span>Подтверждаю, что могу разместить выбранные фотографии на странице, доступной по ссылке, и при необходимости получил согласие изображённых лиц.</span>
+                <span>Подтверждаю, что могу использовать выбранные фотографии.</span>
               </label>
               {consentError ? <p className={styles.consentError} id="photo-consent-error">Без подтверждения нельзя сохранить публичные фотографии.</p> : null}
             </section>
@@ -344,7 +344,10 @@ export function PublicSharePanel({ finalSlug, defaultDisplayName, share, photos,
           {state.shareUrl ? <p className={styles.success}>Ссылка: <a href={state.shareUrl} target="_blank" rel="noreferrer">Открыть публичную страницу</a></p> : null}
           <div className={styles.actionBar}>
             <div className={styles.actionBarInner}>
-              <p className={`${styles.saveStatus} ${hasUnsavedChanges ? styles.saveStatusDirty : ""}`} role="status">{saveStatusText}</p>
+              <div className={styles.actionContext}>
+                <p className={`${styles.saveStatus} ${hasUnsavedChanges ? styles.saveStatusDirty : ""}`} role="status">{saveStatusText}</p>
+                <p className={styles.publicationNote}>Публикуя страницу, вы подтверждаете право размещать выбранные материалы.</p>
+              </div>
               <div className={styles.actionButtons}>
                 <button type="submit" className={styles.saveButton} disabled={saveDisabled} onClick={() => { setPreviewRequested(false); setPublishRequested(false); }}>{pending ? "Сохраняем…" : share ? "Сохранить изменения" : "Создать черновик"}</button>
                 {publishButton}

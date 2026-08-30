@@ -11,6 +11,8 @@ export type EventReminder = {
   email: string;
   sourceCardId: string | null;
   dedupeKey: string;
+  consentVersion: string | null;
+  consentAcceptedAt: string | null;
   cancellationTokenHash: string | null;
   confirmationSentAt: string | null;
   attemptCount: number;

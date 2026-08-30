@@ -6,7 +6,9 @@ type ShareRow = {
   id: string; card_id: string; token_hash: string | null; status: "DRAFT" | "ACTIVE" | "REVOKED"; payload_version: 1 | 2;
   display_name: string | null; headline_preset: PublicShareHeadlinePreset; show_occasion: boolean; show_event_date: boolean; show_greeting_count: boolean;
   show_photo_count: boolean; public_summary: string | null; public_qualities: PublicShareQuality[]; public_phrases: PublicSharePhrase[];
-  show_public_name: boolean; public_phrase_candidate_ids: string[]; photo_consent_version: string | null; photo_consent_accepted_at: Date | string | null; created_at: Date | string; updated_at: Date | string; activated_at: Date | string | null; revision: number; revoked_at: Date | string | null; revoked_by: string | null;
+  show_public_name: boolean; public_phrase_candidate_ids: string[]; photo_consent_version: string | null; photo_consent_accepted_at: Date | string | null;
+  publication_confirmation_version: string | null; publication_confirmation_accepted_at: Date | string | null;
+  created_at: Date | string; updated_at: Date | string; activated_at: Date | string | null; revision: number; revoked_at: Date | string | null; revoked_by: string | null;
 };
 
 type PhotoRow = {
@@ -24,6 +26,8 @@ const mapShare = (row: ShareRow): PublicCardShare => ({
   showGreetingCount: row.show_greeting_count, showPhotoCount: row.show_photo_count, publicSummary: row.public_summary,
   publicQualities: array<PublicShareQuality>(row.public_qualities), publicPhrases: array<PublicSharePhrase>(row.public_phrases), publicPhraseCandidateIds: array<string>(row.public_phrase_candidate_ids),
   photoConsentVersion: row.photo_consent_version, photoConsentAcceptedAt: iso(row.photo_consent_accepted_at),
+  publicationConfirmationVersion: row.publication_confirmation_version ?? null,
+  publicationConfirmationAcceptedAt: iso(row.publication_confirmation_accepted_at ?? null),
   createdAt: iso(row.created_at)!, updatedAt: iso(row.updated_at)!, activatedAt: iso(row.activated_at), revision: row.revision, revokedAt: iso(row.revoked_at), revokedBy: row.revoked_by
 });
 
@@ -95,10 +99,11 @@ export const updatePublicShare = async (share: PublicCardShare) => {
     `UPDATE public_card_shares SET display_name = $2, headline_preset = $3, show_occasion = $4, show_event_date = $5, show_greeting_count = $6,
       show_photo_count = $7, public_summary = $8, public_qualities = $9::jsonb, public_phrases = $10::jsonb,
       photo_consent_version = $11, photo_consent_accepted_at = $12, payload_version = $13,
+      publication_confirmation_version = $14, publication_confirmation_accepted_at = $15,
       updated_at = now() WHERE id = $1 AND status IN ('DRAFT', 'ACTIVE') RETURNING *`,
     [share.id, share.displayName, share.headlinePreset, share.showOccasion, share.showEventDate, share.showGreetingCount, share.showPhotoCount,
       share.publicSummary, JSON.stringify(share.publicQualities), JSON.stringify(share.publicPhrases), share.photoConsentVersion, share.photoConsentAcceptedAt,
-      share.payloadVersion]
+      share.payloadVersion, share.publicationConfirmationVersion, share.publicationConfirmationAcceptedAt]
   );
   return result.rows[0] ? mapShare(result.rows[0]) : null;
 };
@@ -108,10 +113,13 @@ export const revokePublicShare = async (shareId: string) => {
   return result.rows[0] ? mapShare(result.rows[0]) : null;
 };
 
-export const activatePublicShare = async (shareId: string, tokenHash: string) => {
+export const activatePublicShare = async (shareId: string, tokenHash: string, confirmationVersion: string) => {
   const result = await getPostgresPool().query<ShareRow>(
-    "UPDATE public_card_shares SET status = 'ACTIVE', token_hash = $2, activated_at = now(), revision = revision + 1, updated_at = now() WHERE id = $1 AND status = 'DRAFT' RETURNING *",
-    [shareId, tokenHash]
+    `UPDATE public_card_shares
+     SET status = 'ACTIVE', token_hash = $2, activated_at = now(), revision = revision + 1,
+         publication_confirmation_version = $3, publication_confirmation_accepted_at = now(), updated_at = now()
+     WHERE id = $1 AND status = 'DRAFT' RETURNING *`,
+    [shareId, tokenHash, confirmationVersion]
   );
   return result.rows[0] ? mapShare(result.rows[0]) : null;
 };
