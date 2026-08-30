@@ -475,7 +475,28 @@ const GiftIntroAssembled = ({
               <div className={styles.stageShadow} />
               <div className={styles.envelopeRig} aria-hidden="true">
                 <div className={styles.openEnvelopeFlap} data-envelope-flap="true">
-                  <Image src="/assets/gift/envelope-open.png" alt="" fill sizes="520px" priority />
+                  <div className={styles.envelopeFlapPlane}>
+                    <div className={`${styles.envelopeFlapFace} ${styles.envelopeFlapOuterFace}`}>
+                      <Image
+                        className={`${styles.envelopeFlapArtwork} ${styles.envelopeFlapOuterArtwork}`}
+                        src="/assets/gift/envelope-closed.png"
+                        alt=""
+                        fill
+                        sizes="520px"
+                        priority
+                      />
+                    </div>
+                    <div className={`${styles.envelopeFlapFace} ${styles.envelopeFlapInnerFace}`}>
+                      <Image
+                        className={`${styles.envelopeFlapArtwork} ${styles.envelopeFlapInnerArtwork}`}
+                        src="/assets/gift/envelope-open.png"
+                        alt=""
+                        fill
+                        sizes="520px"
+                        priority
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div className={styles.openEnvelopeBack}>
                   <Image src="/assets/gift/envelope-open.png" alt="" fill sizes="520px" priority />
@@ -583,17 +604,9 @@ const GiftIntroAssembled = ({
                     sizes="520px"
                     priority
                   />
-                  <Image
-                    className={styles.envelopeFrontSealArtwork}
-                    src="/assets/gift/envelope-open.png"
-                    alt=""
-                    fill
-                    sizes="520px"
-                    priority
-                  />
                 </div>
-                <div className={styles.closedEnvelopeArtwork} data-closed-envelope-artwork="true">
-                  <Image src="/assets/gift/envelope-closed.png" alt="" fill sizes="520px" priority />
+                <div className={styles.envelopeSealArtwork} data-envelope-seal-artwork="true">
+                  <Image src="/assets/gift/envelope-open.png" alt="" fill sizes="520px" priority />
                 </div>
                 <div className={styles.sealGlint} data-seal-glint="true" />
               </div>

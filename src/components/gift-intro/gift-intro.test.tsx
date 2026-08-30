@@ -44,9 +44,9 @@ describe("GiftIntro", () => {
     expect(document.querySelectorAll('[data-gift-intro-preview="lightweight"]')).toHaveLength(1);
     expect(document.querySelectorAll('img[src*="envelope-closed.png"]')).toHaveLength(1);
     expect(document.querySelectorAll('img[src*="envelope-open.png"]')).toHaveLength(4);
-    expect(document.querySelectorAll('[data-closed-envelope-artwork="true"]')).toHaveLength(1);
+    expect(document.querySelectorAll('[data-closed-envelope-artwork="true"]')).toHaveLength(0);
     expect(document.querySelectorAll('[data-envelope-flap="true"]')).toHaveLength(1);
-    expect(document.querySelectorAll('[data-envelope-seal-artwork="true"]')).toHaveLength(0);
+    expect(document.querySelectorAll('[data-envelope-seal-artwork="true"]')).toHaveLength(1);
     expect(document.querySelector('[data-envelope-pocket-mask="true"]')).toBeInTheDocument();
     expect(document.querySelector('[data-seal-glint="true"]')).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Открыть конверт для Анна" })).toBeInTheDocument();
