@@ -22,6 +22,26 @@ const report: AcquisitionAnalytics = {
   participants: { submissions: 10, identities: 3, unidentifiedSubmissions: 2 }
 };
 
+const emptySummary = {
+  totalEvents: 0,
+  uniqueCards: 0,
+  criticalErrors: 0,
+  recentCritical: [],
+  aiCost: {
+    generations: 0,
+    cards: 0,
+    totalRub: 0,
+    averageGenerationRub: 0,
+    averageCardRub: 0,
+    extractorRub: 0,
+    composerRub: 0,
+    repairRub: 0,
+    repairs: 0,
+    cacheHits: 0,
+    recent: []
+  }
+};
+
 describe("acquisition report UI", () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -36,11 +56,53 @@ describe("acquisition report UI", () => {
   it("switches both reports to the requested period and exposes the selected link", async () => {
     pageMocks.authorize.mockResolvedValue({ role: "admin" });
     pageMocks.acquisition.mockResolvedValue(report);
-    pageMocks.summary.mockResolvedValue({ totalEvents: 0, uniqueCards: 0, criticalErrors: 0, recentCritical: [], aiCost: { generations: 0 } });
+    pageMocks.summary.mockResolvedValue(emptySummary);
     render(await AnalyticsPage({ searchParams: Promise.resolve({ days: "30" }) }));
     expect(pageMocks.acquisition).toHaveBeenCalledWith(30);
     expect(pageMocks.summary).toHaveBeenCalledWith(30);
     expect(screen.getByRole("link", { name: "30 дней" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("shows the cost of each AI stage and recent generation details", async () => {
+    pageMocks.authorize.mockResolvedValue({ role: "admin" });
+    pageMocks.acquisition.mockResolvedValue(report);
+    pageMocks.summary.mockResolvedValue({
+      ...emptySummary,
+      aiCost: {
+        generations: 1,
+        cards: 1,
+        totalRub: 1.25,
+        averageGenerationRub: 1.25,
+        averageCardRub: 1.25,
+        extractorRub: 0.2,
+        composerRub: 0.9,
+        repairRub: 0.15,
+        repairs: 1,
+        cacheHits: 0,
+        recent: [{
+          id: "event-1",
+          event: "ai.join_single_generation",
+          cardId: "12345678-1234-1234-1234-123456789012",
+          createdAt: "2026-08-30T09:00:00.000Z",
+          action: "initial",
+          extractorModel: "gpt://folder/yandexgpt-5.1",
+          composerModel: "gpt://folder/yandexgpt-5.1",
+          cacheHit: false,
+          extractor: { totalRub: 0.2, inputTokens: 100, cachedInputTokens: 0, outputTokens: 40, totalTokens: 140 },
+          composer: { totalRub: 0.9, inputTokens: 300, cachedInputTokens: 0, outputTokens: 120, totalTokens: 420 },
+          repair: { totalRub: 0.15, inputTokens: 50, cachedInputTokens: 0, outputTokens: 20, totalTokens: 70 },
+          repairCount: 1,
+          repairReasons: ["missing_wish"],
+          totalCostRub: 1.25
+        }]
+      }
+    });
+
+    render(await AnalyticsPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByRole("region", { name: "Детализация расходов на ИИ, таблица" })).toBeInTheDocument();
+    expect(screen.getByText("Первый текст")).toBeInTheDocument();
+    expect(screen.getAllByText("1.250 ₽").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/yandexgpt-5\.1/)).toHaveLength(2);
   });
 
   it("separates the card cohort, SEO events and participant counts", () => {

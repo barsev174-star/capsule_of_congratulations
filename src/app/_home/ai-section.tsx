@@ -1,101 +1,52 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import styles from "./ai-section.module.css";
 
 const draftText =
   "Хочу поздравить коллегу Машу с днем рождения. Она всегда всё помнит, напоминает когда мы что-то забываем. Когда я пришел в команду помогла разобраться, отвечала на миллион вопросов. Пожелать здоровья, путешествий, меньше срочных задач и больше времени на себя. Можно пошутить про календарь и дедлайны.";
 
-// Каждый вариант не длиннее 240 символов (214 / 209 / 203)
+// Основной текст создаётся первым; другие версии пользователь запрашивает при необходимости.
 const variants: Array<[string, string]> = [
   [
-    "Аккуратно",
+    "Готовый текст",
     "Маша, с днём рождения! Спасибо, что помнишь о важном и всегда готова помочь. Когда я пришёл в команду, ты помогла мне освоиться и терпеливо отвечала на вопросы. Желаю здоровья, путешествий и больше времени на себя!"
   ],
   [
-    "Теплее",
+    "+ Теплее",
     "Маша, с днём рождения! Спасибо за твою внимательность, терпение и поддержку. Благодаря тебе мне было легче освоиться в команде. Желаю здоровья, ярких путешествий, меньше срочных задач и больше времени на себя!"
   ],
   [
-    "Живее",
+    "+ Творческий",
     "Маша, с днём рождения! Ты помнишь всё за себя и, кажется, ещё за половину команды. Спасибо, что помогла мне освоиться. Желаю здоровья, путешествий и отпуска, который дедлайны не смогут найти в календаре!"
   ]
 ];
 
 export function AiSection() {
-  const sectionRef = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
   const [chosen, setChosen] = useState(false);
-  const autoRef = useRef<{ stopped: boolean; timers: number[] }>({ stopped: false, timers: [] });
-
-  const stopAuto = () => {
-    autoRef.current.stopped = true;
-    autoRef.current.timers.forEach((timer) => window.clearTimeout(timer));
-    autoRef.current.timers = [];
-  };
-
-  // Один спокойный проход Аккуратно → Теплее → Живее
-  const scheduleCycle = () => {
-    if (autoRef.current.stopped) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    autoRef.current.timers.push(
-      window.setTimeout(() => {
-        if (!autoRef.current.stopped) setActive(1);
-      }, 1700)
-    );
-    autoRef.current.timers.push(
-      window.setTimeout(() => {
-        if (!autoRef.current.stopped) setActive(2);
-      }, 3400)
-    );
-  };
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            observer.disconnect();
-            scheduleCycle();
-          }
-        });
-      },
-      { threshold: 0.3 }
-    );
-    observer.observe(el);
-    return () => {
-      observer.disconnect();
-      stopAuto();
-    };
-  }, []);
 
   const runDemo = () => {
-    stopAuto();
     setChosen(false);
     setActive(0);
-    autoRef.current.stopped = false;
-    scheduleCycle();
   };
 
   const selectTab = (index: number) => {
-    stopAuto();
     setActive(index);
     setChosen(false);
   };
 
   return (
-    <section id="ai" ref={sectionRef} className={styles.section} aria-labelledby="ai-title">
+    <section id="ai" className={styles.section} aria-labelledby="ai-title">
       <div className={styles.shell}>
         <div className={styles.heading}>
           <h2 id="ai-title" className={`${styles.title} text-balance`}>
             Не знаете, как написать красиво?
           </h2>
           <p className={styles.subtitle}>
-            Опишите человека своими словами — ИИ-помощник предложит три готовых варианта поздравления.
+            Опишите человека своими словами — ИИ-помощник соберёт один готовый текст поздравления.
           </p>
-          <p className={styles.meta}>Сохраняет ваши мысли · предлагает три варианта · любой текст можно изменить</p>
+          <p className={styles.meta}>Сохраняет ваши мысли · выдаёт один текст · теплее или творческий — по вашему запросу</p>
         </div>
 
         <div className={`${styles.demo} js-motion-card`}>
@@ -103,7 +54,7 @@ export function AiSection() {
             <span className={styles.sticker}>Ваш черновик</span>
             <p className={styles.sourceText}>{draftText}</p>
             <button type="button" className={styles.demoButton} onClick={runDemo}>
-              Получить варианты <span aria-hidden="true">✦</span>
+              Собрать поздравление <span aria-hidden="true">✦</span>
             </button>
           </article>
 
@@ -117,7 +68,7 @@ export function AiSection() {
 
           <article className={styles.result}>
             <span className={styles.resultHeart} aria-hidden="true">♥</span>
-            <div className={styles.tabs} role="tablist" aria-label="Варианты поздравления">
+            <div className={styles.tabs} role="tablist" aria-label="Версии поздравления по запросу">
               {variants.map(([label], index) => (
                 <button
                   key={label}
@@ -139,7 +90,7 @@ export function AiSection() {
               className={`${styles.select} ${chosen ? styles.selectChosen : ""}`}
               onClick={() => setChosen(true)}
             >
-              {chosen ? "Вариант выбран ✓" : "Выбрать вариант ♡"}
+              {chosen ? "Текст вставлен ✓" : "Вставить в поздравление ♡"}
             </button>
           </article>
         </div>

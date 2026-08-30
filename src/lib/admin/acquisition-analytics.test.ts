@@ -155,8 +155,27 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
   });
 
   it("aggregates over 10,000 events without dropping errors or AI costs", async () => {
-    await event("ai.two_stage_generation", "one", { totalCostRub: 0.25 });
-    await event("ai.two_stage_generation", "one", { totalCostRub: 0.5 });
+    await event("ai.join_single_generation", "one", {
+      action: "initial",
+      extractorModel: "gpt://folder/yandexgpt-5.1",
+      composerModel: "gpt://folder/yandexgpt-5.1",
+      cacheHit: false,
+      extractorUsage: { totalRub: 0.1, inputTokens: 100, outputTokens: 20, totalTokens: 120 },
+      composerUsage: { totalRub: 0.15, inputTokens: 200, outputTokens: 50, totalTokens: 250 },
+      repairUsage: [],
+      totalCostRub: 0.25
+    });
+    await event("ai.join_single_generation", "one", {
+      action: "warmer",
+      extractorModel: "gpt://folder/yandexgpt-5.1",
+      composerModel: "gpt://folder/yandexgpt-5.1",
+      cacheHit: true,
+      extractorUsage: null,
+      composerUsage: { totalRub: 0.3, inputTokens: 240, outputTokens: 60, totalTokens: 300 },
+      repairUsage: [{ totalRub: 0.2, inputTokens: 100, outputTokens: 40, totalTokens: 140 }],
+      repairReason: ["missing_wish"],
+      totalCostRub: 0.5
+    });
     await event("ai.two_stage_generation", "one", { totalCostRub: "not-a-number" });
     await db.query(`INSERT INTO telemetry_events
       SELECT md5('event-' || g)::uuid, 'funnel', 'seo_landing_view', NULL, $1::jsonb, NULL, now()
@@ -169,7 +188,20 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
     expect(summary.totalEvents).toBe(10088);
     expect(summary.criticalErrors).toBe(35);
     expect(summary.recentCritical).toHaveLength(30);
-    expect(summary.aiCost).toEqual({ generations: 2, cards: 1, totalRub: 0.75, averageGenerationRub: 0.375, averageCardRub: 0.75 });
+    expect(summary.aiCost).toMatchObject({
+      generations: 2,
+      cards: 1,
+      totalRub: 0.75,
+      averageGenerationRub: 0.375,
+      averageCardRub: 0.75,
+      extractorRub: 0.1,
+      composerRub: 0.45,
+      repairRub: 0.2,
+      repairs: 1,
+      cacheHits: 1
+    });
+    expect(summary.aiCost.recent).toHaveLength(2);
+    expect(summary.aiCost.recent.map((item) => item.action).sort()).toEqual(["initial", "warmer"]);
   });
 
   it("attributes birthday cards and activity to their own landing", async () => {

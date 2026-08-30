@@ -740,6 +740,7 @@
 .periodSwitch a:active { transform: scale(0.96); }
 .periodSwitch .periodActive { background: var(--a-surface); color: var(--a-text); box-shadow: 0 2px 8px var(--a-shadow); }
 .analyticsPanel { margin-bottom: 20px; }
+.analyticsPanel .panelTitle { text-wrap: balance; }
 .analyticsNote { color: var(--a-muted); font-size: 14px; line-height: 1.6; text-wrap: pretty; }
 .analyticsNote:first-of-type { margin-top: 0; }
 .analyticsNote:last-child { margin-bottom: 0; }
@@ -754,6 +755,14 @@
 .analyticsTable .analyticsSource { min-width: 200px; max-width: 280px; overflow-wrap: anywhere; }
 .analyticsSource span { display: block; margin-top: 5px; color: var(--a-muted); font-weight: 400; }
 .analyticsPanel .tableWrap:focus-visible, .periodSwitch a:focus-visible { outline: 2px solid var(--a-accent); outline-offset: 3px; }
+.analyticsSubheading { margin: 24px 0 12px; color: var(--a-text); font-size: 16px; font-weight: 600; text-wrap: balance; }
+.aiCostTable { min-width: 1260px; }
+.aiCostTable td { vertical-align: middle; }
+.aiModelCell span, .aiCostCell span { display: block; color: var(--a-muted); font-size: 12px; line-height: 1.45; }
+.aiModelCell span + span { margin-top: 3px; }
+.aiCostCell strong, .aiCostTotal { color: var(--a-text); font-weight: 700; font-variant-numeric: tabular-nums; }
+.aiCostCell span { margin-top: 4px; }
+.aiCacheMiss { background: rgba(32, 33, 36, 0.07); color: var(--a-muted); }
 .funnelList { display: grid; gap: 18px; }
 .funnelRow { display: grid; grid-template-columns: minmax(180px, 1.8fr) minmax(100px, 2fr) 140px; align-items: center; gap: 16px; }
 .funnelMeta { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; color: var(--a-text); font-size: 14px; }

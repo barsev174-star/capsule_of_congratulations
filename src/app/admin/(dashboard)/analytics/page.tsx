@@ -10,6 +10,19 @@ const labels: Record<string, string> = {
   "critical.media": "Фото", "critical.publication": "Публикация", "client.unhandled_error": "Браузер"
 };
 
+const aiActionLabels: Record<string, string> = {
+  initial: "Первый текст",
+  warmer: "Сделать теплее",
+  creative: "Творческий",
+  alternative: "Ещё вариант",
+  expand: "Подробнее",
+  shorten: "Короче"
+};
+
+const displayModel = (model: string | null) => model?.split("/").at(-1) ?? "—";
+const formatTokens = (input: number, cached: number, output: number) =>
+  `вход ${input.toLocaleString("ru-RU")}${cached ? `, кэш ${cached.toLocaleString("ru-RU")}` : ""} · выход ${output.toLocaleString("ru-RU")}`;
+
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
   await requireAdminRole("admin");
   const days = (await searchParams).days === "30" ? 30 : 7;
@@ -45,8 +58,57 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           <div className={styles.statCard}><p className={styles.statValue}>{formatAiCost(summary.aiCost.totalRub)}</p><p className={styles.statLabel}>Всего за период</p></div>
           <div className={styles.statCard}><p className={styles.statValue}>{formatAiCost(summary.aiCost.averageGenerationRub)}</p><p className={styles.statLabel}>В среднем за генерацию</p></div>
           <div className={styles.statCard}><p className={styles.statValue}>{formatAiCost(summary.aiCost.averageCardRub)}</p><p className={styles.statLabel}>В среднем на открытку</p></div>
+          <div className={styles.statCard}><p className={styles.statValue}>{formatAiCost(summary.aiCost.extractorRub)}</p><p className={styles.statLabel}>Разбор черновика</p></div>
+          <div className={styles.statCard}><p className={styles.statValue}>{formatAiCost(summary.aiCost.composerRub)}</p><p className={styles.statLabel}>Сборка текста</p></div>
+          <div className={styles.statCard}><p className={styles.statValue}>{formatAiCost(summary.aiCost.repairRub)}</p><p className={styles.statLabel}>Автоисправления</p></div>
         </div>
-        <p className={styles.emptyState}>{summary.aiCost.generations ? `Учтено генераций: ${summary.aiCost.generations}; открыток: ${summary.aiCost.cards}.` : "Данные появятся после первой двухшаговой генерации с новой версией учёта."} Черновики и тексты поздравлений здесь не сохраняются.</p>
+        <p className={styles.analyticsNote}>
+          {summary.aiCost.generations
+            ? `Учтено запусков: ${summary.aiCost.generations}; открыток: ${summary.aiCost.cards}; автоматических исправлений: ${summary.aiCost.repairs}; повторно использован разбор: ${summary.aiCost.cacheHits} раз.`
+            : "Данные появятся после первой генерации с учётом стоимости."}
+          {" "}Черновики и готовые поздравления здесь не сохраняются.
+        </p>
+
+        <h3 className={styles.analyticsSubheading}>Последние запуски</h3>
+        {summary.aiCost.recent.length === 0 ? <p className={styles.emptyState}>За выбранный период запусков с детализацией нет.</p> : (
+          <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Детализация расходов на ИИ, таблица">
+            <table className={`${styles.table} ${styles.analyticsTable} ${styles.aiCostTable}`}>
+              <thead>
+                <tr>
+                  <th>Время</th><th>Операция</th><th>Модели</th><th>Разбор</th><th>Сборка</th><th>Исправления</th><th>Итого</th><th>Кэш</th><th>Открытка</th>
+                </tr>
+              </thead>
+              <tbody>{summary.aiCost.recent.map((item) => (
+                <tr key={item.id}>
+                  <td>{new Date(item.createdAt).toLocaleString("ru-RU")}</td>
+                  <td>
+                    <strong>{item.action ? aiActionLabels[item.action] ?? item.action : "Старый сценарий"}</strong>
+                    <span className={styles.cellSecondary}>{item.event === "ai.join_single_generation" ? "один результат" : "три результата"}</span>
+                  </td>
+                  <td className={styles.aiModelCell}>
+                    <span>Разбор: {displayModel(item.extractorModel)}</span>
+                    <span>Сборка: {displayModel(item.composerModel)}</span>
+                  </td>
+                  <td className={styles.aiCostCell}>
+                    <strong>{item.extractor.totalRub.toFixed(3)} ₽</strong>
+                    <span>{item.cacheHit ? "план из кэша" : formatTokens(item.extractor.inputTokens, item.extractor.cachedInputTokens, item.extractor.outputTokens)}</span>
+                  </td>
+                  <td className={styles.aiCostCell}>
+                    <strong>{item.composer.totalRub.toFixed(3)} ₽</strong>
+                    <span>{formatTokens(item.composer.inputTokens, item.composer.cachedInputTokens, item.composer.outputTokens)}</span>
+                  </td>
+                  <td className={styles.aiCostCell}>
+                    <strong>{item.repair.totalRub.toFixed(3)} ₽</strong>
+                    <span title={item.repairReasons.join(", ")}>{item.repairCount ? `${item.repairCount} · ${formatTokens(item.repair.inputTokens, item.repair.cachedInputTokens, item.repair.outputTokens)}` : "не понадобились"}</span>
+                  </td>
+                  <td className={styles.aiCostTotal}>{item.totalCostRub.toFixed(3)} ₽</td>
+                  <td><span className={`${styles.badge} ${item.cacheHit ? styles.badgeVisible : styles.aiCacheMiss}`}>{item.cacheHit ? "Да" : "Нет"}</span></td>
+                  <td className={styles.monoCell} title={item.cardId ?? undefined}>{item.cardId ? item.cardId.slice(0, 8) : "—"}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section className={`${styles.panel} ${styles.analyticsPanel}`}>
