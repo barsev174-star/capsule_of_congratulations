@@ -747,6 +747,7 @@
 .analyticsStats { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
 .analyticsStats .statCard { min-width: 0; }
 .analyticsStats .statValue { font-size: clamp(24px, 2.4vw, 32px); overflow-wrap: anywhere; line-height: 1.15; }
+.analyticsStats .statLabel { text-wrap: pretty; }
 .analyticsTable { font-variant-numeric: tabular-nums; }
 .analyticsTable th { text-transform: none; letter-spacing: normal; }
 .analyticsTable td { white-space: nowrap; }

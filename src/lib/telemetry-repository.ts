@@ -40,6 +40,12 @@ export type AiCostGeneration = {
   totalCostRub: number;
 };
 
+export type AiUsagePaymentStage = {
+  operations: number;
+  cards: number;
+  averagePerCard: number;
+};
+
 export type TelemetrySummary = {
   totalEvents: number;
   uniqueCards: number;
@@ -57,6 +63,16 @@ export type TelemetrySummary = {
     repairRub: number;
     repairs: number;
     cacheHits: number;
+    initialGenerations: number;
+    repeatGenerations: number;
+    averageInitialRub: number;
+    averageRepeatRub: number;
+    generationsWithRepairs: number;
+    repairGenerationShare: number;
+    usageByPayment: {
+      before: AiUsagePaymentStage;
+      after: AiUsagePaymentStage;
+    } | null;
     recent: AiCostGeneration[];
   };
 };
@@ -166,6 +182,9 @@ export const getTelemetrySummary = async (days: number): Promise<TelemetrySummar
   const counts = new Map<string, number>();
   for (const item of items.filter((entry) => entry.kind === "funnel")) counts.set(item.event, (counts.get(item.event) ?? 0) + 1);
   const aiGenerations = items.map(normalizeAiCostGeneration).filter((item): item is AiCostGeneration => Boolean(item));
+  const initialGenerations = aiGenerations.filter((item) => item.action === "initial");
+  const repeatGenerations = aiGenerations.filter((item) => item.action !== null && item.action !== "initial");
+  const generationsWithRepairs = aiGenerations.filter((item) => item.repairCount > 0).length;
   const aiCostTotal = aiGenerations.reduce((sum, item) => sum + item.totalCostRub, 0);
   const aiCostCards = new Set(aiGenerations.map((item) => item.cardId).filter((cardId): cardId is string => Boolean(cardId)));
   const roundRub = (value: number) => Math.round(value * 1_000_000) / 1_000_000;
@@ -186,6 +205,17 @@ export const getTelemetrySummary = async (days: number): Promise<TelemetrySummar
       repairRub: roundRub(aiGenerations.reduce((sum, item) => sum + item.repair.totalRub, 0)),
       repairs: aiGenerations.reduce((sum, item) => sum + item.repairCount, 0),
       cacheHits: aiGenerations.filter((item) => item.cacheHit).length,
+      initialGenerations: initialGenerations.length,
+      repeatGenerations: repeatGenerations.length,
+      averageInitialRub: initialGenerations.length
+        ? roundRub(initialGenerations.reduce((sum, item) => sum + item.totalCostRub, 0) / initialGenerations.length)
+        : 0,
+      averageRepeatRub: repeatGenerations.length
+        ? roundRub(repeatGenerations.reduce((sum, item) => sum + item.totalCostRub, 0) / repeatGenerations.length)
+        : 0,
+      generationsWithRepairs,
+      repairGenerationShare: aiGenerations.length ? roundRub(generationsWithRepairs / aiGenerations.length) : 0,
+      usageByPayment: null,
       recent: aiGenerations.slice(0, 50)
     }
   };
@@ -199,6 +229,7 @@ WITH period AS MATERIALIZED (
 ), ai AS (
   SELECT card_id,
     (context->>'totalCostRub')::numeric AS cost,
+    NULLIF(context->>'action', '') AS action,
     CASE WHEN jsonb_typeof(context->'extractorUsage'->'totalRub') = 'number'
       THEN (context->'extractorUsage'->>'totalRub')::numeric ELSE 0 END AS extractor_cost,
     CASE WHEN jsonb_typeof(context->'composerUsage'->'totalRub') = 'number'
@@ -214,6 +245,14 @@ WITH period AS MATERIALIZED (
   FROM period
   WHERE event IN ('ai.join_single_generation', 'ai.two_stage_generation')
     AND jsonb_typeof(context->'totalCostRub') = 'number'
+), ai_usage_by_payment AS (
+  SELECT usage.card_id,
+    CASE WHEN card.paid_at IS NOT NULL AND usage.created_at >= card.paid_at
+      THEN 'after' ELSE 'before' END AS payment_stage
+  FROM ai_usage_events usage
+  JOIN cards card ON card.id = usage.card_id
+  WHERE usage.created_at >= now() - ($1 * interval '1 day') AND usage.created_at <= now()
+    AND usage.status = 'succeeded' AND usage.is_reserved_free = false
 ), funnel AS (
   SELECT event, count(*) AS count FROM period WHERE kind = 'funnel' GROUP BY event
 ), recent AS (
@@ -236,7 +275,31 @@ SELECT jsonb_build_object(
     'composerRub', round(COALESCE(sum(composer_cost), 0), 6),
     'repairRub', round(COALESCE(sum(repair_cost), 0), 6),
     'repairs', COALESCE(sum(repair_count), 0),
-    'cacheHits', count(*) FILTER (WHERE cache_hit)
+    'cacheHits', count(*) FILTER (WHERE cache_hit),
+    'initialGenerations', count(*) FILTER (WHERE action = 'initial'),
+    'repeatGenerations', count(*) FILTER (WHERE action IS NOT NULL AND action <> 'initial'),
+    'averageInitialRub', round(COALESCE(avg(cost) FILTER (WHERE action = 'initial'), 0), 6),
+    'averageRepeatRub', round(COALESCE(avg(cost) FILTER (WHERE action IS NOT NULL AND action <> 'initial'), 0), 6),
+    'generationsWithRepairs', count(*) FILTER (WHERE repair_count > 0),
+    'repairGenerationShare', round(COALESCE(
+      (count(*) FILTER (WHERE repair_count > 0))::numeric / NULLIF(count(*), 0), 0
+    ), 6),
+    'usageByPayment', jsonb_build_object(
+      'before', jsonb_build_object(
+        'operations', (SELECT count(*) FROM ai_usage_by_payment WHERE payment_stage = 'before'),
+        'cards', (SELECT count(DISTINCT card_id) FROM ai_usage_by_payment WHERE payment_stage = 'before'),
+        'averagePerCard', (SELECT round(COALESCE(
+          count(*)::numeric / NULLIF(count(DISTINCT card_id), 0), 0
+        ), 6) FROM ai_usage_by_payment WHERE payment_stage = 'before')
+      ),
+      'after', jsonb_build_object(
+        'operations', (SELECT count(*) FROM ai_usage_by_payment WHERE payment_stage = 'after'),
+        'cards', (SELECT count(DISTINCT card_id) FROM ai_usage_by_payment WHERE payment_stage = 'after'),
+        'averagePerCard', (SELECT round(COALESCE(
+          count(*)::numeric / NULLIF(count(DISTINCT card_id), 0), 0
+        ), 6) FROM ai_usage_by_payment WHERE payment_stage = 'after')
+      )
+    )
   ) FROM ai)
 ) AS summary
 `;

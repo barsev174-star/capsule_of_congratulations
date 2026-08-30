@@ -22,12 +22,29 @@ const aiActionLabels: Record<string, string> = {
 const displayModel = (model: string | null) => model?.split("/").at(-1) ?? "—";
 const formatTokens = (input: number, cached: number, output: number) =>
   `вход ${input.toLocaleString("ru-RU")}${cached ? `, кэш ${cached.toLocaleString("ru-RU")}` : ""} · выход ${output.toLocaleString("ru-RU")}`;
+const formatShare = (value: number) => new Intl.NumberFormat("ru-RU", {
+  style: "percent", maximumFractionDigits: 1
+}).format(value);
+const formatAverageOperations = (value: number, cards: number) => cards
+  ? new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(value)
+  : "—";
+const plural = (value: number, forms: [string, string, string]) => {
+  const absolute = Math.abs(value) % 100;
+  const last = absolute % 10;
+  if (absolute > 10 && absolute < 20) return forms[2];
+  if (last === 1) return forms[0];
+  if (last > 1 && last < 5) return forms[1];
+  return forms[2];
+};
+const formatUsageDetails = (operations: number, cards: number) =>
+  `${operations} ${plural(operations, ["операция", "операции", "операций"])}, ${cards} ${plural(cards, ["открытка", "открытки", "открыток"])}`;
 
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
   await requireAdminRole("admin");
   const days = (await searchParams).days === "30" ? 30 : 7;
   const [summary, acquisition] = await Promise.all([getTelemetrySummary(days), getAcquisitionAnalytics(days)]);
   const formatAiCost = (value: number) => summary.aiCost.generations ? `${value.toFixed(3)} ₽` : "—";
+  const formatGenerationCost = (value: number, count: number) => count ? `${value.toFixed(3)} ₽` : "—";
 
   return (
     <>
@@ -68,6 +85,44 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
             : "Данные появятся после первой генерации с учётом стоимости."}
           {" "}Черновики и готовые поздравления здесь не сохраняются.
         </p>
+
+        <section aria-labelledby="ai-decision-metrics-title">
+          <h3 id="ai-decision-metrics-title" className={styles.analyticsSubheading}>Показатели для решения по лимитам</h3>
+          <div className={`${styles.statsGrid} ${styles.analyticsStats}`}>
+          <div className={styles.statCard}>
+            <p className={styles.statValue}>{formatGenerationCost(summary.aiCost.averageInitialRub, summary.aiCost.initialGenerations)}</p>
+            <p className={styles.statLabel}>Средняя цена первого текста · {summary.aiCost.initialGenerations} запусков</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statValue}>{formatGenerationCost(summary.aiCost.averageRepeatRub, summary.aiCost.repeatGenerations)}</p>
+            <p className={styles.statLabel}>Средняя цена повторного действия · {summary.aiCost.repeatGenerations} запусков</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statValue}>{summary.aiCost.generations ? formatShare(summary.aiCost.repairGenerationShare) : "—"}</p>
+            <p className={styles.statLabel}>Запусков с автоисправлениями · {summary.aiCost.generationsWithRepairs} из {summary.aiCost.generations}</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statValue}>{summary.aiCost.usageByPayment
+              ? formatAverageOperations(summary.aiCost.usageByPayment.before.averagePerCard, summary.aiCost.usageByPayment.before.cards)
+              : "—"}</p>
+            <p className={styles.statLabel}>Операций на открытку до оплаты{summary.aiCost.usageByPayment
+              ? ` · ${formatUsageDetails(summary.aiCost.usageByPayment.before.operations, summary.aiCost.usageByPayment.before.cards)}`
+              : ""}</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statValue}>{summary.aiCost.usageByPayment
+              ? formatAverageOperations(summary.aiCost.usageByPayment.after.averagePerCard, summary.aiCost.usageByPayment.after.cards)
+              : "—"}</p>
+            <p className={styles.statLabel}>Операций на открытку после оплаты{summary.aiCost.usageByPayment
+              ? ` · ${formatUsageDetails(summary.aiCost.usageByPayment.after.operations, summary.aiCost.usageByPayment.after.cards)}`
+              : ""}</p>
+          </div>
+          </div>
+          <p className={styles.analyticsNote}>
+            Первый текст — действие «initial», повторные — остальные действия актуального сценария. Доля автоисправлений считается по запускам, а не по числу исправлений. Операции до и после оплаты — успешные списываемые из лимита операции за выбранный период; бесплатные служебные операции не учитываются.
+            {!summary.aiCost.usageByPayment && " Разделение по оплате доступно только при подключении PostgreSQL."}
+          </p>
+        </section>
 
         <h3 className={styles.analyticsSubheading}>Последние запуски</h3>
         {summary.aiCost.recent.length === 0 ? <p className={styles.emptyState}>За выбранный период запусков с детализацией нет.</p> : (

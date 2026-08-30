@@ -50,9 +50,10 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
     await db.connect();
     await db.query("BEGIN");
     const tables: Record<string, string> = {
-      cards: "id, created_at, delivered_at, recipient_first_opened_at",
+      cards: "id, created_at, delivered_at, recipient_first_opened_at, paid_at",
       contributions: "id, card_id, source, participant_token_hash, created_at",
       telemetry_events: "id, kind, event, card_id, context, error_id, created_at",
+      ai_usage_events: "id, card_id, generation_type, status, created_at, is_reserved_free",
       payment_orders: "id, card_id, currency, paid_at, payable_amount, total_refunded_amount",
       payment_attempts: "id, order_id, provider, status, confirmation_url, provider_payload",
       payment_events: "id, order_id, attempt_id, provider, event_type, processed_at, payload"
@@ -64,7 +65,7 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
   beforeEach(async () => {
     mocks.configured = true;
     mocks.query.mockImplementation((sql, params) => db.query(sql, params));
-    await db.query("TRUNCATE pg_temp.cards, pg_temp.contributions, pg_temp.telemetry_events, pg_temp.payment_orders, pg_temp.payment_attempts, pg_temp.payment_events");
+    await db.query("TRUNCATE pg_temp.cards, pg_temp.contributions, pg_temp.telemetry_events, pg_temp.ai_usage_events, pg_temp.payment_orders, pg_temp.payment_attempts, pg_temp.payment_events");
   });
   afterAll(async () => {
     if (db) { await db.query("ROLLBACK"); await db.end(); }
@@ -73,12 +74,18 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
   const card = async (days = 1, delivered = false, opened = false) => {
     const id = randomUUID();
     await db.query(`INSERT INTO cards VALUES ($1, now() - ($2 * interval '1 day'),
-      CASE WHEN $3 THEN now() END, CASE WHEN $4 THEN now() END)`, [id, days, delivered, opened]);
+      CASE WHEN $3 THEN now() END, CASE WHEN $4 THEN now() END, NULL)`, [id, days, delivered, opened]);
     return id;
   };
   const event = async (name: string, cardId: string | null, context: object = {}, days = 0) => {
     await db.query(`INSERT INTO telemetry_events VALUES ($1, 'funnel', $2, $3, $4, NULL, now() - ($5 * interval '1 day'))`,
       [randomUUID(), name, cardId, context, days]);
+  };
+  const aiUsage = async (cardId: string, days: number, options: { free?: boolean; status?: "pending" | "succeeded" } = {}) => {
+    await db.query(`INSERT INTO ai_usage_events
+      (id, card_id, generation_type, status, created_at, is_reserved_free)
+      VALUES ($1, $2, 'participant_message', $3, now() - ($4 * interval '1 day'), $5)`,
+      [randomUUID(), cardId, options.status ?? "succeeded", days, options.free ?? false]);
   };
   const payment = async (cardId: string, options: { test?: boolean; confirmed?: boolean; refunded?: number; duplicate?: boolean } = {}) => {
     const order = randomUUID(), attempt = randomUUID();
@@ -202,6 +209,42 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
     });
     expect(summary.aiCost.recent).toHaveLength(2);
     expect(summary.aiCost.recent.map((item) => item.action).sort()).toEqual(["initial", "warmer"]);
+  });
+
+  it("calculates decision metrics and splits quota operations by payment time", async () => {
+    const paidCard = await card(2), unpaidCard = await card(2);
+    await db.query("UPDATE cards SET paid_at = now() - interval '12 hours' WHERE id = $1", [paidCard]);
+    const usage = (cost: number, repairs: number) => ({
+      extractorUsage: { totalRub: cost / 4 },
+      composerUsage: { totalRub: cost * 3 / 4 },
+      repairUsage: Array.from({ length: repairs }, () => ({ totalRub: 0 })),
+      totalCostRub: cost
+    });
+    await event("ai.join_single_generation", paidCard, { action: "initial", ...usage(1, 0) }, 1);
+    await event("ai.join_single_generation", paidCard, { action: "warmer", ...usage(0.5, 1) }, 0.25);
+    await event("ai.join_single_generation", unpaidCard, { action: "initial", ...usage(2, 0) }, 0.25);
+
+    await aiUsage(paidCard, 1);
+    await aiUsage(paidCard, 0.75);
+    await aiUsage(paidCard, 0.25);
+    await aiUsage(paidCard, 0.2);
+    await aiUsage(paidCard, 0.1);
+    await aiUsage(paidCard, 0.1, { free: true });
+    await aiUsage(paidCard, 0.1, { status: "pending" });
+    await aiUsage(unpaidCard, 0.25);
+
+    expect((await getTelemetrySummary(7)).aiCost).toMatchObject({
+      initialGenerations: 2,
+      repeatGenerations: 1,
+      averageInitialRub: 1.5,
+      averageRepeatRub: 0.5,
+      generationsWithRepairs: 1,
+      repairGenerationShare: 0.333333,
+      usageByPayment: {
+        before: { operations: 3, cards: 2, averagePerCard: 1.5 },
+        after: { operations: 3, cards: 1, averagePerCard: 3 }
+      }
+    });
   });
 
   it("attributes birthday cards and activity to their own landing", async () => {

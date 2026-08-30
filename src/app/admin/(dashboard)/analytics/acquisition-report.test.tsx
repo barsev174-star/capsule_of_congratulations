@@ -38,6 +38,13 @@ const emptySummary = {
     repairRub: 0,
     repairs: 0,
     cacheHits: 0,
+    initialGenerations: 0,
+    repeatGenerations: 0,
+    averageInitialRub: 0,
+    averageRepeatRub: 0,
+    generationsWithRepairs: 0,
+    repairGenerationShare: 0,
+    usageByPayment: null,
     recent: []
   }
 };
@@ -69,16 +76,26 @@ describe("acquisition report UI", () => {
     pageMocks.summary.mockResolvedValue({
       ...emptySummary,
       aiCost: {
-        generations: 1,
+        generations: 3,
         cards: 1,
-        totalRub: 1.25,
-        averageGenerationRub: 1.25,
-        averageCardRub: 1.25,
-        extractorRub: 0.2,
-        composerRub: 0.9,
+        totalRub: 2.5,
+        averageGenerationRub: 2.5 / 3,
+        averageCardRub: 2.5,
+        extractorRub: 0.4,
+        composerRub: 1.95,
         repairRub: 0.15,
         repairs: 1,
-        cacheHits: 0,
+        cacheHits: 2,
+        initialGenerations: 1,
+        repeatGenerations: 2,
+        averageInitialRub: 1.25,
+        averageRepeatRub: 0.625,
+        generationsWithRepairs: 1,
+        repairGenerationShare: 1 / 3,
+        usageByPayment: {
+          before: { operations: 3, cards: 2, averagePerCard: 1.5 },
+          after: { operations: 3, cards: 1, averagePerCard: 3 }
+        },
         recent: [{
           id: "event-1",
           event: "ai.join_single_generation",
@@ -103,6 +120,13 @@ describe("acquisition report UI", () => {
     expect(screen.getByText("Первый текст")).toBeInTheDocument();
     expect(screen.getAllByText("1.250 ₽").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/yandexgpt-5\.1/)).toHaveLength(2);
+    const decisionMetrics = screen.getByRole("region", { name: "Показатели для решения по лимитам" });
+    expect(within(decisionMetrics).getByText("0.625 ₽")).toBeInTheDocument();
+    expect(within(decisionMetrics).getByText(/33,3.*%/)).toBeInTheDocument();
+    expect(within(decisionMetrics).getByText("1,5")).toBeInTheDocument();
+    expect(within(decisionMetrics).getByText("3")).toBeInTheDocument();
+    expect(within(decisionMetrics).getByText(/3 операции, 2 открытки/)).toBeInTheDocument();
+    expect(within(decisionMetrics).getByText(/3 операции, 1 открытка/)).toBeInTheDocument();
   });
 
   it("separates the card cohort, SEO events and participant counts", () => {
