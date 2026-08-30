@@ -51,6 +51,10 @@ try {
   const deletedCardId = await createCard("Deleted retention smoke");
   const inactiveDraftId = await createCard("Inactive draft smoke");
   const activeDraftId = await createCard("Recently active draft smoke");
+  const expiredDeliveredId = await createCard("Expired delivered smoke");
+  const expiredShareId = randomUUID();
+  const expiredPhraseId = randomUUID();
+  const oldMagicLinkId = randomUUID();
   await database.query(
     "UPDATE cards SET deleted_at = now() - interval '31 days', purge_at = now() - interval '1 day' WHERE id = $1",
     [deletedCardId]
@@ -60,6 +64,28 @@ try {
     [inactiveDraftId]
   );
   await database.query("UPDATE cards SET updated_at = now() - interval '91 days' WHERE id = $1", [activeDraftId]);
+  await database.query(
+    `UPDATE cards
+     SET payment_status = 'PAID', delivery_status = 'DELIVERED', delivered_at = now() - interval '13 months',
+         recipient_first_opened_at = now() - interval '13 months', updated_at = now() - interval '13 months'
+     WHERE id = $1`,
+    [expiredDeliveredId]
+  );
+  await database.query(
+    `INSERT INTO public_card_shares (id, card_id, token_hash, status, payload_version, created_at, updated_at)
+     VALUES ($1, $2, $3, 'ACTIVE', 1, now() - interval '13 months', now() - interval '13 months')`,
+    [expiredShareId, expiredDeliveredId, `retention-share-${expiredShareId}`]
+  );
+  await database.query(
+    `INSERT INTO public_card_share_phrase_candidates (id, card_id, text, sort_order, created_at, updated_at)
+     VALUES ($1, $2, 'Retention phrase', 0, now() - interval '13 months', now() - interval '13 months')`,
+    [expiredPhraseId, expiredDeliveredId]
+  );
+  await database.query(
+    `INSERT INTO organizer_magic_links (id, email, token_hash, expires_at, used_at, created_at)
+     VALUES ($1, $2, $3, now() - interval '31 days', NULL, now() - interval '32 days')`,
+    [oldMagicLinkId, email, `retention-magic-${oldMagicLinkId}`]
+  );
   await database.query(
     `INSERT INTO contributions (
        id, card_id, author_name, author_role, author_avatar_url, message,
@@ -74,7 +100,7 @@ try {
   });
   if (!response.ok) throw new Error(`Retention endpoint failed: ${response.status}`);
   const result = await response.json();
-  if (result.deleted < 1 || result.inactiveDrafts < 1) {
+  if (result.deleted < 1 || result.inactiveDrafts < 1 || result.expiredDelivered < 1 || result.secondary?.magicLinks < 1) {
     throw new Error(`Retention counts are incomplete: ${JSON.stringify(result)}`);
   }
 
@@ -88,12 +114,16 @@ try {
        AND final_slug IS NULL
        AND recipient_name IS NULL
        AND organizer_email IS NULL`,
-    [[deletedCardId, inactiveDraftId]]
+    [[deletedCardId, inactiveDraftId, expiredDeliveredId]]
   );
-  if (Number(purgedRemaining.rows[0]?.count ?? 0) !== 2) throw new Error("Retention cards were not reduced to safe tombstones.");
+  if (Number(purgedRemaining.rows[0]?.count ?? 0) !== 3) throw new Error("Retention cards were not reduced to safe tombstones.");
   const activeRemaining = await database.query("SELECT count(*)::text AS count FROM cards WHERE id = $1", [activeDraftId]);
   if (Number(activeRemaining.rows[0]?.count ?? 0) !== 1) throw new Error("Recent contribution activity did not protect its draft.");
-  console.log("RETENTION_SMOKE_OK deleted recovery-expiry inactive-draft recent-activity-protection");
+  const shareRemaining = await database.query("SELECT count(*)::text AS count FROM public_card_shares WHERE id = $1", [expiredShareId]);
+  if (Number(shareRemaining.rows[0]?.count ?? 0) !== 0) throw new Error("Public share metadata survived card purge.");
+  const magicLinkRemaining = await database.query("SELECT count(*)::text AS count FROM organizer_magic_links WHERE id = $1", [oldMagicLinkId]);
+  if (Number(magicLinkRemaining.rows[0]?.count ?? 0) !== 0) throw new Error("Expired magic link survived secondary retention.");
+  console.log("RETENTION_SMOKE_OK deleted inactive-draft delivered public-share secondary recent-activity-protection");
 } finally {
   if (cardIds.length > 0) await database.query("DELETE FROM cards WHERE id = ANY($1::uuid[])", [cardIds]);
   await database.query("DELETE FROM organizer_magic_links WHERE email = $1", [email]);

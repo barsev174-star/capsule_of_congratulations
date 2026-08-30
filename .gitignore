@@ -42,3 +42,6 @@ Thumbs.db
 .env.*.local
 key.txt
 key*.txt
+
+# Private operator and compliance records (never commit)
+.private/

@@ -325,15 +325,24 @@ export const restoreDeletedCard = async (cardId: string) => {
   return result.rows[0] ? mapCard(result.rows[0]) : null;
 };
 
-export type CardRetentionCandidate = { id: string; reason: "deleted" | "inactive_draft" };
+export type CardRetentionCandidate = { id: string; reason: "deleted" | "inactive_draft" | "expired_delivered" };
 
-export const listCardRetentionCandidates = async (draftCutoff: Date, now: Date): Promise<CardRetentionCandidate[]> => {
+export const listCardRetentionCandidates = async (
+  draftCutoff: Date,
+  deliveredCutoff: Date,
+  now: Date
+): Promise<CardRetentionCandidate[]> => {
   const result = await getPostgresPool().query<CardRetentionCandidate>(
     `SELECT id,
-            CASE WHEN deleted_at IS NOT NULL THEN 'deleted' ELSE 'inactive_draft' END AS reason
+            CASE
+              WHEN deleted_at IS NOT NULL THEN 'deleted'
+              WHEN delivery_status = 'DELIVERED' THEN 'expired_delivered'
+              ELSE 'inactive_draft'
+            END AS reason
      FROM cards
-     WHERE (deleted_at IS NOT NULL AND purge_at <= $2 AND purged_at IS NULL)
+     WHERE (deleted_at IS NOT NULL AND purge_at <= $3 AND purged_at IS NULL)
         OR (deleted_at IS NULL
+            AND purged_at IS NULL
             AND collection_status = 'DRAFT'
             AND delivery_status = 'PREPARING'
             AND payment_status = 'UNPAID'
@@ -345,13 +354,24 @@ export const listCardRetentionCandidates = async (draftCutoff: Date, now: Date):
             AND NOT EXISTS (
               SELECT 1 FROM card_media_assets
               WHERE card_media_assets.card_id = cards.id AND card_media_assets.updated_at >= $1
+            ))
+        OR (deleted_at IS NULL
+            AND purged_at IS NULL
+            AND delivery_status = 'DELIVERED'
+            AND delivered_at IS NOT NULL
+            AND GREATEST(delivered_at, COALESCE(recipient_first_opened_at, delivered_at)) < $2
+            AND NOT EXISTS (
+              SELECT 1 FROM public_card_shares
+              WHERE public_card_shares.card_id = cards.id AND public_card_shares.updated_at >= $2
             ))`,
-    [draftCutoff, now]
+    [draftCutoff, deliveredCutoff, now]
   );
   return result.rows;
 };
 
-export const purgeCardToTombstone = async (cardId: string): Promise<string[]> => {
+export type PurgedCardMediaPaths = { cardMediaPaths: string[]; publicShareMediaPaths: string[] };
+
+export const purgeCardToTombstone = async (cardId: string): Promise<PurgedCardMediaPaths> => {
   const client = await getPostgresPool().connect();
   try {
     await client.query("BEGIN");
@@ -361,21 +381,37 @@ export const purgeCardToTombstone = async (cardId: string): Promise<string[]> =>
     );
     if (!card.rows[0]) {
       await client.query("ROLLBACK");
-      return [];
+      return { cardMediaPaths: [], publicShareMediaPaths: [] };
     }
     const media = await client.query<{ storage_path: string }>(
       "SELECT storage_path FROM card_media_assets WHERE card_id = $1",
       [cardId]
     );
+    const publicShareMedia = await client.query<{ storage_path: string }>(
+      `SELECT photo.storage_path
+       FROM public_card_share_photos AS photo
+       JOIN public_card_shares AS share ON share.id = photo.public_share_id
+       WHERE share.card_id = $1`,
+      [cardId]
+    );
     // Delete personal/card content, but retain the card row and financial/audit
     // records that reference it. The latter use ON DELETE RESTRICT by design.
     await client.query("DELETE FROM gift_polls WHERE card_id = $1", [cardId]);
+    await client.query(
+      `DELETE FROM public_card_share_photos
+       WHERE public_share_id IN (SELECT id FROM public_card_shares WHERE card_id = $1)`,
+      [cardId]
+    );
+    await client.query("DELETE FROM public_card_shares WHERE card_id = $1", [cardId]);
+    await client.query("DELETE FROM public_card_share_phrase_candidates WHERE card_id = $1", [cardId]);
     await client.query("DELETE FROM contributions WHERE card_id = $1", [cardId]);
     await client.query("DELETE FROM card_media_assets WHERE card_id = $1", [cardId]);
     await client.query("DELETE FROM ai_generation_drafts WHERE card_id = $1", [cardId]);
     await client.query("DELETE FROM ai_usage_events WHERE card_id = $1", [cardId]);
     await client.query("DELETE FROM ai_card_insights WHERE card_id = $1", [cardId]);
     await client.query("DELETE FROM ai_card_allowances WHERE card_id = $1", [cardId]);
+    await client.query("DELETE FROM ai_semantic_plan_cache WHERE card_id = $1", [cardId]);
+    await client.query("DELETE FROM ai_card_quote_selections WHERE card_id = $1", [cardId]);
     await client.query("DELETE FROM event_reminders WHERE source_card_id = $1", [cardId]);
     await client.query("DELETE FROM telemetry_events WHERE card_id = $1::text", [cardId]);
     await client.query(
@@ -408,7 +444,10 @@ export const purgeCardToTombstone = async (cardId: string): Promise<string[]> =>
       [cardId]
     );
     await client.query("COMMIT");
-    return media.rows.map((row) => row.storage_path).filter(Boolean);
+    return {
+      cardMediaPaths: media.rows.map((row) => row.storage_path).filter(Boolean),
+      publicShareMediaPaths: publicShareMedia.rows.map((row) => row.storage_path).filter(Boolean)
+    };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

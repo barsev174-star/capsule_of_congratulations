@@ -5,6 +5,7 @@ import * as postgresRepository from "@/lib/cards/repository-postgres";
 import type { CardDraft, CardMediaAsset, CardStatus, Contribution, ContributionDetailsUpdate } from "@/lib/cards/types";
 import type { CardTemplateId } from "@/lib/cards/templates";
 import { deleteStoredCardMediaFile } from "@/lib/media/local-card-media-storage";
+import { deletePublicSharePhotoDerivative } from "@/lib/public-shares/media-storage";
 import { CARD_CONTRIBUTION_LIMIT, ContributionLimitReachedError } from "@/lib/contributions/limits";
 import type {
   FinalCardBlockOrder,
@@ -247,11 +248,16 @@ export const restoreDeletedCard = async (cardId: string) => {
 
 export const purgeExpiredCards = async (now = new Date()) => {
   const draftCutoff = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+  const deliveredCutoff = new Date(now);
+  deliveredCutoff.setUTCFullYear(deliveredCutoff.getUTCFullYear() - 1);
   if (isPostgresConfigured()) {
-    const candidates = await postgresRepository.listCardRetentionCandidates(draftCutoff, now);
+    const candidates = await postgresRepository.listCardRetentionCandidates(draftCutoff, deliveredCutoff, now);
     for (const candidate of candidates) {
       const paths = await postgresRepository.purgeCardToTombstone(candidate.id);
-      await Promise.all(paths.map((path) => deleteStoredCardMediaFile(path)));
+      await Promise.all([
+        ...paths.cardMediaPaths.map((path) => deleteStoredCardMediaFile(path)),
+        ...paths.publicShareMediaPaths.map((path) => deletePublicSharePhotoDerivative(path))
+      ]);
     }
     return candidates;
   }
@@ -266,11 +272,19 @@ export const purgeExpiredCards = async (now = new Date()) => {
         card.status !== "published" &&
         Date.parse(card.updatedAt) < draftCutoff.getTime() &&
         !contributions.some((item) => item.cardId === card.id && Date.parse(item.updatedAt) >= draftCutoff.getTime()) &&
-        !assets.some((item) => item.cardId === card.id && Date.parse(item.updatedAt) >= draftCutoff.getTime()))
+        !assets.some((item) => item.cardId === card.id && Date.parse(item.updatedAt) >= draftCutoff.getTime())) ||
+      (!card.deletedAt &&
+        card.deliveryStatus === "DELIVERED" &&
+        card.deliveredAt != null &&
+        Math.max(Date.parse(card.deliveredAt), card.recipientFirstOpenedAt ? Date.parse(card.recipientFirstOpenedAt) : 0) < deliveredCutoff.getTime())
     )
     .map((card) => ({
       id: card.id,
-      reason: card.deletedAt ? "deleted" as const : "inactive_draft" as const
+      reason: card.deletedAt
+        ? "deleted" as const
+        : card.deliveryStatus === "DELIVERED"
+          ? "expired_delivered" as const
+          : "inactive_draft" as const
     }));
   if (candidates.length === 0) return candidates;
   const ids = new Set(candidates.map((item) => item.id));
