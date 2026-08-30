@@ -17,6 +17,12 @@ describe("AI usage cost", () => {
     })).toMatchObject({ inputRub: 0.581954, outputRub: 0.290977, totalRub: 0.87293 });
   });
 
+  it("uses official direct Yandex rates for explicit model URIs", () => {
+    expect(estimateAiUsageCost("gpt://folder/yandexgpt-5.1", { inputTokens: 1_000, outputTokens: 100 }).totalRub).toBe(0.88);
+    expect(estimateAiUsageCost("gpt://folder/yandexgpt-5-pro", { inputTokens: 1_000, outputTokens: 100 }).totalRub).toBe(1.32);
+    expect(estimateAiUsageCost("gpt://folder/yandexgpt-5-lite", { inputTokens: 1_000, outputTokens: 100 }).totalRub).toBe(0.22);
+  });
+
   it("does not invent a cost for an unknown model", () => {
     const unknown = estimateAiUsageCost("another-provider/model", { inputTokens: 10, outputTokens: 20 });
     expect(unknown.totalRub).toBeNull();

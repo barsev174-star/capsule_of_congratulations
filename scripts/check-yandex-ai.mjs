@@ -5,7 +5,7 @@ if (!folderId) throw new Error("YANDEX_CLOUD_FOLDER_ID is not configured.");
 
 const baseUrl = (process.env.YANDEX_CLOUD_AI_BASE_URL ?? "https://ai.api.cloud.yandex.net/v1").replace(/\/$/, "");
 const configuredModel = process.env.YANDEX_GREETING_COMPOSER_MODEL?.trim();
-const model = configuredModel?.startsWith("gpt://") ? configuredModel : `gpt://${folderId}/yandexgpt/latest`;
+const model = configuredModel?.startsWith("gpt://") ? configuredModel : `gpt://${folderId}/yandexgpt-5.1`;
 const timeout = Math.max(1_000, Number(process.env.YANDEX_CLOUD_AI_TIMEOUT_MS ?? 60_000) || 60_000);
 
 const response = await fetch(`${baseUrl}/chat/completions`, {

@@ -35,11 +35,25 @@ describe("direct Yandex structured AI client", () => {
       "Content-Type": "application/json"
     });
     expect(JSON.parse(String(init?.body))).toMatchObject({
-      model: "gpt://folder-123/yandexgpt/latest",
+      model: "gpt://folder-123/yandexgpt-5.1",
       response_format: { type: "json_schema", json_schema: { name: "greeting", strict: true } },
       max_tokens: 300
     });
     expect(result).toMatchObject({ value: { text: "Готово" }, usage: { inputTokens: 11, outputTokens: 3, totalTokens: 14 } });
+  });
+
+  it("resolves direct Yandex aliases to explicit versioned model URIs", () => {
+    vi.stubEnv("YANDEX_CLOUD_FOLDER_ID", "folder-123");
+
+    expect(resolveStructuredAiModel("yandex")).toBe("gpt://folder-123/yandexgpt-5.1");
+    expect(resolveStructuredAiModel("yandex", "yandex/gpt-pro-5.1")).toBe("gpt://folder-123/yandexgpt-5.1");
+    expect(resolveStructuredAiModel("yandex", "yandex/gpt-pro-5")).toBe("gpt://folder-123/yandexgpt-5-pro");
+    expect(resolveStructuredAiModel("yandex", "yandex/gpt-lite-5")).toBe("gpt://folder-123/yandexgpt-5-lite");
+  });
+
+  it("rejects an unknown direct Yandex alias instead of silently using another model", () => {
+    vi.stubEnv("YANDEX_CLOUD_FOLDER_ID", "folder-123");
+    expect(() => resolveStructuredAiModel("yandex", "yandex/unknown-model")).toThrow("Unsupported direct Yandex model alias");
   });
 
   it("requires both the server-side API key and folder id", async () => {

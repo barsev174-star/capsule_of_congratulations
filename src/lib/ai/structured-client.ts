@@ -65,7 +65,26 @@ export const resolveStructuredAiModel = (
   if (!folderId) {
     throw new AiError("PROVIDER_CONFIG", "Yandex Cloud folder ID is not configured.");
   }
-  return `gpt://${folderId}/yandexgpt/latest`;
+
+  const normalized = (configured || "yandex/gpt-pro-5.1").toLocaleLowerCase("en-US");
+  const modelId = new Map([
+    ["yandex/gpt-pro-5.1", "yandexgpt-5.1"],
+    ["yandexgpt-5.1", "yandexgpt-5.1"],
+    ["yandexgpt/rc", "yandexgpt-5.1"],
+    ["yandex/gpt-pro-5", "yandexgpt-5-pro"],
+    ["yandexgpt-5-pro", "yandexgpt-5-pro"],
+    ["yandexgpt/latest", "yandexgpt-5-pro"],
+    ["yandex/gpt-lite-5", "yandexgpt-5-lite"],
+    ["yandex/gpt-lite", "yandexgpt-5-lite"],
+    ["yandexgpt-5-lite", "yandexgpt-5-lite"],
+    ["yandexgpt-lite", "yandexgpt-5-lite"]
+  ]).get(normalized);
+
+  if (!modelId) {
+    throw new AiError("PROVIDER_CONFIG", `Unsupported direct Yandex model alias: ${configured}.`);
+  }
+
+  return `gpt://${folderId}/${modelId}`;
 };
 
 export const requestStructuredAi = async <T>({

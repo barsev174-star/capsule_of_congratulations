@@ -5,6 +5,7 @@ dist/
 coverage/
 .npm-cache/
 screenshots/
+output/
 tmp/
 tsconfig.tsbuildinfo
 data/cards.json
