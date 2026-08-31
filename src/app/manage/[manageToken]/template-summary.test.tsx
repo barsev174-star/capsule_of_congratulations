@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import { TemplateSummary } from "./template-summary";
 
 vi.mock("./actions", () => ({
-  updateCardTemplateAction: vi.fn()
+  updateCardTemplateAction: vi.fn(),
+  updateGiftAnimationAction: vi.fn().mockResolvedValue({ ok: true, message: "Способ вручения применён." })
 }));
 
 const templates = [
@@ -33,6 +34,7 @@ describe("TemplateSummary", () => {
         manageToken="manage-token"
         templates={templates}
         initialTemplateId={null}
+        initialAnimationId="envelope"
       />
     );
 
@@ -49,10 +51,12 @@ describe("TemplateSummary", () => {
         manageToken="manage-token"
         templates={templates}
         initialTemplateId="paper-birthday"
+        initialAnimationId="envelope"
       />
     );
 
-    expect(screen.getByText("Анимация: конверт с открыткой")).toBeInTheDocument();
+    expect(screen.getByText("Конверт с открыткой")).toBeInTheDocument();
+    expect(screen.getByText("Собрать поздравления")).toBeInTheDocument();
     const opener = screen.getByRole("button", { name: "Выбрать другой шаблон" });
     await user.click(opener);
 
@@ -71,6 +75,7 @@ describe("TemplateSummary", () => {
         manageToken="manage-token"
         templates={templates}
         initialTemplateId="northern-light"
+        initialAnimationId="collect-messages"
       />
     );
 

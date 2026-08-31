@@ -1,5 +1,6 @@
 import { getPostgresPool } from "@/lib/db/postgres";
 import type { CardTemplateId } from "@/lib/cards/templates";
+import { defaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import type { CardDraft, CardMediaAsset, CardStatus, Contribution, ContributionDetailsUpdate } from "@/lib/cards/types";
 import { deleteStoredCardMediaFile } from "@/lib/media/local-card-media-storage";
 import { CARD_CONTRIBUTION_LIMIT, ContributionLimitReachedError } from "@/lib/contributions/limits";
@@ -27,6 +28,7 @@ type CardRow = {
   description: string | null;
   signature: string | null;
   template_id: CardTemplateId | null;
+  gift_animation_id: GiftAnimationId | null;
   final_block_settings: FinalCardBlockSettings | null;
   final_block_order: FinalCardBlockOrder | null;
   final_message_settings: FinalCardMessageSettings | null;
@@ -131,6 +133,7 @@ const mapCard = (row: CardRow): CardDraft => ({
   description: row.description,
   signature: row.signature,
   templateId: row.template_id,
+  giftAnimationId: row.gift_animation_id ?? defaultGiftAnimationId,
   finalBlockSettings: row.final_block_settings,
   finalBlockOrder: row.final_block_order,
   finalMessageSettings: row.final_message_settings,
@@ -220,7 +223,7 @@ export const saveCardDraft = async (card: CardDraft) => {
       INSERT INTO cards (
         id, public_slug, manage_token, final_slug, recipient_name, occasion, occasion_text,
         from_label, organizer_name, organizer_email, event_date, description, signature,
-        template_id, final_block_settings, final_block_order, final_message_settings,
+        template_id, gift_animation_id, final_block_settings, final_block_order, final_message_settings,
         final_main_greeting_settings, final_memory_settings, payment_status, collection_status, delivery_status,
         paid_at, collection_opened_at, collection_closed_at, delivered_at, recipient_first_opened_at,
         refunded_at, revoked_at, is_hidden, hidden_at, purged_at, active_paid_order_id, active_access_grant_id,
@@ -230,12 +233,12 @@ export const saveCardDraft = async (card: CardDraft) => {
       VALUES (
         $1, $2, $3, $4, $5, $6, $7,
         $8, $9, $10, $11, $12, $13,
-        $14, $15::jsonb, $16::jsonb, $17::jsonb,
-        $18::jsonb, $19::jsonb, $20, $21, $22,
-        $23, $24, $25, $26, $27,
-        $28, $29, $30, $31, $32, $33, $34,
-        $35, $36, $37, $38,
-        $39, $40, $41, $42
+        $14, $15, $16::jsonb, $17::jsonb, $18::jsonb,
+        $19::jsonb, $20::jsonb, $21, $22, $23,
+        $24, $25, $26, $27, $28,
+        $29, $30, $31, $32, $33, $34, $35,
+        $36, $37, $38, $39,
+        $40, $41, $42, $43
       )
     `,
     [
@@ -253,6 +256,7 @@ export const saveCardDraft = async (card: CardDraft) => {
       card.description,
       card.signature,
       card.templateId,
+      card.giftAnimationId ?? defaultGiftAnimationId,
       jsonParam(card.finalBlockSettings),
       jsonParam(card.finalBlockOrder),
       jsonParam(card.finalMessageSettings),
@@ -485,6 +489,20 @@ export const updateCardTemplate = async (cardId: string, templateId: CardTemplat
       RETURNING *
     `,
     [cardId, templateId]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+
+export const updateCardGiftAnimation = async (cardId: string, giftAnimationId: GiftAnimationId) => {
+  const result = await getPostgresPool().query<CardRow>(
+    `
+      UPDATE cards
+      SET gift_animation_id = $2,
+          updated_at = now()
+      WHERE id = $1
+      RETURNING *
+    `,
+    [cardId, giftAnimationId]
   );
   return result.rows[0] ? mapCard(result.rows[0]) : null;
 };

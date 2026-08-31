@@ -2529,6 +2529,12 @@
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.page[data-animation-id="collect-messages"].handoff {
+  transition-delay: 0ms;
+  transition-duration: 560ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
 .handoff .letter {
   transform: translateY(-166px) translateZ(112px) scale(3.45);
   transition-duration: 1250ms;
@@ -2561,6 +2567,14 @@
   transition-property: opacity, transform, filter;
   transition-duration: 1100ms;
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.giftWrapper[data-animation-id="collect-messages"] {
+  transition-duration: 560ms;
+}
+
+.giftWrapper:focus {
+  outline: none;
 }
 
 .finalCardHidden {

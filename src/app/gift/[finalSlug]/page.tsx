@@ -9,6 +9,8 @@ import { getAiCardInsight, getAiCardQuoteSelection } from "@/lib/ai/repository";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
 import { getPublicShareEditor } from "@/lib/public-shares/service";
 import { buildPrivateCardPresentation } from "@/lib/templates/private-card-presentation";
+import { defaultGiftAnimationId, isGiftAnimationId } from "@/lib/gift-animations";
+import { selectGiftRevealMessages, toGiftRevealExcerpt } from "@/lib/gift-reveal-preview";
 
 const toIntroFragment = (value: string, maxLength: number) => {
   const normalized = value.replace(/\s+/g, " ").trim();
@@ -28,11 +30,13 @@ type Props = {
     debugAssets?: string;
     intro?: string;
     motion?: string;
+    reveal?: string;
+    revealPhotos?: string;
   }>;
 };
 
 export default async function GiftPage({ params, searchParams }: Props) {
-  const [{ finalSlug }, { debugAssets, intro, motion }] = await Promise.all([params, searchParams]);
+  const [{ finalSlug }, { debugAssets, intro, motion, reveal, revealPhotos }] = await Promise.all([params, searchParams]);
   const lifecycle = await getGiftLifecycleByFinalSlug(finalSlug);
 
   if (!lifecycle) {
@@ -84,18 +88,29 @@ export default async function GiftPage({ params, searchParams }: Props) {
     ? quoteSelection.quotes
     : contributions.map((contribution) => contribution.message);
   const introPhrases = introPhraseSource
-    .map((phrase) => toIntroFragment(phrase, 74))
+    .map((phrase) => toGiftRevealExcerpt(phrase, 5))
     .filter((phrase, index, items) => phrase && phrase !== introHeadline && items.indexOf(phrase) === index)
     .slice(0, 3);
+  const debugPhotoCount = process.env.NODE_ENV === "development" && /^[0-3]$/.test(revealPhotos ?? "")
+    ? Number(revealPhotos)
+    : 3;
   const introPhotos = mediaAssets
     .filter((asset) => asset.publicUrl)
-    .slice(0, 3)
+    .slice(0, debugPhotoCount)
     .map((asset) => ({
       id: asset.id,
       src: asset.publicUrl,
       alt: asset.captionTitle || asset.captionSubtitle || `Фотография для открытки ${card.recipientName}`,
       objectPosition: `${asset.cropX ?? 50}% ${asset.cropY ?? 50}%`
     }));
+  const persistedAnimationId = card.giftAnimationId ?? defaultGiftAnimationId;
+  const animationId = process.env.NODE_ENV === "development" && reveal && isGiftAnimationId(reveal)
+    ? reveal
+    : persistedAnimationId;
+  const introMessages = selectGiftRevealMessages(card, contributions);
+  const introQualities = qualitiesInsight?.items.length === 5
+    ? qualitiesInsight.items.map((item) => item.text)
+    : [];
   await markRecipientFirstOpened(finalSlug);
 
   return (
@@ -109,9 +124,12 @@ export default async function GiftPage({ params, searchParams }: Props) {
       visualPreset={template?.introVisualPreset}
       previewDecor={template?.introDecor}
       templateId={card.templateId}
+      animationId={animationId}
       accent={template?.accent}
       assemblyPreview={{
         headline: introHeadline,
+        messages: introMessages,
+        qualities: introQualities,
         phrases: introPhrases,
         photos: introPhotos
       }}

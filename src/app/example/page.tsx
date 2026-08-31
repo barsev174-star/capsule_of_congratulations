@@ -36,10 +36,15 @@ type ExamplePageProps = {
 };
 
 export default async function ExamplePage({ searchParams }: ExamplePageProps) {
-  const { template, scenario, intro, motion } = await searchParams;
+  const { template, scenario, intro, motion, animation, photos } = await searchParams;
   const rawTemplate = Array.isArray(template) ? template[0] : template;
   const rawIntro = Array.isArray(intro) ? intro[0] : intro;
   const rawMotion = Array.isArray(motion) ? motion[0] : motion;
+  const rawAnimation = Array.isArray(animation) ? animation[0] : animation;
+  const rawPhotos = Array.isArray(photos) ? photos[0] : photos;
+  const previewPhotoCount = rawPhotos === "0" || rawPhotos === "1" || rawPhotos === "2" || rawPhotos === "3"
+    ? Number(rawPhotos) as 0 | 1 | 2 | 3
+    : 3;
   const birthdayScenario = isBirthdayExample(rawTemplate, Array.isArray(scenario) ? scenario[0] : scenario);
   const initialTemplateId = rawTemplate ? templateAliases[rawTemplate] : undefined;
   const schoolDispatch = requireTemplateRenderer("school-scrapbook");
@@ -63,8 +68,10 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
     <ExampleExperience
       birthdayScenario={birthdayScenario}
       initialTemplateId={initialTemplateId}
+      initialAnimationId={rawAnimation === "envelope" || rawAnimation === "collect-messages" ? rawAnimation : undefined}
       introVariant={rawIntro === "legacy" ? "legacy" : "assembled"}
       forceFullMotion={rawMotion === "full"}
+      previewPhotoCount={previewPhotoCount}
       routeChildren={<FinalCard model={routeAdventureDemoCardModel} />}
       schoolChildren={<TemplateCardRenderer dispatch={schoolDispatch} model={schoolScrapbookDemoCardModel} surface="private" />}
       schoolClassicChildren={<TemplateCardRenderer dispatch={schoolClassicDispatch} model={schoolClassicDemoCardModel} surface="private" />}

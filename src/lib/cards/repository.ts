@@ -4,6 +4,7 @@ import { isPostgresConfigured } from "@/lib/db/postgres";
 import * as postgresRepository from "@/lib/cards/repository-postgres";
 import type { CardDraft, CardMediaAsset, CardStatus, Contribution, ContributionDetailsUpdate } from "@/lib/cards/types";
 import type { CardTemplateId } from "@/lib/cards/templates";
+import { defaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import { deleteStoredCardMediaFile } from "@/lib/media/local-card-media-storage";
 import { deletePublicSharePhotoDerivative } from "@/lib/public-shares/media-storage";
 import { CARD_CONTRIBUTION_LIMIT, ContributionLimitReachedError } from "@/lib/contributions/limits";
@@ -43,6 +44,7 @@ const normalizeCard = (card: CardDraft): CardDraft => ({
   ...card,
   occasionText: card.occasionText ?? card.description ?? card.occasion,
   signature: card.signature ?? null,
+  giftAnimationId: card.giftAnimationId ?? defaultGiftAnimationId,
   finalBlockSettings: card.finalBlockSettings ?? null,
   finalBlockOrder: card.finalBlockOrder ?? null,
   finalMainGreetingSettings: card.finalMainGreetingSettings
@@ -371,6 +373,25 @@ export const updateCardTemplate = async (cardId: string, templateId: CardTemplat
   const updated = {
     ...cards[index],
     templateId,
+    updatedAt: new Date().toISOString()
+  };
+  cards[index] = updated;
+  await writeFile(cardsFilePath, JSON.stringify(cards, null, 2), "utf8");
+  return updated;
+};
+
+export const updateCardGiftAnimation = async (cardId: string, giftAnimationId: GiftAnimationId) => {
+  if (isPostgresConfigured()) {
+    return postgresRepository.updateCardGiftAnimation(cardId, giftAnimationId);
+  }
+
+  const cards = await readCards();
+  const index = cards.findIndex((card) => card.id === cardId);
+  if (index === -1) return null;
+
+  const updated = {
+    ...cards[index],
+    giftAnimationId,
     updatedAt: new Date().toISOString()
   };
   cards[index] = updated;

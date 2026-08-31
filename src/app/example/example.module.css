@@ -543,6 +543,178 @@
   line-height: 1.55;
 }
 
+.animationChoices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: min(100%, 420px);
+  padding: 6px;
+  border-radius: 18px;
+  background: #f7f8fa;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.animationChoice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 12px;
+  color: #5f6368;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.25;
+  cursor: pointer;
+  transition-property: scale, color, background-color, box-shadow;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.animationChoice:hover {
+  color: #e9652f;
+  background: #fff;
+}
+
+.animationChoice:active {
+  scale: 0.96;
+}
+
+.animationChoice:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.3);
+  outline-offset: 2px;
+}
+
+.animationChoiceActive {
+  color: #fff;
+  background: #e9652f;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 6px 14px rgba(233, 101, 47, 0.2);
+}
+
+.animationChoiceActive:hover {
+  color: #fff;
+  background: #df5f2e;
+}
+
+.collectAsset {
+  position: relative;
+  width: 208px;
+  height: 176px;
+}
+
+.collectChat,
+.collectPhoto,
+.collectFlag,
+.collectCard {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  color: #202124;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.07),
+    0 8px 18px rgba(0, 0, 0, 0.09);
+}
+
+.collectChat {
+  width: 86px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 13px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.collectChat:nth-child(1) { left: 0; top: 13px; transform: rotate(-5deg); }
+.collectChat:nth-child(2) { right: 0; top: 3px; transform: rotate(5deg); }
+.collectChat:nth-child(3) { left: 4px; bottom: 11px; transform: rotate(3deg); }
+
+.collectPhoto,
+.collectFlag {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  color: #e9652f;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.collectPhoto { right: 4px; bottom: 7px; transform: rotate(-5deg); }
+.collectFlag { right: 13px; top: 57px; transform: rotate(7deg); }
+
+.collectCard {
+  left: 50%;
+  top: 50%;
+  width: 90px;
+  height: 112px;
+  border-radius: 14px;
+  transform: translate(-50%, -50%) rotate(-1deg);
+  color: #e9652f;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.collectMessagesMini {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 130px;
+}
+
+.collectMessagesMini span {
+  min-height: 26px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  color: #5f6368;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 4px 10px rgba(0, 0, 0, 0.05);
+  font-size: 10px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.collectMessagesMini span:nth-child(2) { margin-left: 18px; }
+.collectMessagesMini span:nth-child(3) { margin-right: 12px; }
+
+.collectPreviewMini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 88px;
+  height: 106px;
+  padding: 20px 12px;
+  border-radius: 12px;
+  color: #e9652f;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.07),
+    0 10px 20px rgba(0, 0, 0, 0.09);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px;
+}
+
+.collectPreviewMini i {
+  width: 74%;
+  height: 3px;
+  border-radius: 999px;
+  background: #dfe2e6;
+}
+
+.collectPreviewMini i:last-child { width: 46%; }
+
 .animationScene {
   display: flex;
   align-items: center;
@@ -1083,6 +1255,10 @@
   .animationInfo {
     align-items: center;
     text-align: center;
+  }
+
+  .animationChoices {
+    grid-template-columns: 1fr;
   }
 
   .animationScene {

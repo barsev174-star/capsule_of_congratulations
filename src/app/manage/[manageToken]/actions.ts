@@ -15,6 +15,7 @@ import {
   swapCardMediaAssetSlots,
   updateCardDraftBasics,
   updateCardFinalPresentationSettings,
+  updateCardGiftAnimation,
   updateCardMainGreetingSettings,
   updateCardTemplate,
   updateCardMediaAssetCaption,
@@ -33,6 +34,7 @@ import {
 } from "@/lib/cards/media-slots";
 import { createContribution } from "@/lib/cards/service";
 import { isProductTemplateId, isTemplateId } from "@/lib/cards/templates";
+import { isGiftAnimationId } from "@/lib/gift-animations";
 import type { CardDraft, CardMediaAsset, CardMediaSlot } from "@/lib/cards/types";
 import { closeCollection, deliverCard, openCollection } from "@/lib/cards/lifecycle-repository";
 import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository";
@@ -1236,6 +1238,35 @@ export async function updateCardTemplateAction(
   });
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
   return { ok: true, message: "Шаблон применён." };
+}
+
+export async function updateGiftAnimationAction(
+  _previousState: { ok: boolean; message: string },
+  formData: FormData
+) {
+  const manageToken = String(formData.get("manageToken") ?? "");
+  const animationId = String(formData.get("giftAnimationId") ?? "");
+  if (!manageToken || !isGiftAnimationId(animationId)) {
+    return { ok: false, message: "Не удалось выбрать способ вручения." };
+  }
+
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+  try {
+    await assertManageContentEditable(manageToken);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования." };
+  }
+
+  const updated = await updateCardGiftAnimation(card.id, animationId);
+  if (!updated) return { ok: false, message: "Не удалось применить способ вручения." };
+
+  logger.info("manage.gift_animation_updated", "Gift animation updated by organizer", {
+    cardId: card.id,
+    animationId
+  });
+  revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
+  return { ok: true, message: "Способ вручения применён." };
 }
 
 export async function setMainGreetingAction(formData: FormData) {

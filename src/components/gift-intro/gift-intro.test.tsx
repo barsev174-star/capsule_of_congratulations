@@ -4,6 +4,13 @@ import { GiftIntro } from "./gift-intro";
 
 const assemblyPreview = {
   headline: "Спасибо за тепло, поддержку и множество прекрасных моментов.",
+  messages: Array.from({ length: 6 }, (_, index) => ({
+    id: `message-${index + 1}`,
+    authorName: `Автор ${index + 1}`,
+    excerpt: `Несколько тёплых слов номер ${index + 1}…`,
+    isMain: index === 0
+  })),
+  qualities: ["доброта", "забота", "тепло", "поддержка", "искренность"],
   phrases: ["Вы вдохновляете нас", "Столько важных слов", "С теплом от всей команды"],
   photos: [
     { id: "photo-1", src: "/photo-1.jpg", alt: "Общее фото" },
@@ -87,12 +94,194 @@ describe("GiftIntro", () => {
 
     act(() => vi.advanceTimersByTime(1940));
     expect(document.querySelector('[data-intro-state="handoff"]')).toBeInTheDocument();
-    expect(screen.getByTestId("full-final-card").parentElement).toHaveAttribute("aria-hidden", "false");
+    expect(screen.getByTestId("full-final-card").parentElement).toHaveAttribute("aria-hidden", "true");
 
     act(() => vi.advanceTimersByTime(1530));
     expect(document.querySelector("[data-intro-state]")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Посмотреть ещё раз" })).toBeInTheDocument();
     expect(screen.getAllByTestId("full-final-card")).toHaveLength(1);
+    expect(screen.getByTestId("full-final-card").parentElement).toHaveFocus();
+  });
+
+  it("collects six safe messages from three neutral chats into the selected template", () => {
+    render(
+      <GiftIntro
+        recipientName="Анна"
+        templateId="team-editorial"
+        visualPreset="editorial"
+        animationId="collect-messages"
+        assemblyPreview={assemblyPreview}
+      >
+        <div data-testid="full-final-card">Полная открытка</div>
+      </GiftIntro>
+    );
+
+    const chatPanels = [...document.querySelectorAll<HTMLElement>("[data-chat-panel]")];
+    const revealMessages = [...document.querySelectorAll<HTMLElement>("[data-reveal-message]")];
+    const revealPhotos = [...document.querySelectorAll<HTMLElement>("[data-reveal-photo]")];
+    const chatNoise = [...document.querySelectorAll<HTMLElement>("[data-chat-noise]")];
+
+    expect(chatPanels).toHaveLength(3);
+    expect(chatPanels.map((panel) => panel.dataset.chatMessageCount)).toEqual(["3", "2", "1"]);
+    expect(revealMessages).toHaveLength(6);
+    expect(revealMessages.every((message) => Boolean(message.closest("[data-chat-panel]")))).toBe(true);
+    expect(revealPhotos).toHaveLength(3);
+    expect(revealPhotos.every((photo) => Boolean(photo.closest("[data-chat-panel]")))).toBe(true);
+    expect(document.querySelectorAll("[data-reveal-quality]")).toHaveLength(0);
+    expect(document.querySelectorAll("[data-reveal-phrase]")).toHaveLength(0);
+    expect(document.querySelectorAll("[data-preview-text-block]")).toHaveLength(1);
+    expect(document.querySelectorAll("[data-material-message]")).toHaveLength(6);
+    expect(document.querySelectorAll("[data-preview-message-slot]")).toHaveLength(6);
+    expect(document.querySelectorAll("[data-material-photo]")).toHaveLength(3);
+    expect(
+      [...document.querySelectorAll<HTMLElement>("[data-material-message]")].map((item) => item.dataset.materialMessage)
+    ).toEqual(
+      [...document.querySelectorAll<HTMLElement>("[data-preview-message-slot]")].map((item) => item.dataset.previewMessageSlot)
+    );
+    expect(
+      [...document.querySelectorAll<HTMLElement>("[data-material-photo]")].map((item) => item.dataset.materialPhoto)
+    ).toEqual(
+      [...document.querySelectorAll<HTMLElement>("[data-preview-photo]")].map((item) => item.dataset.previewPhoto)
+    );
+    expect(chatNoise).toHaveLength(7);
+    expect(chatNoise.every((noise) => !noise.closest("[data-reveal-message]"))).toBe(true);
+    expect(chatNoise.map((noise) => noise.querySelector("small")?.textContent)).toEqual(expect.arrayContaining([
+      "Всем привет!",
+      "Я тоже присоединяюсь!",
+      "Я тоже напишу",
+      "Нашла снимок",
+      "И от нас тоже",
+      "Вот ещё фото",
+      "Подберу фото"
+    ]));
+    expect([...chatPanels[0].querySelectorAll<HTMLElement>("[data-stream-kind]")].map((item) => item.dataset.streamKind))
+      .toEqual(["greeting", "noise", "greeting", "noise", "photo", "greeting"]);
+    expect([...chatPanels[1].querySelectorAll<HTMLElement>("[data-stream-kind]")].map((item) => item.dataset.streamKind))
+      .toEqual(["greeting", "noise", "greeting", "photo"]);
+    expect([...chatPanels[2].querySelectorAll<HTMLElement>("[data-stream-kind]")].map((item) => item.dataset.streamKind))
+      .toEqual(["photo", "noise", "greeting"]);
+    expect(screen.getAllByText("отдельные сообщения")).toHaveLength(2);
+    expect(screen.queryByText("Спасибо, добавлю")).not.toBeInTheDocument();
+    expect(screen.queryByText("Есть ещё фотография")).not.toBeInTheDocument();
+    expect(screen.queryByText("Сохраняю")).not.toBeInTheDocument();
+    expect(screen.queryByText("•••")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Собрать поздравления" })).toBeInTheDocument();
+    expect(document.querySelector('[data-template-foundation="team-editorial"]')).toBeInTheDocument();
+    expect(document.querySelectorAll("[data-material-photo] img")).toHaveLength(0);
+    expect(document.querySelectorAll("[data-preview-photo] img")).toHaveLength(0);
+    expect(document.querySelectorAll("[data-preview-message-slot] small")).toHaveLength(6);
+
+    fireEvent.click(screen.getByRole("button", { name: "Собрать поздравления" }));
+    expect(document.querySelector('[data-intro-state="focusing"]')).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(120));
+    expect(document.querySelector('[data-intro-state="highlighting-messages"]')).toBeInTheDocument();
+    expect(screen.queryByText("Выделяем поздравления")).not.toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(800));
+    expect(document.querySelector('[data-intro-state="detaching-content"]')).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(350));
+    expect(document.querySelector('[data-intro-state="fading-noise"]')).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(300));
+    expect(document.querySelector('[data-intro-state="grouping-content"]')).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(1200));
+    expect(document.querySelector('[data-intro-state="holding-content"]')).toBeInTheDocument();
+    expect([...document.querySelectorAll("[data-material-message]")].every((item) => item.getAttribute("data-item-state") === "collected")).toBe(true);
+    expect([...document.querySelectorAll("[data-material-photo]")].every((item) => item.getAttribute("data-item-state") === "collected")).toBe(true);
+
+    act(() => vi.advanceTimersByTime(400));
+    expect(document.querySelector('[data-intro-state="revealing-preview"]')).toBeInTheDocument();
+    expect(screen.getByTestId("full-final-card")).toBeInTheDocument();
+    expect([...document.querySelectorAll("[data-preview-message-slot]")].every((item) => item.getAttribute("data-item-state") === "collected")).toBe(true);
+
+    act(() => vi.advanceTimersByTime(550));
+    expect(document.querySelector('[data-intro-state="embedding-messages"]')).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(1050));
+    expect(document.querySelector('[data-intro-state="embedding-photos"]')).toBeInTheDocument();
+    expect([...document.querySelectorAll("[data-material-message]")].every((item) => item.getAttribute("data-item-state") === "placed")).toBe(true);
+    expect([...document.querySelectorAll("[data-preview-message-slot]")].every((item) => item.getAttribute("data-item-state") === "placed")).toBe(true);
+    expect(document.querySelector("[data-material-tray] [data-all-placed=\"true\"]")).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(600));
+    expect(document.querySelector('[data-intro-state="settling"]')).toBeInTheDocument();
+    expect([...document.querySelectorAll("[data-material-photo]")].every((item) => item.getAttribute("data-item-state") === "placed")).toBe(true);
+    expect([...document.querySelectorAll("[data-preview-photo]")].every((item) => item.getAttribute("data-item-state") === "placed")).toBe(true);
+    expect(document.querySelector("[data-material-photos][data-all-placed=\"true\"]")).toBeInTheDocument();
+    expect(document.querySelectorAll("[data-transfer-overlay]")).toHaveLength(0);
+
+    act(() => vi.advanceTimersByTime(450));
+    expect(document.querySelector('[data-intro-state="handoff"]')).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(600));
+    expect(document.querySelector("[data-intro-state]")).not.toBeInTheDocument();
+    expect(screen.getByTestId("full-final-card")).toBeInTheDocument();
+  });
+
+  it.each([0, 1, 2, 3])("uses exactly %s real photos in the collect scene", (photoCount) => {
+    render(
+      <GiftIntro
+        recipientName="Анна"
+        templateId="paper-birthday"
+        animationId="collect-messages"
+        assemblyPreview={{ ...assemblyPreview, photos: assemblyPreview.photos.slice(0, photoCount) }}
+      >
+        <div>Полная открытка</div>
+      </GiftIntro>
+    );
+
+    expect(document.querySelector('[data-animation-id="collect-messages"] [data-photo-count]'))
+      .toHaveAttribute("data-photo-count", String(photoCount));
+    expect(document.querySelectorAll("[data-reveal-photo]")).toHaveLength(photoCount);
+    expect(document.querySelectorAll("[data-material-photo]")).toHaveLength(photoCount);
+    expect(document.querySelectorAll("[data-preview-photo]")).toHaveLength(photoCount);
+    if (photoCount === 0) {
+      expect(document.querySelector("[data-material-photos]")).not.toBeInTheDocument();
+    } else {
+      expect(document.querySelector("[data-material-photos]")).toBeInTheDocument();
+    }
+  });
+
+  it("skips the collect timeline cleanly while the preview is assembling", () => {
+    const onIntroDone = vi.fn();
+    render(
+      <GiftIntro
+        recipientName="Анна"
+        animationId="collect-messages"
+        assemblyPreview={assemblyPreview}
+        onIntroDone={onIntroDone}
+      >
+        <div data-testid="collect-final-card">Полная открытка</div>
+      </GiftIntro>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Собрать поздравления" }));
+    act(() => vi.advanceTimersByTime(1450));
+    fireEvent.click(screen.getByRole("button", { name: "Пропустить" }));
+    act(() => vi.advanceTimersByTime(5000));
+
+    expect(document.querySelector("[data-intro-state]")).not.toBeInTheDocument();
+    expect(screen.getByTestId("collect-final-card")).toBeInTheDocument();
+    expect(onIntroDone).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps an assembled preview beat in reduced motion for collect messages", () => {
+    stubMotionPreference(true);
+    render(
+      <GiftIntro recipientName="Анна" animationId="collect-messages" assemblyPreview={assemblyPreview}>
+        <div data-testid="collect-final-card">Полная открытка</div>
+      </GiftIntro>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Собрать поздравления" }));
+    expect(document.querySelector('[data-intro-state="revealing-preview"]')).toHaveAttribute("data-motion-mode", "reduced");
+    act(() => vi.advanceTimersByTime(180));
+    expect(document.querySelector('[data-intro-state="handoff"]')).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(340));
+    expect(document.querySelector("[data-intro-state]")).not.toBeInTheDocument();
   });
 
   it("renders the semantic assembly from the supplied photos and phrases", () => {
@@ -212,6 +401,20 @@ describe("GiftIntro", () => {
     expect(document.querySelector("[data-intro-state]")).not.toBeInTheDocument();
     expect(screen.getByTestId("full-final-card")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Посмотреть ещё раз" })).toBeInTheDocument();
+    expect(screen.getByTestId("full-final-card").parentElement).toHaveFocus();
+  });
+
+  it("skips the modal reveal with Escape", () => {
+    render(
+      <GiftIntro recipientName="Анна" animationId="collect-messages" assemblyPreview={assemblyPreview}>
+        <div data-testid="escape-final-card">Полная открытка</div>
+      </GiftIntro>
+    );
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(document.querySelector("[data-intro-state]")).not.toBeInTheDocument();
+    expect(screen.getByTestId("escape-final-card")).toBeInTheDocument();
   });
 
   it.each([

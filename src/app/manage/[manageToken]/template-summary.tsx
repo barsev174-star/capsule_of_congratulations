@@ -1,27 +1,43 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import type { CardTemplate } from "@/lib/cards/templates";
+import { giftAnimations, type GiftAnimationId } from "@/lib/gift-animations";
 import { TemplateSettingsForm } from "./template-settings-form";
+import { updateGiftAnimationAction } from "./actions";
 import styles from "./manage-page.module.css";
 
 type Props = {
   manageToken: string;
   templates: CardTemplate[];
   initialTemplateId: CardTemplate["id"] | null;
+  initialAnimationId: GiftAnimationId;
 };
 
 export const TemplateSummary = ({
   manageToken,
   templates,
-  initialTemplateId
+  initialTemplateId,
+  initialAnimationId
 }: Props) => {
   const [templateId, setTemplateId] = useState(initialTemplateId);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [animationId, setAnimationId] = useState(initialAnimationId);
+  const [savedAnimationId, setSavedAnimationId] = useState(initialAnimationId);
   const openerButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const selectedTemplate = templates.find((template) => template.id === templateId) ?? null;
+  const selectedAnimation = giftAnimations.find((animation) => animation.id === animationId) ?? giftAnimations[0];
+  const handleAnimationAction = async (previousState: { ok: boolean; message: string }, formData: FormData) => {
+    const result = await updateGiftAnimationAction(previousState, formData);
+    if (result.ok) setSavedAnimationId(animationId);
+    return result;
+  };
+  const [animationState, animationAction, isAnimationPending] = useActionState(handleAnimationAction, {
+    ok: false,
+    message: ""
+  });
   const previewSrc = selectedTemplate?.preview
     ?? (selectedTemplate?.id === "route-adventure"
       ? "/assets/landing/template-route-adventure-preview.png"
@@ -121,15 +137,48 @@ export const TemplateSummary = ({
         </div>
       </div>
 
-      {selectedTemplate ? <div className={styles.templateAnimationInline}>
-        <div className={styles.envelopeIcon} aria-hidden="true">
-          <span />
-        </div>
-        <div>
-          <strong>Анимация: конверт с открыткой</strong>
-          <p>Получатель увидит открывающийся конверт после передачи.</p>
-        </div>
-      </div> : null}
+      {selectedTemplate ? (
+        <form action={animationAction} className={styles.templateAnimationPicker}>
+          <input type="hidden" name="manageToken" value={manageToken} />
+          <div className={styles.templateAnimationHeading}>
+            <div>
+              <strong>Вручение открытки</strong>
+              <p>{selectedAnimation.description}</p>
+            </div>
+            <span>{savedAnimationId === animationId ? "Выбрано" : "Не сохранено"}</span>
+          </div>
+          <div className={styles.templateAnimationOptions} role="radiogroup" aria-label="Способ вручения открытки">
+            {giftAnimations.map((animation) => (
+              <label
+                key={animation.id}
+                className={`${styles.templateAnimationOption} ${animationId === animation.id ? styles.templateAnimationOptionActive : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="giftAnimationId"
+                  value={animation.id}
+                  checked={animationId === animation.id}
+                  onChange={() => setAnimationId(animation.id)}
+                />
+                <span className={animation.id === "envelope" ? styles.animationEnvelopeMark : styles.animationCollectMark} aria-hidden="true">
+                  {animation.id === "collect-messages" ? <><i /><i /><i /></> : <i />}
+                </span>
+                <span>{animation.name}</span>
+              </label>
+            ))}
+          </div>
+          <div className={styles.templateAnimationFooter}>
+            <span role="status" aria-live="polite">{animationState.message}</span>
+            <button
+              type="submit"
+              className={styles.templateAnimationSave}
+              disabled={isAnimationPending || animationId === savedAnimationId}
+            >
+              {isAnimationPending ? "Сохраняем…" : animationId === savedAnimationId ? "Сохранено" : "Применить"}
+            </button>
+          </div>
+        </form>
+      ) : null}
 
       {isPickerOpen ? (
         <div className={styles.templateDialogBackdrop} role="presentation" onMouseDown={() => setIsPickerOpen(false)}>

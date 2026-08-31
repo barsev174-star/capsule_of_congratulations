@@ -17,10 +17,11 @@ vi.mock("@/components/scroll-reveal/scroll-reveal", () => ({
 
 import { ExampleExperience, type DemoTemplateId } from "./example-experience";
 
-const demo = (initialTemplateId: DemoTemplateId, birthdayScenario = false) => (
+const demo = (initialTemplateId: DemoTemplateId, birthdayScenario = false, previewPhotoCount: 0 | 1 | 2 | 3 = 3) => (
   <ExampleExperience
     birthdayScenario={birthdayScenario}
     initialTemplateId={initialTemplateId}
+    previewPhotoCount={previewPhotoCount}
     routeChildren={null}
     schoolChildren={null}
     schoolClassicChildren={null}
@@ -54,6 +55,34 @@ describe("example creation", () => {
     fireEvent.submit(screen.getByRole("button", { name: "Создать такую же", exact: true }).closest("form")!);
     await waitFor(() => expect(actions.startCardFromShowcaseAction).toHaveBeenCalledTimes(1));
     expect(actions.startColleagueCardFromShowcaseAction).not.toHaveBeenCalled();
+  });
+
+  it("offers the new collect animation and launches it with six message previews", () => {
+    render(demo("paper-birthday"));
+
+    const collectChoice = screen.getByRole("button", { name: /Собрать поздравления/ });
+    expect(collectChoice).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: "Запустить анимацию" }));
+
+    expect(document.querySelector('[data-animation-id="collect-messages"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-message-count="6"]')).toBeInTheDocument();
+  });
+
+  it("still lets the viewer switch the example back to the envelope", () => {
+    render(demo("paper-birthday"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Конверт", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Запустить анимацию" }));
+
+    expect(document.querySelector('[data-animation-id="envelope"]')).toBeInTheDocument();
+  });
+
+  it.each([0, 1, 3] as const)("supports the ?photos=%s visual QA variant", (photoCount) => {
+    render(demo("paper-birthday", false, photoCount));
+    fireEvent.click(screen.getByRole("button", { name: "Запустить анимацию" }));
+    expect(document.querySelector('[data-animation-id="collect-messages"] [data-photo-count]'))
+      .toHaveAttribute("data-photo-count", String(photoCount));
   });
 
   it("opens the birthday envelope directly with the family sender", () => {

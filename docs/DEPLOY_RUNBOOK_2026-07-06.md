@@ -19,7 +19,7 @@
 1. Получить подготовленный release commit.
 2. Проверить `docker compose ... config`.
 3. Собрать новый web image, не удаляя предыдущий.
-4. Применить миграции `0010`–`0015`; повторный запуск должен быть безопасен.
+4. Выполнить `npm run db:migrate` внутри web-контейнера и применить все ожидающие миграции, включая `0036_gift_animation.sql`; повторный запуск должен быть безопасен.
 5. Перезапустить нужные сервисы и проверить health `web` и `postgres`.
 6. Убедиться, что `capsule-caddy-1` запущен в том же Compose-проекте `capsule` и подключён к `capsule_default`. Ручной `docker network connect` не используется.
 7. Проверить HTTPS для `slovesto.ru` и `www.slovesto.ru`, а также 301 с `www` на основной домен.
@@ -44,10 +44,11 @@
 7. Перезапустить web и убедиться, что PostgreSQL и uploads сохранились.
 8. Сделать новый backup и снова проверить восстановление.
 9. Открыть `/example`, выбрать каждую демонстрационную открытку и проверить загрузку её ассетов.
-10. Скачать Story, Post и A4 с реального публичного токена.
-11. Во время Story проверить `/` и `/?_rsc=test`; оба маршрута должны отвечать `200` без timeout.
-12. Проверить этапы `export:start` → `export:complete` и отсутствие `export:failed`, `export:proxy-failed`, `EAI_AGAIN postgres`.
-13. Повторить переключение вкладок manager и зафиксировать response time.
+10. В `/example` и на реальном `/gift` проверить обе вступительные анимации: `envelope` и `collect-messages`; для второй отдельно проверить перенос фотографий на mobile.
+11. Скачать Story, Post и A4 с реального публичного токена.
+12. Во время Story проверить `/` и `/?_rsc=test`; оба маршрута должны отвечать `200` без timeout.
+13. Проверить этапы `export:start` → `export:complete` и отсутствие `export:failed`, `export:proxy-failed`, `EAI_AGAIN postgres`.
+14. Повторить переключение вкладок manager и зафиксировать response time.
 
 ## 5. Rollback
 

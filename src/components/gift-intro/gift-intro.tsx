@@ -13,6 +13,9 @@ import { BrandLogo } from "@/components/brand/brand-logo";
 import type { CardTemplate, CardTemplateId } from "@/lib/cards/templates";
 import type { TemplateGiftVisualPreset } from "@/lib/templates/profile";
 import { defaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
+import type { GiftRevealMessagePreview } from "@/lib/gift-reveal-preview";
+import { getGiftRevealPreviewProfile } from "@/lib/gift-reveal-profiles";
+import { CollectRevealScene } from "./collect-reveal-scene";
 import { GiftIntro as LegacyGiftIntro } from "./legacy-v1/gift-intro";
 import styles from "./gift-intro.module.css";
 
@@ -25,6 +28,8 @@ export type GiftIntroPreviewPhoto = {
 
 export type GiftIntroPreview = {
   headline: string;
+  messages?: readonly GiftRevealMessagePreview[];
+  qualities?: readonly string[];
   photos: readonly GiftIntroPreviewPhoto[];
   phrases: readonly string[];
 };
@@ -37,6 +42,16 @@ type GiftIntroState =
   | "extracting-card"
   | "unfolding-card"
   | "assembling-card"
+  | "focusing"
+  | "highlighting-messages"
+  | "fading-noise"
+  | "detaching-content"
+  | "grouping-content"
+  | "holding-content"
+  | "revealing-preview"
+  | "embedding-messages"
+  | "embedding-photos"
+  | "settling"
   | "handoff"
   | "finished"
   | "skipped";
@@ -63,7 +78,7 @@ export type GiftIntroProps = {
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 const REDUCED_MOTION_DURATION = 420;
-const FULL_SEQUENCE = [
+const ENVELOPE_SEQUENCE = [
   ["releasing-seal", 220],
   ["opening-envelope", 430],
   ["extracting-card", 1290],
@@ -71,6 +86,20 @@ const FULL_SEQUENCE = [
   ["assembling-card", 3190],
   ["handoff", 5130],
   ["finished", 6660]
+] as const satisfies readonly (readonly [GiftIntroState, number])[];
+
+const COLLECT_SEQUENCE = [
+  ["highlighting-messages", 100],
+  ["detaching-content", 900],
+  ["fading-noise", 1250],
+  ["grouping-content", 1550],
+  ["holding-content", 2750],
+  ["revealing-preview", 3150],
+  ["embedding-messages", 3700],
+  ["embedding-photos", 4750],
+  ["settling", 5350],
+  ["handoff", 5800],
+  ["finished", 6400]
 ] as const satisfies readonly (readonly [GiftIntroState, number])[];
 
 const STATE_CLASS: Partial<Record<GiftIntroState, string>> = {
@@ -290,12 +319,15 @@ const GiftIntroAssembled = ({
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const onIntroDoneRef = useRef(onIntroDone);
   const bodyOverflowRef = useRef<string | null>(null);
+  const giftWrapperRef = useRef<HTMLDivElement>(null);
 
   const name = cleanPreviewText(recipientName, "Вам");
   const resolvedPreviewKicker = cleanPreviewText(previewKicker, "Открытка для");
   const accentColor = accent ?? "#e9652f";
   const phrases = (assemblyPreview?.phrases ?? []).filter(Boolean).slice(0, 3);
   const photos = (assemblyPreview?.photos ?? []).slice(0, 3);
+  const messages = (assemblyPreview?.messages ?? []).slice(0, 6);
+  const qualities = (assemblyPreview?.qualities ?? []).filter(Boolean).slice(0, 5);
   const headline = cleanPreviewText(
     assemblyPreview?.headline ?? "",
     `${name}, эта открытка собрана для вас`
@@ -308,8 +340,21 @@ const GiftIntroAssembled = ({
         : undefined
   );
   const assemblyEyebrow = resolvedVisualPreset ? TEMPLATE_ASSEMBLY_EYEBROWS[resolvedVisualPreset] : undefined;
+  const isCollectMessages = animationId === "collect-messages";
+  const collectProfile = getGiftRevealPreviewProfile(templateId)
+    ?? getGiftRevealPreviewProfile("paper-birthday");
   const isFinished = state === "finished" || state === "skipped";
-  const shouldRenderFinalCard = ["unfolding-card", "assembling-card", "handoff", "finished", "skipped"].includes(state);
+  const shouldRenderFinalCard = [
+    "unfolding-card",
+    "assembling-card",
+    "revealing-preview",
+    "embedding-messages",
+    "embedding-photos",
+    "settling",
+    "handoff",
+    "finished",
+    "skipped"
+  ].includes(state);
   const isFinalCardVisible = state === "handoff" || isFinished;
   const isIntroVisible = !isFinished;
 
@@ -356,13 +401,36 @@ const GiftIntroAssembled = ({
   }, [isIntroVisible]);
 
   useEffect(() => {
-    const isComplexMotionPlaying = ["intro", "releasing-seal", "opening-envelope", "extracting-card", "unfolding-card", "assembling-card"].includes(state);
+    const isComplexMotionPlaying = [
+      "intro",
+      "releasing-seal",
+      "opening-envelope",
+      "extracting-card",
+      "unfolding-card",
+      "assembling-card",
+      "focusing",
+      "highlighting-messages",
+      "fading-noise",
+      "detaching-content",
+      "grouping-content",
+      "holding-content",
+      "revealing-preview",
+      "embedding-messages",
+      "embedding-photos",
+      "settling"
+    ].includes(state);
     if (!prefersReducedMotion || !isComplexMotionPlaying) return;
 
     clearTimers();
+    if (isCollectMessages) {
+      schedule(() => setState("revealing-preview"), 0);
+      schedule(() => setState("handoff"), 180);
+      schedule(() => finishIntro("finished"), 520);
+      return;
+    }
     schedule(() => setState("handoff"), 0);
     schedule(() => finishIntro("finished"), REDUCED_MOTION_DURATION);
-  }, [clearTimers, finishIntro, prefersReducedMotion, schedule, state]);
+  }, [clearTimers, finishIntro, isCollectMessages, prefersReducedMotion, schedule, state]);
 
   const startSequence = useCallback((requestFullMotion: boolean) => {
     if (state !== "idle") return;
@@ -371,13 +439,20 @@ const GiftIntroAssembled = ({
     setIsHoveringCta(false);
     if (requestFullMotion) setFullMotionRequested(true);
     if (prefersReducedMotion && !requestFullMotion) {
-      setState("handoff");
-      schedule(() => finishIntro("finished"), REDUCED_MOTION_DURATION);
+      if (isCollectMessages) {
+        setState("revealing-preview");
+        schedule(() => setState("handoff"), 180);
+        schedule(() => finishIntro("finished"), 520);
+      } else {
+        setState("handoff");
+        schedule(() => finishIntro("finished"), REDUCED_MOTION_DURATION);
+      }
       return;
     }
 
-    setState("intro");
-    FULL_SEQUENCE.forEach(([nextState, delay]) => {
+    setState(isCollectMessages ? "focusing" : "intro");
+    const sequence = isCollectMessages ? COLLECT_SEQUENCE : ENVELOPE_SEQUENCE;
+    sequence.forEach(([nextState, delay]) => {
       schedule(() => {
         if (nextState === "finished") {
           finishIntro("finished");
@@ -386,7 +461,7 @@ const GiftIntroAssembled = ({
         setState(nextState);
       }, delay);
     });
-  }, [clearTimers, finishIntro, prefersReducedMotion, schedule, state]);
+  }, [clearTimers, finishIntro, isCollectMessages, prefersReducedMotion, schedule, state]);
 
   const handleOpen = useCallback(() => startSequence(false), [startSequence]);
 
@@ -394,6 +469,19 @@ const GiftIntroAssembled = ({
     clearTimers();
     finishIntro("skipped");
   }, [clearTimers, finishIntro]);
+
+  useEffect(() => {
+    if (!isIntroVisible) {
+      giftWrapperRef.current?.focus({ preventScroll: true });
+      return;
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") handleSkip();
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [handleSkip, isIntroVisible]);
 
   const handleReplay = useCallback(() => {
     clearTimers();
@@ -403,9 +491,13 @@ const GiftIntroAssembled = ({
   return (
     <>
       <div
+        ref={giftWrapperRef}
         className={`${styles.giftWrapper} ${isFinalCardVisible ? styles.finalCardVisible : styles.finalCardHidden}`}
+        data-animation-id={animationId}
         data-motion-mode={prefersReducedMotion ? "reduced" : "full"}
-        aria-hidden={!isFinalCardVisible}
+        aria-hidden={isIntroVisible}
+        inert={isIntroVisible ? true : undefined}
+        tabIndex={-1}
       >
         {shouldRenderFinalCard ? children : null}
         {isFinished ? (
@@ -436,6 +528,28 @@ const GiftIntroAssembled = ({
             </button>
           </header>
 
+          {isCollectMessages && collectProfile ? (
+            <CollectRevealScene
+              phase={state}
+              recipientName={name}
+              fromLabel={fromLabel}
+              messages={messages}
+              photos={photos}
+              profile={collectProfile}
+              previewFoundation={(
+                <TemplateFoundation
+                  templateId={templateId}
+                  visualPreset={collectProfile.visualPreset}
+                  preset={previewPreset}
+                  accent={accentColor}
+                  decor={previewDecor}
+                />
+              )}
+              onOpen={handleOpen}
+              disabled={state !== "idle"}
+              reducedMotion={prefersReducedMotion}
+            />
+          ) : (
           <div className={styles.introLayout}>
             <div className={styles.sceneCopy}>
               <p className={styles.giftKicker}>Вам подарили открытку</p>
@@ -631,6 +745,7 @@ const GiftIntroAssembled = ({
               </p>
             </div>
           </div>
+          )}
         </section>
       ) : null}
     </>

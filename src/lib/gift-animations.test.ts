@@ -9,6 +9,7 @@ describe("gift animations", () => {
 
   it("validates animation identifiers", () => {
     expect(isGiftAnimationId("envelope")).toBe(true);
+    expect(isGiftAnimationId("collect-messages")).toBe(true);
     expect(isGiftAnimationId("unknown")).toBe(false);
   });
 });

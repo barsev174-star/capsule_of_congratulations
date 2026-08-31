@@ -5,6 +5,7 @@ dist/
 coverage/
 .npm-cache/
 screenshots/
+artifacts/
 output/
 tmp/
 tsconfig.tsbuildinfo

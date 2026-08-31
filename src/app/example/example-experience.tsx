@@ -10,6 +10,8 @@ import { ScrollReveal, useScrollReveal } from "@/components/scroll-reveal/scroll
 import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel, teamEditorialDemoCardModel } from "@/lib/example-card";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
 import { birthdayExampleCardModel } from "@/lib/birthday-example";
+import type { GiftAnimationId } from "@/lib/gift-animations";
+import { toGiftRevealExcerpt } from "@/lib/gift-reveal-preview";
 import { startBirthdayCardFromShowcaseAction, startCardFromShowcaseAction, startColleagueCardFromShowcaseAction } from "../home-actions";
 import styles from "./example.module.css";
 
@@ -23,9 +25,11 @@ type Props = {
   kindergartenDoodlesChildren: ReactNode;
   teamEditorialChildren: ReactNode;
   initialTemplateId?: DemoTemplateId;
+  initialAnimationId?: GiftAnimationId;
   birthdayScenario?: boolean;
   introVariant?: GiftIntroVariant;
   forceFullMotion?: boolean;
+  previewPhotoCount?: 0 | 1 | 2 | 3;
 };
 
 type DemoStepId = "template" | "animation" | "recipient_view";
@@ -45,9 +49,10 @@ const previewFeatures = [
 
 const previewContributions = exampleCardModel.contributions.slice(0, 2);
 
-export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, initialTemplateId, birthdayScenario = false, introVariant = "assembled", forceFullMotion = false }: Props) => {
+export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, initialTemplateId, initialAnimationId, birthdayScenario = false, introVariant = "assembled", forceFullMotion = false, previewPhotoCount = 3 }: Props) => {
   const [started, setStarted] = useState(birthdayScenario);
   const [selectedTemplateId, setSelectedTemplateId] = useState<DemoTemplateId>(initialTemplateId ?? "paper-birthday");
+  const [selectedAnimationId, setSelectedAnimationId] = useState<GiftAnimationId>(initialAnimationId ?? (birthdayScenario ? "envelope" : "collect-messages"));
   const [activeStep, setActiveStep] = useState<DemoStepId>("template");
   const demoModelByTemplate: Record<DemoTemplateId, typeof exampleCardModel | typeof schoolScrapbookDemoCardModel> = {
     "paper-birthday": birthdayScenario ? birthdayExampleCardModel : exampleCardModel,
@@ -122,13 +127,13 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
   };
   const selectedDemoModel = demoModelByTemplate[selectedTemplateId];
   const selectedDemoPhotos = "mediaAssets" in selectedDemoModel
-    ? selectedDemoModel.mediaAssets.slice(0, 3).map((asset) => ({
+    ? selectedDemoModel.mediaAssets.slice(0, previewPhotoCount).map((asset) => ({
         id: asset.id,
         src: asset.publicUrl,
         alt: asset.captionTitle || asset.captionSubtitle || `Фотография для открытки ${selectedDemoModel.recipientName}`,
         objectPosition: `${asset.cropX ?? 50}% ${asset.cropY ?? 50}%`
       }))
-    : [...selectedDemoModel.messagePhotos, ...selectedDemoModel.memoryPhotos].slice(0, 3).map((photo) => ({
+    : [...selectedDemoModel.messagePhotos, ...selectedDemoModel.memoryPhotos].slice(0, previewPhotoCount).map((photo) => ({
         id: photo.id,
         src: photo.src,
         alt: photo.alt,
@@ -140,6 +145,12 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
   const selectedDemoPhrases = "quotes" in selectedDemoModel
     ? selectedDemoModel.quotes
     : selectedDemoModel.privateQuotes;
+  const selectedDemoMessages = selectedDemoModel.contributions.slice(0, 6).map((contribution, index) => ({
+    id: contribution.id,
+    authorName: contribution.authorName,
+    excerpt: toGiftRevealExcerpt(contribution.message),
+    isMain: index === 0
+  }));
   const createAction = selectedTemplateId === "team-editorial"
     ? startColleagueCardFromShowcaseAction
     : birthdayScenario && selectedTemplateId === "paper-birthday"
@@ -237,12 +248,21 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     sendClientTelemetry("demo_template_selected", { route: "/example", template: templateId });
   };
 
+  const selectAnimation = (animationId: GiftAnimationId) => {
+    if (animationId === selectedAnimationId) return;
+    setSelectedAnimationId(animationId);
+  };
+
   const trackCreateClicked = (source: string) => {
     sendClientTelemetry("demo_create_clicked", { route: "/example", source });
   };
 
   const openDemo = () => {
-    sendClientTelemetry("demo_animation_started", { route: "/example", template: selectedTemplateId });
+    sendClientTelemetry("demo_animation_started", {
+      route: "/example",
+      template: selectedTemplateId,
+      animation: selectedAnimationId
+    });
     setStarted(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -260,10 +280,12 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
         visualPreset={demoIntroByTemplate[selectedTemplateId].visualPreset}
         previewDecor={demoIntroByTemplate[selectedTemplateId].decor}
         templateId={selectedTemplateId}
-        animationId="envelope"
+        animationId={selectedAnimationId}
         accent={demoIntroByTemplate[selectedTemplateId].accent}
         assemblyPreview={{
           headline: selectedDemoHeadline,
+          messages: selectedDemoMessages,
+          qualities: selectedDemoModel.qualities.slice(0, 5),
           phrases: selectedDemoPhrases.slice(0, 3),
           photos: selectedDemoPhotos
         }}
@@ -521,26 +543,61 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
             <span className={styles.blockNumber}>2</span>
             <div className={styles.blockHeaderText}>
               <h2 id="animation-heading">Выберите анимацию открытия</h2>
-              <p>Получатель сначала увидит конверт, а затем открытка раскроется на экране.</p>
+              <p>Конверт остаётся классическим вариантом, а новая сцена собирает открытку из поздравлений.</p>
             </div>
           </div>
 
           <div className={styles.animationLayout}>
             <div {...animationAsset} className={styles.animationAssetWrap}>
-              <Image
-                src="/assets/example/animation-envelope.png"
-                alt=""
-                width={1254}
-                height={1254}
-                className={styles.animationAsset}
-                sizes="(max-width: 640px) 160px, 220px"
-              />
+              {selectedAnimationId === "envelope" ? (
+                <Image
+                  src="/assets/example/animation-envelope.png"
+                  alt=""
+                  width={1254}
+                  height={1254}
+                  className={styles.animationAsset}
+                  sizes="(max-width: 640px) 160px, 220px"
+                />
+              ) : (
+                <div className={styles.collectAsset} aria-hidden="true">
+                  <span className={styles.collectChat}>Алексей</span>
+                  <span className={styles.collectChat}>Марина</span>
+                  <span className={styles.collectChat}>Игорь</span>
+                  <span className={styles.collectPhoto}>▧</span>
+                  <span className={styles.collectFlag}>♥</span>
+                  <span className={styles.collectCard}>Для тебя</span>
+                </div>
+              )}
             </div>
 
             <div {...animationInfo} className={styles.animationInfo}>
+              <div className={styles.animationChoices} role="group" aria-label="Способ открытия открытки">
+                <button
+                  type="button"
+                  className={`${styles.animationChoice} ${selectedAnimationId === "envelope" ? styles.animationChoiceActive : ""}`}
+                  aria-pressed={selectedAnimationId === "envelope"}
+                  onClick={() => selectAnimation("envelope")}
+                >
+                  <span aria-hidden="true">✉</span>
+                  Конверт
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.animationChoice} ${selectedAnimationId === "collect-messages" ? styles.animationChoiceActive : ""}`}
+                  aria-pressed={selectedAnimationId === "collect-messages"}
+                  onClick={() => selectAnimation("collect-messages")}
+                >
+                  <span aria-hidden="true">✦</span>
+                  Собрать поздравления
+                </button>
+              </div>
               <span className={styles.badgeSelected}>Выбрано</span>
-              <strong>Конверт с открыткой</strong>
-              <p>Мягкое открытие клапана и появление готовой открытки.</p>
+              <strong>{selectedAnimationId === "envelope" ? "Конверт с открыткой" : "Собрать поздравления"}</strong>
+              <p>
+                {selectedAnimationId === "envelope"
+                  ? "Мягкое открытие клапана и появление готовой открытки."
+                  : "Сообщения, фотографии и качества прилетают из чатов и складываются в выбранный шаблон."}
+              </p>
               <button type="button" className={styles.ghostButton} onClick={openDemo}>
                 <span aria-hidden="true">▶</span>
                 Запустить анимацию
@@ -549,40 +606,52 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
 
             <div {...animationScene} className={styles.animationScene}>
               <div className={styles.animationSceneStep}>
-                <div className={styles.paperEnvelopeClosed}>
-                  <Image
-                    src="/assets/gift/envelope-closed.png"
-                    alt=""
-                    fill
-                    sizes="180px"
-                    className={styles.storyEnvelopeAsset}
-                  />
-                  <div className={styles.paperEnvelopeClosedFlap} />
-                  <div className={styles.paperEnvelopeClosedSeal}>♡</div>
-                </div>
-                <span>Сначала конверт</span>
+                {selectedAnimationId === "envelope" ? (
+                  <div className={styles.paperEnvelopeClosed}>
+                    <Image
+                      src="/assets/gift/envelope-closed.png"
+                      alt=""
+                      fill
+                      sizes="180px"
+                      className={styles.storyEnvelopeAsset}
+                    />
+                    <div className={styles.paperEnvelopeClosedFlap} />
+                    <div className={styles.paperEnvelopeClosedSeal}>♡</div>
+                  </div>
+                ) : (
+                  <div className={styles.collectMessagesMini} aria-hidden="true">
+                    <span>Алексей</span><span>Марина</span><span>Игорь</span>
+                  </div>
+                )}
+                <span>{selectedAnimationId === "envelope" ? "Сначала конверт" : "Сначала поздравления"}</span>
               </div>
               <span className={styles.animationSceneArrow} aria-hidden="true">→</span>
               <div className={styles.animationSceneStep}>
-                <div className={styles.paperCardOpen}>
-                  <Image
-                    src="/assets/gift/envelope-open.png"
-                    alt=""
-                    fill
-                    sizes="180px"
-                    className={styles.storyEnvelopeAsset}
-                  />
-                  <div className={styles.paperCardOpenCard} />
-                  <div className={styles.paperCardOpenEnvelope}>
-                    <div className={styles.paperCardOpenSeal}>♡</div>
+                {selectedAnimationId === "envelope" ? (
+                  <div className={styles.paperCardOpen}>
+                    <Image
+                      src="/assets/gift/envelope-open.png"
+                      alt=""
+                      fill
+                      sizes="180px"
+                      className={styles.storyEnvelopeAsset}
+                    />
+                    <div className={styles.paperCardOpenCard} />
+                    <div className={styles.paperCardOpenEnvelope}>
+                      <div className={styles.paperCardOpenSeal}>♡</div>
+                    </div>
                   </div>
-                </div>
-                <span>Затем открытка раскроется</span>
+                ) : (
+                  <div className={styles.collectPreviewMini} aria-hidden="true">
+                    <strong>Для тебя</strong><i /><i /><i />
+                  </div>
+                )}
+                <span>{selectedAnimationId === "envelope" ? "Затем открытка раскроется" : "Затем соберётся открытка"}</span>
               </div>
             </div>
           </div>
 
-          <p className={styles.blockFooter}>Позже добавим листание страниц и мягкое появление.</p>
+          <p className={styles.blockFooter}>Выбор меняет реальную демонстрацию выше и в этой секции.</p>
         </section>
 
         <section
