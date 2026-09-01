@@ -12,12 +12,13 @@ import type {
   CreateCardResult,
   CreateContributionInput
 } from "@/lib/cards/types";
+import { storeCardRecoveryToken } from "@/lib/manage/recovery-tokens";
 
 const slug = (size = 8) => randomBytes(size).toString("hex");
 
 const buildDraftLinks = (card: CardDraft): CreateCardResult => {
   const participantLink = getJoinUrl(card.publicSlug);
-  const manageLink = getManageUrl(card.manageToken);
+  const manageLink = getManageUrl(card.organizerEmail.trim() ? card.id : card.manageToken);
   const finalLink = getGiftUrl(card.finalSlug);
   const chatMessage = `Друзья, собираем открытку для ${card.recipientName || "дорогого человека"}. Повод: ${
     card.occasionText || "пока уточняется"
@@ -83,6 +84,7 @@ export const createCardDraft = async (input: CreateCardInput): Promise<CreateCar
   };
 
   await saveCardDraft(card);
+  await storeCardRecoveryToken(card.id, card.manageToken);
 
   await trackFunnel("funnel.card_created", {
     cardId: card.id,
@@ -154,6 +156,7 @@ export const createEmptyCardDraft = async (
   };
 
   await saveCardDraft(card);
+  await storeCardRecoveryToken(card.id, card.manageToken);
 
   await trackFunnel("funnel.card_created", {
     ...funnelContext,

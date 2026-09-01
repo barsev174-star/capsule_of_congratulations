@@ -1,9 +1,10 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PreviewBar } from "@/components/preview/preview-bar";
 import { PreviewWatermark } from "@/components/preview/preview-watermark";
 import { TemplateCardRenderer } from "@/components/templates/template-card-renderer";
 import {
-  getCardDraftByManageToken,
+  getCardDraftByLegacyManageToken,
+  getCardDraftByManagementId,
   listCardMediaAssetsByCardId,
   listContributionsByCardId
 } from "@/lib/cards/repository";
@@ -18,6 +19,8 @@ import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { buildCardBlockReadiness } from "@/lib/manage/card-design-readiness";
 import { getUniversalLayoutPreset } from "@/lib/templates/layout-presets";
 import { buildPrivateCardPresentation } from "@/lib/templates/private-card-presentation";
+import { getCardManagementAccess } from "@/lib/manage/access";
+import { resolveCardRecoveryToken } from "@/lib/manage/recovery-tokens";
 
 export const metadata = {
   robots: {
@@ -33,10 +36,22 @@ type Props = {
 };
 
 export default async function PreviewPage({ params }: Props) {
-  const { manageToken } = await params;
-  const [card, lifecycle] = await Promise.all([getCardDraftByManageToken(manageToken), getCardLifecycleByManageToken(manageToken)]);
+  const { manageToken: identifier } = await params;
+  const permanentCard = await getCardDraftByManagementId(identifier);
+  const recoveryCardId = permanentCard ? null : await resolveCardRecoveryToken(identifier);
+  const recoveryCard = permanentCard
+    ? null
+    : recoveryCardId
+      ? await getCardDraftByManagementId(recoveryCardId)
+      : await getCardDraftByLegacyManageToken(identifier);
+  const card = permanentCard ?? recoveryCard;
+  if (!card) notFound();
+  const access = await getCardManagementAccess(card);
+  if (!access.allowed) redirect(`/manage/${recoveryCard ? identifier : card.id}`);
+  if (identifier !== card.id) redirect(`/preview/${card.id}`);
+  const lifecycle = await getCardLifecycleByManageToken(card.id);
 
-  if (!card || !lifecycle || lifecycle.purgedAt !== null) {
+  if (!lifecycle || lifecycle.purgedAt !== null) {
     notFound();
   }
 
@@ -88,21 +103,21 @@ export default async function PreviewPage({ params }: Props) {
 
   return (
     <>
-      <PreviewBar manageToken={manageToken} finalSlug={card.finalSlug} published={published} />
+      <PreviewBar manageToken={card.id} finalSlug={card.finalSlug} published={published} />
       <PreviewWatermark />
       {presentation.kind === "universal-v1"
         ? <TemplateCardRenderer
             dispatch={presentation.dispatch}
             model={presentation.model}
             actionContext="private"
-            manageToken={manageToken}
+            manageToken={card.id}
             blockReadiness={blockReadiness}
           />
         : <TemplateCardRenderer
             dispatch={presentation.dispatch}
             model={presentation.model}
             mode="preview"
-            manageToken={manageToken}
+            manageToken={card.id}
             blockReadiness={blockReadiness}
           />}
     </>

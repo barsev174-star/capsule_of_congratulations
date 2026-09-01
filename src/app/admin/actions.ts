@@ -56,7 +56,7 @@ export async function updateAiBonusLimitAdminAction(formData: FormData): Promise
   });
 
   revalidatePath(`/admin/cards/${cardId}`);
-  revalidatePath(`/manage/${card.manageToken}`);
+  revalidatePath(`/manage/${card.id}`);
 }
 
 export type AdminCardsSearchOptions = ListAdminCardsOptions;
@@ -75,7 +75,7 @@ export async function grantCardAccessAdminAction(formData: FormData): Promise<vo
   await grantCardAccess({ cardId, adminEmail: session.email, reasonCode: reasonCode as typeof accessGrantReasons[number], comment, expiresAt });
   revalidatePath(`/admin/cards/${cardId}`);
   const card = await getCardDraftById(cardId);
-  if (card) revalidatePath(`/manage/${card.manageToken}`);
+  if (card) revalidatePath(`/manage/${card.id}`);
 }
 
 export async function revokeCardAccessAdminAction(formData: FormData): Promise<void> {
@@ -87,5 +87,5 @@ export async function revokeCardAccessAdminAction(formData: FormData): Promise<v
   await revokeCardAccess({ cardId, grantId, adminEmail: session.email, comment });
   revalidatePath(`/admin/cards/${cardId}`);
   const card = await getCardDraftById(cardId);
-  if (card) revalidatePath(`/manage/${card.manageToken}`);
+  if (card) revalidatePath(`/manage/${card.id}`);
 }

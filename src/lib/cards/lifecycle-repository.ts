@@ -95,7 +95,15 @@ const assertOperational = (card: CardLifecycleRecord) => {
 };
 
 export const getCardLifecycleByManageToken = async (manageToken: string): Promise<CardLifecycleRecord | null> => {
-  const result = await getPostgresPool().query<CardLifecycleRow>(`${selectLifecycle} WHERE manage_token = $1 LIMIT 1`, [manageToken]);
+  const result = await getPostgresPool().query<CardLifecycleRow>(
+    `${selectLifecycle} WHERE id::text = $1 OR manage_token = $1 LIMIT 1`,
+    [manageToken]
+  );
+  return result.rows[0] ? withAccess(mapCard(result.rows[0])) : null;
+};
+
+export const getCardLifecycleByCardId = async (cardId: string): Promise<CardLifecycleRecord | null> => {
+  const result = await getPostgresPool().query<CardLifecycleRow>(`${selectLifecycle} WHERE id = $1 LIMIT 1`, [cardId]);
   return result.rows[0] ? withAccess(mapCard(result.rows[0])) : null;
 };
 
@@ -108,7 +116,7 @@ export const openCollection = async (manageToken: string): Promise<CardLifecycle
   const client = await getPostgresPool().connect();
   try {
     await client.query("BEGIN");
-    const current = await client.query<CardLifecycleRow>(`${selectLifecycle} WHERE manage_token = $1 FOR UPDATE`, [manageToken]);
+    const current = await client.query<CardLifecycleRow>(`${selectLifecycle} WHERE id::text = $1 OR manage_token = $1 FOR UPDATE`, [manageToken]);
     const card = current.rows[0] ? await withAccess(mapCard(current.rows[0])) : null;
     if (!card) throw new CardLifecycleConflictError("Открытка не найдена.");
     assertOperational(card);
@@ -136,7 +144,7 @@ export const closeCollection = async (manageToken: string): Promise<CardLifecycl
   const client = await getPostgresPool().connect();
   try {
     await client.query("BEGIN");
-    const current = await client.query<CardLifecycleRow>(`${selectLifecycle} WHERE manage_token = $1 FOR UPDATE`, [manageToken]);
+    const current = await client.query<CardLifecycleRow>(`${selectLifecycle} WHERE id::text = $1 OR manage_token = $1 FOR UPDATE`, [manageToken]);
     const card = current.rows[0] ? await withAccess(mapCard(current.rows[0])) : null;
     if (!card) throw new CardLifecycleConflictError("Открытка не найдена.");
     assertOperational(card);
@@ -166,7 +174,7 @@ export const deliverCard = async (
   const client = await getPostgresPool().connect();
   try {
     await client.query("BEGIN");
-    const current = await client.query<CardLifecycleRow>(`${selectLifecycle} WHERE manage_token = $1 FOR UPDATE`, [manageToken]);
+    const current = await client.query<CardLifecycleRow>(`${selectLifecycle} WHERE id::text = $1 OR manage_token = $1 FOR UPDATE`, [manageToken]);
     const card = current.rows[0] ? await withAccess(mapCard(current.rows[0])) : null;
     if (!card) throw new CardLifecycleConflictError("Открытка не найдена.");
     assertOperational(card);

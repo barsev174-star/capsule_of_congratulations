@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import type { CSSProperties } from "react";
 import {
-  getCardDraftByManageToken,
+  getCardDraftByLegacyManageToken,
+  getCardDraftByManagementId,
   listAllContributionsByCardId,
   listCardMediaAssetsByCardId,
   listContributionsByCardId
@@ -31,7 +32,7 @@ import {
   isValidBestQuoteText,
   QUALITY_MIN_CONTRIBUTION_COUNT
 } from "@/lib/ai/card-insights";
-import { getCardLifecycleByManageToken } from "@/lib/cards/lifecycle-repository";
+import { getCardLifecycleByCardId } from "@/lib/cards/lifecycle-repository";
 import { getCardLifecycleLabel, isGiftAccessible } from "@/lib/cards/lifecycle";
 import { getActiveMessageSlots, getAssetsForSlots, MEMORY_MEDIA_SLOTS } from "@/lib/cards/media-slots";
 import { openCollectionAction } from "./actions";
@@ -53,6 +54,10 @@ import {
 import { EditorSidebarCard } from "./editor-sidebar-card";
 import { ParticipantLinkCard } from "./participant-link-card";
 import { PreparationProgress } from "./preparation-progress";
+import { getCardManagementAccess } from "@/lib/manage/access";
+import { hasActiveCardRecoveryToken, resolveCardRecoveryToken } from "@/lib/manage/recovery-tokens";
+import { getPendingOrganizerEmailChange } from "@/lib/organizer/repository";
+import { ManageAccessGate } from "./access-gate";
 
 // Readiness combines several database-backed aggregates. Always render a fresh
 // server snapshot so refreshes, browser tabs and devices cannot reuse a stale page.
@@ -120,15 +125,48 @@ const EditorTabIcon = ({ tab }: { tab: EditorTab }) => {
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
 
 export default async function ManagePage({ params, searchParams }: Props) {
-  const { manageToken } = await params;
+  const { manageToken: identifier } = await params;
   const { tab, focus, section } = await searchParams;
   const contentFocus = isContentFocus(focus) ? focus : null;
   const activeTab = resolveEditorTab({ tab, section, focus: contentFocus });
-  const [card, lifecycle] = await Promise.all([getCardDraftByManageToken(manageToken), getCardLifecycleByManageToken(manageToken)]);
+  const permanentCard = await getCardDraftByManagementId(identifier);
+  const recoveryCardId = permanentCard ? null : await resolveCardRecoveryToken(identifier);
+  const recoveryCard = permanentCard
+    ? null
+    : recoveryCardId
+      ? await getCardDraftByManagementId(recoveryCardId)
+      : await getCardDraftByLegacyManageToken(identifier);
+  const card = permanentCard ?? recoveryCard;
 
-  if (!card || !lifecycle) {
-    notFound();
+  if (!card) {
+    return <ManageAccessGate cardId={null} invalid />;
   }
+
+  const access = await getCardManagementAccess(card);
+  if (recoveryCard && access.allowed) redirect(getManagePath(card.id));
+  if (!access.allowed) {
+    return (
+      <ManageAccessGate
+        cardId={card.id}
+        recoveryToken={recoveryCard ? identifier : undefined}
+        needsEmailClaim={!card.organizerEmail.trim()}
+        currentEmail={access.currentEmail}
+        staffRoleDenied={access.reason === "staff-role-denied"}
+        localBypassEnabled={process.env.NODE_ENV !== "production"}
+      />
+    );
+  }
+
+  const manageToken = card.id;
+  const lifecycle = await getCardLifecycleByCardId(card.id);
+  if (!lifecycle) return <ManageAccessGate cardId={null} invalid />;
+  const canManageAccess = access.actor.kind === "organizer";
+  const [pendingEmailChange, recoveryLinkActive] = canManageAccess
+    ? await Promise.all([
+        getPendingOrganizerEmailChange(card.id),
+        hasActiveCardRecoveryToken(card.id)
+      ])
+    : [null, false];
 
   const isDesignTab = activeTab === "design";
   const isMaterialTab = activeTab === "congratulations" || activeTab === "photos";
@@ -372,6 +410,11 @@ export default async function ManagePage({ params, searchParams }: Props) {
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
+        {access.actor.kind === "staff" ? (
+          <div className={styles.adminAccessBanner} role="status">
+            Административный доступ · {access.actor.role === "admin" ? "Администратор" : "Модератор"}
+          </div>
+        ) : null}
         <header className={styles.managerHeader}>
           <div className={styles.managerBrand}>
             <Link href="/" className={styles.brandName}>
@@ -379,7 +422,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
             </Link>
           </div>
           <ManageMobileMenu
-            previewHref={giftAccessible ? getGiftPath(card.finalSlug) : getPreviewPath(card.manageToken)}
+            previewHref={giftAccessible ? getGiftPath(card.finalSlug) : getPreviewPath(card.id)}
           />
 
           <div className={styles.managerTitleGroup}>
@@ -397,7 +440,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
 
           <div className={styles.managerActions}>
             <Link
-              href={giftAccessible ? getGiftPath(card.finalSlug) : getPreviewPath(card.manageToken)}
+              href={giftAccessible ? getGiftPath(card.finalSlug) : getPreviewPath(card.id)}
               target="_blank"
               className={styles.previewPrimaryLink}
             >
@@ -461,7 +504,13 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   </div>
                 </div>
 
-                <BasicsSettingsForm manageToken={manageToken} card={card} />
+                <BasicsSettingsForm
+                  manageToken={manageToken}
+                  card={card}
+                  canManageAccess={canManageAccess}
+                  initialPendingEmailChange={pendingEmailChange}
+                  initialRecoveryLinkActive={recoveryLinkActive}
+                />
               </section>
 
               <section className={`${styles.studioPanel} ${styles.compositionSection}`} id="composition-section">

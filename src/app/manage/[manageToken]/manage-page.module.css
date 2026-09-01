@@ -8378,13 +8378,13 @@ button.contentFilterPill {
 
 .organizerAccessBlock {
   display: grid;
-  gap: 16px;
-  padding: 18px;
-  border-radius: 22px;
-  background: rgba(255, 241, 232, 0.72);
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--bg-surface);
   box-shadow:
-    0 0 0 1px rgba(233, 101, 47, 0.12),
-    0 10px 26px rgba(0, 0, 0, 0.05);
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 8px 22px rgba(0, 0, 0, 0.04);
 }
 
 .organizerAccessIntro {
@@ -8412,6 +8412,7 @@ button.contentFilterPill {
   color: var(--text-secondary);
   font-size: 0.86rem;
   line-height: 1.45;
+  text-wrap: pretty;
 }
 
 .organizerAccessResend {
@@ -17188,5 +17189,231 @@ button.contentStatusItemButton:active {
   .giftOrderEditorDialog .orderEditorFooter {
     border-top: 1px solid var(--border-neutral);
     background: var(--bg-surface);
+  }
+}
+.adminAccessBanner {
+  padding: 10px 16px;
+  border-radius: 12px;
+  color: #202124;
+  background: rgba(233, 101, 47, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.22);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+}
+.organizerEmailChange {
+  display: grid;
+  gap: 10px;
+}
+
+.organizerRecoverySettings {
+  display: grid;
+  gap: 10px;
+}
+
+.organizerRecoverySettings > div:first-child,
+.organizerRecoverySettings label {
+  display: grid;
+  gap: 4px;
+}
+
+.organizerRecoverySettings span,
+.organizerRecoverySettings p,
+.organizerRecoverySettings label,
+.organizerRecoverySettings small {
+  color: #5f6368;
+}
+
+.organizerRecoveryActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.organizerRecoveryActions button {
+  min-height: 44px;
+  border: 1px solid #e9652f;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #e9652f;
+  font-weight: 700;
+  transition-property: background-color, color, transform;
+  transition-duration: 160ms;
+}
+
+.organizerRecoveryActions button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.organizerEmailChangeControls button:focus-visible,
+.organizerRecoveryActions button:focus-visible,
+.organizerRecoverySettings input:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.28);
+  outline-offset: 2px;
+}
+
+.organizerEmailChangeControls button:disabled,
+.organizerRecoveryActions button:disabled {
+  cursor: default;
+  opacity: 0.56;
+}
+
+.organizerEmailChange > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.organizerEmailChange span,
+.organizerEmailChange p {
+  color: #5f6368;
+}
+
+.organizerSecurityDetails {
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--bg-subtle);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.07);
+}
+
+.organizerSecurityDetails > summary {
+  position: relative;
+  display: grid;
+  min-height: 52px;
+  align-content: center;
+  gap: 2px;
+  padding: 8px 48px 8px 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  list-style: none;
+}
+
+.organizerSecurityDetails > summary::-webkit-details-marker {
+  display: none;
+}
+
+.organizerSecurityDetails > summary::after {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #e9652f;
+  border-bottom: 2px solid #e9652f;
+  content: "";
+  rotate: 45deg;
+  translate: 0 -70%;
+  transition-property: rotate, translate;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.organizerSecurityDetails[open] > summary::after {
+  rotate: 225deg;
+  translate: 0 -20%;
+}
+
+.organizerSecurityDetails > summary span {
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.organizerSecurityDetails > summary small {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+.organizerSecurityDetails > summary:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.28);
+  outline-offset: -3px;
+}
+
+.organizerSecurityContent {
+  display: grid;
+  gap: 0;
+  padding: 0 14px 14px;
+}
+
+.organizerSecuritySection,
+.organizerEmailChange,
+.organizerRecoverySettings {
+  padding: 14px 0;
+  box-shadow: inset 0 1px rgba(0, 0, 0, 0.07);
+}
+
+.organizerSecuritySection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.organizerSecuritySection > div {
+  display: grid;
+  gap: 4px;
+}
+
+.organizerSecuritySection span {
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.organizerSecuritySection .organizerAccessFeedback {
+  grid-column: 1 / -1;
+}
+
+.organizerEmailChangeControls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.organizerEmailChangeControls input {
+  min-width: 0;
+  flex: 1;
+}
+
+.organizerEmailChangeControls button {
+  min-height: 44px;
+  border: 1px solid #e9652f;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #e9652f;
+  font-weight: 700;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.organizerEmailChangeControls button:hover:not(:disabled) {
+  background: #e9652f;
+  color: #ffffff;
+}
+
+.organizerEmailChangeControls button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+@media (max-width: 640px) {
+  .organizerSecuritySection {
+    grid-template-columns: 1fr;
+  }
+
+  .organizerSecuritySection .organizerAccessResend,
+  .organizerRecoveryActions button {
+    width: 100%;
+  }
+
+  .organizerEmailChangeControls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .organizerSecurityDetails > summary::after,
+  .organizerRecoveryActions button {
+    transition-duration: 0.01ms;
   }
 }

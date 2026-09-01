@@ -199,6 +199,14 @@ export const getCardDraftByManageToken = async (manageToken: string) => {
   }
 
   const cards = await readCards();
+  return cards.find(
+    (card) => (card.id === manageToken || card.manageToken === manageToken) && !card.deletedAt && !card.purgedAt
+  ) ?? null;
+};
+
+export const getCardDraftByLegacyManageToken = async (manageToken: string) => {
+  if (isPostgresConfigured()) return postgresRepository.getCardDraftByLegacyManageToken(manageToken);
+  const cards = await readCards();
   return cards.find((card) => card.manageToken === manageToken && !card.deletedAt && !card.purgedAt) ?? null;
 };
 
@@ -209,6 +217,31 @@ export const getCardDraftById = async (cardId: string) => {
 
   const cards = await readCards();
   return cards.find((card) => card.id === cardId && !card.purgedAt) ?? null;
+};
+
+export const getCardDraftByManagementId = async (cardId: string) => {
+  const card = await getCardDraftById(cardId);
+  return card && !card.deletedAt && !card.purgedAt ? card : null;
+};
+
+export const claimCardOrganizerEmail = async (cardId: string, email: string) => {
+  if (isPostgresConfigured()) return postgresRepository.claimCardOrganizerEmail(cardId, email);
+  const cards = await readCards();
+  const index = cards.findIndex((card) => card.id === cardId && !card.deletedAt && !card.purgedAt);
+  if (index < 0 || cards[index].organizerEmail.trim()) return null;
+  cards[index] = { ...cards[index], organizerEmail: email.trim().toLowerCase(), updatedAt: new Date().toISOString() };
+  await writeFile(cardsFilePath, JSON.stringify(cards, null, 2), "utf8");
+  return cards[index];
+};
+
+export const transferCardOrganizerEmail = async (cardId: string, email: string) => {
+  if (isPostgresConfigured()) return postgresRepository.transferCardOrganizerEmail(cardId, email);
+  const cards = await readCards();
+  const index = cards.findIndex((card) => card.id === cardId && !card.deletedAt && !card.purgedAt);
+  if (index < 0) return null;
+  cards[index] = { ...cards[index], organizerEmail: email.trim().toLowerCase(), updatedAt: new Date().toISOString() };
+  await writeFile(cardsFilePath, JSON.stringify(cards, null, 2), "utf8");
+  return cards[index];
 };
 
 export const softDeleteCard = async (cardId: string) => {

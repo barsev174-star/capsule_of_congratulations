@@ -5,6 +5,7 @@ import { getAiUsageSummary } from "@/lib/ai/repository";
 import { grantCardAccessAdminAction, revokeCardAccessAdminAction, updateAiBonusLimitAdminAction } from "../../../actions";
 import { getCardLifecycleLabel } from "@/lib/cards/lifecycle";
 import { getActiveCardAccessGrant } from "@/lib/cards/access-grants";
+import { requireAdminRole } from "@/lib/admin/session";
 import styles from "../../../admin.module.css";
 
 const contributionStatusLabels: Record<string, string> = {
@@ -20,6 +21,7 @@ type Props = {
 };
 
 export default async function AdminCardDetailPage({ params }: Props) {
+  await requireAdminRole("moderator");
   const { id } = await params;
   const detail = await getAdminCardById(id);
 
@@ -68,7 +70,7 @@ export default async function AdminCardDetailPage({ params }: Props) {
         </div>
 
         <div className={styles.detailLinks}>
-          <Link href={`/manage/${card.manageToken}`} className={styles.detailLink}>
+          <Link href={`/manage/${card.id}`} className={styles.detailLink}>
             Страница организатора
           </Link>
           {card.paymentStatus === "PAID" && card.deliveryStatus === "DELIVERED" ? (
@@ -76,7 +78,7 @@ export default async function AdminCardDetailPage({ params }: Props) {
               Финальная открытка
             </Link>
           ) : null}
-          <Link href={`/preview/${card.manageToken}`} className={styles.detailLink}>
+          <Link href={`/preview/${card.id}`} className={styles.detailLink}>
             Предпросмотр
           </Link>
         </div>

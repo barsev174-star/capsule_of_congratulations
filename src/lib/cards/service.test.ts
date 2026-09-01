@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   saveCardDraft: vi.fn(),
   saveContribution: vi.fn(),
-  trackFunnel: vi.fn()
+  trackFunnel: vi.fn(),
+  storeCardRecoveryToken: vi.fn()
 }));
 
 vi.mock("@/lib/cards/repository", () => ({
@@ -13,6 +14,10 @@ vi.mock("@/lib/cards/repository", () => ({
 
 vi.mock("@/lib/telemetry", () => ({
   trackFunnel: mocks.trackFunnel
+}));
+
+vi.mock("@/lib/manage/recovery-tokens", () => ({
+  storeCardRecoveryToken: mocks.storeCardRecoveryToken
 }));
 
 import { createEmptyCardDraft } from "@/lib/cards/service";
@@ -32,6 +37,7 @@ describe("empty card draft creation", () => {
     });
 
     expect(mocks.saveCardDraft).toHaveBeenCalledWith(result.card);
+    expect(mocks.storeCardRecoveryToken).toHaveBeenCalledWith(result.card.id, result.card.manageToken);
     expect(mocks.trackFunnel).toHaveBeenCalledWith("funnel.card_created", {
       landing_type: "teacher",
       landing_path: "/gruppovaya-otkrytka/uchitelyu",

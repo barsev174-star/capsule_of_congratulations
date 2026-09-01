@@ -20,6 +20,7 @@
 - `docs/GIFT_OPENING_ANIMATION_2026-06-29.md` — актуальный сценарий конверта, визуальные профили, таймлайн, mobile/reduced-motion контракт и production-проверка вступительной анимации.
 - `docs/COLLECT_MESSAGES_GIFT_ANIMATION_2026-08-31.md` — вторая анимация вручения «Собрать поздравления»: данные превью, таймлайн, профили шаблонов, mobile и миграция.
 - `docs/REVEAL_SELECTION_EXPERIENCE_2026-09-01.md` — единый сценарий выбора `template + reveal` на `/example` и в `/manage`, наследование настроек при создании и реальный recipient-preview.
+- `docs/MANAGE_ACCESS_SECURITY_2026-09-01.md` — постоянный URL управления, passwordless-владение, роли admin/moderator, recovery-токены, миграции и security smoke.
 - `docs/ARCHIVE_INDEX.md` — навигация по текущей документации и историческим планам; старые незакрытые пункты не являются backlog.
 - `docs/PROJECT_AUDIT_AND_PLAN_2026-09-01.md` — решения P0/P1, закрытые пробелы, остаточные риски и план выпуска.
 - `docs/SEO_INDEXING_CONTROL_2026-08-26.md` — автоматическая и кабинетная проверка индексации четырёх SEO-страниц.
@@ -96,6 +97,6 @@
 
 - Production работает на Next.js, PostgreSQL, Caddy и Docker Compose; оплата Robokassa и полный путь от создания до вручения открытки приняты.
 - В каталоге шесть продуктовых шаблонов, два способа открытия и четыре SEO-лендинга.
-- Схема production доведена до миграции `0036`; последний продуктовый выпуск описан в `docs/DELIVERY_LOG.md`.
+- Локальная схема доведена до миграции `0038`; перед production-выпуском security-миграций обязателен backup и порядок из `docs/MANAGE_ACCESS_SECURITY_2026-09-01.md`.
 - Точные отложенные риски и ближайшие задачи ведутся только в `docs/CURRENT_STATUS_AND_PAYMENT_GATE.md`; `/roadmap` не используется как публичный backlog.
 - Базовая проверка перед пушем: `npm run typecheck`, `npm run lint`, `npm run test:coverage`, `npm run build`. GitHub Actions дополняет её PostgreSQL-миграциями, Chromium/Firefox/WebKit smoke и audit зависимостей.

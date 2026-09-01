@@ -7,7 +7,8 @@ const mocks = vi.hoisted(() => ({
   getCardDraftByPublicSlug: vi.fn(),
   listAllContributionsByCardId: vi.fn(),
   getCardLifecycleByManageToken: vi.fn(),
-  getCardLifecycleByPublicSlug: vi.fn()
+  getCardLifecycleByPublicSlug: vi.fn(),
+  requireCardManagementAccess: vi.fn()
 }));
 
 vi.mock("@/lib/ai/service", () => ({ generateParticipantMessage: mocks.generateParticipantMessage }));
@@ -27,6 +28,7 @@ vi.mock("@/lib/cards/lifecycle-repository", () => ({
   getCardLifecycleByManageToken: mocks.getCardLifecycleByManageToken,
   getCardLifecycleByPublicSlug: mocks.getCardLifecycleByPublicSlug
 }));
+vi.mock("@/lib/manage/access", () => ({ requireCardManagementAccess: mocks.requireCardManagementAccess }));
 
 import { POST } from "./route";
 
@@ -61,6 +63,7 @@ describe("POST /api/ai/generate-greeting — join contract", () => {
       purgedAt: null
     });
     mocks.listAllContributionsByCardId.mockResolvedValue([]);
+    mocks.requireCardManagementAccess.mockResolvedValue({ actor: { kind: "organizer", email: "owner@example.com" } });
     mocks.generateParticipantMessage.mockResolvedValue({
       generationId: "generation-1",
       variants: [{ id: "style", label: "Творческий", text: "Готовый текст" }],

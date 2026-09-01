@@ -43,14 +43,17 @@ export async function POST(request: Request) {
   try {
     const result = await createCardDraft(validation.data);
     try {
-      await requestOrganizerAccess(result.card.organizerEmail);
+      await requestOrganizerAccess(result.card.organizerEmail, { returnPath: `/manage/${result.card.id}` });
     } catch (error) {
       logger.warn("organizer.welcome_email_failed", "Organizer access email was not sent after card creation", {
         cardId: result.card.id,
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }
-    return NextResponse.json({ ok: true, result }, { status: 201 });
+    return NextResponse.json({
+      ok: true,
+      result: { ...result, card: { ...result.card, manageToken: "" } }
+    }, { status: 201 });
   } catch (error) {
     logger.error("cards.create_failed", "Card draft creation failed", {
       error: error instanceof Error ? error.message : "Unknown error"

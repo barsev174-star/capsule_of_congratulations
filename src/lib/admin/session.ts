@@ -39,11 +39,18 @@ export const requireAdminRole = async (role: AdminUserRole): Promise<AdminSessio
 export const setAdminSession = async (token: string) => {
   const cookieStore = await cookies();
 
-  cookieStore.set(ADMIN_SESSION_COOKIE, token, {
+  cookieStore.set(ADMIN_SESSION_COOKIE, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/admin",
+    maxAge: 0
+  });
+  cookieStore.set(ADMIN_SESSION_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
     maxAge: SESSION_MAX_AGE_SECONDS
   });
 };
@@ -56,6 +63,13 @@ export const clearAdminSession = async () => {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/admin",
+    maxAge: 0
+  });
+  cookieStore.set(ADMIN_SESSION_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
     maxAge: 0
   });
 };

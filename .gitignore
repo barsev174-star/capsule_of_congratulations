@@ -16,6 +16,7 @@ data/ai-card-insights.json
 data/ai-card-allowances.json
 data/payment-orders.json
 data/event-reminders.json
+data/card-recovery-tokens.json
 data/telemetry-events.json
 data/public-share-media/
 public/uploads/

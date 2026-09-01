@@ -12,7 +12,7 @@ type Checkout = { confirmationUrl: string; invoiceId: string; orderId: string; r
 const nextInvoiceId = () => `${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}`;
 
 export const createRobokassaCheckout = async (input: {
-  manageToken: string;
+  cardId: string;
   receiptEmail: string;
   offerAccepted: boolean;
   privacyAccepted: boolean;
@@ -33,7 +33,7 @@ export const createRobokassaCheckout = async (input: {
       id: string; payment_status: string; deleted_at: Date | null; purged_at: Date | null; is_hidden: boolean; active_access_grant_id: string | null;
       repurchase_allowed_at: Date | null; repurchase_expires_at: Date | null; repurchase_used_at: Date | null;
     }>(`SELECT id, payment_status, deleted_at, purged_at, is_hidden, active_access_grant_id, repurchase_allowed_at, repurchase_expires_at, repurchase_used_at
-        FROM cards WHERE manage_token = $1 FOR UPDATE`, [input.manageToken]);
+        FROM cards WHERE id = $1 FOR UPDATE`, [input.cardId]);
     const card = cardResult.rows[0];
     if (!card || card.deleted_at || card.purged_at) throw new CardLifecycleConflictError("Открытка недоступна для оплаты.");
     if (card.active_access_grant_id) throw new CardLifecycleConflictError("Для открытки уже предоставлен доступ без оплаты.");

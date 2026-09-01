@@ -244,7 +244,7 @@ export const saveCardDraft = async (card: CardDraft) => {
     [
       card.id,
       card.publicSlug,
-      card.manageToken,
+      null,
       card.finalSlug,
       card.recipientName,
       card.occasion,
@@ -303,8 +303,38 @@ export const listCardDraftsByOrganizerEmail = async (email: string) => {
 };
 
 export const getCardDraftByPublicSlug = (publicSlug: string) => selectCardBy("public_slug", publicSlug);
-export const getCardDraftByManageToken = (manageToken: string) => selectCardBy("manage_token", manageToken);
+export const getCardDraftByManageToken = async (identifier: string) => {
+  const result = await getPostgresPool().query<CardRow>(
+    `SELECT * FROM cards WHERE (id::text = $1 OR manage_token = $1) AND deleted_at IS NULL AND purged_at IS NULL LIMIT 1`,
+    [identifier]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+export const getCardDraftByLegacyManageToken = (manageToken: string) => selectCardBy("manage_token", manageToken);
 export const getCardDraftById = (cardId: string) => selectCardBy("id", cardId, true);
+
+export const claimCardOrganizerEmail = async (cardId: string, email: string) => {
+  const result = await getPostgresPool().query<CardRow>(
+    `UPDATE cards
+     SET organizer_email = LOWER(BTRIM($2)), updated_at = now()
+     WHERE id = $1
+       AND (organizer_email IS NULL OR BTRIM(organizer_email) = '')
+       AND deleted_at IS NULL
+       AND purged_at IS NULL
+     RETURNING *`,
+    [cardId, email]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
+
+export const transferCardOrganizerEmail = async (cardId: string, email: string) => {
+  const result = await getPostgresPool().query<CardRow>(
+    `UPDATE cards SET organizer_email = LOWER(BTRIM($2)), updated_at = now()
+     WHERE id = $1 AND deleted_at IS NULL AND purged_at IS NULL RETURNING *`,
+    [cardId, email]
+  );
+  return result.rows[0] ? mapCard(result.rows[0]) : null;
+};
 
 export const softDeleteCard = async (cardId: string) => {
   const result = await getPostgresPool().query<CardRow>(

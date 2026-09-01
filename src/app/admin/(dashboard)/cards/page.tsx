@@ -91,12 +91,12 @@ export default async function AdminCardsPage({ searchParams }: Props) {
                         <Link href={`/admin/cards/${card.id}`} className={`${styles.detailLink} ${styles.detailLinkPrimary}`.trim()}>
                           Детали и доступ
                         </Link>
-                        {!card.deletedAt && card.manageToken?.trim() ? (
+                        {!card.deletedAt ? (
                           <>
-                          <Link href={getManagePath(card.manageToken)} className={styles.detailLink}>
+                          <Link href={getManagePath(card.id)} className={styles.detailLink}>
                             Управлять
                           </Link>
-                          <Link href={getPreviewPath(card.manageToken)} className={styles.detailLink}>
+                          <Link href={getPreviewPath(card.id)} className={styles.detailLink}>
                             Предпросмотр
                           </Link>
                           </>

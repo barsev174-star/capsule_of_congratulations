@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getCardDraftByManageToken = vi.fn();
 const previewGiftLink = vi.fn();
+const requireCardManagementAccess = vi.fn();
 
 vi.mock("@/lib/cards/repository", () => ({ getCardDraftByManageToken: (...args: unknown[]) => getCardDraftByManageToken(...args) }));
 vi.mock("@/lib/gift-polls/link-preview", () => ({ previewGiftLink: (...args: unknown[]) => previewGiftLink(...args) }));
+vi.mock("@/lib/manage/access", () => ({ requireCardManagementAccess: (...args: unknown[]) => requireCardManagementAccess(...args) }));
 
 import { POST } from "./route";
 
@@ -21,6 +23,7 @@ describe("gift-poll-preview route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getCardDraftByManageToken.mockResolvedValue({ id: "card_1" });
+    requireCardManagementAccess.mockResolvedValue({ actor: { kind: "organizer" } });
     previewGiftLink.mockResolvedValue(draftPreview);
   });
 
@@ -34,7 +37,7 @@ describe("gift-poll-preview route", () => {
   it("rejects requests without a valid manage token", async () => {
     getCardDraftByManageToken.mockResolvedValue(null);
     const response = await post({ manageToken: "token", rawInput: "https://example.com/p/1" });
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(404);
     expect(previewGiftLink).not.toHaveBeenCalled();
   });
 

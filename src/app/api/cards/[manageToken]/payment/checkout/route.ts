@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import { CardLifecycleConflictError } from "@/lib/cards/lifecycle";
 import { createRobokassaCheckout } from "@/lib/payments/repository";
 import { buildRobokassaCheckoutUrl, getRobokassaConfig } from "@/lib/payments/robokassa";
+import { getCardDraftByManageToken } from "@/lib/cards/repository";
+import { CardManagementAccessError, requireCardManagementAccess } from "@/lib/manage/access";
 
 const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
 
 export async function POST(request: Request, { params }: { params: Promise<{ manageToken: string }> }) {
   try {
     const { manageToken } = await params;
+    const card = await getCardDraftByManageToken(manageToken);
+    if (!card) return NextResponse.json({ ok: false, message: "Открытка не найдена." }, { status: 404 });
+    await requireCardManagementAccess(card.id);
     const body = await request.json().catch(() => null) as { receiptEmail?: string; offerAccepted?: boolean; privacyAccepted?: boolean } | null;
     const receiptEmail = body?.receiptEmail?.trim().toLowerCase() ?? "";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(receiptEmail)) return NextResponse.json({ ok: false, message: "Укажите email для чека." }, { status: 400 });
@@ -15,7 +20,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ man
     const baseUrl = siteUrl();
     if (!baseUrl) throw new Error("NEXT_PUBLIC_SITE_URL is not configured.");
     const checkout = await createRobokassaCheckout({
-      manageToken,
+      cardId: card.id,
       receiptEmail,
       offerAccepted: body.offerAccepted,
       privacyAccepted: body.privacyAccepted,
@@ -35,6 +40,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ man
     });
     return NextResponse.json({ ok: true, checkout });
   } catch (error) {
+    if (error instanceof CardManagementAccessError) return NextResponse.json({ ok: false, message: "Требуется вход владельца открытки." }, { status: 403 });
     if (error instanceof CardLifecycleConflictError) return NextResponse.json({ ok: false, message: error.message }, { status: 409 });
     if (error instanceof Error && error.message.includes("not configured")) return NextResponse.json({ ok: false, message: "Оплата пока не настроена." }, { status: 503 });
     throw error;

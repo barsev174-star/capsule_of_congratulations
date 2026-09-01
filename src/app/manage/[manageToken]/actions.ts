@@ -67,6 +67,11 @@ import {
 import { importGiftOptionImage } from "@/lib/gift-polls/image-storage";
 import { ensureGiftPollEnabled } from "@/lib/gift-polls/activation";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
+import {
+  getPendingOrganizerEmailChange,
+  revokePendingOrganizerEmailChanges,
+  type PendingOrganizerEmailChange
+} from "@/lib/organizer/repository";
 import { getGiftPath, getJoinPath, getManagePath, getPreviewPath } from "@/lib/routes/card-links";
 import { reportCriticalError } from "@/lib/telemetry";
 import {
@@ -91,6 +96,9 @@ import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { buildCardBlockReadiness } from "@/lib/manage/card-design-readiness";
 import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
 import { dispatchTemplateRenderer, getTemplateFinalCardStyleId } from "@/lib/templates/dispatcher";
+import { requireCardManagementAccess, requireCardOrganizer } from "@/lib/manage/access";
+import { revokeCardRecoveryTokens, rotateCardRecoveryToken } from "@/lib/manage/recovery-tokens";
+import { consumePublicRateLimit, getConfiguredRateLimit } from "@/lib/security/public-rate-limit";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
@@ -103,9 +111,14 @@ const validateLength = (value: string, min: number, max: number) => value.length
 const validateDate = (value: string) => value.length === 0 || !Number.isNaN(Date.parse(value));
 
 const assertManageContentEditable = async (manageToken: string) => {
-  const lifecycle = await getCardLifecycleByManageToken(manageToken);
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) {
+    throw new Error("Открытка не найдена.");
+  }
+  await requireCardManagementAccess(card.id);
+  const lifecycle = await getCardLifecycleByManageToken(card.id);
   if (!lifecycle) {
-    throw new Error("Секретная ссылка управления больше не актуальна.");
+    throw new Error("Открытка больше не доступна.");
   }
   assertCardContentEditable(lifecycle);
 };
@@ -412,6 +425,8 @@ export async function closeGiftPollAction(formData: FormData) {
   const card = await getCardDraftByManageToken(manageToken);
   if (!card || !pollId) return;
   await assertManageContentEditable(manageToken);
+  const poll = await getGiftPollForManage(card.id);
+  if (!poll || poll.id !== pollId) return;
   await closeGiftPoll(pollId);
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 }
@@ -423,6 +438,8 @@ export async function selectGiftPollOptionAction(formData: FormData) {
   const card = await getCardDraftByManageToken(manageToken);
   if (!card || !pollId || !optionId) return;
   await assertManageContentEditable(manageToken);
+  const poll = await getGiftPollForManage(card.id);
+  if (!poll || poll.id !== pollId || !poll.options.some((option) => option.id === optionId)) return;
   await selectGiftPollOption(pollId, optionId);
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 }
@@ -464,9 +481,13 @@ export async function setContributionStatusAction(formData: FormData) {
   const managedCard = await getCardDraftByManageToken(manageToken);
   if (!managedCard) return;
   await assertManageContentEditable(manageToken);
+  const existing = (await listAllContributionsByCardId(managedCard.id)).find(
+    (contribution) => contribution.id === contributionId
+  );
+  if (!existing) return;
 
   const updated = await updateContributionStatus(contributionId, status);
-  if (!updated || updated.cardId !== managedCard.id) {
+  if (!updated) {
     return;
   }
 
@@ -593,9 +614,13 @@ export async function deleteContributionAction(formData: FormData) {
   const managedCard = await getCardDraftByManageToken(manageToken);
   if (!managedCard) return;
   await assertManageContentEditable(manageToken);
+  const existing = (await listAllContributionsByCardId(managedCard.id)).find(
+    (contribution) => contribution.id === contributionId
+  );
+  if (!existing) return;
 
   const updated = await updateContributionStatus(contributionId, "deleted");
-  if (!updated || updated.cardId !== managedCard.id) {
+  if (!updated) {
     return;
   }
 
@@ -651,10 +676,6 @@ export async function updateCardBasicsAction(
     return cardBasicsError("Укажите имя организатора длиной от 2 до 80 символов.", fields);
   }
 
-  if (!isValidEmail(fields.organizerEmail) || fields.organizerEmail.length > 254) {
-    return cardBasicsError("Введите корректный email организатора.", fields);
-  }
-
   if (!validateDate(fields.eventDate)) {
     return cardBasicsError("Дата события выглядит некорректно.", fields);
   }
@@ -673,7 +694,7 @@ export async function updateCardBasicsAction(
     occasion: occasionValue,
     occasionText: fields.occasionText,
     organizerName: fields.organizerName,
-    organizerEmail: fields.organizerEmail,
+    organizerEmail: card.organizerEmail,
     eventDate: fields.eventDate || null,
     description: fields.description || null,
     signature: fields.signature || null
@@ -688,36 +709,12 @@ export async function updateCardBasicsAction(
     occasion: occasionValue
   });
 
-  const organizerEmailChanged = fields.organizerEmail.toLowerCase() !== card.organizerEmail.toLowerCase();
-  let accessEmailSent = false;
-
-  if (organizerEmailChanged && isValidEmail(fields.organizerEmail)) {
-    try {
-      const access = await requestOrganizerAccess(fields.organizerEmail);
-      accessEmailSent = !access.limited;
-    } catch (error) {
-      logger.warn("organizer.access_email_failed", "Organizer access email was not sent after email update", {
-        cardId: card.id,
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  }
-
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
-
-  const accessEmail = organizerEmailChanged
-    ? accessEmailSent
-      ? {
-          status: "sent" as const,
-          message: `Письмо со ссылкой для входа отправлено на ${fields.organizerEmail}.`
-        }
-      : {
-          status: "failed" as const,
-          message: "Не удалось отправить письмо со ссылкой."
-        }
-    : undefined;
-
-  return { ok: true, message: "Изменения сохранены.", fields, accessEmail };
+  return {
+    ok: true,
+    message: "Изменения сохранены.",
+    fields: { ...fields, organizerEmail: card.organizerEmail }
+  };
 }
 
 export async function saveOrganizerContributionAction(
@@ -836,9 +833,14 @@ export async function resendOrganizerAccessAction(
 ): Promise<{ ok: boolean; message: string }> {
   const card = await getCardDraftByManageToken(manageToken);
   if (!card) return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+  try {
+    await requireCardOrganizer(card.id);
+  } catch {
+    return { ok: false, message: "Отправить ссылку может только владелец открытки." };
+  }
 
   try {
-    const access = await requestOrganizerAccess(card.organizerEmail);
+    const access = await requestOrganizerAccess(card.organizerEmail, { returnPath: getManagePath(card.id) });
     if (access.limited) {
       return { ok: false, message: "Ссылку уже отправляли недавно. Попробуйте немного позже." };
     }
@@ -852,12 +854,126 @@ export async function resendOrganizerAccessAction(
   }
 }
 
+export async function requestOrganizerEmailChangeAction(
+  manageToken: string,
+  emailInput: string
+): Promise<{
+  ok: boolean;
+  message: string;
+  devAccessUrl?: string;
+  pendingEmailChange?: PendingOrganizerEmailChange | null;
+}> {
+  const email = emailInput.trim().toLowerCase();
+  if (!isValidEmail(email) || email.length > 254) {
+    return { ok: false, message: "Введите корректный новый email." };
+  }
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) return { ok: false, message: "Открытка не найдена." };
+  try {
+    await requireCardOrganizer(card.id);
+  } catch {
+    return { ok: false, message: "Сменить email может только владелец открытки." };
+  }
+  if (email === card.organizerEmail.trim().toLowerCase()) {
+    return { ok: false, message: "Это уже текущий email владельца." };
+  }
+  const cardRateLimit = consumePublicRateLimit({
+    scope: "manage-organizer-email-change",
+    clientKey: card.id,
+    limit: getConfiguredRateLimit("MANAGE_EMAIL_CHANGE_RATE_LIMIT", 5),
+    windowMs: 60 * 60 * 1000
+  });
+  if (!cardRateLimit.allowed) {
+    logger.warn("manage.organizer_email_change_rate_limited", "Organizer email change was rate limited", {
+      cardId: card.id
+    });
+    return { ok: false, message: "Слишком много попыток смены email. Попробуйте через час." };
+  }
+  try {
+    const access = await requestOrganizerAccess(email, {
+      returnPath: getManagePath(card.id),
+      transferCardId: card.id
+    });
+    if (access.limited) {
+      return {
+        ok: false,
+        message: "Письмо уже отправляли недавно. Попробуйте позже.",
+        pendingEmailChange: await getPendingOrganizerEmailChange(card.id)
+      };
+    }
+    const pendingEmailChange = await getPendingOrganizerEmailChange(card.id);
+    logger.info("manage.organizer_email_change_requested", "Organizer requested a confirmed ownership transfer", {
+      cardId: card.id
+    });
+    return {
+      ok: true,
+      message: `Подтверждение отправлено на ${email}. Email изменится только после перехода по ссылке.`,
+      devAccessUrl: access.devAccessUrl,
+      pendingEmailChange
+    };
+  } catch {
+    return {
+      ok: false,
+      message: "Не удалось отправить подтверждение. Попробуйте позже.",
+      pendingEmailChange: await getPendingOrganizerEmailChange(card.id)
+    };
+  }
+}
+
+export async function cancelOrganizerEmailChangeAction(
+  manageToken: string
+): Promise<{ ok: boolean; message: string }> {
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) return { ok: false, message: "Открытка не найдена." };
+  try {
+    await requireCardOrganizer(card.id);
+  } catch {
+    return { ok: false, message: "Отменить смену email может только владелец открытки." };
+  }
+  await revokePendingOrganizerEmailChanges(card.id);
+  logger.info("manage.organizer_email_change_cancelled", "Organizer cancelled pending ownership transfer", {
+    cardId: card.id
+  });
+  return { ok: true, message: "Смена email отменена. Текущий владелец не изменился." };
+}
+
+export async function rotateRecoveryLinkAction(
+  manageToken: string
+): Promise<{ ok: boolean; message: string; recoveryUrl?: string }> {
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) return { ok: false, message: "Открытка не найдена." };
+  try { await requireCardOrganizer(card.id); }
+  catch { return { ok: false, message: "Создать резервную ссылку может только владелец." }; }
+  const token = await rotateCardRecoveryToken(card.id);
+  logger.info("manage.recovery_token_rotated", "Organizer rotated card recovery credentials", { cardId: card.id });
+  const path = getManagePath(token);
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
+  return {
+    ok: true,
+    message: "Новая резервная ссылка создана. Предыдущие ссылки больше не работают.",
+    recoveryUrl: `${baseUrl}${path}`
+  };
+}
+
+export async function revokeRecoveryLinksAction(
+  manageToken: string
+): Promise<{ ok: boolean; message: string }> {
+  const card = await getCardDraftByManageToken(manageToken);
+  if (!card) return { ok: false, message: "Открытка не найдена." };
+  try { await requireCardOrganizer(card.id); }
+  catch { return { ok: false, message: "Отозвать резервные ссылки может только владелец." }; }
+  await revokeCardRecoveryTokens(card.id);
+  logger.info("manage.recovery_tokens_revoked", "Organizer revoked card recovery credentials", { cardId: card.id });
+  return { ok: true, message: "Все резервные ссылки отозваны. Вход по email продолжает работать." };
+}
+
 const runLifecycleAction = async (formData: FormData, command: (manageToken: string) => Promise<unknown>) => {
   const manageToken = String(formData.get("manageToken") ?? "");
   if (!manageToken) return;
   const card = await getCardDraftByManageToken(manageToken);
   if (!card) return;
-  await command(manageToken);
+  await requireCardManagementAccess(card.id);
+  await command(card.id);
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
 };
 
@@ -880,6 +996,11 @@ export async function deliverCardAction(
   const confirmed = formData.get("deliveryConfirmed") === "on";
   const card = manageToken ? await getCardDraftByManageToken(manageToken) : null;
   if (!card) return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
+  try {
+    await requireCardManagementAccess(card.id);
+  } catch {
+    return { ok: false, message: "Войдите как владелец открытки и повторите действие." };
+  }
   if (!isTemplateId(card.templateId)) {
     logger.warn("manage.delivery_blocked_by_template", "Card delivery blocked because no template is selected", {
       cardId: card.id
@@ -932,7 +1053,7 @@ export async function deliverCardAction(
     return { ok: false, message: "Сначала завершите обязательные блоки открытки." };
   }
   try {
-    await deliverCard(manageToken, { confirmed, cardVersion });
+    await deliverCard(card.id, { confirmed, cardVersion });
     revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
     return { ok: true, message: "Открытка передана. Приватная ссылка готова." };
   } catch (error) {
@@ -965,6 +1086,13 @@ export async function updateContributionMessageAction(
     return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования." };
   }
 
+  const existing = (await listAllContributionsByCardId(card.id)).find(
+    (contribution) => contribution.id === contributionId
+  );
+  if (!existing) {
+    return { ok: false, message: "Поздравление не найдено." };
+  }
+
   const issues = validateContributionMessage(message, {
     layoutMode: card.finalMessageSettings?.layoutMode ?? "grid-2"
   });
@@ -984,7 +1112,7 @@ export async function updateContributionMessageAction(
   }
 
   const updated = await updateContributionMessage(contributionId, message);
-  if (!updated || updated.cardId !== card.id) {
+  if (!updated) {
     return { ok: false, message: "Поздравление не найдено." };
   }
 
@@ -1011,9 +1139,14 @@ export async function moveContributionAction(formData: FormData) {
   if (!card) {
     return;
   }
+  await assertManageContentEditable(manageToken);
+  const existing = (await listAllContributionsByCardId(card.id)).find(
+    (contribution) => contribution.id === contributionId
+  );
+  if (!existing) return;
 
   const updated = await moveContribution(contributionId, direction);
-  if (!updated || updated.cardId !== card.id) {
+  if (!updated) {
     return;
   }
 

@@ -4,13 +4,28 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { CardDraft } from "@/lib/cards/types";
 import type { CardBasicsFormState } from "./actions";
-import { resendOrganizerAccessAction, updateCardBasicsAction } from "./actions";
+import {
+  cancelOrganizerEmailChangeAction,
+  requestOrganizerEmailChangeAction,
+  resendOrganizerAccessAction,
+  revokeRecoveryLinksAction,
+  rotateRecoveryLinkAction,
+  updateCardBasicsAction
+} from "./actions";
+import type { PendingOrganizerEmailChange } from "@/lib/organizer/repository";
 import { serializeBasicsFields } from "./basics-fields";
+import { ConfirmationDialog } from "./confirmation-dialog";
+import { CopyLinkButton } from "./copy-link-button";
 import styles from "./manage-page.module.css";
+import accessStyles from "./organizer-access-settings.module.css";
+import { OrganizerEmailChangeDialog } from "./organizer-email-change-dialog";
 
 type Props = {
   manageToken: string;
   card: CardDraft;
+  canManageAccess?: boolean;
+  initialPendingEmailChange?: PendingOrganizerEmailChange | null;
+  initialRecoveryLinkActive?: boolean;
 };
 
 const initialState: CardBasicsFormState = {
@@ -38,11 +53,58 @@ const areRequiredFieldsReady = (fields: ReturnType<typeof buildFields>) =>
       fields.organizerEmail.trim()
   );
 
-export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
+const ACCESS_COOLDOWN_SECONDS = 60;
+
+const maskEmail = (email: string) => {
+  const [localPart, domain] = email.split("@");
+  if (!localPart || !domain) return email;
+  return `${localPart.slice(0, 1)}${"*".repeat(Math.min(3, Math.max(1, localPart.length - 1)))}@${domain}`;
+};
+
+const useCooldown = (initialStartedAt?: string | null) => {
+  const [remaining, setRemaining] = useState(0);
+
+  useEffect(() => {
+    if (!initialStartedAt) return;
+    const timeout = window.setTimeout(() => {
+      const elapsedSeconds = Math.floor((Date.now() - Date.parse(initialStartedAt)) / 1000);
+      setRemaining(Math.max(0, ACCESS_COOLDOWN_SECONDS - elapsedSeconds));
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [initialStartedAt]);
+
+  useEffect(() => {
+    if (remaining <= 0) return;
+    const timeout = window.setTimeout(() => setRemaining((value) => Math.max(0, value - 1)), 1000);
+    return () => window.clearTimeout(timeout);
+  }, [remaining]);
+
+  return [remaining, () => setRemaining(ACCESS_COOLDOWN_SECONDS)] as const;
+};
+
+export const BasicsSettingsForm = ({
+  manageToken,
+  card,
+  canManageAccess = true,
+  initialPendingEmailChange = null,
+  initialRecoveryLinkActive = true
+}: Props) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [state, setState] = useState<CardBasicsFormState>(initialState);
   const [accessMessage, setAccessMessage] = useState("");
+  const [newOrganizerEmail, setNewOrganizerEmail] = useState("");
+  const [emailChangeMessage, setEmailChangeMessage] = useState("");
+  const [emailChangeStatus, setEmailChangeStatus] = useState("");
+  const [pendingEmailChange, setPendingEmailChange] = useState(initialPendingEmailChange);
+  const [pendingEmailChangeDevUrl, setPendingEmailChangeDevUrl] = useState("");
+  const [isEmailChangeOpen, setIsEmailChangeOpen] = useState(false);
+  const [recoveryMessage, setRecoveryMessage] = useState("");
+  const [recoveryUrl, setRecoveryUrl] = useState("");
+  const [recoveryLinkActive, setRecoveryLinkActive] = useState(initialRecoveryLinkActive);
+  const [recoveryConfirmation, setRecoveryConfirmation] = useState<"rotate" | "revoke" | null>(null);
+  const [accessCooldown, startAccessCooldown] = useCooldown();
+  const [emailChangeCooldown, startEmailChangeCooldown] = useCooldown(initialPendingEmailChange?.createdAt);
 
   const [fields, setFields] = useState(() => buildFields(card));
   const requiredFieldsReady = areRequiredFieldsReady(fields);
@@ -57,7 +119,7 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
   const submittedKey = submittedFields ? serializeBasicsFields(submittedFields) : null;
   const isDirty = currentKey !== savedKey;
   const justFailed = submittedKey !== null && submittedKey === currentKey;
-  const showResendAction = Boolean(
+  const showResendAction = canManageAccess && Boolean(
     card.organizerEmail.trim() ||
       state.accessEmail ||
       accessMessage
@@ -115,7 +177,67 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
     setAccessMessage("");
     startTransition(async () => {
       const result = await resendOrganizerAccessAction(manageToken);
-      setAccessMessage(result.message);
+      setAccessMessage(
+        result.ok
+          ? `✓ Ссылка отправлена на ${maskEmail(fields.organizerEmail)}.`
+          : result.message
+      );
+      if (result.ok) startAccessCooldown();
+    });
+  };
+
+  const requestEmailChange = (email: string, source: "dialog" | "pending") => {
+    setEmailChangeMessage("");
+    setEmailChangeStatus("");
+    startTransition(async () => {
+      const result = await requestOrganizerEmailChangeAction(manageToken, email);
+      if ("pendingEmailChange" in result) {
+        setPendingEmailChange(result.pendingEmailChange ?? null);
+      }
+      if (!result.ok) {
+        if (source === "dialog") setEmailChangeMessage(result.message);
+        else setEmailChangeStatus(result.message);
+        return;
+      }
+      setPendingEmailChangeDevUrl(result.devAccessUrl ?? "");
+      setEmailChangeStatus(`✓ Подтверждение отправлено на ${maskEmail(result.pendingEmailChange?.email ?? email)}.`);
+      setIsEmailChangeOpen(false);
+      startEmailChangeCooldown();
+    });
+  };
+
+  const cancelEmailChange = () => {
+    setEmailChangeStatus("");
+    startTransition(async () => {
+      const result = await cancelOrganizerEmailChangeAction(manageToken);
+      setEmailChangeStatus(result.message);
+      if (result.ok) {
+        setPendingEmailChange(null);
+        setPendingEmailChangeDevUrl("");
+      }
+    });
+  };
+
+  const rotateRecoveryLink = () => {
+    setRecoveryConfirmation(null);
+    setRecoveryMessage("");
+    setRecoveryUrl("");
+    startTransition(async () => {
+      const result = await rotateRecoveryLinkAction(manageToken);
+      setRecoveryMessage(result.recoveryUrl ? "" : result.message);
+      setRecoveryUrl(result.recoveryUrl ?? "");
+      if (result.ok) setRecoveryLinkActive(true);
+    });
+  };
+
+  const revokeRecoveryLinks = () => {
+    setRecoveryConfirmation(null);
+    setRecoveryMessage("");
+    setRecoveryUrl("");
+    startTransition(async () => {
+      const result = await revokeRecoveryLinksAction(manageToken);
+      setRecoveryMessage(result.message);
+      if (result.ok) setRecoveryLinkActive(false);
     });
   };
   const additionalFieldsCount = [
@@ -131,6 +253,7 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
         : "заполнены частично";
 
   return (
+    <>
     <form id="manage-basics-form" onSubmit={handleSubmit} className={styles.basicsForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
       <input type="hidden" name="occasion" value={card.occasion} />
@@ -222,8 +345,7 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
 
       <section className={styles.organizerAccessBlock}>
         <div className={styles.organizerAccessIntro}>
-          <strong>Контакт организатора</strong>
-          <span>Нужен для восстановления доступа к открытке.</span>
+          <strong>Организатор</strong>
         </div>
         <div className={styles.fieldGrid}>
           <div className={styles.field}>
@@ -241,34 +363,147 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
             />
           </div>
           <div className={styles.field}>
-            <label htmlFor="organizerEmail">Email <span className={styles.requiredMark} aria-hidden="true">*</span></label>
-            <input
-              id="organizerEmail"
-              name="organizerEmail"
-              type="email"
-              value={fields.organizerEmail}
-              onChange={handleChange("organizerEmail")}
-              placeholder="name@example.com"
-              maxLength={254}
-              autoComplete="email"
+            <span id="organizer-email-label">Email владельца <span className={styles.requiredMark} aria-hidden="true">*</span></span>
+            <input type="hidden" name="organizerEmail" value={fields.organizerEmail} />
+            <div
+              className={accessStyles.emailValue}
+              role="group"
+              aria-labelledby="organizer-email-label"
               aria-describedby={`organizer-email-help${state.accessEmail?.status === "failed" ? " organizer-email-error" : ""}`}
-              required
-            />
+            >
+              <strong>{fields.organizerEmail || "Не указан"}</strong>
+              <small>Подтверждённый адрес — изменить его можно в настройках доступа</small>
+            </div>
           </div>
         </div>
         <div className={styles.organizerAccessActions} id="organizer-email-help">
-          <span>Ссылка для входа придёт на этот email. Пароль и регистрация не нужны.</span>
-          {showResendAction ? (
-            <button
-              type="button"
-              className={styles.organizerAccessResend}
-              disabled={isPending || !fields.organizerEmail.trim()}
-              onClick={resendAccess}
-            >
-              Отправить ссылку ещё раз
-            </button>
-          ) : null}
+          <span>На этот email приходят ссылки для входа. Пароль не нужен.</span>
         </div>
+        {canManageAccess ? (
+          <details className={styles.organizerSecurityDetails}>
+            <summary>
+              <span>Доступ и безопасность</span>
+              <small>Вход, email владельца и резервная ссылка</small>
+            </summary>
+            <div className={styles.organizerSecurityContent}>
+              <section className={styles.organizerSecuritySection}>
+                <div>
+                  <strong>Вход по email</strong>
+                  <span>Отправьте новую ссылку, если нужно войти на другом устройстве.</span>
+                </div>
+                {showResendAction ? (
+                  <button
+                    type="button"
+                    className={`${styles.organizerAccessResend} ${accessStyles.cooldownButton}`}
+                    disabled={isPending || accessCooldown > 0 || !fields.organizerEmail.trim()}
+                    onClick={resendAccess}
+                  >
+                    {accessCooldown > 0
+                      ? `Отправить ещё раз через ${accessCooldown} с`
+                      : accessMessage
+                        ? "Отправить ещё раз"
+                        : "Отправить ссылку для входа"}
+                  </button>
+                ) : null}
+                {accessMessage ? <p className={styles.organizerAccessFeedback} aria-live="polite">{accessMessage}</p> : null}
+              </section>
+
+              <section className={styles.organizerEmailChange}>
+                <div>
+                  <strong>Email владельца</strong>
+                  <span>Новый адрес станет владельцем только после подтверждения из письма.</span>
+                </div>
+                {pendingEmailChange ? (
+                  <div className={accessStyles.pendingEmailPanel}>
+                    <span>Ожидает подтверждения</span>
+                    <strong>{pendingEmailChange.email}</strong>
+                    <small>Мы отправили письмо на новый адрес. До подтверждения владельцем остаётся {fields.organizerEmail}.</small>
+                    <div className={accessStyles.pendingEmailActions}>
+                      <button
+                        type="button"
+                        onClick={() => requestEmailChange(pendingEmailChange.email, "pending")}
+                        disabled={isPending || emailChangeCooldown > 0}
+                      >
+                        {emailChangeCooldown > 0
+                          ? `Отправить ещё раз через ${emailChangeCooldown} с`
+                          : "Отправить ещё раз"}
+                      </button>
+                      <button type="button" onClick={cancelEmailChange} disabled={isPending}>
+                        Отменить смену
+                      </button>
+                    </div>
+                    {pendingEmailChangeDevUrl ? <a href={pendingEmailChangeDevUrl}>Открыть тестовую ссылку</a> : null}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className={accessStyles.launchButton}
+                    onClick={() => {
+                      setEmailChangeMessage("");
+                      setNewOrganizerEmail("");
+                      setIsEmailChangeOpen(true);
+                    }}
+                    disabled={isPending}
+                  >
+                    Изменить email
+                  </button>
+                )}
+                {emailChangeStatus ? <p className={accessStyles.inlineStatus} aria-live="polite">{emailChangeStatus}</p> : null}
+              </section>
+
+              <section className={styles.organizerRecoverySettings}>
+                <div>
+                  <strong>Резервная ссылка</strong>
+                  <span>
+                    {recoveryLinkActive
+                      ? "Действующая ссылка помогает снова найти открытку и запросить вход на email владельца. Сама ссылка не открывает управление."
+                      : "Резервная ссылка не создана. При необходимости создайте её для возврата к этой открытке и подтверждения входа."}
+                  </span>
+                </div>
+                <div className={styles.organizerRecoveryActions}>
+                  <button
+                    type="button"
+                    className={accessStyles.recoveryPrimary}
+                    onClick={() => setRecoveryConfirmation("rotate")}
+                    disabled={isPending}
+                  >
+                    {recoveryLinkActive ? "Создать новую резервную ссылку" : "Создать резервную ссылку"}
+                  </button>
+                  {recoveryLinkActive ? (
+                    <button
+                      type="button"
+                      className={accessStyles.recoveryDanger}
+                      onClick={() => setRecoveryConfirmation("revoke")}
+                      disabled={isPending}
+                    >
+                      Отозвать все резервные ссылки
+                    </button>
+                  ) : null}
+                </div>
+                {recoveryLinkActive ? <small>При создании новой ссылки все предыдущие сразу перестанут работать.</small> : null}
+                {recoveryMessage ? <p aria-live="polite">{recoveryMessage}</p> : null}
+                {recoveryUrl ? (
+                  <div className={accessStyles.recoveryResult} role="status" aria-live="polite">
+                    <strong>Резервная ссылка создана</strong>
+                    <span>Сохраните её в надёжном месте. После ухода со страницы секрет повторно показать нельзя.</span>
+                    <input
+                      aria-label="Новая резервная ссылка"
+                      readOnly
+                      value={recoveryUrl}
+                      onFocus={(event) => event.currentTarget.select()}
+                    />
+                    <CopyLinkButton
+                      value={recoveryUrl}
+                      label="Скопировать ссылку"
+                      copiedLabel="Ссылка скопирована"
+                      className={accessStyles.copyRecoveryButton}
+                    />
+                  </div>
+                ) : null}
+              </section>
+            </div>
+          </details>
+        ) : null}
         {state.accessEmail ? (
           <p
             id={state.accessEmail.status === "failed" ? "organizer-email-error" : undefined}
@@ -283,7 +518,6 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
             ) : null}
           </p>
         ) : null}
-        {accessMessage ? <p className={styles.organizerAccessFeedback} aria-live="polite">{accessMessage}</p> : null}
       </section>
 
       <details className={styles.basicsAdditional}>
@@ -344,5 +578,46 @@ export const BasicsSettingsForm = ({ manageToken, card }: Props) => {
       </div>
       </div>
     </form>
+    {isEmailChangeOpen ? (
+      <OrganizerEmailChangeDialog
+        currentEmail={fields.organizerEmail}
+        email={newOrganizerEmail}
+        message={emailChangeMessage}
+        isPending={isPending}
+        onEmailChange={(email) => {
+          setNewOrganizerEmail(email);
+          setEmailChangeMessage("");
+        }}
+        onSubmit={() => requestEmailChange(newOrganizerEmail, "dialog")}
+        onDismiss={() => setIsEmailChangeOpen(false)}
+      />
+    ) : null}
+    {recoveryConfirmation === "rotate" ? (
+      <ConfirmationDialog
+        title={recoveryLinkActive ? "Создать новую резервную ссылку?" : "Создать резервную ссылку?"}
+        description={
+          recoveryLinkActive
+            ? "Все предыдущие резервные ссылки сразу перестанут работать. Постоянный адрес открытки и вход по email владельца не изменятся."
+            : "Ссылка поможет снова найти открытку и запросить вход на email владельца. Сама ссылка не открывает управление."
+        }
+        onDismiss={() => setRecoveryConfirmation(null)}
+        actions={[
+          { label: "Отмена", tone: "secondary", onClick: () => setRecoveryConfirmation(null) },
+          { label: "Создать ссылку", onClick: rotateRecoveryLink, disabled: isPending }
+        ]}
+      />
+    ) : null}
+    {recoveryConfirmation === "revoke" ? (
+      <ConfirmationDialog
+        title="Отозвать все резервные ссылки?"
+        description="Все резервные ссылки перестанут работать. Открытка останется доступна по постоянному адресу, а вход по email владельца сохранится."
+        onDismiss={() => setRecoveryConfirmation(null)}
+        actions={[
+          { label: "Отмена", tone: "secondary", onClick: () => setRecoveryConfirmation(null) },
+          { label: "Отозвать ссылки", tone: "danger", onClick: revokeRecoveryLinks, disabled: isPending }
+        ]}
+      />
+    ) : null}
+    </>
   );
 };

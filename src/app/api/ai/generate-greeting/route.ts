@@ -20,6 +20,7 @@ import {
   getPublicClientKey,
   rateLimitHeaders
 } from "@/lib/security/public-rate-limit";
+import { requireCardManagementAccess } from "@/lib/manage/access";
 
 const buildExistingMessageContext = (messages: string[]) => {
   const selected: string[] = [];
@@ -78,6 +79,14 @@ export async function POST(request: Request) {
 
   if (!card || card.id !== input.cardId) {
     return NextResponse.json({ ok: false, message: "Открытка не найдена или ссылка больше не актуальна." }, { status: 404 });
+  }
+
+  if (isManagerRequest) {
+    try {
+      await requireCardManagementAccess(card.id);
+    } catch {
+      return NextResponse.json({ ok: false, message: "Требуется вход владельца открытки." }, { status: 403 });
+    }
   }
 
   const lifecycle = isManagerEdit && input.manageToken

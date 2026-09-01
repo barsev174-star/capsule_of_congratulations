@@ -50,8 +50,8 @@ export default async function AccountPage() {
                     </form>
                   ) : (
                     <div className={styles.cardActions}>
-                      <Link href={`/manage/${card.manageToken}`} className={styles.primaryLink}>Управлять</Link>
-                      <Link href={delivered ? `/gift/${card.finalSlug}` : `/preview/${card.manageToken}`} className={styles.secondaryLink}>{delivered ? "Открыть" : "Предпросмотр"}</Link>
+                      <Link href={`/manage/${card.id}`} className={styles.primaryLink}>Управлять</Link>
+                      <Link href={delivered ? `/gift/${card.finalSlug}` : `/preview/${card.id}`} className={styles.secondaryLink}>{delivered ? "Открыть" : "Предпросмотр"}</Link>
                       <form action={deleteOrganizerCardAction}>
                         <input type="hidden" name="cardId" value={card.id} />
                         <button type="submit" className={styles.secondaryButton}>Удалить</button>

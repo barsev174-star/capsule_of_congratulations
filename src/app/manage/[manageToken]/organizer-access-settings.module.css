@@ -1,0 +1,428 @@
+.emailValue {
+  display: grid;
+  min-height: 52px;
+  align-content: center;
+  gap: 2px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  color: #202124;
+  background: #f7f8fa;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.emailValue strong {
+  overflow-wrap: anywhere;
+  font-size: 0.94rem;
+}
+
+.emailValue small {
+  color: #8a9099;
+  font-size: 0.74rem;
+}
+
+.launchButton,
+.recoveryPrimary,
+.recoveryDanger {
+  box-sizing: border-box;
+  justify-self: start;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition-property: scale, background-color, color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.recoveryPrimary.recoveryPrimary {
+  border: 0;
+  color: #ffffff;
+  background: #e9652f;
+  box-shadow: 0 8px 18px rgba(233, 101, 47, 0.2);
+}
+
+.launchButton {
+  height: 44px;
+  padding-block: 0;
+  overflow-wrap: normal;
+  white-space: nowrap;
+  line-height: 1.25;
+  text-align: center;
+  color: #e9652f;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.45);
+}
+
+.launchButton:hover:not(:disabled) {
+  color: #df5f2e;
+  background: #f7f8fa;
+  box-shadow: inset 0 0 0 1px rgba(223, 95, 46, 0.68);
+}
+
+.recoveryPrimary:hover:not(:disabled),
+.primaryAction:hover:not(:disabled) {
+  background: #df5f2e;
+}
+
+.launchButton:active:not(:disabled),
+.recoveryPrimary:active:not(:disabled),
+.recoveryDanger:active:not(:disabled),
+.dialogActions button:active:not(:disabled) {
+  scale: 0.96;
+}
+
+.recoveryPrimary.recoveryPrimary:active:not(:disabled),
+.recoveryDanger.recoveryDanger:active:not(:disabled) {
+  transform: none;
+}
+
+.recoveryDanger.recoveryDanger {
+  border: 0;
+  color: #5f6368;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(32, 33, 36, 0.2);
+}
+
+.recoveryDanger:hover:not(:disabled) {
+  color: #202124;
+  background: #f7f8fa;
+  box-shadow: inset 0 0 0 1px rgba(32, 33, 36, 0.32);
+}
+
+.pendingEmailPanel,
+.recoveryResult {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.07),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.pendingEmailPanel > span:first-child {
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #e9652f;
+  background: rgba(233, 101, 47, 0.1);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.pendingEmailPanel > strong,
+.recoveryResult > strong {
+  overflow-wrap: anywhere;
+  color: #202124;
+}
+
+.pendingEmailPanel > small,
+.recoveryResult > span {
+  color: #5f6368;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.pendingEmailActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 3px;
+}
+
+.pendingEmailActions button,
+.copyRecoveryButton {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition-property: scale, background-color, color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.cooldownButton,
+.pendingEmailActions button:first-child {
+  font-variant-numeric: tabular-nums;
+}
+
+.pendingEmailActions button:first-child {
+  color: #e9652f;
+  background: rgba(233, 101, 47, 0.08);
+}
+
+.pendingEmailActions button:last-child {
+  color: #5f6368;
+  background: #f7f8fa;
+  box-shadow: inset 0 0 0 1px rgba(32, 33, 36, 0.14);
+}
+
+.pendingEmailActions button:active:not(:disabled),
+.copyRecoveryButton:active:not(:disabled) {
+  scale: 0.96;
+}
+
+.pendingEmailActions button:disabled {
+  cursor: default;
+  opacity: 0.56;
+}
+
+.pendingEmailPanel > a {
+  width: fit-content;
+  color: #e9652f;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.inlineStatus {
+  margin: 0;
+  color: #5f6368;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.recoveryResult {
+  background: rgba(233, 101, 47, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.18);
+}
+
+.recoveryResult input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(32, 33, 36, 0.18);
+  border-radius: 10px;
+  color: #202124;
+  background: #ffffff;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.copyRecoveryButton {
+  justify-self: start;
+  min-height: 44px;
+  color: #ffffff;
+  background: #e9652f;
+  box-shadow: 0 8px 18px rgba(233, 101, 47, 0.18);
+}
+
+.copyRecoveryButton:hover:not(:disabled) {
+  background: #df5f2e;
+}
+
+.launchButton:focus-visible,
+.recoveryPrimary:focus-visible,
+.recoveryDanger:focus-visible,
+.pendingEmailActions button:focus-visible,
+.pendingEmailPanel > a:focus-visible,
+.copyRecoveryButton:focus-visible,
+.recoveryResult input:focus-visible,
+.dialogActions button:focus-visible,
+.emailField input:focus-visible,
+.devLink:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.28);
+  outline-offset: 2px;
+}
+
+.launchButton:disabled,
+.recoveryPrimary:disabled,
+.recoveryDanger:disabled,
+.dialogActions button:disabled {
+  cursor: default;
+  opacity: 0.56;
+}
+
+.dialogBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(32, 33, 36, 0.42);
+  backdrop-filter: blur(3px);
+}
+
+.dialog {
+  display: grid;
+  width: min(500px, 100%);
+  gap: 20px;
+  padding: 26px;
+  border-radius: 26px;
+  outline: 0;
+  color: #202124;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    0 26px 70px rgba(0, 0, 0, 0.22);
+}
+
+.dialogCopy {
+  display: grid;
+  gap: 8px;
+}
+
+.dialogCopy h2 {
+  margin: 0;
+  color: #202124;
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 1.65rem;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.dialogCopy p,
+.dialogFeedback {
+  margin: 0;
+  color: #5f6368;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.currentEmail {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f7f8fa;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.07);
+}
+
+.currentEmail span,
+.emailField span {
+  color: #5f6368;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.currentEmail strong {
+  overflow-wrap: anywhere;
+  font-size: 0.94rem;
+}
+
+.emailField {
+  display: grid;
+  gap: 7px;
+}
+
+.emailField input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(32, 33, 36, 0.2);
+  border-radius: 12px;
+  color: #202124;
+  background: #ffffff;
+  font: inherit;
+}
+
+.devLink {
+  width: fit-content;
+  color: #e9652f;
+  font-weight: 700;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.dialogActions button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 13px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition-property: scale, background-color, color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.primaryAction {
+  color: #ffffff;
+  background: #e9652f;
+  box-shadow: 0 8px 18px rgba(233, 101, 47, 0.2);
+}
+
+.secondaryAction {
+  color: #5f6368;
+  background: #f7f8fa;
+}
+
+.secondaryAction:hover:not(:disabled) {
+  color: #202124;
+  background: #eef0f3;
+}
+
+@media (max-width: 640px) {
+  .launchButton,
+  .recoveryPrimary,
+  .recoveryDanger {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .pendingEmailActions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .pendingEmailActions button,
+  .copyRecoveryButton {
+    width: 100%;
+  }
+
+  .dialogBackdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .dialog {
+    width: 100%;
+    padding: 22px 18px max(20px, env(safe-area-inset-bottom));
+    border-radius: 26px 26px 0 0;
+  }
+
+  .dialogActions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .dialogActions button {
+    width: 100%;
+  }
+
+  .primaryAction {
+    grid-row: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launchButton,
+  .recoveryPrimary,
+  .recoveryDanger,
+  .pendingEmailActions button,
+  .copyRecoveryButton,
+  .dialogActions button {
+    transition-duration: 0.01ms;
+  }
+}

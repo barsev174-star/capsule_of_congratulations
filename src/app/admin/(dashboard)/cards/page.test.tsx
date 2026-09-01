@@ -68,8 +68,8 @@ describe("AdminCardsPage", () => {
       "href",
       `/admin/cards/${activeCard.id}`
     );
-    expect(within(activeRow!).getByRole("link", { name: "Управлять" })).toHaveAttribute("href", "/manage/manage-card");
-    expect(within(activeRow!).getByRole("link", { name: "Предпросмотр" })).toHaveAttribute("href", "/preview/manage-card");
+    expect(within(activeRow!).getByRole("link", { name: "Управлять" })).toHaveAttribute("href", `/manage/${activeCard.id}`);
+    expect(within(activeRow!).getByRole("link", { name: "Предпросмотр" })).toHaveAttribute("href", `/preview/${activeCard.id}`);
   });
 
   it("does not expose user routes for a deleted card", async () => {
