@@ -17,7 +17,8 @@ describe("telemetry", () => {
       event: "REVEAL_EXAMPLE_OPENED",
       context: {
         templateId: "school-scrapbook",
-        revealType: "collect-messages",
+        previewedRevealType: "collect-messages",
+        savedRevealType: "envelope",
         source: "reveal_modal",
         manageToken: "private-token",
         greeting: "private greeting"
@@ -26,7 +27,8 @@ describe("telemetry", () => {
       event: "REVEAL_EXAMPLE_OPENED",
       context: {
         templateId: "school-scrapbook",
-        revealType: "collect-messages",
+        previewedRevealType: "collect-messages",
+        savedRevealType: "envelope",
         source: "reveal_modal"
       }
     });

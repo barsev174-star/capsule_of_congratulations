@@ -10854,39 +10854,15 @@ button.designStickyPrimary {
   box-shadow: 0 4px 11px rgba(0, 0, 0, 0.09);
 }
 
-.animationEnvelopeMark i {
-  width: 20px;
-  height: 14px;
-  border-radius: 4px;
-  background: #fff3ed;
-  box-shadow: inset 0 0 0 1.5px #e9652f;
+.animationEnvelopeMark svg,
+.animationCollectMark svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-
-.animationEnvelopeMark i::after {
-  content: "";
-  position: absolute;
-  inset: 10px 8px auto;
-  height: 9px;
-  border-bottom: 1.5px solid #e9652f;
-  transform: rotate(32deg) skewX(-25deg);
-}
-
-.animationCollectMark {
-  display: block;
-}
-
-.animationCollectMark i {
-  position: absolute;
-  width: 17px;
-  height: 8px;
-  border-radius: 5px;
-  background: #fff3ed;
-  box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.62);
-}
-
-.animationCollectMark i:nth-child(1) { top: 7px; left: 5px; }
-.animationCollectMark i:nth-child(2) { top: 14px; right: 4px; }
-.animationCollectMark i:nth-child(3) { bottom: 5px; left: 7px; }
 
 .templateAnimationFooter {
   display: flex;
@@ -11087,7 +11063,7 @@ button.designStickyPrimary {
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
-  padding: 24px 24px 19px;
+  padding: 16px 24px 13px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   background: #fff;
 }
@@ -11140,16 +11116,16 @@ button.designStickyPrimary {
 
 .revealDialogForm {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto auto;
   min-height: 0;
 }
 
 .revealDialogBody {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
   min-height: 0;
-  padding: 20px 24px;
+  padding: 16px 20px;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -11158,14 +11134,16 @@ button.designStickyPrimary {
 
 .revealOptionCard {
   display: grid;
+  grid-template-rows: auto minmax(90px, 1fr) auto;
   align-content: start;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
-  padding: 10px;
+  padding: 8px;
   border-radius: 24px;
   background: #fff;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.09), 0 2px 5px rgba(0, 0, 0, 0.04);
-  transition-property: box-shadow, transform;
+  cursor: pointer;
+  transition-property: background-color, box-shadow, transform;
   transition-duration: 170ms;
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
@@ -11178,15 +11156,16 @@ button.designStickyPrimary {
 }
 
 .revealOptionCardSelected {
-  box-shadow: 0 0 0 1px #e9652f, 0 8px 24px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(rgba(233, 101, 47, 0.035), rgba(233, 101, 47, 0.035)), #fff;
+  box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.5), 0 8px 22px rgba(0, 0, 0, 0.085);
 }
 
 .revealStoryboard {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
-  padding: 8px;
+  padding: 6px;
   border-radius: 14px;
   background: #f7f8fa;
 }
@@ -11194,8 +11173,8 @@ button.designStickyPrimary {
 .revealStoryboard figure {
   position: relative;
   display: grid;
-  grid-template-rows: 82px auto;
-  gap: 7px;
+  grid-template-rows: 92px auto;
+  gap: 6px;
   min-width: 0;
   margin: 0;
   padding-top: 8px;
@@ -11205,7 +11184,7 @@ button.designStickyPrimary {
   content: "→";
   position: absolute;
   z-index: 3;
-  top: 41px;
+  top: 46px;
   right: -8px;
   color: #e9652f;
   font-size: 0.8rem;
@@ -11242,8 +11221,8 @@ button.designStickyPrimary {
 
 .revealStoryboard figcaption {
   color: var(--text-secondary);
-  font-size: 0.64rem;
-  font-weight: 720;
+  font-size: 0.69rem;
+  font-weight: 760;
   line-height: 1.25;
   text-align: center;
   text-wrap: balance;
@@ -11258,13 +11237,39 @@ button.designStickyPrimary {
 .storyEnvelopeImage {
   z-index: 2;
   object-fit: contain;
-  padding: 12px 7px 5px;
+  padding: 7px 3px 2px;
   filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.12));
 }
 
-.storyEnvelopeOpening .storyEnvelopeImage,
+.storyEnvelopeOpening .storyEnvelopeImage {
+  object-position: center 66%;
+  transform: translateY(8px) scale(1.02);
+}
+
 .storyEnvelopeRevealed .storyEnvelopeImage {
   transform: translateY(11px) scale(1.06);
+}
+
+.storyEnvelopeBackImage {
+  z-index: 1;
+}
+
+.storyEnvelopeFlapImage {
+  z-index: 1;
+  clip-path: polygon(14% 37%, 50% 5%, 86% 37%);
+}
+
+.storyEnvelopeFrontImage {
+  z-index: 3;
+  clip-path: polygon(
+    0 37%,
+    14% 37%,
+    50% 61%,
+    86% 37%,
+    100% 37%,
+    100% 100%,
+    0 100%
+  );
 }
 
 .storyEnvelopePeek,
@@ -11282,7 +11287,8 @@ button.designStickyPrimary {
 }
 
 .storyEnvelopePeek {
-  top: 12px;
+  z-index: 2;
+  top: 35px;
 }
 
 .storyEnvelopeResult {
@@ -11387,7 +11393,7 @@ button.designStickyPrimary {
   display: grid;
   gap: 6px;
   min-width: 0;
-  margin-inline: 8px;
+  margin-inline: 6px;
 }
 
 .revealOptionTitle {
@@ -11396,10 +11402,24 @@ button.designStickyPrimary {
   gap: 10px;
 }
 
+.revealOptionTitle > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
 .revealOptionTitle strong {
   color: var(--text-primary);
   font-size: 0.96rem;
   text-wrap: balance;
+}
+
+.revealOptionTitle > div > span {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.3;
+  text-wrap: pretty;
 }
 
 .revealOptionCopy p {
@@ -11414,7 +11434,7 @@ button.designStickyPrimary {
   display: grid;
   grid-template-columns: minmax(110px, 0.78fr) minmax(148px, 1.22fr);
   gap: 8px;
-  margin: auto 8px 8px;
+  margin: auto 6px 6px;
 }
 
 .revealSelectButton,
@@ -11441,18 +11461,27 @@ button.designStickyPrimary {
 }
 
 .revealSelectButton {
-  color: #fff;
-  background: #e9652f;
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.12);
+  color: #e9652f;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.62), 0 2px 5px rgba(0, 0, 0, 0.045);
 }
 
-.revealSelectButton:hover:not(:disabled) { background: #df5f2e; }
-.revealSelectButton:active:not(:disabled) { transform: scale(0.96); background: #c7532a; }
+.revealSelectButton:hover:not(:disabled) {
+  color: #df5f2e;
+  background: #f7f8fa;
+  box-shadow: inset 0 0 0 1px #df5f2e, 0 4px 9px rgba(0, 0, 0, 0.06);
+}
+
+.revealSelectButton:active:not(:disabled) {
+  color: #c7532a;
+  background: #f7f8fa;
+  transform: scale(0.96);
+}
 
 .revealSelectedButton {
   color: #e9652f;
-  background: #f7f8fa;
-  box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.36);
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.24);
   cursor: default;
 }
 
@@ -11490,18 +11519,13 @@ button.designStickyPrimary {
   position: relative;
   z-index: 2;
   display: flex;
-  min-height: 68px;
+  min-height: 60px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
   padding: 12px 24px;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   background: #fff;
-}
-
-.revealDialogFooter > span {
-  color: var(--text-secondary);
-  font-size: 0.78rem;
 }
 
 .revealDialogFooter > button {
@@ -11509,6 +11533,16 @@ button.designStickyPrimary {
   color: var(--text-primary);
   background: #f7f8fa;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.revealDialogError {
+  margin: 0;
+  padding: 9px 20px;
+  color: #b3261e;
+  background: #fff;
+  border-top: 1px solid rgba(179, 38, 30, 0.16);
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 @keyframes revealEnvelopeBreath {
@@ -11551,7 +11585,7 @@ button.designStickyPrimary {
   }
 
   .revealDialogHeader {
-    padding: max(16px, env(safe-area-inset-top)) 16px 14px;
+    padding: max(9px, env(safe-area-inset-top)) 16px 7px;
   }
 
   .revealDialogHeader h3 {
@@ -11564,13 +11598,21 @@ button.designStickyPrimary {
 
   .revealDialogBody {
     grid-template-columns: minmax(0, 1fr);
+    align-content: start;
     gap: 14px;
-    padding: 14px 14px 18px;
+    padding: 12px 10px 16px;
     scrollbar-gutter: auto;
   }
 
   .revealOptionCard {
+    grid-template-rows: auto auto auto;
+    gap: 16px;
+    padding: 6px;
     border-radius: 22px;
+  }
+
+  .revealOptionActions {
+    margin: 0 4px 4px;
   }
 
   .revealDialogFooter {
@@ -11591,15 +11633,19 @@ button.designStickyPrimary {
   }
 
   .revealStoryboard figure {
-    grid-template-rows: 76px auto;
+    grid-template-rows: 94px auto;
   }
 
+  .revealStoryboard figcaption {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 760;
+  }
+}
+
+@media (max-width: 370px) {
   .revealOptionActions {
     grid-template-columns: 1fr;
-  }
-
-  .revealDialogFooter > span:empty {
-    display: none;
   }
 }
 

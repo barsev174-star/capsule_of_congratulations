@@ -37,7 +37,7 @@ const templates = [
 describe("TemplateSummary", () => {
   beforeEach(() => {
     actions.updateGiftAnimationAction.mockReset();
-    actions.updateGiftAnimationAction.mockResolvedValue({ ok: true, message: "Способ открытия сохранён." });
+    actions.updateGiftAnimationAction.mockResolvedValue({ ok: true, message: "Сохранено" });
     telemetry.sendClientTelemetry.mockReset();
   });
 
@@ -82,16 +82,29 @@ describe("TemplateSummary", () => {
 
     const dialog = screen.getByRole("dialog", { name: "Выберите способ открытия" });
     expect(dialog).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleDescription("Как получатель впервые увидит подарок");
     await waitFor(() => expect(dialog).toHaveFocus());
     expect(screen.getAllByRole("radio")).toHaveLength(2);
     expect(screen.getByRole("radio", { name: "Конверт — выбрано" })).toHaveAttribute("aria-checked", "true");
     expect(document.querySelectorAll('[data-preview-story="envelope"] [data-preview-stage]')).toHaveLength(3);
     expect(document.querySelectorAll('[data-preview-story="collect-messages"] [data-preview-stage]')).toHaveLength(3);
+    expect(telemetry.sendClientTelemetry).toHaveBeenCalledWith("REVEAL_SETTINGS_MODAL_OPENED", {
+      templateId: "paper-birthday",
+      revealType: "envelope",
+      savedRevealType: "envelope",
+      source: "editor_sidebar"
+    });
 
     await user.keyboard("{Escape}");
 
     expect(screen.queryByRole("dialog", { name: "Выберите способ открытия" })).not.toBeInTheDocument();
     expect(opener).toHaveFocus();
+    expect(telemetry.sendClientTelemetry).toHaveBeenCalledWith("REVEAL_SETTINGS_MODAL_CLOSED", {
+      templateId: "paper-birthday",
+      revealType: "envelope",
+      savedRevealType: "envelope",
+      source: "reveal_modal"
+    });
   });
 
   it("previews an alternative reveal without changing or saving the current setting", async () => {
@@ -121,7 +134,8 @@ describe("TemplateSummary", () => {
     expect(screen.getByRole("radio", { name: "Конверт — выбрано" })).toHaveAttribute("aria-checked", "true");
     expect(telemetry.sendClientTelemetry).toHaveBeenCalledWith("REVEAL_EXAMPLE_OPENED", {
       templateId: "paper-birthday",
-      revealType: "collect-messages",
+      previewedRevealType: "collect-messages",
+      savedRevealType: "envelope",
       source: "reveal_modal"
     });
   });
@@ -138,15 +152,24 @@ describe("TemplateSummary", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Изменить" }));
-    await user.click(screen.getByRole("radio", { name: "Собрать поздравления — выбрать" }));
+    const collectChoice = screen.getByRole("radio", { name: "Собрать поздравления — выбрать" });
+    const collectCard = collectChoice.closest("article");
+    expect(collectCard).not.toBeNull();
+    await user.click(collectCard!.querySelector('[data-preview-story="collect-messages"]')!);
 
     await waitFor(() => expect(actions.updateGiftAnimationAction).toHaveBeenCalledTimes(1));
     const submitted = actions.updateGiftAnimationAction.mock.calls[0][1] as FormData;
     expect(submitted.get("manageToken")).toBe("manage-token");
     expect(submitted.get("giftAnimationId")).toBe("collect-messages");
+    const dialog = screen.getByRole("dialog", { name: "Выберите способ открытия" });
     await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: "Выберите способ открытия" })).not.toBeInTheDocument();
+      expect(within(dialog).getByRole("radio", { name: "Собрать поздравления — выбрано" })).toHaveAttribute(
+        "aria-checked",
+        "true"
+      );
     });
+    expect(within(dialog).queryByText("Сохранено")).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Закрыть" }));
     expect(screen.getByText("Собрать поздравления")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Посмотреть пример/ })).toHaveAttribute(
       "href",
@@ -155,6 +178,7 @@ describe("TemplateSummary", () => {
     expect(telemetry.sendClientTelemetry).toHaveBeenCalledWith("REVEAL_TYPE_SELECTED", {
       templateId: "paper-birthday",
       revealType: "collect-messages",
+      savedRevealType: "collect-messages",
       source: "reveal_modal"
     });
   });
@@ -176,6 +200,7 @@ describe("TemplateSummary", () => {
 
     expect(await screen.findAllByText("Не удалось сохранить.")).toHaveLength(2);
     expect(screen.getByRole("dialog", { name: "Выберите способ открытия" })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Не удалось сохранить.");
     expect(screen.getByRole("radio", { name: "Конверт — выбрано" })).toHaveAttribute("aria-checked", "true");
     expect(telemetry.sendClientTelemetry).not.toHaveBeenCalledWith(
       "REVEAL_TYPE_SELECTED",

@@ -36,10 +36,10 @@ export const TemplateSummary = ({
     const result = await updateGiftAnimationAction(previousState, formData);
     if (result.ok && (requestedAnimationId === "envelope" || requestedAnimationId === "collect-messages")) {
       setAnimationId(requestedAnimationId);
-      setIsRevealPickerOpen(false);
       sendClientTelemetry("REVEAL_TYPE_SELECTED", {
         templateId: selectedTemplate?.id ?? "",
         revealType: requestedAnimationId,
+        savedRevealType: requestedAnimationId,
         source: "reveal_modal"
       });
     }
@@ -60,9 +60,33 @@ export const TemplateSummary = ({
     if (!selectedTemplate) return;
     sendClientTelemetry("REVEAL_EXAMPLE_OPENED", {
       templateId: selectedTemplate.id,
-      revealType: animationId,
+      previewedRevealType: animationId,
+      savedRevealType: animationId,
       source: "editor_sidebar"
     });
+  };
+
+  const openRevealPicker = () => {
+    if (!selectedTemplate) return;
+    sendClientTelemetry("REVEAL_SETTINGS_MODAL_OPENED", {
+      templateId: selectedTemplate.id,
+      revealType: animationId,
+      savedRevealType: animationId,
+      source: "editor_sidebar"
+    });
+    setIsRevealPickerOpen(true);
+  };
+
+  const closeRevealPicker = () => {
+    if (selectedTemplate) {
+      sendClientTelemetry("REVEAL_SETTINGS_MODAL_CLOSED", {
+        templateId: selectedTemplate.id,
+        revealType: animationId,
+        savedRevealType: animationId,
+        source: "reveal_modal"
+      });
+    }
+    setIsRevealPickerOpen(false);
   };
 
   useEffect(() => {
@@ -172,7 +196,7 @@ export const TemplateSummary = ({
           </div>
           <div className={styles.revealSummaryFooter}>
             <div className={styles.revealSummaryActions}>
-              <button type="button" onClick={() => setIsRevealPickerOpen(true)}>
+              <button type="button" onClick={openRevealPicker}>
                 Изменить
               </button>
               <a
@@ -227,8 +251,8 @@ export const TemplateSummary = ({
           selectedAnimationId={animationId}
           action={animationAction}
           isPending={isAnimationPending}
-          statusMessage={animationState.message}
-          onClose={() => setIsRevealPickerOpen(false)}
+          errorMessage={animationState.ok ? "" : animationState.message}
+          onClose={closeRevealPicker}
         />
       ) : null}
     </div>

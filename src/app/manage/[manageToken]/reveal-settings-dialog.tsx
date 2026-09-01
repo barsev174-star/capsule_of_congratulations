@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type KeyboardEvent } from "react";
+import { useRef, type KeyboardEvent, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { CardTemplate } from "@/lib/cards/templates";
@@ -16,8 +16,19 @@ type Props = {
   selectedAnimationId: GiftAnimationId;
   action: (formData: FormData) => void;
   isPending: boolean;
-  statusMessage: string;
+  errorMessage: string;
   onClose: () => void;
+};
+
+const revealOptionDetails: Record<GiftAnimationId, { label: string; description: string }> = {
+  envelope: {
+    label: "Классическое открытие",
+    description: "Конверт раскрывается и показывает открытку."
+  },
+  "collect-messages": {
+    label: "Показывает, как собирался подарок",
+    description: "Поздравления и фото собираются в открытку прямо на глазах."
+  }
 };
 
 export const getRevealExampleHref = (
@@ -30,7 +41,19 @@ export const RevealIcon = ({ animationId }: { animationId: GiftAnimationId }) =>
     className={animationId === "envelope" ? styles.animationEnvelopeMark : styles.animationCollectMark}
     aria-hidden="true"
   >
-    {animationId === "collect-messages" ? <><i /><i /><i /></> : <i />}
+    {animationId === "envelope" ? (
+      <svg viewBox="0 0 24 24" fill="none">
+        <rect x="3.5" y="5.5" width="17" height="13" rx="2.5" />
+        <path d="m4.5 7 7.5 6 7.5-6" />
+        <path d="m4.5 17 5.2-4.5M19.5 17l-5.2-4.5" />
+      </svg>
+    ) : (
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M4.5 4.5h9a2.5 2.5 0 0 1 2.5 2.5v3.5a2.5 2.5 0 0 1-2.5 2.5H9l-3.8 2.8.8-2.8H4.5A2.5 2.5 0 0 1 2 10.5V7a2.5 2.5 0 0 1 2.5-2.5Z" />
+        <path d="M11 13.5v.5a2.5 2.5 0 0 0 2.5 2.5H16l3.3 2.4-.7-2.4h.9A2.5 2.5 0 0 0 22 14v-2.5A2.5 2.5 0 0 0 19.5 9H18" />
+        <path d="M6.5 8.7h5M14.5 12.8h3" />
+      </svg>
+    )}
   </span>
 );
 
@@ -46,10 +69,30 @@ const EnvelopeStoryboard = ({ templatePreviewSrc }: { templatePreviewSrc: string
     <figure data-preview-stage="opening">
       <span className={styles.storyStep}>2</span>
       <div className={`${styles.storyEnvelope} ${styles.storyEnvelopeOpening}`} aria-hidden="true">
+        <Image
+          src="/assets/gift/envelope-open.png"
+          alt=""
+          fill
+          sizes="120px"
+          className={`${styles.storyEnvelopeImage} ${styles.storyEnvelopeBackImage}`}
+        />
+        <Image
+          src="/assets/gift/envelope-open.png"
+          alt=""
+          fill
+          sizes="120px"
+          className={`${styles.storyEnvelopeImage} ${styles.storyEnvelopeFlapImage}`}
+        />
         <span className={styles.storyEnvelopePeek}>
           <Image src={templatePreviewSrc} alt="" fill sizes="70px" className={styles.storyTemplateImage} />
         </span>
-        <Image src="/assets/gift/envelope-open.png" alt="" fill sizes="120px" className={styles.storyEnvelopeImage} />
+        <Image
+          src="/assets/gift/envelope-open.png"
+          alt=""
+          fill
+          sizes="120px"
+          className={`${styles.storyEnvelopeImage} ${styles.storyEnvelopeFrontImage}`}
+        />
       </div>
       <figcaption>Открытие</figcaption>
     </figure>
@@ -110,7 +153,7 @@ export const RevealSettingsDialog = ({
   selectedAnimationId,
   action,
   isPending,
-  statusMessage,
+  errorMessage,
   onClose
 }: Props) => {
   const dialogRef = useRef<HTMLElement>(null);
@@ -118,13 +161,11 @@ export const RevealSettingsDialog = ({
   const choiceRefs = useRef<Partial<Record<GiftAnimationId, HTMLButtonElement | null>>>({});
   useModalFocus(dialogRef, onClose);
 
-  useEffect(() => {
-    sendClientTelemetry("REVEAL_SETTINGS_MODAL_OPENED", {
-      templateId,
-      revealType: selectedAnimationId,
-      source: "editor_sidebar"
-    });
-  }, [selectedAnimationId, templateId]);
+  const selectAnimation = (animationId: GiftAnimationId) => {
+    if (isPending || animationId === selectedAnimationId) return;
+    const choice = choiceRefs.current[animationId];
+    if (choice) formRef.current?.requestSubmit(choice);
+  };
 
   const handleChoiceKeyDown = (
     event: KeyboardEvent<HTMLButtonElement>,
@@ -135,15 +176,19 @@ export const RevealSettingsDialog = ({
     const nextAnimationId: GiftAnimationId = animationId === "envelope" ? "collect-messages" : "envelope";
     const nextChoice = choiceRefs.current[nextAnimationId];
     nextChoice?.focus();
-    if (nextAnimationId !== selectedAnimationId && nextChoice) {
-      formRef.current?.requestSubmit(nextChoice);
-    }
+    selectAnimation(nextAnimationId);
+  };
+
+  const handleCardClick = (event: MouseEvent<HTMLElement>, animationId: GiftAnimationId) => {
+    if (event.target instanceof Element && event.target.closest("a, button")) return;
+    selectAnimation(animationId);
   };
 
   const trackExample = (animationId: GiftAnimationId) => {
     sendClientTelemetry("REVEAL_EXAMPLE_OPENED", {
       templateId,
-      revealType: animationId,
+      previewedRevealType: animationId,
+      savedRevealType: selectedAnimationId,
       source: "reveal_modal"
     });
   };
@@ -163,7 +208,7 @@ export const RevealSettingsDialog = ({
         <header className={styles.revealDialogHeader}>
           <div>
             <h3 id="reveal-dialog-title">Выберите способ открытия</h3>
-            <p id="reveal-dialog-description">Как получатель впервые увидит открытку</p>
+            <p id="reveal-dialog-description">Как получатель впервые увидит подарок</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Закрыть выбор способа открытия">×</button>
         </header>
@@ -177,6 +222,7 @@ export const RevealSettingsDialog = ({
                 <article
                   key={animation.id}
                   className={`${styles.revealOptionCard} ${selected ? styles.revealOptionCardSelected : ""}`}
+                  onClick={(event) => handleCardClick(event, animation.id)}
                 >
                   {animation.id === "envelope"
                     ? <EnvelopeStoryboard templatePreviewSrc={templatePreviewSrc} />
@@ -184,9 +230,12 @@ export const RevealSettingsDialog = ({
                   <div className={styles.revealOptionCopy}>
                     <div className={styles.revealOptionTitle}>
                       <RevealIcon animationId={animation.id} />
-                      <strong>{animation.name}</strong>
+                      <div>
+                        <strong>{animation.name}</strong>
+                        <span>{revealOptionDetails[animation.id].label}</span>
+                      </div>
                     </div>
-                    <p>{animation.description}</p>
+                    <p>{revealOptionDetails[animation.id].description}</p>
                   </div>
                   <div className={styles.revealOptionActions}>
                     <button
@@ -210,7 +259,10 @@ export const RevealSettingsDialog = ({
                       target="_blank"
                       rel="noopener noreferrer"
                       className={styles.revealExampleLink}
-                      onClick={() => trackExample(animation.id)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        trackExample(animation.id);
+                      }}
                     >
                       Посмотреть пример <span aria-hidden="true">↗</span>
                     </a>
@@ -219,10 +271,10 @@ export const RevealSettingsDialog = ({
               );
             })}
           </div>
+          {errorMessage ? (
+            <p className={styles.revealDialogError} role="alert">{errorMessage}</p>
+          ) : null}
           <footer className={styles.revealDialogFooter}>
-            <span role="status" aria-live="polite">
-              {isPending ? "Сохраняем способ открытия…" : statusMessage}
-            </span>
             <button type="button" onClick={onClose}>Закрыть</button>
           </footer>
         </form>

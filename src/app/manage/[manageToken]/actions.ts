@@ -1247,7 +1247,7 @@ export async function updateGiftAnimationAction(
   const manageToken = String(formData.get("manageToken") ?? "");
   const animationId = String(formData.get("giftAnimationId") ?? "");
   if (!manageToken || !isGiftAnimationId(animationId)) {
-    return { ok: false, message: "Не удалось выбрать способ вручения." };
+    return { ok: false, message: "Не удалось выбрать способ открытия." };
   }
 
   const card = await getCardDraftByManageToken(manageToken);
@@ -1259,14 +1259,14 @@ export async function updateGiftAnimationAction(
   }
 
   const updated = await updateCardGiftAnimation(card.id, animationId);
-  if (!updated) return { ok: false, message: "Не удалось применить способ вручения." };
+  if (!updated) return { ok: false, message: "Не удалось сохранить способ открытия." };
 
   logger.info("manage.gift_animation_updated", "Gift animation updated by organizer", {
     cardId: card.id,
     animationId
   });
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
-  return { ok: true, message: "Способ вручения применён." };
+  return { ok: true, message: "Сохранено" };
 }
 
 export async function setMainGreetingAction(formData: FormData) {
