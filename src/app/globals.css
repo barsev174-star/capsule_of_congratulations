@@ -1,22 +1,22 @@
 :root {
-  --background: #f1f3f4;
-  --surface: rgba(241, 243, 244, 0.88);
-  --surface-strong: #f1f3f4;
-  --surface-warm: #f1f3f4;
-  --surface-soft: #f1f3f4;
-  --surface-cream: #f1f3f4;
-  --surface-peach: #f1f3f4;
-  --text: #202124;
-  --muted: #5f6368;
-  --line: rgba(32, 33, 36, 0.15);
-  --line-strong: rgba(32, 33, 36, 0.22);
-  --accent: #e9652f;
-  --accent-strong: #e9652f;
-  --accent-soft: rgba(233, 101, 47, 0.16);
-  --accent-light: rgba(233, 101, 47, 0.08);
-  --shadow: 0 18px 60px rgba(0, 0, 0, 0.12);
-  --shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.08);
-  --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --background: #f6efe7;
+  --surface: rgba(255, 251, 247, 0.88);
+  --surface-strong: #fffaf5;
+  --surface-warm: #fdf3ea;
+  --surface-soft: #f8f0e8;
+  --surface-cream: #fff8f0;
+  --surface-peach: #fff0e3;
+  --text: #332722;
+  --muted: #7b675d;
+  --line: rgba(92, 67, 51, 0.15);
+  --line-strong: rgba(92, 67, 51, 0.22);
+  --accent: #bf6c47;
+  --accent-strong: #d45a27;
+  --accent-soft: #f3d8cc;
+  --accent-light: #fff0e5;
+  --shadow: 0 18px 60px rgba(72, 49, 37, 0.12);
+  --shadow-soft: 0 18px 50px rgba(76, 45, 25, 0.08);
+  --shadow-card: 0 12px 32px rgba(72, 49, 37, 0.08), 0 4px 8px rgba(72, 49, 37, 0.04);
   --motion-fast: 180ms;
   --motion-normal: 420ms;
   --motion-slow: 650ms;
@@ -46,7 +46,7 @@ body {
   margin: 0;
   background:
     radial-gradient(circle at top, rgba(255, 255, 255, 0.75), transparent 38%),
-    linear-gradient(180deg, #f1f3f4 0%, var(--background) 100%);
+    linear-gradient(180deg, #f8f2ea 0%, var(--background) 100%);
   color: var(--text);
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -64,7 +64,7 @@ select {
 }
 
 ::selection {
-  background: rgba(233, 101, 47, 0.22);
+  background: rgba(191, 108, 71, 0.22);
 }
 
 .text-balance {
@@ -90,17 +90,17 @@ section[id] {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(241, 243, 244, 0.72);
+  background: rgba(255, 250, 245, 0.72);
 }
 
 ::-webkit-scrollbar-thumb {
-  border: 3px solid rgba(223, 225, 229, 0.72);
+  border: 3px solid rgba(255, 250, 245, 0.72);
   border-radius: 999px;
-  background: rgba(233, 101, 47, 0.42);
+  background: rgba(142, 79, 52, 0.42);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(233, 101, 47, 0.58);
+  background: rgba(142, 79, 52, 0.58);
 }
 
 @media (prefers-reduced-motion: reduce) {

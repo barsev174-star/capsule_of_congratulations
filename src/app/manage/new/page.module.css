@@ -3,7 +3,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: #f1f3f4;
+  background: #fff9f2;
   color: #202124;
 }
 
@@ -11,8 +11,8 @@
   width: min(100%, 560px);
   padding: clamp(28px, 6vw, 48px);
   border-radius: 28px;
-  background: #f1f3f4;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 12px 28px -14px rgba(0, 0, 0, 0.24), 0 3px 8px -4px rgba(0, 0, 0, 0.12);
+  background: #fffdf9;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 12px 28px -14px rgba(56, 38, 31, 0.24), 0 3px 8px -4px rgba(56, 38, 31, 0.12);
   text-align: center;
 }
 
@@ -41,45 +41,34 @@
   text-wrap: pretty;
 }
 
-.notice {
-  margin: -12px auto 22px;
-  padding: 12px 14px;
-  border: 1px solid rgba(233, 101, 47, 0.28);
-  border-radius: 12px;
-  background: rgba(233, 101, 47, 0.08);
-  color: #202124;
-  line-height: 1.45;
-}
-
 .primaryButton {
   min-height: 48px;
   padding: 13px 20px;
   border: 0;
   border-radius: 14px;
-  background: #e9652f;
+  background: #ed6431;
   color: #fff;
   cursor: pointer;
   font: inherit;
   font-weight: 800;
-  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.72);
+  box-shadow: 0 6px 14px -8px rgba(185, 74, 32, 0.72);
   transition-property: transform, box-shadow, background-color;
   transition-duration: 160ms;
   transition-timing-function: ease-out;
 }
 
 .primaryButton:hover {
-  background: #df5f2e;
-  box-shadow: 0 9px 18px -8px rgba(0, 0, 0, 0.78);
+  background: #d95828;
+  box-shadow: 0 9px 18px -8px rgba(185, 74, 32, 0.78);
 }
 
 .primaryButton:active {
-  background: #c7532a;
   transform: scale(0.96);
 }
 
 .primaryButton:focus-visible,
 .backLink:focus-visible {
-  outline: 3px solid rgba(233, 101, 47, 0.35);
+  outline: 3px solid rgba(237, 100, 49, 0.35);
   outline-offset: 3px;
 }
 

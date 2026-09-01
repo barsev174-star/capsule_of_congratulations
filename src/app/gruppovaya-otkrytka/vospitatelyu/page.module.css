@@ -1,7 +1,7 @@
 .caregiverPage {
   --caregiver-blue: #eaf5fa;
   --caregiver-green: #edf7ef;
-  --caregiver-yellow: #ffffff;
+  --caregiver-yellow: #fff8dc;
 }
 
 .caregiverPage :global([data-caregiver-art]) {

@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   height: var(--home-header-height, 68px);
-  background: rgba(241, 243, 244, 0.82);
+  background: rgba(246, 239, 231, 0.82);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
   transform: translateY(0);
@@ -17,8 +17,8 @@
 }
 
 .header[data-scrolled] {
-  background: rgba(241, 243, 244, 0.94);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 248, 241, 0.94);
+  box-shadow: 0 6px 18px rgba(92, 62, 46, 0.08);
 }
 
 .teacherHeader {
@@ -137,8 +137,8 @@
   min-width: 210px;
   padding: 8px;
   border-radius: 16px;
-  background: rgba(241, 243, 244, 0.98);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.15), inset 0 0 0 1px var(--line);
+  background: rgba(255, 250, 244, 0.98);
+  box-shadow: 0 16px 32px rgba(92, 62, 46, 0.15), inset 0 0 0 1px var(--line);
   animation: mobileNavIn 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -187,7 +187,7 @@
   border: none;
   border-radius: 999px;
   background: linear-gradient(180deg, #ef7240 0%, #df5f2e 100%);
-  color: #ffffff;
+  color: #fff9f4;
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;

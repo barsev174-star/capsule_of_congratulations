@@ -20,7 +20,7 @@
 
 .mark {
   flex: 0 0 auto;
-  color: #202124;
+  color: #5a3927;
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 900;
   letter-spacing: 0.12em;

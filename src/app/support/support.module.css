@@ -3,7 +3,7 @@
   padding: 28px 20px 64px;
   background:
     radial-gradient(circle at 14% 6%, rgba(255, 255, 255, 0.92), transparent 30%),
-    linear-gradient(180deg, #f1f3f4 0%, #f1f3f4 100%);
+    linear-gradient(180deg, #fff8f1 0%, #f7ece3 100%);
   color: #202124;
 }
 
@@ -22,8 +22,8 @@
 .card {
   padding: 30px;
   border-radius: 28px;
-  background: rgba(241, 243, 244, 0.92);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 22px 60px rgba(0, 0, 0, 0.09);
+  background: rgba(255, 252, 248, 0.92);
+  box-shadow: 0 0 0 1px rgba(67, 42, 30, 0.08), 0 22px 60px rgba(83, 49, 28, 0.09);
 }
 .form { display: grid; gap: 22px; }
 .honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
@@ -38,17 +38,17 @@
   place-items: center;
   padding: 10px 12px;
   border-radius: 14px;
-  background: #f1f3f4;
+  background: #fffdf9;
   color: #202124;
   text-align: center;
   cursor: pointer;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 0 0 1px rgba(67, 42, 30, 0.12);
   transition-property: color, background-color, box-shadow, transform;
   transition-duration: 150ms;
 }
-.topicOption span:hover { color: #e9652f; box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.34), 0 8px 18px rgba(0, 0, 0, 0.06); }
-.topicOption input:checked + span { background: #f1f3f4; color: #e9652f; box-shadow: 0 0 0 2px rgba(233, 101, 47, 0.4); }
-.topicOption input:focus-visible + span { outline: 3px solid rgba(233, 101, 47, 0.24); outline-offset: 3px; }
+.topicOption span:hover { color: #e9652f; box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.34), 0 8px 18px rgba(83, 49, 28, 0.06); }
+.topicOption input:checked + span { background: #fff0e5; color: #e9652f; box-shadow: 0 0 0 2px rgba(233, 101, 47, 0.4); }
+.topicOption input:focus-visible + span { outline: 3px solid rgba(191, 108, 71, 0.24); outline-offset: 3px; }
 .topicOption span:active { transform: scale(0.96); }
 
 .fieldRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
@@ -57,9 +57,9 @@
 .field input, .field textarea {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid rgba(95, 99, 104, 0.14);
+  border: 1px solid rgba(67, 42, 30, 0.14);
   border-radius: 16px;
-  background: #f1f3f4;
+  background: #fffdf9;
   padding: 14px 16px;
   color: #202124;
   font: inherit;
@@ -67,12 +67,12 @@
   transition-duration: 150ms;
 }
 .field textarea { min-height: 170px; resize: vertical; line-height: 1.55; }
-.field input:hover, .field textarea:hover { border-color: rgba(95, 99, 104, 0.3); }
+.field input:hover, .field textarea:hover { border-color: rgba(67, 42, 30, 0.3); }
 .field input:focus, .field textarea:focus { outline: none; border-color: rgba(233, 101, 47, 0.55); box-shadow: 0 0 0 4px rgba(233, 101, 47, 0.12); background: #fff; }
 .field input::placeholder, .field textarea::placeholder { color: #5f6368; }
 
 .success, .error { padding: 15px 17px; border-radius: 16px; }
-.success { background: #f1f3f4; color: #202124; box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.15); }
+.success { background: #fff1e7; color: #202124; box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.15); }
 .error { background: #fff0ed; color: #9c3928; box-shadow: 0 0 0 1px rgba(194, 67, 45, 0.18); }
 .success strong, .error strong { display: block; margin-bottom: 3px; }
 .success p, .error p { margin: 0; line-height: 1.5; }

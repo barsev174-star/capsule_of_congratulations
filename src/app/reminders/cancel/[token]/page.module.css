@@ -5,8 +5,8 @@
   padding: 32px 20px;
   color: #202124;
   background:
-    radial-gradient(circle at 20% 12%, rgba(241, 243, 244, 0.72), transparent 34%),
-    linear-gradient(160deg, #f1f3f4 0%, #f1f3f4 100%);
+    radial-gradient(circle at 20% 12%, rgba(255, 226, 197, 0.72), transparent 34%),
+    linear-gradient(160deg, #fffaf4 0%, #fdf2e8 100%);
 }
 
 .card {
@@ -16,8 +16,8 @@
   text-align: center;
   background: rgba(255, 255, 255, 0.9);
   box-shadow:
-    0 28px 70px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.06);
+    0 28px 70px rgba(102, 63, 42, 0.12),
+    0 2px 8px rgba(102, 63, 42, 0.06);
 }
 
 .icon {
@@ -28,8 +28,8 @@
   margin: 0 auto 22px;
   border-radius: 20px;
   font-size: 28px;
-  background: #f1f3f4;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  background: #fff0e3;
+  box-shadow: inset 0 0 0 1px rgba(224, 103, 55, 0.1);
 }
 
 .eyebrow {
@@ -68,8 +68,8 @@
   border: 0;
   border-radius: 16px;
   color: #fff;
-  background: linear-gradient(180deg, #e9652f, #e9652f);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.22);
+  background: linear-gradient(180deg, #f17543, #e95c2b);
+  box-shadow: 0 12px 26px rgba(222, 82, 35, 0.22);
   font: inherit;
   font-weight: 800;
   text-decoration: none;
@@ -82,7 +82,7 @@
 .cancelButton:hover,
 .primaryLink:hover {
   transform: translateY(-1px);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 16px 32px rgba(222, 82, 35, 0.28);
 }
 
 .cancelButton:active,

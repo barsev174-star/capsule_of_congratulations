@@ -76,7 +76,7 @@
   flex: 1;
   padding: 20px 18px 16px;
   border-radius: 22px;
-  background: rgba(241, 243, 244, 0.72);
+  background: rgba(253, 243, 234, 0.72);
   border: 1px dashed var(--line);
   overflow: hidden;
 }
@@ -109,7 +109,7 @@
   height: 22px;
   border-radius: 50%;
   flex-shrink: 0;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(72, 49, 37, 0.08);
 }
 
 .msg:nth-child(3) .msgAvatar { transform: translateY(-4px); }
@@ -125,7 +125,7 @@
   color: var(--text);
   font-size: 0.85rem;
   line-height: 1.35;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 6px rgba(72, 49, 37, 0.05);
 }
 
 .msgRight .msgBubble {
@@ -213,10 +213,10 @@
   padding: 24px 20px 18px;
   border-radius: 22px;
   background:
-    repeating-linear-gradient(0deg, rgba(233, 101, 47, 0.022) 0 2px, transparent 2px 7px),
-    linear-gradient(150deg, #f1f3f4 0%, var(--surface-cream) 100%);
+    repeating-linear-gradient(0deg, rgba(191, 108, 71, 0.022) 0 2px, transparent 2px 7px),
+    linear-gradient(150deg, #fffaf5 0%, var(--surface-cream) 100%);
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-card), inset 0 0 0 6px rgba(0, 0, 0, 0.55), inset 0 0 0 7px var(--line);
+  box-shadow: var(--shadow-card), inset 0 0 0 6px rgba(255, 250, 245, 0.55), inset 0 0 0 7px var(--line);
 }
 
 .resultFlower {
@@ -238,9 +238,9 @@
 
 .resultCollage :global(img) {
   height: auto;
-  border: 3px solid #dfe1e5;
+  border: 3px solid #fffaf5;
   border-radius: 10px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 10px 24px rgba(72, 49, 37, 0.22);
   object-fit: cover;
 }
 
@@ -390,7 +390,7 @@
   border-radius: 3px;
   background: var(--surface-strong);
   border: 1px solid var(--accent-soft);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 4px rgba(72, 49, 37, 0.12);
   transform: rotate(8deg);
 }
 
@@ -414,7 +414,7 @@
   border-radius: 2px;
   background: var(--surface-strong);
   border: 1px solid var(--line);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 4px rgba(72, 49, 37, 0.12);
   transform: rotate(10deg);
 }
 
@@ -423,7 +423,7 @@
   position: absolute;
   inset: 3px 3px 7px;
   border-radius: 1px;
-  background: linear-gradient(135deg, var(--accent-soft), #f1f3f4);
+  background: linear-gradient(135deg, var(--accent-soft), #e4c2b0);
 }
 
 /* Подарить как событие — конверт с открыткой */
@@ -431,8 +431,8 @@
   width: 19px;
   height: 13px;
   border-radius: 2px;
-  background: linear-gradient(135deg, #f1f3f4, #f1f3f4);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.14);
+  background: linear-gradient(135deg, #e9c8b6, #dab6a4);
+  box-shadow: 0 2px 4px rgba(72, 49, 37, 0.14);
   transform: rotate(6deg);
 }
 
