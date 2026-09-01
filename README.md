@@ -18,6 +18,7 @@
 - `docs/GIFT_EXPERIENCE_AND_POLL.md` — правила финального просмотра открытки и выбора подарка.
 - `docs/GIFT_OPENING_ANIMATION_2026-06-29.md` — актуальный сценарий конверта, визуальные профили, таймлайн, mobile/reduced-motion контракт и production-проверка вступительной анимации.
 - `docs/COLLECT_MESSAGES_GIFT_ANIMATION_2026-08-31.md` — вторая анимация вручения «Собрать поздравления»: данные превью, таймлайн, профили шаблонов, mobile и миграция.
+- `docs/REVEAL_SELECTION_EXPERIENCE_2026-09-01.md` — единый сценарий выбора `template + reveal` на `/example` и в `/manage`, наследование настроек при создании и реальный recipient-preview.
 - `docs/CURRENT_STATUS_AND_PAYMENT_GATE.md` — актуальный production-статус и критерии перехода к оплате.
 - `docs/ARCHIVE_INDEX.md` — навигация по текущей документации и историческим планам; старые незакрытые пункты не являются backlog.
 - `docs/NEXT_SESSION_HANDOFF_2026-08-26.md` — ближайшие действия по публичному превью, безопасной очистке и контролю SEO.

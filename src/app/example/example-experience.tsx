@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
@@ -12,7 +12,7 @@ import { sendClientTelemetry } from "@/lib/client-telemetry";
 import { birthdayExampleCardModel } from "@/lib/birthday-example";
 import type { GiftAnimationId } from "@/lib/gift-animations";
 import { toGiftRevealExcerpt } from "@/lib/gift-reveal-preview";
-import { startBirthdayCardFromShowcaseAction, startCardFromShowcaseAction, startColleagueCardFromShowcaseAction } from "../home-actions";
+import { startCardFromExampleSelectionAction } from "../home-actions";
 import styles from "./example.module.css";
 
 export type DemoTemplateId = "paper-birthday" | "route-adventure" | "school-scrapbook" | "school-classic" | "kindergarten-doodles" | "team-editorial";
@@ -34,12 +34,6 @@ type Props = {
 
 type DemoStepId = "template" | "animation" | "recipient_view";
 
-const demoSteps: { id: DemoStepId; label: string }[] = [
-  { id: "template", label: "Выбор шаблона" },
-  { id: "animation", label: "Анимация" },
-  { id: "recipient_view", label: "Результат" }
-];
-
 const previewFeatures = [
   "поздравления от участников",
   "фотографии и моменты",
@@ -47,13 +41,55 @@ const previewFeatures = [
   "лучшие фразы"
 ];
 
-const previewContributions = exampleCardModel.contributions.slice(0, 2);
+const demoTemplateMeta: Record<DemoTemplateId, { name: string; preview: string; objectPosition?: string }> = {
+  "paper-birthday": {
+    name: "Бумажный классический",
+    preview: "/assets/example/template-paper-thumb.png",
+    objectPosition: "center"
+  },
+  "route-adventure": {
+    name: "Маршрут",
+    preview: "/assets/landing/template-route-adventure-preview.png",
+    objectPosition: "center"
+  },
+  "school-scrapbook": {
+    name: "Школьный коллаж",
+    preview: "/templates/school-scrapbook/preview.webp",
+    objectPosition: "center"
+  },
+  "school-classic": {
+    name: "Школьный классический",
+    preview: "/templates/school-classic/preview-v6.webp",
+    objectPosition: "center"
+  },
+  "kindergarten-doodles": {
+    name: "Детство в рисунках",
+    preview: "/templates/kindergarten-doodles/preview.webp",
+    objectPosition: "center"
+  },
+  "team-editorial": {
+    name: "Вместе",
+    preview: "/templates/team-editorial/preview-v4.webp",
+    objectPosition: "center"
+  }
+};
+
+const revealNames: Record<GiftAnimationId, string> = {
+  envelope: "Конверт",
+  "collect-messages": "Собрать поздравления"
+};
+
+const StoryPhotoPlaceholder = () => (
+  <svg className={styles.storyPhotoGlyph} viewBox="0 0 40 40" aria-hidden="true">
+    <circle cx="29" cy="11" r="4" />
+    <path d="M6 31 16 20l7 7 4-4 7 8" />
+  </svg>
+);
 
 export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, initialTemplateId, initialAnimationId, birthdayScenario = false, introVariant = "assembled", forceFullMotion = false, previewPhotoCount = 3 }: Props) => {
   const [started, setStarted] = useState(birthdayScenario);
   const [selectedTemplateId, setSelectedTemplateId] = useState<DemoTemplateId>(initialTemplateId ?? "paper-birthday");
-  const [selectedAnimationId, setSelectedAnimationId] = useState<GiftAnimationId>(initialAnimationId ?? (birthdayScenario ? "envelope" : "collect-messages"));
-  const [activeStep, setActiveStep] = useState<DemoStepId>("template");
+  const [selectedRevealType, setSelectedRevealType] = useState<GiftAnimationId>(initialAnimationId ?? (birthdayScenario ? "envelope" : "collect-messages"));
   const demoModelByTemplate: Record<DemoTemplateId, typeof exampleCardModel | typeof schoolScrapbookDemoCardModel> = {
     "paper-birthday": birthdayScenario ? birthdayExampleCardModel : exampleCardModel,
     "route-adventure": routeAdventureDemoCardModel,
@@ -151,12 +187,6 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     excerpt: toGiftRevealExcerpt(contribution.message),
     isMain: index === 0
   }));
-  const createAction = selectedTemplateId === "team-editorial"
-    ? startColleagueCardFromShowcaseAction
-    : birthdayScenario && selectedTemplateId === "paper-birthday"
-      ? startBirthdayCardFromShowcaseAction
-      : startCardFromShowcaseAction;
-
   const viewedStepsRef = useRef<Set<DemoStepId>>(new Set());
 
   const trackStepViewed = (step: DemoStepId) => {
@@ -173,11 +203,6 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
 
   // Hero.
   const heroVisual = useScrollReveal<HTMLDivElement>({ variant: "slide-right", duration: 720, delay: 180 });
-
-  // Animation block columns.
-  const animationAsset = useScrollReveal<HTMLDivElement>({ variant: "slide-left", duration: 560 });
-  const animationInfo = useScrollReveal<HTMLDivElement>({ variant: "slide-left", duration: 560, delay: 90 });
-  const animationScene = useScrollReveal<HTMLDivElement>({ variant: "slide-right", duration: 560, delay: 60 });
 
   // Preview block columns.
   const previewVisual = useScrollReveal<HTMLDivElement>({ variant: "slide-left", duration: 700 });
@@ -222,26 +247,6 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     };
   }, []);
 
-  // Scroll-progress indicator: track which step section is in view.
-  useEffect(() => {
-    const sections = demoSteps
-      .map((step) => ({ id: step.id, element: document.querySelector<HTMLElement>(`[data-demo-step="${step.id}"]`) }))
-      .filter((item): item is { id: DemoStepId; element: HTMLElement } => Boolean(item.element));
-    if (!sections.length) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const step = sections.find((item) => item.element === entry.target);
-          if (step) setActiveStep(step.id);
-        });
-      },
-      { threshold: 0.35 }
-    );
-    sections.forEach((item) => observer.observe(item.element));
-    return () => observer.disconnect();
-  }, []);
-
   const selectTemplate = (templateId: DemoTemplateId) => {
     if (templateId === selectedTemplateId) return;
     setSelectedTemplateId(templateId);
@@ -249,22 +254,52 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
   };
 
   const selectAnimation = (animationId: GiftAnimationId) => {
-    if (animationId === selectedAnimationId) return;
-    setSelectedAnimationId(animationId);
-  };
-
-  const trackCreateClicked = (source: string) => {
-    sendClientTelemetry("demo_create_clicked", { route: "/example", source });
-  };
-
-  const openDemo = () => {
-    sendClientTelemetry("demo_animation_started", {
+    if (animationId === selectedRevealType) return;
+    setSelectedRevealType(animationId);
+    sendClientTelemetry("demo_reveal_selected", {
       route: "/example",
       template: selectedTemplateId,
-      animation: selectedAnimationId
+      animation: animationId
+    });
+  };
+
+  const moveRevealSelection = (event: KeyboardEvent<HTMLButtonElement>, nextReveal: GiftAnimationId) => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+    event.preventDefault();
+    selectAnimation(nextReveal);
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLButtonElement>(`[data-reveal-option="${nextReveal}"]`)?.focus();
+    });
+  };
+
+  const trackCreateClicked = (placement: "hero" | "bottom_cta") => {
+    sendClientTelemetry("demo_create_clicked", {
+      route: "/example",
+      source: "demo_page",
+      placement,
+      template: selectedTemplateId,
+      animation: selectedRevealType
+    });
+  };
+
+  const openDemo = (source: "animation_preview" | "recipient_view") => {
+    sendClientTelemetry("demo_animation_started", {
+      route: "/example",
+      source,
+      template: selectedTemplateId,
+      animation: selectedRevealType
+    });
+    sendClientTelemetry(source === "animation_preview" ? "demo_animation_preview_opened" : "demo_gift_opened", {
+      route: "/example",
+      template: selectedTemplateId,
+      animation: selectedRevealType
     });
     setStarted(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const scrollToTemplates = () => {
+    document.querySelector('[data-demo-step="template"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   if (started) {
@@ -280,7 +315,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
         visualPreset={demoIntroByTemplate[selectedTemplateId].visualPreset}
         previewDecor={demoIntroByTemplate[selectedTemplateId].decor}
         templateId={selectedTemplateId}
-        animationId={selectedAnimationId}
+        animationId={selectedRevealType}
         accent={demoIntroByTemplate[selectedTemplateId].accent}
         assemblyPreview={{
           headline: selectedDemoHeadline,
@@ -289,7 +324,11 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
           phrases: selectedDemoPhrases.slice(0, 3),
           photos: selectedDemoPhotos
         }}
-        onIntroDone={() => sendClientTelemetry("demo_card_opened", { route: "/example", template: selectedTemplateId })}
+        onIntroDone={() => sendClientTelemetry("demo_card_opened", {
+          route: "/example",
+          template: selectedTemplateId,
+          animation: selectedRevealType
+        })}
       >
         {demoChildrenByTemplate[selectedTemplateId]}
       </GiftIntro>
@@ -328,11 +367,13 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
             </ScrollReveal>
             <ScrollReveal variant="fade-up" delay={240}>
               <div className={styles.heroActions}>
-                <button type="button" className={styles.primaryButton} onClick={openDemo}>
-                  <span aria-hidden="true">▶</span>
-                  Открыть демонстрационную открытку
+                <button type="button" className={styles.primaryButton} onClick={scrollToTemplates}>
+                  Выбрать пример
+                  <span aria-hidden="true">↓</span>
                 </button>
-                <form action={createAction} onSubmit={() => trackCreateClicked("hero")}>
+                <form action={startCardFromExampleSelectionAction} onSubmit={() => trackCreateClicked("hero")}>
+                  <input type="hidden" name="templateId" value={selectedTemplateId} />
+                  <input type="hidden" name="giftAnimationId" value={selectedRevealType} />
                   <button type="submit" className={styles.secondaryButton}>
                     Создать такую же
                   </button>
@@ -366,7 +407,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
             <span className={styles.blockNumber}>1</span>
             <div className={styles.blockHeaderText}>
               <h2 id="template-heading">Выберите пример открытки</h2>
-              <p>Все шесть примеров уже доступны: выберите настроение, которое подходит вашему подарку.</p>
+              <p>Выберите стиль, который подходит вашему поводу и настроению.</p>
             </div>
           </div>
 
@@ -529,7 +570,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
           </div>
 
           <p className={styles.blockFooter}>
-            Выберите шаблон и нажмите «Открыть демонстрационную открытку».
+            Шаблон выбран. Теперь выберите способ открытия.
           </p>
         </section>
 
@@ -543,115 +584,195 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
             <span className={styles.blockNumber}>2</span>
             <div className={styles.blockHeaderText}>
               <h2 id="animation-heading">Выберите анимацию открытия</h2>
-              <p>Конверт остаётся классическим вариантом, а новая сцена собирает открытку из поздравлений.</p>
+              <p>Выберите, как получатель впервые увидит открытку.</p>
             </div>
           </div>
 
-          <div className={styles.animationLayout}>
-            <div {...animationAsset} className={styles.animationAssetWrap}>
-              {selectedAnimationId === "envelope" ? (
-                <Image
-                  src="/assets/example/animation-envelope.png"
-                  alt=""
-                  width={1254}
-                  height={1254}
-                  className={styles.animationAsset}
-                  sizes="(max-width: 640px) 160px, 220px"
-                />
-              ) : (
-                <div className={styles.collectAsset} aria-hidden="true">
-                  <span className={styles.collectChat}>Алексей</span>
-                  <span className={styles.collectChat}>Марина</span>
-                  <span className={styles.collectChat}>Игорь</span>
-                  <span className={styles.collectPhoto}>▧</span>
-                  <span className={styles.collectFlag}>♥</span>
-                  <span className={styles.collectCard}>Для тебя</span>
-                </div>
-              )}
-            </div>
+          <div className={styles.revealOptions} role="radiogroup" aria-label="Способ открытия открытки">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={selectedRevealType === "envelope"}
+              aria-label="Конверт — классическое вручение"
+              tabIndex={selectedRevealType === "envelope" ? 0 : -1}
+              data-reveal-option="envelope"
+              className={`${styles.revealOption} ${selectedRevealType === "envelope" ? styles.revealOptionActive : ""}`}
+              onClick={() => selectAnimation("envelope")}
+              onKeyDown={(event) => moveRevealSelection(event, "collect-messages")}
+            >
+              <span
+                className={`${styles.revealOptionPreview} ${styles.envelopePreview}`}
+                aria-hidden="true"
+                data-preview-story="envelope"
+              >
+                <span className={styles.storySequence}>
+                  <span className={styles.storyStage} data-preview-stage="1">
+                    <span className={styles.storyStep}>1</span>
+                    <span className={`${styles.storyVisual} ${styles.envelopeClosedStage}`}>
+                      <Image
+                        src="/assets/gift/envelope-closed.png"
+                        alt=""
+                        fill
+                        sizes="150px"
+                        className={styles.envelopeClosedImage}
+                      />
+                    </span>
+                    <span className={styles.storyCaption}>Конверт</span>
+                  </span>
+                  <span className={styles.storyArrow}>→</span>
+                  <span className={styles.storyStage} data-preview-stage="2">
+                    <span className={styles.storyStep}>2</span>
+                    <span className={`${styles.storyVisual} ${styles.envelopeOpeningStage}`}>
+                      <Image
+                        src="/assets/gift/envelope-open.png"
+                        alt=""
+                        fill
+                        sizes="150px"
+                        className={`${styles.envelopeOpeningImage} ${styles.envelopeOpeningBackImage}`}
+                      />
+                      <Image
+                        src="/assets/gift/envelope-open.png"
+                        alt=""
+                        fill
+                        sizes="150px"
+                        className={`${styles.envelopeOpeningImage} ${styles.envelopeOpeningFlapImage}`}
+                      />
+                      <span className={styles.envelopePeekCard}>
+                        <Image
+                          src={demoTemplateMeta[selectedTemplateId].preview}
+                          alt=""
+                          fill
+                          sizes="70px"
+                          className={styles.envelopePeekImage}
+                        />
+                      </span>
+                      <Image
+                        src="/assets/gift/envelope-open.png"
+                        alt=""
+                        fill
+                        sizes="150px"
+                        className={`${styles.envelopeOpeningImage} ${styles.envelopeOpeningFrontImage}`}
+                      />
+                    </span>
+                    <span className={styles.storyCaption}>Открытие</span>
+                  </span>
+                  <span className={styles.storyArrow}>→</span>
+                  <span className={styles.storyStage} data-preview-stage="3">
+                    <span className={styles.storyStep}>3</span>
+                    <span className={`${styles.storyVisual} ${styles.envelopeFinalStage}`}>
+                      <span className={styles.envelopeFinalCard}>
+                        <Image
+                          src={demoTemplateMeta[selectedTemplateId].preview}
+                          alt=""
+                          fill
+                          sizes="150px"
+                          className={styles.storyResultImage}
+                        />
+                        <span className={styles.envelopeFinalLabel}>Для тебя</span>
+                      </span>
+                      <Image
+                        src="/assets/gift/envelope-open.png"
+                        alt=""
+                        fill
+                        sizes="150px"
+                        className={styles.envelopeFinalImage}
+                      />
+                    </span>
+                    <span className={styles.storyCaption}>Открытка выходит</span>
+                  </span>
+                </span>
+              </span>
+              <span className={styles.revealOptionBody}>
+                <strong>Конверт</strong>
+                <span>Классический сценарий: конверт открывается, и внутри появляется готовая открытка.</span>
+                <span className={selectedRevealType === "envelope" ? styles.revealOptionStatusActive : styles.revealOptionStatus}>
+                  {selectedRevealType === "envelope" ? "✓ Выбрано" : "Выбрать"}
+                </span>
+              </span>
+            </button>
 
-            <div {...animationInfo} className={styles.animationInfo}>
-              <div className={styles.animationChoices} role="group" aria-label="Способ открытия открытки">
-                <button
-                  type="button"
-                  className={`${styles.animationChoice} ${selectedAnimationId === "envelope" ? styles.animationChoiceActive : ""}`}
-                  aria-pressed={selectedAnimationId === "envelope"}
-                  onClick={() => selectAnimation("envelope")}
-                >
-                  <span aria-hidden="true">✉</span>
-                  Конверт
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.animationChoice} ${selectedAnimationId === "collect-messages" ? styles.animationChoiceActive : ""}`}
-                  aria-pressed={selectedAnimationId === "collect-messages"}
-                  onClick={() => selectAnimation("collect-messages")}
-                >
-                  <span aria-hidden="true">✦</span>
-                  Собрать поздравления
-                </button>
-              </div>
-              <span className={styles.badgeSelected}>Выбрано</span>
-              <strong>{selectedAnimationId === "envelope" ? "Конверт с открыткой" : "Собрать поздравления"}</strong>
-              <p>
-                {selectedAnimationId === "envelope"
-                  ? "Мягкое открытие клапана и появление готовой открытки."
-                  : "Сообщения, фотографии и качества прилетают из чатов и складываются в выбранный шаблон."}
-              </p>
-              <button type="button" className={styles.ghostButton} onClick={openDemo}>
-                <span aria-hidden="true">▶</span>
-                Запустить анимацию
-              </button>
-            </div>
-
-            <div {...animationScene} className={styles.animationScene}>
-              <div className={styles.animationSceneStep}>
-                {selectedAnimationId === "envelope" ? (
-                  <div className={styles.paperEnvelopeClosed}>
-                    <Image
-                      src="/assets/gift/envelope-closed.png"
-                      alt=""
-                      fill
-                      sizes="180px"
-                      className={styles.storyEnvelopeAsset}
-                    />
-                    <div className={styles.paperEnvelopeClosedFlap} />
-                    <div className={styles.paperEnvelopeClosedSeal}>♡</div>
-                  </div>
-                ) : (
-                  <div className={styles.collectMessagesMini} aria-hidden="true">
-                    <span>Алексей</span><span>Марина</span><span>Игорь</span>
-                  </div>
-                )}
-                <span>{selectedAnimationId === "envelope" ? "Сначала конверт" : "Сначала поздравления"}</span>
-              </div>
-              <span className={styles.animationSceneArrow} aria-hidden="true">→</span>
-              <div className={styles.animationSceneStep}>
-                {selectedAnimationId === "envelope" ? (
-                  <div className={styles.paperCardOpen}>
-                    <Image
-                      src="/assets/gift/envelope-open.png"
-                      alt=""
-                      fill
-                      sizes="180px"
-                      className={styles.storyEnvelopeAsset}
-                    />
-                    <div className={styles.paperCardOpenCard} />
-                    <div className={styles.paperCardOpenEnvelope}>
-                      <div className={styles.paperCardOpenSeal}>♡</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.collectPreviewMini} aria-hidden="true">
-                    <strong>Для тебя</strong><i /><i /><i />
-                  </div>
-                )}
-                <span>{selectedAnimationId === "envelope" ? "Затем открытка раскроется" : "Затем соберётся открытка"}</span>
-              </div>
-            </div>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={selectedRevealType === "collect-messages"}
+              aria-label="Собрать поздравления — материалы превращаются в готовую открытку"
+              tabIndex={selectedRevealType === "collect-messages" ? 0 : -1}
+              data-reveal-option="collect-messages"
+              className={`${styles.revealOption} ${selectedRevealType === "collect-messages" ? styles.revealOptionActive : ""}`}
+              onClick={() => selectAnimation("collect-messages")}
+              onKeyDown={(event) => moveRevealSelection(event, "envelope")}
+            >
+              <span
+                className={`${styles.revealOptionPreview} ${styles.collectPreview}`}
+                aria-hidden="true"
+                data-preview-story="collect-messages"
+              >
+                <span className={styles.storySequence}>
+                  <span className={styles.storyStage} data-preview-stage="1">
+                    <span className={styles.storyStep}>1</span>
+                    <span className={`${styles.storyVisual} ${styles.collectLooseStage}`}>
+                      <span className={`${styles.collectStoryMessage} ${styles.collectLooseMessageOne}`}>Алексей<i /></span>
+                      <span className={`${styles.collectStoryMessage} ${styles.collectLooseMessageTwo}`}>Марина<i /></span>
+                      <span className={`${styles.collectStoryPhoto} ${styles.collectLoosePhoto}`}>
+                        <StoryPhotoPlaceholder />
+                      </span>
+                    </span>
+                    <span className={styles.storyCaption}>Сообщения и фото</span>
+                  </span>
+                  <span className={styles.storyArrow}>→</span>
+                  <span className={styles.storyStage} data-preview-stage="2">
+                    <span className={styles.storyStep}>2</span>
+                    <span className={`${styles.storyVisual} ${styles.collectGroupedStage}`}>
+                      <span className={styles.collectStoryGroup}>
+                        <span className={`${styles.collectStoryMessage} ${styles.collectGroupedMessageOne}`}>Алексей<i /></span>
+                        <span className={`${styles.collectStoryPhoto} ${styles.collectGroupedPhoto}`}>
+                          <StoryPhotoPlaceholder />
+                        </span>
+                        <span className={`${styles.collectStoryMessage} ${styles.collectGroupedMessageTwo}`}>Марина<i /></span>
+                      </span>
+                    </span>
+                    <span className={styles.storyCaption}>Собираются</span>
+                  </span>
+                  <span className={styles.storyArrow}>→</span>
+                  <span className={styles.storyStage} data-preview-stage="3">
+                    <span className={styles.storyStep}>3</span>
+                    <span className={`${styles.storyVisual} ${styles.collectResultStage}`}>
+                      <span className={`${styles.storyResultCard} ${styles.collectStoryResultCard}`}>
+                        <Image
+                          src={demoTemplateMeta[selectedTemplateId].preview}
+                          alt=""
+                          fill
+                          sizes="150px"
+                          className={styles.storyResultImage}
+                        />
+                        <span className={styles.collectResultBadge}>Готово</span>
+                        <span className={`${styles.collectResultMessage} ${styles.collectResultMessageOne}`}><i /></span>
+                        <span className={`${styles.collectResultMessage} ${styles.collectResultMessageTwo}`}><i /></span>
+                        <span className={styles.collectResultPhoto}>
+                          <StoryPhotoPlaceholder />
+                        </span>
+                      </span>
+                    </span>
+                    <span className={styles.storyCaption}>Готовая открытка</span>
+                  </span>
+                </span>
+              </span>
+              <span className={styles.revealOptionBody}>
+                <strong>Собрать поздравления</strong>
+                <span>Поздравления и фотографии собираются из сообщений и превращаются в открытку прямо на глазах.</span>
+                <span className={selectedRevealType === "collect-messages" ? styles.revealOptionStatusActive : styles.revealOptionStatus}>
+                  {selectedRevealType === "collect-messages" ? "✓ Выбрано" : "Выбрать"}
+                </span>
+              </span>
+            </button>
           </div>
 
-          <p className={styles.blockFooter}>Выбор меняет реальную демонстрацию выше и в этой секции.</p>
+          <div className={styles.animationAction}>
+            <button type="button" className={styles.primaryButton} onClick={() => openDemo("animation_preview")}>
+              <span aria-hidden="true">▶</span>
+              Посмотреть анимацию
+            </button>
+          </div>
         </section>
 
         <section
@@ -664,21 +785,32 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
             <span className={styles.blockNumber}>3</span>
             <div className={styles.blockHeaderText}>
               <h2 id="preview-heading">Посмотрите открытку глазами получателя</h2>
-              <p>
-                Откройте пример и увидьте, как поздравления, фото и тёплые слова превращаются в
-                готовый подарок.
-              </p>
+              <p>Посмотрите, как выбранный шаблон и способ открытия выглядят для получателя.</p>
             </div>
           </div>
 
+          <div className={styles.selectionSummary} aria-label="Выбранные параметры демонстрации">
+            <strong>{demoTemplateMeta[selectedTemplateId].name}</strong>
+            <span aria-hidden="true">·</span>
+            <strong>{revealNames[selectedRevealType]}</strong>
+          </div>
+
           <div className={styles.previewLayout}>
-            <div {...previewVisual} className={styles.previewVisual}>
-              <Image
-                src="/assets/example/gift-preview-neutral.png"
-                alt=""
-                fill
-                className={styles.previewAsset}
-                sizes="(max-width: 900px) 70vw, 420px"
+            <div
+              {...previewVisual}
+              className={styles.previewVisual}
+              role="img"
+              aria-label={`Фрагмент готовой открытки «${demoTemplateMeta[selectedTemplateId].name}»`}
+            >
+              <iframe
+                key={selectedTemplateId}
+                src={`/example/recipient-preview?template=${selectedTemplateId}`}
+                title={`Реальная открытка «${demoTemplateMeta[selectedTemplateId].name}»`}
+                className={styles.recipientPreviewFrame}
+                scrolling="no"
+                tabIndex={-1}
+                aria-hidden="true"
+                loading="lazy"
               />
             </div>
 
@@ -692,9 +824,9 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
                 {...previewCta}
                 type="button"
                 className={styles.primaryButton}
-                onClick={openDemo}
+                onClick={() => openDemo("recipient_view")}
               >
-                Открыть демонстрационную открытку
+                Открыть выбранную открытку
                 <span aria-hidden="true">→</span>
               </button>
               <ul {...previewFeaturesList} className={styles.previewFeatures}>
@@ -715,34 +847,17 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
           </div>
           <div className={styles.bottomCtaText}>
             <h2 id="bottom-cta-title">Хотите собрать такую же открытку?</h2>
-            <p>Создайте открытку, отправьте ссылку друзьям — и получите готовый подарок от всех.</p>
+            <p>Выбранные стиль и способ открытия уже будут настроены — останется собрать поздравления.</p>
           </div>
-          <form action={createAction} onSubmit={() => trackCreateClicked("bottom_cta")}>
+          <form action={startCardFromExampleSelectionAction} onSubmit={() => trackCreateClicked("bottom_cta")}>
+            <input type="hidden" name="templateId" value={selectedTemplateId} />
+            <input type="hidden" name="giftAnimationId" value={selectedRevealType} />
             <button type="submit" className={styles.primaryButton}>
               Создать открытку
-              <span aria-hidden="true">♡</span>
             </button>
           </form>
         </section>
       </div>
-
-      <nav className={styles.stepIndicator} aria-label="Шаги демонстрации">
-        {demoSteps.map((step) => (
-          <button
-            key={step.id}
-            type="button"
-            className={`${styles.stepIndicatorItem} ${activeStep === step.id ? styles.stepIndicatorItemActive : ""}`}
-            aria-current={activeStep === step.id ? "true" : undefined}
-            title={step.label}
-            onClick={() => {
-              document.querySelector(`[data-demo-step="${step.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-            }}
-          >
-            <span className={styles.stepIndicatorDot} aria-hidden="true" />
-            <span className={styles.stepIndicatorLabel}>{step.label}</span>
-          </button>
-        ))}
-      </nav>
     </main>
   );
 };

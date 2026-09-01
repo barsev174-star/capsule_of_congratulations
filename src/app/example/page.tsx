@@ -3,32 +3,16 @@ import type { Metadata } from "next";
 import { TemplateCardRenderer } from "@/components/templates/template-card-renderer";
 import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel, teamEditorialDemoCardModel } from "@/lib/example-card";
 import { requireTemplateRenderer } from "@/lib/templates/dispatcher";
-import { ExampleExperience, type DemoTemplateId } from "./example-experience";
+import { ExampleExperience } from "./example-experience";
 import { birthdayExampleCardModel } from "@/lib/birthday-example";
 import { isBirthdayExample } from "@/lib/birthday-scenario";
+import { resolveDemoAnimationId, resolveDemoTemplateId } from "./example-query";
 
 export const metadata: Metadata = {
   title: "Пример групповой онлайн-открытки",
   description: "Посмотрите, как поздравления и фотографии превращаются в тёплую групповую онлайн-открытку Slovesto.",
   alternates: { canonical: "/example" },
   openGraph: { url: "/example" }
-};
-
-const templateAliases: Record<string, DemoTemplateId> = {
-  paper: "paper-birthday",
-  "paper-birthday": "paper-birthday",
-  route: "route-adventure",
-  "route-adventure": "route-adventure",
-  school: "school-scrapbook",
-  "school-scrapbook": "school-scrapbook",
-  classic: "school-classic",
-  "school-classic": "school-classic",
-  kindergarten: "kindergarten-doodles",
-  caregiver: "kindergarten-doodles",
-  "kindergarten-doodles": "kindergarten-doodles",
-  together: "team-editorial",
-  team: "team-editorial",
-  "team-editorial": "team-editorial"
 };
 
 type ExamplePageProps = {
@@ -46,7 +30,7 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
     ? Number(rawPhotos) as 0 | 1 | 2 | 3
     : 3;
   const birthdayScenario = isBirthdayExample(rawTemplate, Array.isArray(scenario) ? scenario[0] : scenario);
-  const initialTemplateId = rawTemplate ? templateAliases[rawTemplate] : undefined;
+  const initialTemplateId = resolveDemoTemplateId(rawTemplate);
   const schoolDispatch = requireTemplateRenderer("school-scrapbook");
   const schoolClassicDispatch = requireTemplateRenderer("school-classic");
   const kindergartenDoodlesDispatch = requireTemplateRenderer("kindergarten-doodles");
@@ -68,7 +52,7 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
     <ExampleExperience
       birthdayScenario={birthdayScenario}
       initialTemplateId={initialTemplateId}
-      initialAnimationId={rawAnimation === "envelope" || rawAnimation === "collect-messages" ? rawAnimation : undefined}
+      initialAnimationId={resolveDemoAnimationId(rawAnimation)}
       introVariant={rawIntro === "legacy" ? "legacy" : "assembled"}
       forceFullMotion={rawMotion === "full"}
       previewPhotoCount={previewPhotoCount}

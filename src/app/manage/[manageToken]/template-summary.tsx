@@ -2,7 +2,9 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import type { CardTemplate } from "@/lib/cards/templates";
+import { sendClientTelemetry } from "@/lib/client-telemetry";
 import { giftAnimations, type GiftAnimationId } from "@/lib/gift-animations";
+import { getRevealExampleHref, RevealIcon, RevealSettingsDialog } from "./reveal-settings-dialog";
 import { TemplateSettingsForm } from "./template-settings-form";
 import { updateGiftAnimationAction } from "./actions";
 import styles from "./manage-page.module.css";
@@ -22,16 +24,25 @@ export const TemplateSummary = ({
 }: Props) => {
   const [templateId, setTemplateId] = useState(initialTemplateId);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isRevealPickerOpen, setIsRevealPickerOpen] = useState(false);
   const [animationId, setAnimationId] = useState(initialAnimationId);
-  const [savedAnimationId, setSavedAnimationId] = useState(initialAnimationId);
   const openerButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const selectedTemplate = templates.find((template) => template.id === templateId) ?? null;
   const selectedAnimation = giftAnimations.find((animation) => animation.id === animationId) ?? giftAnimations[0];
   const handleAnimationAction = async (previousState: { ok: boolean; message: string }, formData: FormData) => {
+    const requestedAnimationId = String(formData.get("giftAnimationId") ?? "");
     const result = await updateGiftAnimationAction(previousState, formData);
-    if (result.ok) setSavedAnimationId(animationId);
+    if (result.ok && (requestedAnimationId === "envelope" || requestedAnimationId === "collect-messages")) {
+      setAnimationId(requestedAnimationId);
+      setIsRevealPickerOpen(false);
+      sendClientTelemetry("REVEAL_TYPE_SELECTED", {
+        templateId: selectedTemplate?.id ?? "",
+        revealType: requestedAnimationId,
+        source: "reveal_modal"
+      });
+    }
     return result;
   };
   const [animationState, animationAction, isAnimationPending] = useActionState(handleAnimationAction, {
@@ -44,6 +55,15 @@ export const TemplateSummary = ({
       : selectedTemplate?.id === "paper-birthday"
         ? "/templates/warm-classic-preview.png"
         : null);
+
+  const trackSidebarExample = () => {
+    if (!selectedTemplate) return;
+    sendClientTelemetry("REVEAL_EXAMPLE_OPENED", {
+      templateId: selectedTemplate.id,
+      revealType: animationId,
+      source: "editor_sidebar"
+    });
+  };
 
   useEffect(() => {
     if (!isPickerOpen) {
@@ -138,46 +158,37 @@ export const TemplateSummary = ({
       </div>
 
       {selectedTemplate ? (
-        <form action={animationAction} className={styles.templateAnimationPicker}>
-          <input type="hidden" name="manageToken" value={manageToken} />
-          <div className={styles.templateAnimationHeading}>
+        <section className={styles.revealSummary} aria-labelledby="reveal-summary-title">
+          <div className={styles.revealSummaryHeading}>
+            <span>Способ открытия</span>
+            <h3 id="reveal-summary-title">Как получатель впервые увидит подарок</h3>
+          </div>
+          <div className={styles.revealSummaryCurrent}>
+            <RevealIcon animationId={selectedAnimation.id} />
             <div>
-              <strong>Вручение открытки</strong>
+              <strong>{selectedAnimation.name}</strong>
               <p>{selectedAnimation.description}</p>
             </div>
-            <span>{savedAnimationId === animationId ? "Выбрано" : "Не сохранено"}</span>
           </div>
-          <div className={styles.templateAnimationOptions} role="radiogroup" aria-label="Способ вручения открытки">
-            {giftAnimations.map((animation) => (
-              <label
-                key={animation.id}
-                className={`${styles.templateAnimationOption} ${animationId === animation.id ? styles.templateAnimationOptionActive : ""}`}
+          <div className={styles.revealSummaryFooter}>
+            <div className={styles.revealSummaryActions}>
+              <button type="button" onClick={() => setIsRevealPickerOpen(true)}>
+                Изменить
+              </button>
+              <a
+                href={getRevealExampleHref(selectedTemplate.id, animationId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={trackSidebarExample}
               >
-                <input
-                  type="radio"
-                  name="giftAnimationId"
-                  value={animation.id}
-                  checked={animationId === animation.id}
-                  onChange={() => setAnimationId(animation.id)}
-                />
-                <span className={animation.id === "envelope" ? styles.animationEnvelopeMark : styles.animationCollectMark} aria-hidden="true">
-                  {animation.id === "collect-messages" ? <><i /><i /><i /></> : <i />}
-                </span>
-                <span>{animation.name}</span>
-              </label>
-            ))}
+                Посмотреть пример <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+            <span className={styles.revealSaveStatus} role="status" aria-live="polite">
+              {isAnimationPending ? "Сохраняем…" : animationState.message || "Сохранено"}
+            </span>
           </div>
-          <div className={styles.templateAnimationFooter}>
-            <span role="status" aria-live="polite">{animationState.message}</span>
-            <button
-              type="submit"
-              className={styles.templateAnimationSave}
-              disabled={isAnimationPending || animationId === savedAnimationId}
-            >
-              {isAnimationPending ? "Сохраняем…" : animationId === savedAnimationId ? "Сохранено" : "Применить"}
-            </button>
-          </div>
-        </form>
+        </section>
       ) : null}
 
       {isPickerOpen ? (
@@ -206,6 +217,19 @@ export const TemplateSummary = ({
             />
           </section>
         </div>
+      ) : null}
+
+      {isRevealPickerOpen && selectedTemplate ? (
+        <RevealSettingsDialog
+          manageToken={manageToken}
+          templateId={selectedTemplate.id}
+          templatePreviewSrc={previewSrc ?? "/templates/warm-classic-preview.png"}
+          selectedAnimationId={animationId}
+          action={animationAction}
+          isPending={isAnimationPending}
+          statusMessage={animationState.message}
+          onClose={() => setIsRevealPickerOpen(false)}
+        />
       ) : null}
     </div>
   );

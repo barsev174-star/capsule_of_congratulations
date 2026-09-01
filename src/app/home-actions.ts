@@ -7,26 +7,40 @@ import { getManagePath } from "@/lib/routes/card-links";
 import { reportCriticalError, trackFunnel } from "@/lib/telemetry";
 import { FIRST_TOUCH_COOKIE_NAME, parseLandingAttribution } from "@/lib/landing-attribution";
 import { isProductTemplateId, type CardTemplateId } from "@/lib/cards/templates";
+import { isGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 
-const startCardFromLanding = async (templateId: CardTemplateId | null = null, occasionText?: string) => {
+const startCardFromLanding = async (
+  templateId: CardTemplateId | null = null,
+  occasionText?: string,
+  giftAnimationId?: GiftAnimationId,
+  source = "landing"
+) => {
   const cookieStore = await cookies();
   const attribution = parseLandingAttribution(cookieStore.get(FIRST_TOUCH_COOKIE_NAME)?.value);
   const attributionContext = attribution ?? {};
   await trackFunnel("funnel.card_creation_started", {
-    source: "landing",
+    source,
     ...attributionContext,
-    ...(templateId ? { templateId } : {})
+    ...(templateId ? { templateId } : {}),
+    ...(giftAnimationId ? { giftAnimationId } : {})
   });
   let result;
   try {
     result = templateId
-      ? await createEmptyCardDraft(attributionContext, { templateId, ...(occasionText ? { occasionText } : {}) })
-      : await createEmptyCardDraft(attributionContext);
+      ? await createEmptyCardDraft(attributionContext, {
+          templateId,
+          ...(occasionText ? { occasionText } : {}),
+          ...(giftAnimationId ? { giftAnimationId } : {})
+        })
+      : giftAnimationId
+        ? await createEmptyCardDraft(attributionContext, { giftAnimationId })
+        : await createEmptyCardDraft(attributionContext);
   } catch (error) {
     await reportCriticalError("database", error, {
       operation: "create_card",
-      source: "landing",
-      ...(templateId ? { templateId } : {})
+      source,
+      ...(templateId ? { templateId } : {}),
+      ...(giftAnimationId ? { giftAnimationId } : {})
     });
     throw error;
   }
@@ -35,6 +49,19 @@ const startCardFromLanding = async (templateId: CardTemplateId | null = null, oc
 
 export async function startCardFromShowcaseAction() {
   return startCardFromLanding();
+}
+
+export async function startCardFromExampleSelectionAction(formData: FormData) {
+  const rawTemplateId = formData.get("templateId");
+  const rawGiftAnimationId = formData.get("giftAnimationId");
+  const templateId = typeof rawTemplateId === "string" && isProductTemplateId(rawTemplateId)
+    ? rawTemplateId
+    : null;
+  const giftAnimationId = typeof rawGiftAnimationId === "string" && isGiftAnimationId(rawGiftAnimationId)
+    ? rawGiftAnimationId
+    : undefined;
+
+  return startCardFromLanding(templateId, undefined, giftAnimationId, "demo_page");
 }
 
 export async function startCardFromTemplateAction(templateId: string) {

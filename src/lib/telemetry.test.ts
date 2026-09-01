@@ -12,6 +12,26 @@ describe("telemetry", () => {
     expect(parseClientTelemetry({ event: "payment.started", context: {} })).toBeNull();
   });
 
+  it("accepts reveal editor events without retaining draft data", () => {
+    expect(parseClientTelemetry({
+      event: "REVEAL_EXAMPLE_OPENED",
+      context: {
+        templateId: "school-scrapbook",
+        revealType: "collect-messages",
+        source: "reveal_modal",
+        manageToken: "private-token",
+        greeting: "private greeting"
+      }
+    })).toEqual({
+      event: "REVEAL_EXAMPLE_OPENED",
+      context: {
+        templateId: "school-scrapbook",
+        revealType: "collect-messages",
+        source: "reveal_modal"
+      }
+    });
+  });
+
   it("accepts the teacher landing events and safe attribution fields", () => {
     expect(parseClientTelemetry({
       event: "seo_create_click",

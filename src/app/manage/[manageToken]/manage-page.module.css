@@ -10922,6 +10922,610 @@ button.designStickyPrimary {
 .templateAnimationSave:active:not(:disabled) { transform: scale(0.96); background: #c7532a; }
 .templateAnimationSave:disabled { opacity: 0.48; cursor: default; }
 
+.revealSummary {
+  display: grid;
+  gap: 12px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-neutral);
+}
+
+.revealSummaryHeading {
+  display: grid;
+  gap: 3px;
+}
+
+.revealSummaryHeading > span {
+  color: #e9652f;
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.revealSummaryHeading h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.revealSummaryCurrent {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 11px;
+  align-items: center;
+}
+
+.revealSummaryCurrent .animationEnvelopeMark,
+.revealSummaryCurrent .animationCollectMark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.revealSummaryCurrent > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.revealSummaryCurrent strong {
+  color: var(--text-primary);
+  font-size: 0.88rem;
+}
+
+.revealSummaryCurrent p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  line-height: 1.42;
+  text-wrap: pretty;
+}
+
+.revealSummaryFooter {
+  display: grid;
+  gap: 8px;
+}
+
+.revealSummaryActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.revealSummaryActions > button,
+.revealSummaryActions > a {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 11px;
+  color: #e9652f;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.42), 0 2px 5px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 820;
+  text-decoration: none;
+  transition-property: transform, background-color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.revealSummaryActions > a {
+  color: var(--text-primary);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12), 0 2px 5px rgba(0, 0, 0, 0.04);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .revealSummaryActions > button:hover {
+    background: #f7f8fa;
+    box-shadow: 0 0 0 1px #e9652f, 0 4px 10px rgba(0, 0, 0, 0.07);
+  }
+
+  .revealSummaryActions > a:hover {
+    color: #e9652f;
+    background: #f7f8fa;
+    box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.46), 0 4px 10px rgba(0, 0, 0, 0.07);
+  }
+}
+
+.revealSummaryActions > button:active,
+.revealSummaryActions > a:active {
+  transform: scale(0.96);
+}
+
+.revealSummaryActions > button:focus-visible,
+.revealSummaryActions > a:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.25);
+  outline-offset: 2px;
+}
+
+.revealSaveStatus {
+  min-height: 1.2em;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  text-align: right;
+}
+
+.revealDialogBackdrop {
+  position: fixed;
+  z-index: 90;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(32, 33, 36, 0.48);
+  backdrop-filter: blur(8px);
+}
+
+.revealDialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(960px, 100%);
+  max-height: min(790px, calc(100dvh - 48px));
+  overflow: hidden;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 26px 80px rgba(0, 0, 0, 0.25);
+}
+
+.revealDialog:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.3);
+  outline-offset: 3px;
+}
+
+.revealDialogHeader {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 24px 19px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+}
+
+.revealDialogHeader > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.revealDialogHeader h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.revealDialogHeader p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.revealDialogHeader > button {
+  display: inline-grid;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  color: var(--text-primary);
+  background: #f7f8fa;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  font: inherit;
+  font-size: 1.5rem;
+  transition-property: transform, background-color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.revealDialogHeader > button:active {
+  transform: scale(0.96);
+}
+
+.revealDialogForm {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+}
+
+.revealDialogBody {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  min-height: 0;
+  padding: 20px 24px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.revealOptionCard {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.09), 0 2px 5px rgba(0, 0, 0, 0.04);
+  transition-property: box-shadow, transform;
+  transition-duration: 170ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .revealOptionCard:hover {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+.revealOptionCardSelected {
+  box-shadow: 0 0 0 1px #e9652f, 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.revealStoryboard {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+  padding: 8px;
+  border-radius: 14px;
+  background: #f7f8fa;
+}
+
+.revealStoryboard figure {
+  position: relative;
+  display: grid;
+  grid-template-rows: 82px auto;
+  gap: 7px;
+  min-width: 0;
+  margin: 0;
+  padding-top: 8px;
+}
+
+.revealStoryboard figure:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  z-index: 3;
+  top: 41px;
+  right: -8px;
+  color: #e9652f;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.storyStep {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  left: 50%;
+  display: grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 5px rgba(0, 0, 0, 0.06);
+  font-size: 0.58rem;
+  font-weight: 800;
+  transform: translateX(-50%);
+}
+
+.revealStoryboard figure > div {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fff;
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+
+.revealStoryboard figcaption {
+  color: var(--text-secondary);
+  font-size: 0.64rem;
+  font-weight: 720;
+  line-height: 1.25;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.storyEnvelope {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 45%, #fff, #f7f8fa 72%);
+}
+
+.storyEnvelopeImage {
+  z-index: 2;
+  object-fit: contain;
+  padding: 12px 7px 5px;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.12));
+}
+
+.storyEnvelopeOpening .storyEnvelopeImage,
+.storyEnvelopeRevealed .storyEnvelopeImage {
+  transform: translateY(11px) scale(1.06);
+}
+
+.storyEnvelopePeek,
+.storyEnvelopeResult {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  width: 35px;
+  height: 45px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 4px 9px rgba(0, 0, 0, 0.14);
+  transform: translateX(-50%);
+}
+
+.storyEnvelopePeek {
+  top: 12px;
+}
+
+.storyEnvelopeResult {
+  z-index: 3;
+  top: 4px;
+  width: 43px;
+  height: 57px;
+}
+
+.storyEnvelopeOpening .storyEnvelopePeek,
+.storyEnvelopeRevealed .storyEnvelopeResult {
+  animation: revealEnvelopeBreath 2.8s ease-in-out infinite alternate;
+}
+
+.storyTemplateImage {
+  object-fit: cover;
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+
+.storyCollect i {
+  position: absolute;
+  display: block;
+  border-radius: 5px;
+  transition-property: transform, opacity;
+  transition-duration: 260ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.storyMessageOne,
+.storyMessageTwo {
+  width: 34px;
+  height: 16px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.7), 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.storyMessageOne::after,
+.storyMessageTwo::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 6px;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: #8a9099;
+  box-shadow: 0 4px 0 #d7d9de;
+}
+
+.storyPhoto {
+  width: 25px;
+  height: 23px;
+  background: linear-gradient(145deg, #dfeeff, #ffffff 62%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.storyPhoto::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e9652f;
+}
+
+.storyReadyCard {
+  position: absolute;
+  display: block;
+  width: 46px;
+  height: 54px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 7px 13px rgba(0, 0, 0, 0.13);
+}
+
+.storyCollectLoose .storyMessageOne { left: 8px; top: 9px; transform: rotate(-7deg); }
+.storyCollectLoose .storyMessageTwo { right: 7px; bottom: 10px; transform: rotate(6deg); }
+.storyCollectLoose .storyPhoto { right: 9px; top: 9px; transform: rotate(5deg); }
+.storyCollectLoose .storyReadyCard { left: 50%; top: 50%; opacity: 0; transform: translate(-50%, -45%) scale(0.72); }
+
+.storyCollectAssembling .storyMessageOne { left: 21%; top: 19px; transform: rotate(-3deg); }
+.storyCollectAssembling .storyMessageTwo { right: 19%; bottom: 18px; transform: rotate(3deg); }
+.storyCollectAssembling .storyPhoto { right: 23%; top: 14px; transform: rotate(2deg); }
+.storyCollectAssembling .storyReadyCard { left: 50%; top: 50%; opacity: 0.34; transform: translate(-50%, -50%) scale(0.84); }
+
+.storyCollectReady .storyMessageOne,
+.storyCollectReady .storyMessageTwo,
+.storyCollectReady .storyPhoto { left: 50%; top: 50%; opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+.storyCollectReady .storyReadyCard { left: 50%; top: 50%; transform: translate(-50%, -50%); animation: revealCardBreath 2.8s ease-in-out infinite alternate; }
+.storyCollectLoose .storyMessageOne,
+.storyCollectLoose .storyMessageTwo,
+.storyCollectLoose .storyPhoto,
+.storyCollectAssembling .storyMessageOne,
+.storyCollectAssembling .storyMessageTwo,
+.storyCollectAssembling .storyPhoto { animation: revealCollectDrift 3.2s ease-in-out infinite alternate; }
+
+.revealOptionCopy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin-inline: 8px;
+}
+
+.revealOptionTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.revealOptionTitle strong {
+  color: var(--text-primary);
+  font-size: 0.96rem;
+  text-wrap: balance;
+}
+
+.revealOptionCopy p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.revealOptionActions {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.78fr) minmax(148px, 1.22fr);
+  gap: 8px;
+  margin: auto 8px 8px;
+}
+
+.revealSelectButton,
+.revealSelectedButton,
+.revealExampleLink,
+.revealDialogFooter > button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 830;
+  text-align: center;
+  text-decoration: none;
+  transition-property: transform, background-color, box-shadow, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.revealSelectButton {
+  color: #fff;
+  background: #e9652f;
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.12);
+}
+
+.revealSelectButton:hover:not(:disabled) { background: #df5f2e; }
+.revealSelectButton:active:not(:disabled) { transform: scale(0.96); background: #c7532a; }
+
+.revealSelectedButton {
+  color: #e9652f;
+  background: #f7f8fa;
+  box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.36);
+  cursor: default;
+}
+
+.revealSelectButton:disabled,
+.revealSelectedButton:disabled {
+  opacity: 0.56;
+}
+
+.revealExampleLink {
+  color: var(--text-primary);
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.13);
+}
+
+.revealExampleLink:hover {
+  color: #e9652f;
+  background: #f7f8fa;
+}
+
+.revealExampleLink:active,
+.revealDialogFooter > button:active {
+  transform: scale(0.96);
+}
+
+.revealSelectButton:focus-visible,
+.revealSelectedButton:focus-visible,
+.revealExampleLink:focus-visible,
+.revealDialogFooter > button:focus-visible,
+.revealDialogHeader > button:focus-visible {
+  outline: 3px solid rgba(233, 101, 47, 0.25);
+  outline-offset: 2px;
+}
+
+.revealDialogFooter {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: 68px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+}
+
+.revealDialogFooter > span {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.revealDialogFooter > button {
+  min-width: 96px;
+  color: var(--text-primary);
+  background: #f7f8fa;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes revealEnvelopeBreath {
+  from { translate: 0 1px; }
+  to { translate: 0 -2px; }
+}
+
+@keyframes revealCollectDrift {
+  from { translate: -1px 1px; }
+  to { translate: 1px -2px; }
+}
+
+@keyframes revealCardBreath {
+  from { transform: translate(-50%, -49%) scale(0.97); }
+  to { transform: translate(-50%, -51%) scale(1); }
+}
+
 @media (max-width: 520px) {
   .templateAnimationOptions {
     grid-template-columns: 1fr;
@@ -10929,6 +11533,99 @@ button.designStickyPrimary {
 
   .templateAnimationHeading p {
     display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .revealDialogBackdrop {
+    place-items: end center;
+    padding: 0;
+    backdrop-filter: none;
+  }
+
+  .revealDialog {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .revealDialogHeader {
+    padding: max(16px, env(safe-area-inset-top)) 16px 14px;
+  }
+
+  .revealDialogHeader h3 {
+    font-size: 1.35rem;
+  }
+
+  .revealDialogHeader p {
+    font-size: 0.82rem;
+  }
+
+  .revealDialogBody {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 14px 14px 18px;
+    scrollbar-gutter: auto;
+  }
+
+  .revealOptionCard {
+    border-radius: 22px;
+  }
+
+  .revealDialogFooter {
+    min-height: 64px;
+    padding: 10px 14px max(10px, env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 430px) {
+  .revealSummaryActions {
+    display: grid;
+    grid-template-columns: 0.78fr 1.22fr;
+  }
+
+  .revealSummaryActions > button,
+  .revealSummaryActions > a {
+    padding-inline: 8px;
+  }
+
+  .revealStoryboard figure {
+    grid-template-rows: 76px auto;
+  }
+
+  .revealOptionActions {
+    grid-template-columns: 1fr;
+  }
+
+  .revealDialogFooter > span:empty {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .revealSummaryActions > button,
+  .revealSummaryActions > a,
+  .revealOptionCard,
+  .revealSelectButton,
+  .revealSelectedButton,
+  .revealExampleLink,
+  .revealDialogHeader > button,
+  .revealDialogFooter > button,
+  .storyCollect i {
+    transition: none;
+  }
+
+  .storyEnvelopeOpening .storyEnvelopePeek,
+  .storyEnvelopeRevealed .storyEnvelopeResult,
+  .storyCollectReady .storyReadyCard,
+  .storyCollectLoose .storyMessageOne,
+  .storyCollectLoose .storyMessageTwo,
+  .storyCollectLoose .storyPhoto,
+  .storyCollectAssembling .storyMessageOne,
+  .storyCollectAssembling .storyMessageTwo,
+  .storyCollectAssembling .storyPhoto {
+    animation: none;
   }
 }
 

@@ -78,4 +78,17 @@ describe("empty card draft creation", () => {
     expect(result.chatMessage).toContain(result.participantLink);
     expect((await createEmptyCardDraft()).card.occasionText).toBe("");
   });
+
+  it("persists a selected gift reveal in a new draft", async () => {
+    const result = await createEmptyCardDraft({}, {
+      templateId: "team-editorial",
+      giftAnimationId: "collect-messages"
+    });
+
+    expect(result.card.giftAnimationId).toBe("collect-messages");
+    expect(mocks.saveCardDraft).toHaveBeenCalledWith(expect.objectContaining({
+      templateId: "team-editorial",
+      giftAnimationId: "collect-messages"
+    }));
+  });
 });

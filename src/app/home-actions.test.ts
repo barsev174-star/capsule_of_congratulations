@@ -25,6 +25,7 @@ vi.mock("@/lib/landing-attribution", () => ({
 
 import {
   startBirthdayCardFromShowcaseAction,
+  startCardFromExampleSelectionAction,
   startCardFromShowcaseAction,
   startCardFromTemplateAction,
   startCaregiverCardFromShowcaseAction,
@@ -76,6 +77,35 @@ describe("landing card creation actions", () => {
     await startCardFromTemplateAction("team-editorial");
     expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution, { templateId: "team-editorial" });
     expect(mocks.redirect).toHaveBeenCalledWith("/manage/manage-token");
+  });
+
+  it("creates a demo draft from a validated template and reveal combination", async () => {
+    const formData = new FormData();
+    formData.set("templateId", "school-classic");
+    formData.set("giftAnimationId", "collect-messages");
+
+    await startCardFromExampleSelectionAction(formData);
+
+    expect(mocks.trackFunnel).toHaveBeenCalledWith("funnel.card_creation_started", {
+      source: "demo_page",
+      ...attribution,
+      templateId: "school-classic",
+      giftAnimationId: "collect-messages"
+    });
+    expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution, {
+      templateId: "school-classic",
+      giftAnimationId: "collect-messages"
+    });
+  });
+
+  it("falls back to an ordinary draft for an invalid demo combination", async () => {
+    const formData = new FormData();
+    formData.set("templateId", "../../admin");
+    formData.set("giftAnimationId", "unknown-reveal");
+
+    await startCardFromExampleSelectionAction(formData);
+
+    expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution);
   });
 
   it.each(["unknown-template", "../../admin", ""])("rejects unavailable template %s", async (templateId) => {
