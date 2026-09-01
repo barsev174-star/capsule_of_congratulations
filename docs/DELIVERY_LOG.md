@@ -1,6 +1,6 @@
 # Журнал поставки
 
-## Update 2026-09-01 Reveal Selection Experience — Local Commit
+## Update 2026-09-01 Reveal Selection Experience — Deployed
 
 1. `/example` собран в единый конфигуратор `шаблон → способ открытия → результат`: выбранные `templateId` и `giftAnimationId` сохраняются между шагами, используются в полном demo и передаются в новый черновик из hero и нижнего CTA.
 2. Шаг выбора анимации получил две доступные radio-карточки с трёхчастными storyboard. Для конверта зафиксированы корректные слои кармана и открытки; для сборки поздравлений состояния читаются как `хаос → порядок → готовая открытка`. Микро-анимации отключаются при reduced motion.
@@ -8,8 +8,12 @@
 4. Create-flow валидирует выбранные значения общими реестрами и создаёт черновик с этой комбинацией. Невалидные URL/FormData не попадают в сервис и безопасно откатываются к defaults.
 5. В `/manage` текущий способ открытия вынесен в компактный summary, а изменение — в доступный modal с просмотром каждого варианта на `/example`. Сохранение продолжает использовать существующий server action.
 6. Телеметрия дополнена событиями выбора, preview, открытия gift, создания из demo и работы reveal-modal; приватные поля черновика не входят в разрешённый контекст.
-7. Архитектура, контракты и ручной smoke описаны в `docs/REVEAL_SELECTION_EXPERIENCE_2026-09-01.md`. Новых миграций, зависимостей и env-переменных нет; push и deploy в этот пакет не входят.
-8. Перед коммитом прошли 1049 тестов, 18 штатно пропущены; typecheck, UI-colors, UI-contrast и `git diff --check` успешны. Lint завершился без ошибок с двумя прежними рекомендациями `<img>` в `public-share-panel.tsx`.
+7. Архитектура, контракты, состояния modal и ручной smoke описаны в `docs/REVEAL_SELECTION_EXPERIENCE_2026-09-01.md`. Код `750def2` вместе с накопленными изменениями опубликован в `origin/main` и `origin/codex/colleague-seo-release`, затем fast-forward развёрнут на VPS. Новых зависимостей и env-переменных нет.
+8. Перед выкладкой создана и проверена backup-пара `20260901-135808`: checksum и изолированное восстановление PostgreSQL/uploads прошли успешно, в восстановленной базе 35 миграций. Предыдущий web-образ сохранён как `capsule-web:rollback-before-reveal-20260901` (`sha256:99e82fd1b3d4a24f821aab508bb541a715c461aab46027fa2f2fc4e395421d86`).
+9. Накопленная миграция `0036_gift_animation.sql` применена при запуске нового контейнера; повторный `npm run db:migrate` подтвердил идемпотентность и наличие всех миграций до `0036`. PostgreSQL, Caddy, uploads, volumes и `.env.production*` не заменялись.
+10. Новый web-образ `sha256:aa7914a20e14afe108ff73016300c6fc8d1643bc2b34abefe2ac2cf48e992df6` запущен и healthy. Штатный production health-check прошёл; envelope/collect demo и recipient-preview отвечают HTTP 200, `www` перенаправляет на основной домен с HTTP 301, ошибок уровня error/exception/fatal в свежем журнале web не найдено.
+11. Перед коммитом прошли 1049 тестов, 18 штатно пропущены; typecheck, production build, UI-colors, UI-contrast и `git diff --check` успешны. Lint завершился без ошибок с двумя прежними рекомендациями `<img>` в `public-share-panel.tsx`.
+12. После сборки удалён только неиспользуемый Docker build-cache; занятость диска снизилась с 91% до 82%. Активные контейнеры, volumes, данные и помеченный rollback-образ сохранены.
 
 ## Update 2026-08-31 Collect Messages Gift Animation — Local Commit
 
