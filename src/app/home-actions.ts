@@ -1,13 +1,18 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createEmptyCardDraft } from "@/lib/cards/service";
 import { getManagePath } from "@/lib/routes/card-links";
 import { reportCriticalError, trackFunnel } from "@/lib/telemetry";
 import { FIRST_TOUCH_COOKIE_NAME, parseLandingAttribution } from "@/lib/landing-attribution";
 import { isProductTemplateId, type CardTemplateId } from "@/lib/cards/templates";
 import { isGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
+import {
+  consumePublicRateLimit,
+  getConfiguredRateLimit,
+  getPublicClientKey
+} from "@/lib/security/public-rate-limit";
 
 const startCardFromLanding = async (
   templateId: CardTemplateId | null = null,
@@ -15,6 +20,14 @@ const startCardFromLanding = async (
   giftAnimationId?: GiftAnimationId,
   source = "landing"
 ) => {
+  const requestHeaders = await headers();
+  const rateLimit = consumePublicRateLimit({
+    scope: "card-create-action",
+    clientKey: getPublicClientKey(requestHeaders),
+    limit: getConfiguredRateLimit("PUBLIC_CARD_CREATE_RATE_LIMIT", 12),
+    windowMs: 60 * 60 * 1000
+  });
+  if (!rateLimit.allowed) redirect("/manage/new?limited=1");
   const cookieStore = await cookies();
   const attribution = parseLandingAttribution(cookieStore.get(FIRST_TOUCH_COOKIE_NAME)?.value);
   const attributionContext = attribution ?? {};

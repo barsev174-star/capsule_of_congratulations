@@ -59,7 +59,11 @@ import type {
   FinalCardOptionalBlockId
 } from "@/lib/final-card/types";
 import { logger } from "@/lib/logger";
-import { deleteStoredCardMediaFile, saveCardMediaFile } from "@/lib/media/local-card-media-storage";
+import {
+  CardMediaProcessingError,
+  deleteStoredCardMediaFile,
+  saveCardMediaFile
+} from "@/lib/media/local-card-media-storage";
 import { importGiftOptionImage } from "@/lib/gift-polls/image-storage";
 import { ensureGiftPollEnabled } from "@/lib/gift-polls/activation";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
@@ -1380,6 +1384,9 @@ export async function saveCardMediaAction(
     try {
       savedFile = await saveCardMediaFile({ cardId: card.id, slot, file });
     } catch (error) {
+      if (error instanceof CardMediaProcessingError) {
+        return { ok: false, message: error.message };
+      }
       const errorId = await reportCriticalError("media", error, { cardId: card.id, operation: "save_file", slot });
       return { ok: false, message: `Не удалось сохранить фото. Код ошибки: ${errorId}` };
     }
@@ -1392,12 +1399,12 @@ export async function saveCardMediaAction(
       publicUrl: savedFile.publicUrl,
       storagePath: savedFile.storagePath,
       fileName: file.name,
-      mimeType: file.type,
-      sizeBytes: file.size,
+      mimeType: savedFile.mimeType,
+      sizeBytes: savedFile.sizeBytes,
       captionTitle,
       captionSubtitle,
-      imageWidth,
-      imageHeight,
+      imageWidth: savedFile.imageWidth,
+      imageHeight: savedFile.imageHeight,
       cropX: crop.x,
       cropY: crop.y,
       cropZoom: crop.zoom,
@@ -1422,8 +1429,8 @@ export async function saveCardMediaAction(
     logger.info("manage.card_media_saved", "Card media saved by organizer", {
       cardId: card.id,
       slot,
-      mimeType: file.type,
-      sizeBytes: file.size
+      mimeType: savedFile.mimeType,
+      sizeBytes: savedFile.sizeBytes
     });
 
     const nextAssets = [...currentAssets.filter((item) => item.id !== asset.id), asset];

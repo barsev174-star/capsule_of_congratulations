@@ -1,5 +1,17 @@
 # Журнал поставки
 
+## Update 2026-09-01 Security, CI And Project Reconciliation — Local Only
+
+1. Добавлены общие security headers и настраиваемые почасовые rate limits для создания открыток, поздравлений, AI и телеметрии. Ключ клиента хешируется; при текущей одноконтейнерной схеме limiter хранится в памяти процесса.
+2. Новые card/gift-option uploads проходят фактическое Sharp-декодирование, автоповорот и перекодирование в JPG/PNG/WebP. Browser MIME не считается достоверным, EXIF/метаданные снимаются. Старые файлы и URL не меняются.
+3. Добавлен readiness `/api/health`; Docker healthcheck теперь проверяет PostgreSQL. Production health охватывает ключевые маршруты, robots/sitemap и headers; operations-check — также свежесть PostgreSQL/uploads backup и диск.
+4. Создан GitHub Actions CI с PostgreSQL 16, миграциями, typecheck, lint, coverage gate, build, Chromium/Firefox/WebKit smoke, скриншот-артефактами и двумя npm audit. Добавлен `@vitest/coverage-v8`; baseline всего `src` защищён порогами 48/42/46/49.
+5. UI color gate расширен на `src/components`, HEX/RGB/RGBA, CSS-переменные, фоны, рамки, outline и тени. UI-слои приведены к нейтрально-оранжевой палитре; художественные `final-card`, `gift-intro` и template renderers из UI-gate исключены. Главная и `/example` прошли desktop/mobile визуальный Chromium smoke; пропавший контраст final CTA был обнаружен по скриншоту и исправлен в правиле.
+6. Публичный `/roadmap` больше не читает исторический `ROADMAP_BLOCKS.md`: маршрут постоянно редиректит на главную и закрыт в robots. README, current status, archive index и VPS runbook приведены к production 01.09.2026 и миграции `0036`.
+7. Владелец подтвердил юридическую приёмку как готовую. Offsite-backup осознанно отложен; риск одной точки отказа записан явно. Остаточные риски и план выпуска: `PROJECT_AUDIT_AND_PLAN_2026-09-01.md`.
+8. Полный прогон: 179 test-файлов прошли, 6 штатно пропущены; 1065 тестов прошли, 18 пропущены. Покрытие: statements 48.22%, branches 43.02%, functions 46.03%, lines 49.79%. Typecheck, production build, UI-colors, UI-contrast, `git diff --check`, синтаксис production shell-скриптов, Chromium desktop/mobile smoke, redirect `/roadmap`, robots и оба npm audit успешны. Lint — 0 ошибок и две прежние рекомендации `<img>` в public-share panel.
+9. Пакет остаётся локальным: push, GitHub Actions и production deploy не выполнялись. Перед выпуском нужны штатные backup/restore-check, зелёный CI, замена только web и production smoke загрузки фото/Robokassa.
+
 ## Update 2026-09-01 Reveal Selection Experience — Deployed
 
 1. `/example` собран в единый конфигуратор `шаблон → способ открытия → результат`: выбранные `templateId` и `giftAnimationId` сохраняются между шагами, используются в полном demo и передаются в новый черновик из hero и нижнего CTA.

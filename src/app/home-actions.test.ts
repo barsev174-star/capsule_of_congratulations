@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   cookies: vi.fn(),
+  headers: vi.fn(),
   redirect: vi.fn(),
   createEmptyCardDraft: vi.fn(),
   getManagePath: vi.fn(),
@@ -10,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   parseLandingAttribution: vi.fn()
 }));
 
-vi.mock("next/headers", () => ({ cookies: mocks.cookies }));
+vi.mock("next/headers", () => ({ cookies: mocks.cookies, headers: mocks.headers }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/cards/service", () => ({ createEmptyCardDraft: mocks.createEmptyCardDraft }));
 vi.mock("@/lib/routes/card-links", () => ({ getManagePath: mocks.getManagePath }));
@@ -45,6 +46,7 @@ describe("landing card creation actions", () => {
     mocks.cookies.mockResolvedValue({
       get: vi.fn(() => ({ value: "encoded-first-touch" }))
     });
+    mocks.headers.mockResolvedValue(new Headers({ "x-forwarded-for": `203.0.113.${Math.floor(Math.random() * 200) + 1}` }));
     mocks.parseLandingAttribution.mockReturnValue(attribution);
     mocks.createEmptyCardDraft.mockResolvedValue({
       card: { manageToken: "manage-token" }

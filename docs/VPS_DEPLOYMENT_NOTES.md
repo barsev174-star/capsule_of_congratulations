@@ -1,6 +1,6 @@
 # VPS deployment notes
 
-Актуально на 26 августа 2026 года. Это основной документ по production-инфраструктуре Slovesto.
+Актуально на 1 сентября 2026 года. Это основной документ по production-инфраструктуре Slovesto.
 
 ## Текущий production-статус
 
@@ -11,6 +11,8 @@
 - Текущий release-набор: шесть продуктовых шаблонов, включая «Детство в рисунках» (`kindergarten-doodles`) и «Вместе» (`team-editorial`), их демонстрационные открытки, статические OG-превью, локальные шрифты и Story/Post/A4-экспорты. В составе сайта есть отдельные SEO-страницы для учителя и воспитателя; маршрут воспитателю — `/gruppovaya-otkrytka/vospitatelyu`, его CTA и пример используют `kindergarten-doodles`. Точный развернутый commit проверяется на VPS командой `git rev-parse --short HEAD`.
 - Security baseline от 26 августа 2026 года: Next.js `16.3.3`, sharp `0.35.3`, PostCSS `8.5.23`, nanoid `3.3.18`; `npm audit` и `npm audit --omit=dev` возвращают `0 vulnerabilities`. Sharp объявлен прямой production-зависимостью, поскольку используется runtime-маршрутами фотографий, OG и экспортов.
 - 26 августа опубликована третья SEO-страница `/gruppovaya-otkrytka/kollege` (код `a459323`) с шаблоном «Вместе», анимациями и компактными SEO-ссылками главной. Web/PostgreSQL healthy; публичные страницы, OG, canonical и sitemap проверены.
+- 1 сентября опубликован выбор `template + reveal` (`750def2`), применена миграция `0036_gift_animation.sql`; web/PostgreSQL healthy. Полный отчёт в начале `DELIVERY_LOG.md`.
+- Security/CI-пакет от 1 сентября пока локальный: до отдельной выкладки security headers, rate limits, `/api/health` и нормализация новых uploads на production не действуют.
 
 Рабочие контейнеры:
 
@@ -89,6 +91,15 @@ docker compose -f docker-compose.prod.yml --env-file .env.production exec web np
 ```
 
 ## Обязательная проверка после деплоя
+
+Основная автопроверка после выкладки:
+
+```bash
+cd /home/deploy/capsule
+PROD_ENV_FILE=/home/deploy/capsule/.env.production bash infra/scripts/check-production-health.sh
+```
+
+Она проверяет readiness PostgreSQL, ключевые публичные маршруты, robots/sitemap и обязательные security headers.
 
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.production ps
@@ -193,7 +204,16 @@ cd /home/deploy/capsule
 BACKUP_DIR=/home/deploy/capsule/backups bash infra/scripts/verify-backup-restore.sh
 ```
 
-21.08.2026 сначала проверена предрелизная пара с 31 применённой миграцией, затем после выпуска `0032` создана новая пара и повторено восстановление уже с 32 миграциями. В обоих случаях SHA-256, восстановление PostgreSQL и распаковка uploads прошли успешно; временные данные были автоматически удалены.
+01.09.2026 предрелизная пара `20260901-135808` прошла SHA-256 и изолированное восстановление с 35 миграциями. После выкладки production идемпотентно применила `0036`.
+
+Полная операционная проверка включает health, свежесть обоих backup-файлов и диск:
+
+```bash
+cd /home/deploy/capsule
+BACKUP_DIR=/home/deploy/capsule/backups bash infra/scripts/check-production-operations.sh
+```
+
+Скрипт удобно запускать после ночного backup и перед deploy. Offsite-копия за пределами VPS осознанно отложена; это оставляет единую точку отказа для VPS и backup-каталога.
 
 ## Данные и очистка Docker
 

@@ -43,10 +43,10 @@
   gap: 14px;
   padding: 26px 20px;
   border-radius: 28px;
-  background: linear-gradient(135deg, #fffaf4, #fcebdd);
+  background: linear-gradient(135deg, #f1f3f4, #f1f3f4);
   box-shadow:
-    0 18px 44px rgba(92, 62, 46, 0.1),
-    inset 0 0 0 1px rgba(217, 106, 61, 0.14);
+    0 18px 44px rgba(0, 0, 0, 0.1),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.14);
   opacity: 0;
   transform: translateY(32px);
   transition: opacity 650ms var(--motion-ease-out), transform 650ms var(--motion-ease-out);
@@ -66,10 +66,10 @@
   padding: 24px 20px 18px;
   border-radius: 12px;
   background:
-    repeating-linear-gradient(0deg, transparent 0 25px, rgba(191, 108, 71, 0.1) 25px 26px),
-    #fffaf5;
-  border: 1px solid rgba(191, 108, 71, 0.14);
-  box-shadow: 0 14px 30px rgba(92, 62, 46, 0.12);
+    repeating-linear-gradient(0deg, transparent 0 25px, rgba(233, 101, 47, 0.1) 25px 26px),
+    #f1f3f4;
+  border: 1px solid rgba(95, 99, 104, 0.14);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
   rotate: -1.2deg;
   opacity: 0;
   transform: translateX(-28px);
@@ -92,7 +92,7 @@
   color: #e9652f;
   font-size: 0.72rem;
   font-weight: 800;
-  box-shadow: 0 4px 10px rgba(92, 62, 46, 0.12);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
   rotate: -3deg;
 }
 
@@ -115,7 +115,7 @@
   border: none;
   border-radius: 999px;
   background: linear-gradient(180deg, #ef7240 0%, #df5f2e 100%);
-  color: #fff9f4;
+  color: #ffffff;
   font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
@@ -133,7 +133,7 @@
 }
 
 .demoButton:focus-visible {
-  outline: 3px solid rgba(217, 106, 61, 0.4);
+  outline: 3px solid rgba(233, 101, 47, 0.4);
   outline-offset: 3px;
 }
 
@@ -200,7 +200,7 @@
   height: 0;
   border-left: 2.5px solid transparent;
   border-right: 2.5px solid transparent;
-  border-top: 7px solid #8c6758;
+  border-top: 7px solid #5f6368;
 }
 
 /* Карандаш один раз проходит несколько пикселей вдоль стрелки */
@@ -223,10 +223,10 @@
   padding: 22px 24px 20px;
   border-radius: 18px;
   background:
-    repeating-linear-gradient(0deg, rgba(191, 108, 71, 0.025) 0 2px, transparent 2px 26px),
-    linear-gradient(150deg, #fffaf5 0%, var(--surface-cream) 100%);
+    repeating-linear-gradient(0deg, rgba(233, 101, 47, 0.025) 0 2px, transparent 2px 26px),
+    linear-gradient(150deg, #f1f3f4 0%, var(--surface-cream) 100%);
   border: 1px solid var(--line);
-  box-shadow: 0 14px 34px rgba(72, 49, 37, 0.1);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.1);
   opacity: 0;
   transform: translateY(22px);
   transition: opacity 500ms var(--motion-ease-out) 460ms, transform 500ms var(--motion-ease-out) 460ms;
@@ -263,7 +263,7 @@
   width: fit-content;
   padding: 4px;
   border-radius: 999px;
-  background: rgba(217, 106, 61, 0.09);
+  background: rgba(233, 101, 47, 0.09);
 }
 
 .tab {
@@ -285,7 +285,7 @@
 }
 
 .tab:focus-visible {
-  outline: 2px solid rgba(217, 106, 61, 0.55);
+  outline: 2px solid rgba(233, 101, 47, 0.55);
   outline-offset: 2px;
 }
 
@@ -337,7 +337,7 @@
   width: fit-content;
   min-height: 44px;
   padding: 0 20px;
-  border: 1.5px solid rgba(217, 106, 61, 0.7);
+  border: 1.5px solid rgba(233, 101, 47, 0.7);
   border-radius: 999px;
   color: #e9652f;
   background: transparent;
@@ -357,7 +357,7 @@
 }
 
 .select:focus-visible {
-  outline: 3px solid rgba(217, 106, 61, 0.4);
+  outline: 3px solid rgba(233, 101, 47, 0.4);
   outline-offset: 3px;
 }
 

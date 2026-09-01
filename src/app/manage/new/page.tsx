@@ -6,7 +6,12 @@ export const metadata = {
   title: "Новая открытка"
 };
 
-export default function NewManagedCardPage() {
+export default async function NewManagedCardPage({
+  searchParams
+}: {
+  searchParams: Promise<{ limited?: string }>;
+}) {
+  const limited = (await searchParams).limited === "1";
   return (
     <main className={styles.page}>
       <section className={styles.card} aria-labelledby="new-card-title">
@@ -15,6 +20,11 @@ export default function NewManagedCardPage() {
         <p className={styles.copy}>
           Создадим пустой черновик и сразу откроем рабочее пространство: данные получателя, поздравления, фото и подарок.
         </p>
+        {limited ? (
+          <p className={styles.notice} role="alert">
+            За последнее время с этого подключения создано слишком много открыток. Попробуйте немного позже.
+          </p>
+        ) : null}
         <form action={startCardFromShowcaseAction}>
           <button type="submit" className={styles.primaryButton}>Открыть управление</button>
         </form>

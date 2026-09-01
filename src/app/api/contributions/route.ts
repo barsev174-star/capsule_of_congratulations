@@ -9,10 +9,37 @@ import { ContributionLimitReachedError } from "@/lib/contributions/limits";
 import { hashParticipantToken, isParticipantToken } from "@/lib/participants/token";
 import { getCardLifecycleByPublicSlug } from "@/lib/cards/lifecycle-repository";
 import { LEGAL_VERSIONS } from "@/lib/legal/versions";
+import {
+  consumePublicRateLimit,
+  getConfiguredRateLimit,
+  getPublicClientKey,
+  rateLimitHeaders
+} from "@/lib/security/public-rate-limit";
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
   const publicSlug = typeof request.headers.get("x-card-slug") === "string" ? request.headers.get("x-card-slug") : null;
+  const clientKey = getPublicClientKey(request.headers);
+  const configuredLimit = getConfiguredRateLimit("PUBLIC_CONTRIBUTION_RATE_LIMIT", 40);
+  const globalRateLimit = consumePublicRateLimit({
+    scope: "contribution-global",
+    clientKey,
+    limit: configuredLimit * 3,
+    windowMs: 60 * 60 * 1000
+  });
+  const cardRateLimit = consumePublicRateLimit({
+    scope: `contribution-card:${publicSlug?.slice(0, 80) || "missing"}`,
+    clientKey,
+    limit: configuredLimit,
+    windowMs: 60 * 60 * 1000
+  });
+  const blockedRateLimit = !globalRateLimit.allowed ? globalRateLimit : !cardRateLimit.allowed ? cardRateLimit : null;
+  if (blockedRateLimit) {
+    return NextResponse.json(
+      { ok: false, message: "Слишком много отправок за короткое время. Попробуйте немного позже." },
+      { status: 429, headers: rateLimitHeaders(blockedRateLimit) }
+    );
+  }
+  const formData = await request.formData();
   const cardId = typeof formData.get("cardId") === "string" ? String(formData.get("cardId")) : "";
   const card = publicSlug ? await getCardDraftByPublicSlug(publicSlug) : null;
   const lifecycle = publicSlug ? await getCardLifecycleByPublicSlug(publicSlug) : null;

@@ -61,7 +61,9 @@ export async function GET(
       headers: {
         "Cache-Control": "private, no-store",
         "Content-Length": String(file.length),
-        "Content-Type": getContentType(fileName)
+        "Content-Type": getContentType(fileName),
+        "Cross-Origin-Resource-Policy": "same-origin",
+        "X-Content-Type-Options": "nosniff"
       }
     });
   } catch {

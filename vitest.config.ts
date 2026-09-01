@@ -10,7 +10,15 @@ export default defineConfig({
     globals: true,
     setupFiles: [path.resolve(rootDir, "vitest.setup.ts")],
     coverage: {
-      reporter: ["text", "html"]
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/**/*.d.ts"],
+      reporter: ["text", "html"],
+      thresholds: {
+        statements: 48,
+        branches: 42,
+        functions: 46,
+        lines: 49
+      }
     }
   },
   resolve: {

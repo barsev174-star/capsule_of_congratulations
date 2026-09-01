@@ -394,7 +394,7 @@
 }
 
 .badgeDraft {
-  background: rgba(123, 103, 93, 0.12);
+  background: rgba(138, 144, 153, 0.12);
   color: #202124;
 }
 
@@ -419,8 +419,8 @@
 }
 
 .badgeHidden {
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
+  background: rgba(233, 101, 47, 0.12);
+  color: #e9652f;
 }
 
 .badgeDeleted {
@@ -769,7 +769,7 @@
 .funnelMeta { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; color: var(--a-text); font-size: 14px; }
 .funnelMeta strong, .statValue, .funnelConversion { font-variant-numeric: tabular-nums; }
 .funnelTrack { height: 10px; overflow: hidden; border-radius: 999px; background: rgba(32, 33, 36, 0.08); }
-.funnelTrack span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--a-accent), #ef8b61); }
+.funnelTrack span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--a-accent), #e9652f); }
 .funnelConversion { color: var(--a-muted); font-size: 12px; text-align: right; }
 .badgeError { background: rgba(239, 68, 68, 0.1); color: #b91c1c; }
 .monoCell { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; font-variant-numeric: tabular-nums; }

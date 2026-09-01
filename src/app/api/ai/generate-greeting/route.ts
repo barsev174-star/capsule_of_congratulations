@@ -14,6 +14,12 @@ import { hasPaidAiEntitlement } from "@/lib/ai/repository";
 import { reportCriticalError } from "@/lib/telemetry";
 import { assertCardContentEditable } from "@/lib/cards/lifecycle";
 import { getCardLifecycleByManageToken, getCardLifecycleByPublicSlug } from "@/lib/cards/lifecycle-repository";
+import {
+  consumePublicRateLimit,
+  getConfiguredRateLimit,
+  getPublicClientKey,
+  rateLimitHeaders
+} from "@/lib/security/public-rate-limit";
 
 const buildExistingMessageContext = (messages: string[]) => {
   const selected: string[] = [];
@@ -31,6 +37,18 @@ const buildExistingMessageContext = (messages: string[]) => {
 };
 
 export async function POST(request: Request) {
+  const rateLimit = consumePublicRateLimit({
+    scope: "ai-greeting",
+    clientKey: getPublicClientKey(request.headers),
+    limit: getConfiguredRateLimit("PUBLIC_AI_RATE_LIMIT", 24),
+    windowMs: 60 * 60 * 1000
+  });
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { ok: false, message: "Слишком много AI-запросов за короткое время. Попробуйте позже." },
+      { status: 429, headers: rateLimitHeaders(rateLimit) }
+    );
+  }
   let body: unknown;
 
   try {

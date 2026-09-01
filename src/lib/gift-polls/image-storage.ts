@@ -3,16 +3,25 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
+import { sanitizeCardMediaBuffer } from "@/lib/media/local-card-media-storage";
 
 export const GIFT_OPTION_UPLOADS_STORAGE_ROOT = join(process.cwd(), "public", "uploads", "gift-options");
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const allowed = new Map([["image/jpeg", ".jpg"], ["image/png", ".png"], ["image/webp", ".webp"]]);
 
+const normalizeGiftImage = async (bytes: Buffer) => {
+  const normalized = await sanitizeCardMediaBuffer(bytes);
+  if (normalized.buffer.byteLength > MAX_IMAGE_BYTES) throw new Error("invalid image");
+  const extension = allowed.get(normalized.mimeType);
+  if (!extension) throw new Error("invalid image");
+  return { ...normalized, extension };
+};
+
 export const saveGiftOptionUpload = async (cardId: string, file: File) => {
-  const extension = allowed.get(file.type);
-  if (!extension || !file.size || file.size > MAX_IMAGE_BYTES) throw new Error("invalid image");
-  const directory = join(GIFT_OPTION_UPLOADS_STORAGE_ROOT, cardId); const fileName = `${Date.now()}-${randomUUID()}${extension}`;
-  await mkdir(directory, { recursive: true }); await writeFile(join(directory, fileName), Buffer.from(await file.arrayBuffer()));
+  if (!allowed.has(file.type) || !file.size || file.size > MAX_IMAGE_BYTES) throw new Error("invalid image");
+  const normalized = await normalizeGiftImage(Buffer.from(await file.arrayBuffer()));
+  const directory = join(GIFT_OPTION_UPLOADS_STORAGE_ROOT, cardId); const fileName = `${Date.now()}-${randomUUID()}${normalized.extension}`;
+  await mkdir(directory, { recursive: true }); await writeFile(join(directory, fileName), normalized.buffer);
   return `/uploads/gift-options/${cardId}/${fileName}`;
 };
 
@@ -36,12 +45,13 @@ export const importGiftOptionImage = async (cardId: string, sourceUrl: string) =
       const location = response.headers.get("location"); if (!location || redirects === 3) throw new Error("redirect"); current = new URL(location, current); continue;
     }
     const contentType = response.headers.get("content-type")?.split(";", 1)[0].toLowerCase() ?? "";
-    const extension = allowed.get(contentType); const size = Number(response.headers.get("content-length") ?? 0);
-    if (!response.ok || !extension || size > MAX_IMAGE_BYTES) throw new Error("invalid image");
-    const bytes = new Uint8Array(await response.arrayBuffer());
+    const size = Number(response.headers.get("content-length") ?? 0);
+    if (!response.ok || !allowed.has(contentType) || size > MAX_IMAGE_BYTES) throw new Error("invalid image");
+    const bytes = Buffer.from(await response.arrayBuffer());
     if (!bytes.byteLength || bytes.byteLength > MAX_IMAGE_BYTES) throw new Error("invalid image");
-    const directory = join(GIFT_OPTION_UPLOADS_STORAGE_ROOT, cardId); const fileName = `${Date.now()}-${randomUUID()}${extension}`;
-    await mkdir(directory, { recursive: true }); await writeFile(join(directory, fileName), bytes);
+    const normalized = await normalizeGiftImage(bytes);
+    const directory = join(GIFT_OPTION_UPLOADS_STORAGE_ROOT, cardId); const fileName = `${Date.now()}-${randomUUID()}${normalized.extension}`;
+    await mkdir(directory, { recursive: true }); await writeFile(join(directory, fileName), normalized.buffer);
     return `/uploads/gift-options/${cardId}/${fileName}`;
   }
   throw new Error("redirect");

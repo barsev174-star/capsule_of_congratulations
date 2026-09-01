@@ -2,8 +2,23 @@ import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { parseClientTelemetry } from "@/lib/telemetry";
 import { recordTelemetryEvent } from "@/lib/telemetry-repository";
+import {
+  consumePublicRateLimit,
+  getConfiguredRateLimit,
+  getPublicClientKey,
+  rateLimitHeaders
+} from "@/lib/security/public-rate-limit";
 
 export async function POST(request: Request) {
+  const rateLimit = consumePublicRateLimit({
+    scope: "client-telemetry",
+    clientKey: getPublicClientKey(request.headers),
+    limit: getConfiguredRateLimit("PUBLIC_TELEMETRY_RATE_LIMIT", 240),
+    windowMs: 60 * 1000
+  });
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ ok: false }, { status: 429, headers: rateLimitHeaders(rateLimit) });
+  }
   let body: unknown;
   try {
     body = await request.json();

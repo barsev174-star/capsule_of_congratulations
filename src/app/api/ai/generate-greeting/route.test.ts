@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { resetPublicRateLimitsForTests } from "@/lib/security/public-rate-limit";
 
 const mocks = vi.hoisted(() => ({
   generateParticipantMessage: vi.fn(),
@@ -29,8 +30,11 @@ vi.mock("@/lib/cards/lifecycle-repository", () => ({
 
 import { POST } from "./route";
 
+const originalRateLimit = process.env.PUBLIC_AI_RATE_LIMIT;
+
 describe("POST /api/ai/generate-greeting — join contract", () => {
   beforeEach(() => {
+    resetPublicRateLimitsForTests();
     vi.clearAllMocks();
     mocks.getCardDraftByPublicSlug.mockResolvedValue({
       id: "card-1",
@@ -63,6 +67,26 @@ describe("POST /api/ai/generate-greeting — join contract", () => {
       usage: { used: 1, limit: 3, remaining: 2 },
       messageLimit: 280
     });
+  });
+
+  afterEach(() => {
+    if (originalRateLimit === undefined) delete process.env.PUBLIC_AI_RATE_LIMIT;
+    else process.env.PUBLIC_AI_RATE_LIMIT = originalRateLimit;
+  });
+
+  it("останавливает серию AI-запросов до обращения к провайдеру", async () => {
+    process.env.PUBLIC_AI_RATE_LIMIT = "1";
+    const request = () => new Request("http://localhost/api/ai/generate-greeting", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "203.0.113.17" },
+      body: "{}"
+    });
+
+    expect((await POST(request())).status).toBe(400);
+    const blocked = await POST(request());
+    expect(blocked.status).toBe(429);
+    expect(blocked.headers.get("retry-after")).toBeTruthy();
+    expect(mocks.generateParticipantMessage).not.toHaveBeenCalled();
   });
 
   it("передаёт операцию и активный текст в AI-сервис", async () => {

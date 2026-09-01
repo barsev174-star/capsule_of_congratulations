@@ -44,7 +44,7 @@
   height: calc(100% - 174px);
   background: repeating-linear-gradient(
     180deg,
-    rgba(217, 106, 61, 0.55) 0 5px,
+    rgba(233, 101, 47, 0.55) 0 5px,
     transparent 5px 10px
   );
   transform: scaleY(0);
@@ -107,7 +107,7 @@
   padding: 0 7px;
   border-radius: 999px;
   background: var(--accent-soft);
-  border: 1px solid rgba(217, 106, 61, 0.28);
+  border: 1px solid rgba(233, 101, 47, 0.28);
   color: var(--accent-strong);
   font-size: 0.8rem;
   font-weight: 800;
@@ -154,7 +154,7 @@
   height: 2px;
   background: repeating-linear-gradient(
     90deg,
-    rgba(217, 106, 61, 0.5) 0 3px,
+    rgba(233, 101, 47, 0.5) 0 3px,
     transparent 3px 6px
   );
 }
@@ -200,7 +200,7 @@
     height: 2px;
     background: repeating-linear-gradient(
       90deg,
-      rgba(217, 106, 61, 0.55) 0 5px,
+      rgba(233, 101, 47, 0.55) 0 5px,
       transparent 5px 10px
     );
     transform: scaleX(0);
@@ -246,7 +246,7 @@
     transform: translateX(-50%);
     background: repeating-linear-gradient(
       180deg,
-      rgba(217, 106, 61, 0.5) 0 3px,
+      rgba(233, 101, 47, 0.5) 0 3px,
       transparent 3px 5px
     );
   }

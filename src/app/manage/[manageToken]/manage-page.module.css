@@ -7,9 +7,9 @@
   --m-accent-medium: rgba(233, 101, 47, 0.16);
   --m-accent-strong: rgba(233, 101, 47, 0.3);
   --m-accent-focus: rgba(233, 101, 47, 0.28);
-  --m-on-accent: #fff8f3;
-  --m-cream: #fffdf9;
-  --m-cream-soft: rgba(255, 252, 248, 0.86);
+  --m-on-accent: #ffffff;
+  --m-cream: #f1f3f4;
+  --m-cream-soft: rgba(241, 243, 244, 0.86);
 }
 
 
@@ -23,11 +23,11 @@
 .greetingFilterSheetBackdrop,
 .orderEditorBackdrop,
 .photoDialogBackdrop {
-  --bg-page: #f7f3ee;
-  --bg-surface: #fffcf8;
-  --bg-subtle: #fbf6f1;
-  --bg-hover: #fff1e8;
-  --border-neutral: #e8ded4;
+  --bg-page: #f1f3f4;
+  --bg-surface: #f1f3f4;
+  --bg-subtle: #f1f3f4;
+  --bg-hover: #f1f3f4;
+  --border-neutral: #dfe1e5;
   --text-primary: #202124;
   --text-secondary: #5f6368;
   --text-muted: #8a9099;
@@ -54,7 +54,7 @@
 .actionsCard {
   border: 1px solid var(--border-neutral);
   border-radius: 28px;
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.08);
 }
 
@@ -91,7 +91,7 @@
   padding: 18px;
   border: 1px solid var(--border-neutral);
   border-radius: 22px;
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.46);
 }
 
@@ -129,7 +129,7 @@
   padding: 0 14px;
   border: 1px solid var(--border-neutral);
   border-radius: 14px;
-  background: rgba(255, 252, 248, 0.88);
+  background: rgba(241, 243, 244, 0.88);
   color: var(--text-primary);
   font: inherit;
 }
@@ -161,7 +161,7 @@
   width: 96px;
   aspect-ratio: 3 / 4;
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   color: var(--text-secondary);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 0.95rem;
@@ -174,7 +174,7 @@
   padding: 16px;
   border: 1px solid var(--border-neutral);
   border-radius: 22px;
-  background: rgba(255, 252, 248, 0.68);
+  background: rgba(241, 243, 244, 0.68);
 }
 
 .heroSummaryLabel {
@@ -266,7 +266,7 @@
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid var(--border-neutral);
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
 }
 
 .flowPanel {
@@ -275,7 +275,7 @@
   padding: 16px;
   border: 1px solid var(--border-neutral);
   border-radius: 24px;
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(241, 243, 244, 0.82);
 }
 
 .flowStatus {
@@ -332,7 +332,7 @@
 .copyLinkButton {
   min-width: 140px;
   border: 1px solid rgba(233, 101, 47, 0.38);
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   color: var(--m-accent);
   font-weight: 800;
   white-space: nowrap;
@@ -356,7 +356,7 @@
   padding: 12px;
   border: 1px solid var(--border-neutral);
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.66);
+  background: rgba(241, 243, 244, 0.66);
 }
 
 .linkCard span {
@@ -417,7 +417,7 @@
   padding: 22px;
   border: 1px solid var(--border-neutral);
   border-radius: 28px;
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.08);
 }
 
@@ -442,7 +442,7 @@
   flex: 0 0 40px;
   border-radius: 50%;
   background: linear-gradient(180deg, #ef7240 0%, #df5f2e 100%);
-  color: #fff8f3;
+  color: #ffffff;
   font-weight: 800;
   box-shadow: 0 8px 18px rgba(233, 101, 47, 0.22);
 }
@@ -465,7 +465,7 @@
   border: 1px solid var(--border-neutral);
   border-radius: 28px;
   background:
-    radial-gradient(circle at top right, rgba(255, 252, 248, 0.64), transparent 25%),
+    radial-gradient(circle at top right, rgba(241, 243, 244, 0.64), transparent 25%),
     linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-hover) 100%);
   overflow: hidden;
   box-shadow:
@@ -483,7 +483,7 @@
   border: 1px solid var(--border-neutral);
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--preview-accent) 18%, white), transparent 28%),
-    linear-gradient(180deg, rgba(255, 252, 248, 0.98), rgba(252, 245, 238, 0.94));
+    linear-gradient(180deg, rgba(241, 243, 244, 0.98), rgba(241, 243, 244, 0.94));
 }
 
 .previewFloralGlow {
@@ -529,7 +529,7 @@
   padding: 16px;
   border-radius: 20px;
   border: 1px solid var(--border-neutral);
-  background: rgba(255, 252, 248, 0.78);
+  background: rgba(241, 243, 244, 0.78);
   text-align: center;
 }
 
@@ -550,7 +550,7 @@
   padding: 16px;
   border-radius: 22px;
   border: 1px solid var(--border-neutral);
-  background: rgba(255, 252, 248, 0.76);
+  background: rgba(241, 243, 244, 0.76);
 }
 
 .previewMessagesSection {
@@ -559,7 +559,7 @@
   padding: 16px;
   border-radius: 22px;
   border: 1px solid var(--border-neutral);
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(241, 243, 244, 0.82);
 }
 
 .previewMessagesHeader {
@@ -581,7 +581,7 @@
   align-items: start;
   padding: 12px;
   border-radius: 18px;
-  background: rgba(250, 243, 237, 0.94);
+  background: rgba(241, 243, 244, 0.94);
 }
 
 .previewAvatar {
@@ -589,7 +589,7 @@
   height: 44px;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 35% 30%, rgba(255, 252, 248, 0.76), transparent 32%),
+    radial-gradient(circle at 35% 30%, rgba(241, 243, 244, 0.76), transparent 32%),
     linear-gradient(180deg, color-mix(in srgb, var(--preview-accent) 58%, white), color-mix(in srgb, var(--preview-accent) 24%, white));
 }
 
@@ -607,7 +607,7 @@
   border: 1px solid var(--border-neutral);
   background:
     radial-gradient(circle at bottom center, color-mix(in srgb, var(--preview-accent) 18%, white), transparent 38%),
-    rgba(255, 252, 248, 0.7);
+    rgba(241, 243, 244, 0.7);
   text-align: center;
   color: var(--text-primary);
   font-weight: 700;
@@ -621,7 +621,7 @@
   padding: 0 16px;
   border-radius: 999px;
   border: 1px solid var(--border-neutral);
-  background: rgba(255, 252, 248, 0.84);
+  background: rgba(241, 243, 244, 0.84);
   color: var(--text-primary);
   font-weight: 700;
 }
@@ -667,7 +667,7 @@
   padding: 18px;
   border: 1px solid var(--border-neutral);
   border-radius: 24px;
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
 }
 
 .studioCanvasHeader {
@@ -703,7 +703,7 @@
   gap: 12px;
   padding: 14px;
   border-radius: 28px;
-  background: linear-gradient(180deg, rgba(245, 232, 222, 0.95), rgba(239, 225, 211, 0.95));
+  background: linear-gradient(180deg, rgba(241, 243, 244, 0.95), rgba(241, 243, 244, 0.95));
   border: 1px solid var(--border-neutral);
 }
 
@@ -714,7 +714,7 @@
   padding: 14px;
   border-radius: 20px;
   border: 1px solid var(--border-neutral);
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(241, 243, 244, 0.82);
   transition:
     transform 180ms ease,
     box-shadow 180ms ease,
@@ -747,7 +747,7 @@
 
 .canvasBlockDropTarget {
   border-color: rgba(233, 101, 47, 0.34);
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
 }
 
@@ -814,7 +814,7 @@
   color: var(--text-secondary);
   cursor: grab;
   user-select: none;
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(241, 243, 244, 0.82);
   transition:
     transform 160ms ease,
     box-shadow 160ms ease,
@@ -900,7 +900,7 @@
   justify-content: center;
   border-radius: 14px;
   border: 1px dashed var(--border-neutral);
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   color: var(--text-secondary);
   text-align: center;
 }
@@ -960,7 +960,7 @@
   padding: 12px;
   border: 1px solid var(--border-neutral);
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.78);
+  background: rgba(241, 243, 244, 0.78);
   cursor: pointer;
   position: relative;
 }
@@ -985,7 +985,7 @@
 .inlinePillOptionActive {
   border-color: rgba(233, 101, 47, 0.34);
   box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.16);
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
 }
 
 .toggleCardDisabled {
@@ -1016,7 +1016,7 @@
 .inlineToggleActive {
   border-color: rgba(233, 101, 47, 0.34);
   box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.16);
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
 }
 
 .inlineSettingsRow,
@@ -1046,7 +1046,7 @@
   padding: 0 14px;
   border: 1px solid var(--border-neutral);
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.8);
+  background: rgba(241, 243, 244, 0.8);
   cursor: pointer;
 }
 
@@ -1079,7 +1079,7 @@
   height: 36px;
   border: 1px solid var(--border-neutral);
   border-radius: 50%;
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   color: var(--text-secondary);
   font-size: 1.3rem;
   line-height: 1;
@@ -1105,7 +1105,7 @@
   padding: 14px;
   border: 1px solid var(--border-neutral);
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(241, 243, 244, 0.82);
   text-align: left;
   cursor: pointer;
 }
@@ -1113,7 +1113,7 @@
 .layoutChoiceCardActive {
   border-color: rgba(233, 101, 47, 0.34);
   box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.16);
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
 }
 
 .layoutChoiceTitle,
@@ -1129,7 +1129,7 @@
   padding: 14px;
   border: 1px solid var(--border-neutral);
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(241, 243, 244, 0.82);
   text-align: left;
   cursor: pointer;
   transition:
@@ -1181,7 +1181,7 @@
   padding: 16px 18px;
   border: 1px solid var(--border-neutral);
   border-radius: 22px;
-  background: rgba(255, 252, 248, 0.84);
+  background: rgba(241, 243, 244, 0.84);
   transition:
     transform 180ms ease,
     box-shadow 180ms ease,
@@ -1208,7 +1208,7 @@
 
 .compositionCardDropTarget {
   border-color: rgba(233, 101, 47, 0.28);
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1);
 }
 
@@ -1235,7 +1235,7 @@
 .contentAssistantCard {
   border: 1px solid var(--border-neutral);
   border-radius: 28px;
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.08);
 }
 
@@ -1254,7 +1254,7 @@
   min-height: 38px;
   padding: 0 12px;
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.66);
+  background: rgba(241, 243, 244, 0.66);
   color: var(--text-primary);
   font-size: 0.92rem;
   font-variant-numeric: tabular-nums;
@@ -1268,7 +1268,7 @@
 }
 
 .contentStatusDotWarm {
-  background: #dc9b65;
+  background: #e9652f;
 }
 
 .contentStatusDotOk {
@@ -1276,7 +1276,7 @@
 }
 
 .contentStatusDotAlert {
-  background: #eb9b5d;
+  background: #e9652f;
 }
 
 .contentStatusBar::-webkit-scrollbar,
@@ -1291,7 +1291,7 @@
 
 .contentStatusBar::-webkit-scrollbar-thumb,
 .contentFilterRow::-webkit-scrollbar-thumb {
-  border: 2px solid rgba(255, 250, 245, 0.92);
+  border: 2px solid rgba(223, 225, 229, 0.92);
   border-radius: 999px;
   background: rgba(233, 101, 47, 0.28);
 }
@@ -1419,7 +1419,7 @@
   padding: 8px;
   border: 1px solid var(--border-neutral);
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.98);
+  background: rgba(241, 243, 244, 0.98);
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.14);
 }
 
@@ -1468,7 +1468,7 @@
 .contentPagerButton {
   border: 1px solid rgba(233, 101, 47, 0.22);
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.86);
+  background: rgba(241, 243, 244, 0.86);
   color: var(--m-accent);
   font: inherit;
   transition:
@@ -1514,7 +1514,7 @@
   padding: 0 14px;
   border: 1px solid rgba(233, 101, 47, 0.38);
   border-radius: 12px;
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
   color: var(--m-accent);
   font: inherit;
   font-size: 0.92rem;
@@ -1532,7 +1532,7 @@
 .contentAiButton:hover {
   transform: translateY(-1px);
   border-color: rgba(233, 101, 47, 0.55);
-  background: rgba(255, 241, 232, 0.98);
+  background: rgba(241, 243, 244, 0.98);
   box-shadow: 0 10px 22px rgba(233, 101, 47, 0.1);
 }
 }
@@ -1543,17 +1543,17 @@
 
 .contentAiButtonPrimary {
   border-color: #ec662f;
-  background: linear-gradient(135deg, #f47a3c, #e95d27);
+  background: linear-gradient(135deg, #e9652f, #e9652f);
   color: #fff;
-  box-shadow: 0 7px 15px rgba(212, 81, 35, 0.2);
+  box-shadow: 0 7px 15px rgba(0, 0, 0, 0.2);
 }
 
 @media (hover: hover) and (pointer: fine) {
 
 .contentAiButtonPrimary:hover:not(:disabled) {
   border-color: #d95728;
-  background: linear-gradient(135deg, #f98543, #dd5123);
-  box-shadow: 0 10px 20px rgba(212, 81, 35, 0.28);
+  background: linear-gradient(135deg, #df5f2e, #c7532a);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
 }
 }
 
@@ -1570,7 +1570,7 @@
   padding: 24px;
   border: 1px solid var(--border-neutral);
   border-radius: 28px;
-  background: linear-gradient(145deg, rgba(255, 252, 248, 0.95), rgba(255, 241, 232, 0.9));
+  background: linear-gradient(145deg, rgba(241, 243, 244, 0.95), rgba(241, 243, 244, 0.9));
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.07);
 }
 
@@ -1585,46 +1585,46 @@
 .giftPollModeChoices .giftPollModeActive { border-color: rgba(233, 101, 47, 0.7); background: rgba(233, 101, 47, 0.1); color: #e9652f; }
 .giftPollModeHint { margin: -2px 0 0; color: var(--text-secondary); font-size: .92rem; }
 .giftPollField, .giftPollOptionEditor label { display: grid; gap: 6px; color: var(--text-primary); font-size: 0.9rem; font-weight: 700; }
-.giftPollField input, .giftPollOptionEditor input { min-height: 44px; padding: 0 12px; border: 1px solid var(--border-neutral); border-radius: 13px; background: rgba(255, 252, 248, 0.78); color: var(--text-primary); font: inherit; }
-.giftPollOptionEditor { display: grid; gap: 10px; margin: 0; padding: 16px; border: 1px solid var(--border-neutral); border-radius: 18px; background: rgba(255, 252, 248, 0.5); }
+.giftPollField input, .giftPollOptionEditor input { min-height: 44px; padding: 0 12px; border: 1px solid var(--border-neutral); border-radius: 13px; background: rgba(241, 243, 244, 0.78); color: var(--text-primary); font: inherit; }
+.giftPollOptionEditor { display: grid; gap: 10px; margin: 0; padding: 16px; border: 1px solid var(--border-neutral); border-radius: 18px; background: rgba(241, 243, 244, 0.5); }
 .giftPollOptionEditor legend { padding: 0 6px; color: var(--text-secondary); font-size: .9rem; font-weight: 700; }
 .giftPollOptionFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .giftPollAddOption, .giftPollRemoveOption, .giftPollOpenButton, .giftPollCloseButton, .giftPollSelectedButton { min-height: 42px; width: fit-content; padding: 0 14px; border-radius: 12px; font: inherit; font-weight: 700; cursor: pointer; }
-.giftPollAddOption, .giftPollOpenButton { border: 1px solid rgba(233, 101, 47, .48); background: rgba(255, 252, 248, 0.76); color: #e9652f; }
-.giftPollRemoveOption, .giftPollCloseButton { border: 1px solid var(--border-neutral); background: rgba(255, 252, 248, 0.85); color: var(--text-secondary); }
+.giftPollAddOption, .giftPollOpenButton { border: 1px solid rgba(233, 101, 47, .48); background: rgba(241, 243, 244, 0.76); color: #e9652f; }
+.giftPollRemoveOption, .giftPollCloseButton { border: 1px solid var(--border-neutral); background: rgba(241, 243, 244, 0.85); color: var(--text-secondary); }
 .giftPollSelectedButton { border: 1px solid rgba(97, 132, 91, .35); background: rgba(222, 239, 217, .72); color: #456d42; }
 .giftPollFormSuccess, .giftPollFormError { margin: 0; font-size: .92rem; }
 .giftPollFormSuccess { color: #487243; }.giftPollFormError { color: #e9652f; }
-.giftPollResults { display: grid; gap: 6px; padding: 16px; border-radius: 18px; background: rgba(255, 252, 248, 0.58); color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.giftPollResults { display: grid; gap: 6px; padding: 16px; border-radius: 18px; background: rgba(241, 243, 244, 0.58); color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .giftPollResults p { margin: 0; }
 
-.giftPollEmptyState { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px 18px; max-width: 880px; padding: 34px; border: 1px solid var(--border-neutral); border-radius: 24px; background: rgba(255, 252, 248, 0.78); box-shadow: 0 16px 38px rgba(0, 0, 0, 0.06); }
+.giftPollEmptyState { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px 18px; max-width: 880px; padding: 34px; border: 1px solid var(--border-neutral); border-radius: 24px; background: rgba(241, 243, 244, 0.78); box-shadow: 0 16px 38px rgba(0, 0, 0, 0.06); }
 .giftPollEmptyState p { max-width: 680px; margin: 6px 0 0; color: var(--text-secondary); line-height: 1.55; }
 .giftPollEmptyIcon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 16px; background: var(--bg-hover); color: #e9652f; font-size: 1.35rem; }
 .giftPollEnableButton { grid-column: 2; width: fit-content; min-height: 46px; padding: 0 18px; border: 0; border-radius: 999px; background: #ec662f; color: #fff; font: inherit; font-weight: 800; cursor: pointer; box-shadow: 0 10px 20px rgba(233, 101, 47, .2); }
-.giftPollEnableButton span, .giftPollToggleOn { position: relative; display: inline-block; width: 34px; height: 20px; margin-right: 8px; vertical-align: -5px; border-radius: 999px; background: #ef6630; }
+.giftPollEnableButton span, .giftPollToggleOn { position: relative; display: inline-block; width: 34px; height: 20px; margin-right: 8px; vertical-align: -5px; border-radius: 999px; background: #e9652f; }
 .giftPollEnableButton span::after, .giftPollToggleOn::after { position: absolute; top: 3px; right: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg-surface); content: ""; }
 .giftPollToggleOn { margin: 0; }
 .giftPollHero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(270px, 340px); gap: 22px; align-items: start; }
 .giftPollHeroCopy { padding: 6px 2px; }.giftPollHeroCopy p { max-width: 620px; margin: 8px 0 0; color: var(--text-secondary); line-height: 1.55; }
 .giftPollHeroHeading { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }.giftPollHeroHeading .sectionTitle { margin: 0; }
-.giftPollStatusCard { display: grid; gap: 9px; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, rgba(255, 252, 248, 0.8), rgba(255, 241, 232, 0.88)); color: var(--text-primary); font-size: .9rem; }
+.giftPollStatusCard { display: grid; gap: 9px; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, rgba(241, 243, 244, 0.8), rgba(241, 243, 244, 0.88)); color: var(--text-primary); font-size: .9rem; }
 .giftPollStatusCard > div { display: flex; justify-content: space-between; gap: 12px; align-items: center; }.giftPollStatusCard p { margin: 0; }.giftPollStatusOpen { padding: 5px 9px; border-radius: 999px; background: #e3f1df; color: #427242; font-size: .78rem; font-weight: 800; }
 .giftPollModeFieldset { display: grid; gap: 12px; margin: 0; padding: 18px; border: 1px solid var(--border-neutral); border-radius: 20px; }.giftPollModeFieldset legend { padding: 0 6px; color: var(--text-primary); font-size: .9rem; font-weight: 800; }
 .giftPollModeChoices label { flex: 1 1 220px; min-height: 76px; align-items: start; padding: 14px; border-radius: 14px; }.giftPollModeChoices label span { display: grid; gap: 3px; }.giftPollModeChoices label small { color: var(--text-secondary); font-size: .8rem; font-weight: 500; }
 .giftPollModeChoices input { accent-color: #ec662f; }
 .giftPollQuestionGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }.giftPollField { position: relative; }.giftPollField small { position: absolute; right: 11px; bottom: 12px; color: var(--text-secondary); font-size: .75rem; font-weight: 500; }.giftPollField input { padding-right: 58px; }
-.giftPollDateField { display: grid; gap: 7px; max-width: 360px; color: var(--text-primary); font-size: .9rem; font-weight: 800; }.giftPollDateField span, .giftPollOptionBody label span { color: var(--text-secondary); font-weight: 500; }.giftPollDateField input { min-height: 44px; padding: 0 12px; border: 1px solid var(--border-neutral); border-radius: 13px; background: rgba(255, 252, 248, 0.78); color: var(--text-primary); font: inherit; }
+.giftPollDateField { display: grid; gap: 7px; max-width: 360px; color: var(--text-primary); font-size: .9rem; font-weight: 800; }.giftPollDateField span, .giftPollOptionBody label span { color: var(--text-secondary); font-weight: 500; }.giftPollDateField input { min-height: 44px; padding: 0 12px; border: 1px solid var(--border-neutral); border-radius: 13px; background: rgba(241, 243, 244, 0.78); color: var(--text-primary); font: inherit; }
 .giftPollOptionsSection { display: grid; gap: 12px; }.giftPollOptionsHeader { display: flex; justify-content: space-between; gap: 16px; align-items: end; }.giftPollOptionsHeader h3 { margin: 0; color: var(--text-primary); font-family: Georgia, serif; font-size: 1.25rem; }.giftPollOptionsHeader p { margin: 4px 0 0; color: var(--text-secondary); font-size: .9rem; }
 .giftPollOptionList { gap: 10px; }.giftPollOptionEditor { gap: 0; padding: 0; overflow: hidden; }.giftPollOptionCardHeader { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 12px; align-items: center; min-height: 70px; padding: 12px 14px; }.giftPollOptionCardHeader > div:nth-child(2) { display: grid; gap: 4px; min-width: 0; }.giftPollOptionCardHeader > div:nth-child(2) span { overflow: hidden; color: var(--text-secondary); font-size: .85rem; text-overflow: ellipsis; white-space: nowrap; }
 .giftPollDragHint, .giftPollOptionCardActions button { border: 0; background: transparent; color: var(--text-secondary); font: inherit; cursor: pointer; }.giftPollDragHint { font-size: 1.15rem; letter-spacing: -3px; }.giftPollOptionCardActions { display: flex; flex-wrap: wrap; justify-content: end; gap: 5px; }.giftPollOptionCardActions button { min-height: 32px; padding: 0 7px; border-radius: 8px; }@media (hover: hover) and (pointer: fine) {.giftPollOptionCardActions button:hover:not(:disabled) { background: rgba(233,101,47,.1); color: #e9652f; }
 }.giftPollOptionCardActions button:disabled { opacity: .32; cursor: default; }
-.giftPollOptionBody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px; border-top: 1px solid var(--border-neutral); background: rgba(255, 252, 248, 0.36); }.giftPollOptionBody > label:last-child, .giftPollOptionBody > label:nth-child(2) { grid-column: 1 / -1; }.giftPollOptionBody label { display: grid; gap: 6px; color: var(--text-primary); font-size: .88rem; font-weight: 800; }.giftPollOptionBody input { min-height: 42px; padding: 0 11px; border: 1px solid var(--border-neutral); border-radius: 11px; background: var(--bg-surface); color: var(--text-primary); font: inherit; }.giftPollOptionBody .giftPollOptionFields { grid-column: 1 / -1; }
-.giftPollDangerZone { display: flex; justify-content: space-between; gap: 18px; align-items: center; padding: 18px; border: 1px solid var(--border-neutral); border-radius: 18px; background: rgba(255, 252, 248, 0.76); }.giftPollDangerZone h3 { margin: 0; color: var(--text-primary); }.giftPollDangerZone p { max-width: 560px; margin: 5px 0 0; color: var(--text-secondary); }.giftPollCloseButton { flex: 0 0 auto; }
+.giftPollOptionBody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px; border-top: 1px solid var(--border-neutral); background: rgba(241, 243, 244, 0.36); }.giftPollOptionBody > label:last-child, .giftPollOptionBody > label:nth-child(2) { grid-column: 1 / -1; }.giftPollOptionBody label { display: grid; gap: 6px; color: var(--text-primary); font-size: .88rem; font-weight: 800; }.giftPollOptionBody input { min-height: 42px; padding: 0 11px; border: 1px solid var(--border-neutral); border-radius: 11px; background: var(--bg-surface); color: var(--text-primary); font: inherit; }.giftPollOptionBody .giftPollOptionFields { grid-column: 1 / -1; }
+.giftPollDangerZone { display: flex; justify-content: space-between; gap: 18px; align-items: center; padding: 18px; border: 1px solid var(--border-neutral); border-radius: 18px; background: rgba(241, 243, 244, 0.76); }.giftPollDangerZone h3 { margin: 0; color: var(--text-primary); }.giftPollDangerZone p { max-width: 560px; margin: 5px 0 0; color: var(--text-secondary); }.giftPollCloseButton { flex: 0 0 auto; }
 @media (max-width: 760px) { .giftPollEmptyState { grid-template-columns: 1fr; padding: 24px; }.giftPollEnableButton { grid-column: auto; width: 100%; }.giftPollHero, .giftPollQuestionGrid { grid-template-columns: 1fr; }.giftPollOptionsHeader, .giftPollDangerZone { align-items: stretch; flex-direction: column; }.giftPollOptionsHeader .giftPollAddOption, .giftPollCloseButton { width: 100%; }.giftPollOptionCardHeader { grid-template-columns: auto minmax(0,1fr); }.giftPollOptionCardActions { grid-column: 1 / -1; justify-content: start; }.giftPollOptionBody { grid-template-columns: 1fr; }.giftPollOptionBody > label:last-child, .giftPollOptionBody > label:nth-child(2) { grid-column: auto; } }
 
 /* Product-like gift poll dashboard */
-.giftPollManager { gap: 24px; max-width: 1240px; margin-inline: auto; padding: 28px; border-radius: 26px; background: rgba(255, 252, 248, 0.9); box-shadow: 0 16px 42px rgba(0, 0, 0, 0.08); }
+.giftPollManager { gap: 24px; max-width: 1240px; margin-inline: auto; padding: 28px; border-radius: 26px; background: rgba(241, 243, 244, 0.9); box-shadow: 0 16px 42px rgba(0, 0, 0, 0.08); }
 .giftPollAdminTitle { margin: 0; color: var(--text-primary); font-family: var(--font-sans, Arial, sans-serif); font-size: clamp(1.22rem, 1.8vw, 1.5rem); line-height: 1.12; text-wrap: balance; }
 .giftPollHero { grid-template-columns: minmax(0, 1fr) 340px; padding-bottom: 22px; border-bottom: 1px solid var(--border-neutral); }.giftPollHeroCopy { padding: 2px 0; }.giftPollHeroCopy p { max-width: 570px; font-size: .84rem; line-height: 1.48; text-wrap: pretty; }
 .giftPollHeroHeading { flex-wrap: nowrap; gap: 9px; }.giftPollHeroHeading > strong { color: var(--text-primary); font-size: .8rem; white-space: nowrap; }.giftPollToggleOn { width: 34px; height: 20px; }.giftPollStatusCard { gap: 10px; padding: 17px 18px; border: 1px solid var(--border-neutral); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.035); }.giftPollStatusCard p { display: flex; align-items: center; gap: 7px; font-size: .82rem; }.giftPollStatusLabel { display: inline-flex; min-width: 54px; justify-content: center; padding: 3px 6px; border-radius: 999px; background: var(--bg-hover); color: #e9652f; font-size: .65rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
@@ -1636,8 +1636,8 @@
 .giftPollOptionsSection { gap: 12px; }.giftPollOptionsHeader { align-items: center; }.giftPollOptionsHeader h3 { font-family: var(--font-sans, Arial, sans-serif); font-size: 1rem; font-weight: 800; }.giftPollOptionsHeader p { font-size: .82rem; }.giftPollAddOption { min-height: 38px; padding: 0 14px; border-radius: 9px; font-size: .83rem; }.giftPollOptionList { gap: 8px; }
 .giftPollOptionEditor { border-color: var(--border-neutral); border-radius: 13px; background: var(--bg-surface); transition: border-color .18s ease, box-shadow .18s ease, opacity .18s ease; }@media (hover: hover) and (pointer: fine) {.giftPollOptionEditor:hover { border-color: rgba(233,101,47,.34); box-shadow: 0 7px 16px rgba(0, 0, 0, 0.04); }
 }.giftPollOptionDragging { opacity: .5; }.giftPollOptionCardHeader { grid-template-columns: 18px 76px minmax(170px,1fr) 56px 132px auto; gap: 13px; min-height: 104px; padding: 11px 13px; }.giftPollBudgetEditor .giftPollOptionCardHeader { grid-template-columns: 18px minmax(180px,1fr) 56px 132px auto; }.giftPollDragHint { padding: 0; color: var(--text-secondary); font-size: 1.2rem; cursor: grab; }.giftPollOptionThumbnail, .giftPollOptionPlaceholder { width: 76px; height: 76px; border-radius: 10px; object-fit: cover; background: linear-gradient(145deg,var(--bg-hover),var(--border-neutral)); outline: 1px solid var(--border-neutral); }.giftPollOptionPlaceholder { display: grid; place-items: center; color: var(--text-secondary); font-size: 1.5rem; }.giftPollOptionPreview, .giftPollBudgetPreview { display: grid; gap: 4px; min-width: 0; }.giftPollOptionPreview strong, .giftPollBudgetPreview strong { overflow: hidden; color: var(--text-primary); font-size: .94rem; text-overflow: ellipsis; white-space: nowrap; }.giftPollOptionPreview span, .giftPollBudgetPreview span { overflow: hidden; color: var(--text-secondary); font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }.giftPollOptionPreview em { width: fit-content; max-width: 100%; overflow: hidden; padding: 2px 6px; border-radius: 999px; background: var(--bg-subtle); color: var(--text-primary); font-size: .74rem; font-style: normal; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }.giftPollOptionPreview a { overflow: hidden; color: var(--text-secondary); font-size: .74rem; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }.giftPollBudgetPreview strong { color: var(--text-primary); font-size: 1.25rem; font-variant-numeric: tabular-nums; }
-.giftPollOptionResult { display: grid; gap: 0; text-align: center; font-variant-numeric: tabular-nums; }.giftPollOptionResult strong { color: var(--text-primary); font-size: 1.28rem; line-height: 1; }.giftPollOptionResult span { color: var(--text-secondary); font-size: .72rem; }.giftPollProgress { display: grid; gap: 7px; }.giftPollProgress strong { color: var(--text-primary); font-size: .8rem; }.giftPollProgress > span { display: block; height: 4px; overflow: hidden; border-radius: 999px; background: var(--bg-subtle); }.giftPollProgress i { display: block; height: 100%; border-radius: inherit; background: #ef6630; transition: width .22s ease; }.giftPollOptionCardActions { flex-wrap: nowrap; gap: 3px; }.giftPollOptionCardActions button { min-width: 27px; padding: 0 5px; color: var(--text-secondary); }.giftPollOptionCardActions .giftPollRemoveOption { color: #e9652f; }
-.giftPollOptionBody { padding: 15px 17px; background: var(--bg-surface); }.giftPollRemoveOption { width: fit-content; min-height: 38px; margin-top: 4px; padding: 0 12px; border: 1px solid rgba(210,88,55,.32); border-radius: 9px; background: var(--bg-surface); color: #e9652f; font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; }.giftPollAddOptionWide { min-height: 42px; border: 1px dashed rgba(236,102,47,.64); border-radius: 9px; background: var(--bg-hover); color: #ec662f; font: inherit; font-size: .86rem; font-weight: 800; cursor: pointer; }.giftPollAddOptionWide:active, .giftPollRemoveOption:active, .giftPollSaveButton:active { scale: .96; }.giftPollSaveButton { min-height: 45px; padding: 0 20px; border: 0; border-radius: 10px; background: #ec662f; color: #fff; font: inherit; font-weight: 800; cursor: pointer; box-shadow: 0 9px 18px rgba(233,101,47,.18); }.giftPollSaveButton:disabled { opacity: .55; cursor: default; }.giftPollDecisionPanel { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 17px; border-radius: 16px; background: rgba(255, 252, 248, 0.9); }.giftPollDecisionPanel h3, .giftPollDecisionPanel p { width: 100%; margin: 0; }.giftPollDecisionPanel p { color: var(--text-secondary); font-size: .86rem; }
+.giftPollOptionResult { display: grid; gap: 0; text-align: center; font-variant-numeric: tabular-nums; }.giftPollOptionResult strong { color: var(--text-primary); font-size: 1.28rem; line-height: 1; }.giftPollOptionResult span { color: var(--text-secondary); font-size: .72rem; }.giftPollProgress { display: grid; gap: 7px; }.giftPollProgress strong { color: var(--text-primary); font-size: .8rem; }.giftPollProgress > span { display: block; height: 4px; overflow: hidden; border-radius: 999px; background: var(--bg-subtle); }.giftPollProgress i { display: block; height: 100%; border-radius: inherit; background: #e9652f; transition: width .22s ease; }.giftPollOptionCardActions { flex-wrap: nowrap; gap: 3px; }.giftPollOptionCardActions button { min-width: 27px; padding: 0 5px; color: var(--text-secondary); }.giftPollOptionCardActions .giftPollRemoveOption { color: #e9652f; }
+.giftPollOptionBody { padding: 15px 17px; background: var(--bg-surface); }.giftPollRemoveOption { width: fit-content; min-height: 38px; margin-top: 4px; padding: 0 12px; border: 1px solid rgba(233, 101, 47, .32); border-radius: 9px; background: var(--bg-surface); color: #e9652f; font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; }.giftPollAddOptionWide { min-height: 42px; border: 1px dashed rgba(236,102,47,.64); border-radius: 9px; background: var(--bg-hover); color: #ec662f; font: inherit; font-size: .86rem; font-weight: 800; cursor: pointer; }.giftPollAddOptionWide:active, .giftPollRemoveOption:active, .giftPollSaveButton:active { scale: .96; }.giftPollSaveButton { min-height: 45px; padding: 0 20px; border: 0; border-radius: 10px; background: #ec662f; color: #fff; font: inherit; font-weight: 800; cursor: pointer; box-shadow: 0 9px 18px rgba(233,101,47,.18); }.giftPollSaveButton:disabled { opacity: .55; cursor: default; }.giftPollDecisionPanel { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 17px; border-radius: 16px; background: rgba(241, 243, 244, 0.9); }.giftPollDecisionPanel h3, .giftPollDecisionPanel p { width: 100%; margin: 0; }.giftPollDecisionPanel p { color: var(--text-secondary); font-size: .86rem; }
 .giftPollDangerZone { border-color: rgba(236,102,47,.4); background: var(--bg-hover); }.giftPollDangerZone h3 { color: #e9652f; }.giftPollCloseButton { border-color: rgba(236,102,47,.58); background: #ec662f; color: #fff; box-shadow: 0 8px 16px rgba(236,102,47,.16); }
 .giftPollHero { align-items: start; }.giftPollHeroCopy { padding-top: 4px; }.giftPollStatusCard { margin-top: -8px; }.giftPollStatusCard > div { min-height: 26px; }.giftPollStatusCard p { gap: 9px; }.giftPollStatusCard p svg { width: 17px; height: 17px; flex: 0 0 auto; color: var(--text-secondary); fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }.giftPollStatusLabel { display: none; }
 .giftPollModeFieldset legend { color: var(--text-primary); font-family: var(--font-sans, Arial, sans-serif); font-size: 1rem; font-weight: 800; }.giftPollModeFieldset legend span { color: #ec662f; font-size: .72rem; }.giftPollModeChoices label { align-items: center; }.giftPollModeChoices label > span:last-child b { display: none; }.giftPollModeIcon { border: 1px solid var(--border-neutral); background: var(--bg-surface); }.giftPollModeIcon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }.giftPollModeActive { border-color: #ec662f !important; background: var(--bg-hover) !important; color: #ec662f !important; }.giftPollModeActive .giftPollModeIcon { border-color: rgba(236,102,47,.48); background: var(--bg-surface); color: #ec662f; }.giftPollModeActive > span:last-child strong { color: #e9652f; }.giftPollModeActive > span:last-child small { color: var(--text-secondary); }
@@ -1660,7 +1660,7 @@
 .giftPollHeroState { display: inline-flex; min-height: 24px; align-items: center; padding: 0 9px; border-radius: 999px; background: #e3f1df; color: #427242; font-size: .78rem; font-weight: 800; }
 .giftPollModeDisabled { border-color: var(--border-neutral) !important; background: var(--bg-subtle) !important; color: var(--text-muted) !important; cursor: not-allowed; opacity: .66; }.giftPollModeDisabled .giftPollModeIcon { border-color: var(--border-neutral); background: var(--bg-subtle); color: var(--text-muted); }.giftPollModeDisabled > span:last-child strong, .giftPollModeDisabled > span:last-child small { color: var(--text-muted); }
 .giftPollOptionsLockHint { color: var(--text-secondary) !important; }
-.giftPollDangerZone { border-color: var(--border-neutral); background: rgba(255, 252, 248, 0.78); box-shadow: none; }.giftPollDangerZone h3 { color: var(--text-primary); }.giftPollDangerZone p { color: var(--text-secondary); }.giftPollCloseButton { border: 1px solid rgba(236,102,47,.66); background: transparent; color: #ec662f; box-shadow: none; }@media (hover: hover) and (pointer: fine) {.giftPollCloseButton:hover { background: var(--bg-hover); color: #d95728; }
+.giftPollDangerZone { border-color: var(--border-neutral); background: rgba(241, 243, 244, 0.78); box-shadow: none; }.giftPollDangerZone h3 { color: var(--text-primary); }.giftPollDangerZone p { color: var(--text-secondary); }.giftPollCloseButton { border: 1px solid rgba(236,102,47,.66); background: transparent; color: #ec662f; box-shadow: none; }@media (hover: hover) and (pointer: fine) {.giftPollCloseButton:hover { background: var(--bg-hover); color: #d95728; }
 }
 
 @media (min-width: 1100px) {
@@ -1671,7 +1671,7 @@
 }
 
 .giftPollRightRail { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.giftPollParticipantView, .giftPollFinishCard { display: grid; gap: 10px; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, rgba(255, 252, 248, 0.8), rgba(255, 241, 232, 0.88)); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.035), inset 0 0 0 1px rgba(0, 0, 0, 0.06); }
+.giftPollParticipantView, .giftPollFinishCard { display: grid; gap: 10px; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, rgba(241, 243, 244, 0.8), rgba(241, 243, 244, 0.88)); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.035), inset 0 0 0 1px rgba(0, 0, 0, 0.06); }
 .giftPollParticipantView strong, .giftPollFinishCard > strong { color: var(--text-primary); font-size: 1rem; }
 .giftPollParticipantView p, .giftPollFinishCard p { margin: 0; color: var(--text-secondary); font-size: .88rem; line-height: 1.5; text-wrap: pretty; }
 .giftPollParticipantLink { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 0 14px; border: 1px solid rgba(236,102,47,.58); border-radius: 12px; color: #ec662f; font-size: .88rem; font-weight: 800; text-align: center; text-decoration: none; transition-property: background-color, color, transform; transition-duration: 160ms; }
@@ -1685,7 +1685,7 @@
 /* Gift-poll page intentionally uses independent cards: the main editor must not inherit a tall shared surface. */
 .giftPollPage { width: 100%; max-width: none; padding-inline: 0; box-sizing: border-box; }
 .giftPollLayout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
-.giftPollMain { display: grid; gap: 24px; min-width: 0; padding: 28px; border-radius: 26px; background: rgba(255, 252, 248, 0.9); box-shadow: 0 16px 42px rgba(0, 0, 0, 0.08); }
+.giftPollMain { display: grid; gap: 24px; min-width: 0; padding: 28px; border-radius: 26px; background: rgba(241, 243, 244, 0.9); box-shadow: 0 16px 42px rgba(0, 0, 0, 0.08); }
 .giftPollMain .giftPollHero { display: block; padding: 0 0 22px; border-bottom: 1px solid var(--border-neutral); }
 .giftPollMain .giftPollHeroCopy { padding: 2px 0; }
 .giftPollMain .giftPollManagerForm { min-width: 0; }
@@ -1738,7 +1738,7 @@
 
 .contentAiButtonSecondary {
   border-color: var(--border-neutral);
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   color: var(--text-primary);
 }
 
@@ -1746,7 +1746,7 @@
 
 .contentAiButtonSecondary:hover {
   border-color: var(--border-neutral);
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.07);
 }
 }
@@ -1769,7 +1769,7 @@
   padding: 0 16px;
   border: 1px solid var(--border-neutral);
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   color: var(--text-secondary);
   font: inherit;
 }
@@ -1794,8 +1794,8 @@ button.contentFilterPill {
   border: 1px solid rgba(233, 101, 47, 0.18);
   border-radius: 26px;
   background:
-    radial-gradient(circle at top right, rgba(255, 252, 248, 0.72), transparent 26%),
-    rgba(255, 252, 248, 0.82);
+    radial-gradient(circle at top right, rgba(241, 243, 244, 0.72), transparent 26%),
+    rgba(241, 243, 244, 0.82);
   box-shadow:
     0 18px 44px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
@@ -1859,7 +1859,7 @@ button.contentFilterPill {
   width: 100%;
   border: 1px solid var(--border-neutral);
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.88);
+  background: rgba(241, 243, 244, 0.88);
   color: var(--text-primary);
   font: inherit;
   padding: 13px 14px;
@@ -1875,8 +1875,8 @@ button.contentFilterPill {
 
 .manualContributionGrid input:focus,
 .manualContributionMessage textarea:focus {
-  border-color: rgba(219, 88, 40, 0.42);
-  box-shadow: 0 0 0 4px rgba(219, 88, 40, 0.1);
+  border-color: rgba(233, 101, 47, 0.42);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
   outline: none;
 }
 
@@ -1890,7 +1890,7 @@ button.contentFilterPill {
   padding: 10px;
   border: 1px solid var(--border-neutral);
   border-radius: 22px;
-  background: rgba(255, 252, 248, 0.6);
+  background: rgba(241, 243, 244, 0.6);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
@@ -1900,7 +1900,7 @@ button.contentFilterPill {
   min-height: 36px;
   padding: 0 11px;
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   color: var(--text-secondary);
   font-size: 0.88rem;
   font-weight: 800;
@@ -1919,7 +1919,7 @@ button.contentFilterPill {
   position: relative;
   border: 1px solid var(--border-neutral);
   border-radius: 24px;
-  background: rgba(255, 252, 248, 0.78);
+  background: rgba(241, 243, 244, 0.78);
   overflow: hidden;
   overflow-anchor: none;
   transition:
@@ -1947,7 +1947,7 @@ button.contentFilterPill {
 }
 
 .contentContributionCardWarn {
-  border-color: rgba(233, 155, 93, 0.28);
+  border-color: rgba(233, 101, 47, 0.28);
 }
 
 .contentContributionCardDragging {
@@ -1957,7 +1957,7 @@ button.contentFilterPill {
 
 .contentContributionCardDropTarget {
   border-color: rgba(233, 101, 47, 0.28);
-  background: rgba(255, 252, 248, 0.98);
+  background: rgba(241, 243, 244, 0.98);
   box-shadow: 0 18px 32px rgba(0, 0, 0, 0.1);
 }
 
@@ -2042,7 +2042,7 @@ button.contentFilterPill {
   flex: 0 0 auto;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 34% 28%, rgba(255, 252, 248, 0.82), transparent 36%),
+    radial-gradient(circle at 34% 28%, rgba(241, 243, 244, 0.82), transparent 36%),
     linear-gradient(135deg, var(--bg-hover) 0%, var(--bg-hover) 58%, var(--border-neutral) 100%);
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.08),
@@ -2142,7 +2142,7 @@ button.contentFilterPill {
   height: 40px;
   border: 1px solid var(--border-neutral);
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.78);
+  background: rgba(241, 243, 244, 0.78);
   color: var(--text-secondary);
   cursor: pointer;
   font: inherit;
@@ -2159,7 +2159,7 @@ button.contentFilterPill {
 .contentMoveButton:hover:not(:disabled) {
   transform: translateY(-1px);
   border-color: rgba(233, 101, 47, 0.24);
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
 }
 }
@@ -2179,7 +2179,7 @@ button.contentFilterPill {
   height: 24px;
   border: 1px solid var(--border-neutral);
   border-radius: 999px;
-  background: rgba(232, 220, 210, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   transition: background 180ms ease;
 }
 
@@ -2360,7 +2360,7 @@ button.contentFilterPill {
   padding: 0 16px;
   border: 1px solid rgba(233, 101, 47, 0.45);
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   color: #e9652f;
   font-weight: 700;
   transition:
@@ -2384,7 +2384,7 @@ button.contentFilterPill {
   padding: 0 16px;
   border: 0;
   background: linear-gradient(180deg, #ef7240 0%, #df5f2e 100%);
-  color: #fff8f3;
+  color: #ffffff;
   font-weight: 700;
 }
 
@@ -2406,13 +2406,13 @@ button.contentFilterPill {
 
 .contentOutlineButton {
   border: 1px solid rgba(233, 101, 47, 0.38);
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   color: var(--m-accent);
 }
 
 .contentSoftButton {
   border: 1px solid var(--border-neutral);
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   color: var(--text-primary);
 }
 
@@ -2420,7 +2420,7 @@ button.contentFilterPill {
   min-height: 44px;
   padding: 0 16px;
   border: 1px solid rgba(171, 66, 50, 0.22);
-  background: rgba(255, 241, 232, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   color: #ab4232;
 }
 
@@ -2429,7 +2429,7 @@ button.contentFilterPill {
   padding: 0 18px;
   border: 1px solid rgba(171, 66, 50, 0.22);
   border-radius: 16px;
-  background: rgba(255, 241, 232, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   color: #ab4232;
   font: inherit;
 }
@@ -2447,7 +2447,7 @@ button.contentFilterPill {
   gap: 12px;
   padding: 16px;
   border-radius: 20px;
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(241, 243, 244, 0.82);
   box-shadow:
     0 0 0 1px rgba(233, 101, 47, 0.12),
     0 8px 24px rgba(0, 0, 0, 0.06);
@@ -2505,7 +2505,7 @@ button.contentFilterPill {
 }
 
 .contentAiVariantTabActive {
-  background: rgba(255, 252, 248, 0.88);
+  background: rgba(241, 243, 244, 0.88);
   color: var(--m-accent);
   box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.16);
 }
@@ -2513,7 +2513,7 @@ button.contentFilterPill {
 @media (hover: hover) and (pointer: fine) {
 
 .contentAiVariantTab:hover {
-  background: rgba(255, 252, 248, 0.88);
+  background: rgba(241, 243, 244, 0.88);
   color: var(--m-accent);
   box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.16);
 }
@@ -2528,7 +2528,7 @@ button.contentFilterPill {
   margin: 0;
   padding: 14px;
   border-radius: 14px;
-  background: rgba(255, 252, 248, 0.88);
+  background: rgba(241, 243, 244, 0.88);
   color: var(--text-primary);
   line-height: 1.55;
   text-wrap: pretty;
@@ -2583,7 +2583,7 @@ button.contentFilterPill {
   gap: 14px;
   padding: 16px;
   border-radius: 20px;
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   box-shadow:
     0 0 0 1px rgba(233, 101, 47, 0.12),
     0 8px 24px rgba(0, 0, 0, 0.05);
@@ -2617,7 +2617,7 @@ button.contentFilterPill {
 .aiInsightStale {
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(233, 151, 77, 0.11);
+  background: rgba(233, 101, 47, 0.11);
   color: var(--text-secondary);
 }
 
@@ -2639,7 +2639,7 @@ button.contentFilterPill {
   margin: 0;
   padding: 12px 14px;
   border-radius: 14px;
-  background: rgba(255, 252, 248, 0.88);
+  background: rgba(241, 243, 244, 0.88);
   color: var(--text-primary);
   line-height: 1.5;
   text-wrap: pretty;
@@ -2664,8 +2664,8 @@ button.contentFilterPill {
 }
 
 .aiQuoteChoiceSelected {
-  background: rgba(255, 241, 232, 0.9);
-  box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.42), 0 5px 13px rgba(194, 86, 42, 0.1);
+  background: rgba(241, 243, 244, 0.9);
+  box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.42), 0 5px 13px rgba(0, 0, 0, 0.1);
 }
 
 .aiQuoteChoice input {
@@ -2699,7 +2699,7 @@ button.contentFilterPill {
 .aiQualityList li {
   padding: 9px 13px;
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   color: var(--text-primary);
   font-size: 0.92rem;
   font-weight: 650;
@@ -2780,7 +2780,7 @@ button.contentFilterPill {
   overflow: hidden;
   border: 1px solid var(--border-neutral);
   border-radius: 24px;
-  background: rgba(255, 252, 248, 0.78);
+  background: rgba(241, 243, 244, 0.78);
 }
 
 .contentPreviewCover {
@@ -2802,7 +2802,7 @@ button.contentFilterPill {
   height: 138px;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 42% 40%, rgba(255, 252, 248, 0.84), transparent 22%),
+    radial-gradient(circle at 42% 40%, rgba(241, 243, 244, 0.84), transparent 22%),
     radial-gradient(circle, color-mix(in srgb, var(--preview-accent) 28%, white), transparent 68%);
   opacity: 0.86;
 }
@@ -2832,7 +2832,7 @@ button.contentFilterPill {
   padding: 12px 16px;
   border: 1px solid rgba(233, 101, 47, 0.16);
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   color: var(--text-primary);
   font-weight: 700;
 }
@@ -2851,7 +2851,7 @@ button.contentFilterPill {
   padding: 18px;
   border: 1px solid var(--border-neutral);
   border-radius: 24px;
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(241, 243, 244, 0.82);
 }
 
 .contentPreviewFinal {
@@ -2909,7 +2909,7 @@ button.contentFilterPill {
   min-height: 240px;
   border-radius: 24px;
   overflow: hidden;
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(241, 243, 244, 0.82);
   border: 1px solid var(--border-neutral);
 }
 
@@ -2939,7 +2939,7 @@ button.contentFilterPill {
   padding: 14px 18px;
   border: 1px solid var(--border-neutral);
   border-radius: 20px;
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   box-shadow: none;
 }
 
@@ -3006,7 +3006,7 @@ button.contentFilterPill {
   padding: 12px;
   border: 1px solid var(--border-neutral);
   border-radius: 22px;
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.55) inset,
     0 18px 44px rgba(0, 0, 0, 0.12);
@@ -3016,8 +3016,8 @@ button.contentFilterPill {
 .contentFooterBarDirty {
   border-color: rgba(233, 101, 47, 0.26);
   background:
-    radial-gradient(circle at 10% 0%, rgba(255, 225, 203, 0.78), transparent 34%),
-    rgba(255, 252, 248, 0.94);
+    radial-gradient(circle at 10% 0%, rgba(241, 243, 244, 0.78), transparent 34%),
+    rgba(241, 243, 244, 0.94);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.55) inset,
     0 20px 48px rgba(0, 0, 0, 0.16);
@@ -3446,7 +3446,7 @@ button.contentFilterPill {
   height: 34px;
   border: 1px solid var(--border-neutral);
   border-radius: 50%;
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   color: var(--text-secondary);
   cursor: pointer;
 }
@@ -3479,7 +3479,7 @@ button.contentFilterPill {
   padding: 14px;
   border: 1px solid var(--border-neutral);
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.88);
+  background: rgba(241, 243, 244, 0.88);
   text-align: left;
   cursor: pointer;
 }
@@ -3487,7 +3487,7 @@ button.contentFilterPill {
 .layoutPresetCardActive {
   border-color: rgba(233, 101, 47, 0.34);
   box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.16);
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
 }
 
 .layoutPresetTitle {
@@ -3509,7 +3509,7 @@ button.contentFilterPill {
   padding: 0 14px;
   border: 1px solid var(--border-neutral);
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.88);
+  background: rgba(241, 243, 244, 0.88);
   cursor: pointer;
   color: var(--text-primary);
   font-weight: 700;
@@ -3517,7 +3517,7 @@ button.contentFilterPill {
 
 .mediaLayoutPillActive {
   border-color: rgba(233, 101, 47, 0.34);
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
   box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.14);
 }
 
@@ -3541,7 +3541,7 @@ button.contentFilterPill {
   padding: 18px;
   border: 1px solid var(--border-neutral);
   border-radius: 28px;
-  background: linear-gradient(180deg, rgba(255, 252, 248, 0.96), rgba(255, 241, 232, 0.92));
+  background: linear-gradient(180deg, rgba(241, 243, 244, 0.96), rgba(241, 243, 244, 0.92));
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.08);
 }
 
@@ -3560,7 +3560,7 @@ button.contentFilterPill {
   padding: 14px 16px;
   border: 1px solid var(--border-neutral);
   border-radius: 20px;
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
 }
 
 .welcomeStepNumber {
@@ -3571,7 +3571,7 @@ button.contentFilterPill {
   height: 42px;
   border-radius: 50%;
   background: #e9652f;
-  color: #fff8f3;
+  color: #ffffff;
   font-weight: 800;
 }
 
@@ -3601,7 +3601,7 @@ button.contentFilterPill {
   width: 100%;
   border: 1px solid var(--border-neutral);
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   padding: 14px 16px;
   color: var(--text-primary);
 }
@@ -3622,7 +3622,7 @@ button.contentFilterPill {
   padding: 14px;
   border: 1px solid var(--border-neutral);
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.62);
+  background: rgba(241, 243, 244, 0.62);
 }
 
 .contributionCardWarn {
@@ -3794,7 +3794,7 @@ button.contentFilterPill {
   padding: 14px 16px;
   border: 1px solid var(--border-neutral);
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.84);
+  background: rgba(241, 243, 244, 0.84);
   font: inherit;
   line-height: 1.6;
   resize: vertical;
@@ -3814,7 +3814,7 @@ button.contentFilterPill {
   padding: 12px;
   border: 1px solid var(--border-neutral);
   border-radius: 22px;
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.55) inset,
     0 18px 44px rgba(0, 0, 0, 0.1);
@@ -3824,8 +3824,8 @@ button.contentFilterPill {
 .editorFooterDirty {
   border-color: rgba(233, 101, 47, 0.26);
   background:
-    radial-gradient(circle at 10% 0%, rgba(255, 225, 203, 0.72), transparent 34%),
-    rgba(255, 252, 248, 0.94);
+    radial-gradient(circle at 10% 0%, rgba(241, 243, 244, 0.72), transparent 34%),
+    rgba(241, 243, 244, 0.94);
 }
 
 .compositionAutoSaveStatus {
@@ -3933,8 +3933,8 @@ button.contentFilterPill {
   padding: 18px 20px;
   border-radius: 24px;
   background:
-    radial-gradient(circle at top left, rgba(255, 252, 248, 0.8), transparent 34%),
-    rgba(255, 252, 248, 0.94);
+    radial-gradient(circle at top left, rgba(241, 243, 244, 0.8), transparent 34%),
+    rgba(241, 243, 244, 0.94);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.07),
     0 14px 34px rgba(0, 0, 0, 0.07);
@@ -3954,12 +3954,12 @@ button.contentFilterPill {
 
 .mediaLibraryUnifiedCard {
   background:
-    radial-gradient(circle at top left, rgba(255, 252, 248, 0.82), transparent 28%),
-    rgba(255, 252, 248, 0.9);
+    radial-gradient(circle at top left, rgba(241, 243, 244, 0.82), transparent 28%),
+    rgba(241, 243, 244, 0.9);
 }
 
 .contentPhotoCardOptional {
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.05),
     0 10px 24px rgba(0, 0, 0, 0.05);
@@ -3967,8 +3967,8 @@ button.contentFilterPill {
 
 .contentPhotoCardComplete {
   background:
-    linear-gradient(135deg, rgba(246, 252, 243, 0.6), rgba(255, 252, 248, 0.88)),
-    rgba(255, 252, 248, 0.86);
+    linear-gradient(135deg, rgba(246, 252, 243, 0.6), rgba(241, 243, 244, 0.88)),
+    rgba(241, 243, 244, 0.86);
 }
 
 .mediaManagerStack .contentPhotoHint {
@@ -3981,7 +3981,7 @@ button.contentFilterPill {
   padding: 18px 20px;
   border: 1px solid var(--border-neutral);
   border-radius: 24px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
 }
 
 .mediaLibraryHeader {
@@ -4022,13 +4022,13 @@ button.contentFilterPill {
 
 .mediaLibraryCounterWarning {
   border-color: rgba(233, 101, 47, 0.24);
-  background: rgba(255, 241, 232, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   color: #e9652f;
 }
 
 .mediaLibraryCounterOptional {
   border-color: var(--border-neutral);
-  background: rgba(255, 252, 248, 0.62);
+  background: rgba(241, 243, 244, 0.62);
   color: var(--text-secondary);
 }
 
@@ -4225,7 +4225,7 @@ button.contentFilterPill {
   padding: 0 18px;
   border: 1px solid rgba(233, 101, 47, 0.35);
   border-radius: 12px;
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
   color: var(--m-accent);
   font: inherit;
   font-size: 0.92rem;
@@ -4314,7 +4314,7 @@ button.contentFilterPill {
   height: clamp(200px, 18vw, 260px);
   overflow: hidden;
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
@@ -4356,7 +4356,7 @@ button.contentFilterPill {
   padding: 0 18px;
   border: 1px solid rgba(233, 101, 47, 0.35);
   border-radius: 12px;
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
   color: var(--m-accent);
   font: inherit;
   font-size: 0.92rem;
@@ -4404,7 +4404,7 @@ button.contentFilterPill {
   min-width: 0;
   padding: 10px 12px;
   border-radius: 16px;
-  background: rgba(255, 241, 232, 0.82);
+  background: rgba(241, 243, 244, 0.82);
   color: var(--text-primary);
   box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.12);
 }
@@ -4463,7 +4463,7 @@ button.contentFilterPill {
   box-sizing: border-box;
   border: 1px solid var(--border-neutral);
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.88);
+  background: rgba(241, 243, 244, 0.88);
   color: var(--text-primary);
   font: inherit;
   font-size: 0.9rem;
@@ -4495,7 +4495,7 @@ button.contentFilterPill {
 
 .mediaLibrarySlotTrigger:hover {
   border-color: rgba(233, 101, 47, 0.35);
-  background-color: rgba(255, 252, 248, 0.96);
+  background-color: rgba(241, 243, 244, 0.96);
 }
 }
 
@@ -4657,7 +4657,7 @@ button.contentFilterPill {
   padding: 12px;
   border: 0;
   border-radius: 20px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.07),
     0 10px 24px rgba(0, 0, 0, 0.06);
@@ -4758,7 +4758,7 @@ button.contentFilterPill {
   flex: 0 0 auto;
   padding: 4px 7px;
   border-radius: 999px;
-  background: rgba(255, 241, 232, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   color: var(--text-secondary);
   font-size: 0.75rem;
   font-weight: 800;
@@ -4804,7 +4804,7 @@ button.contentFilterPill {
   padding: 6px;
   border-radius: 14px;
   border: 1px solid var(--border-neutral);
-  background: rgba(255, 252, 248, 0.98);
+  background: rgba(241, 243, 244, 0.98);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
 }
 
@@ -4842,7 +4842,7 @@ button.contentFilterPill {
   margin: 0;
   padding: 12px 14px;
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.56);
+  background: rgba(241, 243, 244, 0.56);
   color: var(--text-secondary);
   font-size: 0.92rem;
   line-height: 1.5;
@@ -4866,7 +4866,7 @@ button.contentFilterPill {
   padding: 18px;
   border: 1px solid var(--border-neutral);
   border-radius: 22px;
-  background: rgba(255, 252, 248, 0.78);
+  background: rgba(241, 243, 244, 0.78);
   cursor: pointer;
 }
 
@@ -4879,7 +4879,7 @@ button.contentFilterPill {
 .templateCardActive {
   border-color: rgba(233, 101, 47, 0.34);
   box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.16);
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
 }
 
 .templateSwatch {
@@ -4905,7 +4905,7 @@ button.contentFilterPill {
   padding: 16px;
   border: 1px solid var(--border-neutral);
   border-radius: 20px;
-  background: rgba(255, 252, 248, 0.74);
+  background: rgba(241, 243, 244, 0.74);
 }
 
 .mediaManagerCardActive {
@@ -4931,7 +4931,7 @@ button.contentFilterPill {
   overflow: hidden;
   border-radius: 18px;
   border: 1px dashed var(--border-neutral);
-  background: rgba(248, 243, 237, 0.8);
+  background: rgba(241, 243, 244, 0.8);
 }
 
 .mediaPreviewImage {
@@ -4963,7 +4963,7 @@ button.contentFilterPill {
   padding: 12px 14px;
   border: 1px solid var(--border-neutral);
   border-radius: 14px;
-  background: rgba(255, 252, 248, 0.88);
+  background: rgba(241, 243, 244, 0.88);
   font: inherit;
 }
 
@@ -4989,18 +4989,18 @@ button.contentFilterPill {
 .button {
   border: 0;
   background: linear-gradient(180deg, #ef7240 0%, #df5f2e 100%);
-  color: #fff8f3;
+  color: #ffffff;
 }
 
 .secondaryButton {
   border: 1px solid rgba(233, 101, 47, 0.38);
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   color: var(--m-accent);
 }
 
 .dangerButton {
   border: 1px solid rgba(171, 66, 50, 0.22);
-  background: rgba(255, 241, 232, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   color: #ab4232;
 }
 
@@ -5009,7 +5009,7 @@ button.contentFilterPill {
   display: inline-block;
   padding: 3px 8px;
   border-radius: 8px;
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(241, 243, 244, 0.82);
   overflow-wrap: anywhere;
 }
 
@@ -5102,8 +5102,8 @@ button.contentFilterPill {
   padding: 30px 34px;
   border-radius: 30px;
   background:
-    radial-gradient(circle at top left, rgba(255, 252, 248, 0.84), transparent 32%),
-    linear-gradient(180deg, rgba(255, 252, 248, 0.98), rgba(255, 252, 248, 0.94));
+    radial-gradient(circle at top left, rgba(241, 243, 244, 0.84), transparent 32%),
+    linear-gradient(180deg, rgba(241, 243, 244, 0.98), rgba(241, 243, 244, 0.94));
 }
 
 .heroTop {
@@ -5142,7 +5142,7 @@ button.contentFilterPill {
   padding: 0 14px;
   border-radius: 999px;
   border-color: var(--border-neutral);
-  background: rgba(255, 252, 248, 0.86);
+  background: rgba(241, 243, 244, 0.86);
   color: var(--text-primary);
   font-size: 0.95rem;
 }
@@ -5155,13 +5155,13 @@ button.contentFilterPill {
   min-height: 46px;
   padding: 0 18px;
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.78);
+  background: rgba(241, 243, 244, 0.78);
   font-size: 0.98rem;
 }
 
 .tabLinkActive {
   background: #e9652f;
-  color: #fff8f3;
+  color: #ffffff;
   border-color: transparent;
   box-shadow: 0 10px 24px rgba(233, 101, 47, 0.24);
 }
@@ -5216,8 +5216,8 @@ button.contentFilterPill {
   min-height: 124px;
   border-radius: 20px;
   background:
-    radial-gradient(circle at top right, rgba(255, 252, 248, 0.62), transparent 28%),
-    linear-gradient(135deg, color-mix(in srgb, var(--template-accent, #d7c1b5) 55%, white), color-mix(in srgb, var(--template-accent, #d7c1b5) 82%, white));
+    radial-gradient(circle at top right, rgba(241, 243, 244, 0.62), transparent 28%),
+    linear-gradient(135deg, color-mix(in srgb, var(--template-accent, #f1f3f4) 55%, white), color-mix(in srgb, var(--template-accent, #f1f3f4) 82%, white));
   overflow: hidden;
 }
 
@@ -5227,7 +5227,7 @@ button.contentFilterPill {
   width: 66px;
   aspect-ratio: 3 / 4;
   border-radius: 14px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
   color: var(--text-secondary);
   font-family: Georgia, "Times New Roman", serif;
@@ -5256,7 +5256,7 @@ button.contentFilterPill {
   padding: 0 14px;
   border: 1px solid var(--border-neutral);
   border-radius: 14px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   color: var(--text-primary);
   font: inherit;
 }
@@ -5289,7 +5289,7 @@ button.contentFilterPill {
   padding: 20px 22px 16px;
   border: 1px solid var(--border-neutral);
   border-radius: 26px;
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.08);
 }
 
@@ -5321,7 +5321,7 @@ button.contentFilterPill {
 
 .stepperDotActive {
   background: #e9652f;
-  color: #fff8f3;
+  color: #ffffff;
   border-color: transparent;
 }
 
@@ -5373,7 +5373,7 @@ button.contentFilterPill {
 .previewPanel {
   padding: 22px;
   border-radius: 28px;
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
 }
 
 .sectionStepHeader {
@@ -5433,7 +5433,7 @@ button.contentFilterPill {
   border: 1px solid var(--border-neutral);
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--preview-accent) 18%, white), transparent 24%),
-    radial-gradient(circle at 14% 18%, rgba(255, 252, 248, 0.84), transparent 18%),
+    radial-gradient(circle at 14% 18%, rgba(241, 243, 244, 0.84), transparent 18%),
     linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-hover) 100%);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.56),
@@ -5446,7 +5446,7 @@ button.contentFilterPill {
 .previewFinalCard {
   border-radius: 22px;
   border: 1px solid var(--border-neutral);
-  background: rgba(255, 252, 248, 0.8);
+  background: rgba(241, 243, 244, 0.8);
 }
 
 .previewHeroCard {
@@ -5499,7 +5499,7 @@ button.contentFilterPill {
   align-self: end;
   padding: 18px 14px;
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
   text-align: center;
 }
 
@@ -5570,7 +5570,7 @@ button.contentFilterPill {
   height: 88px;
   border-radius: 16px;
   background:
-    radial-gradient(circle at 35% 30%, rgba(255, 252, 248, 0.82), transparent 30%),
+    radial-gradient(circle at 35% 30%, rgba(241, 243, 244, 0.82), transparent 30%),
     linear-gradient(180deg, color-mix(in srgb, var(--preview-accent) 58%, white), color-mix(in srgb, var(--preview-accent) 24%, white));
 }
 
@@ -5611,7 +5611,7 @@ button.contentFilterPill {
 .previewLinkButton {
   min-height: 44px;
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.86);
+  background: rgba(241, 243, 244, 0.86);
 }
 
 .fullPreviewStage {
@@ -5625,7 +5625,7 @@ button.contentFilterPill {
 .fullPreviewChecklist section {
   border: 1px solid var(--border-neutral);
   border-radius: 28px;
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.08);
 }
 
@@ -5681,13 +5681,13 @@ button.contentFilterPill {
 
 .previewPrimaryLink {
   background: linear-gradient(180deg, #ef7240 0%, #df5f2e 100%);
-  color: #fff8f3;
+  color: #ffffff;
   box-shadow: 0 14px 28px rgba(233, 101, 47, 0.22);
 }
 
 .previewSecondaryLink {
   border: 1px solid rgba(233, 101, 47, 0.38);
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   color: var(--m-accent);
 }
 
@@ -5771,7 +5771,7 @@ button.contentFilterPill {
 .fullPreviewBlockList span {
   border: 1px solid rgba(233, 101, 47, 0.16);
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.86);
+  background: rgba(241, 243, 244, 0.86);
   color: var(--text-primary);
   padding: 8px 10px;
 }
@@ -5858,7 +5858,7 @@ button.contentFilterPill {
   gap: 0;
   border: 1px solid var(--border-neutral);
   border-radius: 20px;
-  background: rgba(255, 252, 248, 0.88);
+  background: rgba(241, 243, 244, 0.88);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
   transition:
     border-color 180ms ease,
@@ -5983,7 +5983,7 @@ button.contentFilterPill {
   height: 40px;
   border: 1px solid var(--border-neutral);
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(241, 243, 244, 0.82);
   color: var(--text-secondary);
   cursor: pointer;
   transition-property: transform, box-shadow, border-color, background-color, color, opacity;
@@ -6004,7 +6004,7 @@ button.contentFilterPill {
 
 .compositionMoveButton:hover:not(:disabled) {
   border-color: rgba(233, 101, 47, 0.24);
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
 }
@@ -6062,7 +6062,7 @@ button.contentFilterPill {
   padding: 0 10px;
   border-radius: 999px;
   border: 1px solid rgba(233, 101, 47, 0.14);
-  background: rgba(255, 241, 232, 0.94);
+  background: rgba(241, 243, 244, 0.94);
   color: var(--text-secondary);
   font-size: 0.84rem;
   font-weight: 700;
@@ -6179,7 +6179,7 @@ button.contentFilterPill {
   padding: 16px;
   border: 1px solid var(--border-neutral);
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   text-align: left;
   cursor: pointer;
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
@@ -6199,7 +6199,7 @@ button.contentFilterPill {
   box-shadow:
     inset 0 0 0 1px rgba(233, 101, 47, 0.16),
     0 10px 22px rgba(233, 101, 47, 0.1);
-  background: rgba(255, 252, 248, 0.98);
+  background: rgba(241, 243, 244, 0.98);
 }
 
 .layoutCardCheck {
@@ -6217,7 +6217,7 @@ button.contentFilterPill {
   place-items: center;
   min-height: 86px;
   border-radius: 14px;
-  background: rgba(250, 243, 237, 0.92);
+  background: rgba(241, 243, 244, 0.92);
 }
 
 .layoutDiagramGrid {
@@ -6234,7 +6234,7 @@ button.contentFilterPill {
   display: block;
   border: 1px solid var(--border-neutral);
   border-radius: 4px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
 }
 
 .layoutDiagramGrid span {
@@ -6279,7 +6279,7 @@ button.contentFilterPill {
   width: 32px;
   height: 44px;
   border-radius: 5px;
-  background: rgba(252, 236, 223, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   border-color: rgba(233, 101, 47, 0.32);
 }
 
@@ -6310,7 +6310,7 @@ button.contentFilterPill {
   display: block;
   border: 1px solid var(--border-neutral);
   border-radius: 5px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
 }
 
 .mediaLayoutMessages span {
@@ -6324,7 +6324,7 @@ button.contentFilterPill {
 }
 
 .mediaLayoutPhotos span {
-  background: rgba(252, 236, 223, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   border-color: rgba(233, 101, 47, 0.32);
 }
 
@@ -6366,7 +6366,7 @@ button.contentFilterPill {
   padding: 0 14px;
   border: 1px solid var(--border-neutral);
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   color: var(--text-secondary);
   font: inherit;
   font-weight: 700;
@@ -6375,7 +6375,7 @@ button.contentFilterPill {
 
 .mediaVariantTabActive {
   border-color: rgba(233, 101, 47, 0.45);
-  background: rgba(255, 252, 248, 0.98);
+  background: rgba(241, 243, 244, 0.98);
   color: var(--m-accent);
   box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.12);
 }
@@ -6395,8 +6395,8 @@ button.contentFilterPill {
   padding: 14px;
   border-radius: 16px;
   background:
-    radial-gradient(circle at top left, rgba(255, 252, 248, 0.68), transparent 36%),
-    rgba(255, 252, 248, 0.88);
+    radial-gradient(circle at top left, rgba(241, 243, 244, 0.68), transparent 36%),
+    rgba(241, 243, 244, 0.88);
   box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.12);
 }
 
@@ -6414,7 +6414,7 @@ button.contentFilterPill {
   min-height: 32px;
   padding: 0 12px;
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.86);
+  background: rgba(241, 243, 244, 0.86);
   color: #4d7d4d;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -6433,7 +6433,7 @@ button.contentFilterPill {
   padding: 14px;
   border: 1px solid var(--border-neutral);
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.78);
+  background: rgba(241, 243, 244, 0.78);
 }
 
 .photoSequenceHeader {
@@ -6650,13 +6650,13 @@ button.contentFilterPill {
 }
 
 .page *::-webkit-scrollbar-track {
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   border-radius: 999px;
 }
 
 .page *::-webkit-scrollbar-thumb {
   background: rgba(233, 101, 47, 0.38);
-  border: 3px solid rgba(255, 247, 240, 0.72);
+  border: 3px solid rgba(223, 225, 229, 0.72);
   border-radius: 999px;
 }
 
@@ -6854,7 +6854,7 @@ button.contentFilterPill {
 @media (hover: hover) and (pointer: fine) {
 
 .copyLinkButton:hover {
-  background: rgba(255, 252, 248, 0.98);
+  background: rgba(241, 243, 244, 0.98);
   border-color: rgba(233, 101, 47, 0.55);
   box-shadow:
     0 0 0 1px rgba(233, 101, 47, 0.08),
@@ -6882,8 +6882,8 @@ button.contentFilterPill {
 .flowPanel {
   border-color: transparent;
   background:
-    radial-gradient(circle at top right, rgba(255, 252, 248, 0.78), transparent 30%),
-    rgba(255, 252, 248, 0.88);
+    radial-gradient(circle at top right, rgba(241, 243, 244, 0.78), transparent 30%),
+    rgba(241, 243, 244, 0.88);
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.07),
     0 12px 28px rgba(0, 0, 0, 0.05);
@@ -6899,7 +6899,7 @@ button.contentFilterPill {
 
 .linkCard {
   border-color: transparent;
-  background: rgba(255, 252, 248, 0.76);
+  background: rgba(241, 243, 244, 0.76);
   padding: 10px 12px;
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.07),
@@ -6910,7 +6910,7 @@ button.contentFilterPill {
 
 .linkCard:hover {
   transform: translateY(-1px);
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
   box-shadow:
     0 0 0 1px rgba(233, 101, 47, 0.16),
     0 12px 24px rgba(0, 0, 0, 0.08);
@@ -6972,7 +6972,7 @@ button.contentFilterPill {
 .memoryCaptionInput:hover,
 .memoryCaptionTextarea:hover {
   border-color: rgba(233, 101, 47, 0.24);
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
 }
 }
 
@@ -7004,8 +7004,8 @@ button.contentFilterPill {
 .panel,
 .studioPanel {
   background:
-    radial-gradient(circle at top right, rgba(255, 252, 248, 0.62), transparent 28%),
-    rgba(255, 252, 248, 0.96);
+    radial-gradient(circle at top right, rgba(241, 243, 244, 0.62), transparent 28%),
+    rgba(241, 243, 244, 0.96);
 }
 
 .stepperDot {
@@ -7026,7 +7026,7 @@ button.contentFilterPill {
   padding: 0 12px;
   border: 1px solid rgba(233, 101, 47, 0.12);
   border-radius: 999px;
-  background: rgba(255, 252, 248, 0.68);
+  background: rgba(241, 243, 244, 0.68);
   transition-property: background-color, color, transform;
   transition-duration: 160ms;
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
@@ -7056,7 +7056,7 @@ button.contentFilterPill {
 
 .compositionRow:hover {
   transform: translateY(-1px);
-  background: rgba(255, 252, 248, 0.95);
+  background: rgba(241, 243, 244, 0.95);
   box-shadow:
     0 0 0 1px rgba(233, 101, 47, 0.14),
     0 14px 28px rgba(0, 0, 0, 0.08);
@@ -7064,7 +7064,7 @@ button.contentFilterPill {
 }
 
 .compositionRowExpanded {
-  background: rgba(255, 252, 248, 0.98);
+  background: rgba(241, 243, 244, 0.98);
 }
 
 .compositionGrip {
@@ -7167,7 +7167,7 @@ button.contentFilterPill {
 .layoutCardCheck {
   display: grid;
   place-items: center;
-  background: rgba(255, 252, 248, 0.86);
+  background: rgba(241, 243, 244, 0.86);
   box-shadow: 0 5px 12px rgba(233, 101, 47, 0.14);
 }
 
@@ -7176,7 +7176,7 @@ button.contentFilterPill {
 .mediaVariantTab:hover,
 .restoreChip:hover:not(:disabled) {
   border-color: rgba(233, 101, 47, 0.24);
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
 }
 }
 
@@ -7187,14 +7187,14 @@ button.contentFilterPill {
 }
 
 .restoreAddButton {
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
 }
 
 @media (hover: hover) and (pointer: fine) {
 
 .restoreAddButton:hover {
   border-color: rgba(233, 101, 47, 0.44);
-  background: rgba(255, 241, 232, 0.92);
+  background: rgba(241, 243, 244, 0.92);
 }
 }
 
@@ -7518,7 +7518,7 @@ button.contentFilterPill {
     margin: 0 -10px;
     padding: 8px 10px;
     overflow-x: auto;
-    background: rgba(255, 252, 248, 0.84);
+    background: rgba(241, 243, 244, 0.84);
     backdrop-filter: blur(14px);
   }
 
@@ -7733,7 +7733,7 @@ button.contentFilterPill {
   padding: 0 13px;
   border-radius: 999px;
   border: 1px solid var(--border-neutral);
-  background: rgba(255, 252, 248, 0.74);
+  background: rgba(241, 243, 244, 0.74);
   color: var(--text-primary);
   font-size: 0.9rem;
   font-weight: 800;
@@ -7742,7 +7742,7 @@ button.contentFilterPill {
 
 .managerChips .aiChip {
   border-color: rgba(223, 79, 36, 0.22);
-  background: rgba(255, 241, 232, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   color: #e9652f;
 }
 
@@ -7768,7 +7768,7 @@ button.contentFilterPill {
   min-width: 170px;
   padding-inline: 16px;
   border: 1px solid rgba(233, 101, 47, 0.38);
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   color: var(--m-accent);
   font-size: 0.92rem;
   letter-spacing: -0.01em;
@@ -7781,7 +7781,7 @@ button.contentFilterPill {
 .managerActions .previewPrimaryLink,
 .publishButton {
   background: linear-gradient(180deg, #ef7240 0%, #df5f2e 100%);
-  color: #fff8f3;
+  color: #ffffff;
   box-shadow: 0 14px 28px rgba(233, 101, 47, 0.24);
 }
 
@@ -7852,8 +7852,8 @@ button.contentFilterPill {
   border: 0;
   border-radius: 22px;
   background:
-    radial-gradient(circle at top right, rgba(255, 252, 248, 0.8), transparent 30%),
-    rgba(255, 252, 248, 0.94);
+    radial-gradient(circle at top right, rgba(241, 243, 244, 0.8), transparent 30%),
+    rgba(241, 243, 244, 0.94);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.07),
     0 1px 2px -1px rgba(0, 0, 0, 0.08),
@@ -7916,7 +7916,7 @@ button.contentFilterPill {
   gap: 8px;
   min-height: 168px;
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   border: 1px dashed rgba(233, 101, 47, 0.25);
   padding: 24px;
 }
@@ -7937,9 +7937,9 @@ button.contentFilterPill {
   min-height: 168px;
   border-radius: 18px;
   background:
-    radial-gradient(circle at 72% 24%, rgba(255, 252, 248, 0.88) 0 10%, transparent 11%),
-    radial-gradient(circle at 26% 32%, color-mix(in srgb, var(--template-accent, #bf6c47) 38%, white) 0 4px, transparent 5px),
-    linear-gradient(135deg, rgba(255, 241, 232, 0.94), color-mix(in srgb, var(--template-accent, #bf6c47) 18%, white));
+    radial-gradient(circle at 72% 24%, rgba(241, 243, 244, 0.88) 0 10%, transparent 11%),
+    radial-gradient(circle at 26% 32%, color-mix(in srgb, var(--template-accent, #e9652f) 38%, white) 0 4px, transparent 5px),
+    linear-gradient(135deg, rgba(241, 243, 244, 0.94), color-mix(in srgb, var(--template-accent, #e9652f) 18%, white));
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.08),
     0 16px 28px rgba(0, 0, 0, 0.12);
@@ -7972,7 +7972,7 @@ button.contentFilterPill {
   bottom: 62px;
   width: 54px;
   height: 54px;
-  background: color-mix(in srgb, var(--template-accent, #bf6c47) 88%, #ff6a42);
+  background: color-mix(in srgb, var(--template-accent, #e9652f) 88%, #e9652f);
   clip-path: path("M27 48 C12 36 4 27 4 17 C4 9 10 5 17 5 C22 5 25 8 27 12 C29 8 32 5 37 5 C44 5 50 9 50 17 C50 27 42 36 27 48 Z");
 }
 
@@ -8045,7 +8045,7 @@ button.contentFilterPill {
 .lockedHint {
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(255, 241, 232, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   box-shadow: inset 0 0 0 1px rgba(223, 79, 36, 0.12);
 }
 
@@ -8194,7 +8194,7 @@ button.contentFilterPill {
   padding: 10px 18px;
   border: 1px solid rgba(233, 101, 47, 0.38);
   border-radius: 14px;
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   color: var(--m-accent);
   font: inherit;
   font-weight: 800;
@@ -8211,7 +8211,7 @@ button.contentFilterPill {
 .inviteOpenButton:hover {
   transform: translateY(-1px);
   border-color: rgba(233, 101, 47, 0.55);
-  background: rgba(255, 252, 248, 0.98);
+  background: rgba(241, 243, 244, 0.98);
   box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.08), 0 10px 22px rgba(233, 101, 47, 0.1);
 }
 }
@@ -8253,8 +8253,8 @@ button.contentFilterPill {
   gap: 16px;
   border: 1px solid rgba(223, 79, 36, 0.2);
   background:
-    radial-gradient(circle at bottom right, rgba(255, 218, 184, 0.48), transparent 36%),
-    rgba(255, 252, 248, 0.96);
+    radial-gradient(circle at bottom right, rgba(241, 243, 244, 0.48), transparent 36%),
+    rgba(241, 243, 244, 0.96);
 }
 
 .publishCard .sidebarCardHeader > div {
@@ -8303,7 +8303,7 @@ button.contentFilterPill {
 .designRail > .inviteCard { order: 3; }
 
 .mediaRightsConsent { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 9px; color: var(--text-secondary); font-size: .82rem; line-height: 1.4; }
-.mediaRightsConsent input { width: 17px; height: 17px; margin-top: 2px; flex: 0 0 auto; accent-color: #c65431; }
+.mediaRightsConsent input { width: 17px; height: 17px; margin-top: 2px; flex: 0 0 auto; accent-color: #e9652f; }
 
 @media (max-width: 760px) {
   .mediaLibraryFilterRow {
@@ -8381,7 +8381,7 @@ button.contentFilterPill {
   gap: 16px;
   padding: 18px;
   border-radius: 22px;
-  background: rgba(255, 241, 232, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   box-shadow:
     0 0 0 1px rgba(233, 101, 47, 0.12),
     0 10px 26px rgba(0, 0, 0, 0.05);
@@ -8491,7 +8491,7 @@ button.contentFilterPill {
   flex: 0 0 auto;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(235, 120, 66, 0.12);
+  background: rgba(233, 101, 47, 0.12);
   color: #e9652f;
   font-size: 0.74rem;
   font-weight: 800;
@@ -8556,9 +8556,9 @@ button.contentFilterPill {
   display: grid;
   gap: 8px;
   padding: 14px;
-  border: 1px solid rgba(214, 83, 39, 0.16);
+  border: 1px solid rgba(233, 101, 47, 0.16);
   border-radius: 16px;
-  background: rgba(255, 241, 232, 0.66);
+  background: rgba(241, 243, 244, 0.66);
 }
 
 .openPaymentPanel strong,
@@ -8597,15 +8597,15 @@ button.contentFilterPill {
 }
 
 .statusPrimaryAction {
-  border: 1px solid #d85a2f;
+  border: 1px solid #e9652f;
   background: linear-gradient(180deg, #ef7240 0%, #df5f2e 100%);
-  color: #fff8f3;
-  box-shadow: 0 12px 24px rgba(214, 83, 39, 0.22);
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
 }
 
 .statusSecondaryAction {
-  border: 1px solid rgba(214, 83, 39, 0.46);
-  background: rgba(255, 252, 248, 0.76);
+  border: 1px solid rgba(233, 101, 47, 0.46);
+  background: rgba(241, 243, 244, 0.76);
   color: #e9652f;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 6px 14px rgba(0, 0, 0, 0.04);
 }
@@ -8613,7 +8613,7 @@ button.contentFilterPill {
 @media (hover: hover) and (pointer: fine) {
 
 .statusPrimaryAction:hover:not(:disabled) {
-  box-shadow: 0 16px 28px rgba(214, 83, 39, 0.28);
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.28);
 }
 }
 
@@ -8621,8 +8621,8 @@ button.contentFilterPill {
 
 .statusSecondaryAction:hover,
 .localTestPayment:hover {
-  border-color: rgba(180, 74, 41, 0.72);
-  background: rgba(255, 241, 232, 0.9);
+  border-color: rgba(233, 101, 47, 0.72);
+  background: rgba(241, 243, 244, 0.9);
 }
 }
 
@@ -8677,7 +8677,7 @@ button.contentFilterPill {
   padding: 9px 11px;
   border: 1px solid var(--border-neutral);
   border-radius: 10px;
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   color: var(--text-primary);
   font: inherit;
 }
@@ -8695,7 +8695,7 @@ button.contentFilterPill {
   width: 17px;
   height: 17px;
   margin: 1px 0 0;
-  accent-color: #c65431;
+  accent-color: #e9652f;
 }
 
 .paymentConsent a {
@@ -8707,7 +8707,7 @@ button.contentFilterPill {
 .localTestPayment {
   min-height: 40px;
   border: 1px dashed var(--border-neutral);
-  background: rgba(255, 252, 248, 0.62);
+  background: rgba(241, 243, 244, 0.62);
   color: var(--text-primary);
   font-size: 0.78rem;
 }
@@ -8789,7 +8789,7 @@ button.contentFilterPill {
 .giftPollDragHint { user-select: none; }
 .giftPollDragHint:active { cursor: grabbing; }
 .giftPollOptionPreview strong::first-letter { text-transform: uppercase; }
-.giftPollDraftChecklist { display: grid; gap: 10px; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, rgba(255, 252, 248, 0.8), rgba(255, 241, 232, 0.88)); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.035), inset 0 0 0 1px rgba(0, 0, 0, 0.06); }
+.giftPollDraftChecklist { display: grid; gap: 10px; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, rgba(241, 243, 244, 0.8), rgba(241, 243, 244, 0.88)); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.035), inset 0 0 0 1px rgba(0, 0, 0, 0.06); }
 .giftPollDraftChecklist > strong { color: var(--text-primary); font-size: 1rem; }
 .giftPollDraftChecklist ul { display: grid; gap: 7px; margin: 0; padding: 0; color: var(--text-primary); font-size: .84rem; line-height: 1.35; list-style: none; }
 .giftPollDraftChecklist li { display: flex; gap: 7px; align-items: baseline; }
@@ -8800,15 +8800,15 @@ button.contentFilterPill {
 .giftPollPage[data-poll-status="draft"] .giftPollDraftChecklist { order: 3; }
 
 /* Import-first gift option flow: one calm entry point that expands into the regular editor. */
-.giftPollImportCard { display: grid; gap: 12px; padding: 18px; border-radius: 22px; background: linear-gradient(135deg, rgba(255, 252, 248, 0.86), rgba(255, 241, 232, 0.9)); box-shadow: 0 0 0 1px rgba(233,101,47,.15), 0 12px 26px rgba(0, 0, 0, 0.06); }
+.giftPollImportCard { display: grid; gap: 12px; padding: 18px; border-radius: 22px; background: linear-gradient(135deg, rgba(241, 243, 244, 0.86), rgba(241, 243, 244, 0.9)); box-shadow: 0 0 0 1px rgba(233,101,47,.15), 0 12px 26px rgba(0, 0, 0, 0.06); }
 .giftPollImportCard > div:first-child { display: grid; gap: 4px; }
 .giftPollImportCard strong { color: var(--text-primary); font-size: 1.02rem; }
 .giftPollImportCard p { margin: 0; color: var(--text-secondary); font-size: .9rem; line-height: 1.45; text-wrap: pretty; }
 .giftPollImportField { display: grid; gap: 6px; color: var(--text-primary); font-size: .88rem; font-weight: 750; }
-.giftPollImportField textarea { width: 100%; min-height: 88px; box-sizing: border-box; resize: vertical; padding: 11px 12px; border: 1px solid var(--border-neutral); border-radius: 14px; background: rgba(255, 252, 248, 0.84); color: var(--text-primary); font: inherit; line-height: 1.4; }
+.giftPollImportField textarea { width: 100%; min-height: 88px; box-sizing: border-box; resize: vertical; padding: 11px 12px; border: 1px solid var(--border-neutral); border-radius: 14px; background: rgba(241, 243, 244, 0.84); color: var(--text-primary); font: inherit; line-height: 1.4; }
 .giftPollImportField textarea:focus { outline: 3px solid rgba(233,101,47,.18); border-color: rgba(233,101,47,.58); }
 .giftPollImportActions { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; color: var(--text-secondary); font-size: .86rem; }
-.giftPollImportButton, .giftPollPhotoRemove { min-height: 42px; padding: 0 15px; border-radius: 12px; border: 1px solid rgba(233,101,47,.46); background: rgba(255, 252, 248, 0.82); color: #e9652f; font: inherit; font-weight: 800; cursor: pointer; transition-property: transform, box-shadow, background-color; transition-duration: 160ms; }
+.giftPollImportButton, .giftPollPhotoRemove { min-height: 42px; padding: 0 15px; border-radius: 12px; border: 1px solid rgba(233,101,47,.46); background: rgba(241, 243, 244, 0.82); color: #e9652f; font: inherit; font-weight: 800; cursor: pointer; transition-property: transform, box-shadow, background-color; transition-duration: 160ms; }
 @media (hover: hover) and (pointer: fine) {
 .giftPollImportButton:hover:not(:disabled) { background: var(--bg-surface); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1); }
 }
@@ -8816,7 +8816,7 @@ button.contentFilterPill {
 .giftPollImportButton:disabled { cursor: wait; opacity: .58; }
 .giftPollImportNotice, .giftPollImportError { margin: 0; font-size: .88rem; line-height: 1.4; }
 .giftPollImportNotice { color: #487243 !important; }.giftPollImportError { color: #e9652f !important; }
-.giftPollOptionBody input[type="file"] { padding: 9px; border: 1px dashed var(--border-neutral); border-radius: 12px; background: rgba(255, 252, 248, 0.58); color: var(--text-primary); font: inherit; }
+.giftPollOptionBody input[type="file"] { padding: 9px; border: 1px dashed var(--border-neutral); border-radius: 12px; background: rgba(241, 243, 244, 0.58); color: var(--text-primary); font: inherit; }
 .giftPollPhotoRemove { grid-column: 1 / -1; justify-self: start; min-height: 34px; padding: 0 10px; border-radius: 9px; border-color: var(--border-neutral); color: var(--text-secondary); font-size: .82rem; }
 .giftPollOptionBody input:not([type="file"]) { touch-action: none; user-select: text; -webkit-user-select: text; -webkit-touch-callout: default; }
 .giftPollOptionBody input[type="file"] { min-height: 46px; padding: 4px; cursor: pointer; }
@@ -9027,7 +9027,7 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
   padding: 0 15px;
   border: 1px solid rgba(233, 101, 47, 0.38);
   border-radius: 12px;
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
   color: var(--m-accent);
   cursor: pointer;
   font: inherit;
@@ -9141,7 +9141,7 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
   min-width: 0;
   padding: 12px;
   border-radius: 20px;
-  background: rgba(255, 252, 248, 0.78);
+  background: rgba(241, 243, 244, 0.78);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition-property: box-shadow, background-color, transform;
@@ -9233,7 +9233,7 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
 .basicsAdditional {
   overflow: hidden;
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
@@ -9403,7 +9403,7 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
   margin: 0 0 14px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(246, 239, 232, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   color: var(--text-primary);
   font-size: 0.88rem;
   line-height: 1.45;
@@ -9559,7 +9559,7 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
   gap: 8px;
   padding: 14px;
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
@@ -9597,7 +9597,7 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
   bottom: 0;
   left: 0;
   padding: 10px 24px calc(10px + env(safe-area-inset-bottom));
-  background: rgba(255, 252, 248, 0.92);
+  background: rgba(241, 243, 244, 0.92);
   box-shadow:
     0 -1px 0 rgba(0, 0, 0, 0.08),
     0 -12px 36px rgba(0, 0, 0, 0.08);
@@ -9772,7 +9772,7 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
     overflow-x: auto;
     padding: 4px max(4px, env(safe-area-inset-left));
     border-radius: 14px;
-    background: rgba(255, 252, 248, 0.94);
+    background: rgba(241, 243, 244, 0.94);
     box-shadow:
       0 1px 0 rgba(0, 0, 0, 0.08),
       0 8px 22px rgba(0, 0, 0, 0.07);
@@ -9790,7 +9790,7 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
     gap: 14px;
     padding: 16px;
     border-radius: 20px;
-    background: rgba(255, 252, 248, 0.96);
+    background: rgba(241, 243, 244, 0.96);
     box-shadow:
       0 0 0 1px rgba(0, 0, 0, 0.07),
       0 14px 30px rgba(0, 0, 0, 0.07);
@@ -10167,7 +10167,7 @@ input.giftPollPhotoInput { position: absolute !important; width: 1px !important;
   min-height: 40px;
   margin-left: 8px;
   padding: 0 12px;
-  border: 1px solid rgba(190, 77, 45, 0.3);
+  border: 1px solid rgba(233, 101, 47, 0.3);
   border-radius: 10px;
   background: var(--bg-surface);
   color: #e9652f;
@@ -10821,7 +10821,7 @@ button.designStickyPrimary {
 }
 
 .templateAnimationOptionActive {
-  background: #fff7f3;
+  background: #f1f3f4;
   box-shadow: inset 0 0 0 2px #e9652f, 0 5px 14px rgba(0, 0, 0, 0.07);
 }
 
@@ -11860,7 +11860,7 @@ button.designStickyPrimary {
   min-height: 40px;
   align-items: center;
   padding: 0 11px;
-  border: 1px solid rgba(225, 94, 48, 0.28);
+  border: 1px solid rgba(233, 101, 47, 0.28);
   border-radius: 11px;
   color: #e9652f;
   font-size: 0.8rem;
@@ -12056,7 +12056,7 @@ button.designStickyPrimary {
   min-width: 0;
   padding: 28px;
   border-radius: 28px;
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06), 0 16px 38px rgba(0, 0, 0, 0.06);
 }
 
@@ -12093,7 +12093,7 @@ button.designStickyPrimary {
 .photoIncompleteStatus { justify-self: start; padding: 8px 12px; border-radius: 999px; color: #e9652f !important; background: rgba(233,101,47,.11); font-weight: 800; }
 .photoNeutralStatus { justify-self: start; padding: 8px 12px; border-radius: 999px; color: var(--m-muted) !important; background: rgba(32, 33, 36, 0.06); font-weight: 800; }
 
-.photoBlock { display: grid; gap: 16px; min-width: 0; padding: 18px; border-radius: 22px; background: rgba(255, 252, 248, 0.52); box-shadow: 0 0 0 1px rgba(0,0,0,.06); }
+.photoBlock { display: grid; gap: 16px; min-width: 0; padding: 18px; border-radius: 22px; background: rgba(241, 243, 244, 0.52); box-shadow: 0 0 0 1px rgba(0,0,0,.06); }
 .photoBlockHeader { display: flex; gap: 18px; align-items: flex-start; justify-content: space-between; }
 .photoBlockHeader h3 { font-family: var(--font-display), Georgia, serif; font-size: 1.35rem; }
 .photoBlockHeader > div { width: 100%; }
@@ -12137,7 +12137,7 @@ button.designStickyPrimary {
 .photoSlotsPair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 .photoSlotCard { position: relative; min-width: 0; min-height: 210px; overflow: hidden; border: 0; border-radius: 16px; background: var(--bg-surface); box-shadow: 0 0 0 1px rgba(0,0,0,.08); transition-property: translate, box-shadow, background-color; transition-duration: 180ms; transition-timing-function: cubic-bezier(.2,0,0,1); }
-.photoSlotEmpty { display: grid; place-items: center; align-content: center; gap: 9px; width: 100%; padding: 22px; color: var(--m-accent); background: rgba(255, 252, 248, 0.72); box-shadow: inset 0 0 0 1.5px rgba(233,101,47,.22); cursor: pointer; }
+.photoSlotEmpty { display: grid; place-items: center; align-content: center; gap: 9px; width: 100%; padding: 22px; color: var(--m-accent); background: rgba(241, 243, 244, 0.72); box-shadow: inset 0 0 0 1.5px rgba(233,101,47,.22); cursor: pointer; }
 .photoSlotEmpty:active { scale: .96; }
 .photoSlotEmpty:focus-visible,
 .photoSlotMenuButton:focus-visible,
@@ -12158,9 +12158,9 @@ button.designStickyPrimary {
 .photoSlotText { display: grid; min-height: 42px; align-content: center; gap: 3px; padding: 10px 12px; }
 .photoSlotText small { color: var(--m-muted); font-size: .74rem; }
 .photoSlotCaption { display: block; margin: 0; overflow: hidden; color: var(--m-ink); font-size: .84rem; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
-.photoSlotPosition { position: absolute; top: 10px; left: 10px; z-index: 2; padding: 6px 9px; border-radius: 999px; color: var(--m-ink); background: rgba(255, 252, 248, 0.9); box-shadow: 0 1px 4px rgba(0,0,0,.08); font-size: .75rem; font-weight: 900; }
+.photoSlotPosition { position: absolute; top: 10px; left: 10px; z-index: 2; padding: 6px 9px; border-radius: 999px; color: var(--m-ink); background: rgba(241, 243, 244, 0.9); box-shadow: 0 1px 4px rgba(0,0,0,.08); font-size: .75rem; font-weight: 900; }
 .photoSlotMenuWrap { position: absolute; top: 8px; right: 8px; z-index: 3; }
-.photoSlotMenuButton { width: 44px; height: 44px; border: 0; border-radius: 12px; color: var(--m-accent); background: rgba(255, 252, 248, 0.94); box-shadow: 0 1px 6px rgba(0,0,0,.1); font-size: 1.4rem; cursor: pointer; }
+.photoSlotMenuButton { width: 44px; height: 44px; border: 0; border-radius: 12px; color: var(--m-accent); background: rgba(241, 243, 244, 0.94); box-shadow: 0 1px 6px rgba(0,0,0,.1); font-size: 1.4rem; cursor: pointer; }
 .photoSlotMenu { position: absolute; top: 48px; right: 0; display: grid; width: 240px; overflow: hidden; border-radius: 14px; background: var(--bg-surface); box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 14px 34px rgba(0, 0, 0, 0.18); }
 .photoSlotMenu button { min-height: 42px; padding: 10px 13px; border: 0; color: var(--m-ink); background: transparent; text-align: left; cursor: pointer; }
 @media (hover: hover) and (pointer: fine) {
@@ -12171,10 +12171,10 @@ button.designStickyPrimary {
 .photoSlotMenu .actionMenuItemDanger:hover { color: #e9652f; }
 }
 .photoSlotPointerDragging,
-.photoSlotDisplacedTarget { background: rgba(255, 252, 248, 0.86); box-shadow: inset 0 0 0 2px rgba(233,101,47,.34); }
+.photoSlotDisplacedTarget { background: rgba(241, 243, 244, 0.86); box-shadow: inset 0 0 0 2px rgba(233,101,47,.34); }
 .photoSlotPointerDragging > *,
 .photoSlotDisplacedTarget > * { opacity: 0; }
-.photoSlotDropTarget { background: rgba(255, 252, 248, 0.9); box-shadow: inset 0 0 0 2px var(--m-accent-strong), 0 12px 26px rgba(0, 0, 0, 0.1); }
+.photoSlotDropTarget { background: rgba(241, 243, 244, 0.9); box-shadow: inset 0 0 0 2px var(--m-accent-strong), 0 12px 26px rgba(0, 0, 0, 0.1); }
 .photoSlotRecentlyUpdated { animation: photoSlotUpdated 1.35s cubic-bezier(.2,0,0,1); }
 @keyframes photoSlotUpdated {
   0%, 100% { box-shadow: 0 0 0 1px rgba(0,0,0,.08); }
@@ -12239,11 +12239,11 @@ button.designStickyPrimary {
 .photoEditorSecondaryActions { display: flex; flex-wrap: wrap; gap: 8px; }
 .photoEditorSecondaryActions button { min-height: 40px; padding: 0 12px; border: 0; border-radius: 10px; color: var(--m-accent); background: var(--m-accent-light); font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; transition: background-color 150ms ease, scale 120ms ease; }
 .photoEditorSecondaryActions button:active { scale: .96; }
-.photoEditorSecondaryActions .photoEditorDeleteAction { color: #e9652f; background: rgba(200,79,43,.09); }
+.photoEditorSecondaryActions .photoEditorDeleteAction { color: #e9652f; background: rgba(233, 101, 47, .09); }
 .photoRightsConsent { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; color: var(--m-ink); font-size: .84rem; line-height: 1.45; }
 .photoRightsConsent input { width: 20px; height: 20px; accent-color: var(--m-accent); }
-.photoEditorError { margin: 0; padding: 10px 12px; border-radius: 12px; color: #e9652f; background: rgba(200,79,43,.1); }
-.photoEditorActions { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 16px 24px max(16px,env(safe-area-inset-bottom)); background: rgba(255, 252, 248, 0.96); box-shadow: 0 -1px 0 rgba(0,0,0,.07); backdrop-filter: blur(10px); }
+.photoEditorError { margin: 0; padding: 10px 12px; border-radius: 12px; color: #e9652f; background: rgba(233, 101, 47, .1); }
+.photoEditorActions { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 16px 24px max(16px,env(safe-area-inset-bottom)); background: rgba(241, 243, 244, 0.96); box-shadow: 0 -1px 0 rgba(0,0,0,.07); backdrop-filter: blur(10px); }
 .photoEditorDisabledReason { max-width: 360px; margin: 0 auto 0 0; color: #e9652f; font-size: .8rem; line-height: 1.35; }
 .photoPrimaryButton,
 .photoSecondaryButton { min-height: 44px; padding: 0 18px; border-radius: 12px; font: inherit; font-weight: 900; cursor: pointer; transition: background-color 150ms ease, color 150ms ease, scale 120ms ease; }
@@ -12277,7 +12277,7 @@ button.designStickyPrimary {
 .photoMoveGrid em { color: var(--m-accent); font-size: .74rem; font-style: normal; font-weight: 800; }
 .photoMoveGrid .photoMoveTargetActive { background: var(--m-accent-light); box-shadow: 0 0 0 1px var(--m-accent); }
 .photoToast { position: fixed; z-index: 1900; left: 50%; bottom: max(24px,env(safe-area-inset-bottom)); display: flex; min-height: 44px; max-width: calc(100% - 32px); align-items: center; gap: 14px; padding: 10px 12px 10px 18px; border-radius: 14px; color: #fff; background: #3f7d49; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22); font-weight: 800; text-align: center; transform: translateX(-50%); }
-.photoToast button { min-height: 36px; padding: 0 10px; border: 0; border-radius: 9px; color: #d9ffd8; background: rgba(255, 252, 248, 0.12); font: inherit; font-weight: 900; cursor: pointer; }
+.photoToast button { min-height: 36px; padding: 0 10px; border: 0; border-radius: 9px; color: #d9ffd8; background: rgba(241, 243, 244, 0.12); font: inherit; font-weight: 900; cursor: pointer; }
 
 @media (max-width: 760px) {
   .photoWorkspace { gap: 12px; padding: 18px; border-radius: 22px; }
@@ -12314,7 +12314,7 @@ button.designStickyPrimary {
   .photoMoveDialog { width: 100%; max-height: 100dvh; border-radius: 22px 22px 0 0; }
   .photoEditorDialog { height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; }
   .photoEditorBody { grid-template-columns: 1fr; align-content: start; gap: 16px; overflow: auto; padding: 10px 18px 18px; }
-  .photoDialogHeader { position: sticky; top: 0; z-index: 2; padding: 14px 18px; background: rgba(255, 252, 248, 0.96); box-shadow: 0 1px 0 rgba(0,0,0,.07); backdrop-filter: blur(10px); }
+  .photoDialogHeader { position: sticky; top: 0; z-index: 2; padding: 14px 18px; background: rgba(241, 243, 244, 0.96); box-shadow: 0 1px 0 rgba(0,0,0,.07); backdrop-filter: blur(10px); }
   .photoDialogHeader > button { width: 44px; height: 44px; }
   .photoCropPanel,
   .photoEditorFields { gap: 10px; }
@@ -12323,7 +12323,7 @@ button.designStickyPrimary {
   .photoEditorDisabledReason { flex: 1 0 100%; max-width: none; }
   .photoEditorActions button { flex: 1 1 50%; }
   .photoMoveDialog { display: grid; grid-template-rows: auto 1fr; padding: 0 0 max(8px,env(safe-area-inset-bottom)); }
-  .photoMoveDialog .photoDialogHeader { position: sticky; top: 0; z-index: 2; background: rgba(255, 252, 248, 0.96); box-shadow: 0 1px 0 rgba(0,0,0,.07); backdrop-filter: blur(10px); }
+  .photoMoveDialog .photoDialogHeader { position: sticky; top: 0; z-index: 2; background: rgba(241, 243, 244, 0.96); box-shadow: 0 1px 0 rgba(0,0,0,.07); backdrop-filter: blur(10px); }
   .photoMoveBody { overflow: auto; padding: 4px 16px 18px; }
   .photoMoveGrid { grid-template-columns: 1fr; }
   .photoMoveGrid button { grid-template-columns: 64px minmax(0,1fr) auto; grid-template-rows: 1fr; min-height: 88px; place-items: center stretch; gap: 12px; padding: 10px; text-align: left; }
@@ -12909,7 +12909,7 @@ button.designStickyPrimary {
   padding: 14px 16px;
   border: 1px solid rgba(34, 33, 30, 0.09);
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.66);
+  background: rgba(241, 243, 244, 0.66);
 }
 
 .compactPhotoSummary strong {
@@ -13078,7 +13078,7 @@ button.designStickyPrimary {
   margin-inline: auto;
   padding: 3px;
   border-radius: 15px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.08),
     0 8px 24px rgba(0, 0, 0, 0.06);
@@ -13141,7 +13141,7 @@ button.designStickyPrimary {
   overflow-y: hidden;
   border: 0;
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.06),
     0 5px 16px rgba(0, 0, 0, 0.04);
@@ -13192,7 +13192,7 @@ button.contentStatusItemButton:active {
   padding: 22px;
   border: 0;
   border-radius: 24px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.07),
     0 12px 32px rgba(0, 0, 0, 0.06);
@@ -13205,7 +13205,7 @@ button.contentStatusItemButton:active {
 .contentPhotoSection .mediaLibraryUnifiedCard {
   padding: 24px;
   border: 0;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.07),
     0 12px 32px rgba(0, 0, 0, 0.06);
@@ -13216,12 +13216,12 @@ button.contentStatusItemButton:active {
   gap: 14px;
   padding: 17px;
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(241, 243, 244, 0.9);
   box-shadow: 0 0 0 1px rgba(233, 101, 47, 0.22);
 }
 
 .contentMainGreetingCardEmpty {
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
 }
 
 .contentMainGreetingIntro {
@@ -13265,7 +13265,7 @@ button.contentStatusItemButton:active {
   gap: 11px;
   padding: 10px;
   border-radius: 14px;
-  background: rgba(255, 252, 248, 0.76);
+  background: rgba(241, 243, 244, 0.76);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
@@ -13317,7 +13317,7 @@ button.contentStatusItemButton:active {
   padding: 0 13px;
   border-radius: 13px;
   color: var(--text-secondary);
-  background: rgba(255, 252, 248, 0.86);
+  background: rgba(241, 243, 244, 0.86);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14);
 }
 
@@ -13366,7 +13366,7 @@ button.contentStatusItemButton:active {
 .contentContributionCard {
   border: 0;
   border-radius: 16px;
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(241, 243, 244, 0.82);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.09);
   content-visibility: auto;
   contain-intrinsic-size: auto 86px;
@@ -13417,7 +13417,7 @@ button.contentStatusItemButton:active {
   gap: 9px;
   padding: 28px;
   border-radius: 18px;
-  background: rgba(255, 252, 248, 0.72);
+  background: rgba(241, 243, 244, 0.72);
   text-align: left;
 }
 
@@ -13448,7 +13448,7 @@ button.contentStatusItemButton:active {
   gap: 13px;
   padding: 19px;
   border-radius: 22px;
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.07),
     0 10px 26px rgba(0, 0, 0, 0.05);
@@ -13664,15 +13664,15 @@ button.contentStatusItemButton:active {
 
 .contentContextPrimaryButton {
   border: 0;
-  background: linear-gradient(180deg, #f36d37, #e55620);
+  background: linear-gradient(180deg, #f36d37, #e9652f);
   color: #fff;
-  box-shadow: 0 9px 18px rgba(229, 86, 32, 0.18);
+  box-shadow: 0 9px 18px rgba(0, 0, 0, 0.18);
 }
 
 .contentContextSecondaryButton {
   border: 0;
   background: var(--bg-surface);
-  color: #e45a25;
+  color: #e9652f;
   box-shadow: inset 0 0 0 1px rgba(233, 101, 47, 0.36);
 }
 
@@ -13698,7 +13698,7 @@ button.contentStatusItemButton:active {
   min-height: 44px;
   border-color: rgba(233, 101, 47, 0.38);
   background: var(--bg-surface);
-  color: #e45a25;
+  color: #e9652f;
 }
 
 .contentAccessGranted {
@@ -13857,7 +13857,7 @@ button.contentStatusItemButton:active {
     left: 0;
     display: grid;
     padding: 9px 10px calc(9px + env(safe-area-inset-bottom));
-    background: rgba(255, 252, 248, 0.94);
+    background: rgba(241, 243, 244, 0.94);
     box-shadow:
       0 -1px 0 rgba(0, 0, 0, 0.07),
       0 -12px 30px rgba(0, 0, 0, 0.08);
@@ -13884,7 +13884,7 @@ button.contentStatusItemButton:active {
     text-align: center;
     text-decoration: none;
     cursor: pointer;
-    box-shadow: 0 10px 22px rgba(229, 86, 32, 0.22);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
     transition-property: background-color, scale, box-shadow;
     transition-duration: 150ms;
   }
@@ -13986,7 +13986,7 @@ button.contentStatusItemButton:active {
   padding: 20px;
   border: 0;
   border-radius: 22px;
-  background: rgba(255, 252, 248, 0.96);
+  background: rgba(241, 243, 244, 0.96);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.06),
     0 1px 2px -1px rgba(0, 0, 0, 0.06),
@@ -14145,14 +14145,14 @@ button.contentStatusItemButton:active {
   padding: 10px 9px 10px 7px;
   border-radius: 14px;
   background: var(--bg-hover);
-  box-shadow: inset 3px 0 0 #ee622d;
+  box-shadow: inset 3px 0 0 #000000;
 }
 
 .preparationStepsCompact li[data-status="CURRENT"] > span,
 .preparationStepsExpanded li[data-status="CURRENT"] > span {
-  background: #ed5e27;
+  background: #e9652f;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(220, 77, 24, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .preparationStepsCompact li > div,
@@ -14206,7 +14206,7 @@ button.contentStatusItemButton:active {
   border: 0;
   border-radius: 12px;
   background: transparent;
-  color: #e65321;
+  color: #e9652f;
   font: inherit;
   font-size: 0.82rem;
   font-weight: 850;
@@ -14323,7 +14323,7 @@ button.contentStatusItemButton:active {
   border: 0;
   background: var(--bg-surface);
   color: #e9652f;
-  box-shadow: 0 0 0 1px rgba(226, 84, 32, 0.38);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.38);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -14337,7 +14337,7 @@ button.contentStatusItemButton:active {
 
 .participantLinkSecondary:hover {
   background: var(--bg-subtle);
-  box-shadow: 0 0 0 1px rgba(226, 84, 32, 0.52);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.52);
 }
 }
 
@@ -14468,7 +14468,7 @@ button.contentStatusItemButton:active {
   min-height: 44px;
   background: var(--bg-surface);
   color: #e9652f;
-  box-shadow: 0 0 0 1px rgba(226, 84, 32, 0.32);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.32);
 }
 
 .participantAccessGranted {
@@ -14639,7 +14639,7 @@ button.contentStatusItemButton:active {
 /* UI palette contract: neutral content, Slovesto orange actions, no brown. */
 .page {
   background:
-    radial-gradient(circle at top left, rgba(255, 252, 248, 0.92), transparent 30%),
+    radial-gradient(circle at top left, rgba(241, 243, 244, 0.92), transparent 30%),
     linear-gradient(180deg, var(--bg-subtle) 0%, var(--border-neutral) 100%);
 }
 
@@ -14867,7 +14867,7 @@ button.contentStatusItemButton:active {
 }
 
 .editorSidebarCard {
-  background: rgba(255, 252, 248, 0.98);
+  background: rgba(241, 243, 244, 0.98);
   box-shadow:
     0 0 0 1px rgba(31, 41, 55, 0.08),
     0 1px 2px rgba(0, 0, 0, 0.04),
@@ -14885,14 +14885,14 @@ button.contentStatusItemButton:active {
   border: 0;
   background: linear-gradient(180deg, #f36d37 0%, #e65720 100%);
   color: #fff;
-  box-shadow: 0 10px 22px rgba(224, 81, 27, 0.22);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
 }
 
 @media (hover: hover) and (pointer: fine) {
 
 .recipientLinkAction:hover {
-  background: linear-gradient(180deg, #ef652f 0%, #df5f2e 100%);
-  box-shadow: 0 14px 28px rgba(224, 81, 27, 0.28);
+  background: linear-gradient(180deg, #e9652f 0%, #df5f2e 100%);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
 }
 }
 
@@ -15054,7 +15054,7 @@ button.contentStatusItemButton:active {
   @media (hover: hover) and (pointer: fine) {
 
   .tabLink:hover {
-    background: rgba(255, 241, 232, 0.72);
+    background: rgba(241, 243, 244, 0.72);
   }
   }
 
@@ -15131,12 +15131,12 @@ button.contentStatusItemButton:active {
     font-weight: 900;
     line-height: 1;
     font-variant-numeric: tabular-nums;
-    box-shadow: 0 0 0 2px rgba(255, 250, 245, 0.94);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.94);
   }
 
   .tabLinkActive .tabMobileBadge {
     background: var(--bg-surface);
-    box-shadow: 0 0 0 2px #fff0e7;
+    box-shadow: 0 0 0 2px #000000;
   }
 }
 /* Congratulations workspace: compact list, universal editor, filters and explicit ordering. */
@@ -15146,7 +15146,7 @@ button.contentStatusItemButton:active {
   min-width: 0;
   padding: 28px;
   border-radius: 28px;
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 16px 42px rgba(0, 0, 0, 0.08);
 }
 
@@ -15172,10 +15172,10 @@ button.contentStatusItemButton:active {
 .greetingOrderButton:active,
 .greetingEmptyState button:active,
 .greetingEmptyPrimary:active { scale: .96; }
-.congratulationsAddButton { flex: 0 0 auto; min-width: 218px; padding: 0 18px 0 16px; color: #fff; background: #e9652f; box-shadow: 0 8px 18px rgba(223, 86, 40, .22); white-space: nowrap; }
+.congratulationsAddButton { flex: 0 0 auto; min-width: 218px; padding: 0 18px 0 16px; color: #fff; background: #e9652f; box-shadow: 0 8px 18px rgba(0, 0, 0, .22); white-space: nowrap; }
 
-.mainGreetingCardNew { display: grid; gap: 14px; padding: 18px; border-radius: 22px; background: linear-gradient(145deg, rgba(255, 252, 248, 0.95), rgba(255, 252, 248, 0.98)); box-shadow: 0 0 0 1px rgba(225,105,53,.18); }
-.mainGreetingCardNewEmpty { background: rgba(250,247,242,.8); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1); }
+.mainGreetingCardNew { display: grid; gap: 14px; padding: 18px; border-radius: 22px; background: linear-gradient(145deg, rgba(241, 243, 244, 0.95), rgba(241, 243, 244, 0.98)); box-shadow: 0 0 0 1px rgba(0, 0, 0, .18); }
+.mainGreetingCardNewEmpty { background: rgba(241, 243, 244, .8); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1); }
 .mainGreetingCardNewHeading { display: flex; align-items: center; gap: 12px; }
 .mainGreetingCardNewHeading > span { display: grid; place-items: center; width: 38px; height: 38px; color: #e9652f; font-size: 1.65rem; }
 .mainGreetingCardNewHeading h3 { margin: 0; color: var(--text-primary); font-size: 1rem; }
@@ -15185,7 +15185,7 @@ button.contentStatusItemButton:active {
 .mainGreetingCardNewContent > div > span { display: block; margin-top: 2px; color: var(--text-secondary); font-size: .84rem; }
 .mainGreetingCardNewContent p { display: -webkit-box; margin: 3px 0 0; overflow: hidden; color: var(--text-primary); line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .mainGreetingCardNewContent button,
-.mainGreetingCardNewMissing button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; color: #e9652f; background: var(--bg-subtle); box-shadow: 0 0 0 1px rgba(225,105,53,.24); font: inherit; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.mainGreetingCardNewMissing button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; color: #e9652f; background: var(--bg-subtle); box-shadow: 0 0 0 1px rgba(0, 0, 0, .24); font: inherit; font-weight: 700; white-space: nowrap; cursor: pointer; }
 .mainGreetingCardNewMissing { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 4px 2px 2px 50px; }
 .mainGreetingCardNewMissing strong { color: var(--text-primary); }
 .mainGreetingCardNewMissing p { margin: 4px 0 0; color: var(--text-secondary); font-size: .9rem; text-wrap: pretty; }
@@ -15206,14 +15206,14 @@ button.contentStatusItemButton:active {
 .orderEditorIndex,
 .contributionEditorCounter { font-variant-numeric: tabular-nums; }
 .greetingDesktopFilters .greetingFilterActive,
-.greetingMobileFilters .greetingFilterActive { color: #e9652f; background: var(--bg-hover); box-shadow: inset 0 0 0 1px rgba(225,101,47,.28); font-weight: 700; }
+.greetingMobileFilters .greetingFilterActive { color: #e9652f; background: var(--bg-hover); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .28); font-weight: 700; }
 .greetingMobileFilters { display: none; }
-.greetingOrderButton { padding: 0 16px; color: #e9652f; background: var(--bg-surface); box-shadow: 0 0 0 1px rgba(225,101,47,.25), 0 3px 10px rgba(0, 0, 0, 0.04); white-space: nowrap; }
+.greetingOrderButton { padding: 0 16px; color: #e9652f; background: var(--bg-surface); box-shadow: 0 0 0 1px rgba(0, 0, 0, .25), 0 3px 10px rgba(0, 0, 0, 0.04); white-space: nowrap; }
 
 .greetingCards { display: grid; gap: 12px; }
 .greetingCard { overflow: hidden; border-radius: 20px; background: var(--bg-surface); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 4px 14px rgba(0, 0, 0, 0.035); transition-property: box-shadow, transform, background-color; transition-duration: 160ms; transition-timing-function: ease; }
-.greetingCardExpanded { box-shadow: 0 0 0 1px rgba(225,101,47,.2), 0 10px 24px rgba(0, 0, 0, 0.07); }
-.greetingCardHighlighted { transform: translateY(-2px); box-shadow: 0 0 0 2px rgba(225,101,47,.45), 0 12px 28px rgba(225,101,47,.12); }
+.greetingCardExpanded { box-shadow: 0 0 0 1px rgba(0, 0, 0, .2), 0 10px 24px rgba(0, 0, 0, 0.07); }
+.greetingCardHighlighted { transform: translateY(-2px); box-shadow: 0 0 0 2px rgba(0, 0, 0, .45), 0 12px 28px rgba(0, 0, 0, .12); }
 .greetingCardSummary { display: grid; grid-template-columns: 38px 48px minmax(0,1fr) 44px; align-items: center; gap: 12px; width: 100%; min-height: 88px; padding: 11px 12px 11px 16px; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
 .greetingCardIndex { color: var(--text-secondary); font-size: .86rem; font-weight: 700; text-align: center; }
 .greetingCardAvatar,
@@ -15249,7 +15249,7 @@ button.contentStatusItemButton:active {
 .greetingEmptyState p { max-width: 470px; margin: 0; line-height: 1.55; text-wrap: pretty; }
 .greetingEmptyState > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 8px; }
 .greetingEmptyState button,
-.greetingEmptyPrimary { padding: 0 17px; color: #e9652f; background: var(--bg-surface); box-shadow: 0 0 0 1px rgba(225,101,47,.24); }
+.greetingEmptyPrimary { padding: 0 17px; color: #e9652f; background: var(--bg-surface); box-shadow: 0 0 0 1px rgba(0, 0, 0, .24); }
 .greetingToast { position: fixed; z-index: 1300; left: 50%; bottom: max(24px,env(safe-area-inset-bottom)); min-height: 44px; padding: 12px 18px; border-radius: 14px; color: #fff; background: #3f7d49; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22); font-weight: 700; transform: translateX(-50%); }
 
 .contributionEditorBackdrop,
@@ -15265,7 +15265,7 @@ button.contentStatusItemButton:active {
 .confirmationActions button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 13px; font: inherit; font-weight: 700; cursor: pointer; transition-property: scale, background-color, box-shadow; transition-duration: 150ms; transition-timing-function: ease-out; }
 .confirmationActions button:active { scale: .96; }
 .confirmationActions button:disabled { opacity: .5; cursor: not-allowed; }
-.confirmationPrimary { color: #fff; background: var(--m-accent); box-shadow: 0 8px 18px rgba(225,101,47,.2); }
+.confirmationPrimary { color: #fff; background: var(--m-accent); box-shadow: 0 8px 18px rgba(0, 0, 0, .2); }
 .confirmationSecondary { color: var(--text-secondary); background: var(--bg-subtle); }
 .confirmationDanger { color: #a64132; background: var(--bg-surface); box-shadow: inset 0 0 0 1px rgba(166,65,50,.28); }
 .confirmationActions button:disabled { color: var(--text-secondary); background: var(--border-neutral); box-shadow: none; opacity: 1; }
@@ -15503,7 +15503,7 @@ button.contentStatusItemButton:active {
 .contributionEditorMessage textarea { min-height: 180px; padding: 13px; line-height: 1.55; resize: vertical; }
 .contributionEditorIdentity input:focus,
 .contributionEditorMessage textarea:focus,
-.orderEditorMovePanel input:focus { box-shadow: inset 0 0 0 2px rgba(225,101,47,.65), 0 0 0 3px rgba(225,101,47,.1); }
+.orderEditorMovePanel input:focus { box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .65), 0 0 0 3px rgba(0, 0, 0, .1); }
 .contributionEditorFieldInvalid input,
 .contributionEditorFieldInvalid textarea { box-shadow: inset 0 0 0 1.5px #e9652f; }
 .contributionEditorFieldInvalid input:focus,
@@ -15526,7 +15526,7 @@ button.contentStatusItemButton:active {
 }
 .contributionEditorAiUndo button:active { scale: .96; }
 .contributionEditorAiUndo button:focus-visible { outline: 3px solid rgba(233,101,47,.24); outline-offset: 2px; }
-.contributionEditorAiMode { min-width: 0; min-height: max-content; overflow: visible; border-radius: 18px; box-shadow: 0 0 0 1px rgba(225,101,47,.13); }
+.contributionEditorAiMode { min-width: 0; min-height: max-content; overflow: visible; border-radius: 18px; box-shadow: 0 0 0 1px rgba(0, 0, 0, .13); }
 .organizerAi { display: grid; gap: 18px; min-width: 0; padding: 20px; border-radius: 18px; background: var(--bg-surface); color: var(--text-primary); }
 .organizerAiHeader { display: grid; grid-template-columns: 42px minmax(0,1fr); align-items: start; gap: 12px; }
 .organizerAiHeader h3,
@@ -15640,7 +15640,7 @@ button.contentStatusItemButton:active {
 .contributionEditorSubmit,
 .contributionEditorDelete { min-height: 44px; padding: 0 16px; border: 0; border-radius: 13px; font: inherit; font-weight: 700; white-space: nowrap; cursor: pointer; transition-property: scale, background-color; transition-duration: 150ms; }
 .contributionEditorCancel { color: var(--text-secondary); background: var(--bg-subtle); }
-.contributionEditorSubmit { flex-shrink: 0; min-width: 178px; color: #fff; background: #e9652f; box-shadow: 0 8px 18px rgba(225,101,47,.2); }
+.contributionEditorSubmit { flex-shrink: 0; min-width: 178px; color: #fff; background: #e9652f; box-shadow: 0 8px 18px rgba(0, 0, 0, .2); }
 .contributionEditorDelete { padding-inline: 8px; color: #a64132; background: transparent; }
 .contributionEditorCancel:active,
 .contributionEditorSubmit:active,
@@ -15655,7 +15655,7 @@ button.contentStatusItemButton:active {
 .orderEditorHeader p { max-width: 600px; margin: 6px 0 0; color: var(--text-secondary); text-wrap: pretty; }
 .orderEditorList { display: grid; flex: 1 1 auto; grid-auto-rows: max-content; align-content: start; gap: 8px; min-height: 0; padding: 16px 20px; overflow-y: auto; overscroll-behavior: contain; }
 .orderEditorRow { position: relative; display: grid; grid-template-columns: 44px 36px 42px minmax(0,1fr) auto; align-items: center; gap: 10px; min-height: 72px; padding: 9px 12px; border-radius: 16px; background: var(--bg-surface); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08); transition-property: transform, box-shadow, opacity; transition-duration: 160ms; }
-.orderEditorRowDragging { min-height: 72px; background: rgba(255, 241, 232, 0.72); box-shadow: inset 0 0 0 2px rgba(233,101,47,.42); }
+.orderEditorRowDragging { min-height: 72px; background: rgba(241, 243, 244, 0.72); box-shadow: inset 0 0 0 2px rgba(233,101,47,.42); }
 .orderEditorRowDragging > * { visibility: hidden; }
 .orderEditorRowDragging::after { position: absolute; inset: 8px; display: grid; place-items: center; border: 1px dashed rgba(233,101,47,.58); border-radius: 11px; color: var(--m-accent); content: "Место вставки"; font-size: .78rem; font-weight: 800; }
 .orderEditorRowDropTarget { box-shadow: 0 0 0 2px rgba(233,101,47,.28), 0 8px 20px rgba(0, 0, 0, 0.06); }
@@ -15679,7 +15679,7 @@ button.contentStatusItemButton:active {
 .orderEditorQuickActions { grid-column: 1 / -1; display: flex; gap: 8px; }
 .orderEditorQuickActions button,
 .orderEditorInlineField button,
-.orderEditorCandidates button { min-height: 40px; border: 0; border-radius: 10px; color: #e9652f; background: var(--bg-surface); box-shadow: 0 0 0 1px rgba(225,101,47,.18); font: inherit; font-weight: 700; cursor: pointer; }
+.orderEditorCandidates button { min-height: 40px; border: 0; border-radius: 10px; color: #e9652f; background: var(--bg-surface); box-shadow: 0 0 0 1px rgba(0, 0, 0, .18); font: inherit; font-weight: 700; cursor: pointer; }
 .orderEditorQuickActions button { padding: 0 12px; }
 .orderEditorInlineField { display: grid; grid-template-columns: minmax(80px,1fr) auto; gap: 7px; }
 .orderEditorInlineField button { min-width: 116px; padding: 0 10px; white-space: nowrap; }
@@ -15709,7 +15709,7 @@ button.contentStatusItemButton:active {
 .orderMoveDialog input:focus-visible { box-shadow: inset 0 0 0 2px var(--m-accent), 0 0 0 3px rgba(233,101,47,.12); }
 .orderMoveError { color: #e9652f; font-size: .8rem; font-weight: 600; }
 .orderEditorToast { position: fixed; z-index: 1700; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 16px; max-width: calc(100% - 32px); padding: 12px 14px 12px 16px; border-radius: 14px; color: #fff; background: var(--text-primary); box-shadow: 0 14px 38px rgba(0, 0, 0, 0.24); transform: translateX(-50%); animation: orderEditorToastLifecycle 3000ms cubic-bezier(.2,0,0,1) both; }
-.orderEditorToast button { min-height: 36px; padding: 0 10px; border: 0; border-radius: 9px; color: #ffb28f; background: transparent; font: inherit; font-weight: 800; cursor: pointer; }
+.orderEditorToast button { min-height: 36px; padding: 0 10px; border: 0; border-radius: 9px; color: #e9652f; background: transparent; font: inherit; font-weight: 800; cursor: pointer; }
 
 @keyframes orderEditorToastLifecycle {
   0% { opacity: 0; transform: translate(-50%, 8px); }
@@ -15752,7 +15752,7 @@ button.contentStatusItemButton:active {
   cursor: not-allowed;
 }
 .contributionEditorSubmit[aria-busy="true"],
-.orderEditorSave[aria-busy="true"] { color: #fff; background: var(--m-accent); box-shadow: 0 8px 18px rgba(225,101,47,.2); }
+.orderEditorSave[aria-busy="true"] { color: #fff; background: var(--m-accent); box-shadow: 0 8px 18px rgba(0, 0, 0, .2); }
 .greetingCardSummary:active { background: var(--bg-hover); }
 .contributionEditorClose,
 .orderEditorHeader > button,
@@ -15811,7 +15811,7 @@ button.contentStatusItemButton:active {
   .greetingMobileFilters button:hover { color: var(--m-accent); background: var(--bg-hover); box-shadow: inset 0 0 0 1px rgba(233,101,47,.28); }
   .congratulationsAddButton:hover,
   .contributionEditorSubmit:hover:not(:disabled):not([data-inactive="true"]),
-  .orderEditorSave:hover:not(:disabled) { background: var(--m-accent-active); box-shadow: 0 10px 22px rgba(225,101,47,.28); transform: translateY(-1px); }
+  .orderEditorSave:hover:not(:disabled) { background: var(--m-accent-active); box-shadow: 0 10px 22px rgba(0, 0, 0, .28); transform: translateY(-1px); }
   .greetingOrderButton:hover,
   .greetingCardActions button:hover,
   .mainGreetingCardNewContent button:hover,
@@ -15828,7 +15828,7 @@ button.contentStatusItemButton:active {
   .contributionEditorIdentity label:not(.contributionEditorFieldInvalid) input:hover,
   .contributionEditorMessage:not(.contributionEditorFieldInvalid) textarea:hover,
   .orderMoveDialog input:hover { box-shadow: inset 0 0 0 1px rgba(233,101,47,.4); }
-  .confirmationPrimary:hover:not(:disabled) { background: var(--m-accent-active); box-shadow: 0 10px 22px rgba(225,101,47,.26); }
+  .confirmationPrimary:hover:not(:disabled) { background: var(--m-accent-active); box-shadow: 0 10px 22px rgba(0, 0, 0, .26); }
   .confirmationSecondary:hover:not(:disabled) { color: var(--m-accent); background: var(--bg-hover); }
   .confirmationDanger:hover:not(:disabled) { color: #963c2e; background: var(--bg-hover); box-shadow: inset 0 0 0 1px rgba(166,65,50,.48); }
 }
@@ -16017,8 +16017,8 @@ button.contentStatusItemButton:active {
   border: 0;
   border-radius: 28px;
   background:
-    radial-gradient(circle at 0 0, rgba(255, 252, 248, 0.92), transparent 32%),
-    rgba(255, 252, 248, 0.96);
+    radial-gradient(circle at 0 0, rgba(241, 243, 244, 0.92), transparent 32%),
+    rgba(241, 243, 244, 0.96);
   box-shadow:
     0 0 0 1px rgba(0,0,0,.055),
     0 1px 2px -1px rgba(0,0,0,.06),
@@ -16040,9 +16040,9 @@ button.contentStatusItemButton:active {
   place-items: center;
   border-radius: 16px;
   background: var(--bg-hover);
-  color: #ec622c;
+  color: #e9652f;
   font-size: 1.4rem;
-  box-shadow: inset 0 0 0 1px rgba(236,98,44,.08);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08);
 }
 
 .giftPollOnboardingHeading {
@@ -16095,7 +16095,7 @@ button.contentStatusItemButton:active {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   overflow: hidden;
   border-radius: 22px;
-  background: rgba(255, 252, 248, 0.5);
+  background: rgba(241, 243, 244, 0.5);
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.09),
     0 10px 28px rgba(0, 0, 0, 0.035);
@@ -16118,7 +16118,7 @@ button.contentStatusItemButton:active {
   right: 0;
   bottom: 18px;
   width: 1px;
-  background: rgba(236,98,44,.16);
+  background: rgba(233, 101, 47, .16);
   content: "";
 }
 
@@ -16129,7 +16129,7 @@ button.contentStatusItemButton:active {
   place-items: center;
   border-radius: 999px;
   background: var(--bg-hover);
-  color: #e85822;
+  color: #e9652f;
   font-size: .86rem;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
@@ -16139,7 +16139,7 @@ button.contentStatusItemButton:active {
 .giftPollBenefitGrid article > span,
 .giftPollBenefitList article > span {
   display: grid;
-  color: #ed602a;
+  color: #e9652f;
 }
 
 .giftPollStepIcon {
@@ -16237,12 +16237,12 @@ button.contentStatusItemButton:active {
   border: 0;
   background: linear-gradient(180deg,#f36d37,#e65720);
   color: #fff;
-  box-shadow: 0 10px 22px rgba(224,81,27,.2);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, .2);
 }
 
 @media (hover: hover) and (pointer: fine) {
 
-.giftPollEnableButton:hover:not(:disabled) { background: linear-gradient(180deg,#f57642,#df541c); box-shadow: 0 13px 26px rgba(224,81,27,.25); }
+.giftPollEnableButton:hover:not(:disabled) { background: #df5f2e; box-shadow: 0 13px 26px rgba(0, 0, 0, .25); }
 }
 .giftPollEnableButton:active:not(:disabled),
 .giftPollHowButton:active,
@@ -16278,7 +16278,7 @@ button.contentStatusItemButton:active {
 
 @media (hover: hover) and (pointer: fine) {
 
-.giftPollHowButton:hover { background: var(--bg-hover); color: #d94f1d; box-shadow: inset 0 0 0 1px rgba(233,101,47,.48), 0 7px 16px rgba(224,81,27,.07); }
+.giftPollHowButton:hover { background: var(--bg-hover); color: #e9652f; box-shadow: inset 0 0 0 1px rgba(233,101,47,.48), 0 7px 16px rgba(0, 0, 0, .07); }
 }
 .giftPollHowButton svg { width: 21px; height: 21px; }
 .giftPollEnableButton:focus-visible,
@@ -16302,7 +16302,7 @@ button.contentStatusItemButton:active {
 .giftPollBenefitsAccordion {
   overflow: hidden;
   border-radius: 22px;
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
   box-shadow:
     0 0 0 1px rgba(0,0,0,.055),
     0 10px 26px rgba(0, 0, 0, 0.045);
@@ -16342,9 +16342,9 @@ button.contentStatusItemButton:active {
 
 @media (hover: hover) and (pointer: fine) {
 
-.giftPollBenefitsTrigger:hover { background: rgba(255, 241, 232, 0.62); color: #d94f1d; }
+.giftPollBenefitsTrigger:hover { background: rgba(241, 243, 244, 0.62); color: #e9652f; }
 }
-.giftPollBenefitsTrigger:active { background: rgba(255,232,220,.72); }
+.giftPollBenefitsTrigger:active { background: rgba(241, 243, 244, .72); }
 
 .giftPollBenefitsTriggerCopy {
   display: grid;
@@ -16419,7 +16419,7 @@ button.contentStatusItemButton:active {
 .giftPollBenefitsDesktop,
 .giftPollBenefitsMobile {
   border-radius: 24px;
-  background: rgba(255, 252, 248, 0.94);
+  background: rgba(241, 243, 244, 0.94);
   box-shadow:
     0 0 0 1px rgba(0,0,0,.05),
     0 12px 30px rgba(0, 0, 0, 0.05);
@@ -16430,7 +16430,7 @@ button.contentStatusItemButton:active {
 .giftPollBenefitGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
 .giftPollBenefitGrid article,
 .giftPollBenefitList article { display: grid; grid-template-columns: 38px minmax(0,1fr); gap: 12px; min-width: 0; }
-.giftPollBenefitGrid article { padding: 17px; border-radius: 17px; background: rgba(255, 252, 248, 0.56); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.075); }
+.giftPollBenefitGrid article { padding: 17px; border-radius: 17px; background: rgba(241, 243, 244, 0.56); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.075); }
 .giftPollBenefitGrid article > span,
 .giftPollBenefitList article > span { width: 38px; height: 38px; place-items: center; color: #32964d; }
 .giftPollBenefitGrid h3,
@@ -16474,12 +16474,12 @@ button.contentStatusItemButton:active {
 .giftPollInfoHeader button:active { scale: .96; }
 .giftPollInfoHeader svg { width: 20px; height: 20px; }
 .giftPollInfoList { display: grid; gap: 10px; min-height: 0; margin: 0; padding: 0 3px 0 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
-.giftPollInfoList li { display: grid; grid-template-columns: 32px minmax(0,1fr); align-items: start; gap: 11px; padding: 12px; border-radius: 14px; background: rgba(255, 252, 248, 0.64); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.07); }
-.giftPollInfoList li > span { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 999px; background: var(--bg-hover); color: #e85822; font-size: .78rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.giftPollInfoList li { display: grid; grid-template-columns: 32px minmax(0,1fr); align-items: start; gap: 11px; padding: 12px; border-radius: 14px; background: rgba(241, 243, 244, 0.64); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.07); }
+.giftPollInfoList li > span { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 999px; background: var(--bg-hover); color: #e9652f; font-size: .78rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 .giftPollInfoList p { margin: 5px 0 0; color: var(--text-primary); font-size: .9rem; line-height: 1.5; text-wrap: pretty; }
-.giftPollInfoDone { width: 100%; padding: 0 18px; border: 0; background: #ec622c; color: #fff; }
+.giftPollInfoDone { width: 100%; padding: 0 18px; border: 0; background: #e9652f; color: #fff; }
 @media (hover: hover) and (pointer: fine) {
-.giftPollInfoDone:hover { background: #df541c; box-shadow: 0 9px 20px rgba(224,81,27,.2); }
+.giftPollInfoDone:hover { background: #df5f2e; box-shadow: 0 9px 20px rgba(0, 0, 0, .2); }
 }
 
 .giftStateHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
@@ -16562,7 +16562,7 @@ button.contentStatusItemButton:active {
 .giftPollPage { display: grid; align-content: start; gap: 20px; }
 
 .giftPollOverview,
-.giftPollOptionsBlock { display: grid; gap: 18px; padding: 24px 26px; border-radius: 26px; background: rgba(255, 252, 248, 0.92); box-shadow: 0 16px 42px rgba(0, 0, 0, 0.08); }
+.giftPollOptionsBlock { display: grid; gap: 18px; padding: 24px 26px; border-radius: 26px; background: rgba(241, 243, 244, 0.92); box-shadow: 0 16px 42px rgba(0, 0, 0, 0.08); }
 
 .giftPollOverviewTop { display: flex; align-items: flex-start; gap: 16px; }
 .giftPollOverviewIcon { display: grid; width: 46px; height: 46px; flex: 0 0 auto; place-items: center; border-radius: 14px; background: var(--bg-hover); color: #ec662f; }
@@ -16582,7 +16582,7 @@ button.contentStatusItemButton:active {
 }
 .giftPollPreviewButton:disabled { cursor: default; opacity: .5; }
 
-.giftPollSummary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; align-items: center; gap: 12px; padding: 14px 18px; border: 1px solid var(--border-neutral); border-radius: 18px; background: rgba(255, 252, 248, 0.6); }
+.giftPollSummary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; align-items: center; gap: 12px; padding: 14px 18px; border: 1px solid var(--border-neutral); border-radius: 18px; background: rgba(241, 243, 244, 0.6); }
 .giftPollSummaryItem { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .giftPollSummaryItem > span:last-child { display: grid; gap: 2px; min-width: 0; }
 .giftPollSummaryItem small { color: var(--text-secondary); font-size: .72rem; }
@@ -16647,8 +16647,8 @@ button.contentStatusItemButton:active {
 .giftPollOptionCardActions .actionMenuTrigger:hover { border-color: rgba(233,101,47,.4); background: var(--bg-hover); }
 }
 
-.giftPollPage > .giftPollLaunchFooter { margin-top: 0; padding: 20px 24px; border: 0; border-radius: 26px; background: rgba(255, 252, 248, 0.92); box-shadow: 0 16px 42px rgba(0, 0, 0, 0.08); }
-.giftPollPage > .giftPollDecisionPanel { padding: 20px 24px; border-radius: 26px; background: rgba(255, 252, 248, 0.92); box-shadow: 0 16px 42px rgba(0, 0, 0, 0.08); }
+.giftPollPage > .giftPollLaunchFooter { margin-top: 0; padding: 20px 24px; border: 0; border-radius: 26px; background: rgba(241, 243, 244, 0.92); box-shadow: 0 16px 42px rgba(0, 0, 0, 0.08); }
+.giftPollPage > .giftPollDecisionPanel { padding: 20px 24px; border-radius: 26px; background: rgba(241, 243, 244, 0.92); box-shadow: 0 16px 42px rgba(0, 0, 0, 0.08); }
 
 .giftPollModal { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; width: min(100%, 600px); max-height: min(760px, calc(100dvh - 40px)); overflow: hidden; border-radius: 26px; background: var(--bg-surface); box-shadow: 0 26px 70px rgba(0, 0, 0, 0.24); }
 .giftPollModal:focus { outline: none; }
@@ -16685,7 +16685,7 @@ button.contentStatusItemButton:active {
 .giftPollOpenCheck input { width: 18px; height: 18px; flex: 0 0 auto; margin-top: 2px; accent-color: #ec662f; }
 
 .giftPollImportStep { display: grid; gap: 12px; }
-.giftPollImportStep textarea { min-height: 110px; padding: 12px; border: 1px solid var(--border-neutral); border-radius: 13px; background: rgba(255, 252, 248, 0.78); color: var(--text-primary); font: inherit; resize: vertical; }
+.giftPollImportStep textarea { min-height: 110px; padding: 12px; border: 1px solid var(--border-neutral); border-radius: 13px; background: rgba(241, 243, 244, 0.78); color: var(--text-primary); font: inherit; resize: vertical; }
 .giftPollImportStep textarea:focus-visible { border-color: rgba(236,102,47,.6); outline: none; }
 .giftPollImportStep .giftPollImportActions { display: flex; flex-wrap: wrap; gap: 10px; }
 .giftPollImportStep .giftPollImportButton { border: 0; background: #ec662f; color: #fff; box-shadow: 0 9px 18px rgba(233,101,47,.2); }
@@ -16732,9 +16732,9 @@ button.contentStatusItemButton:active {
 /* Gift poll rework: focused ordering flow, separate voter counters and orange actions. */
 .confirmationActions:has(> button:nth-child(3)) { display: grid; width: min(100%,230px); justify-self: end; }
 .confirmationActions:has(> button:nth-child(3)) button { width: 100%; }
-.confirmationDanger { color: #e9652f; background: var(--bg-surface); box-shadow: inset 0 0 0 1px rgba(225,101,47,.34); }
+.confirmationDanger { color: #e9652f; background: var(--bg-surface); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .34); }
 @media (hover: hover) and (pointer: fine) {
-.confirmationDanger:hover:not(:disabled) { color: #d95728; background: var(--bg-hover); box-shadow: inset 0 0 0 1px rgba(225,101,47,.58); }
+.confirmationDanger:hover:not(:disabled) { color: #d95728; background: var(--bg-hover); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .58); }
 }
 
 .giftPollSummary { grid-template-columns: repeat(4,minmax(0,1fr)) auto; }
@@ -16762,10 +16762,10 @@ button.contentStatusItemButton:active {
 @media (hover: hover) and (pointer: fine) {
 .giftPollModalCancel:hover:not(:disabled) { border-color: rgba(236,102,47,.28); background: var(--bg-hover); color: #d95728; }
 }
-.giftPollModalDelete { min-height: 44px; padding: 0 13px; border: 0; border-radius: 12px; background: var(--bg-surface); color: #e9652f; box-shadow: inset 0 0 0 1px rgba(225,101,47,.32); font: inherit; font-weight: 800; cursor: pointer; transition-property: color,background-color,box-shadow,scale; transition-duration: 160ms; }
-.giftPollModalDelete:focus-visible { color: #d95728; background: var(--bg-hover); box-shadow: inset 0 0 0 1px rgba(225,101,47,.58); outline: none; }
+.giftPollModalDelete { min-height: 44px; padding: 0 13px; border: 0; border-radius: 12px; background: var(--bg-surface); color: #e9652f; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .32); font: inherit; font-weight: 800; cursor: pointer; transition-property: color,background-color,box-shadow,scale; transition-duration: 160ms; }
+.giftPollModalDelete:focus-visible { color: #d95728; background: var(--bg-hover); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .58); outline: none; }
 @media (hover: hover) and (pointer: fine) {
-.giftPollModalDelete:hover:not(:disabled) { color: #d95728; background: var(--bg-hover); box-shadow: inset 0 0 0 1px rgba(225,101,47,.58); outline: none; }
+.giftPollModalDelete:hover:not(:disabled) { color: #d95728; background: var(--bg-hover); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .58); outline: none; }
 }
 .giftPollModalDelete:active, .giftPollModalCancel:active, .giftPollModalSubmit:active { scale: .96; }
 .giftPollModalDelete:disabled { opacity: .55; cursor: default; }
@@ -16971,9 +16971,9 @@ button.contentStatusItemButton:active {
 @media (hover: hover) and (pointer: fine) {
 .giftPollPhotoBlockActionMuted:hover { background: var(--bg-subtle); border-color: var(--border-neutral); }
 }
-.giftPollPhotoBlockActionDanger { border-color: rgba(210,88,55,.32); color: #e9652f; }
+.giftPollPhotoBlockActionDanger { border-color: rgba(233, 101, 47, .32); color: #e9652f; }
 @media (hover: hover) and (pointer: fine) {
-.giftPollPhotoBlockActionDanger:hover { background: var(--bg-hover); border-color: rgba(210,88,55,.5); }
+.giftPollPhotoBlockActionDanger:hover { background: var(--bg-hover); border-color: rgba(233, 101, 47, .5); }
 }
 .giftPollPhotoBlockAction:active,
 .giftPollPhotoBlockActionMuted:active,

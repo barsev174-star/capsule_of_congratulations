@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "codex/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: capsule_ci
+          POSTGRES_USER: capsule
+          POSTGRES_PASSWORD: capsule_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U capsule -d capsule_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://capsule:capsule_ci_password@127.0.0.1:5432/capsule_ci
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+      PUBLIC_SHARE_TOKEN_SECRET: ci-public-share-token-secret-change-me
+      ORGANIZER_SESSION_SECRET: ci-organizer-session-secret-change-me
+      ADMIN_SESSION_SECRET: ci-admin-session-secret-change-me
+      REMINDER_TOKEN_SECRET: ci-reminder-token-secret-change-me
+      CRON_SECRET: ci-cron-secret-change-me
+      AI_PROVIDER: mock
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:migrate
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:coverage
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run smoke:ci
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cross-browser-smoke-screenshots
+          path: artifacts/ci-smoke
+          if-no-files-found: ignore
+          retention-days: 14
+      - run: npm audit --omit=dev --audit-level=moderate
+      - run: npm audit --audit-level=moderate
