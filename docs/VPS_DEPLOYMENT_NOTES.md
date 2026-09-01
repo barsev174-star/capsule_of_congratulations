@@ -1,6 +1,6 @@
 # VPS deployment notes
 
-Актуально на 1 сентября 2026 года. Это основной документ по production-инфраструктуре Slovesto.
+Актуально на 2 сентября 2026 года. Это основной документ по production-инфраструктуре Slovesto.
 
 ## Текущий production-статус
 
@@ -12,7 +12,9 @@
 - Security baseline от 26 августа 2026 года: Next.js `16.3.3`, sharp `0.35.3`, PostCSS `8.5.23`, nanoid `3.3.18`; `npm audit` и `npm audit --omit=dev` возвращают `0 vulnerabilities`. Sharp объявлен прямой production-зависимостью, поскольку используется runtime-маршрутами фотографий, OG и экспортов.
 - 26 августа опубликована третья SEO-страница `/gruppovaya-otkrytka/kollege` (код `a459323`) с шаблоном «Вместе», анимациями и компактными SEO-ссылками главной. Web/PostgreSQL healthy; публичные страницы, OG, canonical и sitemap проверены.
 - 1 сентября опубликован выбор `template + reveal` (`750def2`), применена миграция `0036_gift_animation.sql`; web/PostgreSQL healthy. Полный отчёт в начале `DELIVERY_LOG.md`.
-- Security/CI-пакет от 1 сентября пока локальный: до отдельной выкладки security headers, rate limits, `/api/health` и нормализация новых uploads на production не действуют.
+- 2 сентября опубликован security/manage-пакет `b7f8147`: применены миграции `0037`–`0038`, включены security headers, rate limits, `/api/health`, нормализация новых uploads и actor-check для manage/preview/API. Web/PostgreSQL healthy; обязательные health/operations smoke и анонимный manage-gate прошли.
+- Предрелизная backup-пара: `/home/deploy/capsule/backups/postgres-20260901-220136.sql.gz` и `uploads-20260901-220136.tar.gz`; checksum и контрольное восстановление успешны (36 миграций до выпуска). Rollback-образ: `capsule-web:rollback-before-manage-access-20260902`, исходный image `sha256:aa7914a20e14afe108ff73016300c6fc8d1643bc2b34abefe2ac2cf48e992df6`.
+- Рабочий image после runtime-packaging hotfix: `sha256:8554ed65895f550b490e2daf8ef305ffa09e861f851c53ee0af8f9361affb33d`. После удаления только build-cache диск занимает 82%.
 
 Рабочие контейнеры:
 

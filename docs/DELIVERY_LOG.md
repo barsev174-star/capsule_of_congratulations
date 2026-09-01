@@ -4,15 +4,17 @@
 
 1. Production runner теперь включает `src/lib/security`, который импортируется из `next.config.ts` при `next start`; без него собранный образ завершался с `Cannot find module './src/lib/security/headers'`.
 2. Ошибка обнаружена штатным container healthcheck сразу после первой замены web. Миграции `0037`–`0038` к этому моменту уже были применены, поэтому небезопасный откат только кода не выполнялся; выпущен совместимый hotfix поверх новой схемы.
+3. Hotfix `b7f8147` опубликован в `main` и рабочей ветке. Итоговый image `sha256:8554ed65895f550b490e2daf8ef305ffa09e861f851c53ee0af8f9361affb33d` запущен и healthy; повторный migration-прогон подтвердил схему до `0038`.
+4. Production health-check, provider policy, security headers, локальный Caddy-маршрут и анонимный manage-gate прошли. В свежих логах web нет новых `error/exception/fatal`; operations-check подтвердил свежие backups и диск 82%.
 
-## Update 2026-09-01 Warm UI Palette Restoration — Local Only
+## Update 2026-09-01 Warm UI Palette Restoration — Deployed 2026-09-02
 
 1. После сравнения экранов редактора отменены все цветовые изменения из `f98715e`: нейтрально-серые поверхности убирали бумажное тепло и визуальный уют продукта.
 2. Все 29 затронутых CSS-файлов возвращены к палитре до `f98715e`. Security headers, rate limits, безопасная обработка фото, health checks, CI, coverage и тесты не откатывались.
 3. В `manage-page.module.css` цветовые строки восстановлены отдельным reverse patch поверх параллельной работы над organizer ownership/manage access; новые изменения безопасности и доступа сохранены.
 4. Расширение `scripts/check-ui-colors.mjs` и сопутствующее описание отменены, чтобы автоматический fix повторно не заменил тёплые поверхности на серые.
 
-## Update 2026-09-01 Organizer Ownership And Manage Access — Local Only
+## Update 2026-09-01 Organizer Ownership And Manage Access — Deployed 2026-09-02
 
 1. `/manage/{cardId}` и `/preview/{cardId}` переведены на постоянный UUID, который больше не является credential. Приватные данные загружаются только после единого actor-check.
 2. Organizer получает доступ по 30-дневной passwordless-сессии с совпадающим email; admin/moderator имеют служебный bypass с явным banner, support исключён. Cookie admin расширена на path `/`, старый `/admin` cookie очищается при входе и выходе.
@@ -20,7 +22,7 @@
 4. Recovery-секреты отделены от URL, хранятся как SHA-256 и поддерживают rotate/revoke. Миграция `0038` переносит и очищает legacy plaintext `manage_token`; порядок deploy и rollback описан отдельно.
 5. Все manage actions и API защищены тем же actor-check. Перед изменением поздравления проверяется его принадлежность авторизованной открытке, закрывая межкарточный IDOR.
 6. Ссылки кабинета и админки больше не раскрывают recovery-токены. Подробная модель, миграции и smoke: `docs/MANAGE_ACCESS_SECURITY_2026-09-01.md`.
-7. Пакет локальный; production deploy и миграции ещё не выполнялись.
+7. Пакет опубликован и развёрнут 02.09.2026; production применил миграции `0037`–`0038`.
 8. Блок организатора уплотнён: подтверждённый email показан как статическое значение, а смена владельца вынесена в отдельный диалог с явным описанием подтверждения.
 9. Recovery-действия переименованы в «Создать новую резервную ссылку» и «Отозвать все резервные ссылки», разведены по визуальному тону и требуют проектного диалога подтверждения вместо browser `confirm`.
 10. Текст интерфейса и security-документ уточняют роль резервной ссылки: она не открывает управление без email-сессии. Смена email дополнительно ограничена по открытке (5 попыток в час по умолчанию).
@@ -28,7 +30,7 @@
 12. Блок резервной ссылки различает active/empty, после создания однократно показывает raw-секрет и действие копирования, после отзыва скрывает недоступное действие. Кнопка смены email стала вторичной и получила явный `border-box`/44px mobile-контракт без переполнения.
 13. Предрелизная проверка 02.09.2026: 188 test-файлов прошли, 6 штатно пропущены; 1091 тест прошёл, 18 пропущены. Typecheck, production build, ESLint, UI-colors, UI-contrast и `git diff --check` успешны; в lint только две прежние рекомендации `<img>` вне manage-flow.
 
-## Update 2026-09-01 Security, CI And Project Reconciliation — Local Only
+## Update 2026-09-01 Security, CI And Project Reconciliation — Deployed 2026-09-02
 
 1. Добавлены общие security headers и настраиваемые почасовые rate limits для создания открыток, поздравлений, AI и телеметрии. Ключ клиента хешируется; при текущей одноконтейнерной схеме limiter хранится в памяти процесса.
 2. Новые card/gift-option uploads проходят фактическое Sharp-декодирование, автоповорот и перекодирование в JPG/PNG/WebP. Browser MIME не считается достоверным, EXIF/метаданные снимаются. Старые файлы и URL не меняются.
@@ -38,7 +40,7 @@
 6. Публичный `/roadmap` больше не читает исторический `ROADMAP_BLOCKS.md`: маршрут постоянно редиректит на главную и закрыт в robots. README, current status, archive index и VPS runbook приведены к production 01.09.2026 и миграции `0036`.
 7. Владелец подтвердил юридическую приёмку как готовую. Offsite-backup осознанно отложен; риск одной точки отказа записан явно. Остаточные риски и план выпуска: `PROJECT_AUDIT_AND_PLAN_2026-09-01.md`.
 8. Полный прогон: 179 test-файлов прошли, 6 штатно пропущены; 1065 тестов прошли, 18 пропущены. Покрытие: statements 48.22%, branches 43.02%, functions 46.03%, lines 49.79%. Typecheck, production build, UI-colors, UI-contrast, `git diff --check`, синтаксис production shell-скриптов, Chromium desktop/mobile smoke, redirect `/roadmap`, robots и оба npm audit успешны. Lint — 0 ошибок и две прежние рекомендации `<img>` в public-share panel.
-9. Пакет остаётся локальным: push, GitHub Actions и production deploy не выполнялись. Перед выпуском нужны штатные backup/restore-check, зелёный CI, замена только web и production smoke загрузки фото/Robokassa.
+9. Пакет опубликован в GitHub и production 02.09.2026. Перед заменой web создана и восстановлена backup-пара `20260901-220136`; после выпуска обязательные health/operations checks успешны.
 
 ## Update 2026-09-01 Reveal Selection Experience — Deployed
 
