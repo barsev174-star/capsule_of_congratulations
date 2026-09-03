@@ -9,6 +9,7 @@
 5. Обновлены FAQ, описание технического cookie и аналитики в privacy, README и документы безопасности. Новые миграции и настройки окружения не требуются.
 6. До выкладки создана backup-пара `20260903-134929`; checksum и изолированное восстановление прошли, 38 миграций. Сохранён rollback-образ `capsule-web:rollback-before-guest-draft-20260903` (`sha256:8554ed65895f550b490e2daf8ef305ffa09e861f851c53ee0af8f9361affb33d`).
 7. Предрелизный coverage-прогон: 191 файл и 1137 тестов прошли, 7 файлов/21 тест штатно пропущены. Покрытие statements/branches/functions/lines: 49.43% / 43.97% / 47.03% / 51.12%, установленные пороги пройдены. Дополнительно пройдены 2 PostgreSQL-теста guest ownership во временных таблицах, typecheck, lint, UI-colors/contrast, production build и diff-check. Тест согласия ждёт завершения эффекта React вместо чтения флага в промежуточном render.
+8. При production-сборке обнаружены новые advisory Browserslist: `GHSA-c83g-rgw3-j3cx` и `GHSA-73wf-gq98-2v4g`. Пакет обновлён с `4.28.2` до `4.28.8` вместе с его справочными зависимостями в lock-файле; `npm audit` и `npm audit --omit=dev` возвращают `0 vulnerabilities`. Промежуточный образ до этого обновления на рабочий сайт не устанавливается.
 
 ## Update 2026-09-02 Production Config Runtime Packaging — Hotfix
 
