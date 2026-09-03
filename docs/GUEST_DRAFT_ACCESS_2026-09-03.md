@@ -32,3 +32,5 @@
 Запуск проверки PostgreSQL: `$env:RUN_DRAFT_ACCESS_DB_TEST='1'; node --env-file=.env.local node_modules/vitest/vitest.mjs run src/lib/manage/draft-ownership.live.test.ts`. Рабочие данные и реальные письма в этом тесте не используются. Без переменной тест пропускается.
 
 Предрелизная проверка: 1137 тестов прошли в полном coverage-прогоне, дополнительно 2 PostgreSQL-теста во временных таблицах; typecheck, lint и production build успешны. Регрессия одновременного входа создателя и admin/moderator проверена на уровне actor-check и реального server action с мокированным почтовым транспортом. Итог публикации фиксируется в `DELIVERY_LOG.md` и `VPS_DEPLOYMENT_NOTES.md`.
+
+Опубликовано 03.09.2026, runtime-код `1b4231c`. Production HTTPS smoke подтвердил выдачу cookie, доступное поле email, отказ без cookie/при подделке и 403 на сбор, оплату и передачу для гостя. В Chrome подтверждён переход с главной прямо в редактор и ввод email. Email-доставка и платежи при этой выкладке не инициировались.
