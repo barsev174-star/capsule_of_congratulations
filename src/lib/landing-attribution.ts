@@ -1,5 +1,6 @@
 export const FIRST_TOUCH_COOKIE_NAME = "slv_first_touch";
 export const FIRST_TOUCH_MAX_AGE_SECONDS = 60 * 60 * 24 * 90;
+export const HOME_LANDING_PATH = "/";
 export const TEACHER_LANDING_PATH = "/gruppovaya-otkrytka/uchitelyu";
 export const CAREGIVER_LANDING_PATH = "/gruppovaya-otkrytka/vospitatelyu";
 export const COLLEAGUE_LANDING_PATH = "/gruppovaya-otkrytka/kollege";
@@ -14,6 +15,11 @@ type LandingAttributionFields = {
   utm_medium?: string;
   utm_campaign?: string;
   referrer_host?: string;
+};
+
+export type HomeLandingAttribution = LandingAttributionFields & {
+  landing_type: "home";
+  landing_path: typeof HOME_LANDING_PATH;
 };
 
 export type TeacherLandingAttribution = LandingAttributionFields & {
@@ -36,7 +42,7 @@ export type BirthdayLandingAttribution = LandingAttributionFields & {
   landing_path: typeof BIRTHDAY_LANDING_PATH;
 };
 
-export type LandingAttribution = TeacherLandingAttribution | CaregiverLandingAttribution | ColleagueLandingAttribution | BirthdayLandingAttribution;
+export type LandingAttribution = HomeLandingAttribution | TeacherLandingAttribution | CaregiverLandingAttribution | ColleagueLandingAttribution | BirthdayLandingAttribution;
 
 type BuildLandingAttributionInput = {
   pathname: string;
@@ -77,6 +83,7 @@ const buildLandingAttribution = ({
   now = new Date()
 }: BuildLandingAttributionInput, landingType: LandingAttribution["landing_type"]): LandingAttribution | null => {
   const landingPath = {
+    home: HOME_LANDING_PATH,
     teacher: TEACHER_LANDING_PATH,
     caregiver: CAREGIVER_LANDING_PATH,
     colleague: COLLEAGUE_LANDING_PATH,
@@ -116,6 +123,9 @@ const buildLandingAttribution = ({
   } as LandingAttribution;
 };
 
+export const buildHomeLandingAttribution = (input: BuildLandingAttributionInput): HomeLandingAttribution | null =>
+  buildLandingAttribution(input, "home") as HomeLandingAttribution | null;
+
 export const buildTeacherLandingAttribution = (input: BuildLandingAttributionInput): TeacherLandingAttribution | null =>
   buildLandingAttribution(input, "teacher") as TeacherLandingAttribution | null;
 
@@ -137,12 +147,13 @@ export const parseLandingAttribution = (rawValue: string | null | undefined): La
   try {
     const decoded = decodeURIComponent(rawValue);
     const value = JSON.parse(decoded) as Record<string, unknown>;
+    const isHome = value.landing_type === "home" && value.landing_path === HOME_LANDING_PATH;
     const isTeacher = value.landing_type === "teacher" && value.landing_path === TEACHER_LANDING_PATH;
     const isCaregiver = value.landing_type === "caregiver" && value.landing_path === CAREGIVER_LANDING_PATH;
     const isColleague = value.landing_type === "colleague" && value.landing_path === COLLEAGUE_LANDING_PATH;
     const isBirthday = value.landing_type === "birthday" && value.landing_path === BIRTHDAY_LANDING_PATH;
     if (
-      (!isTeacher && !isCaregiver && !isColleague && !isBirthday) ||
+      (!isHome && !isTeacher && !isCaregiver && !isColleague && !isBirthday) ||
       typeof value.first_touch_at !== "string" ||
       !Number.isFinite(Date.parse(value.first_touch_at))
     ) {
@@ -155,8 +166,8 @@ export const parseLandingAttribution = (rawValue: string | null | undefined): La
     const referrerHost = sanitizeValue(typeof value.referrer_host === "string" ? normalizeHost(value.referrer_host) : undefined);
 
     return {
-      landing_type: isTeacher ? "teacher" : isCaregiver ? "caregiver" : isColleague ? "colleague" : "birthday",
-      landing_path: isTeacher ? TEACHER_LANDING_PATH : isCaregiver ? CAREGIVER_LANDING_PATH : isColleague ? COLLEAGUE_LANDING_PATH : BIRTHDAY_LANDING_PATH,
+      landing_type: isHome ? "home" : isTeacher ? "teacher" : isCaregiver ? "caregiver" : isColleague ? "colleague" : "birthday",
+      landing_path: isHome ? HOME_LANDING_PATH : isTeacher ? TEACHER_LANDING_PATH : isCaregiver ? CAREGIVER_LANDING_PATH : isColleague ? COLLEAGUE_LANDING_PATH : BIRTHDAY_LANDING_PATH,
       first_touch_at: value.first_touch_at,
       ...(utmSource ? { utm_source: utmSource } : {}),
       ...(utmMedium ? { utm_medium: utmMedium } : {}),

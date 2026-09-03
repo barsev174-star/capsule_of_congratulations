@@ -3,6 +3,12 @@ import {
   analyticsLandings, cohortConversion, sumAcquisitionCounts, type AcquisitionAnalytics
 } from "@/lib/admin/acquisition-analytics";
 import styles from "../../admin.module.css";
+import { homeActivityPlacements } from "@/lib/home-activity";
+
+const homePlacementLabels = {
+  header: "Шапка и меню", hero: "Первый экран", templates: "Шаблоны",
+  price: "Цена", final: "Нижний блок", footer: "Подвал"
+};
 
 const money = (kopecks: number) => new Intl.NumberFormat("ru-RU", {
   style: "currency", currency: "RUB", maximumFractionDigits: 2
@@ -24,7 +30,7 @@ export function AcquisitionReport({ report, days }: { report: AcquisitionAnalyti
     </section>
   );
   const { totals } = report;
-  const unattributed = report.sources.filter((row) => row.landing === null).reduce((sum, row) => sum + row.created, 0);
+  const unattributed = report.sources.filter((row) => row.source === null).reduce((sum, row) => sum + row.created, 0);
 
   return (
     <>
@@ -54,9 +60,10 @@ export function AcquisitionReport({ report, days }: { report: AcquisitionAnalyti
       </section>
 
       <section className={`${styles.panel} ${styles.analyticsPanel}`} aria-labelledby="seo-report-title">
-        <h2 className={styles.panelTitle} id="seo-report-title">SEO-страницы</h2>
-        <p className={styles.analyticsNote}>Просмотры и нажатия — события за {days} дней, не уникальные посетители. Создания и оплаты относятся к выбранным открыткам и их первому SEO-источнику. Делить эти события друг на друга для расчёта конверсии нельзя.</p>
-        <div className={styles.tableWrap} role="region" aria-label="Результаты SEO-страниц, таблица с горизонтальной прокруткой" tabIndex={0}>
+        <h2 className={styles.panelTitle} id="seo-report-title">Главная и тематические страницы</h2>
+        <p className={styles.analyticsNote}>Просмотры и нажатия — события за {days} дней, не уникальные посетители и не только первые входы. Создания и оплаты относятся к выбранным открыткам и их первой сохранённой странице входа после согласия. Делить эти события друг на друга для расчёта конверсии нельзя.</p>
+        <p className={styles.analyticsNote}>Счётчики главной учитывают просмотры и нажатия без идентификатора посетителя. Посещения до включения учёта не восстанавливаются; блокировщики и отключённый JavaScript могут уменьшать числа.</p>
+        <div className={styles.tableWrap} role="region" aria-label="Результаты страниц, таблица с горизонтальной прокруткой" tabIndex={0}>
           <table className={`${styles.table} ${styles.analyticsTable}`}>
             <thead><tr><th scope="col">Страница</th><th scope="col">Просмотры</th><th scope="col">Нажали «Пример»</th><th scope="col">Нажали «Создать»</th><th scope="col">Создали</th><th scope="col">Оплатили</th><th scope="col">Создание → оплата</th></tr></thead>
             <tbody>{analyticsLandings.map((landing) => {
@@ -72,16 +79,31 @@ export function AcquisitionReport({ report, days }: { report: AcquisitionAnalyti
         </div>
       </section>
 
+      <section className={`${styles.panel} ${styles.analyticsPanel}`} aria-labelledby="home-actions-title">
+        <h2 className={styles.panelTitle} id="home-actions-title">Что нажимают на главной</h2>
+        <p className={styles.analyticsNote}>Нажатия по блокам страницы за {days} дней. Повторные нажатия учитываются отдельно; нажатие «Создать» ещё не означает успешное создание открытки.</p>
+        <div className={styles.tableWrap} role="region" aria-label="Нажатия на главной, таблица" tabIndex={0}>
+          <table className={`${styles.table} ${styles.analyticsTable}`}>
+            <thead><tr><th scope="col">Блок</th><th scope="col">Нажали «Пример»</th><th scope="col">Нажали «Создать»</th></tr></thead>
+            <tbody>{homeActivityPlacements.map((placement) => {
+              const activity = report.homeActions.find((item) => item.placement === placement);
+              return <tr key={placement}><th scope="row">{homePlacementLabels[placement]}</th><td>{activity?.exampleClicks ?? 0}</td><td>{activity?.createClicks ?? 0}</td></tr>;
+            })}</tbody>
+          </table>
+        </div>
+      </section>
+
       <section className={`${styles.panel} ${styles.analyticsPanel}`} aria-labelledby="sources-report-title">
         <h2 className={styles.panelTitle} id="sources-report-title">Источники созданных открыток</h2>
-        <p className={styles.analyticsNote}>Первое сохранённое SEO-касание: страница, источник, канал и кампания. Без подтверждённой SEO-атрибуции: <strong>{unattributed}</strong>. Это не означает прямой трафик: источник мог не сохраниться, а входы через главную пока не размечаются.</p>
+        <p className={styles.analyticsNote}>Первый сохранённый вход после согласия: страница, источник, канал и кампания. Источник определён у <strong>{totals.created - unattributed} из {totals.created}</strong> открыток. Без определённого источника: <strong>{unattributed}</strong>. Это не означает прямой трафик: посетитель мог отказаться от аналитики, источник мог не передаться или посещение произошло до включения учёта.</p>
+        <p className={styles.analyticsNote}>Кампания связывается с результатом открытки, даже если её создали позднее через пример или другую страницу. Здесь показаны источники созданных открыток; расходы на рекламу и посетители, не создавшие открытку, в эту таблицу не входят.</p>
         {report.sources.length === 0 ? <p className={styles.emptyState}>Источники появятся после создания открыток.</p> : (
           <div className={styles.tableWrap} role="region" aria-label="Источники открыток, таблица с горизонтальной прокруткой" tabIndex={0}>
             <table className={`${styles.table} ${styles.analyticsTable}`}>
               <thead><tr><th scope="col">Страница / источник</th><th scope="col">Создали</th><th scope="col">С поздравлением</th><th scope="col">Оплатили</th><th scope="col">Передали</th><th scope="col">Открыли</th><th scope="col">Создание → оплата</th><th scope="col">Платежи</th></tr></thead>
               <tbody>{report.sources.map((row) => <tr key={JSON.stringify([row.landing, row.source, row.medium, row.campaign])}>
                 <th scope="row" className={styles.analyticsSource}>
-                  {analyticsLandings.find((l) => l.id === row.landing)?.label ?? "Без SEO-атрибуции"}
+                  {analyticsLandings.find((l) => l.id === row.landing)?.label ?? "Страница входа не определена"}
                   <span>{row.source ?? "Источник не определён"}{row.medium ? ` / ${row.medium}` : ""}</span>
                   {row.campaign && <span>Кампания: {row.campaign}</span>}
                 </th>

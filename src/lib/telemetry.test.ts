@@ -1,6 +1,16 @@
 import { parseClientTelemetry, reportCriticalError } from "@/lib/telemetry";
 
 describe("telemetry", () => {
+  it("restricts homepage counts to fixed page and placement labels without identifiers", () => {
+    expect(parseClientTelemetry({ event: "home_create_click", context: {
+      placement: "hero", landing_type: "teacher", landing_path: "/private", cardId: "secret",
+      utm_source: "private", first_touch_at: "private", referrer_host: "private", ip: "private"
+    } })).toEqual({ event: "home_create_click", context: { landing_type: "home", landing_path: "/", placement: "hero" } });
+    expect(parseClientTelemetry({ event: "home_page_view", context: { placement: "hero", cardId: "secret" } }))
+      .toEqual({ event: "home_page_view", context: { landing_type: "home", landing_path: "/" } });
+    expect(parseClientTelemetry({ event: "home_example_click", context: { placement: "private text" } }))
+      .toEqual({ event: "home_example_click", context: { landing_type: "home", landing_path: "/" } });
+  });
   it("accepts allowlisted events and fields only", () => {
     expect(parseClientTelemetry({
       event: "gift_first_opened",

@@ -6,6 +6,7 @@ import {
 import { enqueueCriticalAlert } from "@/lib/critical-alerts/repository";
 import { logger, sanitizeLogContext, type LogContext } from "@/lib/logger";
 import { recordTelemetryEvent, type TelemetryKind } from "@/lib/telemetry-repository";
+import { homeActivityEvents, isHomeActivityEvent, isHomeActivityPlacement } from "@/lib/home-activity";
 
 export const funnelEvents = [
   "funnel.card_creation_started",
@@ -17,6 +18,7 @@ export const funnelEvents = [
 ] as const;
 
 export const clientEvents = [
+  ...homeActivityEvents,
   "funnel.participant_link_copied",
   "funnel.participant_form_opened",
   "gift_first_opened",
@@ -103,6 +105,18 @@ export const parseClientTelemetry = (input: unknown): { event: ClientTelemetryEv
   const value = input as { event?: unknown; context?: unknown };
   if (typeof value.event !== "string" || !clientEventSet.has(value.event)) return null;
   const rawContext = value.context && typeof value.context === "object" ? value.context as Record<string, unknown> : {};
+  if (isHomeActivityEvent(value.event)) {
+    // Public counts never accept card IDs, campaign values, URLs or arbitrary text.
+    return {
+      event: value.event,
+      context: {
+        landing_type: "home",
+        landing_path: "/",
+        ...(value.event !== "home_page_view" && isHomeActivityPlacement(rawContext.placement)
+          ? { placement: rawContext.placement } : {})
+      }
+    };
+  }
   const context = Object.fromEntries(
     Object.entries(rawContext).filter(([key, item]) =>
       allowedClientContextKeys.has(key) && typeof item === "string" && item.length <= 100

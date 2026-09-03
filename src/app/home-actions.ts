@@ -3,6 +3,9 @@
 import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { createEmptyCardDraft } from "@/lib/cards/service";
+import { claimCardOrganizerEmail } from "@/lib/cards/repository";
+import { getOrganizerSession } from "@/lib/organizer/session";
+import { grantNewDraftAccess } from "@/lib/manage/draft-session";
 import { getManagePath } from "@/lib/routes/card-links";
 import { reportCriticalError, trackFunnel } from "@/lib/telemetry";
 import { FIRST_TOUCH_COOKIE_NAME, parseLandingAttribution } from "@/lib/landing-attribution";
@@ -57,7 +60,13 @@ const startCardFromLanding = async (
     });
     throw error;
   }
-  redirect(getManagePath(result.card.manageToken));
+  const organizer = await getOrganizerSession();
+  if (organizer) {
+    if (!await claimCardOrganizerEmail(result.card.id, organizer.email)) throw new Error("Could not assign the new draft");
+  } else {
+    await grantNewDraftAccess(result.card.id);
+  }
+  redirect(getManagePath(result.card.id));
 };
 
 export async function startCardFromShowcaseAction() {

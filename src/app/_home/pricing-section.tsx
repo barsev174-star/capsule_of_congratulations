@@ -112,7 +112,7 @@ export function PricingSection() {
           </article>
         </div>
         <div className={styles.action}>
-          <form action={startCardFromShowcaseAction}>
+          <form action={startCardFromShowcaseAction} data-home-action="create" data-home-placement="price">
             <button type="submit">Создать открытку бесплатно</button>
           </form>
           <p>Оплатить можно позже, когда открытка будет готова к передаче.</p>

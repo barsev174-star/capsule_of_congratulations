@@ -1,7 +1,9 @@
 import { getPostgresPool, isPostgresConfigured } from "@/lib/db/postgres";
-import { BIRTHDAY_LANDING_PATH, CAREGIVER_LANDING_PATH, COLLEAGUE_LANDING_PATH, TEACHER_LANDING_PATH } from "@/lib/landing-attribution";
+import { BIRTHDAY_LANDING_PATH, CAREGIVER_LANDING_PATH, COLLEAGUE_LANDING_PATH, HOME_LANDING_PATH, TEACHER_LANDING_PATH } from "@/lib/landing-attribution";
+import { homeActivityPlacements, type HomeActivityPlacement } from "@/lib/home-activity";
 
 export const analyticsLandings = [
+  { id: "home", path: HOME_LANDING_PATH, label: "Главная" },
   { id: "teacher", path: TEACHER_LANDING_PATH, label: "Учителю" },
   { id: "caregiver", path: CAREGIVER_LANDING_PATH, label: "Воспитателю" },
   { id: "colleague", path: COLLEAGUE_LANDING_PATH, label: "Коллеге" },
@@ -25,10 +27,12 @@ export type AcquisitionSource = AcquisitionCounts & {
   campaign: string | null;
 };
 export type LandingActivity = { landing: string; views: number; exampleClicks: number; createClicks: number };
+export type HomeActionActivity = { placement: HomeActivityPlacement; exampleClicks: number; createClicks: number };
 export type AcquisitionAnalytics = {
   sources: AcquisitionSource[];
   totals: AcquisitionCounts;
   landings: LandingActivity[];
+  homeActions: HomeActionActivity[];
   participants: { submissions: number; identities: number; unidentifiedSubmissions: number };
 };
 
@@ -100,14 +104,27 @@ WITH landing_catalog AS (
   FROM card_facts GROUP BY landing, source, medium, campaign
 ), landing_activity AS (
   SELECT l.landing,
-    count(*) FILTER (WHERE t.event = 'seo_landing_view') AS views,
-    count(*) FILTER (WHERE t.event = 'seo_example_click') AS "exampleClicks",
-    count(*) FILTER (WHERE t.event = 'seo_create_click') AS "createClicks"
+    count(*) FILTER (WHERE t.event IN ('seo_landing_view', 'home_page_view')) AS views,
+    count(*) FILTER (WHERE t.event IN ('seo_example_click', 'home_example_click')) AS "exampleClicks",
+    count(*) FILTER (WHERE t.event IN ('seo_create_click', 'home_create_click')) AS "createClicks"
   FROM landing_catalog l LEFT JOIN telemetry_events t
     ON t.context->>'landing_type' = l.landing AND t.context->>'landing_path' = l.path
-    AND t.kind = 'funnel' AND t.event IN ('seo_landing_view', 'seo_example_click', 'seo_create_click')
+    AND t.kind = 'funnel' AND (
+      (l.landing = 'home' AND t.event IN ('home_page_view', 'home_example_click', 'home_create_click'))
+      OR (l.landing <> 'home' AND t.event IN ('seo_landing_view', 'seo_example_click', 'seo_create_click'))
+    )
     AND t.created_at >= now() - ($1 * interval '1 day') AND t.created_at <= now()
   GROUP BY l.landing
+), home_actions AS (
+  SELECT t.context->>'placement' AS placement,
+    count(*) FILTER (WHERE t.event = 'home_example_click') AS "exampleClicks",
+    count(*) FILTER (WHERE t.event = 'home_create_click') AS "createClicks"
+  FROM telemetry_events t
+  WHERE t.kind = 'funnel' AND t.event IN ('home_example_click', 'home_create_click')
+    AND t.context->>'landing_type' = 'home' AND t.context->>'landing_path' = '/'
+    AND t.context->>'placement' = ANY($4::text[])
+    AND t.created_at >= now() - ($1 * interval '1 day') AND t.created_at <= now()
+  GROUP BY t.context->>'placement'
 ), participants AS (
   SELECT count(*) AS submissions,
     count(DISTINCT (card_id, participant_token_hash)) FILTER (WHERE NULLIF(participant_token_hash, '') IS NOT NULL) AS identities,
@@ -118,6 +135,7 @@ WITH landing_catalog AS (
 SELECT
   COALESCE((SELECT jsonb_agg(s ORDER BY created DESC, landing NULLS LAST, source NULLS LAST, medium NULLS LAST, campaign NULLS LAST) FROM source_groups s), '[]'::jsonb) AS sources,
   (SELECT jsonb_agg(l ORDER BY landing) FROM landing_activity l) AS landings,
+  COALESCE((SELECT jsonb_agg(h ORDER BY placement) FROM home_actions h), '[]'::jsonb) AS "homeActions",
   (SELECT to_jsonb(p) FROM participants p) AS participants
 `;
 
@@ -125,7 +143,7 @@ export const getAcquisitionAnalytics = async (days: number): Promise<Acquisition
   // JSON development storage has no verified payment ledger. Do not invent zero sales.
   if (!isPostgresConfigured()) return null;
   const result = await getPostgresPool().query<Omit<AcquisitionAnalytics, "totals">>(acquisitionAnalyticsSql, [
-    days === 30 ? 30 : 7, analyticsLandings.map((l) => l.id), analyticsLandings.map((l) => l.path)
+    days === 30 ? 30 : 7, analyticsLandings.map((l) => l.id), analyticsLandings.map((l) => l.path), homeActivityPlacements
   ]);
   const row = result.rows[0];
   return { ...row, totals: sumAcquisitionCounts(row.sources) };

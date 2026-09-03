@@ -511,7 +511,6 @@ export const updateCardDraftBasics = async (
     | "occasionText"
     | "fromLabel"
     | "organizerName"
-    | "organizerEmail"
     | "eventDate"
     | "description"
     | "signature"

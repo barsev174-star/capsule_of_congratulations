@@ -598,7 +598,6 @@ export const updateCardDraftBasics = async (
     | "occasionText"
     | "fromLabel"
     | "organizerName"
-    | "organizerEmail"
     | "eventDate"
     | "description"
     | "signature"
@@ -612,10 +611,9 @@ export const updateCardDraftBasics = async (
           occasion_text = $4,
           from_label = $5,
           organizer_name = $6,
-          organizer_email = $7,
-          event_date = $8,
-          description = $9,
-          signature = $10,
+          event_date = $7,
+          description = $8,
+          signature = $9,
           updated_at = now()
       WHERE id = $1
       RETURNING *
@@ -627,7 +625,6 @@ export const updateCardDraftBasics = async (
       basics.occasionText,
       basics.fromLabel,
       basics.organizerName,
-      basics.organizerEmail,
       basics.eventDate,
       basics.description,
       basics.signature

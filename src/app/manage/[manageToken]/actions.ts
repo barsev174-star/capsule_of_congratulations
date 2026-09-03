@@ -99,6 +99,7 @@ import { dispatchTemplateRenderer, getTemplateFinalCardStyleId } from "@/lib/tem
 import { requireCardManagementAccess, requireCardOrganizer } from "@/lib/manage/access";
 import { revokeCardRecoveryTokens, rotateCardRecoveryToken } from "@/lib/manage/recovery-tokens";
 import { consumePublicRateLimit, getConfiguredRateLimit } from "@/lib/security/public-rate-limit";
+import { requestCardAccessAction } from "./access-actions";
 
 const optionalBlockIds: FinalCardOptionalBlockId[] = ["summary", "qualities", "memories", "quotes"];
 const managedBlockIds: FinalCardBlockId[] = ["hero", "summary", "qualities", "messages", "memories", "quotes", "closing"];
@@ -115,12 +116,13 @@ const assertManageContentEditable = async (manageToken: string) => {
   if (!card) {
     throw new Error("Открытка не найдена.");
   }
-  await requireCardManagementAccess(card.id);
+  const access = await requireCardManagementAccess(card.id, { allowGuestDraft: true });
   const lifecycle = await getCardLifecycleByManageToken(card.id);
   if (!lifecycle) {
     throw new Error("Открытка больше не доступна.");
   }
   assertCardContentEditable(lifecycle);
+  return access;
 };
 
 const syncCardPhotoSettings = async (card: CardDraft, assets: CardMediaAsset[]) => {
@@ -189,6 +191,7 @@ export type CardBasicsFormState = {
   accessEmail?: {
     status: "sent" | "failed";
     message: string;
+    devAccessUrl?: string;
   };
 };
 
@@ -374,6 +377,7 @@ const openGiftPollCore = async (formData: FormData): Promise<GiftPollFormState> 
   const card = await getCardDraftByManageToken(manageToken);
   if (!card || !pollId) return giftPollState(false, "Секретная ссылка управления больше не актуальна.");
   try {
+    await requireCardManagementAccess(card.id);
     await assertManageContentEditable(manageToken);
   } catch (error) {
     return giftPollState(false, error instanceof Error ? error.message : "Открытка недоступна для редактирования.");
@@ -652,12 +656,17 @@ export async function updateCardBasicsAction(
   if (!card) {
     return cardBasicsError("Секретная ссылка управления больше не актуальна.", fields);
   }
+  let access: Awaited<ReturnType<typeof assertManageContentEditable>>;
   try {
-    await assertManageContentEditable(manageToken);
+    access = await assertManageContentEditable(manageToken);
   } catch (error) {
     return cardBasicsError(error instanceof Error ? error.message : "Открытка недоступна для редактирования.", fields);
   }
 
+  const guestDraft = access.actor.kind === "guest-draft";
+  if (guestDraft && (!isValidEmail(fields.organizerEmail) || fields.organizerEmail.length > 254)) {
+    return cardBasicsError("Укажите email, чтобы сохранить доступ к открытке.", fields);
+  }
   const occasionValue = (String(formData.get("occasion") ?? "").trim() || card.occasion) as CardDraft["occasion"];
 
   if (!validateLength(fields.recipientName, 2, 80)) {
@@ -694,7 +703,6 @@ export async function updateCardBasicsAction(
     occasion: occasionValue,
     occasionText: fields.occasionText,
     organizerName: fields.organizerName,
-    organizerEmail: card.organizerEmail,
     eventDate: fields.eventDate || null,
     description: fields.description || null,
     signature: fields.signature || null
@@ -709,11 +717,32 @@ export async function updateCardBasicsAction(
     occasion: occasionValue
   });
 
+  let accessEmail: CardBasicsFormState["accessEmail"];
+  if (guestDraft) {
+    const email = fields.organizerEmail.trim().toLowerCase();
+    fields.organizerEmail = email;
+    const pending = await getPendingOrganizerEmailChange(card.id, "claim");
+    if (pending?.email === email) {
+      accessEmail = { status: "sent", message: "Письмо уже отправлено. Подтвердите email по ссылке из письма, чтобы пригласить участников." };
+    } else {
+      const request = new FormData();
+      request.set("cardId", card.id);
+      request.set("email", email);
+      const result = await requestCardAccessAction({ ok: false, message: "" }, request);
+      accessEmail = {
+        status: result.ok ? "sent" : "failed",
+        message: result.ok ? "Основа сохранена. Подтвердите email по ссылке из письма, чтобы пригласить участников." : `Основа сохранена. ${result.message}`,
+        ...(result.devAccessUrl ? { devAccessUrl: result.devAccessUrl } : {})
+      };
+    }
+  }
+
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
   return {
     ok: true,
     message: "Изменения сохранены.",
-    fields: { ...fields, organizerEmail: card.organizerEmail }
+    fields: { ...fields, organizerEmail: guestDraft ? fields.organizerEmail : card.organizerEmail },
+    ...(accessEmail ? { accessEmail } : {})
   };
 }
 

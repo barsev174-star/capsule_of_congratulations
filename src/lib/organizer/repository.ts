@@ -62,7 +62,7 @@ export const storeMagicLink = async (
   };
   if (isPostgresConfigured()) {
     const values = [item.id, email, tokenHash, item.expiresAt, item.createdAt, item.returnPath, item.claimCardId, item.transferCardId];
-    if (!item.transferCardId) {
+    if (!item.transferCardId && !item.claimCardId) {
       await getPostgresPool().query(
         `INSERT INTO organizer_magic_links (
            id, email, token_hash, expires_at, used_at, created_at, return_path, claim_card_id, transfer_card_id
@@ -72,12 +72,14 @@ export const storeMagicLink = async (
       return;
     }
     const client = await getPostgresPool().connect();
+    const contextColumn = item.transferCardId ? "transfer_card_id" : "claim_card_id";
+    const contextCardId = item.transferCardId ?? item.claimCardId;
     try {
       await client.query("BEGIN");
-      await client.query("SELECT pg_advisory_xact_lock(hashtext($1)::bigint)", [`organizer-transfer:${item.transferCardId}`]);
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1)::bigint)", [`organizer-${item.transferCardId ? "transfer" : "claim"}:${contextCardId}`]);
       await client.query(
-        "DELETE FROM organizer_magic_links WHERE transfer_card_id = $1 AND used_at IS NULL",
-        [item.transferCardId]
+        `DELETE FROM organizer_magic_links WHERE ${contextColumn} = $1 AND used_at IS NULL`,
+        [contextCardId]
       );
       await client.query(
         `INSERT INTO organizer_magic_links (
@@ -95,14 +97,18 @@ export const storeMagicLink = async (
     return;
   }
   const items = (await readJson()).filter(
-    (existing) => !item.transferCardId || existing.transferCardId !== item.transferCardId || Boolean(existing.usedAt)
+    (existing) => Boolean(existing.usedAt) || (
+      (!item.transferCardId || existing.transferCardId !== item.transferCardId)
+      && (!item.claimCardId || existing.claimCardId !== item.claimCardId)
+    )
   );
   items.push(item);
   await writeJson(items.slice(-500));
 };
 
 export const getPendingOrganizerEmailChange = async (
-  cardId: string
+  cardId: string,
+  kind: "transfer" | "claim" = "transfer"
 ): Promise<PendingOrganizerEmailChange | null> => {
   if (isPostgresConfigured()) {
     const result = await getPostgresPool().query<{
@@ -112,7 +118,7 @@ export const getPendingOrganizerEmailChange = async (
     }>(
       `SELECT email, created_at AS "createdAt", expires_at AS "expiresAt"
        FROM organizer_magic_links
-       WHERE transfer_card_id = $1 AND used_at IS NULL AND expires_at > now()
+       WHERE ${kind === "transfer" ? "transfer_card_id" : "claim_card_id"} = $1 AND used_at IS NULL AND expires_at > now()
        ORDER BY created_at DESC
        LIMIT 1`,
       [cardId]
@@ -130,7 +136,7 @@ export const getPendingOrganizerEmailChange = async (
   const item = (await readJson())
     .filter(
       (record) =>
-        record.transferCardId === cardId &&
+        (kind === "transfer" ? record.transferCardId : record.claimCardId) === cardId &&
         !record.usedAt &&
         new Date(record.expiresAt).getTime() > now
     )

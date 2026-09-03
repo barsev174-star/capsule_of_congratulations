@@ -8,7 +8,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ man
   const { manageToken } = await params;
   const draft = await getCardDraftByManageToken(manageToken);
   if (!draft) return NextResponse.json({ ok: false, message: "Открытка не найдена." }, { status: 404 });
-  try { await requireCardManagementAccess(draft.id); }
+  try { await requireCardManagementAccess(draft.id, { allowGuestDraft: true }); }
   catch { return NextResponse.json({ ok: false, message: "Требуется вход владельца открытки." }, { status: 403 }); }
   const card = await getCardLifecycleByManageToken(draft.id);
 

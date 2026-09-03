@@ -83,7 +83,7 @@ export async function POST(request: Request) {
 
   if (isManagerRequest) {
     try {
-      await requireCardManagementAccess(card.id);
+    await requireCardManagementAccess(card.id, { allowGuestDraft: true });
     } catch {
       return NextResponse.json({ ok: false, message: "Требуется вход владельца открытки." }, { status: 403 });
     }

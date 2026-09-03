@@ -80,7 +80,7 @@ export async function TemplatesSection() {
               <p className={styles.cardText}>{template.description}</p>
               <span className={styles.availableBadge}>{featuredTemplateIds.has(template.id) ? "Новый · доступен" : "Доступен"}</span>
               {template.id === "paper-birthday" || template.id === "route-adventure" || template.id === "school-scrapbook" || featuredTemplateIds.has(template.id) ? (
-                <Link className={styles.demoLink} href={`/example?template=${template.id}`}>
+                <Link className={styles.demoLink} href={`/example?template=${template.id}`} data-home-action="example" data-home-placement="templates">
                   Открыть интерактивный пример
                 </Link>
               ) : null}

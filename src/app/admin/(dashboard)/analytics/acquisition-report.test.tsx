@@ -19,6 +19,7 @@ const report: AcquisitionAnalytics = {
     { ...emptyAcquisitionCounts(), created: 1, landing: null, source: null, medium: null, campaign: null }
   ],
   landings: [{ landing: "teacher", views: 10, exampleClicks: 2, createClicks: 3 }],
+  homeActions: [{ placement: "hero", exampleClicks: 4, createClicks: 7 }],
   participants: { submissions: 10, identities: 3, unidentifiedSubmissions: 2 }
 };
 
@@ -135,11 +136,14 @@ describe("acquisition report UI", () => {
     expect(within(journey).getAllByText("50% от созданных")).toHaveLength(2);
     expect(within(journey).getAllByText("100% от созданных")).toHaveLength(2);
     expect(screen.queryByText(/от шага выше/)).not.toBeInTheDocument();
-    const seo = screen.getByRole("region", { name: "SEO-страницы" });
-    expect(within(seo).getAllByRole("link")).toHaveLength(4);
+    const seo = screen.getByRole("region", { name: "Главная и тематические страницы" });
+    expect(within(seo).getAllByRole("link")).toHaveLength(5);
+    expect(within(seo).getByRole("link", { name: "Главная" })).toHaveAttribute("href", "/");
     expect(within(seo).getByRole("link", { name: "День рождения" })).toHaveAttribute("href", "/gruppovaya-otkrytka/den-rozhdeniya");
     expect(within(seo).getByText(/не уникальные посетители/)).toBeInTheDocument();
-    expect(screen.getByText("Без SEO-атрибуции")).toBeInTheDocument();
+    expect(screen.getByText("Страница входа не определена")).toBeInTheDocument();
+    const actions = screen.getByRole("region", { name: "Нажатия на главной, таблица" });
+    expect(within(actions).getByRole("row", { name: "Первый экран 4 7" })).toBeInTheDocument();
     expect(screen.getByText(/не точное число людей/)).toBeInTheDocument();
     expect(screen.getByRole("region", { name: /Источники открыток, таблица/ })).toHaveAttribute("tabindex", "0");
   });

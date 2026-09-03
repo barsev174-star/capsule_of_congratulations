@@ -1,4 +1,5 @@
 import {
+  buildHomeLandingAttribution,
   BIRTHDAY_LANDING_PATH,
   buildBirthdayLandingAttribution,
   CAREGIVER_LANDING_PATH,
@@ -14,6 +15,20 @@ import {
 
 describe("landing attribution", () => {
   const now = new Date("2026-08-21T08:00:00.000Z");
+
+  it("round-trips homepage campaigns while excluding unrelated query data", () => {
+    const attribution = buildHomeLandingAttribution({
+      pathname: "/", search: "?utm_source=telegram&utm_medium=social&utm_campaign=launch&email=private&token=secret",
+      referrer: "https://t.me/channel?private=value", siteHost: "slovesto.ru", now
+    });
+    expect(attribution).toEqual({
+      landing_type: "home", landing_path: "/", first_touch_at: now.toISOString(),
+      utm_source: "telegram", utm_medium: "social", utm_campaign: "launch", referrer_host: "t.me"
+    });
+    expect(parseLandingAttribution(serializeLandingAttribution(attribution!))).toEqual(attribution);
+    expect(buildHomeLandingAttribution({ pathname: "/manage/secret", search: "", now })).toBeNull();
+    expect(parseLandingAttribution(encodeURIComponent(JSON.stringify({ ...attribution, landing_path: TEACHER_LANDING_PATH })))).toBeNull();
+  });
 
   it("captures allowlisted UTM values for the teacher landing", () => {
     expect(buildTeacherLandingAttribution({

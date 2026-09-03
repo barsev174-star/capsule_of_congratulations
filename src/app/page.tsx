@@ -14,6 +14,7 @@ import {
 } from "./_home";
 import type { Metadata } from "next";
 import styles from "./page.module.css";
+import { HomePageTracker } from "./_home/home-page-tracker";
 
 export const metadata: Metadata = {
   title: { absolute: "Slovesto — групповая онлайн-открытка с поздравлениями и фото" },
@@ -31,6 +32,7 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   return (
     <div className={styles.page}>
+      <HomePageTracker />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

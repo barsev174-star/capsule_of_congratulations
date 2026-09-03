@@ -10,6 +10,7 @@ import {
 import { clearOrganizerSession, setOrganizerSession } from "@/lib/organizer/session";
 import { requestOrganizerAccess } from "@/lib/organizer/service";
 import { resolveCardRecoveryToken } from "@/lib/manage/recovery-tokens";
+import { hasGuestDraftAccess } from "@/lib/manage/draft-session";
 import { logger } from "@/lib/logger";
 import {
   consumePublicRateLimit,
@@ -64,7 +65,8 @@ export async function requestCardAccessAction(
       : recoveryToken
         ? await getCardDraftByLegacyManageToken(recoveryToken)
         : null;
-    if (!recoveryCard || recoveryCard.id !== card.id || !emailPattern.test(requestedEmail)) {
+    const guestDraft = await hasGuestDraftAccess(card);
+    if ((!guestDraft && (!recoveryCard || recoveryCard.id !== card.id)) || !emailPattern.test(requestedEmail) || requestedEmail.length > 254) {
       logger.warn("manage.recovery_denied", "Initial card ownership recovery was denied", { cardId: card.id });
       return { ok: false, message: "Не удалось подтвердить право на первичную настройку открытки." };
     }

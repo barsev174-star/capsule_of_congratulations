@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { analyticsLandings, cohortConversion, emptyAcquisitionCounts, getAcquisitionAnalytics, sumAcquisitionCounts } from "./acquisition-analytics";
 import { getTelemetrySummary } from "@/lib/telemetry-repository";
+import { homeActivityPlacements } from "@/lib/home-activity";
 
 const mocks = vi.hoisted(() => ({ configured: true, query: vi.fn() }));
 vi.mock("@/lib/db/postgres", () => ({
@@ -34,7 +35,7 @@ describe("acquisition report", () => {
   it("bounds the requested period and uses allowlisted landing paths", async () => {
     mocks.query.mockResolvedValue({ rows: [{ sources: [], landings: [], participants: { submissions: 0, identities: 0, unidentifiedSubmissions: 0 } }] });
     expect((await getAcquisitionAnalytics(-1))?.totals.created).toBe(0);
-    expect(mocks.query.mock.calls[0][1]).toEqual([7, analyticsLandings.map((l) => l.id), analyticsLandings.map((l) => l.path)]);
+    expect(mocks.query.mock.calls[0][1]).toEqual([7, analyticsLandings.map((l) => l.id), analyticsLandings.map((l) => l.path), homeActivityPlacements]);
     await getAcquisitionAnalytics(30);
     expect(mocks.query.mock.calls[1][1][0]).toBe(30);
   });
@@ -156,9 +157,32 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
       { landing: "birthday", views: 0, exampleClicks: 0, createClicks: 0 },
       { landing: "caregiver", views: 0, exampleClicks: 1, createClicks: 0 },
       { landing: "colleague", views: 0, exampleClicks: 0, createClicks: 1 },
+      { landing: "home", views: 0, exampleClicks: 0, createClicks: 0 },
       { landing: "teacher", views: 2, exampleClicks: 0, createClicks: 0 }
     ]);
     expect((await getAcquisitionAnalytics(30))!.totals.created).toBe(3);
+  });
+
+  it("joins homepage campaigns to real payments while keeping anonymous activity separate", async () => {
+    const created = await card();
+    await event("funnel.card_created", created, { ...attribution("home"), utm_source: "telegram", utm_campaign: "launch" });
+    await event("funnel.card_created", await card());
+    await payment(created);
+    await event("home_page_view", null, { landing_type: "home", landing_path: "/" });
+    await event("home_page_view", null, { landing_type: "home", landing_path: "/" });
+    await event("home_create_click", null, { landing_type: "home", landing_path: "/", placement: "hero" });
+    await event("home_example_click", null, { landing_type: "home", landing_path: "/", placement: "templates" });
+    await event("seo_landing_view", null, { landing_type: "home", landing_path: "/" });
+    await event("home_page_view", null, attribution("teacher"));
+    const report = (await getAcquisitionAnalytics(7))!;
+    expect(report.sources.find((s) => s.landing === "home")).toMatchObject({ source: "telegram", campaign: "launch", created: 1, paid: 1, grossKopecks: 39900 });
+    expect(report.sources.find((s) => s.landing === null)?.created).toBe(1);
+    expect(report.landings.find((l) => l.landing === "home")).toEqual({ landing: "home", views: 2, exampleClicks: 1, createClicks: 1 });
+    expect(report.landings.find((l) => l.landing === "teacher")?.views).toBe(0);
+    expect(report.homeActions).toEqual([
+      { placement: "hero", exampleClicks: 0, createClicks: 1 },
+      { placement: "templates", exampleClicks: 1, createClicks: 0 }
+    ]);
   });
 
   it("aggregates over 10,000 events without dropping errors or AI costs", async () => {

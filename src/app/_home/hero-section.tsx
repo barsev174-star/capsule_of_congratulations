@@ -49,12 +49,12 @@ export function HeroSection() {
           </p>
 
           <div className={styles.actions}>
-            <form action={startCardFromShowcaseAction}>
+            <form action={startCardFromShowcaseAction} data-home-action="create" data-home-placement="hero">
               <button type="submit" className={styles.primaryAction}>
                 Создать открытку
               </button>
             </form>
-            <Link href="/example" className={styles.secondaryAction}>
+            <Link href="/example" className={styles.secondaryAction} data-home-action="example" data-home-placement="hero">
               Посмотреть, как это выглядит
             </Link>
           </div>

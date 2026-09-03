@@ -146,15 +146,22 @@ export function YandexMetrikaConsent() {
 
   useEffect(() => {
     const consentFrame = window.requestAnimationFrame(() => setConsent(readAnalyticsConsent()));
+    const syncConsent = (event: StorageEvent) => {
+      if (event.key === ANALYTICS_CONSENT_STORAGE_KEY || event.key === null) setConsent(readAnalyticsConsent());
+    };
     const openPreferences = () => setPreferencesOpen(true);
+    window.addEventListener("storage", syncConsent);
     window.addEventListener(ANALYTICS_PREFERENCES_EVENT, openPreferences);
     return () => {
       window.cancelAnimationFrame(consentFrame);
+      window.removeEventListener("storage", syncConsent);
       window.removeEventListener(ANALYTICS_PREFERENCES_EVENT, openPreferences);
     };
   }, []);
 
   useEffect(() => {
+    // Initial hydration is not a refusal: keep an existing first touch intact.
+    if (consent === null) return;
     if (consent !== "accepted") {
       revokeMetrika();
       trackedPath.current = null;
@@ -166,8 +173,10 @@ export function YandexMetrikaConsent() {
       return;
     }
     if (trackedPath.current === pathname) return;
+    ensureCurrentLandingFirstTouch();
     loadMetrika();
     trackedPath.current = pathname;
+    return suspendMetrika;
   }, [consent, isPublicAnalyticsPage, pathname]);
 
   if (!isPublicAnalyticsPage || consent === null || (consent !== "unset" && !preferencesOpen)) return null;

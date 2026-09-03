@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Секретная ссылка управления больше не актуальна." }, { status: 404 });
   }
   try {
-    await requireCardManagementAccess(card.id);
+    await requireCardManagementAccess(card.id, { allowGuestDraft: true });
   } catch {
     return NextResponse.json({ ok: false, message: "Требуется вход владельца открытки." }, { status: 403 });
   }

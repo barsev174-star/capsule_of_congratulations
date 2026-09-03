@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ClientErrorMonitor } from "@/components/telemetry/client-error-monitor";
+import { YandexMetrikaConsent } from "@/components/analytics/yandex-metrika-consent";
 
 const inter = localFont({
   src: [
@@ -68,7 +69,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body className={`${inter.variable} ${caveat.variable} ${alumniSans.variable} ${ptSans.variable}`}><ClientErrorMonitor />{children}</body>
+      <body className={`${inter.variable} ${caveat.variable} ${alumniSans.variable} ${ptSans.variable}`}><ClientErrorMonitor />{children}<YandexMetrikaConsent /></body>
     </html>
   );
 }

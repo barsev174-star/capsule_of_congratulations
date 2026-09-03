@@ -142,7 +142,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
     return <ManageAccessGate cardId={null} invalid />;
   }
 
-  const access = await getCardManagementAccess(card);
+  const access = await getCardManagementAccess(card, { allowGuestDraft: true });
   if (recoveryCard && access.allowed) redirect(getManagePath(card.id));
   if (!access.allowed) {
     return (
@@ -161,6 +161,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const lifecycle = await getCardLifecycleByCardId(card.id);
   if (!lifecycle) return <ManageAccessGate cardId={null} invalid />;
   const canManageAccess = access.actor.kind === "organizer";
+  const isGuestDraft = access.actor.kind === "guest-draft";
+  const pendingEmailClaim = isGuestDraft ? await getPendingOrganizerEmailChange(card.id, "claim") : null;
   const [pendingEmailChange, recoveryLinkActive] = canManageAccess
     ? await Promise.all([
         getPendingOrganizerEmailChange(card.id),
@@ -295,7 +297,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
   const participantLink = getJoinUrl(card.publicSlug);
   const lifecycleLabel = getCardLifecycleLabel(lifecycle);
   const giftAccessible = isGiftAccessible(lifecycle);
-  const collectionReady = Boolean(card.recipientName.trim() && card.occasionText.trim() && card.fromLabel.trim() && card.templateId);
+  const collectionReady = !isGuestDraft && Boolean(card.recipientName.trim() && card.occasionText.trim() && card.fromLabel.trim() && card.templateId);
   const aiLimitTotal = aiUsage.limit;
   const aiLimitRemaining = aiUsage.remaining;
   const blockReadiness = buildCardBlockReadiness({
@@ -314,6 +316,9 @@ export default async function ManagePage({ params, searchParams }: Props) {
     blockReadiness,
     visibleContributionCount: visibleContributions.length
   });
+  if (isGuestDraft && organizerJourney.nextAction.target === "lifecycle-section") {
+    organizerJourney.nextAction = { kind: "anchor", label: "Подтвердить email", target: "basics-section" };
+  }
   const deliveryWarnings = blockReadiness
     .filter((block) => block.enabled && block.warning)
     .map((block) => block.warning!);
@@ -508,6 +513,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
                   manageToken={manageToken}
                   card={card}
                   canManageAccess={canManageAccess}
+                  isGuestDraft={isGuestDraft}
+                  initialPendingEmailClaim={pendingEmailClaim}
                   initialPendingEmailChange={pendingEmailChange}
                   initialRecoveryLinkActive={recoveryLinkActive}
                 />
@@ -623,6 +630,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                         {!card.fromLabel.trim() ? <li>От кого открытка</li> : null}
                         {!card.occasionText.trim() ? <li>Надпись события</li> : null}
                         {!card.templateId ? <li>Шаблон открытки</li> : null}
+                        {isGuestDraft ? <li><a href="#basics-section">Подтвердите email, чтобы пригласить участников</a></li> : null}
                       </ul>
                     </div>
                   </EditorSidebarCard>

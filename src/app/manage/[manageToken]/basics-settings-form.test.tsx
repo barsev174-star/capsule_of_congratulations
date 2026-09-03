@@ -10,6 +10,7 @@ import {
   updateCardBasicsAction
 } from "./actions";
 import { BasicsSettingsForm } from "./basics-settings-form";
+import { requestCardAccessAction } from "./access-actions";
 
 const refresh = vi.fn();
 
@@ -25,6 +26,8 @@ vi.mock("./actions", () => ({
   rotateRecoveryLinkAction: vi.fn(),
   updateCardBasicsAction: vi.fn()
 }));
+
+vi.mock("./access-actions", () => ({ requestCardAccessAction: vi.fn() }));
 
 const buildCard = (overrides: Partial<CardDraft> = {}): CardDraft => ({
   id: "card-id",
@@ -60,6 +63,7 @@ const buildCard = (overrides: Partial<CardDraft> = {}): CardDraft => ({
 describe("BasicsSettingsForm mobile summary", () => {
   beforeEach(() => {
     refresh.mockReset();
+    vi.mocked(requestCardAccessAction).mockReset();
     vi.mocked(cancelOrganizerEmailChangeAction).mockReset();
     vi.mocked(requestOrganizerEmailChangeAction).mockReset();
     vi.mocked(revokeRecoveryLinksAction).mockReset();
@@ -112,6 +116,54 @@ describe("BasicsSettingsForm mobile summary", () => {
       "true"
     );
     expect(screen.getByText("Нужно заполнить")).toBeInTheDocument();
+  });
+
+  it("opens the guest basics with a required email and no ownership settings", () => {
+    render(<BasicsSettingsForm manageToken="card-id" card={buildCard({ organizerEmail: "" })} isGuestDraft />);
+
+    expect(screen.getByRole("textbox", { name: /Ваш email/ })).toBeRequired();
+    expect(screen.getByRole("button", { name: "Свернуть" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(/только в этом браузере, до 7 дней/)).toBeInTheDocument();
+    expect(screen.queryByText("Доступ и безопасность")).not.toBeInTheDocument();
+  });
+
+  it("does not call an empty email confirmed when staff views an unclaimed card", () => {
+    render(<BasicsSettingsForm manageToken="card-id" card={buildCard({ organizerEmail: "" })} canManageAccess={false} />);
+    expect(screen.getByText("Владелец ещё не назначен")).toBeInTheDocument();
+    expect(screen.queryByText(/Подтверждённый адрес/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /email/i })).not.toBeInTheDocument();
+  });
+
+  it("restores a pending guest email and lets the user refresh after confirmation", async () => {
+    const user = userEvent.setup();
+    render(<BasicsSettingsForm manageToken="card-id" card={buildCard({ organizerEmail: "" })} isGuestDraft
+      initialPendingEmailClaim={{ email: "pending@example.com", createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 600_000).toISOString() }} />);
+
+    expect(screen.getByRole("textbox", { name: /Ваш email/ })).toHaveValue("pending@example.com");
+    expect(screen.getByText(/Письмо отправлено на pending@example.com/)).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Повторить через/ })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Я подтвердил email" }));
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(requestCardAccessAction).not.toHaveBeenCalled();
+  });
+
+  it("retries a failed guest confirmation through the initial claim action", async () => {
+    const user = userEvent.setup();
+    vi.mocked(updateCardBasicsAction).mockResolvedValueOnce({ ok: true, message: "Основа сохранена.",
+      accessEmail: { status: "failed", message: "Письмо не отправлено." } });
+    vi.mocked(requestCardAccessAction).mockResolvedValue({ ok: true, message: "Письмо отправлено." });
+    render(<BasicsSettingsForm manageToken="card-id" card={buildCard({ organizerEmail: "" })} isGuestDraft />);
+
+    fireEvent.change(screen.getByRole("textbox", { name: /Ваш email/ }), { target: { value: "guest@example.com" } });
+    fireEvent.submit(screen.getByRole("textbox", { name: /Ваш email/ }).closest("form")!);
+    expect(await screen.findByText("Письмо не отправлено.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Отправить ещё раз", exact: true }));
+    await waitFor(() => expect(requestCardAccessAction).toHaveBeenCalledOnce());
+    const submitted = vi.mocked(requestCardAccessAction).mock.calls[0][1];
+    expect(submitted.get("cardId")).toBe("card-id");
+    expect(submitted.get("email")).toBe("guest@example.com");
+    expect(await screen.findByText("Письмо отправлено.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Повторить через/ })).toBeDisabled();
   });
 
   it("saves the event date immediately after it is selected", async () => {

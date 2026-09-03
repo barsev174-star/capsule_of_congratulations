@@ -161,7 +161,7 @@ export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
 
         <nav className={styles.nav} aria-label="Главная навигация">
           {navItems.map((item) => (
-            <a key={item.href} href={item.href} className={styles.navLink} onClick={() => {
+            <a key={item.href} href={item.href} className={styles.navLink} data-home-action={!isSeoLanding && item.href === "/example" ? "example" : undefined} data-home-placement="header" onClick={() => {
               if (variant === "birthday" && item.href === BIRTHDAY_EXAMPLE_PATH) {
                 sendClientTelemetry("seo_example_click", { ...getBirthdayTelemetryContext(), template: "paper-birthday", placement: "header" });
               }
@@ -188,7 +188,7 @@ export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
         {menuOpen ? (
           <nav ref={navRef} id="mobile-nav" aria-label="Мобильная навигация" className={styles.mobileNav}>
             {navItems.map((item) => (
-              <a key={item.href} href={item.href} onClick={() => {
+              <a key={item.href} href={item.href} data-home-action={!isSeoLanding && item.href === "/example" ? "example" : undefined} data-home-placement="header" onClick={() => {
                 setMenuOpen(false);
                 if (variant === "birthday" && item.href === BIRTHDAY_EXAMPLE_PATH) {
                   sendClientTelemetry("seo_example_click", { ...getBirthdayTelemetryContext(), template: "paper-birthday", placement: "header" });
@@ -202,6 +202,8 @@ export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
 
         <form
           action={createAction}
+          data-home-action={!isSeoLanding ? "create" : undefined}
+          data-home-placement="header"
           className={styles.ctaForm}
           onSubmit={() => {
             if (variant === "teacher") {

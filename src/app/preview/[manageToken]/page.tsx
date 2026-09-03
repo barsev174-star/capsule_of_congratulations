@@ -46,7 +46,7 @@ export default async function PreviewPage({ params }: Props) {
       : await getCardDraftByLegacyManageToken(identifier);
   const card = permanentCard ?? recoveryCard;
   if (!card) notFound();
-  const access = await getCardManagementAccess(card);
+  const access = await getCardManagementAccess(card, { allowGuestDraft: true });
   if (!access.allowed) redirect(`/manage/${recoveryCard ? identifier : card.id}`);
   if (identifier !== card.id) redirect(`/preview/${card.id}`);
   const lifecycle = await getCardLifecycleByManageToken(card.id);

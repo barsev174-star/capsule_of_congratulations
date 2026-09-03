@@ -12,6 +12,7 @@ import {
   YandexMetrikaConsent
 } from "./yandex-metrika-consent";
 import { readAnalyticsConsent, saveAnalyticsConsent } from "@/lib/client-analytics-consent";
+import { ensureCurrentLandingFirstTouch } from "@/lib/client-landing-attribution";
 
 type TestWindow = Window & {
   ym?: ((...args: unknown[]) => void) & { a?: unknown[][] };
@@ -24,6 +25,7 @@ const testWindow = () => window as TestWindow;
 describe("YandexMetrikaConsent", () => {
   beforeEach(() => {
     navigation.pathname = "/";
+    window.history.replaceState({}, "", "/");
     window.localStorage.clear();
     document.querySelectorAll("script[data-yandex-metrika]").forEach((script) => script.remove());
     delete testWindow().ym;
@@ -38,8 +40,8 @@ describe("YandexMetrikaConsent", () => {
   it("does not load the counter before explicit consent", async () => {
     render(<YandexMetrikaConsent />);
     expect(await screen.findByRole("heading", { name: "Помочь нам улучшать Slovesto?" })).toBeInTheDocument();
+    await waitFor(() => expect(testWindow().disableYaCounter111957811).toBe(true));
     expect(document.querySelector("script[data-yandex-metrika]")).toBeNull();
-    expect(testWindow().disableYaCounter111957811).toBe(true);
   });
 
   it("keeps Metrika disabled after refusal", async () => {
@@ -111,5 +113,57 @@ describe("YandexMetrikaConsent", () => {
     render(<YandexMetrikaConsent />);
     expect(await screen.findByRole("heading", { name: "Помочь нам улучшать Slovesto?" })).toBeInTheDocument();
     expect(document.querySelector("script[data-yandex-metrika]")).toBeNull();
+  });
+
+  it("preserves the original campaign during hydration and disables the counter on private routes", async () => {
+    window.history.replaceState({}, "", "/?utm_source=telegram&utm_campaign=launch");
+    saveAnalyticsConsent("accepted");
+    ensureCurrentLandingFirstTouch();
+    const firstCookie = document.cookie;
+    window.history.replaceState({}, "", "/?utm_source=other");
+    const { rerender } = render(<YandexMetrikaConsent />);
+    await waitFor(() => expect(testWindow().disableYaCounter111957811).toBe(false));
+    expect(document.cookie).toBe(firstCookie);
+    expect(testWindow().ym?.a?.filter((args) => args[1] === "hit")).toHaveLength(1);
+    navigation.pathname = "/manage/private";
+    window.history.replaceState({}, "", navigation.pathname);
+    rerender(<YandexMetrikaConsent />);
+    expect(testWindow().disableYaCounter111957811).toBe(true);
+    expect(testWindow().ym?.a?.filter((args) => args[1] === "hit")).toHaveLength(1);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    navigation.pathname = "/";
+    window.history.replaceState({}, "", "/");
+    rerender(<YandexMetrikaConsent />);
+    expect(testWindow().disableYaCounter111957811).toBe(false);
+    expect(document.cookie).toBe(firstCookie);
+    expect(testWindow().ym?.a?.filter((args) => args[1] === "hit")).toHaveLength(2);
+  });
+
+  it("captures homepage UTM when consent is given after the page has loaded", async () => {
+    window.history.replaceState({}, "", "/?utm_source=telegram&utm_campaign=launch");
+    render(<YandexMetrikaConsent />);
+    expect(document.cookie).not.toContain("slv_first_touch=");
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Разрешить" }));
+    expect(decodeURIComponent(document.cookie)).toContain('"utm_campaign":"launch"');
+    const hit = testWindow().ym?.a?.find((args) => args[1] === "hit");
+    expect(hit?.[2]).not.toContain("?");
+  });
+
+  it.each(["/gruppovaya-otkrytka/uchitelyu", "/gruppovaya-otkrytka/vospitatelyu", "/gruppovaya-otkrytka/kollege", "/gruppovaya-otkrytka/den-rozhdeniya"])("asks for consent on a direct visit to %s", async (pathname) => {
+    navigation.pathname = pathname;
+    window.history.replaceState({}, "", pathname);
+    render(<YandexMetrikaConsent />);
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(document.querySelector("script[data-yandex-metrika]")).toBeNull();
+  });
+
+  it("honors a refusal saved in another tab", async () => {
+    saveAnalyticsConsent("accepted");
+    render(<YandexMetrikaConsent />);
+    await waitFor(() => expect(testWindow().disableYaCounter111957811).toBe(false));
+    saveAnalyticsConsent("declined");
+    window.dispatchEvent(new StorageEvent("storage", { key: ANALYTICS_CONSENT_STORAGE_KEY }));
+    await waitFor(() => expect(document.querySelector("script[data-yandex-metrika]")).toBeNull());
+    expect(document.cookie).not.toContain("slv_first_touch=");
   });
 });

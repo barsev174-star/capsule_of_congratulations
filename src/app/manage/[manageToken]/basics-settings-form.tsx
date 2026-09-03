@@ -19,6 +19,7 @@ import { CopyLinkButton } from "./copy-link-button";
 import styles from "./manage-page.module.css";
 import accessStyles from "./organizer-access-settings.module.css";
 import { OrganizerEmailChangeDialog } from "./organizer-email-change-dialog";
+import { requestCardAccessAction } from "./access-actions";
 
 type Props = {
   manageToken: string;
@@ -26,6 +27,8 @@ type Props = {
   canManageAccess?: boolean;
   initialPendingEmailChange?: PendingOrganizerEmailChange | null;
   initialRecoveryLinkActive?: boolean;
+  isGuestDraft?: boolean;
+  initialPendingEmailClaim?: PendingOrganizerEmailChange | null;
 };
 
 const initialState: CardBasicsFormState = {
@@ -33,12 +36,12 @@ const initialState: CardBasicsFormState = {
   message: ""
 };
 
-const buildFields = (card: CardDraft) => ({
+const buildFields = (card: CardDraft, pendingEmail = "") => ({
   recipientName: card.recipientName,
   fromLabel: card.fromLabel,
   occasionText: card.occasionText,
   organizerName: card.organizerName,
-  organizerEmail: card.organizerEmail,
+  organizerEmail: card.organizerEmail || pendingEmail,
   eventDate: card.eventDate ?? "",
   description: card.description ?? "",
   signature: card.signature ?? ""
@@ -87,7 +90,9 @@ export const BasicsSettingsForm = ({
   card,
   canManageAccess = true,
   initialPendingEmailChange = null,
-  initialRecoveryLinkActive = true
+  initialRecoveryLinkActive = true,
+  isGuestDraft = false,
+  initialPendingEmailClaim = null
 }: Props) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -103,23 +108,23 @@ export const BasicsSettingsForm = ({
   const [recoveryUrl, setRecoveryUrl] = useState("");
   const [recoveryLinkActive, setRecoveryLinkActive] = useState(initialRecoveryLinkActive);
   const [recoveryConfirmation, setRecoveryConfirmation] = useState<"rotate" | "revoke" | null>(null);
-  const [accessCooldown, startAccessCooldown] = useCooldown();
+  const [accessCooldown, startAccessCooldown] = useCooldown(initialPendingEmailClaim?.createdAt);
   const [emailChangeCooldown, startEmailChangeCooldown] = useCooldown(initialPendingEmailChange?.createdAt);
 
-  const [fields, setFields] = useState(() => buildFields(card));
+  const [fields, setFields] = useState(() => buildFields(card, initialPendingEmailClaim?.email));
   const requiredFieldsReady = areRequiredFieldsReady(fields);
   const [isMobileExpanded, setIsMobileExpanded] = useState(
-    () => !areRequiredFieldsReady(buildFields(card))
+    () => isGuestDraft || !areRequiredFieldsReady(buildFields(card))
   );
 
   const currentKey = serializeBasicsFields(fields);
-  const savedFields = state.ok && state.fields ? state.fields : buildFields(card);
+  const savedFields = state.ok && state.fields ? state.fields : buildFields(card, initialPendingEmailClaim?.email);
   const savedKey = serializeBasicsFields(savedFields);
   const submittedFields = !state.ok && state.fields ? state.fields : null;
   const submittedKey = submittedFields ? serializeBasicsFields(submittedFields) : null;
   const isDirty = currentKey !== savedKey;
   const justFailed = submittedKey !== null && submittedKey === currentKey;
-  const showResendAction = canManageAccess && Boolean(
+  const showResendAction = canManageAccess && !isGuestDraft && Boolean(
     card.organizerEmail.trim() ||
       state.accessEmail ||
       accessMessage
@@ -165,6 +170,7 @@ export const BasicsSettingsForm = ({
     startTransition(async () => {
       const result = await updateCardBasicsAction(state, formData);
       setState(result);
+      if (result.accessEmail?.status === "sent") startAccessCooldown();
       if (!result.ok) setIsMobileExpanded(true);
       if (result.ok && result.fields) {
         setFields(result.fields);
@@ -182,6 +188,19 @@ export const BasicsSettingsForm = ({
           ? `✓ Ссылка отправлена на ${maskEmail(fields.organizerEmail)}.`
           : result.message
       );
+      if (result.ok) startAccessCooldown();
+    });
+  };
+
+  const confirmDraftEmail = () => {
+    const data = new FormData();
+    data.set("cardId", card.id);
+    data.set("email", fields.organizerEmail);
+    startTransition(async () => {
+      const result = await requestCardAccessAction({ ok: false, message: "" }, data);
+      setState((current) => ({ ...current, accessEmail: {
+        status: result.ok ? "sent" : "failed", message: result.message, devAccessUrl: result.devAccessUrl
+      } }));
       if (result.ok) startAccessCooldown();
     });
   };
@@ -363,6 +382,11 @@ export const BasicsSettingsForm = ({
             />
           </div>
           <div className={styles.field}>
+            {isGuestDraft ? <>
+              <label htmlFor="draft-organizer-email">Ваш email <span className={styles.requiredMark} aria-hidden="true">*</span></label>
+              <input id="draft-organizer-email" type="email" name="organizerEmail" autoComplete="email" required maxLength={254}
+                value={fields.organizerEmail} onChange={handleChange("organizerEmail")} aria-describedby="organizer-email-help" />
+            </> : <>
             <span id="organizer-email-label">Email владельца <span className={styles.requiredMark} aria-hidden="true">*</span></span>
             <input type="hidden" name="organizerEmail" value={fields.organizerEmail} />
             <div
@@ -372,14 +396,33 @@ export const BasicsSettingsForm = ({
               aria-describedby={`organizer-email-help${state.accessEmail?.status === "failed" ? " organizer-email-error" : ""}`}
             >
               <strong>{fields.organizerEmail || "Не указан"}</strong>
-              <small>Подтверждённый адрес — изменить его можно в настройках доступа</small>
+              <small>{card.organizerEmail.trim()
+                ? "Подтверждённый адрес — изменить его можно в настройках доступа"
+                : "Владелец ещё не назначен"}</small>
             </div>
+            </>}
           </div>
         </div>
         <div className={styles.organizerAccessActions} id="organizer-email-help">
-          <span>На этот email приходят ссылки для входа. Пароль не нужен.</span>
+          <span>{isGuestDraft
+            ? "Пока черновик доступен только в этом браузере, до 7 дней. При сохранении отправим ссылку на email — подтвердите его, чтобы вернуться с любого устройства и пригласить участников."
+            : card.organizerEmail.trim()
+              ? "На этот email приходят ссылки для входа. Пароль не нужен."
+              : "Служебный доступ позволяет редактировать открытку. Для подтверждения email откройте черновик в браузере, где он был создан."}</span>
         </div>
-        {canManageAccess ? (
+        {isGuestDraft && initialPendingEmailClaim && !state.accessEmail ? (
+          <p className={styles.organizerAccessFeedback}>
+            Письмо отправлено на {initialPendingEmailClaim.email}. Перейдите по ссылке в письме, чтобы подтвердить email.
+          </p>
+        ) : null}
+        {isGuestDraft && (initialPendingEmailClaim || state.accessEmail) ? <div className={styles.organizerAccessActions}>
+          <button type="button" className={styles.statusSecondaryAction} onClick={confirmDraftEmail}
+            disabled={isPending || accessCooldown > 0 || !fields.organizerEmail.trim()}>
+            {accessCooldown > 0 ? `Повторить через ${accessCooldown} с` : "Отправить подтверждение ещё раз"}
+          </button>
+          <button type="button" className={styles.statusSecondaryAction} onClick={() => router.refresh()}>Я подтвердил email</button>
+        </div> : null}
+        {canManageAccess && !isGuestDraft ? (
           <details className={styles.organizerSecurityDetails}>
             <summary>
               <span>Доступ и безопасность</span>
@@ -512,12 +555,13 @@ export const BasicsSettingsForm = ({
           >
             {state.accessEmail.message}
             {state.accessEmail.status === "failed" ? (
-              <button type="button" onClick={resendAccess} disabled={isPending}>
+              <button type="button" onClick={isGuestDraft ? confirmDraftEmail : resendAccess} disabled={isPending || accessCooldown > 0}>
                 Отправить ещё раз
               </button>
             ) : null}
           </p>
         ) : null}
+        {isGuestDraft && state.accessEmail?.devAccessUrl ? <a href={state.accessEmail.devAccessUrl}>Открыть тестовую ссылку подтверждения</a> : null}
       </section>
 
       <details className={styles.basicsAdditional}>

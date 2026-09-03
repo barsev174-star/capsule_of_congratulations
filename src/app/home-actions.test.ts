@@ -8,10 +8,16 @@ const mocks = vi.hoisted(() => ({
   getManagePath: vi.fn(),
   reportCriticalError: vi.fn(),
   trackFunnel: vi.fn(),
-  parseLandingAttribution: vi.fn()
+  parseLandingAttribution: vi.fn(),
+  getOrganizerSession: vi.fn(),
+  grantNewDraftAccess: vi.fn(),
+  claimCardOrganizerEmail: vi.fn()
 }));
 
 vi.mock("next/headers", () => ({ cookies: mocks.cookies, headers: mocks.headers }));
+vi.mock("@/lib/organizer/session", () => ({ getOrganizerSession: mocks.getOrganizerSession }));
+vi.mock("@/lib/manage/draft-session", () => ({ grantNewDraftAccess: mocks.grantNewDraftAccess }));
+vi.mock("@/lib/cards/repository", () => ({ claimCardOrganizerEmail: mocks.claimCardOrganizerEmail }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/cards/service", () => ({ createEmptyCardDraft: mocks.createEmptyCardDraft }));
 vi.mock("@/lib/routes/card-links", () => ({ getManagePath: mocks.getManagePath }));
@@ -43,13 +49,15 @@ describe("landing card creation actions", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.getOrganizerSession.mockResolvedValue(null);
+    mocks.claimCardOrganizerEmail.mockResolvedValue({ id: "created-card-id" });
     mocks.cookies.mockResolvedValue({
       get: vi.fn(() => ({ value: "encoded-first-touch" }))
     });
     mocks.headers.mockResolvedValue(new Headers({ "x-forwarded-for": `203.0.113.${Math.floor(Math.random() * 200) + 1}` }));
     mocks.parseLandingAttribution.mockReturnValue(attribution);
     mocks.createEmptyCardDraft.mockResolvedValue({
-      card: { manageToken: "manage-token" }
+      card: { id: "created-card-id", manageToken: "manage-token" }
     });
     mocks.getManagePath.mockReturnValue("/manage/manage-token");
   });
@@ -63,6 +71,25 @@ describe("landing card creation actions", () => {
     });
     expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution);
     expect(mocks.redirect).toHaveBeenCalledWith("/manage/manage-token");
+    expect(mocks.grantNewDraftAccess).toHaveBeenCalledWith("created-card-id");
+    expect(mocks.getManagePath).toHaveBeenCalledWith("created-card-id");
+    expect(mocks.claimCardOrganizerEmail).not.toHaveBeenCalled();
+  });
+
+  it("assigns a new card to an already verified organizer without granting guest access", async () => {
+    mocks.getOrganizerSession.mockResolvedValue({ email: "verified@example.com" });
+    await startCardFromShowcaseAction();
+    expect(mocks.claimCardOrganizerEmail).toHaveBeenCalledWith("created-card-id", "verified@example.com");
+    expect(mocks.grantNewDraftAccess).not.toHaveBeenCalled();
+  });
+
+  it("keeps a homepage campaign when creating from the example or a thematic page", async () => {
+    const homeAttribution = { landing_type: "home", landing_path: "/", utm_source: "telegram", utm_campaign: "launch" };
+    mocks.parseLandingAttribution.mockReturnValue(homeAttribution);
+    await startCardFromExampleSelectionAction(new FormData());
+    expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(homeAttribution);
+    await startTeacherCardFromShowcaseAction();
+    expect(mocks.createEmptyCardDraft).toHaveBeenLastCalledWith(homeAttribution, { templateId: "school-classic" });
   });
 
   it("starts a birthday draft with the fixed template, occasion and first touch", async () => {

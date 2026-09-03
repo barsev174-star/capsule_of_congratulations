@@ -4,8 +4,10 @@ import { getCardDraftByManagementId } from "@/lib/cards/repository";
 import type { CardDraft } from "@/lib/cards/types";
 import { normalizeOrganizerEmail } from "@/lib/organizer/email-normalization";
 import { getOrganizerSession } from "@/lib/organizer/session";
+import { hasGuestDraftAccess } from "./draft-session";
 
 export type CardManagementActor =
+  | { kind: "guest-draft" }
   | { kind: "organizer"; email: string }
   | { kind: "staff"; email: string; role: "admin" | "moderator" };
 
@@ -29,7 +31,7 @@ export class CardManagementAccessError extends Error {
 const isManagementStaffRole = (role: AdminUserRole): role is "admin" | "moderator" =>
   role === "admin" || role === "moderator";
 
-export const getCardManagementAccess = async (card: CardDraft): Promise<CardManagementAccess> => {
+export const getCardManagementAccess = async (card: CardDraft, options: { allowGuestDraft?: boolean } = {}): Promise<CardManagementAccess> => {
   const [organizerSession, adminSession] = await Promise.all([
     getOrganizerSession(),
     getAdminSession()
@@ -41,18 +43,24 @@ export const getCardManagementAccess = async (card: CardDraft): Promise<CardMana
     return { allowed: true, actor: { kind: "organizer", email: organizerEmail } };
   }
 
-  if (adminSession && isManagementStaffRole(adminSession.role)) {
-    return {
-      allowed: true,
-      actor: { kind: "staff", email: adminSession.email, role: adminSession.role }
-    };
-  }
-
-  if (adminSession) {
+  if (adminSession && !isManagementStaffRole(adminSession.role)) {
     return {
       allowed: false,
       reason: "staff-role-denied",
       currentEmail: adminSession.email
+    };
+  }
+
+  // Prefer the creator's scoped draft grant even if they are also signed into admin.
+  // Opt-in for editing only. Collection, payment and ownership endpoints keep the default.
+  if (options.allowGuestDraft && await hasGuestDraftAccess(card)) {
+    return { allowed: true, actor: { kind: "guest-draft" } };
+  }
+
+  if (adminSession && isManagementStaffRole(adminSession.role)) {
+    return {
+      allowed: true,
+      actor: { kind: "staff", email: adminSession.email, role: adminSession.role }
     };
   }
 
@@ -67,10 +75,10 @@ export const getCardManagementAccess = async (card: CardDraft): Promise<CardMana
   return { allowed: false, reason: "unauthenticated", currentEmail: null };
 };
 
-export const requireCardManagementAccess = async (cardId: string) => {
+export const requireCardManagementAccess = async (cardId: string, options: { allowGuestDraft?: boolean } = {}) => {
   const card = await getCardDraftByManagementId(cardId);
   if (!card) throw new CardManagementAccessError("not-found");
-  const access = await getCardManagementAccess(card);
+  const access = await getCardManagementAccess(card, options);
   if (!access.allowed) {
     throw new CardManagementAccessError(access.reason === "unauthenticated" ? "unauthenticated" : "forbidden");
   }

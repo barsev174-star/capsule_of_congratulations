@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
-import { AnalyticsPreferencesButton, YandexMetrikaConsent } from "@/components/analytics/yandex-metrika-consent";
+import { AnalyticsPreferencesButton } from "@/components/analytics/yandex-metrika-consent";
 import { FooterGroup } from "./footer-group";
 import styles from "./footer.module.css";
 
@@ -16,8 +16,8 @@ export function HomeFooter({ variant = "default" }: { variant?: "default" | "neu
         <FooterGroup title="Сервис">
           <nav className={styles.groupNav} aria-label="Сервис">
             <Link href="/account">Мои открытки</Link>
-            <Link href="/create">Создать открытку</Link>
-            <Link href="/example">Пример открытки</Link>
+            <Link href="/create" data-home-action="create" data-home-placement="footer">Создать открытку</Link>
+            <Link href="/example" data-home-action="example" data-home-placement="footer">Пример открытки</Link>
           </nav>
         </FooterGroup>
         <FooterGroup
@@ -44,7 +44,6 @@ export function HomeFooter({ variant = "default" }: { variant?: "default" | "neu
         <span>© 2026 Slovesto</span>
         <span>Место, где слова становятся подарком</span>
       </div>
-      <YandexMetrikaConsent />
     </footer>
   );
 }

@@ -1,4 +1,7 @@
 import {
+  HOME_LANDING_PATH,
+  buildHomeLandingAttribution,
+  type HomeLandingAttribution,
   BIRTHDAY_LANDING_PATH,
   buildBirthdayLandingAttribution,
   type BirthdayLandingAttribution,
@@ -62,6 +65,9 @@ export const removeFirstTouchCookie = () => {
 export const ensureTeacherFirstTouch = (): TeacherLandingAttribution | null =>
   ensureFirstTouch(TEACHER_LANDING_PATH, buildTeacherLandingAttribution);
 
+export const ensureHomeFirstTouch = (): HomeLandingAttribution | null =>
+  ensureFirstTouch(HOME_LANDING_PATH, buildHomeLandingAttribution);
+
 export const ensureCaregiverFirstTouch = (): CaregiverLandingAttribution | null =>
   ensureFirstTouch(CAREGIVER_LANDING_PATH, buildCaregiverLandingAttribution);
 
@@ -73,6 +79,7 @@ export const ensureBirthdayFirstTouch = (): BirthdayLandingAttribution | null =>
 
 export const ensureCurrentLandingFirstTouch = (): LandingAttribution | null => {
   if (typeof window === "undefined") return null;
+  if (window.location.pathname === HOME_LANDING_PATH) return ensureHomeFirstTouch();
   if (window.location.pathname === TEACHER_LANDING_PATH) return ensureTeacherFirstTouch();
   if (window.location.pathname === CAREGIVER_LANDING_PATH) return ensureCaregiverFirstTouch();
   if (window.location.pathname === COLLEAGUE_LANDING_PATH) return ensureColleagueFirstTouch();
