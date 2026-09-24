@@ -1,6 +1,6 @@
 # VPS deployment notes
 
-Актуально на 3 сентября 2026 года. Это основной документ по production-инфраструктуре Slovesto.
+Актуально на 24 сентября 2026 года. Это основной документ по production-инфраструктуре Slovesto.
 
 ## Текущий production-статус
 
@@ -9,13 +9,14 @@
 - Docker Compose project: `capsule`.
 - На VPS не должно быть других прикладных Docker-проектов.
 - Текущий release-набор: шесть продуктовых шаблонов, включая «Детство в рисунках» (`kindergarten-doodles`) и «Вместе» (`team-editorial`), их демонстрационные открытки, статические OG-превью, локальные шрифты и Story/Post/A4-экспорты. В составе сайта есть отдельные SEO-страницы для учителя и воспитателя; маршрут воспитателю — `/gruppovaya-otkrytka/vospitatelyu`, его CTA и пример используют `kindergarten-doodles`. Точный развернутый commit проверяется на VPS командой `git rev-parse --short HEAD`.
-- Security baseline от 26 августа 2026 года: Next.js `16.3.3`, sharp `0.35.3`, PostCSS `8.5.23`, nanoid `3.3.18`; `npm audit` и `npm audit --omit=dev` возвращают `0 vulnerabilities`. Sharp объявлен прямой production-зависимостью, поскольку используется runtime-маршрутами фотографий, OG и экспортов.
+- Текущие production-зависимости: Next.js `16.3.3`, sharp `0.35.4`, PostCSS `8.5.23`, nanoid `3.3.18`; `npm audit --omit=dev` возвращает `0 vulnerabilities`. Sharp объявлен прямой production-зависимостью, поскольку используется runtime-маршрутами фотографий, OG и экспортов.
 - 26 августа опубликована третья SEO-страница `/gruppovaya-otkrytka/kollege` (код `a459323`) с шаблоном «Вместе», анимациями и компактными SEO-ссылками главной. Web/PostgreSQL healthy; публичные страницы, OG, canonical и sitemap проверены.
 - 1 сентября опубликован выбор `template + reveal` (`750def2`), применена миграция `0036_gift_animation.sql`; web/PostgreSQL healthy. Полный отчёт в начале `DELIVERY_LOG.md`.
 - 2 сентября опубликован security/manage-пакет `b7f8147`: применены миграции `0037`–`0038`, включены security headers, rate limits, `/api/health`, нормализация новых uploads и actor-check для manage/preview/API. Web/PostgreSQL healthy; обязательные health/operations smoke и анонимный manage-gate прошли.
 - Предрелизная backup-пара: `/home/deploy/capsule/backups/postgres-20260901-220136.sql.gz` и `uploads-20260901-220136.tar.gz`; checksum и контрольное восстановление успешны (36 миграций до выпуска). Rollback-образ: `capsule-web:rollback-before-manage-access-20260902`, исходный image `sha256:aa7914a20e14afe108ff73016300c6fc8d1643bc2b34abefe2ac2cf48e992df6`.
 - 3 сентября опубликован runtime-код `1b4231c`: аналитика главной, гостевые черновики с подтверждаемым владением, исправление конфликта с admin-сессией и Browserslist `4.28.8`. Новых миграций/env нет; схема остаётся `0038`.
-- Текущий web-image: `sha256:8befe5f2987bf571eccbb9fcedd0037e978b4874e38ac60d5a409558b965248a`. Web/PostgreSQL healthy; health/operations, provider policy, HTTPS smoke создания/защиты и read-only SQL аналитики 7/30 прошли. После очистки build-cache диск занят на 86%.
+- 24 сентября опубликован `dd4b5e7`: мобильная шапка `kindergarten-doodles` вмещает два полных имени; production-зависимость `sharp` обновлена до исправленной `0.35.4`. Новых миграций и env-переменных нет. Текущий web-image: `sha256:cbe2fbe74d9c3d7d4c8cf0b5304de25760d7af1223dfb2377ecaa0fc369c0305`; web/PostgreSQL healthy, production health/operations и HTTPS-маршруты воспитателя и примера прошли. После очистки build-cache диск занят на 83%.
+- Перед выпуском 24 сентября создана backup-пара `20260924-145117`; SHA-256 и изолированное восстановление прошли с 38 миграциями. Текущий rollback-образ: `capsule-web:rollback-before-caregiver-names-20260924` (`sha256:8befe5f2987bf571eccbb9fcedd0037e978b4874e38ac60d5a409558b965248a`).
 - Backup перед выпуском: `postgres-20260903-134929.sql.gz` и `uploads-20260903-134929.tar.gz` в `/home/deploy/capsule/backups`; checksum и изолированное восстановление успешны (38 миграций). Rollback: `capsule-web:rollback-before-guest-draft-20260903`, image `sha256:8554ed65895f550b490e2daf8ef305ffa09e861f851c53ee0af8f9361affb33d`. Этот релиз не меняет схему, поэтому предыдущий образ совместим с текущей БД; автоматическое восстановление базы при откате не нужно. Фактический отчёт — в `DELIVERY_LOG.md`.
 - Текущая схема использует один web-контейнер: `up --no-deps web` при замене может кратковременно прервать запросы. 03.09.2026 старый web штатно завершён SIGTERM/143 в 10:58:36 UTC, новый стартовал через секунду; автоматических перезапусков после запуска и ошибок Caddy не обнаружено. Точную длительность доступности HTTP текущие логи не измеряют. Подробная проверка по запросу владельца — в `DELIVERY_LOG.md`.
 
