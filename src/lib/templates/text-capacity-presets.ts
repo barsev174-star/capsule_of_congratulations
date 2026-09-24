@@ -40,6 +40,12 @@ export const getUniversalRecipientNameLines = (value: string): readonly string[]
   const normalized = value.trim().replace(/\s+/g, " ");
   const parts = normalized.split(" ");
 
+  const pairedNames = normalized.split(/ и /iu);
+  if (pairedNames.length === 2 && pairedNames.every((name) => {
+    const nameParts = name.split(" ");
+    return nameParts.length === 2 && russianPatronymicPattern.test(nameParts[1]);
+  })) return [pairedNames[0], `и ${pairedNames[1]}`];
+
   return parts.length === 2 && russianPatronymicPattern.test(parts[1])
     ? parts
     : [normalized];

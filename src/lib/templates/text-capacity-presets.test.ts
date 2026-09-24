@@ -26,6 +26,7 @@ describe("universal text capacity presets", () => {
     expect(getUniversalRecipientNameLines("Наталья Афанасьевна")).toEqual(["Наталья", "Афанасьевна"]);
     expect(getUniversalRecipientNameLines("Алексей Петрович")).toEqual(["Алексей", "Петрович"]);
     expect(getUniversalRecipientNameLines("Анна Иванова")).toEqual(["Анна Иванова"]);
+    expect(getUniversalRecipientNameLines("Татьяна Евгеньевна и Диляра Адгамовна")).toEqual(["Татьяна Евгеньевна", "и Диляра Адгамовна"]);
   });
 
   it("scales only near-limit quotes inside the fixed four-line area", () => {

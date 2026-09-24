@@ -791,7 +791,7 @@ export function UniversalTemplateCard({
               title={model.recipientName}
             >
               <h1
-                className={`${styles.recipientName} ${recipientNameTier === "long" ? styles.recipientNameLong : ""} ${recipientNameTier === "very-long" ? styles.recipientNameVeryLong : ""}`.trim()}
+                className={`${styles.recipientName} ${recipientNameTier === "long" ? styles.recipientNameLong : ""} ${recipientNameTier === "very-long" ? styles.recipientNameVeryLong : ""} ${recipientNameLines.length === 2 && recipientNameLines[1].startsWith("и ") ? styles.recipientNamePair : ""}`.trim()}
                 aria-label={model.recipientName}
               >{recipientNameLines.map((line) => <span key={line}>{line}</span>)}</h1>
             </div>
