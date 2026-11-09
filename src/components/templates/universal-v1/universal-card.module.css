@@ -1,3 +1,27 @@
+@font-face {
+  font-family: Lora;
+  src: url('/fonts/Lora-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Lora;
+  src: url('/fonts/Lora-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Lora;
+  src: url('/fonts/Lora-MediumItalic.woff2') format('woff2');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
 .page {
   position: relative;
   width: min(100%, calc(var(--uv1-shell-max-width) + 2 * var(--uv1-shell-padding-max)));
@@ -43,6 +67,168 @@
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
   mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
 }
+
+.page[data-page-scene] {
+  min-height: 0;
+}
+
+.page[data-page-scene] .pageAsset {
+  inset: 0;
+  height: auto;
+  background-repeat: repeat-y;
+  background-size: 100% auto;
+  mask-image: none;
+}
+
+.page[data-page-scene-middle] { container-type: inline-size; }
+
+.sceneMiddle {
+  position: absolute;
+  inset: var(--uv1-middle-start) 0 var(--uv1-middle-end);
+  pointer-events: none;
+}
+
+.sceneMiddle::before {
+  position: absolute;
+  inset: auto 0 0;
+  height: min(100%, var(--uv1-middle-max-height, 100%));
+  background: var(--uv1-middle-image) center bottom / 100% max(100%, 115cqw) no-repeat;
+  mask-image: var(--uv1-middle-mask, none);
+  content: "";
+}
+
+.sceneLayer {
+  position: absolute;
+  z-index: 1;
+  inset-inline: 0;
+  pointer-events: none;
+  aspect-ratio: var(--uv1-scene-ratio);
+  background: var(--uv1-scene-image) center / cover no-repeat;
+}
+
+.sceneLayer[data-scene-edge="top"] { top: 0; }
+.sceneLayer[data-scene-edge="bottom"] { bottom: 0; }
+
+.page[data-viewport="mobile"] .sceneLayer {
+  aspect-ratio: var(--uv1-scene-mobile-ratio);
+  background-image: var(--uv1-scene-mobile-image);
+}
+
+.page[data-viewport="mobile"] .sceneMiddle {
+  inset-block: var(--uv1-middle-mobile-start) var(--uv1-middle-mobile-end);
+  --uv1-middle-max-height: 440cqw;
+  --uv1-middle-mask: linear-gradient(transparent, #000 28%);
+}
+
+@media (max-width: 640px) {
+  .page[data-viewport="auto"] .sceneLayer {
+    aspect-ratio: var(--uv1-scene-mobile-ratio);
+    background-image: var(--uv1-scene-mobile-image);
+  }
+
+  .page[data-viewport="auto"] .sceneMiddle {
+    inset-block: var(--uv1-middle-mobile-start) var(--uv1-middle-mobile-end);
+    --uv1-middle-max-height: 440cqw;
+    --uv1-middle-mask: linear-gradient(transparent, #000 28%);
+  }
+}
+
+.page[data-page-scene] :is(.summary, .messages, .memories, .closingSection) {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.page[data-page-scene] .closingSection {
+  margin-bottom: 0;
+}
+
+.page[data-page-scene] .closingSection .sectionContent {
+  padding-bottom: 38px;
+}
+
+.page[data-page-scene] :is(.qualities, .messages, .memories, .quotes) h2 {
+  font-family: var(--uv1-handwritten-font), cursive;
+  font-size: clamp(28px, 4vw, 45px);
+  font-weight: var(--uv1-handwritten-weight);
+  letter-spacing: normal;
+}
+
+.page[data-page-scene] .qualities h2,
+.page[data-page-scene] .quotes h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 2vw, 22px);
+}
+
+.page[data-page-scene] :is(.qualities, .quotes) h2::before,
+.page[data-page-scene] :is(.qualities, .quotes) h2::after {
+  content: "";
+  flex: 0 1 clamp(18px, 9vw, 96px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor);
+  opacity: .55;
+}
+
+.page[data-page-scene] :is(.qualities, .quotes) h2::after { rotate: 180deg; }
+
+.page[data-page-scene][data-surface="public"] .qualities h2 {
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  padding: 5px 20px 7px;
+  border: 1px solid var(--uv1-scene-lettering);
+  border-radius: 999px;
+  background: var(--uv1-accent);
+  color: var(--uv1-scene-lettering);
+}
+
+.page[data-page-scene][data-surface="public"] .qualities h2::before,
+.page[data-page-scene][data-surface="public"] .qualities h2::after {
+  content: none;
+}
+
+.page[data-page-scene] .quoteCard {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.page[data-page-scene] .quoteCard > p {
+  text-align: center;
+}
+
+.page[data-page-scene] .messages .allMessagesButton,
+.page[data-page-scene] .messages .allMessagesButton strong {
+  color: #b9441d;
+}
+
+.page[data-page-scene] .messages .allMessagesButton {
+  border-color: #e9652f;
+  background: #ffffff;
+}
+
+.page[data-page-scene] .messages .allMessagesButton:hover {
+  background: #fff5f0;
+}
+
+.page[data-occasion-lettering] .heroOccasion {
+  font-family: var(--uv1-occasion-font), cursive;
+  font-size: clamp(35px, 5vw, 67px);
+  font-weight: var(--uv1-occasion-weight);
+  line-height: .95;
+  letter-spacing: 0;
+  text-transform: none;
+  text-wrap: balance;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 32%);
+}
+
+.page[data-page-scene] .heroSection .sectionContent {
+  padding-inline: clamp(30px, 12%, 148px);
+  padding-block-start: clamp(80px, 10vw, 126px);
+}
+
 .sectionUnderlay {
   z-index: 0;
   overflow: hidden;
@@ -458,6 +644,61 @@
   box-shadow: none;
 }
 
+.qualityCard[data-quality-tag] {
+  --uv1-quality-medal: clamp(40px, 29cqw, 54px);
+  box-sizing: border-box;
+  container-type: inline-size;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  justify-items: stretch;
+  gap: 7px;
+  padding: 6px clamp(9px, 1.25vw, 18px) 6px 3px;
+}
+
+.qualityRibbon {
+  position: absolute;
+  inset: 50% 0 auto calc(3px + var(--uv1-quality-medal) / 2);
+  box-sizing: border-box;
+  height: calc(var(--uv1-quality-medal) - 7px);
+  transform: translateY(-50%);
+  border: 1px solid #e7bd77;
+  border-left: 0;
+  border-radius: 0 999px 999px 0;
+  background-size: 100% 100%;
+  box-shadow: inset 0 0 0 2px rgb(255 221 161 / .15), 0 2px 4px rgb(0 0 0 / .2);
+}
+
+.qualityCard[data-quality-tag][data-quality-length="long"] {
+  padding-block: 13px;
+}
+
+.qualityCard[data-quality-tag] strong {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+  font-size: clamp(11px, 9.5cqw, clamp(13px, 1.25vw, var(--uv1-quality-font-max)));
+  text-align: left;
+}
+
+.qualityCard[data-quality-tag] strong > span {
+  display: block;
+}
+
+.qualityCard[data-quality-tag][data-quality-length="long"] strong {
+  font-size: clamp(11px, 7.6cqw, 14px);
+}
+
+.qualityMedallion {
+  position: relative;
+  z-index: 1;
+  width: var(--uv1-quality-medal);
+  aspect-ratio: 1;
+}
+
+.qualityCard .qualityMedallion img { object-fit: contain; }
+
 .page[data-template-id="kindergarten-doodles"] .qualitiesGrid { gap: 14px; }
 .page[data-template-id="kindergarten-doodles"] .qualityCard { min-height: 104px; }
 
@@ -572,6 +813,18 @@
 }
 
 .messageCardUnderlay { z-index: 0; }
+
+.page[data-template-id="new-year"] .messageCard[data-greeting-card-index],
+.dialogBackdrop[data-template-id="new-year"] .messageCard[data-greeting-card-index] {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.page[data-template-id="new-year"] .messageCardUnderlay,
+.dialogBackdrop[data-template-id="new-year"] .messageCardUnderlay {
+  filter: drop-shadow(0 3px 4px rgb(0 0 0 / .16));
+}
 
 .page[data-template-id="kindergarten-doodles"] .messageCard,
 .dialogBackdrop[data-template-id="kindergarten-doodles"] .messageCard {
@@ -756,6 +1009,24 @@
   margin-top: 6px;
 }
 
+.page[data-template-id="new-year"] .messageCardContent > p,
+.dialogBackdrop[data-template-id="new-year"] .messageCardContent > p {
+  text-shadow: 0 0 3px #fff5df, 0 0 1px #fff5df;
+  text-wrap: pretty;
+}
+
+.page[data-template-id="new-year"] .messageCard:not([data-message-expanded]) .messageCardContent > p {
+  display: -webkit-box;
+  flex: 0 1 auto;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.page[data-template-id="new-year"] .messageCard[data-message-density="compact"] .messageCardContent > p,
+.page[data-template-id="new-year"] .messageCard[data-message-density="dense"] .messageCardContent > p {
+  -webkit-line-clamp: 5;
+}
+
 .messagePhotoGrid {
   display: grid;
   height: var(--uv1-message-stack-height);
@@ -936,6 +1207,14 @@
 .memoriesIntro { grid-area: intro; align-self: start; padding-inline: 12px; text-align: left; }
 .memoriesIntro h2 { margin-bottom: 10px; font-size: clamp(24px, 3vw, var(--uv1-section-heading-max)); }
 .memoriesIntro p { margin: 0; color: var(--uv1-muted); font-size: clamp(16px, 1.7vw, 18px); line-height: 1.45; }
+.page[data-page-scene-middle] .memoriesIntro :is(h2, p) {
+  max-inline-size: min(100%, 370px);
+  text-shadow: 0 0 9px var(--uv1-page), 0 0 4px var(--uv1-page);
+}
+.page[data-page-scene-middle][data-viewport="mobile"] .memoriesIntro :is(h2, p) { margin-inline: auto; }
+@media (max-width: 640px) {
+  .page[data-page-scene-middle][data-viewport="auto"] .memoriesIntro :is(h2, p) { margin-inline: auto; }
+}
 .page[data-template-id="kindergarten-doodles"] .memoriesIntro {
   position: relative;
   margin: 4px 8px 0;
@@ -991,6 +1270,13 @@
 .quoteCard > p { position: absolute; z-index: 1; box-sizing: border-box; }
 .quoteCard > span { left: 0; top: 0; display: block; height: 28px; padding: 13px 18px 0; color: var(--uv1-accent); font-family: Georgia, serif; font-size: 38px; line-height: 1; }
 .quoteCard > p { display: flex; align-items: center; justify-content: center; margin: 0; overflow: hidden; padding: 6px 10px; font-size: calc(clamp(16px, 5.2cqw, var(--uv1-quote-text-font-max)) * var(--uv1-quote-scale, 1)); font-weight: 600; line-height: 1.18; overflow-wrap: break-word; text-wrap: pretty; }
+
+.quotePaper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 4px rgb(0 0 0 / .16));
+}
 
 .page[data-template-id="school-scrapbook"] .quoteCard > p {
   text-align: center;
@@ -1077,10 +1363,30 @@
 .closingAction { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; box-sizing: border-box; padding: 9px 18px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 750; line-height: 1.2; text-decoration: none; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out, box-shadow 150ms ease-out, scale 150ms ease-out; }
 .closingAction:active { scale: 0.96; }
 .closingActionPrimary { border: 1px solid var(--uv1-action); color: #fff; background: var(--uv1-action); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); }
-.closingActionPrimary:hover { border-color: color-mix(in srgb, var(--uv1-action) 90%, black); background: color-mix(in srgb, var(--uv1-action) 90%, black); }
-.closingActionPrimary:active { border-color: color-mix(in srgb, var(--uv1-action) 80%, black); background: color-mix(in srgb, var(--uv1-action) 80%, black); }
+.closingActionPrimary:hover { border-color: var(--uv1-action-hover, color-mix(in srgb, var(--uv1-action) 90%, black)); background: var(--uv1-action-hover, color-mix(in srgb, var(--uv1-action) 90%, black)); }
+.closingActionPrimary:active { border-color: var(--uv1-action-active, color-mix(in srgb, var(--uv1-action) 80%, black)); background: var(--uv1-action-active, color-mix(in srgb, var(--uv1-action) 80%, black)); }
 .closingActionSecondary { border: 1px solid var(--uv1-action); color: var(--uv1-action); background: #fff; }
 .closingActionSecondary:hover { background: color-mix(in srgb, var(--uv1-action) 6%, #fff); }
+
+.page[data-template-id="new-year"] .closingActionPrimary {
+  border-color: #f3d087;
+  color: #202124;
+  background: linear-gradient(#ffe8ad, #ebc47b);
+}
+.page[data-template-id="new-year"] .closingActionPrimary:hover { background: #ffe8ad; }
+.page[data-template-id="new-year"] .closingActionPrimary:active { background: #e8bc70; }
+.page[data-template-id="new-year"] .closingActionSecondary {
+  border-color: #e7bd77;
+  color: #fff0bd;
+  background: color-mix(in srgb, var(--uv1-accent) 63%, #10191a);
+}
+.page[data-template-id="new-year"] .closingActionSecondary:hover {
+  background: color-mix(in srgb, var(--uv1-accent) 82%, #10191a);
+}
+.page[data-template-id="new-year"] .closingAction:focus-visible {
+  outline: 2px solid #fff0bd;
+  outline-offset: 3px;
+}
 
 .page[data-template-id="kindergarten-doodles"] .closingActionPrimary {
   border-color: #3f7f95;

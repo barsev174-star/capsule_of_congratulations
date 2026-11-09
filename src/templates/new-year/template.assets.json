@@ -1,0 +1,440 @@
+{
+  "version": 1,
+  "templateId": "new-year",
+  "budgets": {
+    "networkBytes": 2000000,
+    "decodedMemoryBytes": 79000000,
+    "individualBytes": 500000
+  },
+  "preview": {
+    "sourceAssetId": "red-preview-v3",
+    "output": "preview.webp",
+    "width": 1200,
+    "height": 630
+  },
+  "assets": [
+    {
+      "id": "goat-medallion-v2",
+      "source": "goat-medallion-v2.png",
+      "output": "goat-medallion-v2.webp",
+      "width": 128,
+      "height": 128,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "red-preview-v3",
+      "source": "red-preview-v3.png",
+      "output": "red-preview-v3.webp",
+      "width": 1200,
+      "height": 630,
+      "alpha": "opaque",
+      "fit": "cover"
+    },
+    {
+      "id": "red-scene-top-v3",
+      "source": "red-scene-top-v3.png",
+      "output": "red-scene-top-v3.webp",
+      "width": 1200,
+      "height": 800,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "red-scene-mobile-top",
+      "source": "red-scene-mobile-top.png",
+      "output": "red-scene-mobile-top.webp",
+      "width": 520,
+      "height": 650,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "red-scene-story-v3",
+      "source": "red-scene-story-v3.png",
+      "output": "red-scene-story-v3.webp",
+      "width": 810,
+      "height": 327,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "red-scene-post-v3",
+      "source": "red-scene-post-v3.png",
+      "output": "red-scene-post-v3.webp",
+      "width": 810,
+      "height": 185,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "red-scene-a4-v3",
+      "source": "red-scene-a4-v3.png",
+      "output": "red-scene-a4-v3.webp",
+      "width": 930,
+      "height": 278,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "red-scene-bottom-v5",
+      "source": "red-scene-bottom-v5.png",
+      "output": "red-scene-bottom-v5.webp",
+      "width": 1116,
+      "height": 414,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "red-scene-mobile-bottom-v5",
+      "source": "red-scene-mobile-bottom-v5.png",
+      "output": "red-scene-mobile-bottom-v5.webp",
+      "width": 500,
+      "height": 510,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-preview-v3",
+      "source": "green-preview-v3.png",
+      "output": "green-preview-v3.webp",
+      "width": 1200,
+      "height": 630,
+      "alpha": "opaque",
+      "fit": "cover"
+    },
+    {
+      "id": "green-scene-top-v3",
+      "source": "green-scene-top-v3.png",
+      "output": "green-scene-top-v3.webp",
+      "width": 1200,
+      "height": 800,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-scene-mobile-top-v3",
+      "source": "green-scene-mobile-top-v3.png",
+      "output": "green-scene-mobile-top-v3.webp",
+      "width": 520,
+      "height": 650,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-scene-story-v3",
+      "source": "green-scene-story-v3.png",
+      "output": "green-scene-story-v3.webp",
+      "width": 810,
+      "height": 327,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-scene-post-v3",
+      "source": "green-scene-post-v3.png",
+      "output": "green-scene-post-v3.webp",
+      "width": 810,
+      "height": 185,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-scene-a4-v3",
+      "source": "green-scene-a4-v3.png",
+      "output": "green-scene-a4-v3.webp",
+      "width": 930,
+      "height": 278,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-scene-bottom-v4",
+      "source": "green-scene-bottom-v4.png",
+      "output": "green-scene-bottom-v4.webp",
+      "width": 1116,
+      "height": 414,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-scene-mobile-bottom-v4",
+      "source": "green-scene-mobile-bottom-v4.png",
+      "output": "green-scene-mobile-bottom-v4.webp",
+      "width": 500,
+      "height": 510,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "letter-v2",
+      "source": "letter-v2.png",
+      "output": "letter-v2.webp",
+      "width": 1100,
+      "height": 440,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "goat-engraving",
+      "source": "goat-engraving.png",
+      "output": "goat-engraving.webp",
+      "width": 280,
+      "height": 280,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-winter-clearing-v2",
+      "source": "green-winter-clearing-v2.png",
+      "output": "green-winter-clearing-v2.webp",
+      "width": 880,
+      "height": 1760,
+      "alpha": "opaque",
+      "fit": "cover"
+    },
+    {
+      "id": "red-winter-clearing-v2",
+      "source": "red-winter-clearing-v2.png",
+      "output": "red-winter-clearing-v2.webp",
+      "width": 880,
+      "height": 1760,
+      "alpha": "opaque",
+      "fit": "cover"
+    },
+    {
+      "id": "red-enamel-ribbon",
+      "source": "red-enamel-ribbon.png",
+      "output": "red-enamel-ribbon.webp",
+      "width": 720,
+      "height": 180,
+      "alpha": "opaque",
+      "fit": "cover"
+    },
+    {
+      "id": "red-enamel-medal-snowflake",
+      "source": "red-enamel-medal-snowflake.png",
+      "output": "red-enamel-medal-snowflake.webp",
+      "width": 128,
+      "height": 128,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "red-enamel-medal-sparkle",
+      "source": "red-enamel-medal-sparkle.png",
+      "output": "red-enamel-medal-sparkle.webp",
+      "width": 128,
+      "height": 128,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "red-enamel-medal-sprig",
+      "source": "red-enamel-medal-sprig.png",
+      "output": "red-enamel-medal-sprig.webp",
+      "width": 128,
+      "height": 128,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "red-enamel-medal-bell",
+      "source": "red-enamel-medal-bell.png",
+      "output": "red-enamel-medal-bell.webp",
+      "width": 128,
+      "height": 128,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "red-enamel-medal-star",
+      "source": "red-enamel-medal-star.png",
+      "output": "red-enamel-medal-star.webp",
+      "width": 128,
+      "height": 128,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-enamel-ribbon",
+      "source": "green-enamel-ribbon.png",
+      "output": "green-enamel-ribbon.webp",
+      "width": 720,
+      "height": 180,
+      "alpha": "opaque",
+      "fit": "cover"
+    },
+    {
+      "id": "green-enamel-medal-snowflake",
+      "source": "green-enamel-medal-snowflake.png",
+      "output": "green-enamel-medal-snowflake.webp",
+      "width": 128,
+      "height": 128,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-enamel-medal-sparkle",
+      "source": "green-enamel-medal-sparkle.png",
+      "output": "green-enamel-medal-sparkle.webp",
+      "width": 128,
+      "height": 128,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-enamel-medal-sprig",
+      "source": "green-enamel-medal-sprig.png",
+      "output": "green-enamel-medal-sprig.webp",
+      "width": 128,
+      "height": 128,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-enamel-medal-bell",
+      "source": "green-enamel-medal-bell.png",
+      "output": "green-enamel-medal-bell.webp",
+      "width": 128,
+      "height": 128,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "green-enamel-medal-star",
+      "source": "green-enamel-medal-star.png",
+      "output": "green-enamel-medal-star.webp",
+      "width": 128,
+      "height": 128,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "winter-mat-portrait",
+      "source": "winter-mat-portrait.png",
+      "output": "winter-mat-portrait.webp",
+      "width": 802,
+      "height": 1122,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "winter-mat-portrait-ribbon",
+      "source": "winter-mat-portrait-ribbon.png",
+      "output": "winter-mat-portrait-ribbon.webp",
+      "width": 802,
+      "height": 1122,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "winter-mat-landscape",
+      "source": "winter-mat-landscape.png",
+      "output": "winter-mat-landscape.webp",
+      "width": 1122,
+      "height": 802,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "winter-mat-landscape-ribbon",
+      "source": "winter-mat-landscape-ribbon.png",
+      "output": "winter-mat-landscape-ribbon.webp",
+      "width": 1122,
+      "height": 802,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "winter-mat-memory",
+      "source": "winter-mat-memory.png",
+      "output": "winter-mat-memory.webp",
+      "width": 1122,
+      "height": 802,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "winter-mat-memory-ribbon",
+      "source": "winter-mat-memory-ribbon.png",
+      "output": "winter-mat-memory-ribbon.webp",
+      "width": 1122,
+      "height": 802,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "winter-mat-clip",
+      "source": "winter-mat-clip.png",
+      "output": "winter-mat-clip.webp",
+      "width": 336,
+      "height": 240,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "winter-mat-fir-v2",
+      "source": "winter-mat-fir-v2.png",
+      "output": "winter-mat-fir-v2.webp",
+      "width": 336,
+      "height": 240,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "festive-letter-pine",
+      "source": "festive-letter-pine.png",
+      "output": "festive-letter-pine.webp",
+      "width": 800,
+      "height": 360,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "festive-letter-berries",
+      "source": "festive-letter-berries.png",
+      "output": "festive-letter-berries.webp",
+      "width": 800,
+      "height": 360,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "festive-letter-bell",
+      "source": "festive-letter-bell.png",
+      "output": "festive-letter-bell.webp",
+      "width": 800,
+      "height": 360,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "festive-letter-bauble",
+      "source": "festive-letter-bauble.png",
+      "output": "festive-letter-bauble.webp",
+      "width": 800,
+      "height": 360,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "festive-quote-ivory",
+      "source": "festive-quote-ivory.png",
+      "output": "festive-quote-ivory.webp",
+      "width": 720,
+      "height": 240,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "festive-quote-champagne",
+      "source": "festive-quote-champagne.png",
+      "output": "festive-quote-champagne.webp",
+      "width": 720,
+      "height": 240,
+      "alpha": "transparent",
+      "fit": "cover"
+    }
+  ]
+}

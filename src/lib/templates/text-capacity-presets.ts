@@ -32,6 +32,8 @@ export const universalTextCapacityPresets = {
   }
 } as const satisfies Record<string, UniversalTextCapacityPreset>;
 
+export const isLongQualityLabel = (label: string) => label.length > 19 || /\S{14,}/u.test(label);
+
 export type UniversalRecipientNameTier = "default" | "long" | "very-long";
 
 const russianPatronymicPattern = /(?:ович|евич|ич|овна|евна|ична|инична)$/iu;

@@ -52,9 +52,19 @@ export type UniversalTemplateRegistration = {
   family: "universal-v1";
   profile: TemplateProfile;
   catalog: TemplateCatalogMetadata;
+  themes?: {
+    defaultId: string;
+    options: ReadonlyArray<{ id: string; label: string; profile: TemplateProfile }>;
+  };
 };
 
 export type TemplateRegistration = LegacyTemplateRegistration | UniversalTemplateRegistration;
+
+export const resolveTemplateTheme = (registration: TemplateRegistration | undefined, theme?: string | null) => {
+  const themes = registration?.family === "universal-v1" ? registration.themes : undefined;
+  return themes?.options.find((option) => option.id === theme)
+    ?? themes?.options.find((option) => option.id === themes.defaultId);
+};
 
 export type TemplateRegistry = {
   entries: readonly TemplateRegistration[];
@@ -69,6 +79,14 @@ export const createTemplateRegistry = (entries: readonly TemplateRegistration[])
     }
     if (entry.family === "universal-v1" && entry.profile.id !== entry.id) {
       throw new Error(`ID профиля ${entry.profile.id} не совпадает с регистрацией ${entry.id}.`);
+    }
+    if (entry.family === "universal-v1" && entry.themes) {
+      const { options, defaultId } = entry.themes;
+      if (!options.some((option) => option.id === defaultId && option.profile === entry.profile)
+        || new Set(options.map((option) => option.id)).size !== options.length
+        || options.some((option) => option.profile.id !== entry.id || option.profile.layoutPreset !== entry.profile.layoutPreset)) {
+        throw new Error(`Некорректные темы шаблона ${entry.id}.`);
+      }
     }
     byId.set(entry.id, entry);
   }

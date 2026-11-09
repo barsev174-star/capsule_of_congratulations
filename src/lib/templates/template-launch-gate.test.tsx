@@ -63,7 +63,11 @@ describe("universal template launch gate", () => {
       [manifest.preview.output, manifest.preview],
       ...manifest.assets.map((asset) => [asset.output, asset] as const)
     ]);
-    const uniqueAssets = new Map(listTemplateProfileAssets(profile).map(({ asset }) => [asset.src, asset]));
+    const profiles = registration.themes?.options.map((theme) => theme.profile) ?? [profile];
+    for (const variant of profiles) {
+      expect(validateTemplateProfile(variant)).toEqual(expect.objectContaining({ ok: true, issues: [] }));
+    }
+    const uniqueAssets = new Map(profiles.flatMap(listTemplateProfileAssets).map(({ asset }) => [asset.src, asset]));
     for (const asset of uniqueAssets.values()) {
       const expectedPrefix = `/templates/${id}/`;
       expect(asset.src.startsWith(expectedPrefix), `${id}: ${asset.src} must stay inside its template directory`).toBe(true);
@@ -111,6 +115,10 @@ describe("universal template launch gate", () => {
       expect(markup).toContain(`data-export-format="${format}"`);
       expect(markup).not.toMatch(/src="\/templates\//);
       expect(markup).toContain("/api/template-export-asset?src=");
+      if (registration.profile.assets.scene) {
+        expect(markup).toContain('data-export-scene-edge="top"');
+        expect(markup).toContain('data-export-scene-edge="bottom"');
+      }
     }
   });
 

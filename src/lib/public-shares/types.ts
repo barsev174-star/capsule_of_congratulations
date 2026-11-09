@@ -111,6 +111,7 @@ export type PublicSharePayloadV2 = {
   };
   card: {
     templateId: string;
+    templateTheme?: string;
     occasionText: string | null;
     eventDate: string | null;
     fromLabel: string | null;

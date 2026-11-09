@@ -18,6 +18,7 @@ export const toUniversalPhotoCrop = (
 
 export type UniversalPublicPayloadInput = {
   templateId: string;
+  templateTheme?: string | null;
   displayName: string | null;
   headlinePreset: PublicSharePayloadV2["share"]["headlinePreset"];
   showOccasion: boolean;
@@ -56,6 +57,7 @@ export const buildUniversalPublicSharePayload = (
   },
   card: {
     templateId: input.templateId,
+    ...(input.templateTheme ? { templateTheme: input.templateTheme } : {}),
     occasionText: input.showOccasion ? input.occasionText : null,
     eventDate: input.showEventDate ? input.eventDate : null,
     fromLabel: input.fromLabel,

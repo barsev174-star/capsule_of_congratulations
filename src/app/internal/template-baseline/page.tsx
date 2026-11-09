@@ -11,7 +11,7 @@ import {
   isLegacyMessageScenario,
   isLegacyTemplateId
 } from "@/lib/final-card/legacy-baseline";
-import { dispatchTemplateRenderer } from "@/lib/templates/dispatcher";
+import { dispatchCardTemplateRenderer } from "@/lib/templates/dispatcher";
 import { resolveTemplateExportAsset } from "@/lib/templates/export-asset-url";
 import { universalMessageScenarios, type UniversalMessageScenario } from "@/lib/templates/fixtures";
 import {
@@ -46,13 +46,14 @@ export default async function TemplateBaselinePage({ searchParams }: BaselinePag
     );
   }
 
-  const dispatch = typeof template === "string" ? dispatchTemplateRenderer(template) : null;
+  const dispatch = typeof template === "string" ? dispatchCardTemplateRenderer(template, firstValue(params.theme)) : null;
   const universalScenario = typeof scenario === "string" && universalMessageScenarios.includes(scenario as UniversalMessageScenario)
     ? scenario as UniversalMessageScenario
     : null;
   if (!dispatch || dispatch.kind !== "universal-v1" || !universalScenario) notFound();
 
-  const model = buildUniversalFixtureViewModel("full-card-default", {
+  const fixture = firstValue(params.fixture) === "demo" ? dispatch.registration.profile.demo.fixture : "full-card-default";
+  const model = buildUniversalFixtureViewModel(fixture, {
     templateId: dispatch.registration.id,
     scenario: universalScenario,
     photoCount: universalScenarioPhotoCount[universalScenario]

@@ -1,4 +1,5 @@
 import type { UniversalTemplateFixtureId } from "@/lib/templates/profile";
+import { newYearDmitryFixture, newYearNatalyaFixture } from "./fixtures/new-year";
 
 export const universalMessageScenarios = [
   "grid-2",
@@ -173,6 +174,8 @@ export const universalTemplateFixtures: Readonly<Record<UniversalTemplateFixture
     description: "Все блоки, 12 поздравлений, 5 качеств, 3 выбранные фразы и 6 фотографий.",
     ...baseFixture
   },
+  "new-year-demo": newYearDmitryFixture,
+  "new-year-natalya-demo": newYearNatalyaFixture,
   "teacher-classic": {
     id: "teacher-classic",
     label: "Учителю — классический",

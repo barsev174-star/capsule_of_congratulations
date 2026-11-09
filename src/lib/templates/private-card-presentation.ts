@@ -1,6 +1,6 @@
 import type { CardDraft, CardMediaAsset, Contribution } from "@/lib/cards/types";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
-import { dispatchTemplateRenderer } from "@/lib/templates/dispatcher";
+import { dispatchCardTemplateRenderer } from "@/lib/templates/dispatcher";
 import { resolveMainGreetingContribution } from "@/lib/final-card/main-greeting";
 import type {
   UniversalTemplatePhoto,
@@ -37,7 +37,7 @@ export const buildPrivateCardPresentation = (
   options: FinalCardBuildOptions = {}
 ) => {
   if (!card.templateId) return null;
-  const dispatch = dispatchTemplateRenderer(card.templateId);
+  const dispatch = dispatchCardTemplateRenderer(card.templateId, card.templateTheme);
   if (!dispatch) return null;
 
   const finalModel = buildFinalCardViewModel(card, contributions, mediaAssets, aiContent, options);

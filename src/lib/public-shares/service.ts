@@ -4,7 +4,7 @@ import { getGiftLifecycleByFinalSlug } from "@/lib/cards/lifecycle-repository";
 import { getGiftPath } from "@/lib/routes/card-links";
 import { getAiCardInsight } from "@/lib/ai/repository";
 import { buildFinalCardViewModel } from "@/lib/final-card/view-model";
-import { dispatchTemplateRenderer, type TemplateRendererDispatch } from "@/lib/templates/dispatcher";
+import { dispatchCardTemplateRenderer, type TemplateRendererDispatch } from "@/lib/templates/dispatcher";
 import { createPublicSharePhotoDerivative, deletePublicSharePhotoDerivative } from "./media-storage";
 import { activatePublicShare, createPublicShare, getAccessiblePublicShareByTokenHash, getActivePublicShareByCardId, getPublicShareDraftOrActiveByCardId, getPublicShareById, getPublicSharePhoto, hasRevokedPublicShareByCardId, listPublicSharePhotos, replacePublicSharePhotos, revokePublicShare, updatePublicShare } from "./repository";
 import { createPublicShareToken, hashPublicShareToken } from "./tokens";
@@ -32,7 +32,7 @@ const getFinalCardPhotoCount = (
 };
 
 const getRendererDispatch = (card: CardDraft) => card.templateId
-  ? dispatchTemplateRenderer(String(card.templateId))
+  ? dispatchCardTemplateRenderer(card.templateId, card.templateTheme)
   : null;
 
 const getPublicPhotoCount = (
@@ -68,6 +68,7 @@ const buildUniversalPayload = ({
   const assetById = new Map(mediaAssets.map((asset) => [asset.id, asset]));
   return buildUniversalPublicSharePayload({
     templateId: dispatch.registration.id,
+    templateTheme: card.templateTheme,
     displayName: share.displayName || firstName(card.recipientName) || card.recipientName,
     headlinePreset: share.headlinePreset,
     showOccasion: share.showOccasion,

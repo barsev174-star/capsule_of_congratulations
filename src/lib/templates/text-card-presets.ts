@@ -5,11 +5,15 @@ export const universalTextCardPresetIds = [
   "quality-pill-export",
   "quality-plaque-artwork",
   "quality-plaque-export-artwork",
+  "quality-emblem",
+  "quality-enamel",
   "quality-doodle-poster",
   "quality-doodle-export",
   "quote-panel",
   "quote-panel-compact",
   "quote-panel-export-artwork",
+  "quote-ticket",
+  "quote-winter-paper",
   "quote-panel-artwork"
 ] as const;
 export type UniversalTextCardPresetId = (typeof universalTextCardPresetIds)[number];
@@ -73,6 +77,24 @@ export const universalTextCardPresets: Readonly<Record<UniversalTextCardPresetId
     rendering: "artwork",
     renderLeadingQuote: false
   },
+  "quality-emblem": {
+    id: "quality-emblem",
+    label: "Шильд качества с орнаментом",
+    description: "Плашка 480 × 258 с декоративным знаком слева.",
+    source: { width: 480, height: 258 },
+    textArea: { x: 0.24, y: 0.15, width: 0.70, height: 0.70 },
+    rendering: "artwork",
+    renderLeadingQuote: false
+  },
+  "quality-enamel": {
+    id: "quality-enamel",
+    label: "Эмалевая бирка качества",
+    description: "Скруглённая эмалевая плашка с отдельным круглым медальоном.",
+    source: { width: 720, height: 180 },
+    textArea: { x: .25, y: .1, width: .69, height: .8 },
+    rendering: "artwork",
+    renderLeadingQuote: false
+  },
   "quality-doodle-export": {
     id: "quality-doodle-export",
     label: "Горизонтальная карточка качества с рисунком",
@@ -120,6 +142,25 @@ export const universalTextCardPresets: Readonly<Record<UniversalTextCardPresetId
     exportSlices: { top: 0.38, right: 0.2, bottom: 0.14, left: 0.28 },
     exportDecorCrop: { x: 0.04, y: 0.42, width: 0.2, height: 0.28 },
     exportDecorArea: { x: 0.055, y: 0.24, width: 0.16, height: 0.52 }
+  },
+  "quote-ticket": {
+    id: "quote-ticket",
+    label: "Фигурная карточка фразы",
+    description: "Карточка 800 × 640 с вырубными углами и цветной вкладкой.",
+    source: { width: 800, height: 640 },
+    textArea: { x: .15, y: .17, width: .72, height: .66 },
+    rendering: "artwork",
+    renderLeadingQuote: false
+  },
+  "quote-winter-paper": {
+    id: "quote-winter-paper",
+    label: "Зимняя бумажная карточка фразы",
+    description: "Фактурная бумага 720 × 240 с новогодней иллюстрацией по углам.",
+    source: { width: 720, height: 240 },
+    textArea: { x: .16, y: .11, width: .68, height: .78 },
+    rendering: "artwork",
+    renderLeadingQuote: false,
+    exportSlices: { top: .47, right: .19, bottom: .48, left: .17 }
   }
 };
 

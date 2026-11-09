@@ -6,8 +6,8 @@ import { join } from "node:path";
 import sharp from "sharp";
 import { UniversalTemplateExportCard, universalExportFormats } from "@/components/templates/universal-v1/universal-export-card";
 import { getPublicSharePayload } from "@/lib/public-shares/service";
-import { buildUniversalPublicViewModel } from "@/lib/public-shares/universal";
-import { dispatchTemplateRenderer } from "@/lib/templates/dispatcher";
+import { buildUniversalPublicSharePayload, buildUniversalPublicViewModel } from "@/lib/public-shares/universal";
+import { dispatchCardTemplateRenderer } from "@/lib/templates/dispatcher";
 import { resolveTemplateExportAsset } from "@/lib/templates/export-asset-url";
 import type { PublicSharePayload, PublicSharePayloadV1 } from "@/lib/public-shares/types";
 
@@ -430,6 +430,34 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
         photos: model.memoryPhotos.map((photo) => ({ id: photo.id, url: photo.src, width: photo.width, height: photo.height, caption: photo.caption, crop: photo.crop }))
       };
     }
+    if (!payload && token.endsWith("-export-baseline")) {
+      const templateId = token.slice(0, -"-export-baseline".length);
+      const theme = new URL(request.url).searchParams.get("theme");
+      const dispatch = dispatchCardTemplateRenderer(templateId, theme);
+      if (dispatch?.kind === "universal-v1" && dispatch.registration.themes) {
+        const { buildUniversalFixtureViewModel } = await import("@/lib/templates/view-model");
+        const { fixture, scenario, photoCount } = dispatch.registration.profile.demo;
+        const model = buildUniversalFixtureViewModel(fixture, { templateId, scenario, photoCount });
+        payload = buildUniversalPublicSharePayload({
+          templateId,
+          templateTheme: theme,
+          displayName: model.recipientName,
+          headlinePreset: "GIFTED_CARD",
+          showOccasion: true,
+          showEventDate: true,
+          showGreetingCount: true,
+          showPhotoCount: true,
+          occasionText: model.occasion,
+          eventDate: model.eventDate,
+          fromLabel: model.fromLabel,
+          greetingCount: model.participantCount,
+          photoCount: model.privatePhotoCount ?? model.memoryPhotos.length,
+          qualities: model.qualities,
+          phrases: model.publicQuotes,
+          photos: model.memoryPhotos.map(({ src, ...photo }) => ({ ...photo, url: src }))
+        });
+      }
+    }
   }
   payload ??= await getPublicSharePayload(token);
   if (!payload) return new Response(null, { status: 404 });
@@ -447,11 +475,23 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   ];
   let image: ImageResponse;
   if (payload.version === 2) {
-    const dispatch = dispatchTemplateRenderer(payload.card.templateId);
+    const dispatch = dispatchCardTemplateRenderer(payload.card.templateId, payload.card.templateTheme);
     if (!dispatch || dispatch.kind !== "universal-v1" || dispatch.registration.profile.export.profile !== "universal-export-v1") {
       return new Response(null, { status: 404 });
     }
     const profile = dispatch.registration.profile;
+    if (profile.typography.body.family === "Lora") {
+      const [regular, bold, mediumItalic] = await Promise.all([
+        readFile(join(process.cwd(), "public", "fonts", "Lora-Regular.ttf")),
+        readFile(join(process.cwd(), "public", "fonts", "Lora-Bold.ttf")),
+        readFile(join(process.cwd(), "public", "fonts", "Lora-MediumItalic.ttf"))
+      ]);
+      fonts.push(
+        { name: "Lora", data: regular, weight: 400, style: "normal" },
+        { name: "Lora", data: bold, weight: 700, style: "normal" },
+        { name: "Lora", data: mediumItalic, weight: 500, style: "italic" }
+      );
+    }
     const model = buildUniversalPublicViewModel(payload, profile);
     const resolveAsset = (path: `/${string}`) => resolveUniversalExportAsset(origin, path);
     image = new ImageResponse(

@@ -1,6 +1,7 @@
 import type { UniversalTemplateRegistration } from "@/lib/templates/registry";
 
 // template:new:imports
+import { new_yearRegistration } from "@/templates/new-year/registration";
 import { team_editorialRegistration } from "@/templates/team-editorial/registration";
 import { kindergarten_doodlesRegistration } from "@/templates/kindergarten-doodles/registration";
 import { school_classicRegistration } from "@/templates/school-classic/registration";
@@ -15,6 +16,7 @@ export const generatedUniversalTemplateRegistrations = [
   school_classicRegistration,
   kindergarten_doodlesRegistration,
   team_editorialRegistration,
+  new_yearRegistration,
   // template:new:entries
 ] as const satisfies readonly UniversalTemplateRegistration[];
 
@@ -25,6 +27,7 @@ export const generatedUniversalTemplateIds = [
   "school-classic",
   "kindergarten-doodles",
   "team-editorial",
+  "new-year",
   // template:new:ids
 ] as const;
 

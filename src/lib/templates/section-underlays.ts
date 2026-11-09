@@ -1,4 +1,4 @@
-import type { NormalizedRect, TemplateAssetRef } from "@/lib/templates/profile";
+import type { NormalizedRect, TemplateAssetRef, UniversalTemplateBlockId } from "@/lib/templates/profile";
 
 export const universalSectionUnderlayPresetIds = [
   "adaptive-frame",
@@ -15,12 +15,22 @@ export type NormalizedEdgeInsets = {
   left: number;
 };
 
+export const continuousSceneSafeInsets: Partial<Record<UniversalTemplateBlockId, NormalizedEdgeInsets>> = {
+  messages: { top: .032, right: .075, bottom: .032, left: .075 },
+  memories: { top: .0525, right: .07, bottom: .0525, left: .07 }
+};
+
+// Keep the middle behind the full transparent fade of each cap.
+export const continuousSceneCapInsets = { top: .34, bottom: .10 } as const;
+
 export type TemplateSectionUnderlay = {
   asset: TemplateAssetRef;
   mobileAsset?: TemplateAssetRef;
   preset: UniversalSectionUnderlayPresetId;
+  presentation?: "surface";
   /** Optional artwork-specific edges that keep decoration out of stretchable zones. */
   slices?: NormalizedEdgeInsets;
+  fitEdgesToHeight?: boolean;
   opacity?: number;
   focalPoint?: { x: number; y: number };
   safeArea?: NormalizedRect;
@@ -72,7 +82,9 @@ export const getUniversalSectionUnderlayPreset = (id: UniversalSectionUnderlayPr
 export const defineSectionUnderlay = (
   asset: TemplateAssetRef,
   preset: UniversalSectionUnderlayPresetId = "adaptive-frame",
-  options: Pick<TemplateSectionUnderlay, "opacity" | "focalPoint" | "mobileAsset" | "safeArea" | "slices" | "exportRendering" | "exportHorizontalSliceEdgeRatio"> = {}
+  options: Pick<TemplateSectionUnderlay,
+    "presentation" | "opacity" | "focalPoint" | "mobileAsset" | "safeArea" | "slices"
+    | "fitEdgesToHeight" | "exportRendering" | "exportHorizontalSliceEdgeRatio"> = {}
 ): TemplateSectionUnderlay => ({ asset, preset, ...options });
 
 export const getUnderlaySafeInsets = (underlay: TemplateSectionUnderlay) => {

@@ -28,6 +28,7 @@ type CardRow = {
   description: string | null;
   signature: string | null;
   template_id: CardTemplateId | null;
+  template_theme?: string | null;
   gift_animation_id: GiftAnimationId | null;
   final_block_settings: FinalCardBlockSettings | null;
   final_block_order: FinalCardBlockOrder | null;
@@ -133,6 +134,7 @@ const mapCard = (row: CardRow): CardDraft => ({
   description: row.description,
   signature: row.signature,
   templateId: row.template_id,
+  ...(row.template_theme ? { templateTheme: row.template_theme } : {}),
   giftAnimationId: row.gift_animation_id ?? defaultGiftAnimationId,
   finalBlockSettings: row.final_block_settings,
   finalBlockOrder: row.final_block_order,
@@ -463,6 +465,7 @@ export const purgeCardToTombstone = async (cardId: string): Promise<PurgedCardMe
            description = NULL,
            signature = NULL,
            template_id = NULL,
+           template_theme = NULL,
            final_block_settings = NULL,
            final_block_order = NULL,
            final_message_settings = NULL,
@@ -509,16 +512,17 @@ export const updateCardFinalBlockSettings = async (
   return result.rows[0] ? mapCard(result.rows[0]) : null;
 };
 
-export const updateCardTemplate = async (cardId: string, templateId: CardTemplateId) => {
+export const updateCardTemplate = async (cardId: string, templateId: CardTemplateId, templateTheme: string | null = null) => {
   const result = await getPostgresPool().query<CardRow>(
     `
       UPDATE cards
       SET template_id = $2,
+          template_theme = $3,
           updated_at = now()
       WHERE id = $1
       RETURNING *
     `,
-    [cardId, templateId]
+    [cardId, templateId, templateTheme]
   );
   return result.rows[0] ? mapCard(result.rows[0]) : null;
 };
@@ -550,6 +554,7 @@ export const updateCardFinalPresentationSettings = async (
     `
       UPDATE cards
       SET template_id = $2,
+          template_theme = CASE WHEN template_id = $2 THEN template_theme ELSE NULL END,
           final_block_settings = $3::jsonb,
           final_block_order = $4::jsonb,
           final_message_settings = $5::jsonb,

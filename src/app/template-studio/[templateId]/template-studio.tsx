@@ -56,6 +56,8 @@ import styles from "./template-studio.module.css";
 type TemplateStudioProps = {
   initialDraft: TemplateStudioDraft;
   registeredTemplateOptions: ReadonlyArray<{ id: string; label: string }>;
+  themeId?: string;
+  themeOptions?: ReadonlyArray<{ id: string; label: string }>;
 };
 
 type ImportStatus = { tone: "neutral" | "success" | "error"; message: string };
@@ -168,7 +170,7 @@ function RectEditor({
   </div></fieldset>;
 }
 
-export function TemplateStudio({ initialDraft, registeredTemplateOptions }: TemplateStudioProps) {
+export function TemplateStudio({ initialDraft, registeredTemplateOptions, themeId, themeOptions }: TemplateStudioProps) {
   const router = useRouter();
   const draftStorageKey = useMemo(() => getTemplateStudioStorageKey(initialDraft), [initialDraft]);
   const [draft, setDraft] = useState(initialDraft);
@@ -279,7 +281,8 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
     profile: replaceTemplateProfileAsset(current.profile, selectedAsset.path, assetValue)
   }));
   const updateFont = (key: keyof typeof draft.profile.typography, patch: Partial<TemplateFontToken>) => updateDraft((next) => {
-    next.profile.typography[key] = { ...next.profile.typography[key], ...patch };
+    const font = next.profile.typography[key];
+    if (font) next.profile.typography[key] = { ...font, ...patch };
   });
   const updateDecorLayer = (updater: (layer: TemplateDecorLayer) => void) => updateDraft((next) => {
     next.profile.assets.decor = next.profile.assets.decor.map((layer, index) => {
@@ -411,6 +414,10 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
         {!currentTemplateListed ? <option value={draft.profile.id}>{draft.profile.id}</option> : null}
         {templateOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
       </select></label>
+      {themeOptions?.length ? <label><span>Цвет оформления</span><select value={themeId}
+        onChange={(event) => router.push(`/template-studio/${initialDraft.profile.id}?theme=${encodeURIComponent(event.target.value)}`)}>
+        {themeOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+      </select></label> : null}
       <label><span>Fixture</span><select value={fixtureId} onChange={(event) => setFixtureId(event.target.value as UniversalTemplateFixtureId)}>
         {Object.values(universalTemplateFixtures).map((fixture) => <option key={fixture.id} value={fixture.id}>{fixture.label}</option>)}
       </select></label>
@@ -428,6 +435,14 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
         <label><input type="checkbox" checked={longCaptions} onChange={(event) => setLongCaptions(event.target.checked)} /><span>Подпись 45 знаков</span></label>
       </div>
     </section>
+
+    {themeId ? <nav aria-label="Файлы демонстрационной открытки" className={styles.headerActions}>
+      {([["story", "Story PNG"], ["post", "Post PNG"], ["print", "A4 PNG"], ["print", "A4 PDF"]] as const).map(([format, label]) => (
+        <a key={label} className={styles.secondaryButton}
+          href={`/share/${initialDraft.profile.id}-export-baseline/image/${format}?theme=${encodeURIComponent(themeId)}${label === "A4 PNG" ? "&preview=1" : ""}`}
+          target="_blank" rel="noreferrer">{label}</a>
+      ))}
+    </nav> : null}
 
     <div className={styles.workspace}>
       <section className={styles.previewPanel}>
@@ -570,7 +585,11 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions }: Temp
         </div></details>
 
         <details><summary>Типографика</summary><div className={styles.detailsBody}>
-          {(Object.keys(draft.profile.typography) as Array<keyof typeof draft.profile.typography>).map((key) => <fieldset className={styles.fontEditor} key={key}><legend>{key}</legend><div className={styles.fieldGrid}><label><span>Семейство</span><input value={draft.profile.typography[key].family} onChange={(event) => updateFont(key, { family: event.target.value })} /></label><label><span>Вес</span><select value={draft.profile.typography[key].weight} onChange={(event) => updateFont(key, { weight: Number(event.target.value) as TemplateFontToken["weight"] })}>{[400, 500, 600, 700, 800, 900].map((weight) => <option key={weight} value={weight}>{weight}</option>)}</select></label></div></fieldset>)}
+          {(Object.keys(draft.profile.typography) as Array<keyof typeof draft.profile.typography>).map((key) => {
+            const font = draft.profile.typography[key];
+            if (!font) return null;
+            return <fieldset className={styles.fontEditor} key={key}><legend>{key}</legend><div className={styles.fieldGrid}><label><span>Семейство</span><input value={font.family} onChange={(event) => updateFont(key, { family: event.target.value })} /></label><label><span>Вес</span><select value={font.weight} onChange={(event) => updateFont(key, { weight: Number(event.target.value) as TemplateFontToken["weight"] })}>{[400, 500, 600, 700, 800, 900].map((weight) => <option key={weight} value={weight}>{weight}</option>)}</select></label></div></fieldset>;
+          })}
         </div></details>
 
         <details><summary>Публичная версия</summary><div className={styles.detailsBody}>

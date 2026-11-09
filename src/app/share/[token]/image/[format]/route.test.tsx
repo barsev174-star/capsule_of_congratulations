@@ -32,7 +32,7 @@ vi.mock("sharp", () => ({
   })
 }));
 vi.mock("@/lib/public-shares/service", () => ({ getPublicSharePayload: mocks.getPayload }));
-vi.mock("@/lib/templates/dispatcher", () => ({ dispatchTemplateRenderer: mocks.dispatch }));
+vi.mock("@/lib/templates/dispatcher", () => ({ dispatchCardTemplateRenderer: mocks.dispatch }));
 
 import { UniversalTemplateExportCard } from "@/components/templates/universal-v1/universal-export-card";
 import { GET } from "./route";
@@ -71,6 +71,7 @@ describe("public share universal export route", () => {
   });
 
   it("routes payload v2 to the shared universal Story renderer", async () => {
+    mocks.getPayload.mockResolvedValue({ ...payload, card: { ...payload.card, templateTheme: "green" } });
     const webpProfile = structuredClone(profile);
     webpProfile.assets.page = {
       src: "/templates/test/page.webp",
@@ -85,6 +86,7 @@ describe("public share universal export route", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("image/png");
+    expect(mocks.dispatch).toHaveBeenCalledWith(payload.card.templateId, "green");
     expect(mocks.imageCalls).toHaveLength(1);
     expect(mocks.imageCalls[0].element.type).toBe(UniversalTemplateExportCard);
     expect(mocks.imageCalls[0].element.props.format).toBe("story");

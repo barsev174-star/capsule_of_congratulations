@@ -13,6 +13,7 @@ type Props = {
   manageToken: string;
   templates: CardTemplate[];
   initialTemplateId: CardTemplate["id"] | null;
+  initialTemplateTheme?: string | null;
   initialAnimationId: GiftAnimationId;
 };
 
@@ -20,9 +21,11 @@ export const TemplateSummary = ({
   manageToken,
   templates,
   initialTemplateId,
+  initialTemplateTheme,
   initialAnimationId
 }: Props) => {
   const [templateId, setTemplateId] = useState(initialTemplateId);
+  const [templateTheme, setTemplateTheme] = useState(initialTemplateTheme);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isRevealPickerOpen, setIsRevealPickerOpen] = useState(false);
   const [animationId, setAnimationId] = useState(initialAnimationId);
@@ -49,7 +52,8 @@ export const TemplateSummary = ({
     ok: false,
     message: ""
   });
-  const previewSrc = selectedTemplate?.preview
+  const theme = selectedTemplate?.themes?.find((option) => option.id === templateTheme) ?? selectedTemplate?.themes?.[0];
+  const previewSrc = theme?.preview ?? selectedTemplate?.preview
     ?? (selectedTemplate?.id === "route-adventure"
       ? "/assets/landing/template-route-adventure-preview.png"
       : selectedTemplate?.id === "paper-birthday"
@@ -176,7 +180,7 @@ export const TemplateSummary = ({
             className={styles.templateChangeButton}
             onClick={() => setIsPickerOpen(true)}
           >
-            {selectedTemplate ? "Выбрать другой шаблон" : "Выбрать шаблон"}
+            {theme ? "Изменить оформление" : selectedTemplate ? "Выбрать другой шаблон" : "Выбрать шаблон"}
           </button>
         </div>
       </div>
@@ -236,7 +240,11 @@ export const TemplateSummary = ({
               manageToken={manageToken}
               templates={templates}
               currentTemplateId={templateId}
-              onTemplateSelectionChange={setTemplateId}
+              currentTheme={templateTheme}
+              onTemplateSelectionChange={(id, theme) => {
+                setTemplateId(id);
+                setTemplateTheme(theme);
+              }}
               onApplied={() => setIsPickerOpen(false)}
             />
           </section>

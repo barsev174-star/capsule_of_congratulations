@@ -1,5 +1,6 @@
 import {
   templateRegistry,
+  resolveTemplateTheme,
   type LegacyTemplateRegistration,
   type TemplateRegistry,
   type UniversalTemplateRegistration
@@ -38,6 +39,15 @@ export const requireTemplateRenderer = (
     throw new Error(`Шаблон ${templateId} не зарегистрирован.`);
   }
   return dispatch;
+};
+
+export const dispatchCardTemplateRenderer = (templateId: string, theme?: string | null): TemplateRendererDispatch | null => {
+  const dispatch = dispatchTemplateRenderer(templateId);
+  if (dispatch?.kind !== "universal-v1") return dispatch;
+  const resolved = resolveTemplateTheme(dispatch.registration, theme);
+  return resolved
+    ? { ...dispatch, registration: { ...dispatch.registration, profile: resolved.profile } }
+    : dispatch;
 };
 
 export const getTemplateFinalCardStyleId = (

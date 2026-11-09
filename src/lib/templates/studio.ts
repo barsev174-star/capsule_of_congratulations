@@ -342,18 +342,38 @@ export const listTemplateProfileAssets = (profile: TemplateProfile): TemplateStu
 
   push("metadata.preview", "Превью каталога", profile.metadata.preview);
   push("assets.page", "Фон страницы", profile.assets.page);
+  const scene = profile.assets.scene;
+  if (scene) {
+    push("assets.scene.top", "Верхняя сцена", scene.top);
+    push("assets.scene.mobileTop", "Верхняя сцена · Mobile", scene.mobileTop);
+    push("assets.scene.middle", "Общий фон середины", scene.middle);
+    push("assets.scene.bottom", "Нижняя сцена", scene.bottom);
+    push("assets.scene.mobileBottom", "Нижняя сцена · Mobile", scene.mobileBottom);
+    for (const [format, value] of Object.entries(scene.exportTop ?? {})) {
+      push(`assets.scene.exportTop.${format}`, `Верхняя сцена · ${format}`, value);
+    }
+  }
   Object.entries(profile.assets.sections).forEach(([block, value]) => {
     push(`assets.sections.${block}.asset`, `Подложка: ${block}`, value.asset);
     push(`assets.sections.${block}.mobileAsset`, `Mobile-подложка: ${block}`, value.mobileAsset);
   });
   profile.assets.greetingCards.forEach((value, index) => push(`assets.greetingCards.${index}.asset`, `Подложка поздравления ${index + 1}`, value.asset));
-  profile.assets.qualityCards.forEach((value, index) => push(`assets.qualityCards.${index}.asset`, `Карточка качества ${index + 1}`, value.asset));
-  profile.assets.exportQualityCards?.forEach((value, index) => push(`assets.exportQualityCards.${index}.asset`, `Карточка качества для экспорта ${index + 1}`, value.asset));
+  profile.assets.qualityCards.forEach((value, index) => {
+    push(`assets.qualityCards.${index}.asset`, `Карточка качества ${index + 1}`, value.asset);
+    push(`assets.qualityCards.${index}.emblem`, `Медальон качества ${index + 1}`, value.emblem);
+  });
+  profile.assets.exportQualityCards?.forEach((value, index) => {
+    push(`assets.exportQualityCards.${index}.asset`, `Карточка качества для экспорта ${index + 1}`, value.asset);
+    push(`assets.exportQualityCards.${index}.emblem`, `Медальон качества для экспорта ${index + 1}`, value.emblem);
+  });
   profile.assets.quoteCards.forEach((value, index) => push(`assets.quoteCards.${index}.asset`, `Карточка фразы ${index + 1}`, value.asset));
   profile.assets.exportQuoteCards?.forEach((value, index) => push(`assets.exportQuoteCards.${index}.asset`, `Карточка фразы для экспорта ${index + 1}`, value.asset));
   Object.entries(profile.assets.photoFrames).forEach(([frameId, frame]) => {
     push(`assets.photoFrames.${frameId}.base`, `Фоторамка ${frameId}: основа`, frame.base);
     push(`assets.photoFrames.${frameId}.overlay`, `Фоторамка ${frameId}: верхний слой`, frame.overlay);
+    frame.overlayVariants?.forEach((variant, index) => {
+      push(`assets.photoFrames.${frameId}.overlayVariants.${index}`, `Фоторамка ${frameId}: верхний слой ${index + 2}`, variant);
+    });
   });
   push("assets.footer", "Подложка подвала", profile.assets.footer);
   profile.assets.decor.forEach((layer, index) => push(`assets.decor.${index}.asset`, `Декор: ${layer.id}`, layer.asset));

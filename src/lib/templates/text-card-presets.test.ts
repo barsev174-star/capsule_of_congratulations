@@ -8,11 +8,15 @@ describe("universal text card presets", () => {
       "quality-pill-export",
       "quality-plaque-artwork",
       "quality-plaque-export-artwork",
+      "quality-emblem",
+      "quality-enamel",
       "quality-doodle-poster",
       "quality-doodle-export",
       "quote-panel",
       "quote-panel-compact",
       "quote-panel-export-artwork",
+      "quote-ticket",
+      "quote-winter-paper",
       "quote-panel-artwork"
     ]);
     expect(getUniversalTextCardPreset("quality-pill")).toMatchObject({

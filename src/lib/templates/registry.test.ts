@@ -109,7 +109,8 @@ describe("template registry", () => {
       "school-scrapbook",
       "school-classic",
       "kindergarten-doodles",
-      "team-editorial"
+      "team-editorial",
+      "new-year"
     ]);
   });
 

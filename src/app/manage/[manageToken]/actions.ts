@@ -96,6 +96,7 @@ import { finalCardLayouts } from "@/lib/final-card/layouts";
 import { buildCardBlockReadiness } from "@/lib/manage/card-design-readiness";
 import { resolveFinalBestQuotes } from "@/lib/final-card/quote-selection";
 import { dispatchTemplateRenderer, getTemplateFinalCardStyleId } from "@/lib/templates/dispatcher";
+import { resolveTemplateTheme, templateRegistry } from "@/lib/templates/registry";
 import { requireCardManagementAccess, requireCardOrganizer } from "@/lib/manage/access";
 import { revokeCardRecoveryTokens, rotateCardRecoveryToken } from "@/lib/manage/recovery-tokens";
 import { consumePublicRateLimit, getConfiguredRateLimit } from "@/lib/security/public-rate-limit";
@@ -1395,7 +1396,15 @@ export async function updateCardTemplateAction(
     return { ok: false, message: error instanceof Error ? error.message : "Открытка недоступна для редактирования." };
   }
 
-  const updated = await updateCardTemplate(card.id, templateIdValue);
+  const requestedTheme = formData.get("templateTheme");
+  const registration = templateRegistry.get(templateIdValue);
+  const theme = resolveTemplateTheme(registration, typeof requestedTheme === "string"
+    ? requestedTheme
+    : card.templateId === templateIdValue ? card.templateTheme : null);
+  if (requestedTheme !== null && requestedTheme !== theme?.id) {
+    return { ok: false, message: "Выберите доступный цвет оформления." };
+  }
+  const updated = await updateCardTemplate(card.id, templateIdValue, theme?.id ?? null);
   if (!updated) return { ok: false, message: "Не удалось применить шаблон." };
 
   logger.info("manage.card_template_updated", "Card template updated by organizer", {

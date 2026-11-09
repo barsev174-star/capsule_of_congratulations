@@ -30,16 +30,17 @@ import {
   getUniversalMessageLayoutRule,
   getUniversalMessageScenarioForPhotoCount
 } from "@/lib/templates/layout-presets";
-import { getUniversalPhotoFramePreset } from "@/lib/templates/photo-frame-presets";
+import { getUniversalPhotoFramePreset, getUniversalPhotoOverlay } from "@/lib/templates/photo-frame-presets";
 import { getUniversalTextCardPreset } from "@/lib/templates/text-card-presets";
 import {
   getUniversalPhotoCaptionScale,
   getUniversalRecipientNameLines,
   getUniversalRecipientNameTier,
   getUniversalQuoteLengthScale,
+  isLongQualityLabel,
   universalTextCapacityPresets
 } from "@/lib/templates/text-capacity-presets";
-import { getUnderlaySafeInsets } from "@/lib/templates/section-underlays";
+import { continuousSceneCapInsets, continuousSceneSafeInsets, defineSectionUnderlay, getUnderlaySafeInsets } from "@/lib/templates/section-underlays";
 import { SectionUnderlay } from "./section-underlay";
 import { isUniversalBareSection } from "./section-presentation";
 import styles from "./universal-card.module.css";
@@ -126,11 +127,11 @@ function SectionSurface({
   className?: string;
   children: ReactNode;
 }) {
-  const isBare = isUniversalBareSection(id);
+  const isBare = isUniversalBareSection(id, profile);
   const underlay = isBare ? undefined : profile.assets.sections[id];
   const surfaceColor = profile.colors.surfaces[id] ?? profile.colors.surface;
   const sectionColors = profile.colors.sections?.[id];
-  const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
+  const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : profile.assets.scene?.middle ? continuousSceneSafeInsets[id] : undefined;
   const revealProps = useScrollReveal<HTMLElement>({
     disabled: !profile.motion?.revealSections
   });
@@ -152,6 +153,7 @@ function SectionSurface({
       data-motion-section={profile.motion?.revealSections ? "true" : undefined}
       style={{
         "--uv1-section-surface": surfaceColor,
+        ...(id === "hero" && (!isBare || profile.typography.occasion) ? { "--uv1-occasion": profile.colors.occasion } : {}),
         "--uv1-text": sectionColors?.text ?? profile.colors.text,
         "--uv1-muted": sectionColors?.muted ?? profile.colors.muted,
         "--uv1-safe-top": safeInsets ? `${safeInsets.top * 100}cqw` : "0px",
@@ -168,20 +170,51 @@ function SectionSurface({
   );
 }
 
+function PageSceneLayer({ asset, mobile = asset, edge }: {
+  asset: TemplateProfile["metadata"]["preview"];
+  mobile?: TemplateProfile["metadata"]["preview"];
+  edge: "top" | "bottom";
+}) {
+  return <span aria-hidden="true" className={styles.sceneLayer} data-scene-edge={edge}
+    style={{
+      "--uv1-scene-image": `url(${asset.src})`,
+      "--uv1-scene-mobile-image": `url(${mobile.src})`,
+      "--uv1-scene-ratio": `${asset.width} / ${asset.height}`,
+      "--uv1-scene-mobile-ratio": `${mobile.width} / ${mobile.height}`
+    } as CSSProperties} />;
+}
+
+function PageSceneMiddle({ scene }: { scene: NonNullable<TemplateProfile["assets"]["scene"]> }) {
+  if (!scene.middle) return null;
+  const { top, bottom, mobileTop = top, mobileBottom = bottom } = scene;
+  const overlapInset = (asset: typeof top, inset: number) => `${100 * inset * asset.height / asset.width}cqw`;
+  return <span aria-hidden="true" className={styles.sceneMiddle} data-scene-middle
+    style={{
+      "--uv1-middle-image": `url(${scene.middle.src})`,
+      "--uv1-middle-start": overlapInset(top, continuousSceneCapInsets.top),
+      "--uv1-middle-end": overlapInset(bottom, continuousSceneCapInsets.bottom),
+      "--uv1-middle-mobile-start": overlapInset(mobileTop, continuousSceneCapInsets.top),
+      "--uv1-middle-mobile-end": overlapInset(mobileBottom, continuousSceneCapInsets.bottom)
+    } as CSSProperties} />;
+}
+
 function UniversalPhoto({
   photo,
   frame,
+  frameIndex = 0,
   priority = false,
   className = "",
   onOpen
 }: {
   photo: UniversalTemplatePhoto;
   frame: UniversalPhotoFrame;
+  frameIndex?: number;
   priority?: boolean;
   className?: string;
   onOpen?: (photoId: string, trigger: HTMLButtonElement) => void;
 }) {
   const framePreset = getUniversalPhotoFramePreset(frame.preset);
+  const overlay = getUniversalPhotoOverlay(frame, frameIndex);
   const captionStyle = {
     ...normalizedRectStyle(framePreset.captionArea),
     fontStyle: frame.caption.fontStyle ?? "normal",
@@ -225,7 +258,7 @@ function UniversalPhoto({
           {photoImage}
         </button>
       ) : <span className={styles.photoAperture} style={apertureStyle} data-photo-aperture>{photoImage}</span>}
-      {frame.overlay ? <Image className={styles.frameOverlay} src={frame.overlay.src} alt="" fill sizes="40vw" aria-hidden="true" /> : null}
+      {overlay ? <Image className={styles.frameOverlay} src={overlay.src} alt="" fill sizes="40vw" aria-hidden="true" /> : null}
       <figcaption
         className={`${styles.photoCaption} ${styles[`caption${frame.caption.align[0].toUpperCase()}${frame.caption.align.slice(1)}`]} ${frame.caption.fontToken === "handwritten" ? styles.handwrittenCaption : ""}`.trim()}
         style={captionStyle}
@@ -263,6 +296,11 @@ function MessageCard({ contribution, index, profile, carouselOrder, maxChars = u
   const underlay = profile.assets.greetingCards[index % profile.assets.greetingCards.length];
   const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
   const cardStyle = {
+    ...(profile.assets.scene ? {
+      "--uv1-text": profile.colors.text,
+      "--uv1-muted": profile.colors.muted,
+      color: profile.colors.text
+    } : {}),
     ...(safeInsets ? {
       "--uv1-message-safe-top": `${safeInsets.top * 100}cqw`,
       "--uv1-message-safe-right": `${safeInsets.right * 100}cqw`,
@@ -539,6 +577,7 @@ function MessagesBlock({
             className={styles[`messagePhoto${index + 1}`]}
             photo={photo}
             frame={usePortraitFrame ? profile.assets.photoFrames.messagePortrait : profile.assets.photoFrames.messageLandscape}
+            frameIndex={index}
             priority={index === 0}
             onOpen={onPhotoOpen}
           />;
@@ -578,8 +617,8 @@ function MemoriesBlock({
       <div className={styles.memoriesPhotos} data-memory-photo-row data-motion-stagger>
         <UniversalPhoto className={styles.memoryPrimary} photo={primary} frame={profile.assets.photoFrames.memory} priority onOpen={onPhotoOpen} />
         <div className={styles.memoriesIntro}><h2>{model.memoryTitle}</h2><p>{model.memoryDescription}</p></div>
-        <UniversalPhoto className={styles.memorySecondary} photo={second} frame={profile.assets.photoFrames.memory} onOpen={onPhotoOpen} />
-        <UniversalPhoto className={styles.memoryTertiary} photo={third} frame={profile.assets.photoFrames.memory} onOpen={onPhotoOpen} />
+        <UniversalPhoto className={styles.memorySecondary} photo={second} frame={profile.assets.photoFrames.memory} frameIndex={1} onOpen={onPhotoOpen} />
+        <UniversalPhoto className={styles.memoryTertiary} photo={third} frame={profile.assets.photoFrames.memory} frameIndex={2} onOpen={onPhotoOpen} />
       </div>
     </div>
   );
@@ -707,6 +746,10 @@ export function UniversalTemplateCard({
     "--uv1-muted": profile.colors.muted,
     "--uv1-accent": profile.colors.accent,
     "--uv1-action": profile.colors.action ?? "#e9652f",
+    ...(profile.colors.action === "#e9652f" ? {
+      "--uv1-action-hover": "#df5f2e",
+      "--uv1-action-active": "#c7532a"
+    } : {}),
     "--uv1-surface": profile.colors.surface,
     "--uv1-heading-font": profile.typography.heading.family,
     "--uv1-heading-weight": profile.typography.heading.weight,
@@ -714,6 +757,9 @@ export function UniversalTemplateCard({
     "--uv1-body-weight": profile.typography.body.weight,
     "--uv1-handwritten-font": profile.typography.handwritten.family,
     "--uv1-handwritten-weight": profile.typography.handwritten.weight,
+    "--uv1-occasion-font": profile.typography.occasion?.family,
+    "--uv1-occasion-weight": profile.typography.occasion?.weight,
+    "--uv1-scene-lettering": profile.assets.scene ? profile.colors.occasion ?? profile.colors.surface : undefined,
     "--uv1-counter-congratulations-text": profile.export.counters?.congratulations.text ?? profile.colors.muted,
     "--uv1-counter-congratulations-surface": profile.export.counters?.congratulations.surface ?? profile.colors.surface,
     "--uv1-counter-congratulations-outline": profile.export.counters?.congratulations.outline ?? profile.colors.text,
@@ -763,6 +809,9 @@ export function UniversalTemplateCard({
       data-template-family="universal-v1"
       data-template-id={profile.id}
       data-layout-preset={profile.layoutPreset}
+      data-page-scene={profile.assets.scene ? "true" : undefined}
+      data-page-scene-middle={profile.assets.scene?.middle ? "true" : undefined}
+      data-occasion-lettering={profile.typography.occasion ? "true" : undefined}
       data-surface={surface}
       data-viewport={viewport}
       data-motion-preset={profile.motion?.preset ?? "calm"}
@@ -771,6 +820,11 @@ export function UniversalTemplateCard({
       style={rootStyle}
     >
       {profile.assets.page ? <span className={styles.pageAsset} aria-hidden="true" style={{ backgroundImage: `url(${profile.assets.page.src})` }} /> : null}
+      {profile.assets.scene ? <>
+        <PageSceneMiddle scene={profile.assets.scene} />
+        <PageSceneLayer edge="top" asset={profile.assets.scene.top} mobile={profile.assets.scene.mobileTop} />
+        <PageSceneLayer edge="bottom" asset={profile.assets.scene.bottom} mobile={profile.assets.scene.mobileBottom} />
+      </> : null}
       <DecorLayers profile={profile} anchor="templateRoot" viewport={viewport} />
       <div className={styles.shell}>
         {blocks.map((block) => {
@@ -807,6 +861,18 @@ export function UniversalTemplateCard({
             <h2>{profile.copy?.qualitiesTitle ?? "За что тебя ценят"}</h2><div className={styles.qualitiesGrid} data-motion-stagger>{model.qualities.map((quality, index) => {
               const card = profile.assets.qualityCards[index % Math.max(1, profile.assets.qualityCards.length)];
               const preset = card ? getUniversalTextCardPreset(card.preset) : null;
+              if (card?.emblem) {
+                return <article key={`${quality}-${index}`} className={styles.qualityCard} data-text-card
+                  data-text-card-rendering={preset?.rendering} data-quality-tag data-quality-length={isLongQualityLabel(quality) ? "long" : undefined}>
+                  <span className={styles.qualityRibbon} data-quality-ribbon aria-hidden="true" style={{ backgroundImage: `url(${card.asset.src})` }} />
+                  <span className={styles.qualityMedallion} data-quality-medallion aria-hidden="true">
+                    <Image src={card.emblem.src} alt="" fill sizes="54px" />
+                  </span>
+                  <strong data-safe-text data-text-boundary data-text-preset="quality-card"
+                    data-max-lines={universalTextCapacityPresets.qualityCard.maxLines}
+                    style={{ color: card.textColor }} title={quality}><span>{quality}</span></strong>
+                </article>;
+              }
               const textStyle = preset
                 ? { ...normalizedRectStyle(preset.textArea), ...(card?.textColor ? { color: card.textColor } : {}) }
                 : undefined;
@@ -824,9 +890,18 @@ export function UniversalTemplateCard({
               const preset = card ? getUniversalTextCardPreset(card.preset) : null;
               const quoteStyle = {
                 ...(preset ? normalizedRectStyle(preset.textArea) : {}),
+                ...(card?.textColor ? { color: card.textColor } : {}),
                 "--uv1-quote-scale": getUniversalQuoteLengthScale(quote)
               } as CSSProperties;
-              return <blockquote key={`${quote}-${index}`} className={styles.quoteCard} data-text-card data-text-card-rendering={preset?.rendering}>{card ? <Image src={card.asset.src} alt="" fill sizes="28vw" aria-hidden="true" /> : null}{preset?.renderLeadingQuote !== false ? <span aria-hidden="true">“</span> : null}<p data-safe-text data-text-boundary data-text-preset="quote-card" data-max-lines={universalTextCapacityPresets.quoteCard.maxLines} style={quoteStyle} title={quote}>{quote}</p></blockquote>;
+              const paper = card?.preset === "quote-winter-paper" && preset?.exportSlices
+                ? defineSectionUnderlay(card.asset, "adaptive-frame", { slices: preset.exportSlices, fitEdgesToHeight: true })
+                : null;
+              return <blockquote key={`${quote}-${index}`} className={styles.quoteCard} data-text-card data-text-card-rendering={preset?.rendering}>
+                {paper ? <div className={styles.quotePaper}><SectionUnderlay underlay={paper} /></div>
+                  : card ? <Image src={card.asset.src} alt="" fill sizes="28vw" aria-hidden="true" /> : null}
+                {preset?.renderLeadingQuote !== false ? <span aria-hidden="true">“</span> : null}
+                <p data-safe-text data-text-boundary data-text-preset="quote-card" data-max-lines={universalTextCapacityPresets.quoteCard.maxLines} style={quoteStyle} title={quote}>{quote}</p>
+              </blockquote>;
             })}</div>
           </SectionSurface>;
 

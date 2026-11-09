@@ -29,6 +29,7 @@ export type CardDraft = {
   description: string | null;
   signature: string | null;
   templateId: CardTemplateId | null;
+  templateTheme?: string | null;
   /** Missing only on legacy JSON fixtures; persisted cards default to the envelope reveal. */
   giftAnimationId?: GiftAnimationId;
   finalBlockSettings: FinalCardBlockSettings | null;

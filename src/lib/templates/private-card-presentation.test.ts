@@ -70,6 +70,20 @@ const mediaAssets = [{
 }] satisfies CardMediaAsset[];
 
 describe("buildPrivateCardPresentation", () => {
+  it("uses the saved colour theme without changing the content or photo scenario", () => {
+    const draft = { ...card, templateId: "new-year" as const };
+    const red = buildPrivateCardPresentation(draft, contributions, mediaAssets);
+    const green = buildPrivateCardPresentation({ ...draft, templateTheme: "green" }, contributions, mediaAssets);
+
+    expect(red?.dispatch.registration).toMatchObject({ profile: { assets: { scene: {
+      top: { src: "/templates/new-year/red-scene-top-v3.webp" }
+    } } } });
+    expect(green?.dispatch.registration).toMatchObject({ profile: { assets: { scene: {
+      top: { src: "/templates/new-year/green-scene-top-v3.webp" }
+    } } } });
+    expect(green?.model).toEqual(red?.model);
+  });
+
   it("dispatches a real school card to the universal renderer", () => {
     const presentation = buildPrivateCardPresentation(card, contributions, mediaAssets, {
       qualities: ["доброта", "юмор", "надёжность", "внимание", "вдохновение"],

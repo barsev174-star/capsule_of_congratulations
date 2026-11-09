@@ -589,6 +589,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
                     manageToken={manageToken}
                     templates={cardTemplates}
                     initialTemplateId={selectedTemplate?.id ?? null}
+                    initialTemplateTheme={card.templateTheme}
                     initialAnimationId={card.giftAnimationId ?? "envelope"}
                   />
                 </EditorSidebarCard>

@@ -38,6 +38,8 @@ export type UniversalTemplateFixtureId =
   | "teacher-classic"
   | "kindergarten-demo"
   | "team-editorial-demo"
+  | "new-year-demo"
+  | "new-year-natalya-demo"
   | "text-stress"
   | "minimal"
   | "public-full"
@@ -64,18 +66,20 @@ export type TemplateTextCard = {
   asset: TemplateAssetRef;
   preset: UniversalTextCardPresetId;
   textColor?: string;
+  emblem?: TemplateAssetRef;
 };
 
 export const defineTextCard = (
   asset: TemplateAssetRef,
   preset: UniversalTextCardPresetId,
-  options: Pick<TemplateTextCard, "textColor"> = {}
+  options: Pick<TemplateTextCard, "textColor" | "emblem"> = {}
 ): TemplateTextCard => ({ asset, preset, ...options });
 
 export type UniversalPhotoFrame = {
   preset: UniversalPhotoFramePresetId;
   base?: TemplateAssetRef;
   overlay?: TemplateAssetRef;
+  overlayVariants?: readonly TemplateAssetRef[];
   fit: "cover";
   caption: {
     maxChars: 45;
@@ -144,6 +148,14 @@ export type TemplateProfile = {
   };
   assets: {
     page?: TemplateAssetRef;
+    scene?: {
+      top: TemplateAssetRef;
+      mobileTop?: TemplateAssetRef;
+      middle?: TemplateAssetRef;
+      bottom: TemplateAssetRef;
+      mobileBottom?: TemplateAssetRef;
+      exportTop?: Readonly<Record<TemplateExportDecorFormat, TemplateAssetRef>>;
+    };
     sections: Partial<Record<UniversalTemplateBlockId, TemplateSectionUnderlay>>;
     greetingCards: readonly TemplateSectionUnderlay[];
     qualityCards: readonly TemplateTextCard[];
@@ -162,6 +174,7 @@ export type TemplateProfile = {
     heading: TemplateFontToken;
     body: TemplateFontToken;
     handwritten: TemplateFontToken;
+    occasion?: TemplateFontToken;
   };
   colors: {
     page: string;
@@ -249,6 +262,8 @@ const fixtureIds = new Set<UniversalTemplateFixtureId>([
   "teacher-classic",
   "kindergarten-demo",
   "team-editorial-demo",
+  "new-year-demo",
+  "new-year-natalya-demo",
   "text-stress",
   "minimal",
   "public-full",
@@ -386,6 +401,20 @@ const validatePhotoFrame = (
       });
     }
   }
+  if (value.overlayVariants !== undefined) {
+    if (!Array.isArray(value.overlayVariants)) {
+      issues.push({ path: `${path}.overlayVariants`, message: "Ожидается список вариантов верхнего слоя." });
+    } else {
+      value.overlayVariants.forEach((asset: unknown, index: number) => {
+        const assetPath = `${path}.overlayVariants.${index}`;
+        validateAsset(asset, assetPath, issues);
+        if (isRecord(asset) && typeof asset.width === "number" && typeof asset.height === "number"
+          && Math.abs(asset.width / asset.height / preset.aspectRatio - 1) > .01) {
+          issues.push({ path: assetPath, message: "Пропорции верхнего слоя должны совпадать с фоторамкой." });
+        }
+      });
+    }
+  }
   if (value.fit !== "cover") {
     issues.push({ path: `${path}.fit`, message: "В universal-v1 поддерживается только fit=cover." });
   }
@@ -444,6 +473,14 @@ const validateTextCard = (
   }
   const preset = getUniversalTextCardPreset(value.preset as UniversalTextCardPresetId);
   if (value.textColor !== undefined) validateColor(value.textColor, `${path}.textColor`, issues);
+  if (preset.id === "quality-enamel") {
+    validateAsset(value.emblem, `${path}.emblem`, issues);
+    if (isRecord(value.emblem) && value.emblem.width !== value.emblem.height) {
+      issues.push({ path: `${path}.emblem`, message: "Медальон должен быть квадратным." });
+    }
+  } else if (value.emblem !== undefined) {
+    issues.push({ path: `${path}.emblem`, message: "Отдельный медальон поддерживается плашкой quality-enamel." });
+  }
   if (isRecord(value.asset) && (value.asset.width !== preset.source.width || value.asset.height !== preset.source.height)) {
     issues.push({ path: `${path}.asset`, message: `Ассет preset-а ${preset.id} должен иметь размер ${preset.source.width} × ${preset.source.height}.` });
   }
@@ -479,6 +516,9 @@ const validateSectionUnderlay = (
     }
   }
   if (value.safeArea !== undefined) validateRect(value.safeArea, `${path}.safeArea`, issues);
+  if (value.fitEdgesToHeight !== undefined && typeof value.fitEdgesToHeight !== "boolean") {
+    issues.push({ path: `${path}.fitEdgesToHeight`, message: "Настройка подгонки краёв по высоте должна быть логической." });
+  }
   if (value.slices !== undefined) {
     if (!isRecord(value.slices)) {
       issues.push({ path: `${path}.slices`, message: "Ожидаются нормализованные границы nine-slice." });
@@ -503,6 +543,9 @@ const validateSectionUnderlay = (
     value.exportHorizontalSliceEdgeRatio >= 0.5
   )) {
     issues.push({ path: `${path}.exportHorizontalSliceEdgeRatio`, message: "Доля бокового края экспорта должна находиться в диапазоне 0…0.5." });
+  }
+  if (value.presentation !== undefined && value.presentation !== "surface") {
+    issues.push({ path: `${path}.presentation`, message: "Для подложки допустимо только оформление surface." });
   }
   if (value.exportRendering !== undefined && !["horizontal-slice", "cover"].includes(String(value.exportRendering))) {
     issues.push({ path: `${path}.exportRendering`, message: "Экспортная подложка поддерживает только horizontal-slice и cover." });
@@ -557,6 +600,28 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
     issues.push({ path: "assets", message: "Отсутствует набор ассетов." });
   } else {
     validateAsset(value.assets.page, "assets.page", issues, true);
+    const scene = value.assets.scene;
+    if (scene !== undefined) {
+      if (!isRecord(scene)) {
+        issues.push({ path: "assets.scene", message: "Ожидается описание фоновой сцены." });
+      } else {
+        validateAsset(scene.top, "assets.scene.top", issues);
+        validateAsset(scene.middle, "assets.scene.middle", issues, true);
+        validateAsset(scene.bottom, "assets.scene.bottom", issues);
+        validateAsset(scene.mobileTop, "assets.scene.mobileTop", issues, true);
+        validateAsset(scene.mobileBottom, "assets.scene.mobileBottom", issues, true);
+        if (scene.exportTop !== undefined) {
+          const variants = scene.exportTop;
+          if (isRecord(variants)) {
+            for (const format of templateExportDecorFormats) {
+              validateAsset(variants[format], `assets.scene.exportTop.${format}`, issues);
+            }
+          } else {
+            issues.push({ path: "assets.scene.exportTop", message: "Ожидаются версии сцены для Story, Post и A4." });
+          }
+        }
+      }
+    }
     if (!Array.isArray(value.assets.greetingCards)) {
       issues.push({ path: "assets.greetingCards", message: "Ожидается массив подложек поздравлений." });
     } else {
@@ -683,6 +748,7 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
     validateFont(value.typography.heading, "typography.heading", issues);
     validateFont(value.typography.body, "typography.body", issues);
     validateFont(value.typography.handwritten, "typography.handwritten", issues);
+    if (value.typography.occasion !== undefined) validateFont(value.typography.occasion, "typography.occasion", issues);
   }
 
   if (!isRecord(value.colors)) {

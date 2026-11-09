@@ -394,9 +394,9 @@ export const updateCardFinalBlockSettings = async (
   return updated;
 };
 
-export const updateCardTemplate = async (cardId: string, templateId: CardTemplateId) => {
+export const updateCardTemplate = async (cardId: string, templateId: CardTemplateId, templateTheme: string | null = null) => {
   if (isPostgresConfigured()) {
-    return postgresRepository.updateCardTemplate(cardId, templateId);
+    return postgresRepository.updateCardTemplate(cardId, templateId, templateTheme);
   }
 
   const cards = await readCards();
@@ -406,6 +406,7 @@ export const updateCardTemplate = async (cardId: string, templateId: CardTemplat
   const updated = {
     ...cards[index],
     templateId,
+    templateTheme,
     updatedAt: new Date().toISOString()
   };
   cards[index] = updated;
@@ -463,6 +464,7 @@ export const updateCardFinalPresentationSettings = async (
   const updated = {
     ...cards[index],
     templateId,
+    ...(cards[index].templateId !== templateId ? { templateTheme: null } : {}),
     finalBlockSettings,
     finalBlockOrder,
     finalMessageSettings,

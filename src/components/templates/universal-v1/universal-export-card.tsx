@@ -15,15 +15,18 @@ import {
   type UniversalTemplateViewModel
 } from "@/lib/templates/view-model";
 import {
+  continuousSceneCapInsets,
+  continuousSceneSafeInsets,
   getUnderlaySafeInsets,
   getUniversalSectionUnderlayPreset,
   type TemplateSectionUnderlay
 } from "@/lib/templates/section-underlays";
-import { getUniversalPhotoFramePreset } from "@/lib/templates/photo-frame-presets";
+import { getUniversalPhotoFramePreset, getUniversalPhotoOverlay } from "@/lib/templates/photo-frame-presets";
 import { getUniversalTextCardPreset } from "@/lib/templates/text-card-presets";
 import {
   getUniversalPhotoCaptionScale,
   getUniversalRecipientNameLines,
+  isLongQualityLabel,
   getUniversalRecipientNameTier
 } from "@/lib/templates/text-capacity-presets";
 import { isUniversalBareSection } from "./section-presentation";
@@ -189,9 +192,11 @@ function ExportSection({
   children: ReactNode;
 }) {
   const isBare = isUniversalBareSection(id);
+  const scene = profile.assets.scene;
+  const transparent = Boolean(scene && (id === "closing" || (scene.middle && id === "memories")));
   const underlay = isBare ? undefined : profile.assets.sections[id];
   const sectionColors = profile.colors.sections?.[id];
-  const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : null;
+  const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : scene?.middle ? continuousSceneSafeInsets[id] : undefined;
   const hasOverflowDecor = profile.assets.decor.some((layer) =>
     layer.anchor === id && exportVisible(layer) && normalizedRectOverflows(exportDecorVariant(layer, format).rect)
   );
@@ -210,9 +215,9 @@ function ExportSection({
     flexShrink: 0,
     overflow: isBare || hasOverflowDecor ? "visible" : "hidden",
     borderRadius: isBare ? 0 : 28,
-    background: isBare ? "transparent" : profile.colors.surfaces[id] ?? profile.colors.surface,
+    background: isBare || transparent ? "transparent" : profile.colors.surfaces[id] ?? profile.colors.surface,
     color: sectionColors?.text ?? profile.colors.text,
-    boxShadow: isBare ? "none" : "0 2px 5px rgba(0,0,0,.05), 0 16px 34px rgba(0,0,0,.08)"
+    boxShadow: isBare || transparent ? "none" : "0 2px 5px rgba(0,0,0,.05), 0 16px 34px rgba(0,0,0,.08)"
   }}>
     {underlay ? <>
       {id === "closing" && underlay.exportRendering !== "cover"
@@ -235,6 +240,7 @@ function ExportSection({
 function ExportPhoto({
   photo,
   frame,
+  frameIndex = 0,
   width,
   resolveAsset,
   resolvePhoto,
@@ -245,6 +251,7 @@ function ExportPhoto({
 }: {
   photo: UniversalTemplatePhoto;
   frame: UniversalPhotoFrame;
+  frameIndex?: number;
   width: number;
   resolveAsset: (src: `/${string}`) => string;
   resolvePhoto: (src: `/${string}`) => string;
@@ -254,6 +261,7 @@ function ExportPhoto({
   rotation?: number;
 }) {
   const framePreset = getUniversalPhotoFramePreset(frame.preset);
+  const overlay = getUniversalPhotoOverlay(frame, frameIndex);
   const height = Math.round(width / framePreset.aspectRatio);
   const resolvedCaptionFontSize = fontSize * (frame.caption.fontScale ?? 1) * getUniversalPhotoCaptionScale(
     photo.caption,
@@ -274,7 +282,7 @@ function ExportPhoto({
     <div style={{ position: "absolute", display: "flex", overflow: "hidden", ...rectStyle(framePreset.aperture) }}>
       <img data-export-photo-image src={resolvePhoto(photo.src)} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: `${photo.crop.x * 100}% ${photo.crop.y * 100}%`, transform: `scale(${photo.crop.zoom})` }} />
     </div>
-    {frame.overlay ? <img src={resolveAsset(frame.overlay.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
+    {overlay ? <img src={resolveAsset(overlay.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} /> : null}
     <div data-safe-text data-text-boundary data-text-preset="photo-caption" data-caption-paper={paperCaption} style={{ position: "absolute", display: "flex", flexDirection: "column", justifyContent: "center", alignItems, ...captionAreaStyle, overflow: paperCaption ? "visible" : "hidden", color: textColor, fontFamily, fontSize: resolvedCaptionFontSize, fontStyle: frame.caption.fontStyle ?? "normal", fontWeight: frame.caption.fontToken === "body" ? 500 : 600, lineHeight: frame.caption.fontToken === "body" ? 1.05 : width < 400 ? .88 : .96, textAlign: frame.caption.align }}>
       {exportCaptionUnderlay ? <img data-export-caption-paper-underlay src={resolveAsset(exportCaptionUnderlay.src)} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", objectFit: "fill" }} /> : null}
       <span style={{ position: "relative", display: "flex", width: "100%", justifyContent: alignItems }}>{photo.caption}</span>
@@ -377,7 +385,8 @@ function Moments({
   const sansCaption = frame.caption.fontToken === "body";
   const sectionWidth = universalExportFormats[format].width - layouts[format].padding * 2;
   const underlay = profile.assets.sections.memories;
-  const safeInsets = underlay ? getUnderlaySafeInsets(underlay) : { left: 0, right: 0 };
+  const safeInsets = underlay ? getUnderlaySafeInsets(underlay)
+    : (profile.assets.scene?.middle ? continuousSceneSafeInsets.memories : undefined) ?? { left: 0, right: 0 };
   const horizontalPadding = format === "post" ? 12 : 16;
   const contentWidth = sectionWidth * (1 - (safeInsets.left + safeInsets.right) * .45) - horizontalPadding;
   const primaryWidth = Math.round(Math.min(
@@ -395,11 +404,16 @@ function Moments({
   const headingUnderlay = profile.export.memoriesHeadingUnderlay;
   const memoriesColors = profile.colors.sections?.memories;
   const memoriesMuted = memoriesColors?.muted ?? profile.colors.muted;
+  const displayFont = profile.assets.scene ? profile.typography.handwritten : profile.typography.heading;
   const paperHeading = Boolean(headingUnderlay);
   const paperHeadingHeight = format === "post" ? 134 : format === "story" ? 148 : 142;
   const heading = <div data-export-moments-heading data-export-moments-paper={paperHeading ? "true" : undefined} style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", ...(paperHeading ? { width: format === "post" ? "118%" : "104%", height: paperHeadingHeight } : {}), minHeight: paperHeading ? paperHeadingHeight : format === "post" ? 82 : 94, padding: paperHeading ? "20px 32px 22px" : "0 8px", boxSizing: "border-box", textAlign: "center" }}>
     {headingUnderlay ? <img data-export-moments-paper-underlay src={resolveAsset(headingUnderlay.src)} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", objectFit: "fill" }} /> : null}
-    <strong style={{ position: "relative", display: "flex", fontFamily: profile.typography.heading.family, fontSize: layout.heading, lineHeight: 1.04, textAlign: "center" }}>Моменты</strong>
+    {profile.assets.scene?.middle && format === "post" ? <div style={{
+      position: "absolute", left: -55, top: -36, width: sideWidth + 110, height: 154,
+      backgroundImage: `radial-gradient(ellipse, ${profile.colors.page} 25%, ${profile.colors.page}d9 48%, ${profile.colors.page}00 73%)`
+    }} /> : null}
+    <strong style={{ position: "relative", display: "flex", fontFamily: displayFont.family, fontSize: profile.assets.scene ? layout.heading * 1.18 : layout.heading, fontWeight: profile.assets.scene ? displayFont.weight : undefined, lineHeight: 1.04, textAlign: "center" }}>Моменты</strong>
     <span style={{ position: "relative", display: "flex", marginTop: 5, color: memoriesMuted, fontFamily: profile.typography.handwritten.family, fontSize: format === "story" ? 28 : format === "a4" ? 26 : 22, fontWeight: profile.typography.handwritten.weight, lineHeight: 1.08, textAlign: "center" }}>Фото, которыми хочется поделиться</span>
   </div>;
 
@@ -411,7 +425,7 @@ function Moments({
       </div>
       <div data-export-side-column style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", width: sideWidth, flexShrink: 0, gap: sideGap }}>
         {format === "post" ? heading : null}
-        {photos.slice(1).map((photo, index) => <ExportPhoto key={photo.id} photo={photo} frame={frame} width={sideWidth} resolveAsset={resolveAsset} resolvePhoto={resolvePhoto} fontSize={sideCaptionSize(photo.caption)} textColor={profile.colors.text} fontFamily={captionFont} rotation={index === 0 ? 1.2 : -1.2} />)}
+        {photos.slice(1).map((photo, index) => <ExportPhoto key={photo.id} photo={photo} frame={frame} frameIndex={index + 1} width={sideWidth} resolveAsset={resolveAsset} resolvePhoto={resolvePhoto} fontSize={sideCaptionSize(photo.caption)} textColor={profile.colors.text} fontFamily={captionFont} rotation={index === 0 ? 1.2 : -1.2} />)}
       </div>
     </div>
   </div>;
@@ -460,15 +474,28 @@ export function UniversalTemplateExportCard({
     : format === "a4"
       ? { veryLong: .9, long: 1.05, default: 1.7 }
       : { veryLong: .92, long: 1.22, default: 1.86 };
-  const recipientNameFontSize = recipientNameTier === "very-long"
+  const datedPost = format === "post" && Boolean(eventDate && profile.assets.scene);
+  const recipientNameFontSize = (recipientNameTier === "very-long"
     ? layout.heading * recipientNameScale.veryLong
     : recipientNameTier === "long"
       ? layout.heading * recipientNameScale.long
-      : layout.heading * recipientNameScale.default;
+      : layout.heading * recipientNameScale.default) * (datedPost ? .9 : 1);
   const heroDescription = format === "story"
     ? model.heroDescription.replace("яркие моменты и пожелания", "яркие моменты\nи пожелания")
     : model.heroDescription;
   const heroDescriptionMaxWidth = profile.export.heroDescriptionMaxWidth?.[format] ?? 760;
+  const heroUnderlay = isUniversalBareSection("hero", profile) ? undefined : profile.assets.sections.hero;
+  const scene = profile.assets.scene;
+  const displayFont = scene ? profile.typography.handwritten : profile.typography.heading;
+  const displayHeadingStyle = {
+    fontFamily: displayFont.family,
+    fontSize: scene ? layout.heading * 1.18 : layout.heading,
+    fontWeight: scene ? displayFont.weight : undefined,
+    textAlign: "center" as const
+  };
+  const heroColors = heroUnderlay || scene ? profile.colors.sections?.hero : undefined;
+  const occasionFont = profile.typography.occasion;
+  const closingColors = profile.colors.sections?.closing;
   const congratulationsCounter = profile.export.counters?.congratulations ?? {
     text: profile.colors.accent,
     surface: profile.colors.surfaces.qualities ?? profile.colors.surface
@@ -511,6 +538,16 @@ export function UniversalTemplateExportCard({
         { width: spec.width, height: spec.height }
       )
     : null;
+  const sceneTop = scene?.exportTop?.[format] ?? scene?.top;
+  const sceneBottom = scene?.bottom;
+  const middleTop = sceneTop ? Math.round(continuousSceneCapInsets.top * sceneTop.height * spec.width / sceneTop.width) : 0;
+  const middleBottom = sceneBottom ? Math.round(continuousSceneCapInsets.bottom * sceneBottom.height * spec.width / sceneBottom.width) : 0;
+  const middleHeight = spec.height - middleTop - middleBottom;
+  const renderSceneEdge = (asset: NonNullable<typeof sceneTop>, edge: "top" | "bottom") => {
+    const height = Math.round(asset.height * spec.width / asset.width);
+    return <img data-export-scene-edge={edge} src={resolveAsset(asset.src)} width={spec.width} height={height}
+      style={{ position: "absolute", left: 0, [edge]: 0, width: spec.width, height }} />;
+  };
 
   return <div data-template-family="universal-v1" data-export-format={format} style={{
     position: "relative",
@@ -526,33 +563,59 @@ export function UniversalTemplateExportCard({
     fontWeight: profile.typography.body.weight
   }}>
     {pageSrc ? <img data-export-page-underlay src={pageSrc} width={spec.width} height={spec.height} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%" }} /> : null}
+    {scene?.middle && middleHeight > 0 ? <img data-export-scene-middle src={resolveAsset(scene.middle.src)} width={spec.width} height={middleHeight}
+      style={{ position: "absolute", left: 0, top: middleTop, width: spec.width, height: middleHeight, objectFit: "fill" }} /> : null}
+    {sceneTop ? renderSceneEdge(sceneTop, "top") : null}
+    {sceneBottom ? renderSceneEdge(sceneBottom, "bottom") : null}
     <Decor profile={profile} anchor="templateRoot" format={format} width={spec.width} height={spec.height} resolveAsset={resolveAsset} />
     <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%", height: "100%", justifyContent: "space-between", gap: availableGap }}>
-      <div data-universal-export-block="hero" data-section-presentation="bare" data-decor-overflow="visible" style={{ position: "relative", display: "flex", width: "100%", height: layout.hero, flexShrink: 0, overflow: "visible" }}>
-        <Decor profile={profile} anchor="hero" format={format} width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset} />
-        <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: format === "post" ? "8px 78px" : format === "a4" ? "14px 78px" : "20px 78px", boxSizing: "border-box", textAlign: "center" }}>
-          {model.occasion ? <span style={{ color: profile.colors.occasion ?? profile.colors.accent, fontSize: format === "story" ? 18 : 14, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>{model.occasion}</span> : null}
-          {eventDate ? <span style={{ marginTop: 5, color: profile.colors.muted, fontSize: format === "story" ? 18 : 14 }}>{eventDate}</span> : null}
-          {model.recipientName ? <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: format === "story" ? 150 : format === "post" ? 70 : 100, flexShrink: 0, marginTop: eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+      <div data-universal-export-block="hero" data-section-presentation={heroUnderlay ? "surface" : "bare"} data-decor-overflow={heroUnderlay ? undefined : "visible"} style={{ position: "relative", display: "flex", width: "100%", height: layout.hero, flexShrink: 0, overflow: heroUnderlay ? "hidden" : "visible", color: heroColors?.text, ...(heroUnderlay ? { borderRadius: 28, background: profile.colors.surfaces.hero } : {}) }}>
+        {heroUnderlay ? <ExportSectionUnderlay underlay={heroUnderlay} width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset} /> : null}
+        {!heroUnderlay ? <Decor profile={profile} anchor="hero" format={format} width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset} /> : null}
+        <div style={{ ...(heroUnderlay ? { position: "absolute", left: 0, top: 0 } : { position: "relative" }), display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: datedPost ? "6px 78px" : format === "post" ? "8px 78px" : format === "a4" ? "14px 78px" : "20px 78px", boxSizing: "border-box", textAlign: "center" }}>
+          {heroUnderlay ? <Decor profile={profile} anchor="hero" format={format} width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset} /> : null}
+          {model.occasion ? <span style={{
+            color: profile.colors.occasion ?? profile.colors.accent,
+            ...(occasionFont
+              ? { fontFamily: occasionFont.family, fontWeight: occasionFont.weight, fontSize: format === "post" ? 29 : 48, lineHeight: .95 }
+              : { fontSize: format === "story" ? 18 : 14, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" as const })
+          }}>{model.occasion}</span> : null}
+          {eventDate ? <span style={{ marginTop: datedPost ? 3 : 5, color: heroColors?.muted ?? profile.colors.muted, fontSize: format === "story" ? 18 : 14 }}>{eventDate}</span> : null}
+          {model.recipientName ? <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: datedPost ? 58 : format === "story" ? 150 : format === "post" ? 70 : 100, flexShrink: 0, marginTop: datedPost ? 3 : eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
             <span aria-label={model.recipientName} style={{ maxWidth: "100%", fontFamily: profile.typography.heading.family, fontSize: recipientNameFontSize, fontWeight: profile.typography.heading.weight, lineHeight: .98, letterSpacing: "-.04em", textAlign: "center", whiteSpace: "pre-line" }}>{recipientNameLines.join("\n")}</span>
           </div> : null}
-          <span data-export-hero-description style={{ width: "100%", maxWidth: heroDescriptionMaxWidth, marginTop: 8, color: profile.colors.muted, fontSize: layout.body, lineHeight: 1.25, textAlign: "center", whiteSpace: "pre-line" }}>{heroDescription}</span>
-          <div data-export-hero-stats style={{ display: "flex", marginTop: 10, gap: 8 }}>
-            {model.participantCount > 0 ? <span data-export-counter="congratulations" data-export-counter-preset={counterPreset} style={counterStyle(congratulationsCounter, -1.5)}><b>{model.participantCount}</b> поздравлений</span> : null}
-            {shownPhotoCount ? <span data-export-counter="photos" data-export-counter-preset={counterPreset} style={counterStyle(photosCounter, 1.5)}><b>{shownPhotoCount}</b> фото в открытке</span> : null}
+          <span data-export-hero-description style={{ width: "100%", maxWidth: heroDescriptionMaxWidth, marginTop: datedPost ? 4 : 8, color: heroColors?.muted ?? profile.colors.muted, fontSize: datedPost ? layout.body - 2 : layout.body, lineHeight: datedPost ? 1.2 : 1.25, ...(datedPost ? { flexShrink: 0 } : {}), textAlign: "center", whiteSpace: "pre-line" }}>{heroDescription}</span>
+          <div data-export-hero-stats style={{ display: "flex", marginTop: datedPost ? 7 : 10, gap: 8 }}>
+            {model.participantCount > 0 ? <span data-export-counter="congratulations" data-export-counter-preset={counterPreset} style={counterStyle(congratulationsCounter, -1.5)}>{scene ? `${model.participantCount} поздравлений` : <><b>{model.participantCount}</b> поздравлений</>}</span> : null}
+            {shownPhotoCount ? <span data-export-counter="photos" data-export-counter-preset={counterPreset} style={counterStyle(photosCounter, 1.5)}>{scene ? `${shownPhotoCount} фото в открытке` : <><b>{shownPhotoCount}</b> фото в открытке</>}</span> : null}
           </div>
         </div>
       </div>
 
       {qualities.length > 0 ? <div data-universal-export-block="qualities" data-section-presentation="bare" style={{ display: "flex", width: "100%", height: qualitySectionHeight, flexShrink: 0 }}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: useDedicatedQualityLayout ? "6px 28px" : "16px 28px", boxSizing: "border-box" }}>
-          <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, textAlign: "center" }}>{profile.copy?.qualitiesTitle ?? "За что тебя ценят"}</strong>
+          <strong style={{ ...displayHeadingStyle, color: profile.colors.sections?.qualities?.text }}>{profile.copy?.qualitiesTitle ?? "За что тебя ценят"}</strong>
           <div data-export-quality-grid="2-1-2" style={{ display: "flex", flexDirection: "column", width: "100%", alignItems: "center", marginTop: useDedicatedQualityLayout ? 5 : format === "story" ? 10 : 8, gap: useDedicatedQualityLayout ? 4 : format === "story" ? 7 : 6 }}>{qualityRows.map((row, rowIndex) => <div key={rowIndex} data-export-quality-row={rowIndex + 1} style={{ display: "flex", width: row.length === 2 ? qualityCardWidth * 3 : qualityCardWidth, justifyContent: row.length === 2 ? "space-between" : "center" }}>{row.map((index) => {
             const quality = qualities[index];
             const card = qualityCards[index % Math.max(qualityCards.length, 1)];
+            const preset = card ? getUniversalTextCardPreset(card.preset) : null;
+            if (card?.emblem) {
+              const size = Math.round(qualityCardHeight * .89);
+              const ribbonHeight = size - 8;
+              const ribbonLeft = 3 + size / 2;
+              const fontSize = dedicatedQualityLayout.fontSize - (isLongQualityLabel(quality) ? 3 : 0);
+              return <div key={`${quality}-${index}`} data-export-quality-card data-quality-tag style={{ position: "relative", display: "flex", alignItems: "center", flexShrink: 0, boxSizing: "border-box", width: qualityCardWidth, height: qualityCardHeight, gap: 9, padding: "5px 16px 5px 3px" }}>
+                <div data-export-quality-ribbon style={{ position: "absolute", display: "flex", top: (qualityCardHeight - ribbonHeight) / 2, left: ribbonLeft, width: qualityCardWidth - ribbonLeft, height: ribbonHeight, border: "1px solid #e7bd77", borderTopRightRadius: ribbonHeight / 2, borderBottomRightRadius: ribbonHeight / 2, overflow: "hidden" }}>
+                  <img src={resolveAsset(card.asset.src)} style={{ width: "100%", height: "100%", objectFit: "fill" }} />
+                </div>
+                <img data-export-quality-medallion src={resolveAsset(card.emblem.src)} width={size} height={size}
+                  style={{ position: "relative", width: size, height: size, flexShrink: 0, objectFit: "contain" }} />
+                <b data-safe-text data-text-boundary data-text-preset="quality-card" style={{ position: "relative", minWidth: 0, flex: 1, color: card.textColor ?? profile.colors.text, fontSize, lineHeight: 1.05, textAlign: "left" }}>{quality}</b>
+              </div>;
+            }
             return <div key={`${quality}-${index}`} data-export-quality-card style={{ position: "relative", display: "flex", width: qualityCardWidth, minWidth: 0, height: qualityCardHeight, flexShrink: 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
               {card ? <img data-export-quality-asset src={resolveAsset(card.asset.src)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} /> : null}
-              <b data-safe-text data-text-boundary data-text-preset="quality-card" style={{ position: "absolute", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", overflow: "hidden", ...(card ? rectStyle(getUniversalTextCardPreset(card.preset).textArea) : { inset: 7 }), padding: 3, color: card?.textColor ?? profile.colors.text, fontSize: useDedicatedQualityLayout ? dedicatedQualityLayout.fontSize : format === "story" ? 15 : format === "post" ? 12 : 13, lineHeight: 1.04, textAlign: "center" }}>{quality}</b>
+              <b data-safe-text data-text-boundary data-text-preset="quality-card" style={{ position: "absolute", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", overflow: "hidden", ...(preset ? rectStyle(preset.textArea) : { inset: 7 }), padding: 3, color: card?.textColor ?? profile.colors.text, fontSize: useDedicatedQualityLayout ? dedicatedQualityLayout.fontSize : format === "story" ? 15 : format === "post" ? 12 : 13, lineHeight: 1.04, textAlign: "center" }}>{quality}</b>
             </div>;
           })}</div>)}</div>
         </div>
@@ -562,7 +625,7 @@ export function UniversalTemplateExportCard({
 
       {quotes.length >= 2 ? <div data-universal-export-block="quotes" data-section-presentation="bare" style={{ display: "flex", width: "100%", height: layout.quotes, flexShrink: 0 }}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: "0 28px", boxSizing: "border-box" }}>
-          <strong style={{ fontFamily: profile.typography.heading.family, fontSize: layout.heading, lineHeight: 1.04, textAlign: "center" }}>{profile.copy?.quotesTitle ?? "Особенно тёплые слова"}</strong>
+          <strong style={{ ...displayHeadingStyle, lineHeight: 1.04, color: profile.colors.sections?.quotes?.text }}>{profile.copy?.quotesTitle ?? "Особенно тёплые слова"}</strong>
           <div style={{ display: "flex", width: "100%", marginTop: 10, gap: 10, flexShrink: 0 }}>{quotes.map((quote, index) => {
             const card = quoteCards[index % Math.max(quoteCards.length, 1)];
             const cardPreset = card ? getUniversalTextCardPreset(card.preset) : null;
@@ -601,19 +664,19 @@ export function UniversalTemplateExportCard({
                 style={{ position: "absolute", ...rectStyle(cardPreset.exportDecorArea), objectFit: "contain" }}
               /> : null}
               {cardPreset?.renderLeadingQuote !== false ? <span aria-hidden="true" style={{ position: "absolute", left: 13, top: 5, color: profile.colors.accent, fontFamily: profile.typography.handwritten.family, fontSize: 38 }}>“</span> : null}
-              <span data-safe-text data-text-boundary data-text-preset="quote-card" style={{ position: "absolute", display: "flex", alignItems: "center", boxSizing: "border-box", overflow: "hidden", ...quoteTextAreaStyle, padding: "6px 10px", fontFamily: profile.typography.body.family, fontWeight: profile.typography.body.weight, fontSize: quoteFontSize, lineHeight: 1.18, textAlign: "center" }}>{quote}</span>
+              <span data-safe-text data-text-boundary data-text-preset="quote-card" style={{ position: "absolute", display: "flex", alignItems: "center", boxSizing: "border-box", overflow: "hidden", ...quoteTextAreaStyle, padding: "6px 10px", color: card?.textColor, fontFamily: profile.typography.body.family, fontWeight: profile.typography.body.weight, fontSize: quoteFontSize, lineHeight: 1.18, textAlign: "center" }}>{quote}</span>
             </div>;
           })}</div>
         </div>
       </div> : null}
 
       <ExportSection id="closing" profile={profile} format={format} width={sectionWidth} height={closingSectionHeight} resolveAsset={resolveAsset}>
-        <div data-export-closing-content style={{ display: "flex", flexDirection: "column", width: closingLayout ? `${closingLayout.contentWidthPercent}%` : closingUsesHorizontalSlice ? format === "story" ? "58%" : "70%" : "100%", height: "100%", margin: "0 auto", alignItems: "center", justifyContent: "center", padding: closingUsesHorizontalSlice ? "12px 0" : "16px 72px", boxSizing: "border-box", color: profile.colors.text, textAlign: "center" }}>
+        <div data-export-closing-content style={{ display: "flex", flexDirection: "column", width: closingLayout ? `${closingLayout.contentWidthPercent}%` : closingUsesHorizontalSlice ? format === "story" ? "58%" : "70%" : "100%", height: "100%", margin: "0 auto", alignItems: "center", justifyContent: "center", padding: closingUsesHorizontalSlice ? "12px 0" : "16px 72px", boxSizing: "border-box", color: closingColors?.text ?? profile.colors.text, textAlign: "center" }}>
           <strong data-export-closing-heading style={{ fontFamily: profile.typography.heading.family, fontSize: closingLayout?.headingFontSize ?? layout.heading * .82, lineHeight: 1.05, whiteSpace: closingLayout ? "nowrap" : format === "story" ? "normal" : "nowrap", textAlign: "center" }}>В полной открытке — ещё больше тепла</strong>
-          <span data-export-closing-body style={{ maxWidth: 830, marginTop: 7, color: profile.colors.muted, fontSize: closingLayout?.bodyFontSize ?? layout.body, lineHeight: 1.2, textAlign: "center" }}>Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для получателя.</span>
+          <span data-export-closing-body style={{ maxWidth: 830, marginTop: 7, color: closingColors?.muted ?? profile.colors.muted, fontSize: closingLayout?.bodyFontSize ?? layout.body, lineHeight: 1.2, textAlign: "center" }}>Здесь — лишь часть тёплых слов и моментов. Остальное бережно сохранено в полной открытке — только для получателя.</span>
           <div data-export-closing-brand style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: closingLayout?.brandMarginTop ?? (format === "story" ? 8 : 5), ...(closingLayout ? {} : { transform: `translateY(${format === "story" ? -4 : -10}px)` }) }}>
-            <img data-export-closing-logo src={resolveAsset("/brand/email-logo.png")} style={{ width: closingLayout?.logoWidth ?? (format === "story" ? 160 : format === "a4" ? 150 : 130), height: closingLayout?.logoHeight ?? (format === "story" ? 37 : format === "a4" ? 35 : 30), objectFit: "contain" }} />
-            <span data-export-closing-tagline style={{ marginTop: 1, color: profile.colors.muted, fontSize: closingLayout?.taglineFontSize ?? layout.body - 4 }}>Место, где слова становятся подарком</span>
+            <img data-export-closing-logo src={resolveAsset("/brand/email-logo.png")} style={{ width: closingLayout?.logoWidth ?? (format === "story" ? 160 : format === "a4" ? 150 : 130), height: closingLayout?.logoHeight ?? (format === "story" ? 37 : format === "a4" ? 35 : 30), objectFit: "contain", ...(closingColors?.text ? { background: profile.colors.surface, borderRadius: 5 } : {}) }} />
+            <span data-export-closing-tagline style={{ marginTop: 1, color: closingColors?.muted ?? profile.colors.muted, fontSize: closingLayout?.taglineFontSize ?? layout.body - 4, textShadow: scene?.middle ? "0 1px 4px rgba(0, 0, 0, .9)" : undefined }}>Место, где слова становятся подарком</span>
           </div>
         </div>
       </ExportSection>

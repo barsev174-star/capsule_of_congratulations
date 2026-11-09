@@ -6,11 +6,14 @@ import {
   validateUniversalTemplateFixture,
   type UniversalTemplateFixture
 } from "@/lib/templates/fixtures";
+import { new_yearProfile, newYearGreenProfile } from "@/templates/new-year/profile";
 
 describe("universal-v1 fixtures", () => {
   it("содержит общие состояния и тематические fixtures педагога и воспитателя", () => {
     expect(Object.keys(universalTemplateFixtures)).toEqual([
       "full-card-default",
+      "new-year-demo",
+      "new-year-natalya-demo",
       "teacher-classic",
       "kindergarten-demo",
       "team-editorial-demo",
@@ -37,6 +40,23 @@ describe("universal-v1 fixtures", () => {
       "kindergarten-photo-small-discoveries",
       "kindergarten-photo-friendly-group"
     ]);
+  });
+
+  it("назначает каждой новогодней теме свой комплект поздравлений, цитат и фотографий", () => {
+    const natalya = getUniversalTemplateFixture(new_yearProfile.demo.fixture);
+    const dmitry = getUniversalTemplateFixture(newYearGreenProfile.demo.fixture);
+
+    expect(natalya.recipientName).toBe("Наталья");
+    expect(dmitry.recipientName).toBe("Дмитрий");
+    expect(dmitry.contributions[2].authorName).toBe("Денис");
+    for (const fixture of [natalya, dmitry]) {
+      expect(fixture.contributions).toHaveLength(15);
+      expect(fixture.photos).toHaveLength(6);
+      expect(fixture.memoryPhotoIds).toEqual(fixture.photos.slice(3).map(({ id }) => id));
+      expect(fixture.quoteCandidates.every(({ text }) =>
+        fixture.contributions.some(({ message }) => message.includes(text))
+      )).toBe(true);
+    }
   });
 
   it("фиксирует демонстрацию повышения с двадцатью поздравлениями и шестью разными фото", () => {

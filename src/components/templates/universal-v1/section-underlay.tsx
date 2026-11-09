@@ -67,6 +67,7 @@ export function SectionUnderlay({
   const src = resolveAsset(underlay.asset.src);
   const mobileSrc = underlay.mobileAsset ? resolveAsset(underlay.mobileAsset.src) : null;
   const opacity = underlay.opacity ?? 1;
+  const fitEdgesToHeight = underlay.fitEdgesToHeight;
   const rootStyle = {
     position: "absolute",
     top: 0,
@@ -83,7 +84,13 @@ export function SectionUnderlay({
   if (preset.rendering === "nine-slice") {
     if (!targetSize) {
       const slices = underlay.slices ?? preset.slices!;
-      const borderWidth = `${slices.top * underlay.asset.height / underlay.asset.width * 100}cqw ${slices.right * 100}cqw ${slices.bottom * underlay.asset.height / underlay.asset.width * 100}cqw ${slices.left * 100}cqw`;
+      const sourceRatio = underlay.asset.height / underlay.asset.width;
+      const totalVerticalEdges = (slices.top + slices.bottom) * sourceRatio;
+      const borderWidth = [slices.top * sourceRatio, slices.right, slices.bottom * sourceRatio, slices.left]
+        .map((edge) => fitEdgesToHeight && totalVerticalEdges > 0
+          ? `min(${edge * 100}cqw, ${edge / totalVerticalEdges * 96}cqh)`
+          : `${edge * 100}cqw`)
+        .join(" ");
       const borderImageSlice = `${slices.top * 100}% ${slices.right * 100}% ${slices.bottom * 100}% ${slices.left * 100}%`;
       const frameLayerStyle = {
         position: "absolute",
@@ -120,7 +127,7 @@ export function SectionUnderlay({
           aria-hidden="true"
           data-underlay-preset={underlay.preset}
           data-has-mobile-asset={mobileSrc ? "true" : undefined}
-          style={rootStyle}
+          style={fitEdgesToHeight ? { ...rootStyle, containerType: "size" } : rootStyle}
         >
           {mobileSrc ? <span data-underlay-variant="desktop">{frameLayers}</span> : frameLayers}
           {mobileSrc ? <img

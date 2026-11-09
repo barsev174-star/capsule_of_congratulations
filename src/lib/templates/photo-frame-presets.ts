@@ -1,4 +1,4 @@
-import type { NormalizedRect } from "@/lib/templates/profile";
+import type { NormalizedRect, UniversalPhotoFrame } from "@/lib/templates/profile";
 
 export const universalPhotoFramePresetIds = [
   "portrait-polaroid",
@@ -90,6 +90,11 @@ export const universalPhotoFramePresets: Readonly<Record<UniversalPhotoFramePres
 
 export const getUniversalPhotoFramePreset = (id: UniversalPhotoFramePresetId) =>
   universalPhotoFramePresets[id];
+
+export function getUniversalPhotoOverlay(frame: UniversalPhotoFrame, index: number) {
+  const variants = frame.overlayVariants;
+  return variants?.[index % (variants.length + 1) - 1] ?? frame.overlay;
+}
 
 export const getUniversalPhotoApertureAspectRatio = (id: UniversalPhotoFramePresetId) => {
   const preset = getUniversalPhotoFramePreset(id);
