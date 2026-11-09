@@ -2,8 +2,8 @@
   "version": 1,
   "templateId": "new-year",
   "budgets": {
-    "networkBytes": 2000000,
-    "decodedMemoryBytes": 79000000,
+    "networkBytes": 2100000,
+    "decodedMemoryBytes": 83000000,
     "individualBytes": 500000
   },
   "preview": {
@@ -200,6 +200,33 @@
       "width": 880,
       "height": 1760,
       "alpha": "opaque",
+      "fit": "cover"
+    },
+    {
+      "id": "mobile-winter-sprigs",
+      "source": "mobile-winter-sprigs.png",
+      "output": "mobile-winter-sprigs.webp",
+      "width": 680,
+      "height": 1360,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "mobile-winter-lights",
+      "source": "mobile-winter-lights.png",
+      "output": "mobile-winter-lights.webp",
+      "width": 480,
+      "height": 960,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "mobile-winter-ornaments",
+      "source": "mobile-winter-ornaments.png",
+      "output": "mobile-winter-ornaments.webp",
+      "width": 480,
+      "height": 960,
+      "alpha": "transparent",
       "fit": "cover"
     },
     {

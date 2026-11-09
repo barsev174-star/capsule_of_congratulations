@@ -97,7 +97,7 @@ export function SectionUnderlay({
         inset: 0,
         boxSizing: "border-box",
         borderStyle: "solid",
-        borderWidth,
+        borderWidth: `var(--uv1-underlay-border-width, ${borderWidth})`,
         borderImageSource: `url("${src}")`,
         borderImageWidth: 1
       } as CSSProperties;
@@ -107,7 +107,7 @@ export function SectionUnderlay({
             data-underlay-layer="standard"
             style={{
               ...frameLayerStyle,
-              borderImageSlice: `${borderImageSlice} fill`,
+              borderImageSlice: `var(--uv1-underlay-slices, ${borderImageSlice} fill)`,
               borderImageRepeat: "stretch"
             }}
           />

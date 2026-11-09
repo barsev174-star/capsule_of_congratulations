@@ -133,6 +133,157 @@
   }
 }
 
+.page[data-template-id="new-year"][data-page-scene-middle] { container-name: new-year-scene; }
+
+/* Query the card width so Studio's narrow preview and a phone get the same artwork. */
+@container new-year-scene (max-width: 640px) {
+  .page[data-template-id="new-year"]:not([data-viewport="desktop"]) {
+    & .sceneMiddle {
+      --winter-shade: color-mix(in srgb, var(--uv1-accent) 52%, #000);
+      --winter-glow: color-mix(in srgb, var(--uv1-scene-lettering) 23%, transparent);
+      inset-block-start: 0;
+      padding-block-start: clamp(500px, 950px - 95cqw, 640px);
+      background:
+        linear-gradient(var(--winter-shade) max(342px, 87cqw), transparent max(450px, 135cqw)),
+        url("/templates/new-year/mobile-winter-sprigs.webp") center top / 100% auto no-repeat content-box,
+        radial-gradient(ellipse at left 24%, color-mix(in srgb, var(--uv1-accent) 20%, transparent), transparent 43%),
+        radial-gradient(ellipse at right 44%, var(--winter-glow), transparent 42%);
+
+      /* Crop the quiet center when the scene gets tall. Both sides retain their scale. */
+      &::before,
+      &::after {
+        position: absolute;
+        inset: auto 0 0;
+        height: min(100%, var(--uv1-middle-max-height));
+        background: var(--uv1-middle-image) right -4cqw bottom / cover no-repeat;
+        content: "";
+      }
+
+      &::after {
+        background-position: left bottom;
+        mask-image: linear-gradient(90deg, #000 21%, transparent 44%), var(--uv1-middle-mask);
+        mask-composite: intersect;
+      }
+    }
+
+    & .heroSection .sectionContent {
+      min-height: 0;
+      padding: clamp(53px, 17cqw, 97px) max(18px, 6cqw) 38px;
+    }
+
+    & .heroOccasion { font-size: clamp(30px, 9.5cqw, 49px); }
+
+    & .recipientNameBoundary {
+      height: auto;
+      min-height: clamp(60px, 18cqw, 100px);
+      margin-block: 10px 13px;
+    }
+
+    & .recipientName { font-size: clamp(42px, 15cqw, 64px); }
+    & .recipientNameLong { font-size: clamp(34px, 11cqw, 46px); }
+    & .recipientNameVeryLong { font-size: clamp(22px, 6.5cqw, 27px); }
+    & .recipientNamePair { font-size: clamp(18px, 6cqw, 27px); }
+
+    & .heroDescription {
+      max-width: 36ch;
+      font-size: clamp(15px, 4.3cqw, 17px);
+      text-shadow: 0 1px 8px rgb(0 0 0 / 38%);
+    }
+
+    /* The letter's foil details sit inside the four corners of its 1100 × 440 image. */
+    & .summary > .sectionUnderlay [data-underlay-layer="standard"] {
+      --uv1-underlay-slices: 34% 14% 36% 14% fill;
+      --uv1-underlay-border-width: 13.6cqw 14cqw 14.4cqw 14cqw;
+    }
+
+    & .summary .sectionContent {
+      padding-block: max(30px, 10cqw);
+    }
+
+    & .decorLayer[data-decor-layer="year-goat-letter-mobile"] img {
+      object-position: center bottom;
+    }
+
+    & .messages {
+      /* Let the artwork reach the page edges while keeping the content column the same width. */
+      --winter-gutter: max(10px, (100cqw - 520px) / 2);
+      margin-inline: calc(-1 * var(--winter-gutter));
+      padding-inline: var(--winter-gutter);
+      border-radius: 0;
+
+      &::before,
+      &::after {
+        position: absolute;
+        inset-inline: 0;
+        background: center 65% / 100% auto no-repeat;
+        pointer-events: none;
+      }
+
+      &:has(.messagePhotoGrid)::before {
+        inset-block: 0 48%;
+        background-image: url("/templates/new-year/mobile-winter-lights.webp");
+        background-position: center 28%;
+        mask-image: linear-gradient(transparent, #000 7%, #000 88%, transparent);
+        content: "";
+      }
+
+      &::after {
+        inset-block: 0;
+        background-image: url("/templates/new-year/mobile-winter-ornaments.webp");
+        background-size: calc(100% + clamp(0px, 260px - 50cqw, 74px)) auto;
+        content: "";
+      }
+
+      &:has(.messagePhotoGrid)::after {
+        inset-block-start: 47%;
+        mask-image: linear-gradient(transparent, #000 12%);
+      }
+    }
+
+    & .messages .allMessagesButton {
+      --winter-button: color-mix(in srgb, var(--uv1-accent) 74%, #000);
+      border-color: var(--uv1-counter-congratulations-outline);
+      color: var(--uv1-scene-lettering);
+      background: var(--winter-button);
+
+      & strong { color: inherit; }
+      &:hover { background: color-mix(in srgb, var(--winter-button) 88%, var(--uv1-scene-lettering)); }
+      &:active { background: color-mix(in srgb, var(--winter-button) 87%, #000); }
+    }
+
+    & .messageCard:not([data-message-expanded]) .messageCardContent {
+      padding-block-end: max(38px, 12.5cqw);
+
+      & > p {
+        display: block;
+        flex: none;
+        font-size: 16px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+        -webkit-line-clamp: none;
+      }
+    }
+
+    & .quotes h2 {
+      width: fit-content;
+      max-width: 100%;
+      margin-inline: auto;
+      padding: 4px 16px 6px;
+      border: 1px solid var(--uv1-counter-congratulations-outline);
+      border-radius: 999px;
+      color: color-mix(in srgb, var(--uv1-accent) 74%, #000);
+      background: var(--uv1-surface);
+
+      &::before,
+      &::after { content: none; }
+    }
+
+    & .closingSignature {
+      text-shadow: 0 1px 3px rgb(0 0 0 / 85%), 0 0 10px rgb(0 0 0 / 65%);
+    }
+  }
+}
+
 .page[data-page-scene] :is(.summary, .messages, .memories, .closingSection) {
   border-radius: 0;
   background: transparent;

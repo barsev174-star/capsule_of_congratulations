@@ -110,7 +110,7 @@ const createProfile = (theme: keyof typeof palettes) => {
         id: "year-goat-letter-mobile",
         asset: asset("goat-engraving", 280, 280),
         anchor: "summary",
-        rect: { x: .841, y: .48, width: .137, height: .37 },
+        rect: { x: .65, y: .64, width: .29, height: .32 },
         opacity: .30,
         visibleOn: ["mobile"]
       }]
