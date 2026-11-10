@@ -2,8 +2,8 @@
   "version": 1,
   "templateId": "new-year",
   "budgets": {
-    "networkBytes": 2100000,
-    "decodedMemoryBytes": 83000000,
+    "networkBytes": 2500000,
+    "decodedMemoryBytes": 90000000,
     "individualBytes": 500000
   },
   "preview": {
@@ -19,6 +19,15 @@
       "output": "goat-medallion-v2.webp",
       "width": 128,
       "height": 128,
+      "alpha": "transparent",
+      "fit": "cover"
+    },
+    {
+      "id": "goat-sprig-ornament",
+      "source": "goat-sprig-ornament.png",
+      "output": "goat-sprig-ornament.webp",
+      "width": 312,
+      "height": 312,
       "alpha": "transparent",
       "fit": "cover"
     },
@@ -167,9 +176,9 @@
       "fit": "cover"
     },
     {
-      "id": "letter-v2",
-      "source": "letter-v2.png",
-      "output": "letter-v2.webp",
+      "id": "letter-v3",
+      "source": "letter-v3.png",
+      "output": "letter-v3.webp",
       "width": 1100,
       "height": 440,
       "alpha": "transparent",
@@ -185,20 +194,22 @@
       "fit": "cover"
     },
     {
-      "id": "green-winter-clearing-v2",
-      "source": "green-winter-clearing-v2.png",
-      "output": "green-winter-clearing-v2.webp",
-      "width": 880,
-      "height": 1760,
+      "id": "green-winter-clearing-v3",
+      "source": "green-winter-clearing-v3.png",
+      "output": "green-winter-clearing-v3.webp",
+      "width": 1080,
+      "height": 2160,
+      "webpQuality": 88,
       "alpha": "opaque",
       "fit": "cover"
     },
     {
-      "id": "red-winter-clearing-v2",
-      "source": "red-winter-clearing-v2.png",
-      "output": "red-winter-clearing-v2.webp",
-      "width": 880,
-      "height": 1760,
+      "id": "red-winter-clearing-v3",
+      "source": "red-winter-clearing-v3.png",
+      "output": "red-winter-clearing-v3.webp",
+      "width": 1080,
+      "height": 2160,
+      "webpQuality": 88,
       "alpha": "opaque",
       "fit": "cover"
     },

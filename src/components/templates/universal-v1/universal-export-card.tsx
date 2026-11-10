@@ -66,6 +66,12 @@ const layouts: Record<UniversalExportFormat, FormatLayout> = {
   a4: { padding: 38, verticalPadding: 18, gap: 6, hero: 310, qualities: 235, moments: 650, quotes: 220, closing: 268, heading: 43, body: 22 }
 };
 
+const newYearExportHeroLayouts = {
+  story: { extraHeight: 0, nameHeight: 116, paddingBlock: [20, 20], paddingInline: 190, statsGap: 13 },
+  post: { extraHeight: 12, nameHeight: 60, paddingBlock: [12, 14], paddingInline: 180, statsGap: 9 },
+  a4: { extraHeight: 0, nameHeight: 94, paddingBlock: [12, 12], paddingInline: 208, statsGap: 13 }
+} as const;
+
 const getArtworkQuoteFontSize = (format: UniversalExportFormat, quote: string) => {
   const baseFontSize = format === "story" ? 22 : format === "post" ? 16 : 20;
   const length = quote.trim().replace(/\s+/g, " ").length;
@@ -440,6 +446,8 @@ export function UniversalTemplateExportCard({
 }: UniversalExportCardProps) {
   const spec = universalExportFormats[format];
   const layout = layouts[format];
+  const newYearHero = profile.id === "new-year" ? newYearExportHeroLayouts[format] : undefined;
+  const heroHeight = layout.hero + (newYearHero?.extraHeight ?? 0);
   const sectionWidth = spec.width - layout.padding * 2;
   const eventDate = formatUniversalEventDate(model.eventDate);
   const qualities = model.qualities.length === 5 ? model.qualities : [];
@@ -468,7 +476,11 @@ export function UniversalTemplateExportCard({
   const sectionCount = 2 + Number(qualities.length > 0) + Number(photos.length > 0) + Number(quotes.length >= 2);
   const availableGap = sectionCount > 1 ? layout.gap : 0;
   const recipientNameTier = getUniversalRecipientNameTier(model.recipientName);
-  const recipientNameLines = getUniversalRecipientNameLines(model.recipientName);
+  const defaultNameLines = getUniversalRecipientNameLines(model.recipientName);
+  const nameWords = defaultNameLines[0]?.split(" ");
+  const recipientNameLines = newYearHero && recipientNameTier === "very-long" && defaultNameLines.length === 1 && nameWords?.length === 2
+    ? nameWords
+    : defaultNameLines;
   const recipientNameScale = format === "post"
     ? { veryLong: .82, long: .82, default: 1.58 }
     : format === "a4"
@@ -480,12 +492,38 @@ export function UniversalTemplateExportCard({
     : recipientNameTier === "long"
       ? layout.heading * recipientNameScale.long
       : layout.heading * recipientNameScale.default) * (datedPost ? .9 : 1);
+  const recipientNameStyle: CSSProperties = {
+    maxWidth: "100%",
+    fontFamily: profile.typography.heading.family,
+    fontSize: recipientNameFontSize,
+    fontWeight: profile.typography.heading.weight,
+    lineHeight: .98,
+    letterSpacing: "-.04em",
+    textAlign: "center"
+  };
   const heroDescription = format === "story"
     ? model.heroDescription.replace("яркие моменты и пожелания", "яркие моменты\nи пожелания")
     : model.heroDescription;
-  const heroDescriptionMaxWidth = profile.export.heroDescriptionMaxWidth?.[format] ?? 760;
   const heroUnderlay = isUniversalBareSection("hero", profile) ? undefined : profile.assets.sections.hero;
   const scene = profile.assets.scene;
+  const heroColors = heroUnderlay || scene ? profile.colors.sections?.hero : undefined;
+  const heroDescriptionMaxWidth = profile.export.heroDescriptionMaxWidth?.[format] ?? 760;
+  const heroDescriptionWidth = newYearHero
+    ? Math.min(heroDescriptionMaxWidth, sectionWidth - newYearHero.paddingInline * 2)
+    : "100%";
+  const heroDescriptionStyle: CSSProperties = {
+    width: heroDescriptionWidth,
+    maxWidth: heroDescriptionMaxWidth,
+    marginTop: datedPost ? 4 : 8,
+    color: heroColors?.muted ?? profile.colors.muted,
+    fontSize: datedPost ? layout.body - 2 : layout.body,
+    lineHeight: datedPost ? 1.2 : 1.25,
+    ...(datedPost || newYearHero ? { flexShrink: 0 } : {}),
+    textAlign: "center"
+  };
+  const heroPadding = newYearHero
+    ? `${newYearHero.paddingBlock[0]}px ${newYearHero.paddingInline}px ${newYearHero.paddingBlock[1]}px`
+    : datedPost ? "6px 78px" : format === "post" ? "8px 78px" : format === "a4" ? "14px 78px" : "20px 78px";
   const displayFont = scene ? profile.typography.handwritten : profile.typography.heading;
   const displayHeadingStyle = {
     fontFamily: displayFont.family,
@@ -493,7 +531,6 @@ export function UniversalTemplateExportCard({
     fontWeight: scene ? displayFont.weight : undefined,
     textAlign: "center" as const
   };
-  const heroColors = heroUnderlay || scene ? profile.colors.sections?.hero : undefined;
   const occasionFont = profile.typography.occasion;
   const closingColors = profile.colors.sections?.closing;
   const congratulationsCounter = profile.export.counters?.congratulations ?? {
@@ -543,6 +580,12 @@ export function UniversalTemplateExportCard({
   const middleTop = sceneTop ? Math.round(continuousSceneCapInsets.top * sceneTop.height * spec.width / sceneTop.width) : 0;
   const middleBottom = sceneBottom ? Math.round(continuousSceneCapInsets.bottom * sceneBottom.height * spec.width / sceneBottom.width) : 0;
   const middleHeight = spec.height - middleTop - middleBottom;
+  const middleSize = { width: spec.width, height: middleHeight };
+  const middleSrc = scene?.middle && middleHeight > 0
+    ? newYearHero && format !== "story"
+      ? croppedAssetUrl(resolveAsset(scene.middle.src), coverCrop(scene.middle, middleSize, { x: .5, y: .3 }), middleSize)
+      : resolveAsset(scene.middle.src)
+    : null;
   const renderSceneEdge = (asset: NonNullable<typeof sceneTop>, edge: "top" | "bottom") => {
     const height = Math.round(asset.height * spec.width / asset.width);
     return <img data-export-scene-edge={edge} src={resolveAsset(asset.src)} width={spec.width} height={height}
@@ -563,29 +606,38 @@ export function UniversalTemplateExportCard({
     fontWeight: profile.typography.body.weight
   }}>
     {pageSrc ? <img data-export-page-underlay src={pageSrc} width={spec.width} height={spec.height} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%" }} /> : null}
-    {scene?.middle && middleHeight > 0 ? <img data-export-scene-middle src={resolveAsset(scene.middle.src)} width={spec.width} height={middleHeight}
+    {middleSrc ? <img data-export-scene-middle src={middleSrc} width={spec.width} height={middleHeight}
       style={{ position: "absolute", left: 0, top: middleTop, width: spec.width, height: middleHeight, objectFit: "fill" }} /> : null}
     {sceneTop ? renderSceneEdge(sceneTop, "top") : null}
     {sceneBottom ? renderSceneEdge(sceneBottom, "bottom") : null}
     <Decor profile={profile} anchor="templateRoot" format={format} width={spec.width} height={spec.height} resolveAsset={resolveAsset} />
     <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%", height: "100%", justifyContent: "space-between", gap: availableGap }}>
-      <div data-universal-export-block="hero" data-section-presentation={heroUnderlay ? "surface" : "bare"} data-decor-overflow={heroUnderlay ? undefined : "visible"} style={{ position: "relative", display: "flex", width: "100%", height: layout.hero, flexShrink: 0, overflow: heroUnderlay ? "hidden" : "visible", color: heroColors?.text, ...(heroUnderlay ? { borderRadius: 28, background: profile.colors.surfaces.hero } : {}) }}>
-        {heroUnderlay ? <ExportSectionUnderlay underlay={heroUnderlay} width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset} /> : null}
-        {!heroUnderlay ? <Decor profile={profile} anchor="hero" format={format} width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset} /> : null}
-        <div style={{ ...(heroUnderlay ? { position: "absolute", left: 0, top: 0 } : { position: "relative" }), display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: datedPost ? "6px 78px" : format === "post" ? "8px 78px" : format === "a4" ? "14px 78px" : "20px 78px", boxSizing: "border-box", textAlign: "center" }}>
-          {heroUnderlay ? <Decor profile={profile} anchor="hero" format={format} width={sectionWidth} height={layout.hero} resolveAsset={resolveAsset} /> : null}
+      <div data-universal-export-block="hero" data-section-presentation={heroUnderlay ? "surface" : "bare"} data-decor-overflow={heroUnderlay ? undefined : "visible"} style={{ position: "relative", display: "flex", width: "100%", height: heroHeight, flexShrink: 0, overflow: heroUnderlay ? "hidden" : "visible", color: heroColors?.text, ...(heroUnderlay ? { borderRadius: 28, background: profile.colors.surfaces.hero } : {}) }}>
+        {heroUnderlay ? <ExportSectionUnderlay underlay={heroUnderlay} width={sectionWidth} height={heroHeight} resolveAsset={resolveAsset} /> : null}
+        {!heroUnderlay ? <Decor profile={profile} anchor="hero" format={format} width={sectionWidth} height={heroHeight} resolveAsset={resolveAsset} /> : null}
+        <div style={{ ...(heroUnderlay ? { position: "absolute", left: 0, top: 0 } : { position: "relative" }), display: "flex", flexDirection: "column", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", padding: heroPadding, boxSizing: "border-box", textAlign: "center" }}>
+          {heroUnderlay ? <Decor profile={profile} anchor="hero" format={format} width={sectionWidth} height={heroHeight} resolveAsset={resolveAsset} /> : null}
           {model.occasion ? <span style={{
             color: profile.colors.occasion ?? profile.colors.accent,
+            ...(newYearHero ? { textShadow: "0 1px 5px rgba(0, 0, 0, .75)" } : {}),
             ...(occasionFont
               ? { fontFamily: occasionFont.family, fontWeight: occasionFont.weight, fontSize: format === "post" ? 29 : 48, lineHeight: .95 }
               : { fontSize: format === "story" ? 18 : 14, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" as const })
           }}>{model.occasion}</span> : null}
           {eventDate ? <span style={{ marginTop: datedPost ? 3 : 5, color: heroColors?.muted ?? profile.colors.muted, fontSize: format === "story" ? 18 : 14 }}>{eventDate}</span> : null}
-          {model.recipientName ? <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: datedPost ? 58 : format === "story" ? 150 : format === "post" ? 70 : 100, flexShrink: 0, marginTop: datedPost ? 3 : eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-            <span aria-label={model.recipientName} style={{ maxWidth: "100%", fontFamily: profile.typography.heading.family, fontSize: recipientNameFontSize, fontWeight: profile.typography.heading.weight, lineHeight: .98, letterSpacing: "-.04em", textAlign: "center", whiteSpace: "pre-line" }}>{recipientNameLines.join("\n")}</span>
+          {model.recipientName ? <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: newYearHero?.nameHeight ?? (datedPost ? 58 : format === "story" ? 150 : format === "post" ? 70 : 100), flexShrink: 0, marginTop: datedPost ? 3 : eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+            {newYearHero && recipientNameLines.length > 1
+              ? <div aria-label={model.recipientName} style={{ ...recipientNameStyle, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  {recipientNameLines.map((line, index) => <span key={index} style={{ maxWidth: "100%" }}>{line}</span>)}
+                </div>
+              : <span aria-label={model.recipientName} style={{ ...recipientNameStyle, whiteSpace: "pre-line" }}>{recipientNameLines.join("\n")}</span>}
           </div> : null}
-          <span data-export-hero-description style={{ width: "100%", maxWidth: heroDescriptionMaxWidth, marginTop: datedPost ? 4 : 8, color: heroColors?.muted ?? profile.colors.muted, fontSize: datedPost ? layout.body - 2 : layout.body, lineHeight: datedPost ? 1.2 : 1.25, ...(datedPost ? { flexShrink: 0 } : {}), textAlign: "center", whiteSpace: "pre-line" }}>{heroDescription}</span>
-          <div data-export-hero-stats style={{ display: "flex", marginTop: datedPost ? 7 : 10, gap: 8 }}>
+          {newYearHero
+            ? <div data-export-hero-description style={{ ...heroDescriptionStyle, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                {heroDescription.split("\n").map((line, index) => <span key={index} style={{ maxWidth: "100%", textAlign: "center" }}>{line}</span>)}
+              </div>
+            : <span data-export-hero-description style={{ ...heroDescriptionStyle, whiteSpace: "pre-line" }}>{heroDescription}</span>}
+          <div data-export-hero-stats style={{ display: "flex", marginTop: newYearHero?.statsGap ?? (datedPost ? 7 : 10), flexShrink: newYearHero ? 0 : undefined, gap: 8 }}>
             {model.participantCount > 0 ? <span data-export-counter="congratulations" data-export-counter-preset={counterPreset} style={counterStyle(congratulationsCounter, -1.5)}>{scene ? `${model.participantCount} поздравлений` : <><b>{model.participantCount}</b> поздравлений</>}</span> : null}
             {shownPhotoCount ? <span data-export-counter="photos" data-export-counter-preset={counterPreset} style={counterStyle(photosCounter, 1.5)}>{scene ? `${shownPhotoCount} фото в открытке` : <><b>{shownPhotoCount}</b> фото в открытке</>}</span> : null}
           </div>

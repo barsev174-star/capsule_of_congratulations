@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTemplateStudioProfile } from "@/lib/templates/studio";
+import { getUniversalTemplateFixture } from "@/lib/templates/fixtures";
+import { new_yearProfile } from "@/templates/new-year/profile";
 import type { PublicSharePayloadV2 } from "@/lib/public-shares/types";
 
 const mocks = vi.hoisted(() => ({
@@ -106,5 +108,29 @@ describe("public share universal export route", () => {
 
     expect(response.status).toBe(404);
     expect(mocks.imageCalls).toHaveLength(0);
+  });
+
+  it("uses the long name selected in Studio for downloadable demo exports", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    mocks.dispatch.mockReturnValue({
+      kind: "universal-v1",
+      registration: { profile: new_yearProfile, themes: {} }
+    });
+    const token = "new-year-export-baseline";
+
+    try {
+      for (const longName of [false, true]) {
+        const response = await GET(
+          new Request(`http://localhost:3000/share/${token}/image/post?theme=red${longName ? "&longName=1" : ""}`),
+          { params: Promise.resolve({ token, format: "post" }) }
+        );
+        const fixture = getUniversalTemplateFixture(longName ? "text-stress" : new_yearProfile.demo.fixture);
+        expect(response.status).toBe(200);
+        expect(mocks.imageCalls.at(-1)?.element.props.model.recipientName).toBe(fixture.recipientName);
+      }
+      expect(mocks.getPayload).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });

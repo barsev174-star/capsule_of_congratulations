@@ -439,7 +439,7 @@ export function TemplateStudio({ initialDraft, registeredTemplateOptions, themeI
     {themeId ? <nav aria-label="Файлы демонстрационной открытки" className={styles.headerActions}>
       {([["story", "Story PNG"], ["post", "Post PNG"], ["print", "A4 PNG"], ["print", "A4 PDF"]] as const).map(([format, label]) => (
         <a key={label} className={styles.secondaryButton}
-          href={`/share/${initialDraft.profile.id}-export-baseline/image/${format}?theme=${encodeURIComponent(themeId)}${label === "A4 PNG" ? "&preview=1" : ""}`}
+          href={`/share/${initialDraft.profile.id}-export-baseline/image/${format}?theme=${encodeURIComponent(themeId)}${label === "A4 PNG" ? "&preview=1" : ""}${longName ? "&longName=1" : ""}`}
           target="_blank" rel="noreferrer">{label}</a>
       ))}
     </nav> : null}

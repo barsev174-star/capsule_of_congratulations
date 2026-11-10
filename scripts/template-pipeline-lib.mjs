@@ -201,7 +201,7 @@ export const optimizeTemplateAssets = async (root, manifest) => {
     await mkdir(dirname(output), { recursive: true });
     const pipeline = sharp(input, { limitInputPixels: false }).resize(item.width, item.height, { fit: item.fit ?? "cover", position: "centre", kernel: sharp.kernel.lanczos3 });
     const extension = extname(output).toLowerCase();
-    if (extension === ".webp") await pipeline.webp({ quality: 84, alphaQuality: 92, effort: 6 }).toFile(output);
+    if (extension === ".webp") await pipeline.webp({ quality: item.webpQuality ?? 84, alphaQuality: 92, effort: 6 }).toFile(output);
     else if (extension === ".png") await pipeline.png({ compressionLevel: 9, adaptiveFiltering: true }).toFile(output);
     else if ([".jpg", ".jpeg"].includes(extension)) await pipeline.jpeg({ quality: 88, mozjpeg: true }).toFile(output);
     else throw new Error(`${id}: неподдерживаемый формат ${extension}`);

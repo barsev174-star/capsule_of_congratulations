@@ -432,12 +432,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     }
     if (!payload && token.endsWith("-export-baseline")) {
       const templateId = token.slice(0, -"-export-baseline".length);
-      const theme = new URL(request.url).searchParams.get("theme");
+      const params = new URL(request.url).searchParams;
+      const theme = params.get("theme");
       const dispatch = dispatchCardTemplateRenderer(templateId, theme);
       if (dispatch?.kind === "universal-v1" && dispatch.registration.themes) {
         const { buildUniversalFixtureViewModel } = await import("@/lib/templates/view-model");
         const { fixture, scenario, photoCount } = dispatch.registration.profile.demo;
-        const model = buildUniversalFixtureViewModel(fixture, { templateId, scenario, photoCount });
+        const model = buildUniversalFixtureViewModel(fixture, { templateId, scenario, photoCount, longName: params.get("longName") === "1" });
         payload = buildUniversalPublicSharePayload({
           templateId,
           templateTheme: theme,
