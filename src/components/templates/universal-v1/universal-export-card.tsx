@@ -66,12 +66,6 @@ const layouts: Record<UniversalExportFormat, FormatLayout> = {
   a4: { padding: 38, verticalPadding: 18, gap: 6, hero: 310, qualities: 235, moments: 650, quotes: 220, closing: 268, heading: 43, body: 22 }
 };
 
-const newYearExportHeroLayouts = {
-  story: { extraHeight: 0, nameHeight: 116, paddingBlock: [20, 20], paddingInline: 190, statsGap: 13 },
-  post: { extraHeight: 12, nameHeight: 60, paddingBlock: [12, 14], paddingInline: 180, statsGap: 9 },
-  a4: { extraHeight: 0, nameHeight: 94, paddingBlock: [12, 12], paddingInline: 208, statsGap: 13 }
-} as const;
-
 const getArtworkQuoteFontSize = (format: UniversalExportFormat, quote: string) => {
   const baseFontSize = format === "story" ? 22 : format === "post" ? 16 : 20;
   const length = quote.trim().replace(/\s+/g, " ").length;
@@ -446,8 +440,8 @@ export function UniversalTemplateExportCard({
 }: UniversalExportCardProps) {
   const spec = universalExportFormats[format];
   const layout = layouts[format];
-  const newYearHero = profile.id === "new-year" ? newYearExportHeroLayouts[format] : undefined;
-  const heroHeight = layout.hero + (newYearHero?.extraHeight ?? 0);
+  const heroLayout = profile.export.heroLayout?.[format];
+  const heroHeight = layout.hero + (heroLayout?.extraHeight ?? 0);
   const sectionWidth = spec.width - layout.padding * 2;
   const eventDate = formatUniversalEventDate(model.eventDate);
   const qualities = model.qualities.length === 5 ? model.qualities : [];
@@ -478,7 +472,7 @@ export function UniversalTemplateExportCard({
   const recipientNameTier = getUniversalRecipientNameTier(model.recipientName);
   const defaultNameLines = getUniversalRecipientNameLines(model.recipientName);
   const nameWords = defaultNameLines[0]?.split(" ");
-  const recipientNameLines = newYearHero && recipientNameTier === "very-long" && defaultNameLines.length === 1 && nameWords?.length === 2
+  const recipientNameLines = heroLayout && recipientNameTier === "very-long" && defaultNameLines.length === 1 && nameWords?.length === 2
     ? nameWords
     : defaultNameLines;
   const recipientNameScale = format === "post"
@@ -508,8 +502,8 @@ export function UniversalTemplateExportCard({
   const scene = profile.assets.scene;
   const heroColors = heroUnderlay || scene ? profile.colors.sections?.hero : undefined;
   const heroDescriptionMaxWidth = profile.export.heroDescriptionMaxWidth?.[format] ?? 760;
-  const heroDescriptionWidth = newYearHero
-    ? Math.min(heroDescriptionMaxWidth, sectionWidth - newYearHero.paddingInline * 2)
+  const heroDescriptionWidth = heroLayout
+    ? Math.min(heroDescriptionMaxWidth, sectionWidth - heroLayout.paddingInline * 2)
     : "100%";
   const heroDescriptionStyle: CSSProperties = {
     width: heroDescriptionWidth,
@@ -518,11 +512,11 @@ export function UniversalTemplateExportCard({
     color: heroColors?.muted ?? profile.colors.muted,
     fontSize: datedPost ? layout.body - 2 : layout.body,
     lineHeight: datedPost ? 1.2 : 1.25,
-    ...(datedPost || newYearHero ? { flexShrink: 0 } : {}),
+    ...(datedPost || heroLayout ? { flexShrink: 0 } : {}),
     textAlign: "center"
   };
-  const heroPadding = newYearHero
-    ? `${newYearHero.paddingBlock[0]}px ${newYearHero.paddingInline}px ${newYearHero.paddingBlock[1]}px`
+  const heroPadding = heroLayout
+    ? `${heroLayout.paddingBlock[0]}px ${heroLayout.paddingInline}px ${heroLayout.paddingBlock[1]}px`
     : datedPost ? "6px 78px" : format === "post" ? "8px 78px" : format === "a4" ? "14px 78px" : "20px 78px";
   const displayFont = scene ? profile.typography.handwritten : profile.typography.heading;
   const displayHeadingStyle = {
@@ -582,7 +576,7 @@ export function UniversalTemplateExportCard({
   const middleHeight = spec.height - middleTop - middleBottom;
   const middleSize = { width: spec.width, height: middleHeight };
   const middleSrc = scene?.middle && middleHeight > 0
-    ? newYearHero && format !== "story"
+    ? heroLayout?.coverSceneMiddle
       ? croppedAssetUrl(resolveAsset(scene.middle.src), coverCrop(scene.middle, middleSize, { x: .5, y: .3 }), middleSize)
       : resolveAsset(scene.middle.src)
     : null;
@@ -619,25 +613,25 @@ export function UniversalTemplateExportCard({
           {heroUnderlay ? <Decor profile={profile} anchor="hero" format={format} width={sectionWidth} height={heroHeight} resolveAsset={resolveAsset} /> : null}
           {model.occasion ? <span style={{
             color: profile.colors.occasion ?? profile.colors.accent,
-            ...(newYearHero ? { textShadow: "0 1px 5px rgba(0, 0, 0, .75)" } : {}),
+            ...(heroLayout ? { textShadow: "0 1px 5px rgba(0, 0, 0, .75)" } : {}),
             ...(occasionFont
               ? { fontFamily: occasionFont.family, fontWeight: occasionFont.weight, fontSize: format === "post" ? 29 : 48, lineHeight: .95 }
               : { fontSize: format === "story" ? 18 : 14, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" as const })
           }}>{model.occasion}</span> : null}
           {eventDate ? <span style={{ marginTop: datedPost ? 3 : 5, color: heroColors?.muted ?? profile.colors.muted, fontSize: format === "story" ? 18 : 14 }}>{eventDate}</span> : null}
-          {model.recipientName ? <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: newYearHero?.nameHeight ?? (datedPost ? 58 : format === "story" ? 150 : format === "post" ? 70 : 100), flexShrink: 0, marginTop: datedPost ? 3 : eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-            {newYearHero && recipientNameLines.length > 1
+          {model.recipientName ? <div data-safe-text data-text-boundary data-text-preset="recipient-name" style={{ display: "flex", width: "92%", height: heroLayout?.nameHeight ?? (datedPost ? 58 : format === "story" ? 150 : format === "post" ? 70 : 100), flexShrink: 0, marginTop: datedPost ? 3 : eventDate || model.occasion ? format === "post" ? 5 : 8 : 0, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+            {heroLayout && recipientNameLines.length > 1
               ? <div aria-label={model.recipientName} style={{ ...recipientNameStyle, display: "flex", flexDirection: "column", alignItems: "center" }}>
                   {recipientNameLines.map((line, index) => <span key={index} style={{ maxWidth: "100%" }}>{line}</span>)}
                 </div>
               : <span aria-label={model.recipientName} style={{ ...recipientNameStyle, whiteSpace: "pre-line" }}>{recipientNameLines.join("\n")}</span>}
           </div> : null}
-          {newYearHero
+          {heroLayout
             ? <div data-export-hero-description style={{ ...heroDescriptionStyle, display: "flex", flexDirection: "column", alignItems: "center" }}>
                 {heroDescription.split("\n").map((line, index) => <span key={index} style={{ maxWidth: "100%", textAlign: "center" }}>{line}</span>)}
               </div>
             : <span data-export-hero-description style={{ ...heroDescriptionStyle, whiteSpace: "pre-line" }}>{heroDescription}</span>}
-          <div data-export-hero-stats style={{ display: "flex", marginTop: newYearHero?.statsGap ?? (datedPost ? 7 : 10), flexShrink: newYearHero ? 0 : undefined, gap: 8 }}>
+          <div data-export-hero-stats style={{ display: "flex", marginTop: heroLayout?.statsGap ?? (datedPost ? 7 : 10), flexShrink: heroLayout ? 0 : undefined, gap: 8 }}>
             {model.participantCount > 0 ? <span data-export-counter="congratulations" data-export-counter-preset={counterPreset} style={counterStyle(congratulationsCounter, -1.5)}>{scene ? `${model.participantCount} поздравлений` : <><b>{model.participantCount}</b> поздравлений</>}</span> : null}
             {shownPhotoCount ? <span data-export-counter="photos" data-export-counter-preset={counterPreset} style={counterStyle(photosCounter, 1.5)}>{scene ? `${shownPhotoCount} фото в открытке` : <><b>{shownPhotoCount}</b> фото в открытке</>}</span> : null}
           </div>

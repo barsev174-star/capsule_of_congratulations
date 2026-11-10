@@ -8,7 +8,7 @@ import { UniversalTemplateExportCard, universalExportFormats } from "@/component
 import { getPublicSharePayload } from "@/lib/public-shares/service";
 import { buildUniversalPublicSharePayload, buildUniversalPublicViewModel } from "@/lib/public-shares/universal";
 import { dispatchCardTemplateRenderer } from "@/lib/templates/dispatcher";
-import { resolveTemplateExportAsset } from "@/lib/templates/export-asset-url";
+import { isExampleExportPhoto, resolveTemplateExportAsset } from "@/lib/templates/export-asset-url";
 import type { PublicSharePayload, PublicSharePayloadV1 } from "@/lib/public-shares/types";
 
 export const runtime = "nodejs";
@@ -162,6 +162,7 @@ const trim = (text: string | null | undefined, max: number) => {
 };
 const asset = (origin: string, path: string) => new URL(path, origin).toString();
 const exportPhoto = (origin: string, path: string) => {
+  if (isExampleExportPhoto(path)) return resolveTemplateExportAsset(path, origin);
   const url = new URL(path, origin);
   url.searchParams.set("export", "1");
   return url.toString();

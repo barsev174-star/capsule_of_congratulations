@@ -19,6 +19,20 @@ const initialState = {
   message: ""
 };
 
+type TemplateOption = {
+  key: string;
+  templateId: CardTemplate["id"];
+  themeId?: string;
+  name: string;
+  description: string;
+  preview?: string;
+};
+
+export const resolveCatalogTheme = (template: CardTemplate | null | undefined, themeId?: string | null) =>
+  template?.themes?.find(({ id }) => id === themeId)
+  ?? template?.themes?.find(({ id }) => id === template.defaultThemeId)
+  ?? template?.themes?.[0];
+
 export const TemplateSettingsForm = ({
   manageToken,
   templates,
@@ -27,111 +41,96 @@ export const TemplateSettingsForm = ({
   onTemplateSelectionChange,
   onApplied
 }: Props) => {
-  const [selectedTemplateId, setSelectedTemplateId] = useState(currentTemplateId);
-  const [selectedTheme, setSelectedTheme] = useState(currentTheme);
-  const selectedTemplate = templates.find((template) => template.id === selectedTemplateId);
-  const themes = selectedTemplate?.themes;
-  const theme = themes?.find((option) => option.id === selectedTheme) ?? themes?.[0];
+  const currentTemplate = templates.find(({ id }) => id === currentTemplateId);
+  const savedTheme = resolveCatalogTheme(currentTemplate, currentTheme);
+  const currentKey = savedTheme ? `${currentTemplateId}:${savedTheme.id}` : currentTemplateId;
+  const [selectedKey, setSelectedKey] = useState(currentKey);
+  const options = templates.flatMap<TemplateOption>((template) => template.themes?.length
+    ? template.themes.map(({ id, name, description, preview }) => ({
+        key: `${template.id}:${id}`, templateId: template.id, themeId: id, name, description, preview
+      }))
+    : [{ key: template.id, templateId: template.id, name: template.name, description: template.description, preview: template.preview }]
+  ).sort((left, right) => Number(Boolean(right.themeId)) - Number(Boolean(left.themeId)));
+  const selectedOption = options.find(({ key }) => key === selectedKey);
+  const isCurrentSelection = selectedOption?.key === currentKey;
   const handleTemplateAction = async (previousState: typeof initialState, formData: FormData) => {
     const result = await updateCardTemplateAction(previousState, formData);
-    if (result.ok && selectedTemplateId) {
-      if (theme) onTemplateSelectionChange?.(selectedTemplateId, theme.id);
-      else onTemplateSelectionChange?.(selectedTemplateId);
+    if (result.ok && selectedOption) {
+      onTemplateSelectionChange?.(selectedOption.templateId, selectedOption.themeId);
       onApplied?.();
     }
     return result;
   };
   const [state, formAction, isPending] = useActionState(handleTemplateAction, initialState);
 
-  const selectTemplate = (templateId: CardTemplate["id"]) => {
-    setSelectedTemplateId(templateId);
-    setSelectedTheme(templateId === currentTemplateId ? currentTheme : null);
-  };
-  const isCurrentTemplateSelected =
-    selectedTemplateId !== null && selectedTemplateId === currentTemplateId;
-  const isCurrentSelection = isCurrentTemplateSelected && theme?.id === (currentTheme ?? themes?.[0]?.id);
-
   return (
     <form action={formAction} className={styles.templatePickerForm}>
       <input type="hidden" name="manageToken" value={manageToken} />
+      <input type="hidden" name="templateId" value={selectedOption?.templateId ?? ""} />
+      {selectedOption?.themeId ? <input type="hidden" name="templateTheme" value={selectedOption.themeId} /> : null}
       <div className={styles.templatePickerGrid} role="radiogroup" aria-label="Шаблоны открытки">
-        {templates.map((template) => {
-          const selected = selectedTemplateId === template.id;
-          const isCurrent = currentTemplateId === template.id;
-          const isNewSelection = selected && !isCurrent;
-          const previewSrc = (selected ? theme?.preview : undefined) ?? template.preview
-            ?? (template.id === "route-adventure"
+        {options.map((option) => {
+          const selected = selectedKey === option.key;
+          const isCurrent = currentKey === option.key;
+          const showSelection = selected && (!isCurrent || Boolean(option.themeId));
+          const previewSrc = option.preview
+            ?? (option.templateId === "route-adventure"
               ? "/assets/landing/template-route-adventure-preview.png"
               : "/templates/warm-classic-preview.png");
           return (
             <label
-              key={template.id}
-              className={`${styles.templatePickerCard} ${
-                isCurrent ? styles.templatePickerCardCurrent : ""
-              } ${isNewSelection ? styles.templatePickerCardActive : ""}`}
+              key={option.key}
+              className={`${styles.templatePickerCard} ${option.themeId ? styles.templatePickerCardThemed : ""} ${
+                showSelection ? styles.templatePickerCardActive : isCurrent ? styles.templatePickerCardCurrent : ""
+              }`}
               aria-selected={selected}
             >
               <input
                 type="radio"
-                name="templateId"
-                value={template.id}
+                name="templateChoice"
+                value={option.key}
                 checked={selected}
                 disabled={isPending}
-                onChange={() => selectTemplate(template.id)}
+                onChange={() => setSelectedKey(option.key)}
               />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={previewSrc} alt="" />
               <span className={styles.templatePickerCardCopy}>
-                <strong>{template.name}</strong>
-                <span>{template.description}</span>
+                <strong>{option.name}</strong>
+                <span className={styles.templatePickerCardDescription}>{option.description}</span>
+                {isCurrent && option.themeId ? <span className={styles.templatePickerUsedBadge}>Используется</span> : null}
               </span>
-              {isCurrent ? (
+              {isCurrent && !option.themeId ? (
                 <span className={styles.templatePickerUsedBadge}>Используется</span>
               ) : null}
-              {isNewSelection ? (
+              {showSelection ? (
                 <span className={styles.templatePickerCheck} aria-hidden="true">✓</span>
               ) : null}
             </label>
           );
         })}
       </div>
-      {themes?.length ? (
-        <fieldset className={styles.templateThemePicker} disabled={isPending}>
-          <legend>Цвет оформления</legend>
-          <div className={styles.templateThemeOptions}>
-            {themes.map((option) => (
-              <label key={option.id} className={styles.templateThemeOption}>
-                <input type="radio" name="templateTheme" value={option.id}
-                  checked={option.id === theme?.id} onChange={() => setSelectedTheme(option.id)} />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={option.preview} width={44} height={28} alt="" />
-                {option.label}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      ) : null}
       <div className={styles.templatePickerFooter}>
         <span id="template-picker-status" role="status" aria-live="polite">
           {state.message ||
-            (!selectedTemplate
+            (!selectedOption
               ? "Сначала выберите шаблон"
               : isCurrentSelection
-              ? `Шаблон «${selectedTemplate.name}» используется сейчас`
-              : theme ? `Будет применено оформление «${theme.label}»` : `Будет применён шаблон «${selectedTemplate.name}»`)}
+              ? `Шаблон «${selectedOption.name}» используется сейчас`
+              : `Будет применён шаблон «${selectedOption.name}»`)}
         </span>
         <button
           type="submit"
           className={styles.contentPrimaryButton}
-          disabled={isPending || !selectedTemplate || isCurrentSelection}
+          disabled={isPending || !selectedOption || isCurrentSelection}
         >
           {isPending
             ? "Применяем…"
-            : !selectedTemplate
+            : !selectedOption
               ? "Выберите шаблон"
               : isCurrentSelection
                 ? "Этот шаблон уже используется"
-                : isCurrentTemplateSelected ? "Применить цвет" : "Применить шаблон"}
+                : "Применить шаблон"}
         </button>
       </div>
     </form>

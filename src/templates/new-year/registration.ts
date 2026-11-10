@@ -1,4 +1,5 @@
 import type { UniversalTemplateRegistration } from "@/lib/templates/registry";
+import { newYearThemeCatalog } from "./catalog";
 import { new_yearProfile, newYearGreenProfile } from "./profile";
 
 export const new_yearRegistration = {
@@ -8,8 +9,8 @@ export const new_yearRegistration = {
   themes: {
     defaultId: "red",
     options: [
-      { id: "red", label: "Красный + золото", profile: new_yearProfile },
-      { id: "green", label: "Зелёный + золото", profile: newYearGreenProfile }
+      { id: "red", label: "Красный + золото", profile: new_yearProfile, catalog: newYearThemeCatalog.red },
+      { id: "green", label: "Зелёный + золото", profile: newYearGreenProfile, catalog: newYearThemeCatalog.green }
     ]
   },
   catalog: {
@@ -17,6 +18,6 @@ export const new_yearRegistration = {
     description: new_yearProfile.metadata.description,
     recommendedFor: ["personal", "team", "celebration"],
     accent: "#e9652f",
-    availability: "studio"
+    availability: "product"
   }
 } satisfies UniversalTemplateRegistration;

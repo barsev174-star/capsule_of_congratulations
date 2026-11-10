@@ -9,6 +9,7 @@ import { getAiCardInsight, getAiCardQuoteSelection } from "@/lib/ai/repository";
 import { JourneyEvent } from "@/components/telemetry/journey-event";
 import { getPublicShareEditor } from "@/lib/public-shares/service";
 import { buildPrivateCardPresentation } from "@/lib/templates/private-card-presentation";
+import { getGiftIntroScene } from "@/lib/templates/gift-intro-scene";
 import { defaultGiftAnimationId, isGiftAnimationId } from "@/lib/gift-animations";
 import { selectGiftRevealMessages, toGiftRevealExcerpt } from "@/lib/gift-reveal-preview";
 
@@ -123,6 +124,7 @@ export default async function GiftPage({ params, searchParams }: Props) {
       previewPreset={template?.introPreset}
       visualPreset={template?.introVisualPreset}
       previewDecor={template?.introDecor}
+      previewScene={presentation.kind === "universal-v1" ? getGiftIntroScene(presentation.dispatch.registration.profile) : undefined}
       templateId={card.templateId}
       animationId={animationId}
       accent={template?.accent}

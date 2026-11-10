@@ -25,6 +25,13 @@ const defaultZones = {
   quotes: { x: 0.57, y: 0.64, width: 0.34, height: 0.22 }
 } satisfies GiftRevealPreviewProfile["targetZones"];
 
+const editorialZones = {
+  messages: { x: 0.08, y: 0.32, width: 0.5, height: 0.5 },
+  photos: { x: 0.62, y: 0.17, width: 0.29, height: 0.43 },
+  qualities: { x: 0.09, y: 0.14, width: 0.56, height: 0.13 },
+  quotes: { x: 0.58, y: 0.66, width: 0.34, height: 0.18 }
+} satisfies GiftRevealPreviewProfile["targetZones"];
+
 const REVEAL_PREVIEW_PROFILES: Partial<Record<CardTemplateId, GiftRevealPreviewProfile>> = {
   "paper-birthday": profile("paper-celebration", "playful", defaultZones),
   "route-adventure": profile("expedition", "calm", {
@@ -41,12 +48,8 @@ const REVEAL_PREVIEW_PROFILES: Partial<Record<CardTemplateId, GiftRevealPreviewP
     quotes: { x: 0.58, y: 0.64, width: 0.31, height: 0.18 }
   }),
   "kindergarten-doodles": profile("caregiver-playful", "playful", defaultZones),
-  "team-editorial": profile("editorial", "calm", {
-    messages: { x: 0.08, y: 0.32, width: 0.5, height: 0.5 },
-    photos: { x: 0.62, y: 0.17, width: 0.29, height: 0.43 },
-    qualities: { x: 0.09, y: 0.14, width: 0.56, height: 0.13 },
-    quotes: { x: 0.58, y: 0.66, width: 0.34, height: 0.18 }
-  })
+  "team-editorial": profile("editorial", "calm", editorialZones),
+  "new-year": profile("winter-festive", "calm", editorialZones)
 };
 
 export const getGiftRevealPreviewProfile = (templateId: CardTemplateId) =>

@@ -137,6 +137,29 @@ describe("landing card creation actions", () => {
     expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution);
   });
 
+  it.each(["red", "green"])("creates a New Year draft in the %s theme", async (theme) => {
+    const formData = new FormData();
+    formData.set("templateId", "new-year");
+    formData.set("templateTheme", theme);
+    await startCardFromExampleSelectionAction(formData);
+
+    expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution, {
+      templateId: "new-year",
+      templateTheme: theme
+    });
+  });
+
+  it("preserves the theme when creating from the footer of an opened New Year card", async () => {
+    const formData = new FormData();
+    formData.set("templateTheme", "green");
+    await startCardFromTemplateAction("new-year", formData);
+
+    expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution, {
+      templateId: "new-year",
+      templateTheme: "green"
+    });
+  });
+
   it.each(["unknown-template", "../../admin", ""])("rejects unavailable template %s", async (templateId) => {
     await expect(startCardFromTemplateAction(templateId)).rejects.toThrow("Этот шаблон недоступен");
     expect(mocks.createEmptyCardDraft).not.toHaveBeenCalled();

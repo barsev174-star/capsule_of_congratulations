@@ -905,6 +905,25 @@
     #f8e8cb;
 }
 
+.sceneArtwork {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--gi-scene-surface);
+  pointer-events: none;
+}
+
+.sceneArtworkTop,
+.sceneArtworkBottom {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: auto;
+}
+
+.sceneArtworkTop { top: 0; }
+.sceneArtworkBottom { bottom: 0; }
+
 .paperBirthdaySheet,
 .paperBirthdayDecor,
 .templateArtScene,
@@ -1376,6 +1395,21 @@
   font-size: 9px;
 }
 
+.lightweightCardPreview[data-preview-scene] :is(strong, small) {
+  color: var(--gi-scene-text);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 65%);
+}
+
+.lightweightCardPreview[data-preview-scene] .lightweightCardKicker {
+  color: var(--gi-scene-accent);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 65%);
+}
+
+.lightweightCardPreview[data-preview-scene] :is(.lightweightCardRule, .lightweightCardLine) {
+  background: var(--gi-scene-accent);
+  opacity: .48;
+}
+
 .lightweightCardRule,
 .lightweightCardLine {
   position: relative;
@@ -1515,7 +1549,8 @@
   [data-visual-preset="school-playful"],
   [data-visual-preset="school-formal"],
   [data-visual-preset="caregiver-playful"],
-  [data-visual-preset="editorial"]
+  [data-visual-preset="editorial"],
+  [data-visual-preset="winter-festive"]
 ) .assemblyContent::before {
   display: none;
 }
@@ -1892,6 +1927,24 @@
 .letter[data-visual-preset="editorial"] .templateIdentity {
   left: 56px;
   right: 56px;
+}
+
+.letter[data-visual-preset="winter-festive"] .templateIdentity {
+  top: 12%;
+}
+
+.letter[data-visual-preset="winter-festive"] :is(.templateRecipient, .templateFrom, .templateAssemblySummary, .assemblySignature) {
+  color: var(--gi-scene-text);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 65%);
+}
+
+.letter[data-visual-preset="winter-festive"] .templateRecipient {
+  font-family: inherit;
+}
+
+.letter[data-visual-preset="winter-festive"] .templateOccasion {
+  color: var(--gi-scene-accent);
+  background: rgb(0 0 0 / 22%);
 }
 
 .letter[data-visual-preset="editorial"] .templateOccasion {

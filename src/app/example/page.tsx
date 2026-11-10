@@ -6,7 +6,8 @@ import { requireTemplateRenderer } from "@/lib/templates/dispatcher";
 import { ExampleExperience } from "./example-experience";
 import { birthdayExampleCardModel } from "@/lib/birthday-example";
 import { isBirthdayExample } from "@/lib/birthday-scenario";
-import { resolveDemoAnimationId, resolveDemoTemplateId } from "./example-query";
+import { resolveDemoAnimationId, resolveDemoTemplateId, type NewYearExampleId } from "./example-query";
+import { getNewYearExample } from "./new-year-example";
 
 export const metadata: Metadata = {
   title: "Пример групповой онлайн-открытки",
@@ -20,8 +21,9 @@ type ExamplePageProps = {
 };
 
 export default async function ExamplePage({ searchParams }: ExamplePageProps) {
-  const { template, scenario, intro, motion, animation, photos } = await searchParams;
+  const { template, theme, scenario, intro, motion, animation, photos } = await searchParams;
   const rawTemplate = Array.isArray(template) ? template[0] : template;
+  const rawTheme = Array.isArray(theme) ? theme[0] : theme;
   const rawIntro = Array.isArray(intro) ? intro[0] : intro;
   const rawMotion = Array.isArray(motion) ? motion[0] : motion;
   const rawAnimation = Array.isArray(animation) ? animation[0] : animation;
@@ -30,7 +32,7 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
     ? Number(rawPhotos) as 0 | 1 | 2 | 3
     : 3;
   const birthdayScenario = isBirthdayExample(rawTemplate, Array.isArray(scenario) ? scenario[0] : scenario);
-  const initialTemplateId = resolveDemoTemplateId(rawTemplate);
+  const initialTemplateId = resolveDemoTemplateId(rawTemplate, rawTheme);
   const schoolDispatch = requireTemplateRenderer("school-scrapbook");
   const schoolClassicDispatch = requireTemplateRenderer("school-classic");
   const kindergartenDoodlesDispatch = requireTemplateRenderer("kindergarten-doodles");
@@ -48,6 +50,11 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
     throw new Error("Шаблон «Вместе» должен использовать универсальный рендерер.");
   }
 
+  const newYearDemo = (id: NewYearExampleId) => {
+    const { dispatch, model, introScene } = getNewYearExample(id);
+    return { model, introScene, card: <TemplateCardRenderer dispatch={dispatch} model={model} surface="private" actionContext="demo" /> };
+  };
+
   return (
     <ExampleExperience
       birthdayScenario={birthdayScenario}
@@ -61,6 +68,10 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
       schoolClassicChildren={<TemplateCardRenderer dispatch={schoolClassicDispatch} model={schoolClassicDemoCardModel} surface="private" />}
       kindergartenDoodlesChildren={<TemplateCardRenderer dispatch={kindergartenDoodlesDispatch} model={kindergartenDoodlesDemoCardModel} surface="private" />}
       teamEditorialChildren={<TemplateCardRenderer dispatch={teamEditorialDispatch} model={teamEditorialDemoCardModel} surface="private" />}
+      newYearDemos={{
+        "new-year-red": newYearDemo("new-year-red"),
+        "new-year-green": newYearDemo("new-year-green")
+      }}
     >
       <FinalCard model={birthdayScenario ? birthdayExampleCardModel : exampleCardModel} creationScenario={birthdayScenario ? "birthday" : undefined} />
     </ExampleExperience>

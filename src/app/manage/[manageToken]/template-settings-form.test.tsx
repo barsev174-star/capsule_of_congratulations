@@ -1,6 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { cardTemplates } from "@/lib/cards/templates";
+import { newYearThemeCatalog } from "@/templates/new-year/catalog";
+import { updateCardTemplateAction } from "./actions";
 import { TemplateSettingsForm } from "./template-settings-form";
 
 vi.mock("./actions", () => ({
@@ -99,5 +102,43 @@ describe("TemplateSettingsForm", () => {
       "/templates/school-classic/preview-v6.webp"
     );
     expect(container.querySelectorAll('img[src="/templates/warm-classic-preview.png"]')).toHaveLength(1);
+  });
+
+  it.each([
+    [null, "red", "green"],
+    ["green", "green", "red"]
+  ] as const)("uses the saved theme %s and submits the alternative as the same template", async (storedTheme, current, next) => {
+    const user = userEvent.setup();
+    const newYear = cardTemplates.find(({ id }) => id === "new-year")!;
+    const update = vi.mocked(updateCardTemplateAction);
+    update.mockClear();
+    update.mockResolvedValue({ ok: true, message: "Шаблон применён." });
+    const onTemplateSelectionChange = vi.fn();
+    render(
+      <TemplateSettingsForm
+        manageToken="manage-token"
+        templates={[...templates, newYear]}
+        currentTemplateId="new-year"
+        currentTheme={storedTheme}
+        onTemplateSelectionChange={onTemplateSelectionChange}
+      />
+    );
+
+    expect(screen.queryByText("Цвет оформления")).not.toBeInTheDocument();
+    const [red, green] = screen.getAllByRole("radio");
+    expect(red.closest("label")?.querySelector("img")).toHaveAttribute("src", newYearThemeCatalog.red.preview);
+    expect(green.closest("label")?.querySelector("img")).toHaveAttribute("src", newYearThemeCatalog.green.preview);
+    const option = (id: "red" | "green") => screen.getByRole("radio", { name: new RegExp(newYearThemeCatalog[id].name) });
+    expect(option(current)).toBeChecked();
+    expect(option(next)).not.toBeChecked();
+
+    await user.click(screen.getByText(newYearThemeCatalog[next].description));
+    expect(option(next)).toBeChecked();
+    await user.click(screen.getByRole("button", { name: "Применить шаблон" }));
+
+    await waitFor(() => expect(onTemplateSelectionChange).toHaveBeenCalledWith("new-year", next));
+    const submitted = update.mock.calls[0][1];
+    expect(submitted.get("templateId")).toBe("new-year");
+    expect(submitted.get("templateTheme")).toBe(next);
   });
 });

@@ -97,4 +97,14 @@ describe("empty card draft creation", () => {
       giftAnimationId: "collect-messages"
     }));
   });
+
+  it("persists the selected theme with the initial draft", async () => {
+    const result = await createEmptyCardDraft({}, { templateId: "new-year", templateTheme: "green" });
+
+    expect(result.card.templateTheme).toBe("green");
+    expect(mocks.saveCardDraft).toHaveBeenCalledWith(expect.objectContaining({
+      templateId: "new-year",
+      templateTheme: "green"
+    }));
+  });
 });

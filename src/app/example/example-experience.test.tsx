@@ -15,6 +15,7 @@ vi.mock("@/components/scroll-reveal/scroll-reveal", () => ({
 }));
 
 import { ExampleExperience, type DemoTemplateId } from "./example-experience";
+import { getNewYearExample } from "./new-year-example";
 
 const demo = (initialTemplateId: DemoTemplateId, birthdayScenario = false, previewPhotoCount: 0 | 1 | 2 | 3 = 3) => (
   <ExampleExperience
@@ -26,6 +27,10 @@ const demo = (initialTemplateId: DemoTemplateId, birthdayScenario = false, previ
     schoolClassicChildren={null}
     kindergartenDoodlesChildren={null}
     teamEditorialChildren={null}
+    newYearDemos={{
+      "new-year-red": { ...getNewYearExample("new-year-red"), card: <p>Демо Натальи</p> },
+      "new-year-green": { ...getNewYearExample("new-year-green"), card: <p>Демо Дмитрия</p> }
+    }}
   >{null}</ExampleExperience>
 );
 
@@ -61,6 +66,24 @@ describe("example creation", () => {
     });
   });
 
+  it.each([
+    ["Красный", "red", "Наталья"],
+    ["Зелёный", "green", "Дмитрий"]
+  ])("selects the %s New Year demo and submits its theme", async (name, theme, recipient) => {
+    render(demo("paper-birthday"));
+    const option = screen.getByRole("button", { name: new RegExp(`Новый год · ${name}`) });
+    fireEvent.click(option);
+    expect(option).toHaveAttribute("aria-pressed", "true");
+    expect(document.querySelector('iframe[src*="recipient-preview"]'))
+      .toHaveAttribute("src", `/example/recipient-preview?template=new-year-${theme}`);
+    expect(getNewYearExample(theme === "red" ? "new-year-red" : "new-year-green").model.recipientName).toBe(recipient);
+    fireEvent.submit(screen.getByRole("button", { name: "Создать такую же", exact: true }).closest("form")!);
+    await waitFor(() => expect(actions.startCardFromExampleSelectionAction).toHaveBeenCalledTimes(1));
+    const submitted = actions.startCardFromExampleSelectionAction.mock.calls[0][0] as FormData;
+    expect(submitted.get("templateId")).toBe("new-year");
+    expect(submitted.get("templateTheme")).toBe(theme);
+  });
+
   it("offers the new collect animation and launches it with six message previews", () => {
     render(demo("paper-birthday"));
 
@@ -69,8 +92,35 @@ describe("example creation", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Посмотреть анимацию" }));
 
-    expect(document.querySelector('[data-animation-id="collect-messages"]')).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toHaveAttribute("data-animation-id", "collect-messages");
+    expect(screen.getByRole("dialog")).toHaveAttribute("data-motion-mode", "full");
     expect(document.querySelector('[data-message-count="6"]')).toBeInTheDocument();
+  });
+
+  it.each([
+    ["red", "collect-messages"],
+    ["green", "collect-messages"],
+    ["red", "envelope"],
+    ["green", "envelope"]
+  ] as const)("renders the %s winter scene in the %s preview", (theme, animation) => {
+    render(demo(theme === "red" ? "new-year-red" : "new-year-green"));
+    if (animation === "envelope") fireEvent.click(screen.getByRole("radio", { name: /Конверт/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Посмотреть анимацию" }));
+    const intro = screen.getByRole("dialog");
+    expect(intro).toHaveAttribute("data-animation-id", animation);
+    const foundations = [...intro.querySelectorAll('[data-template-foundation="new-year"]')];
+    expect(foundations).toHaveLength(animation === "envelope" ? 3 : 1);
+    for (const foundation of foundations) {
+      expect([...foundation.querySelectorAll("img")].map((image) => image.src))
+        .toEqual(expect.arrayContaining([expect.stringContaining(`${theme}-scene-story-v3.webp`)]));
+      expect(foundation.querySelector('[data-foundation-art="notebook"]')).toBeNull();
+    }
+  });
+
+  it("respects the reduced motion preference when opening the recipient view", () => {
+    render(demo("new-year-red"));
+    fireEvent.click(screen.getByRole("button", { name: "Открыть выбранную открытку" }));
+    expect(screen.getByRole("dialog")).toHaveAttribute("data-motion-mode", "reduced");
   });
 
   it("explains both reveal options as readable three-stage stories", () => {

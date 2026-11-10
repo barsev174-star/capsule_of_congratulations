@@ -10,6 +10,7 @@ import { getManagePath } from "@/lib/routes/card-links";
 import { reportCriticalError, trackFunnel } from "@/lib/telemetry";
 import { FIRST_TOUCH_COOKIE_NAME, parseLandingAttribution } from "@/lib/landing-attribution";
 import { isProductTemplateId, type CardTemplateId } from "@/lib/cards/templates";
+import { resolveTemplateTheme, templateRegistry } from "@/lib/templates/registry";
 import { isGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import {
   consumePublicRateLimit,
@@ -21,7 +22,8 @@ const startCardFromLanding = async (
   templateId: CardTemplateId | null = null,
   occasionText?: string,
   giftAnimationId?: GiftAnimationId,
-  source = "landing"
+  source = "landing",
+  templateTheme?: string
 ) => {
   const requestHeaders = await headers();
   const rateLimit = consumePublicRateLimit({
@@ -45,6 +47,7 @@ const startCardFromLanding = async (
     result = templateId
       ? await createEmptyCardDraft(attributionContext, {
           templateId,
+          ...(templateTheme ? { templateTheme } : {}),
           ...(occasionText ? { occasionText } : {}),
           ...(giftAnimationId ? { giftAnimationId } : {})
         })
@@ -69,6 +72,11 @@ const startCardFromLanding = async (
   redirect(getManagePath(result.card.id));
 };
 
+const getInitialTemplateTheme = (templateId: CardTemplateId, formData?: FormData) => {
+  const theme = formData?.get("templateTheme");
+  return resolveTemplateTheme(templateRegistry.get(templateId), typeof theme === "string" ? theme : undefined)?.id;
+};
+
 export async function startCardFromShowcaseAction() {
   return startCardFromLanding();
 }
@@ -83,14 +91,16 @@ export async function startCardFromExampleSelectionAction(formData: FormData) {
     ? rawGiftAnimationId
     : undefined;
 
-  return startCardFromLanding(templateId, undefined, giftAnimationId, "demo_page");
+  const templateTheme = templateId ? getInitialTemplateTheme(templateId, formData) : undefined;
+  return startCardFromLanding(templateId, undefined, giftAnimationId, "demo_page", templateTheme);
 }
 
-export async function startCardFromTemplateAction(templateId: string) {
+export async function startCardFromTemplateAction(templateId: string, formData?: FormData) {
   if (!isProductTemplateId(templateId)) {
     throw new Error("Этот шаблон недоступен для создания открытки.");
   }
-  return startCardFromLanding(templateId);
+  const templateTheme = getInitialTemplateTheme(templateId, formData);
+  return startCardFromLanding(templateId, undefined, undefined, "landing", templateTheme);
 }
 
 export async function startTeacherCardFromShowcaseAction() {

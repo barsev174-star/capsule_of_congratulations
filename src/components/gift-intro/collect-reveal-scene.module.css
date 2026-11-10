@@ -440,6 +440,16 @@
 
 .previewIdentity span { color: #5f6368; font-size: clamp(0.38rem, 0.8vw, 0.58rem); font-weight: 750; text-transform: uppercase; }
 .previewIdentity strong { max-width: 220px; overflow: hidden; font-size: clamp(0.7rem, 1.5vw, 1.08rem); text-overflow: ellipsis; white-space: nowrap; }
+.collectLayout[data-visual-preset="winter-festive"] .previewIdentity {
+  top: 15%;
+  color: var(--gi-scene-text);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 65%);
+}
+
+.collectLayout[data-visual-preset="winter-festive"] .previewIdentity span {
+  color: var(--gi-scene-accent);
+}
+
 .previewZone { position: absolute; z-index: 2; }
 
 .previewMessageSlots {
@@ -1229,18 +1239,18 @@
   .sceneCopy h1 { font-size: 2.2rem; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .collectLayout *,
-  .collectLayout *::before,
-  .collectLayout *::after {
+[data-motion-mode="reduced"] .collectLayout {
+  & *,
+  & *::before,
+  & *::after {
     animation: none !important;
     transition-duration: 1ms !important;
     transition-delay: 0ms !important;
   }
 
-  .collectLayout[data-phase="idle"]:has(.collectStage:hover, .collectActions button:hover) .chatPanelPrimary { transform: rotate(-1.4deg); }
-  .collectLayout[data-phase="idle"]:has(.collectStage:hover, .collectActions button:hover) .chatPanelTop { transform: rotate(1.3deg); }
-  .collectLayout[data-phase="idle"]:has(.collectStage:hover, .collectActions button:hover) .chatPanelBottom { transform: rotate(-1.1deg); }
+  &[data-phase="idle"]:has(.collectStage:hover, .collectActions button:hover) .chatPanelPrimary { transform: rotate(-1.4deg); }
+  &[data-phase="idle"]:has(.collectStage:hover, .collectActions button:hover) .chatPanelTop { transform: rotate(1.3deg); }
+  &[data-phase="idle"]:has(.collectStage:hover, .collectActions button:hover) .chatPanelBottom { transform: rotate(-1.1deg); }
 }
 
 @keyframes transferPhotoLabelOut {

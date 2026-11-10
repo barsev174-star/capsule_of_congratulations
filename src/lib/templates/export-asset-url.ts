@@ -1,8 +1,11 @@
+export const isExampleExportPhoto = (src: string): src is `/examples/${string}.webp` =>
+  /^\/examples\/[a-z0-9][a-z0-9/_-]*\.webp$/u.test(src);
+
 export const resolveTemplateExportAsset = (
   src: `/${string}`,
   origin?: string
 ) => {
-  if (!src.startsWith("/templates/")) {
+  if (!src.startsWith("/templates/") && !isExampleExportPhoto(src)) {
     return origin ? new URL(src, origin).toString() : src;
   }
 

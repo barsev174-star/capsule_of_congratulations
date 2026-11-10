@@ -1,6 +1,13 @@
 import type { GiftAnimationId } from "@/lib/gift-animations";
 import type { DemoTemplateId } from "./example-experience";
 
+export const newYearExampleThemes = {
+  "new-year-red": "red",
+  "new-year-green": "green"
+} as const;
+
+export type NewYearExampleId = keyof typeof newYearExampleThemes;
+
 const templateAliases: Record<string, DemoTemplateId> = {
   paper: "paper-birthday",
   "paper-birthday": "paper-birthday",
@@ -15,11 +22,15 @@ const templateAliases: Record<string, DemoTemplateId> = {
   "kindergarten-doodles": "kindergarten-doodles",
   together: "team-editorial",
   team: "team-editorial",
-  "team-editorial": "team-editorial"
+  "team-editorial": "team-editorial",
+  "new-year-red": "new-year-red",
+  "new-year-green": "new-year-green"
 };
 
-export const resolveDemoTemplateId = (value: string | undefined): DemoTemplateId | undefined =>
-  value ? templateAliases[value] : undefined;
+export const resolveDemoTemplateId = (value: string | undefined, theme?: string): DemoTemplateId | undefined => {
+  if (value === "new-year") return theme === "green" ? "new-year-green" : "new-year-red";
+  return value && Object.hasOwn(templateAliases, value) ? templateAliases[value] : undefined;
+};
 
 export const resolveDemoAnimationId = (value: string | undefined): GiftAnimationId | undefined =>
   value === "envelope" || value === "collect-messages" ? value : undefined;

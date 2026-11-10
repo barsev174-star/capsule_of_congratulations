@@ -11,11 +11,14 @@ import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoC
 import { sendClientTelemetry } from "@/lib/client-telemetry";
 import { birthdayExampleCardModel } from "@/lib/birthday-example";
 import type { GiftAnimationId } from "@/lib/gift-animations";
+import type { UniversalTemplateViewModel } from "@/lib/templates/view-model";
 import { toGiftRevealExcerpt } from "@/lib/gift-reveal-preview";
+import { newYearThemeCatalog } from "@/templates/new-year/catalog";
 import { startCardFromExampleSelectionAction } from "../home-actions";
+import { newYearExampleThemes, type NewYearExampleId } from "./example-query";
 import styles from "./example.module.css";
 
-export type DemoTemplateId = "paper-birthday" | "route-adventure" | "school-scrapbook" | "school-classic" | "kindergarten-doodles" | "team-editorial";
+export type DemoTemplateId = "paper-birthday" | "route-adventure" | "school-scrapbook" | "school-classic" | "kindergarten-doodles" | "team-editorial" | NewYearExampleId;
 
 type Props = {
   children: ReactNode;
@@ -24,6 +27,7 @@ type Props = {
   schoolClassicChildren: ReactNode;
   kindergartenDoodlesChildren: ReactNode;
   teamEditorialChildren: ReactNode;
+  newYearDemos: Record<NewYearExampleId, { model: UniversalTemplateViewModel; card: ReactNode; introScene?: GiftIntroProps["previewScene"] }>;
   initialTemplateId?: DemoTemplateId;
   initialAnimationId?: GiftAnimationId;
   birthdayScenario?: boolean;
@@ -33,6 +37,7 @@ type Props = {
 };
 
 type DemoStepId = "template" | "animation" | "recipient_view";
+type DemoOpenSource = "animation_preview" | "recipient_view";
 
 const previewFeatures = [
   "поздравления от участников",
@@ -41,7 +46,11 @@ const previewFeatures = [
   "лучшие фразы"
 ];
 
-const demoTemplateMeta: Record<DemoTemplateId, { name: string; preview: string; objectPosition?: string }> = {
+const newYearDemoIds = ["new-year-red", "new-year-green"] as const;
+
+const demoTemplateMeta: Record<DemoTemplateId, { name: string; preview: string; objectPosition?: string; description?: string }> = {
+  "new-year-red": newYearThemeCatalog.red,
+  "new-year-green": newYearThemeCatalog.green,
   "paper-birthday": {
     name: "Бумажный классический",
     preview: "/assets/example/template-paper-thumb.png",
@@ -86,8 +95,8 @@ const StoryPhotoPlaceholder = () => (
   </svg>
 );
 
-export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, initialTemplateId, initialAnimationId, birthdayScenario = false, introVariant = "assembled", forceFullMotion = false, previewPhotoCount = 3 }: Props) => {
-  const [started, setStarted] = useState(birthdayScenario);
+export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, newYearDemos, initialTemplateId, initialAnimationId, birthdayScenario = false, introVariant = "assembled", forceFullMotion = false, previewPhotoCount = 3 }: Props) => {
+  const [demoOpenSource, setDemoOpenSource] = useState<DemoOpenSource | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<DemoTemplateId>(initialTemplateId ?? "paper-birthday");
   const [selectedRevealType, setSelectedRevealType] = useState<GiftAnimationId>(initialAnimationId ?? (birthdayScenario ? "envelope" : "collect-messages"));
   const demoModelByTemplate: Record<DemoTemplateId, typeof exampleCardModel | typeof schoolScrapbookDemoCardModel> = {
@@ -96,7 +105,9 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     "school-scrapbook": schoolScrapbookDemoCardModel,
     "school-classic": schoolClassicDemoCardModel,
     "kindergarten-doodles": kindergartenDoodlesDemoCardModel,
-    "team-editorial": teamEditorialDemoCardModel
+    "team-editorial": teamEditorialDemoCardModel,
+    "new-year-red": newYearDemos["new-year-red"].model,
+    "new-year-green": newYearDemos["new-year-green"].model
   };
   const demoChildrenByTemplate: Record<DemoTemplateId, ReactNode> = {
     "paper-birthday": children,
@@ -104,7 +115,9 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     "school-scrapbook": schoolChildren,
     "school-classic": schoolClassicChildren,
     "kindergarten-doodles": kindergartenDoodlesChildren,
-    "team-editorial": teamEditorialChildren
+    "team-editorial": teamEditorialChildren,
+    "new-year-red": newYearDemos["new-year-red"].card,
+    "new-year-green": newYearDemos["new-year-green"].card
   };
   const demoIntroByTemplate: Record<DemoTemplateId, {
     subtitle: string;
@@ -149,6 +162,8 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
         "/templates/kindergarten-doodles/decor-hero-still-life.webp"
       ]
     },
+    "new-year-red": { subtitle: "для тебя собрали близкие", accent: "#a82b48", kicker: "Новогодняя открытка", preset: "classic", visualPreset: "winter-festive" },
+    "new-year-green": { subtitle: "для тебя собрали коллеги", accent: "#1d6a50", kicker: "Новогодняя открытка", preset: "classic", visualPreset: "winter-festive" },
     "team-editorial": {
       subtitle: "для тебя собрали коллеги",
       accent: "#2f6f70",
@@ -161,6 +176,9 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
       ]
     }
   };
+  const isNewYear = selectedTemplateId === "new-year-red" || selectedTemplateId === "new-year-green";
+  const selectedProductTemplateId = isNewYear ? "new-year" : selectedTemplateId;
+  const selectedTemplateTheme = isNewYear ? newYearExampleThemes[selectedTemplateId] : undefined;
   const selectedDemoModel = demoModelByTemplate[selectedTemplateId];
   const selectedDemoPhotos = "mediaAssets" in selectedDemoModel
     ? selectedDemoModel.mediaAssets.slice(0, previewPhotoCount).map((asset) => ({
@@ -282,7 +300,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     });
   };
 
-  const openDemo = (source: "animation_preview" | "recipient_view") => {
+  const openDemo = (source: DemoOpenSource) => {
     sendClientTelemetry("demo_animation_started", {
       route: "/example",
       source,
@@ -294,7 +312,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
       template: selectedTemplateId,
       animation: selectedRevealType
     });
-    setStarted(true);
+    setDemoOpenSource(source);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -302,19 +320,20 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     document.querySelector('[data-demo-step="template"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  if (started) {
+  if (birthdayScenario || demoOpenSource) {
     return (
       <GiftIntro
         recipientName={selectedDemoModel.recipientName}
         variant={introVariant}
-        forceFullMotion={forceFullMotion}
+        forceFullMotion={forceFullMotion || demoOpenSource === "animation_preview"}
         subtitle={demoIntroByTemplate[selectedTemplateId].subtitle}
         fromLabel={selectedDemoModel.fromLabel}
         previewKicker={demoIntroByTemplate[selectedTemplateId].kicker}
         previewPreset={demoIntroByTemplate[selectedTemplateId].preset}
         visualPreset={demoIntroByTemplate[selectedTemplateId].visualPreset}
         previewDecor={demoIntroByTemplate[selectedTemplateId].decor}
-        templateId={selectedTemplateId}
+        previewScene={isNewYear ? newYearDemos[selectedTemplateId].introScene : undefined}
+        templateId={selectedProductTemplateId}
         animationId={selectedRevealType}
         accent={demoIntroByTemplate[selectedTemplateId].accent}
         assemblyPreview={{
@@ -372,7 +391,8 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
                   <span aria-hidden="true">↓</span>
                 </button>
                 <form action={startCardFromExampleSelectionAction} onSubmit={() => trackCreateClicked("hero")}>
-                  <input type="hidden" name="templateId" value={selectedTemplateId} />
+                  <input type="hidden" name="templateId" value={selectedProductTemplateId} />
+                  {selectedTemplateTheme ? <input type="hidden" name="templateTheme" value={selectedTemplateTheme} /> : null}
                   <input type="hidden" name="giftAnimationId" value={selectedRevealType} />
                   <button type="submit" className={styles.secondaryButton}>
                     Создать такую же
@@ -410,6 +430,48 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
               <p>Выберите стиль, который подходит вашему поводу и настроению.</p>
             </div>
           </div>
+
+          <section className={styles.seasonalCollection} aria-labelledby="seasonal-template-heading">
+            <h3 id="seasonal-template-heading">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                <path d="M12 2v20M3.34 7l17.32 10M3.34 17 20.66 7M9 4l3 3 3-3M9 20l3-3 3 3M3.6 10.6l4.1-1.1-1.1-4.1M20.4 13.4l-4.1 1.1 1.1 4.1M3.6 13.4l4.1 1.1-1.1 4.1M20.4 10.6l-4.1-1.1 1.1-4.1" />
+              </svg>
+              Новогодние открытки
+            </h3>
+            <div className={styles.seasonalGrid}>
+              {newYearDemoIds.map((id, index) => {
+                const { name, preview, description } = demoTemplateMeta[id];
+                const selected = selectedTemplateId === id;
+                return (
+                  <ScrollReveal key={id} variant="fade-up" duration={560} delay={index * 80}>
+                    <button
+                      type="button"
+                      className={`${styles.templateCard} ${styles.templateCardSelectable} ${selected ? styles.templateCardActive : ""}`}
+                      onClick={() => selectTemplate(id)}
+                      aria-pressed={selected}
+                    >
+                      <div className={styles.templateCardThumb}>
+                        <Image
+                          src={preview}
+                          alt=""
+                          fill
+                          sizes="(max-width: 640px) calc(100vw - 72px), (max-width: 1180px) 46vw, 535px"
+                          className={styles.templateThumbImage}
+                        />
+                      </div>
+                      <div className={styles.templateCardMeta}>
+                        <span className={selected ? styles.badgeTemplateSelected : styles.badgeTemplateAvailable}>
+                          {selected ? "✓ Выбрано" : "Выбрать"}
+                        </span>
+                        <strong>{name}</strong>
+                        <span>{description}</span>
+                      </div>
+                    </button>
+                  </ScrollReveal>
+                );
+              })}
+            </div>
+          </section>
 
           <div className={styles.templateGrid}>
             <ScrollReveal variant="slide-left" duration={560}>
@@ -850,7 +912,8 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
             <p>Выбранные стиль и способ открытия уже будут настроены — останется собрать поздравления.</p>
           </div>
           <form action={startCardFromExampleSelectionAction} onSubmit={() => trackCreateClicked("bottom_cta")}>
-            <input type="hidden" name="templateId" value={selectedTemplateId} />
+            <input type="hidden" name="templateId" value={selectedProductTemplateId} />
+            {selectedTemplateTheme ? <input type="hidden" name="templateTheme" value={selectedTemplateTheme} /> : null}
             <input type="hidden" name="giftAnimationId" value={selectedRevealType} />
             <button type="submit" className={styles.primaryButton}>
               Создать открытку

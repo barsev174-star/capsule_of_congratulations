@@ -150,13 +150,18 @@ const createProfile = (theme: keyof typeof palettes) => {
       text: lightText.text,
       accent: palette.gold,
       preset: "classic",
-      visualPreset: "editorial",
+      visualPreset: "winter-festive",
       kicker: "Новогодняя открытка",
       mark: goatMedallion
     },
     copy: { ...together.copy, quotesTitle: "Лучшие фразы" },
     export: {
       ...together.export,
+      heroLayout: {
+        story: { extraHeight: 0, nameHeight: 116, paddingBlock: [20, 20], paddingInline: 190, statsGap: 13 },
+        post: { extraHeight: 12, nameHeight: 60, paddingBlock: [12, 14], paddingInline: 180, statsGap: 9, coverSceneMiddle: true },
+        a4: { extraHeight: 0, nameHeight: 94, paddingBlock: [12, 12], paddingInline: 208, statsGap: 13, coverSceneMiddle: true }
+      },
       heroDescriptionMaxWidth: { story: 650, post: 600, a4: 650 },
       counters: { preset: "classic-label", congratulations: counters, photos: counters }
     },

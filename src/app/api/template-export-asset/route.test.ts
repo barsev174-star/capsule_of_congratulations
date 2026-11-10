@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest";
 import { GET } from "./route";
 
 describe("template export asset route", () => {
-  it("converts a public template WebP to a PNG for ImageResponse", async () => {
+  it.each([
+    "/templates/school-scrapbook/page.webp",
+    "/examples/kristina-birthday/tea-with-mum-v1.webp"
+  ])("converts the public WebP %s to a PNG for ImageResponse", async (src) => {
     const response = await GET(new Request(
-      "http://localhost:3000/api/template-export-asset?src=%2Ftemplates%2Fschool-scrapbook%2Fpage.webp"
+      `http://localhost:3000/api/template-export-asset?src=${encodeURIComponent(src)}`
     ));
 
     expect(response.status).toBe(200);
@@ -44,7 +47,7 @@ describe("template export asset route", () => {
     expect(response.status).toBe(400);
   });
 
-  it("does not expose files outside the public template directory", async () => {
+  it("does not expose files outside the public asset directories", async () => {
     const response = await GET(new Request(
       "http://localhost:3000/api/template-export-asset?src=%2Ftemplates%2F..%2F..%2F.env.local"
     ));

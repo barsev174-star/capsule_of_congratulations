@@ -128,7 +128,8 @@ export type TemplateGiftVisualPreset =
   | "school-playful"
   | "school-formal"
   | "caregiver-playful"
-  | "editorial";
+  | "editorial"
+  | "winter-festive";
 
 export type TemplateMotionProfile = {
   preset: TemplateMotionPreset;
@@ -213,6 +214,14 @@ export type TemplateProfile = {
   };
   export: {
     profile: typeof UNIVERSAL_EXPORT_PROFILE;
+    heroLayout?: Record<TemplateExportDecorFormat, {
+      extraHeight: number;
+      nameHeight: number;
+      paddingBlock: readonly [number, number];
+      paddingInline: number;
+      statsGap: number;
+      coverSceneMiddle?: boolean;
+    }>;
     heroDescriptionMaxWidth?: {
       story: number;
       post: number;
@@ -803,7 +812,8 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
       "school-playful",
       "school-formal",
       "caregiver-playful",
-      "editorial"
+      "editorial",
+      "winter-festive"
     ].includes(String(value.intro.visualPreset))) {
       issues.push({ path: "intro.visualPreset", message: "Неизвестный художественный preset открытки из конверта." });
     }
@@ -879,6 +889,33 @@ export const validateTemplateProfile = (value: unknown): TemplateProfileValidati
   if (!isRecord(value.export) || value.export.profile !== UNIVERSAL_EXPORT_PROFILE) {
     issues.push({ path: "export.profile", message: `Ожидается профиль ${UNIVERSAL_EXPORT_PROFILE}.` });
   } else {
+    if (value.export.heroLayout !== undefined) {
+      const layouts = value.export.heroLayout;
+      if (!isRecord(layouts)) {
+        issues.push({ path: "export.heroLayout", message: "Ожидаются параметры экспортной шапки по форматам." });
+      } else {
+        for (const format of templateExportDecorFormats) {
+          const layout = layouts[format];
+          const path = `export.heroLayout.${format}`;
+          if (!isRecord(layout)) {
+            issues.push({ path, message: "Отсутствуют параметры формата." });
+            continue;
+          }
+          for (const key of ["extraHeight", "nameHeight", "paddingInline", "statsGap"] as const) {
+            if (!Number.isInteger(layout[key]) || Number(layout[key]) < (key === "nameHeight" ? 1 : 0)) {
+              issues.push({ path: `${path}.${key}`, message: "Недопустимый размер в пикселях." });
+            }
+          }
+          if (!Array.isArray(layout.paddingBlock) || layout.paddingBlock.length !== 2
+            || layout.paddingBlock.some((padding) => !Number.isInteger(padding) || padding < 0)) {
+            issues.push({ path: `${path}.paddingBlock`, message: "Ожидаются два неотрицательных целых отступа." });
+          }
+          if (layout.coverSceneMiddle !== undefined && typeof layout.coverSceneMiddle !== "boolean") {
+            issues.push({ path: `${path}.coverSceneMiddle`, message: "Ожидается логическое значение." });
+          }
+        }
+      }
+    }
     if (value.export.heroDescriptionMaxWidth !== undefined) {
       if (!isRecord(value.export.heroDescriptionMaxWidth)) {
         issues.push({ path: "export.heroDescriptionMaxWidth", message: "Ожидаются ширины экспортного текста по форматам." });

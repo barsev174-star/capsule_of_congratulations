@@ -10,28 +10,13 @@ import {
   teamEditorialDemoCardModel
 } from "@/lib/example-card";
 import { requireTemplateRenderer } from "@/lib/templates/dispatcher";
+import { resolveDemoTemplateId } from "../example-query";
+import { getNewYearExample } from "../new-year-example";
 
 export const metadata: Metadata = {
   title: "Предпросмотр открытки",
   robots: { index: false, follow: false }
 };
-
-type PreviewTemplateId =
-  | "paper-birthday"
-  | "route-adventure"
-  | "school-scrapbook"
-  | "school-classic"
-  | "kindergarten-doodles"
-  | "team-editorial";
-
-const templateIds = new Set<PreviewTemplateId>([
-  "paper-birthday",
-  "route-adventure",
-  "school-scrapbook",
-  "school-classic",
-  "kindergarten-doodles",
-  "team-editorial"
-]);
 
 type RecipientPreviewPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -40,9 +25,7 @@ type RecipientPreviewPageProps = {
 export default async function RecipientPreviewPage({ searchParams }: RecipientPreviewPageProps) {
   const { template } = await searchParams;
   const rawTemplate = Array.isArray(template) ? template[0] : template;
-  const templateId: PreviewTemplateId = rawTemplate && templateIds.has(rawTemplate as PreviewTemplateId)
-    ? rawTemplate as PreviewTemplateId
-    : "paper-birthday";
+  const templateId = resolveDemoTemplateId(rawTemplate) ?? "paper-birthday";
 
   const previewDocumentStyles = (
     <style>{`
@@ -79,6 +62,16 @@ export default async function RecipientPreviewPage({ searchParams }: RecipientPr
       <>
         {previewDocumentStyles}
         <FinalCard model={routeAdventureDemoCardModel} />
+      </>
+    );
+  }
+
+  if (templateId === "new-year-red" || templateId === "new-year-green") {
+    const { dispatch, model } = getNewYearExample(templateId);
+    return (
+      <>
+        {previewDocumentStyles}
+        <TemplateCardRenderer dispatch={dispatch} model={model} surface="private" actionContext="demo" />
       </>
     );
   }

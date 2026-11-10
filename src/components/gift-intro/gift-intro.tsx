@@ -15,6 +15,7 @@ import type { TemplateGiftVisualPreset } from "@/lib/templates/profile";
 import { defaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import type { GiftRevealMessagePreview } from "@/lib/gift-reveal-preview";
 import { getGiftRevealPreviewProfile } from "@/lib/gift-reveal-profiles";
+import type { GiftIntroScene } from "@/lib/templates/gift-intro-scene";
 import { CollectRevealScene } from "./collect-reveal-scene";
 import { GiftIntro as LegacyGiftIntro } from "./legacy-v1/gift-intro";
 import styles from "./gift-intro.module.css";
@@ -65,6 +66,7 @@ export type GiftIntroProps = {
   previewKicker?: string;
   previewPreset?: CardTemplate["introPreset"];
   previewDecor?: readonly string[];
+  previewScene?: GiftIntroScene;
   visualPreset?: TemplateGiftVisualPreset;
   templateId?: CardTemplateId;
   animationId?: GiftAnimationId;
@@ -129,8 +131,26 @@ const TEMPLATE_ASSEMBLY_EYEBROWS: Record<TemplateGiftVisualPreset, string> = {
   "school-playful": "Школьная открытка",
   "school-formal": "Открытка учителю",
   "caregiver-playful": "С любовью от детей",
-  editorial: "Открытка от команды"
+  editorial: "Открытка от команды",
+  "winter-festive": "Новогодняя открытка"
 };
+
+const SceneArtwork = ({ scene }: { scene: GiftIntroScene }) => (
+  <div className={styles.sceneArtwork} aria-hidden="true">
+    {[scene.top, scene.bottom].map(({ src, width, height }, index) => (
+      <Image
+        key={src}
+        className={index === 0 ? styles.sceneArtworkTop : styles.sceneArtworkBottom}
+        src={src}
+        width={width}
+        height={height}
+        sizes="(max-width: 640px) 94vw, 740px"
+        loading="eager"
+        alt=""
+      />
+    ))}
+  </div>
+);
 
 const LightweightCardPreview = ({
   recipientName,
@@ -139,7 +159,8 @@ const LightweightCardPreview = ({
   templateId,
   accent,
   preset,
-  decor
+  decor,
+  scene
 }: {
   recipientName: string;
   fromLabel?: string;
@@ -148,15 +169,17 @@ const LightweightCardPreview = ({
   accent: string;
   preset: NonNullable<CardTemplate["introPreset"]>;
   decor: readonly string[];
+  scene?: GiftIntroScene;
 }) => (
   <div
     className={styles.lightweightCardPreview}
     data-template-id={templateId}
     data-preview-preset={preset}
     data-gift-intro-preview="lightweight"
+    data-preview-scene={scene ? "true" : undefined}
     style={{ "--gi-preview-accent": accent } as CSSProperties}
   >
-    {preset === "scrapbook" ? (
+    {scene ? <SceneArtwork scene={scene} /> : preset === "scrapbook" ? (
       <>
         <span className={styles.schoolPreviewTape} data-school-preview-decor="tape" aria-hidden="true" />
         <span className={styles.schoolPreviewSticker} data-school-preview-decor="sticker" aria-hidden="true">5+</span>
@@ -171,8 +194,7 @@ const LightweightCardPreview = ({
           </span>
         ))}
       </>
-    ) : null}
-    {preset === "classic" ? (
+    ) : preset === "classic" ? (
       <>
         <span className={styles.classicPreviewFrame} aria-hidden="true" />
         <span className={styles.classicPreviewRule} aria-hidden="true" />
@@ -203,6 +225,7 @@ const TemplateFoundation = ({
   preset,
   accent,
   decor = [],
+  scene,
   className
 }: {
   templateId: CardTemplateId;
@@ -210,12 +233,13 @@ const TemplateFoundation = ({
   preset: NonNullable<CardTemplate["introPreset"]>;
   accent: string;
   decor?: readonly string[];
+  scene?: GiftIntroScene;
   className?: string;
 }) => {
   const isPaperBirthday = visualPreset === "paper-celebration";
   const hasArtDirectedFoundation = Boolean(visualPreset);
 
-  const artLayers = visualPreset && visualPreset !== "paper-celebration" ? {
+  const artLayers = visualPreset && visualPreset !== "paper-celebration" && visualPreset !== "winter-festive" ? {
     expedition: [
       ["map", styles.foundationRouteMap],
       ["compass", styles.foundationRouteCompass],
@@ -255,7 +279,7 @@ const TemplateFoundation = ({
       data-foundation-preset={preset}
       style={{ "--gi-preview-accent": accent } as CSSProperties}
     >
-      {isPaperBirthday ? (
+      {scene ? <SceneArtwork scene={scene} /> : isPaperBirthday ? (
         <>
           <span className={styles.paperBirthdaySheet} data-paper-foundation="sheet" />
           <span className={`${styles.paperBirthdayDecor} ${styles.paperBirthdayCake}`} data-paper-foundation="cake" />
@@ -298,6 +322,7 @@ const GiftIntroAssembled = ({
   previewKicker = "Открытка для",
   previewPreset = "default",
   previewDecor = [],
+  previewScene,
   visualPreset,
   templateId = "warm-classic",
   animationId = defaultGiftAnimationId,
@@ -324,6 +349,11 @@ const GiftIntroAssembled = ({
   const name = cleanPreviewText(recipientName, "Вам");
   const resolvedPreviewKicker = cleanPreviewText(previewKicker, "Открытка для");
   const accentColor = accent ?? "#e9652f";
+  const sceneColors = previewScene ? {
+    "--gi-scene-surface": previewScene.surface,
+    "--gi-scene-text": previewScene.text,
+    "--gi-scene-accent": previewScene.accent
+  } as CSSProperties : undefined;
   const phrases = (assemblyPreview?.phrases ?? []).filter(Boolean).slice(0, 3);
   const photos = (assemblyPreview?.photos ?? []).slice(0, 3);
   const messages = (assemblyPreview?.messages ?? []).slice(0, 6);
@@ -516,6 +546,7 @@ const GiftIntroAssembled = ({
           data-intro-state={state}
           data-animation-id={animationId}
           data-motion-mode={prefersReducedMotion ? "reduced" : "full"}
+          style={sceneColors}
           role="dialog"
           aria-modal="true"
           aria-label={`Подарочная открытка для ${name}`}
@@ -543,11 +574,13 @@ const GiftIntroAssembled = ({
                   preset={previewPreset}
                   accent={accentColor}
                   decor={previewDecor}
+                  scene={previewScene}
                 />
               )}
               onOpen={handleOpen}
               disabled={state !== "idle"}
               reducedMotion={prefersReducedMotion}
+              previewKicker={previewScene ? resolvedPreviewKicker : undefined}
             />
           ) : (
           <div className={styles.introLayout}>
@@ -630,6 +663,7 @@ const GiftIntroAssembled = ({
                       preset={previewPreset}
                       accent={accentColor}
                       decor={previewDecor}
+                      scene={previewScene}
                       className={styles.templateFoundationLower}
                     />
                   </div>
@@ -644,6 +678,7 @@ const GiftIntroAssembled = ({
                         accent={accentColor}
                         preset={previewPreset}
                         decor={previewDecor}
+                        scene={previewScene}
                       />
                     </div>
                     <div className={`${styles.cardLidFace} ${styles.cardLidInside}`} data-card-face="template">
@@ -653,6 +688,7 @@ const GiftIntroAssembled = ({
                         preset={previewPreset}
                         accent={accentColor}
                         decor={previewDecor}
+                        scene={previewScene}
                         className={styles.templateFoundationUpper}
                       />
                     </div>
@@ -665,6 +701,7 @@ const GiftIntroAssembled = ({
                       accent={accentColor}
                       preset={previewPreset}
                       decor={previewDecor}
+                      scene={previewScene}
                     />
 
                     <div className={styles.assemblyContent}>

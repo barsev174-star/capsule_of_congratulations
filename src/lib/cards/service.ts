@@ -97,6 +97,7 @@ export const createCardDraft = async (input: CreateCardInput): Promise<CreateCar
 
 type CreateEmptyCardDraftOptions = {
   templateId?: CardTemplateId | null;
+  templateTheme?: string;
   giftAnimationId?: GiftAnimationId;
   occasionText?: string;
 };
@@ -123,6 +124,7 @@ export const createEmptyCardDraft = async (
     description: null,
     signature: null,
     templateId: options.templateId ?? null,
+    ...(options.templateTheme ? { templateTheme: options.templateTheme } : {}),
     giftAnimationId: options.giftAnimationId ?? defaultGiftAnimationId,
     finalBlockSettings: null,
     finalBlockOrder: null,

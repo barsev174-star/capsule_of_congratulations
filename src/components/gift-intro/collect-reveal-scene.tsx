@@ -23,6 +23,7 @@ type Props = {
   onOpen: () => void;
   disabled: boolean;
   reducedMotion: boolean;
+  previewKicker?: string;
 };
 
 type RevealItemState = "chat" | "collecting" | "collected" | "placing" | "placed";
@@ -117,7 +118,8 @@ export const CollectRevealScene = ({
   previewFoundation,
   onOpen,
   disabled,
-  reducedMotion
+  reducedMotion,
+  previewKicker = "Открытка для"
 }: Props) => {
   const safeMessages = messages.slice(0, 6);
   const safePhotos = photos.slice(0, 3);
@@ -644,7 +646,7 @@ export const CollectRevealScene = ({
         <div className={styles.previewShell} aria-hidden="true">
           {previewFoundation}
           <div className={styles.previewIdentity}>
-            <span>Открытка для</span>
+            <span>{previewKicker}</span>
             <strong>{recipientName}</strong>
           </div>
           <div className={`${styles.previewZone} ${styles.previewMessages}`} style={zoneStyle(profile.targetZones.messages, 1.07)}>

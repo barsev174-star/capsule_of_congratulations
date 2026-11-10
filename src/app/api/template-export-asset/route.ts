@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 import sharp from "sharp";
+import { isExampleExportPhoto } from "@/lib/templates/export-asset-url";
 
 export const runtime = "nodejs";
 
@@ -129,7 +130,7 @@ export async function GET(request: Request) {
   const width = parseSize(searchParams.get("width"));
   const height = parseSize(searchParams.get("height"));
   const slices = parseSlices(searchParams.get("slices"));
-  if (!supportedAssetPattern.test(src) || src.split("/").includes("..")) {
+  if ((!supportedAssetPattern.test(src) && !isExampleExportPhoto(src)) || src.split("/").includes("..")) {
     return new Response(null, { status: 404 });
   }
   if (crop === undefined || slices === undefined || width === undefined || height === undefined || Boolean(width) !== Boolean(height) || (slices && (!width || !height))) {

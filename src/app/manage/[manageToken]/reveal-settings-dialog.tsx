@@ -12,6 +12,7 @@ import styles from "./manage-page.module.css";
 type Props = {
   manageToken: string;
   templateId: CardTemplate["id"];
+  templateTheme?: string;
   templatePreviewSrc: string;
   selectedAnimationId: GiftAnimationId;
   action: (formData: FormData) => void;
@@ -33,8 +34,9 @@ const revealOptionDetails: Record<GiftAnimationId, { label: string; description:
 
 export const getRevealExampleHref = (
   templateId: CardTemplate["id"],
-  animationId: GiftAnimationId
-) => `/example?template=${encodeURIComponent(templateId)}&animation=${encodeURIComponent(animationId)}`;
+  animationId: GiftAnimationId,
+  templateTheme?: string
+) => `/example?template=${encodeURIComponent(templateId)}&animation=${encodeURIComponent(animationId)}${templateTheme ? `&theme=${encodeURIComponent(templateTheme)}` : ""}`;
 
 export const RevealIcon = ({ animationId }: { animationId: GiftAnimationId }) => (
   <span
@@ -149,6 +151,7 @@ const CollectStoryboard = ({ templatePreviewSrc }: { templatePreviewSrc: string 
 export const RevealSettingsDialog = ({
   manageToken,
   templateId,
+  templateTheme,
   templatePreviewSrc,
   selectedAnimationId,
   action,
@@ -255,7 +258,7 @@ export const RevealSettingsDialog = ({
                       {selected ? "✓ Выбрано" : isPending ? "Сохраняем…" : "Выбрать"}
                     </button>
                     <a
-                      href={getRevealExampleHref(templateId, animation.id)}
+                      href={getRevealExampleHref(templateId, animation.id, templateTheme)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={styles.revealExampleLink}

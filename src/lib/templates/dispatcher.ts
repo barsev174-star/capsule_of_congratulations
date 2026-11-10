@@ -16,6 +16,7 @@ export type TemplateRendererDispatch =
   | {
       kind: "universal-v1";
       registration: UniversalTemplateRegistration;
+      themeId?: string;
     };
 
 export const dispatchTemplateRenderer = (
@@ -46,7 +47,7 @@ export const dispatchCardTemplateRenderer = (templateId: string, theme?: string 
   if (dispatch?.kind !== "universal-v1") return dispatch;
   const resolved = resolveTemplateTheme(dispatch.registration, theme);
   return resolved
-    ? { ...dispatch, registration: { ...dispatch.registration, profile: resolved.profile } }
+    ? { ...dispatch, registration: { ...dispatch.registration, profile: resolved.profile }, themeId: resolved.id }
     : dispatch;
 };
 

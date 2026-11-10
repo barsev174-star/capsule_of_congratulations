@@ -5,7 +5,7 @@ import type { CardTemplate } from "@/lib/cards/templates";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
 import { giftAnimations, type GiftAnimationId } from "@/lib/gift-animations";
 import { getRevealExampleHref, RevealIcon, RevealSettingsDialog } from "./reveal-settings-dialog";
-import { TemplateSettingsForm } from "./template-settings-form";
+import { resolveCatalogTheme, TemplateSettingsForm } from "./template-settings-form";
 import { updateGiftAnimationAction } from "./actions";
 import styles from "./manage-page.module.css";
 
@@ -52,7 +52,9 @@ export const TemplateSummary = ({
     ok: false,
     message: ""
   });
-  const theme = selectedTemplate?.themes?.find((option) => option.id === templateTheme) ?? selectedTemplate?.themes?.[0];
+  const theme = resolveCatalogTheme(selectedTemplate, templateTheme);
+  const templateName = theme?.name ?? selectedTemplate?.name;
+  const templateDescription = theme?.description ?? selectedTemplate?.description;
   const previewSrc = theme?.preview ?? selectedTemplate?.preview
     ?? (selectedTemplate?.id === "route-adventure"
       ? "/assets/landing/template-route-adventure-preview.png"
@@ -146,7 +148,7 @@ export const TemplateSummary = ({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={previewSrc}
-              alt={selectedTemplate.name}
+              alt={templateName ?? ""}
               className={styles.templatePreviewImage}
             />
           </div>
@@ -164,14 +166,14 @@ export const TemplateSummary = ({
 
         <div className={styles.templateSummaryText}>
           <div className={styles.templateNameRow}>
-            <strong>{selectedTemplate?.name ?? "Шаблон не выбран"}</strong>
+            <strong>{templateName ?? "Шаблон не выбран"}</strong>
           </div>
           <p>
             <span className={styles.templateDescriptionDesktop}>
-              {selectedTemplate?.description ?? "Это обязательный шаг перед открытием сбора."}
+              {templateDescription ?? "Это обязательный шаг перед открытием сбора."}
             </span>
             <span className={styles.templateDescriptionMobile}>
-              {selectedTemplate?.description ?? "Обязательный шаг"}
+              {templateDescription ?? "Обязательный шаг"}
             </span>
           </p>
           <button
@@ -204,7 +206,7 @@ export const TemplateSummary = ({
                 Изменить
               </button>
               <a
-                href={getRevealExampleHref(selectedTemplate.id, animationId)}
+                href={getRevealExampleHref(selectedTemplate.id, animationId, theme?.id)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={trackSidebarExample}
@@ -255,6 +257,7 @@ export const TemplateSummary = ({
         <RevealSettingsDialog
           manageToken={manageToken}
           templateId={selectedTemplate.id}
+          templateTheme={theme?.id}
           templatePreviewSrc={previewSrc ?? "/templates/warm-classic-preview.png"}
           selectedAnimationId={animationId}
           action={animationAction}

@@ -17,7 +17,8 @@ export type CardTemplate = {
   recommendedFor: OccasionId[];
   accent: string;
   preview?: string;
-  themes?: ReadonlyArray<{ id: string; label: string; preview: string }>;
+  themes?: ReadonlyArray<{ id: string; name: string; description: string; preview: string }>;
+  defaultThemeId?: string;
   introKicker?: string;
   introPreset?: "default" | "route" | "scrapbook" | "classic";
   introVisualPreset?: TemplateGiftVisualPreset;
@@ -31,8 +32,12 @@ export const cardTemplates: CardTemplate[] = catalogTemplateRegistrations.map((e
   recommendedFor: entry.catalog.recommendedFor,
   accent: entry.catalog.accent,
   preview: entry.family === "universal-v1" ? entry.profile.metadata.preview.src : entry.catalog.preview,
-  themes: entry.family === "universal-v1" ? entry.themes?.options.map(({ id, label, profile }) => ({
-    id, label, preview: profile.metadata.preview.src
+  defaultThemeId: entry.family === "universal-v1" ? entry.themes?.defaultId : undefined,
+  themes: entry.family === "universal-v1" ? entry.themes?.options.map(({ id, label, profile, catalog }) => ({
+    id,
+    name: catalog?.name ?? label,
+    description: catalog?.description ?? entry.catalog.description,
+    preview: catalog?.preview ?? profile.metadata.preview.src
   })) : undefined,
   introKicker: entry.family === "universal-v1" ? entry.profile.intro.kicker : undefined,
   introPreset: entry.family === "universal-v1"

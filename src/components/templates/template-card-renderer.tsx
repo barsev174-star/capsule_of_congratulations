@@ -54,6 +54,7 @@ export function TemplateCardRenderer(props: TemplateCardRendererProps) {
     <UniversalTemplateCard
       profile={universal.dispatch.registration.profile}
       model={universal.model}
+      templateTheme={universal.dispatch.themeId}
       surface={universal.surface}
       viewport={universal.viewport}
       actionContext={universal.actionContext}

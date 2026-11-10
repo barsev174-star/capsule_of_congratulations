@@ -230,7 +230,7 @@ export const saveCardDraft = async (card: CardDraft) => {
         paid_at, collection_opened_at, collection_closed_at, delivered_at, recipient_first_opened_at,
         refunded_at, revoked_at, is_hidden, hidden_at, purged_at, active_paid_order_id, active_access_grant_id,
         repurchase_allowed_at, repurchase_expires_at, repurchase_used_at, repurchase_allowed_by_admin_id,
-        deleted_at, purge_at, created_at, updated_at
+        deleted_at, purge_at, created_at, updated_at, template_theme
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7,
@@ -240,7 +240,7 @@ export const saveCardDraft = async (card: CardDraft) => {
         $24, $25, $26, $27, $28,
         $29, $30, $31, $32, $33, $34, $35,
         $36, $37, $38, $39,
-        $40, $41, $42, $43
+        $40, $41, $42, $43, $44
       )
     `,
     [
@@ -286,7 +286,8 @@ export const saveCardDraft = async (card: CardDraft) => {
       card.deletedAt,
       card.purgeAt,
       card.createdAt,
-      card.updatedAt
+      card.updatedAt,
+      card.templateTheme ?? null
     ]
   );
 };

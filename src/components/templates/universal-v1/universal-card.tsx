@@ -51,6 +51,7 @@ export type UniversalTemplateActionContext = "demo" | "private" | "studio";
 export type UniversalCardProps = {
   profile: TemplateProfile;
   model: UniversalTemplateViewModel;
+  templateTheme?: string;
   surface?: UniversalTemplateSurface;
   viewport?: UniversalTemplateViewport;
   actionContext?: UniversalTemplateActionContext;
@@ -627,10 +628,12 @@ function MemoriesBlock({
 function ClosingActions({
   context,
   templateId,
+  templateTheme,
   publicVersionHref
 }: {
   context: UniversalTemplateActionContext;
   templateId: string;
+  templateTheme?: string;
   publicVersionHref?: string;
 }) {
   const createAction = startCardFromTemplateAction.bind(null, templateId);
@@ -651,7 +654,12 @@ function ClosingActions({
 
   return (
     <div className={styles.closingActions} data-action-context={context}>
-      {context === "studio" ? createButton : <form action={createAction}>{createButton}</form>}
+      {context === "studio" ? createButton : (
+        <form action={createAction}>
+          {templateTheme ? <input type="hidden" name="templateTheme" value={templateTheme} /> : null}
+          {createButton}
+        </form>
+      )}
       {context === "private" || context === "studio" ? publicVersionButton : null}
     </div>
   );
@@ -700,6 +708,7 @@ function ReadinessPlaceholder({
 export function UniversalTemplateCard({
   profile,
   model,
+  templateTheme,
   surface = "private",
   viewport = "auto",
   actionContext,
@@ -905,9 +914,9 @@ export function UniversalTemplateCard({
             })}</div>
           </SectionSurface>;
 
-          if (block === "closing") return <SectionSurface key={block} id="closing" profile={profile} viewport={viewport} className={styles.closingSection}><p className={styles.closingSignature}>{model.privateSignature}</p><ClosingActions context={resolvedActionContext} templateId={profile.id} publicVersionHref={publicVersionHref} /><ClosingBrand /></SectionSurface>;
+          if (block === "closing") return <SectionSurface key={block} id="closing" profile={profile} viewport={viewport} className={styles.closingSection}><p className={styles.closingSignature}>{model.privateSignature}</p><ClosingActions context={resolvedActionContext} templateId={profile.id} templateTheme={templateTheme} publicVersionHref={publicVersionHref} /><ClosingBrand /></SectionSurface>;
 
-          return <SectionSurface key={block} id="closing" dataBlockId="public-note" profile={profile} viewport={viewport} className={`${styles.closingSection} ${styles.publicNote}`}><h2>В полной открытке — ещё больше тепла</h2><p>Личные поздравления и важные воспоминания бережно сохранены только для получателя.</p><ClosingActions context={resolvedActionContext} templateId={profile.id} publicVersionHref={publicVersionHref} /><ClosingBrand /></SectionSurface>;
+          return <SectionSurface key={block} id="closing" dataBlockId="public-note" profile={profile} viewport={viewport} className={`${styles.closingSection} ${styles.publicNote}`}><h2>В полной открытке — ещё больше тепла</h2><p>Личные поздравления и важные воспоминания бережно сохранены только для получателя.</p><ClosingActions context={resolvedActionContext} templateId={profile.id} templateTheme={templateTheme} publicVersionHref={publicVersionHref} /><ClosingBrand /></SectionSurface>;
         })}
       </div>
       {photoViewerEnabled ? <PhotoViewerDialog

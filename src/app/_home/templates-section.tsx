@@ -65,7 +65,7 @@ export async function TemplatesSection() {
       <div className={styles.shell}>
         <div className={styles.heading}>
           <h2 className={`${styles.title} text-balance`}>Выберите настроение открытки</h2>
-          <p className={styles.subtitle}>Выберите один из шести тщательно проработанных шаблонов. Новые стили появятся позже.</p>
+          <p className={styles.subtitle}>Выберите подходящий стиль. Оформление можно изменить в редакторе.</p>
         </div>
 
         <div className={styles.grid}>

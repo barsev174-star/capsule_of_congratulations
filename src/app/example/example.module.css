@@ -336,12 +336,40 @@
   background: #efe8e2;
 }
 
-/* Template grid */
-.templateGrid {
+/* Template grids */
+.seasonalCollection {
+  --seasonal-padding: clamp(12px, 2vw, 22px);
+  margin-bottom: 16px;
+  padding: var(--seasonal-padding);
+  border-radius: calc(var(--ex-radius-sm) + var(--seasonal-padding));
+  background: var(--ex-bg-light);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 8%), 0 4px 16px rgb(0 0 0 / 4%);
+}
+
+.seasonalCollection h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  color: #202124;
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.seasonalCollection h3 svg {
+  flex: none;
+  color: #e9652f;
+}
+
+.templateGrid,
+.seasonalGrid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 16px;
 }
+
+.templateGrid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.seasonalGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 .templateGrid > div {
   grid-column: span 2;
@@ -502,6 +530,43 @@
   font-size: 13px;
   line-height: 1.4;
 }
+
+.seasonalGrid .templateCard {
+  border: 1px solid rgb(0 0 0 / 10%);
+  background: #fff;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 6%);
+}
+
+.seasonalGrid .templateCardSelectable:hover {
+  box-shadow: 0 8px 20px rgb(0 0 0 / 12%);
+}
+
+.seasonalGrid .templateCardActive {
+  border-color: #e9652f;
+}
+
+.seasonalGrid .templateCardThumb {
+  flex: none;
+  height: auto;
+  aspect-ratio: 2.15;
+  margin: 0;
+  border-radius: 0;
+}
+
+.seasonalGrid .templateCardMeta {
+  flex: 1;
+  justify-content: flex-start;
+  padding: 14px 16px 16px;
+  border-radius: 0;
+  background: #fff;
+}
+
+.seasonalGrid .templateCardMeta strong { color: #202124; }
+.seasonalGrid .templateCardMeta > span:last-child {
+  color: #5f6368;
+  text-wrap: pretty;
+}
+
 
 /* Animation block */
 .animationLayout {
@@ -1902,7 +1967,8 @@
     height: 38px;
   }
 
-  .templateGrid {
+  .templateGrid,
+  .seasonalGrid {
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
   }
@@ -2073,13 +2139,15 @@
 }
 
 /* Template grid: reveal wrappers keep cards equal height. */
-.templateGrid > div {
+.templateGrid > div,
+.seasonalGrid > div {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-.templateGrid > div > .templateCard {
+.templateGrid > div > .templateCard,
+.seasonalGrid > div > .templateCard {
   flex: 1;
 }
 

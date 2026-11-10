@@ -54,7 +54,12 @@ export type UniversalTemplateRegistration = {
   catalog: TemplateCatalogMetadata;
   themes?: {
     defaultId: string;
-    options: ReadonlyArray<{ id: string; label: string; profile: TemplateProfile }>;
+    options: ReadonlyArray<{
+      id: string;
+      label: string;
+      profile: TemplateProfile;
+      catalog?: Pick<TemplateCatalogMetadata, "name" | "description" | "preview">;
+    }>;
   };
 };
 

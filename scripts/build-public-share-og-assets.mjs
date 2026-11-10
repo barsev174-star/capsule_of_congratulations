@@ -30,6 +30,11 @@ const cards = [
     id: "kindergarten-doodles",
     name: "Детство в рисунках",
     preview: "public/templates/kindergarten-doodles/preview.webp"
+  },
+  {
+    id: "new-year",
+    name: "Новый год",
+    preview: "public/templates/new-year/preview.webp"
   }
 ];
 
