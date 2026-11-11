@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { NEW_YEAR_LANDING_PATH } from "@/lib/landing-attribution";
 import type { CSSProperties } from "react";
 import { FaqSection, HomeFooter, HomeHeader } from "@/app/_home";
 import { ColleagueLandingMotion } from "./colleague-landing-motion";
@@ -349,6 +350,9 @@ export default function ColleagueLandingPage() {
             <p>Начните бесплатно, отправьте одну ссылку коллегам и добавьте общие фотографии, когда слова будут собраны.</p>
             <ColleagueCreateForm placement="final" buttonClassName={sharedStyles.primaryButton}>Собрать открытку коллеге</ColleagueCreateForm>
             <span>Без регистрации · До 100 поздравлений · Приватная ссылка для вручения</span>
+            <Link href={NEW_YEAR_LANDING_PATH} className={sharedStyles.secondaryButton} style={{ marginTop: 18 }}>
+              Новогодняя открытка от команды
+            </Link>
           </div>
         </section>
       </main>

@@ -5,7 +5,8 @@ const landingPaths = [
   "/gruppovaya-otkrytka/uchitelyu",
   "/gruppovaya-otkrytka/vospitatelyu",
   "/gruppovaya-otkrytka/kollege",
-  "/gruppovaya-otkrytka/den-rozhdeniya"
+  "/gruppovaya-otkrytka/den-rozhdeniya",
+  "/gruppovaya-otkrytka/novyy-god"
 ];
 
 const failures = [];
@@ -104,5 +105,5 @@ if (failures.length) {
   console.error("\nОшибки контроля индексации:\n- " + failures.join("\n- "));
   process.exitCode = 1;
 } else {
-  console.log("\nКонтроль индексации: 4/4 страниц, robots.txt, sitemap.xml и OG — OK.");
+  console.log(`\nКонтроль индексации: ${landingPaths.length}/${landingPaths.length} страниц, robots.txt, sitemap.xml и OG — OK.`);
 }

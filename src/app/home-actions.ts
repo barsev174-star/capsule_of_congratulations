@@ -118,3 +118,7 @@ export async function startColleagueCardFromShowcaseAction() {
 export async function startBirthdayCardFromShowcaseAction() {
   return startCardFromLanding("paper-birthday", "С днём рождения!");
 }
+
+export async function startNewYearCardFromShowcaseAction(formData: FormData) {
+  return startCardFromTemplateAction("new-year", formData);
+}

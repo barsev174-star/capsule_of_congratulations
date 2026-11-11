@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
-import { getBirthdayTelemetryContext, getCaregiverTelemetryContext, getColleagueTelemetryContext, getTeacherTelemetryContext } from "@/lib/client-landing-attribution";
+import { getBirthdayTelemetryContext, getCaregiverTelemetryContext, getColleagueTelemetryContext, getNewYearTelemetryContext, getTeacherTelemetryContext } from "@/lib/client-landing-attribution";
 import { BIRTHDAY_EXAMPLE_PATH } from "@/lib/birthday-scenario";
 import {
   startBirthdayCardFromShowcaseAction,
   startCardFromShowcaseAction,
   startCaregiverCardFromShowcaseAction,
   startColleagueCardFromShowcaseAction,
+  startNewYearCardFromShowcaseAction,
   startTeacherCardFromShowcaseAction
 } from "../home-actions";
 import styles from "./header.module.css";
@@ -55,32 +56,38 @@ const birthdayNavItems = [
   { href: "/account", label: "Мои открытки" }
 ];
 
-type HeaderVariant = "home" | "teacher" | "caregiver" | "colleague" | "birthday";
+const newYearNavItems = [
+  { href: "#how-it-works", label: "Как это работает" },
+  { href: "#examples", label: "Примеры" },
+  { href: "#price", label: "Цена" },
+  { href: "#faq", label: "FAQ" },
+  { href: "/account", label: "Мои открытки" }
+];
+
+type HeaderVariant = "home" | "teacher" | "caregiver" | "colleague" | "birthday" | "new-year";
 
 export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const navRef = useRef<HTMLElement>(null);
-  const navItems = variant === "teacher"
-    ? teacherNavItems
-    : variant === "caregiver"
-      ? caregiverNavItems
-      : variant === "colleague"
-        ? colleagueNavItems
-        : variant === "birthday"
-          ? birthdayNavItems
-          : homeNavItems;
+  const navItems = {
+    home: homeNavItems,
+    teacher: teacherNavItems,
+    caregiver: caregiverNavItems,
+    colleague: colleagueNavItems,
+    birthday: birthdayNavItems,
+    "new-year": newYearNavItems
+  }[variant];
   const isSeoLanding = variant !== "home";
-  const createAction = variant === "teacher"
-    ? startTeacherCardFromShowcaseAction
-    : variant === "caregiver"
-      ? startCaregiverCardFromShowcaseAction
-      : variant === "colleague"
-        ? startColleagueCardFromShowcaseAction
-        : variant === "birthday"
-          ? startBirthdayCardFromShowcaseAction
-          : startCardFromShowcaseAction;
+  const createAction = {
+    home: startCardFromShowcaseAction,
+    teacher: startTeacherCardFromShowcaseAction,
+    caregiver: startCaregiverCardFromShowcaseAction,
+    colleague: startColleagueCardFromShowcaseAction,
+    birthday: startBirthdayCardFromShowcaseAction,
+    "new-year": startNewYearCardFromShowcaseAction
+  }[variant];
 
   useEffect(() => {
     const header = headerRef.current;
@@ -229,6 +236,12 @@ export function HomeHeader({ variant = "home" }: { variant?: HeaderVariant }) {
                 ...getBirthdayTelemetryContext(),
                 placement: "header",
                 template: "paper-birthday"
+              });
+            } else if (variant === "new-year") {
+              sendClientTelemetry("seo_create_click", {
+                ...getNewYearTelemetryContext(),
+                placement: "header",
+                template: "new-year"
               });
             }
           }}

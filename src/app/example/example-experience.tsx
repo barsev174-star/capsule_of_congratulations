@@ -21,6 +21,7 @@ import {
 import type { UniversalTemplateViewModel } from "@/lib/templates/view-model";
 import { toGiftRevealExcerpt } from "@/lib/gift-reveal-preview";
 import { newYearThemeCatalog } from "@/templates/new-year/catalog";
+import { NEW_YEAR_LANDING_PATH } from "@/lib/landing-attribution";
 import { startCardFromExampleSelectionAction } from "../home-actions";
 import { newYearExampleThemes, type NewYearExampleId } from "./example-query";
 import styles from "./example.module.css";
@@ -37,6 +38,7 @@ type Props = {
   newYearDemos: Record<NewYearExampleId, { model: UniversalTemplateViewModel; card: ReactNode; introScene?: GiftIntroProps["previewScene"] }>;
   initialTemplateId?: DemoTemplateId;
   initialAnimationId?: GiftAnimationId;
+  initialDemoOpenSource?: DemoOpenSource;
   birthdayScenario?: boolean;
   introVariant?: GiftIntroVariant;
   forceFullMotion?: boolean;
@@ -103,8 +105,8 @@ const StoryPhotoPlaceholder = () => (
   </svg>
 );
 
-export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, newYearDemos, initialTemplateId, initialAnimationId, birthdayScenario = false, introVariant = "assembled", forceFullMotion = false, previewPhotoCount = 3 }: Props) => {
-  const [demoOpenSource, setDemoOpenSource] = useState<DemoOpenSource | null>(null);
+export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, newYearDemos, initialTemplateId, initialAnimationId, initialDemoOpenSource, birthdayScenario = false, introVariant = "assembled", forceFullMotion = false, previewPhotoCount = 3 }: Props) => {
+  const [demoOpenSource, setDemoOpenSource] = useState<DemoOpenSource | null>(initialDemoOpenSource ?? null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<DemoTemplateId>(initialTemplateId ?? "paper-birthday");
   const [revealTypeOverride, setRevealTypeOverride] = useState(initialAnimationId);
   const demoModelByTemplate: Record<DemoTemplateId, typeof exampleCardModel | typeof schoolScrapbookDemoCardModel> = {
@@ -509,6 +511,9 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
                 );
               })}
             </div>
+            <Link href={NEW_YEAR_LANDING_PATH} className={styles.seasonalLandingLink}>
+              Собрать групповую открытку на Новый год <span aria-hidden="true">→</span>
+            </Link>
           </section>
 
           <div className={styles.templateGrid}>

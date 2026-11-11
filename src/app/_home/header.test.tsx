@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   startCardFromShowcaseAction: vi.fn(),
   startCaregiverCardFromShowcaseAction: vi.fn(),
   startColleagueCardFromShowcaseAction: vi.fn(),
+  startNewYearCardFromShowcaseAction: vi.fn(),
   startTeacherCardFromShowcaseAction: vi.fn(),
   sendClientTelemetry: vi.fn(),
   getTeacherTelemetryContext: vi.fn(() => ({
@@ -27,6 +28,7 @@ vi.mock("../home-actions", () => ({
   startCardFromShowcaseAction: mocks.startCardFromShowcaseAction,
   startCaregiverCardFromShowcaseAction: mocks.startCaregiverCardFromShowcaseAction,
   startColleagueCardFromShowcaseAction: mocks.startColleagueCardFromShowcaseAction,
+  startNewYearCardFromShowcaseAction: mocks.startNewYearCardFromShowcaseAction,
   startTeacherCardFromShowcaseAction: mocks.startTeacherCardFromShowcaseAction
 }));
 vi.mock("@/lib/client-telemetry", () => ({

@@ -1,5 +1,6 @@
 import styles from "./cases-section.module.css";
 import Link from "next/link";
+import { NEW_YEAR_LANDING_PATH } from "@/lib/landing-attribution";
 
 /* Предметные мини-иллюстрации в едином стиле:
    нейтральные поверхности, фирменные оранжевые акценты и мягкие контуры. */
@@ -152,6 +153,9 @@ export function CasesSection() {
             </article>
           ))}
         </div>
+        <Link href={NEW_YEAR_LANDING_PATH} className={`${styles.teacherLink} ${styles.seasonalLink}`}>
+          Групповая открытка на Новый год <span aria-hidden="true">→</span>
+        </Link>
       </div>
     </section>
   );

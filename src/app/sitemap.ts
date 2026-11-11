@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { NEW_YEAR_LANDING_PATH } from "@/lib/landing-attribution";
 
 const siteUrl = "https://slovesto.ru";
 
@@ -9,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${siteUrl}/gruppovaya-otkrytka/vospitatelyu`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${siteUrl}/gruppovaya-otkrytka/kollege`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${siteUrl}/gruppovaya-otkrytka/den-rozhdeniya`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${siteUrl}${NEW_YEAR_LANDING_PATH}`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${siteUrl}/example`, changeFrequency: "monthly", priority: 0.7 }
   ];
 }

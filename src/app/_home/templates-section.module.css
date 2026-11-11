@@ -1,6 +1,7 @@
 .section {
   padding: 96px 0;
-  background: linear-gradient(180deg, var(--surface-cream) 0%, var(--surface-strong) 100%);
+  background: linear-gradient(180deg, #f7f8fa 0%, #ffffff 100%);
+  color: #202124;
 }
 
 .shell {
@@ -24,7 +25,7 @@
 
 .subtitle {
   margin: 0;
-  color: var(--muted);
+  color: #5f6368;
   font-size: 1rem;
   line-height: 1.6;
 }
@@ -39,21 +40,15 @@
   flex-direction: column;
   padding: 12px 12px 22px;
   border-radius: 24px;
-  background: var(--surface-strong);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-soft);
+  background: #ffffff;
+  border: 1px solid rgba(233, 101, 47, 0.3);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.07);
   transition: border-color 220ms var(--motion-ease-out), box-shadow 220ms var(--motion-ease-out);
 }
 
-.card.active {
-  background: linear-gradient(135deg, #fffaf5 0%, #fff0e3 100%);
-  border-color: rgba(217, 106, 61, 0.35);
-  box-shadow: 0 20px 48px rgba(191, 108, 71, 0.16);
-}
-
-.card.active:hover {
-  border-color: rgba(217, 106, 61, 0.6);
-  box-shadow: 0 24px 54px rgba(191, 108, 71, 0.2);
+.card:hover {
+  border-color: rgba(233, 101, 47, 0.55);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.09);
 }
 
 .preview,
@@ -66,13 +61,13 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
-.active .preview,
-.active .assetPreview {
-  box-shadow: 0 10px 24px rgba(191, 108, 71, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+.assetPreview {
+  background: #f7f8fa;
 }
 
-.assetPreview {
-  background: var(--surface-warm);
+.seasonalCard .assetPreview {
+  height: auto;
+  aspect-ratio: 1120 / 521;
 }
 
 .accentWash {
@@ -84,7 +79,7 @@
 
 .assetImage {
   object-fit: cover;
-  outline: 1px solid var(--line);
+  outline: 1px solid rgba(0, 0, 0, 0.1);
   outline-offset: -1px;
   transition: transform var(--motion-normal, 420ms) var(--motion-ease-out);
 }
@@ -266,7 +261,7 @@
 .cardText {
   flex: 1 1 auto;
   margin: 0 10px;
-  color: var(--muted);
+  color: #5f6368;
   font-size: 0.9rem;
   line-height: 1.5;
   text-wrap: pretty;
@@ -293,8 +288,9 @@
   align-items: center;
   gap: 6px;
   width: fit-content;
-  margin: 10px 10px 0;
-  color: var(--accent-strong);
+  min-height: 40px;
+  margin: 4px 10px 0;
+  color: #c94a1d;
   font-size: 0.85rem;
   font-weight: 700;
   text-decoration: none;
@@ -313,12 +309,12 @@
 }
 
 .demoLink:hover {
-  color: var(--accent);
+  color: #c7532a;
   border-bottom-color: currentColor;
 }
 
 .demoLink:focus-visible {
-  outline: 3px solid rgba(191, 108, 71, 0.24);
+  outline: 3px solid rgba(233, 101, 47, 0.32);
   outline-offset: 3px;
   border-radius: 6px;
 }
@@ -361,6 +357,10 @@
 
   .grid > .card {
     grid-column: span 2;
+  }
+
+  .grid > .seasonalCard {
+    grid-column: span 3;
   }
 
   .preview,

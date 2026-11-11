@@ -34,3 +34,9 @@ export const resolveDemoTemplateId = (value: string | undefined, theme?: string)
 
 export const resolveDemoAnimationId = (value: string | undefined): GiftAnimationId | undefined =>
   value && isGiftAnimationId(value) ? value : undefined;
+
+export const resolveDemoOpenSource = (value: string | undefined) => {
+  if (value === "animation") return "animation_preview";
+  if (value === "recipient") return "recipient_view";
+  return undefined;
+};

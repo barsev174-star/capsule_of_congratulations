@@ -1,5 +1,5 @@
 import { getPostgresPool, isPostgresConfigured } from "@/lib/db/postgres";
-import { BIRTHDAY_LANDING_PATH, CAREGIVER_LANDING_PATH, COLLEAGUE_LANDING_PATH, HOME_LANDING_PATH, TEACHER_LANDING_PATH } from "@/lib/landing-attribution";
+import { BIRTHDAY_LANDING_PATH, CAREGIVER_LANDING_PATH, COLLEAGUE_LANDING_PATH, HOME_LANDING_PATH, NEW_YEAR_LANDING_PATH, TEACHER_LANDING_PATH } from "@/lib/landing-attribution";
 import { homeActivityPlacements, type HomeActivityPlacement } from "@/lib/home-activity";
 
 export const analyticsLandings = [
@@ -7,7 +7,8 @@ export const analyticsLandings = [
   { id: "teacher", path: TEACHER_LANDING_PATH, label: "Учителю" },
   { id: "caregiver", path: CAREGIVER_LANDING_PATH, label: "Воспитателю" },
   { id: "colleague", path: COLLEAGUE_LANDING_PATH, label: "Коллеге" },
-  { id: "birthday", path: BIRTHDAY_LANDING_PATH, label: "День рождения" }
+  { id: "birthday", path: BIRTHDAY_LANDING_PATH, label: "День рождения" },
+  { id: "new-year", path: NEW_YEAR_LANDING_PATH, label: "Новый год" }
 ] as const;
 
 export type AcquisitionCounts = {

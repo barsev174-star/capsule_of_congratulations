@@ -11,6 +11,7 @@ import {
   type AnalyticsConsentDecision
 } from "@/lib/client-analytics-consent";
 import { ensureCurrentLandingFirstTouch, removeFirstTouchCookie } from "@/lib/client-landing-attribution";
+import { NEW_YEAR_LANDING_PATH } from "@/lib/landing-attribution";
 import styles from "./yandex-metrika-consent.module.css";
 
 export const YANDEX_METRIKA_ID = 111957811;
@@ -22,7 +23,8 @@ const PUBLIC_ANALYTICS_PATHS = new Set([
   "/gruppovaya-otkrytka/uchitelyu",
   "/gruppovaya-otkrytka/vospitatelyu",
   "/gruppovaya-otkrytka/kollege",
-  "/gruppovaya-otkrytka/den-rozhdeniya"
+  "/gruppovaya-otkrytka/den-rozhdeniya",
+  NEW_YEAR_LANDING_PATH
 ]);
 
 type MetrikaFunction = ((...args: unknown[]) => void) & { a?: unknown[][]; l?: number };

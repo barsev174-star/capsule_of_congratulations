@@ -137,9 +137,10 @@ describe("acquisition report UI", () => {
     expect(within(journey).getAllByText("100% от созданных")).toHaveLength(2);
     expect(screen.queryByText(/от шага выше/)).not.toBeInTheDocument();
     const seo = screen.getByRole("region", { name: "Главная и тематические страницы" });
-    expect(within(seo).getAllByRole("link")).toHaveLength(5);
+    expect(within(seo).getAllByRole("link")).toHaveLength(6);
     expect(within(seo).getByRole("link", { name: "Главная" })).toHaveAttribute("href", "/");
     expect(within(seo).getByRole("link", { name: "День рождения" })).toHaveAttribute("href", "/gruppovaya-otkrytka/den-rozhdeniya");
+    expect(within(seo).getByRole("link", { name: "Новый год" })).toHaveAttribute("href", "/gruppovaya-otkrytka/novyy-god");
     expect(within(seo).getByText(/не уникальные посетители/)).toBeInTheDocument();
     expect(screen.getByText("Страница входа не определена")).toBeInTheDocument();
     const actions = screen.getByRole("region", { name: "Нажатия на главной, таблица" });

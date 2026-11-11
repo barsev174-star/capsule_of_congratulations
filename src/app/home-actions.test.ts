@@ -37,6 +37,7 @@ import {
   startCardFromTemplateAction,
   startCaregiverCardFromShowcaseAction,
   startColleagueCardFromShowcaseAction,
+  startNewYearCardFromShowcaseAction,
   startTeacherCardFromShowcaseAction
 } from "@/app/home-actions";
 
@@ -172,6 +173,16 @@ describe("landing card creation actions", () => {
       templateId: "new-year",
       templateTheme: "green"
     });
+  });
+
+  it.each([[undefined, "red"], ["red", "red"], ["green", "green"]])("creates a draft from the New Year landing with theme %s", async (selection, theme) => {
+    const formData = new FormData();
+    if (selection) formData.set("templateTheme", selection);
+
+    await startNewYearCardFromShowcaseAction(formData);
+
+    expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution, { templateId: "new-year", templateTheme: theme });
+    expect(mocks.redirect).toHaveBeenCalledWith("/manage/manage-token");
   });
 
   it.each(["unknown-template", "../../admin", ""])("rejects unavailable template %s", async (templateId) => {

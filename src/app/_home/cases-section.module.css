@@ -88,6 +88,12 @@
   transform: scale(0.96);
 }
 
+.seasonalLink {
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 0.95rem;
+}
+
 .section[data-motion-ready] .card:nth-child(-n+3) { transform: translateX(-32px); }
 .section[data-motion-ready] .card:nth-child(n+4) { transform: translateX(32px); }
 .section[data-motion-visible="true"] .card:nth-child(n) { transform: translateX(0); }

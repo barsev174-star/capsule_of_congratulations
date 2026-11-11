@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanProductUrl, extractProductUrl, previewGiftLink, productImageUrl } from "./link-preview";
 
+vi.mock("node:dns/promises", () => {
+  const lookup = async (hostname: string) => {
+    if (hostname === "example.com") return [{ address: "93.184.216.34", family: 4 }];
+    throw new Error(`Unexpected DNS lookup for ${hostname}`);
+  };
+  return { lookup, default: { lookup } };
+});
+
 describe("extractProductUrl", () => {
   it("finds and cleans a URL in copied text", () => expect(extractProductUrl("Товар: https://www.ozon.ru/product/item-1)." )).toBe("https://www.ozon.ru/product/item-1"));
   it("uses the first supported URL", () => expect(extractProductUrl("https://one.example/a и https://two.example/b")).toBe("https://one.example/a"));

@@ -6,7 +6,7 @@ import { requireTemplateRenderer } from "@/lib/templates/dispatcher";
 import { ExampleExperience } from "./example-experience";
 import { birthdayExampleCardModel } from "@/lib/birthday-example";
 import { isBirthdayExample } from "@/lib/birthday-scenario";
-import { resolveDemoAnimationId, resolveDemoTemplateId, type NewYearExampleId } from "./example-query";
+import { resolveDemoAnimationId, resolveDemoOpenSource, resolveDemoTemplateId, type NewYearExampleId } from "./example-query";
 import { getNewYearExample } from "./new-year-example";
 
 export const metadata: Metadata = {
@@ -21,18 +21,20 @@ type ExamplePageProps = {
 };
 
 export default async function ExamplePage({ searchParams }: ExamplePageProps) {
-  const { template, theme, scenario, intro, motion, animation, photos } = await searchParams;
+  const { template, theme, scenario, intro, motion, animation, photos, preview } = await searchParams;
   const rawTemplate = Array.isArray(template) ? template[0] : template;
   const rawTheme = Array.isArray(theme) ? theme[0] : theme;
   const rawIntro = Array.isArray(intro) ? intro[0] : intro;
   const rawMotion = Array.isArray(motion) ? motion[0] : motion;
   const rawAnimation = Array.isArray(animation) ? animation[0] : animation;
   const rawPhotos = Array.isArray(photos) ? photos[0] : photos;
+  const rawPreview = Array.isArray(preview) ? preview[0] : preview;
   const previewPhotoCount = rawPhotos === "0" || rawPhotos === "1" || rawPhotos === "2" || rawPhotos === "3"
     ? Number(rawPhotos) as 0 | 1 | 2 | 3
     : 3;
   const birthdayScenario = isBirthdayExample(rawTemplate, Array.isArray(scenario) ? scenario[0] : scenario);
   const initialTemplateId = resolveDemoTemplateId(rawTemplate, rawTheme);
+  const initialDemoOpenSource = resolveDemoOpenSource(rawPreview);
   const schoolDispatch = requireTemplateRenderer("school-scrapbook");
   const schoolClassicDispatch = requireTemplateRenderer("school-classic");
   const kindergartenDoodlesDispatch = requireTemplateRenderer("kindergarten-doodles");
@@ -57,9 +59,11 @@ export default async function ExamplePage({ searchParams }: ExamplePageProps) {
 
   return (
     <ExampleExperience
+      key={`${initialTemplateId ?? "default"}:${initialDemoOpenSource ?? "catalog"}`}
       birthdayScenario={birthdayScenario}
       initialTemplateId={initialTemplateId}
       initialAnimationId={resolveDemoAnimationId(rawAnimation)}
+      initialDemoOpenSource={initialDemoOpenSource}
       introVariant={rawIntro === "legacy" ? "legacy" : "assembled"}
       forceFullMotion={rawMotion === "full"}
       previewPhotoCount={previewPhotoCount}

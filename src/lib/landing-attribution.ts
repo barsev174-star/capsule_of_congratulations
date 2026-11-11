@@ -5,6 +5,16 @@ export const TEACHER_LANDING_PATH = "/gruppovaya-otkrytka/uchitelyu";
 export const CAREGIVER_LANDING_PATH = "/gruppovaya-otkrytka/vospitatelyu";
 export const COLLEAGUE_LANDING_PATH = "/gruppovaya-otkrytka/kollege";
 export const BIRTHDAY_LANDING_PATH = "/gruppovaya-otkrytka/den-rozhdeniya";
+export const NEW_YEAR_LANDING_PATH = "/gruppovaya-otkrytka/novyy-god";
+
+const landingPaths = {
+  home: HOME_LANDING_PATH,
+  teacher: TEACHER_LANDING_PATH,
+  caregiver: CAREGIVER_LANDING_PATH,
+  colleague: COLLEAGUE_LANDING_PATH,
+  birthday: BIRTHDAY_LANDING_PATH,
+  "new-year": NEW_YEAR_LANDING_PATH
+} as const;
 
 const MAX_COOKIE_LENGTH = 2_048;
 const MAX_VALUE_LENGTH = 100;
@@ -42,7 +52,12 @@ export type BirthdayLandingAttribution = LandingAttributionFields & {
   landing_path: typeof BIRTHDAY_LANDING_PATH;
 };
 
-export type LandingAttribution = HomeLandingAttribution | TeacherLandingAttribution | CaregiverLandingAttribution | ColleagueLandingAttribution | BirthdayLandingAttribution;
+export type NewYearLandingAttribution = LandingAttributionFields & {
+  landing_type: "new-year";
+  landing_path: typeof NEW_YEAR_LANDING_PATH;
+};
+
+export type LandingAttribution = HomeLandingAttribution | TeacherLandingAttribution | CaregiverLandingAttribution | ColleagueLandingAttribution | BirthdayLandingAttribution | NewYearLandingAttribution;
 
 type BuildLandingAttributionInput = {
   pathname: string;
@@ -82,13 +97,7 @@ const buildLandingAttribution = ({
   siteHost,
   now = new Date()
 }: BuildLandingAttributionInput, landingType: LandingAttribution["landing_type"]): LandingAttribution | null => {
-  const landingPath = {
-    home: HOME_LANDING_PATH,
-    teacher: TEACHER_LANDING_PATH,
-    caregiver: CAREGIVER_LANDING_PATH,
-    colleague: COLLEAGUE_LANDING_PATH,
-    birthday: BIRTHDAY_LANDING_PATH
-  }[landingType];
+  const landingPath = landingPaths[landingType];
   if (pathname !== landingPath) return null;
 
   const params = typeof search === "string" ? new URLSearchParams(search) : search;
@@ -138,6 +147,9 @@ export const buildColleagueLandingAttribution = (input: BuildLandingAttributionI
 export const buildBirthdayLandingAttribution = (input: BuildLandingAttributionInput): BirthdayLandingAttribution | null =>
   buildLandingAttribution(input, "birthday") as BirthdayLandingAttribution | null;
 
+export const buildNewYearLandingAttribution = (input: BuildLandingAttributionInput): NewYearLandingAttribution | null =>
+  buildLandingAttribution(input, "new-year") as NewYearLandingAttribution | null;
+
 export const serializeLandingAttribution = (value: LandingAttribution) =>
   encodeURIComponent(JSON.stringify(value));
 
@@ -147,13 +159,11 @@ export const parseLandingAttribution = (rawValue: string | null | undefined): La
   try {
     const decoded = decodeURIComponent(rawValue);
     const value = JSON.parse(decoded) as Record<string, unknown>;
-    const isHome = value.landing_type === "home" && value.landing_path === HOME_LANDING_PATH;
-    const isTeacher = value.landing_type === "teacher" && value.landing_path === TEACHER_LANDING_PATH;
-    const isCaregiver = value.landing_type === "caregiver" && value.landing_path === CAREGIVER_LANDING_PATH;
-    const isColleague = value.landing_type === "colleague" && value.landing_path === COLLEAGUE_LANDING_PATH;
-    const isBirthday = value.landing_type === "birthday" && value.landing_path === BIRTHDAY_LANDING_PATH;
+    const landingType = value.landing_type;
     if (
-      (!isHome && !isTeacher && !isCaregiver && !isColleague && !isBirthday) ||
+      typeof landingType !== "string" ||
+      !Object.hasOwn(landingPaths, landingType) ||
+      value.landing_path !== landingPaths[landingType as keyof typeof landingPaths] ||
       typeof value.first_touch_at !== "string" ||
       !Number.isFinite(Date.parse(value.first_touch_at))
     ) {
@@ -166,8 +176,8 @@ export const parseLandingAttribution = (rawValue: string | null | undefined): La
     const referrerHost = sanitizeValue(typeof value.referrer_host === "string" ? normalizeHost(value.referrer_host) : undefined);
 
     return {
-      landing_type: isHome ? "home" : isTeacher ? "teacher" : isCaregiver ? "caregiver" : isColleague ? "colleague" : "birthday",
-      landing_path: isHome ? HOME_LANDING_PATH : isTeacher ? TEACHER_LANDING_PATH : isCaregiver ? CAREGIVER_LANDING_PATH : isColleague ? COLLEAGUE_LANDING_PATH : BIRTHDAY_LANDING_PATH,
+      landing_type: landingType,
+      landing_path: value.landing_path,
       first_touch_at: value.first_touch_at,
       ...(utmSource ? { utm_source: utmSource } : {}),
       ...(utmMedium ? { utm_medium: utmMedium } : {}),

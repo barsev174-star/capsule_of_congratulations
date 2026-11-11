@@ -371,6 +371,17 @@
 .templateGrid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .seasonalGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
+.seasonalLandingLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  width: fit-content;
+  gap: 8px;
+  color: #e9652f;
+  font-weight: 700;
+  text-underline-offset: 0.2em;
+}
+
 .templateGrid > div {
   grid-column: span 2;
 }

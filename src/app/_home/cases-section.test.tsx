@@ -6,7 +6,8 @@ describe("CasesSection", () => {
   it("keeps all six occasions and separates family birthdays from colleagues", () => {
     render(<CasesSection />);
     expect(screen.getAllByRole("article")).toHaveLength(6);
-    expect(screen.getAllByRole("link")).toHaveLength(5);
+    expect(screen.getAllByRole("link")).toHaveLength(6);
+    expect(screen.getByRole("link", { name: "Групповая открытка на Новый год" })).toHaveAttribute("href", "/gruppovaya-otkrytka/novyy-god");
     expect(screen.getByRole("link", { name: "На день рождения от близких" })).toHaveAttribute("href", "/gruppovaya-otkrytka/den-rozhdeniya");
     const birthdayCard = screen.getByRole("heading", { name: "День рождения", exact: true }).closest("article")!;
     expect(within(birthdayCard).getByRole("link", { name: "Открытка от друзей и близких" })).toHaveAttribute("href", "/gruppovaya-otkrytka/den-rozhdeniya");

@@ -9,15 +9,18 @@ import {
   COLLEAGUE_LANDING_PATH,
   FIRST_TOUCH_COOKIE_NAME,
   FIRST_TOUCH_MAX_AGE_SECONDS,
+  NEW_YEAR_LANDING_PATH,
   TEACHER_LANDING_PATH,
   buildCaregiverLandingAttribution,
   buildColleagueLandingAttribution,
+  buildNewYearLandingAttribution,
   buildTeacherLandingAttribution,
   parseLandingAttribution,
   serializeLandingAttribution,
   type CaregiverLandingAttribution,
   type ColleagueLandingAttribution,
   type LandingAttribution,
+  type NewYearLandingAttribution,
   type TeacherLandingAttribution
 } from "@/lib/landing-attribution";
 import { hasAcceptedAnalyticsConsent } from "@/lib/client-analytics-consent";
@@ -77,6 +80,9 @@ export const ensureColleagueFirstTouch = (): ColleagueLandingAttribution | null 
 export const ensureBirthdayFirstTouch = (): BirthdayLandingAttribution | null =>
   ensureFirstTouch(BIRTHDAY_LANDING_PATH, buildBirthdayLandingAttribution);
 
+export const ensureNewYearFirstTouch = (): NewYearLandingAttribution | null =>
+  ensureFirstTouch(NEW_YEAR_LANDING_PATH, buildNewYearLandingAttribution);
+
 export const ensureCurrentLandingFirstTouch = (): LandingAttribution | null => {
   if (typeof window === "undefined") return null;
   if (window.location.pathname === HOME_LANDING_PATH) return ensureHomeFirstTouch();
@@ -84,6 +90,7 @@ export const ensureCurrentLandingFirstTouch = (): LandingAttribution | null => {
   if (window.location.pathname === CAREGIVER_LANDING_PATH) return ensureCaregiverFirstTouch();
   if (window.location.pathname === COLLEAGUE_LANDING_PATH) return ensureColleagueFirstTouch();
   if (window.location.pathname === BIRTHDAY_LANDING_PATH) return ensureBirthdayFirstTouch();
+  if (window.location.pathname === NEW_YEAR_LANDING_PATH) return ensureNewYearFirstTouch();
   return null;
 };
 
@@ -91,6 +98,12 @@ export const getBirthdayTelemetryContext = (): Record<string, string> =>
   ensureBirthdayFirstTouch() ?? {
     landing_type: "birthday",
     landing_path: BIRTHDAY_LANDING_PATH
+  };
+
+export const getNewYearTelemetryContext = (): Record<string, string> =>
+  ensureNewYearFirstTouch() ?? {
+    landing_type: "new-year",
+    landing_path: NEW_YEAR_LANDING_PATH
   };
 
 export const getTeacherTelemetryContext = (): Record<string, string> => {

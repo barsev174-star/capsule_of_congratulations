@@ -112,7 +112,7 @@ describe("TemplateSettingsForm", () => {
     const newYear = cardTemplates.find(({ id }) => id === "new-year")!;
     const update = vi.mocked(updateCardTemplateAction);
     update.mockClear();
-    update.mockResolvedValue({ ok: true, message: "Шаблон применён." });
+    update.mockResolvedValue({ ok: true, message: "Шаблон применён.", giftAnimationId: "winter-wonder" });
     const onTemplateSelectionChange = vi.fn();
     render(
       <TemplateSettingsForm
@@ -136,7 +136,7 @@ describe("TemplateSettingsForm", () => {
     expect(option(next)).toBeChecked();
     await user.click(screen.getByRole("button", { name: "Применить шаблон" }));
 
-    await waitFor(() => expect(onTemplateSelectionChange).toHaveBeenCalledWith("new-year", next));
+    await waitFor(() => expect(onTemplateSelectionChange).toHaveBeenCalledWith("new-year", next, "winter-wonder"));
     const submitted = update.mock.calls[0][1];
     expect(submitted.get("templateId")).toBe("new-year");
     expect(submitted.get("templateTheme")).toBe(next);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveDemoAnimationId, resolveDemoTemplateId } from "./example-query";
+import { resolveDemoAnimationId, resolveDemoOpenSource, resolveDemoTemplateId } from "./example-query";
 
 describe("example query parameters", () => {
   it("accepts the template and reveal values produced by the editor", () => {
@@ -18,5 +18,12 @@ describe("example query parameters", () => {
 
   it.each(["unknown-reveal", "COLLECT_MESSAGES", ""])("falls back for an invalid reveal %s", (value) => {
     expect(resolveDemoAnimationId(value)).toBeUndefined();
+  });
+
+  it("opens the selected demo mode only for supported preview values", () => {
+    expect(resolveDemoOpenSource("animation")).toBe("animation_preview");
+    expect(resolveDemoOpenSource("recipient")).toBe("recipient_view");
+    expect(resolveDemoOpenSource("winter-wonder")).toBeUndefined();
+    expect(resolveDemoOpenSource(undefined)).toBeUndefined();
   });
 });
