@@ -3,9 +3,16 @@
 import { useRef, type KeyboardEvent, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import { WinterGiftPreview } from "@/components/gift-intro/winter-gift-scene";
 import type { CardTemplate } from "@/lib/cards/templates";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
-import { giftAnimations, type GiftAnimationId } from "@/lib/gift-animations";
+import {
+  getGiftAnimationNeighbor,
+  getGiftAnimationsForTemplate,
+  getWinterGiftTheme,
+  winterWonderAnimation,
+  type GiftAnimationId
+} from "@/lib/gift-animations";
 import { useModalFocus } from "./use-modal-focus";
 import styles from "./manage-page.module.css";
 
@@ -29,6 +36,10 @@ const revealOptionDetails: Record<GiftAnimationId, { label: string; description:
   "collect-messages": {
     label: "Показывает, как собирался подарок",
     description: "Поздравления и фото собираются в открытку прямо на глазах."
+  },
+  "winter-wonder": {
+    label: "Подарок из зимнего леса",
+    description: winterWonderAnimation.description
   }
 };
 
@@ -48,6 +59,10 @@ export const RevealIcon = ({ animationId }: { animationId: GiftAnimationId }) =>
         <rect x="3.5" y="5.5" width="17" height="13" rx="2.5" />
         <path d="m4.5 7 7.5 6 7.5-6" />
         <path d="m4.5 17 5.2-4.5M19.5 17l-5.2-4.5" />
+      </svg>
+    ) : animationId === "winter-wonder" ? (
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-1-6-7-6-6-2 .3 1.4 2.5 2 6 2Zm0 0c1-6 7-6 6-2-.3 1.4-2.5 2-6 2Z" />
       </svg>
     ) : (
       <svg viewBox="0 0 24 24" fill="none">
@@ -162,6 +177,7 @@ export const RevealSettingsDialog = ({
   const dialogRef = useRef<HTMLElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const choiceRefs = useRef<Partial<Record<GiftAnimationId, HTMLButtonElement | null>>>({});
+  const availableAnimations = getGiftAnimationsForTemplate(templateId);
   useModalFocus(dialogRef, onClose);
 
   const selectAnimation = (animationId: GiftAnimationId) => {
@@ -174,9 +190,9 @@ export const RevealSettingsDialog = ({
     event: KeyboardEvent<HTMLButtonElement>,
     animationId: GiftAnimationId
   ) => {
-    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+    const nextAnimationId = getGiftAnimationNeighbor(availableAnimations, animationId, event.key);
+    if (!nextAnimationId) return;
     event.preventDefault();
-    const nextAnimationId: GiftAnimationId = animationId === "envelope" ? "collect-messages" : "envelope";
     const nextChoice = choiceRefs.current[nextAnimationId];
     nextChoice?.focus();
     selectAnimation(nextAnimationId);
@@ -219,17 +235,21 @@ export const RevealSettingsDialog = ({
         <form ref={formRef} action={action} className={styles.revealDialogForm}>
           <input type="hidden" name="manageToken" value={manageToken} />
           <div className={styles.revealDialogBody} role="radiogroup" aria-label="Способ открытия открытки">
-            {giftAnimations.map((animation) => {
+            {availableAnimations.map((animation) => {
               const selected = animation.id === selectedAnimationId;
               return (
                 <article
                   key={animation.id}
-                  className={`${styles.revealOptionCard} ${selected ? styles.revealOptionCardSelected : ""}`}
+                  className={`${styles.revealOptionCard} ${animation.id === "winter-wonder" ? styles.winterRevealCard : ""} ${selected ? styles.revealOptionCardSelected : ""}`}
                   onClick={(event) => handleCardClick(event, animation.id)}
                 >
                   {animation.id === "envelope"
                     ? <EnvelopeStoryboard templatePreviewSrc={templatePreviewSrc} />
-                    : <CollectStoryboard templatePreviewSrc={templatePreviewSrc} />}
+                    : animation.id === "collect-messages"
+                      ? <CollectStoryboard templatePreviewSrc={templatePreviewSrc} />
+                      : <div className={styles.winterRevealPreview} data-preview-story="winter-wonder">
+                          <WinterGiftPreview theme={getWinterGiftTheme(templateId, templateTheme)} templatePreviewSrc={templatePreviewSrc} />
+                        </div>}
                   <div className={styles.revealOptionCopy}>
                     <div className={styles.revealOptionTitle}>
                       <RevealIcon animationId={animation.id} />

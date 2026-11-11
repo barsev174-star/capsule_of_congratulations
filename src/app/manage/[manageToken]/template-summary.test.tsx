@@ -1,6 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cardTemplates } from "@/lib/cards/templates";
 import { TemplateSummary } from "./template-summary";
 
 const actions = vi.hoisted(() => ({
@@ -39,6 +40,31 @@ describe("TemplateSummary", () => {
     actions.updateGiftAnimationAction.mockReset();
     actions.updateGiftAnimationAction.mockResolvedValue({ ok: true, message: "Сохранено" });
     telemetry.sendClientTelemetry.mockReset();
+  });
+
+  it("saves the winter animation and keeps the selected theme in its example link", async () => {
+    const user = userEvent.setup();
+    render(
+      <TemplateSummary
+        manageToken="manage-token"
+        templates={cardTemplates.filter(({ id }) => id === "new-year")}
+        initialTemplateId="new-year"
+        initialTemplateTheme="green"
+        initialAnimationId="envelope"
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "Изменить" }));
+    expect(screen.getAllByRole("radio")[0]).toHaveAccessibleName("Волшебная доставка — выбрать");
+    await user.click(screen.getByRole("radio", { name: "Волшебная доставка — выбрать" }));
+    expect(await screen.findByRole("radio", { name: "Волшебная доставка — выбрано" })).toHaveAttribute("aria-checked", "true");
+    const submitted = actions.updateGiftAnimationAction.mock.calls[0][1] as FormData;
+    expect(submitted.get("giftAnimationId")).toBe("winter-wonder");
+    await user.click(screen.getByRole("button", { name: "Закрыть" }));
+    expect(screen.getByRole("link", { name: /Посмотреть пример/ })).toHaveAttribute(
+      "href",
+      "/example?template=new-year&animation=winter-wonder&theme=green"
+    );
   });
 
   it("starts without an automatically selected template", () => {
@@ -84,7 +110,8 @@ describe("TemplateSummary", () => {
     expect(dialog).toBeInTheDocument();
     expect(dialog).toHaveAccessibleDescription("Как получатель впервые увидит подарок");
     await waitFor(() => expect(dialog).toHaveFocus());
-    expect(screen.getAllByRole("radio")).toHaveLength(2);
+    expect(screen.getAllByRole("radio")).toHaveLength(3);
+    expect(screen.getAllByRole("radio").at(-1)).toHaveAccessibleName("Волшебная доставка — выбрать");
     expect(screen.getByRole("radio", { name: "Конверт — выбрано" })).toHaveAttribute("aria-checked", "true");
     expect(document.querySelectorAll('[data-preview-story="envelope"] [data-preview-stage]')).toHaveLength(3);
     expect(document.querySelectorAll('[data-preview-story="collect-messages"] [data-preview-stage]')).toHaveLength(3);

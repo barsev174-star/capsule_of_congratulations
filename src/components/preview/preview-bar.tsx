@@ -6,9 +6,10 @@ type PreviewBarProps = {
   manageToken: string;
   finalSlug: string;
   published?: boolean;
+  openingPreviewHref?: string;
 };
 
-export const PreviewBar = ({ manageToken, finalSlug, published = false }: PreviewBarProps) => {
+export const PreviewBar = ({ manageToken, finalSlug, published = false, openingPreviewHref }: PreviewBarProps) => {
   return (
     <header className={styles.bar}>
       <div className={styles.inner}>
@@ -19,6 +20,11 @@ export const PreviewBar = ({ manageToken, finalSlug, published = false }: Previe
           </p>
         </div>
         <div className={styles.actions}>
+          {openingPreviewHref ? (
+            <Link href={openingPreviewHref} className={styles.secondaryButton}>
+              Посмотреть анимацию открытия
+            </Link>
+          ) : null}
           <Link href={getManagePath(manageToken)} className={styles.secondaryButton}>
             Вернуться к редактированию
           </Link>

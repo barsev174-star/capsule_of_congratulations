@@ -11148,6 +11148,16 @@ button.designStickyPrimary {
   scrollbar-gutter: stable;
 }
 
+.winterRevealCard {
+  grid-column: 1 / -1;
+}
+
+.winterRevealPreview {
+  height: 128px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
 .revealOptionCard {
   display: grid;
   grid-template-rows: auto minmax(90px, 1fr) auto;
@@ -11162,6 +11172,20 @@ button.designStickyPrimary {
   transition-property: background-color, box-shadow, transform;
   transition-duration: 170ms;
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (min-width: 768px) {
+  .winterRevealCard.revealOptionCard {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+  }
+
+  .winterRevealPreview {
+    grid-row: span 2;
+    height: 100%;
+    min-height: 128px;
+  }
 }
 
 @media (hover: hover) and (pointer: fine) {

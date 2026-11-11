@@ -82,7 +82,7 @@ describe("empty card draft creation", () => {
     expect(result.chatMessage).toContain("С днём рождения!");
     expect(result.participantLink).toMatch(/\/join\/[^?]+\?preview=join-v2$/);
     expect(result.chatMessage).toContain(result.participantLink);
-    expect((await createEmptyCardDraft()).card.occasionText).toBe("");
+    expect((await createEmptyCardDraft()).card).toMatchObject({ occasionText: "", giftAnimationId: null });
   });
 
   it("persists a selected gift reveal in a new draft", async () => {
@@ -98,13 +98,14 @@ describe("empty card draft creation", () => {
     }));
   });
 
-  it("persists the selected theme with the initial draft", async () => {
+  it("uses delivery by default for a new New Year draft", async () => {
     const result = await createEmptyCardDraft({}, { templateId: "new-year", templateTheme: "green" });
 
     expect(result.card.templateTheme).toBe("green");
     expect(mocks.saveCardDraft).toHaveBeenCalledWith(expect.objectContaining({
       templateId: "new-year",
-      templateTheme: "green"
+      templateTheme: "green",
+      giftAnimationId: "winter-wonder"
     }));
   });
 });

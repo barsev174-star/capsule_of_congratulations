@@ -1412,7 +1412,7 @@ export async function updateCardTemplateAction(
     templateId: templateIdValue
   });
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);
-  return { ok: true, message: "Шаблон применён." };
+  return { ok: true, message: "Шаблон применён.", giftAnimationId: updated.giftAnimationId };
 }
 
 export async function updateGiftAnimationAction(

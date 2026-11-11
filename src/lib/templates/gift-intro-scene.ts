@@ -6,6 +6,8 @@ export type GiftIntroScene = {
   surface: string;
   text: string;
   accent: string;
+  webTop?: TemplateAssetRef;
+  mobileTop?: TemplateAssetRef;
 };
 
 export const getGiftIntroScene = (profile: TemplateProfile): GiftIntroScene | undefined => {
@@ -15,6 +17,8 @@ export const getGiftIntroScene = (profile: TemplateProfile): GiftIntroScene | un
   return {
     top: scene.exportTop?.story ?? scene.top,
     bottom: scene.bottom,
+    webTop: scene.top,
+    mobileTop: scene.mobileTop,
     surface: profile.intro.surface,
     text: profile.intro.text,
     accent: profile.intro.accent

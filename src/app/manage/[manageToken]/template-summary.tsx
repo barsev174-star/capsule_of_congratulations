@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import type { CardTemplate } from "@/lib/cards/templates";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
-import { giftAnimations, type GiftAnimationId } from "@/lib/gift-animations";
+import { giftAnimations, isGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import { getRevealExampleHref, RevealIcon, RevealSettingsDialog } from "./reveal-settings-dialog";
 import { resolveCatalogTheme, TemplateSettingsForm } from "./template-settings-form";
 import { updateGiftAnimationAction } from "./actions";
@@ -37,7 +37,7 @@ export const TemplateSummary = ({
   const handleAnimationAction = async (previousState: { ok: boolean; message: string }, formData: FormData) => {
     const requestedAnimationId = String(formData.get("giftAnimationId") ?? "");
     const result = await updateGiftAnimationAction(previousState, formData);
-    if (result.ok && (requestedAnimationId === "envelope" || requestedAnimationId === "collect-messages")) {
+    if (result.ok && isGiftAnimationId(requestedAnimationId)) {
       setAnimationId(requestedAnimationId);
       sendClientTelemetry("REVEAL_TYPE_SELECTED", {
         templateId: selectedTemplate?.id ?? "",
@@ -243,9 +243,10 @@ export const TemplateSummary = ({
               templates={templates}
               currentTemplateId={templateId}
               currentTheme={templateTheme}
-              onTemplateSelectionChange={(id, theme) => {
+              onTemplateSelectionChange={(id, theme, savedAnimationId) => {
                 setTemplateId(id);
                 setTemplateTheme(theme);
+                if (savedAnimationId) setAnimationId(savedAnimationId);
               }}
               onApplied={() => setIsPickerOpen(false)}
             />

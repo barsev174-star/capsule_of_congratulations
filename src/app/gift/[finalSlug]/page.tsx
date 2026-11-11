@@ -126,6 +126,7 @@ export default async function GiftPage({ params, searchParams }: Props) {
       previewDecor={template?.introDecor}
       previewScene={presentation.kind === "universal-v1" ? getGiftIntroScene(presentation.dispatch.registration.profile) : undefined}
       templateId={card.templateId}
+      templateTheme={card.templateTheme}
       animationId={animationId}
       accent={template?.accent}
       assemblyPreview={{

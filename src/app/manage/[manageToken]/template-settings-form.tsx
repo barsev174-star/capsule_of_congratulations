@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import type { CardTemplate } from "@/lib/cards/templates";
+import type { GiftAnimationId } from "@/lib/gift-animations";
 import { updateCardTemplateAction } from "./actions";
 import styles from "./manage-page.module.css";
 
@@ -10,7 +11,7 @@ type Props = {
   templates: CardTemplate[];
   currentTemplateId: CardTemplate["id"] | null;
   currentTheme?: string | null;
-  onTemplateSelectionChange?: (templateId: CardTemplate["id"], theme?: string) => void;
+  onTemplateSelectionChange?: (templateId: CardTemplate["id"], theme?: string, animationId?: GiftAnimationId | null) => void;
   onApplied?: () => void;
 };
 
@@ -56,7 +57,7 @@ export const TemplateSettingsForm = ({
   const handleTemplateAction = async (previousState: typeof initialState, formData: FormData) => {
     const result = await updateCardTemplateAction(previousState, formData);
     if (result.ok && selectedOption) {
-      onTemplateSelectionChange?.(selectedOption.templateId, selectedOption.themeId);
+      onTemplateSelectionChange?.(selectedOption.templateId, selectedOption.themeId, result.giftAnimationId);
       onApplied?.();
     }
     return result;

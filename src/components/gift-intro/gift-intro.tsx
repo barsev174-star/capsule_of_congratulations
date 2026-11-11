@@ -12,11 +12,12 @@ import {
 import { BrandLogo } from "@/components/brand/brand-logo";
 import type { CardTemplate, CardTemplateId } from "@/lib/cards/templates";
 import type { TemplateGiftVisualPreset } from "@/lib/templates/profile";
-import { defaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
+import { defaultGiftAnimationId, getWinterGiftTheme, type GiftAnimationId } from "@/lib/gift-animations";
 import type { GiftRevealMessagePreview } from "@/lib/gift-reveal-preview";
 import { getGiftRevealPreviewProfile } from "@/lib/gift-reveal-profiles";
 import type { GiftIntroScene } from "@/lib/templates/gift-intro-scene";
 import { CollectRevealScene } from "./collect-reveal-scene";
+import { WinterGiftScene } from "./winter-gift-scene";
 import { GiftIntro as LegacyGiftIntro } from "./legacy-v1/gift-intro";
 import styles from "./gift-intro.module.css";
 
@@ -37,6 +38,8 @@ export type GiftIntroPreview = {
 
 type GiftIntroState =
   | "idle"
+  | "delivering"
+  | "opening-gift"
   | "intro"
   | "releasing-seal"
   | "opening-envelope"
@@ -69,6 +72,7 @@ export type GiftIntroProps = {
   previewScene?: GiftIntroScene;
   visualPreset?: TemplateGiftVisualPreset;
   templateId?: CardTemplateId;
+  templateTheme?: string | null;
   animationId?: GiftAnimationId;
   accent?: string;
   assemblyPreview?: GiftIntroPreview;
@@ -80,6 +84,10 @@ export type GiftIntroProps = {
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 const REDUCED_MOTION_DURATION = 420;
+const WINTER_OPEN_AT = 5980;
+const WINTER_HANDOFF_AT = WINTER_OPEN_AT + 2130;
+const WINTER_FINISH_AT = WINTER_HANDOFF_AT + 1250;
+const WINTER_REDUCED_DURATION = 360;
 const ENVELOPE_SEQUENCE = [
   ["releasing-seal", 220],
   ["opening-envelope", 430],
@@ -325,6 +333,7 @@ const GiftIntroAssembled = ({
   previewScene,
   visualPreset,
   templateId = "warm-classic",
+  templateTheme,
   animationId = defaultGiftAnimationId,
   accent,
   assemblyPreview,
@@ -339,12 +348,16 @@ const GiftIntroAssembled = ({
   );
   const [fullMotionRequested, setFullMotionRequested] = useState(forceFullMotion);
   const prefersReducedMotion = systemPrefersReducedMotion && !fullMotionRequested && !forceFullMotion;
+  const isWinter = animationId === "winter-wonder";
   const [state, setState] = useState<GiftIntroState>("idle");
   const [isHoveringCta, setIsHoveringCta] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const onIntroDoneRef = useRef(onIntroDone);
   const bodyOverflowRef = useRef<string | null>(null);
   const giftWrapperRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const winterOpenedRef = useRef(false);
+  const finishedRef = useRef(false);
 
   const name = cleanPreviewText(recipientName, "Вам");
   const resolvedPreviewKicker = cleanPreviewText(previewKicker, "Открытка для");
@@ -374,7 +387,7 @@ const GiftIntroAssembled = ({
   const collectProfile = getGiftRevealPreviewProfile(templateId)
     ?? getGiftRevealPreviewProfile("paper-birthday");
   const isFinished = state === "finished" || state === "skipped";
-  const shouldRenderFinalCard = [
+  const shouldRenderFinalCard = isWinter || [
     "unfolding-card",
     "assembling-card",
     "revealing-preview",
@@ -402,6 +415,8 @@ const GiftIntroAssembled = ({
   }, []);
 
   const finishIntro = useCallback((nextState: "finished" | "skipped") => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
     setState(nextState);
     onIntroDoneRef.current?.();
   }, []);
@@ -432,9 +447,11 @@ const GiftIntroAssembled = ({
 
   useEffect(() => {
     const isComplexMotionPlaying = [
+      "delivering",
       "intro",
       "releasing-seal",
       "opening-envelope",
+      "opening-gift",
       "extracting-card",
       "unfolding-card",
       "assembling-card",
@@ -452,6 +469,11 @@ const GiftIntroAssembled = ({
     if (!prefersReducedMotion || !isComplexMotionPlaying) return;
 
     clearTimers();
+    if (isWinter) {
+      schedule(() => setState("handoff"), 0);
+      schedule(() => finishIntro("finished"), WINTER_REDUCED_DURATION);
+      return;
+    }
     if (isCollectMessages) {
       schedule(() => setState("revealing-preview"), 0);
       schedule(() => setState("handoff"), 180);
@@ -460,9 +482,24 @@ const GiftIntroAssembled = ({
     }
     schedule(() => setState("handoff"), 0);
     schedule(() => finishIntro("finished"), REDUCED_MOTION_DURATION);
-  }, [clearTimers, finishIntro, isCollectMessages, prefersReducedMotion, schedule, state]);
+  }, [clearTimers, finishIntro, isCollectMessages, isWinter, prefersReducedMotion, schedule, state]);
 
   const startSequence = useCallback((requestFullMotion: boolean) => {
+    if (isWinter) {
+      if (state !== "idle" || winterOpenedRef.current || finishedRef.current) return;
+      winterOpenedRef.current = true;
+      dialogRef.current?.focus({ preventScroll: true });
+      if (prefersReducedMotion) {
+        setState("handoff");
+        schedule(() => finishIntro("finished"), WINTER_REDUCED_DURATION);
+      } else {
+        setState("delivering");
+        schedule(() => setState("opening-gift"), WINTER_OPEN_AT);
+        schedule(() => setState("handoff"), WINTER_HANDOFF_AT);
+        schedule(() => finishIntro("finished"), WINTER_FINISH_AT);
+      }
+      return;
+    }
     if (state !== "idle") return;
 
     clearTimers();
@@ -491,7 +528,7 @@ const GiftIntroAssembled = ({
         setState(nextState);
       }, delay);
     });
-  }, [clearTimers, finishIntro, isCollectMessages, prefersReducedMotion, schedule, state]);
+  }, [clearTimers, finishIntro, isCollectMessages, isWinter, prefersReducedMotion, schedule, state]);
 
   const handleOpen = useCallback(() => startSequence(false), [startSequence]);
 
@@ -506,20 +543,40 @@ const GiftIntroAssembled = ({
       return;
     }
 
-    const handleEscape = (event: KeyboardEvent) => {
+    if (isWinter) dialogRef.current?.focus({ preventScroll: true });
+    const handleKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") handleSkip();
+      if (!isWinter || event.key !== "Tab") return;
+      const buttons = dialogRef.current?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)");
+      if (!buttons?.length) return;
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      const active = document.activeElement;
+      if (active === (event.shiftKey ? first : last) || ![...buttons].some((button) => button === active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      }
     };
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [handleSkip, isIntroVisible]);
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [handleSkip, isIntroVisible, isWinter]);
 
   const handleReplay = useCallback(() => {
     clearTimers();
+    finishedRef.current = false;
+    winterOpenedRef.current = false;
+    if (isWinter) window.scrollTo({ top: 0, behavior: "instant" });
     setState("idle");
-  }, [clearTimers]);
+  }, [clearTimers, isWinter]);
 
   return (
     <>
+      {isWinter && previewScene?.webTop ? (
+        <>
+          <link rel="preload" as="image" href={previewScene.webTop.src} media={previewScene.mobileTop ? "(width > 640px)" : undefined} />
+          {previewScene.mobileTop ? <link rel="preload" as="image" href={previewScene.mobileTop.src} media="(width <= 640px)" /> : null}
+        </>
+      ) : null}
       <div
         ref={giftWrapperRef}
         className={`${styles.giftWrapper} ${isFinalCardVisible ? styles.finalCardVisible : styles.finalCardHidden}`}
@@ -527,6 +584,7 @@ const GiftIntroAssembled = ({
         data-motion-mode={prefersReducedMotion ? "reduced" : "full"}
         aria-hidden={isIntroVisible}
         inert={isIntroVisible ? true : undefined}
+        style={isWinter ? sceneColors : undefined}
         tabIndex={-1}
       >
         {shouldRenderFinalCard ? children : null}
@@ -542,6 +600,7 @@ const GiftIntroAssembled = ({
 
       {isIntroVisible ? (
         <section
+          ref={isWinter ? dialogRef : undefined}
           className={`${styles.page} ${STATE_CLASS[state] ?? ""} ${isHoveringCta ? styles.scenePrimed : ""}`}
           data-intro-state={state}
           data-animation-id={animationId}
@@ -550,16 +609,27 @@ const GiftIntroAssembled = ({
           role="dialog"
           aria-modal="true"
           aria-label={`Подарочная открытка для ${name}`}
+          tabIndex={isWinter ? -1 : undefined}
         >
-          <div className={styles.sceneLight} aria-hidden="true" />
+          {!isWinter && <div className={styles.sceneLight} aria-hidden="true" />}
           <header className={styles.introHeader}>
-            <BrandLogo className={styles.introBrand} />
+            {isWinter ? <span className={styles.winterBrand}>Slovesto</span> : <BrandLogo className={styles.introBrand} />}
             <button type="button" className={styles.skipButton} onClick={handleSkip}>
               Пропустить
             </button>
           </header>
 
-          {isCollectMessages && collectProfile ? (
+          {isWinter ? (
+            <WinterGiftScene
+              theme={getWinterGiftTheme(templateId, templateTheme)}
+              phase={state === "handoff" ? "handoff"
+                : state === "opening-gift" ? "opening"
+                : state === "delivering" ? "delivering" : "ready"}
+              reducedMotion={prefersReducedMotion}
+              forceFullMotion={forceFullMotion}
+              onOpen={handleOpen}
+            />
+          ) : isCollectMessages && collectProfile ? (
             <CollectRevealScene
               phase={state}
               recipientName={name}
@@ -790,7 +860,8 @@ const GiftIntroAssembled = ({
 };
 
 export const GiftIntro = ({ variant = "assembled", ...props }: GiftIntroProps) => {
-  if (variant === "legacy") {
+  const animationId = props.animationId ?? defaultGiftAnimationId;
+  if (variant === "legacy" && animationId !== "winter-wonder") {
     return (
       <LegacyGiftIntro
         recipientName={props.recipientName}
@@ -800,7 +871,7 @@ export const GiftIntro = ({ variant = "assembled", ...props }: GiftIntroProps) =
         previewPreset={props.previewPreset}
         previewDecor={props.previewDecor}
         templateId={props.templateId}
-        animationId={props.animationId}
+        animationId={animationId}
         accent={props.accent}
         onIntroDone={props.onIntroDone}
       >
@@ -809,7 +880,7 @@ export const GiftIntro = ({ variant = "assembled", ...props }: GiftIntroProps) =
     );
   }
 
-  return <GiftIntroAssembled {...props} variant={variant} />;
+  return <GiftIntroAssembled {...props} animationId={animationId} variant={variant} />;
 };
 
 type GiftPlaceholderProps = {

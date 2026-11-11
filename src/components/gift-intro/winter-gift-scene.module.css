@@ -1,0 +1,650 @@
+.scene {
+  --settle: cubic-bezier(.2, .65, .25, 1);
+  --open: cubic-bezier(.29, .02, .24, 1);
+  --lid-lift-delay: 180ms;
+  --lid-lift-duration: 1120ms;
+  --lid-exit-at: calc(var(--lid-lift-delay) + var(--lid-lift-duration));
+  --lid-exit-duration: 720ms;
+  --gift-width: clamp(154px, min(95vw, 57dvh), 405px);
+  --stage-y: 53dvh;
+  --flight-width: clamp(222px, 30vw, 390px);
+  --flight-top: 23dvh;
+  --flight-delay: 450ms;
+  --flight-duration: 4560ms;
+  --delivery-duration: 2520ms;
+  --transfer-at: calc(var(--flight-delay) + var(--flight-duration) / 2);
+  --transfer-rise: -16px;
+  --launch-x: calc(var(--flight-width) * (var(--cargo-x) - .5));
+  --launch-top: calc(var(--flight-top) + var(--transfer-rise) + var(--flight-width) * var(--cargo-y));
+  --launch-y: calc(var(--launch-top) - var(--stage-y));
+  position: absolute;
+  inset: 0;
+  color: #fff;
+  overflow: hidden;
+}
+
+.landscape,
+.forest,
+.vignette,
+.sky,
+.snow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.landscape {
+  background: radial-gradient(ellipse at 50% 72%, #203755 0, #14273f 38%, #0c1528 85%);
+}
+
+.forest {
+  background: url("/assets/gift/winter-wonder-forest.webp") center 60% / cover no-repeat;
+  filter: brightness(1.19) saturate(1.06);
+}
+
+.vignette {
+  background:
+    radial-gradient(ellipse at 50% 68%, rgba(255, 211, 157, .15), transparent 53%),
+    linear-gradient(180deg, rgba(6, 13, 25, .28), transparent 25% 68%, rgba(6, 13, 25, .41)),
+    radial-gradient(ellipse at 50% 46%, transparent 34%, rgba(5, 12, 22, .36) 100%);
+}
+
+.moon {
+  position: absolute;
+  top: 10dvh;
+  left: 71%;
+  width: clamp(76px, min(20vw, 20dvh), 178px);
+  aspect-ratio: 1;
+  opacity: .9;
+  transform: translateX(-50%);
+}
+
+.moon::before,
+.moon::after {
+  content: "";
+  position: absolute;
+}
+
+.moon::before {
+  inset: -62%;
+  background: radial-gradient(circle, rgba(255, 234, 193, .5) 24%, rgba(253, 222, 176, .21) 35%, rgba(171, 210, 255, .08) 50%, transparent 70%);
+}
+
+.moon::after {
+  inset: 0;
+  background: url("/assets/gift/winter-wonder-moon.webp") center / contain no-repeat;
+}
+
+.lanterns {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 8% 44%, rgba(255, 204, 127, .62), transparent 22px),
+    radial-gradient(circle at 13% 53%, rgba(255, 211, 152, .39), transparent 13px),
+    radial-gradient(circle at 91% 53%, rgba(255, 203, 126, .54), transparent 19px),
+    radial-gradient(circle at 95% 33%, rgba(255, 203, 126, .58), transparent 17px);
+  opacity: .62;
+}
+
+[data-winter-motion="full"] .lanterns {
+  animation: lanterns 5.4s ease-in-out infinite alternate;
+}
+
+.snow span {
+  position: absolute;
+  top: -8px;
+  left: var(--x);
+  width: var(--diameter);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #eaf5ff;
+  opacity: var(--alpha);
+  animation: snowfall var(--duration) var(--delay) linear infinite;
+}
+
+.snow span:nth-child(5n) {
+  background: #ffe3a6;
+  box-shadow: 0 0 7px 1px rgba(255, 198, 115, .48);
+}
+
+.sky {
+  mask-image: linear-gradient(to right, transparent, #000 13% 87%, transparent);
+}
+
+.flight {
+  position: absolute;
+  left: 50%;
+  top: var(--flight-top);
+  width: var(--flight-width);
+  margin-left: calc(var(--flight-width) / -2);
+  color: #ffe3a3;
+  animation:
+    flight var(--flight-duration) var(--flight-delay) linear both,
+    flightVisibility var(--flight-duration) var(--flight-delay) linear both;
+}
+
+.flight svg,
+.previewFlight svg {
+  display: block;
+  width: 100%;
+  filter: brightness(1.15) drop-shadow(0 0 3px rgba(255, 194, 104, .23));
+}
+
+.flight .sleighRock {
+  transform-origin: calc(var(--cargo-x) * 400px) calc(var(--cargo-y) * 400px);
+  animation: sleighRock calc(var(--flight-duration) / 4) var(--flight-delay) ease-in-out 4 both;
+}
+
+.flight .leadDeer {
+  --stride-start: var(--flight-delay);
+}
+
+.flight .followDeer {
+  --stride-start: calc(var(--flight-delay) + 170ms);
+}
+
+.flight .deerBody {
+  transform-origin: 77px 53px;
+  animation: teamBob 760ms var(--stride-start) ease-in-out 6 both;
+}
+
+.flight :is(.foreLeg, .hindLeg) {
+  animation: deerStep 760ms var(--stride-start) ease-in-out 6 both;
+}
+
+.flight .foreLeg {
+  --reach: -5deg;
+  --gather: 11deg;
+  transform-origin: 101px 62px;
+}
+
+.flight .hindLeg {
+  --reach: 7deg;
+  --gather: -9deg;
+  transform-origin: 41px 67px;
+  animation-delay: calc(var(--stride-start) + 115ms);
+}
+
+.cargoGlow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cargoGlow 690ms calc(var(--transfer-at) - 430ms) ease-in-out both;
+}
+
+.cargoGift {
+  animation: cargoGift 520ms calc(var(--transfer-at) - 430ms) linear both;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.arrival,
+.arrivalDepth,
+.landing,
+.giftMotion,
+.giftSettle {
+  position: absolute;
+  inset: 0;
+}
+
+.arrivalDepth,
+.giftMotion,
+.giftSettle {
+  transform-origin: 50% var(--stage-y);
+}
+
+.giftBox {
+  position: absolute;
+  left: 50%;
+  top: var(--stage-y);
+  width: var(--gift-width);
+  aspect-ratio: 3 / 2;
+  perspective: max(760px, calc(var(--gift-width) * 2.1));
+  transform: translate(-50%, -50%);
+}
+
+.giftBox > svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.giftLid {
+  transform-origin: 50% 55%;
+}
+
+.giftInterior,
+.innerGlow {
+  opacity: 0;
+}
+
+.deliveryTrace i {
+  position: absolute;
+  left: calc(50% + var(--trace-x));
+  top: calc(var(--stage-y) + var(--trace-y));
+  width: 3px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #ffe5a9;
+  box-shadow: 0 0 8px 1px rgba(255, 192, 90, .8);
+  animation: trailDrift 660ms calc(var(--transfer-at) + var(--trace-time)) ease-out both;
+}
+
+.deliveryTrace i:nth-child(1) {
+  --trace-x: calc(var(--launch-x) * .97 - 10px);
+  --trace-y: calc(var(--launch-y) - 9px);
+  --trace-time: 100ms;
+}
+
+.deliveryTrace i:nth-child(2) {
+  --trace-x: calc(var(--launch-x) * .94 + 11px);
+  --trace-y: calc(var(--launch-y) + 5px);
+  --trace-time: 180ms;
+}
+
+.deliveryTrace i:nth-child(3) {
+  --trace-x: calc(var(--launch-x) * .76 - 7px);
+  --trace-y: calc(var(--launch-y) * .93 - 11px);
+  --trace-time: 510ms;
+}
+
+.deliveryTrace i:nth-child(4) {
+  --trace-x: calc(var(--launch-x) * .25 - 13px);
+  --trace-y: calc(var(--launch-y) * .45 - 17px);
+  --trace-time: 1370ms;
+}
+
+.deliveryTrace i:nth-child(5) {
+  --trace-x: calc(var(--launch-x) * .05 - 21px);
+  --trace-y: calc(var(--launch-y) * .10 - 16px);
+  --trace-time: 1980ms;
+}
+
+.groundLight,
+.boxShadow {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--stage-y) + var(--gift-width) * .322);
+  transform: translate(-50%, -50%);
+}
+
+.groundLight {
+  width: calc(var(--gift-width) * 1.7);
+  height: calc(var(--gift-width) * .53);
+  background: radial-gradient(ellipse, rgba(255, 205, 124, .22), rgba(242, 155, 63, .08) 42%, transparent 71%);
+}
+
+.boxShadow {
+  width: calc(var(--gift-width) * .95);
+  height: calc(var(--gift-width) * .145);
+  background: radial-gradient(ellipse, rgba(0, 0, 0, .68), rgba(0, 0, 0, .22) 43%, transparent 71%);
+}
+
+.copy {
+  position: absolute;
+  inset: 56dvh 24px auto;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 24px;
+  text-align: center;
+  transform: translateY(-50%);
+  transition: opacity 360ms ease-out;
+}
+
+[data-winter-phase]:not([data-winter-phase="ready"]) .copy {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.copy h1 {
+  margin: 0;
+  max-width: 19ch;
+  color: #fff;
+  font-size: clamp(28px, 5vw, 54px);
+  line-height: 1.12;
+  font-weight: 750;
+  text-wrap: balance;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, .72);
+}
+
+.copy button {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 50px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 14px;
+  color: #202124;
+  background: #e9652f;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+  transition: background-color 160ms ease-out, scale 160ms ease-out;
+}
+
+.copy button:hover { background: #df5f2e; }
+.copy button:active { background: #c7532a; scale: .96; }
+.copy button:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
+.seamLight,
+.lightWave,
+.sparkBurst {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--stage-y) - var(--gift-width) * .018);
+  pointer-events: none;
+}
+
+.seamLight {
+  width: calc(var(--gift-width) * .91);
+  height: calc(var(--gift-width) * .36);
+  background: radial-gradient(ellipse, rgba(255, 229, 160, .56), rgba(255, 181, 79, .2) 39%, transparent 72%);
+  animation: seamLight 2.14s 510ms ease-out both;
+}
+
+.lightWave {
+  width: max(100%, 620px);
+  height: max(88%, 620px);
+  background: radial-gradient(ellipse,
+    rgba(255, 234, 181, .58) 8%, rgba(255, 203, 123, .36) 38%,
+    rgba(255, 193, 105, .17) 56%, transparent 74%);
+  animation: lightWave 1.65s 1510ms cubic-bezier(.31, .1, .24, 1) both;
+}
+
+.sparkBurst span {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ffdf96;
+  box-shadow: 0 0 8px #ffbf6f;
+  animation: sparkOut 1.31s var(--delay) var(--settle) both;
+}
+
+[data-winter-motion="full"] .forest,
+[data-winter-motion="full"] .vignette,
+[data-winter-motion="full"] .moon {
+  animation: fadeIn 1.2s ease-out both;
+}
+
+[data-winter-motion="full"] .arrival {
+  animation:
+    deliverGift var(--delivery-duration) var(--transfer-at) cubic-bezier(.22, .1, .48, 1) both,
+    fadeIn 170ms var(--transfer-at) ease-out both;
+}
+
+[data-winter-motion="full"] .arrivalDepth {
+  animation: giftApproach var(--delivery-duration) var(--transfer-at) cubic-bezier(.48, .02, .58, 1) both;
+}
+
+[data-winter-motion="full"] .arrivalDepth::before {
+  content: "";
+  position: absolute;
+  top: var(--stage-y);
+  left: 50%;
+  width: calc(var(--gift-width) * 2.5);
+  aspect-ratio: 1.3;
+  background: radial-gradient(ellipse, rgba(255, 238, 183, .94) 5%, rgba(255, 182, 86, .68) 29%, transparent 69%);
+  animation: releaseGlow 830ms var(--transfer-at) ease-out both;
+}
+
+[data-winter-motion="full"] .landing {
+  animation: fadeIn 760ms calc(var(--transfer-at) + 1690ms) ease-out both;
+}
+
+[data-winter-motion="full"] .giftSettle {
+  animation:
+    giftPitch var(--delivery-duration) var(--transfer-at) ease-in-out both,
+    giftBounce 435ms calc(var(--transfer-at) + var(--delivery-duration)) ease-in-out both;
+}
+
+[data-winter-open][data-winter-motion="full"] .giftMotion {
+  animation: giftOpen 2.5s var(--open) both;
+}
+
+[data-winter-open][data-winter-motion="full"] .boxShadow {
+  animation: lightOut 650ms 1.45s ease-out both;
+}
+
+[data-winter-open][data-winter-motion="full"] .groundLight {
+  animation: lightGather 2.45s ease-out both;
+}
+
+[data-winter-open][data-winter-motion="full"] .giftLid {
+  animation:
+    liftLid var(--lid-lift-duration) var(--lid-lift-delay) cubic-bezier(.33, .05, .33, 1) both,
+    lightOut var(--lid-exit-duration) var(--lid-exit-at) ease-in-out both;
+}
+
+[data-winter-open][data-winter-motion="full"] .giftBody {
+  animation: lightOut 670ms calc(var(--lid-exit-at) + 120ms) ease-in-out both;
+}
+
+[data-winter-open][data-winter-motion="full"] .giftInterior {
+  animation: revealInterior 145ms 150ms ease-out both;
+}
+
+[data-winter-open][data-winter-motion="full"] .innerGlow {
+  animation: innerGlow 1.56s 510ms ease-out both;
+}
+
+.preview {
+  --gift-width: min(132px, 100%);
+  --stage-y: 47%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 112px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(6, 13, 25, .45), rgba(6, 13, 25, .16), rgba(6, 13, 25, .56)),
+    url("/assets/gift/winter-wonder-forest.webp") center 56% / cover,
+    #14273f;
+}
+
+.previewFlight {
+  padding: 0 8%;
+  color: #ffe3a3;
+}
+
+.previewBox {
+  position: relative;
+  align-self: stretch;
+  background: radial-gradient(ellipse, rgba(255, 192, 107, .36), transparent 70%);
+}
+
+.previewCard {
+  position: relative;
+  justify-self: center;
+  width: min(78%, 110px);
+  aspect-ratio: 1.16;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .54);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
+  transform: rotate(7deg);
+}
+
+.previewCard img { object-fit: cover; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+}
+
+@keyframes lightOut {
+  to { opacity: 0; }
+}
+
+@keyframes snowfall {
+  to { transform: translate3d(var(--travel), calc(100dvh + 16px), 0); }
+}
+
+@keyframes lanterns {
+  0%, 100% { opacity: .16; }
+  42% { opacity: .64; }
+}
+
+@keyframes flight {
+  from {
+    transform: translate3d(-57vw, 24px, 0) rotate(-6deg) scale(.64);
+    animation-timing-function: cubic-bezier(.3, .42, .64, .89);
+  }
+  /* Match the horizontal speed on both sides of the cargo handoff. */
+  50% {
+    transform: translate3d(0, var(--transfer-rise), 0) rotate(0) scale(1);
+    animation-timing-function: cubic-bezier(.34, .099, .69, .57);
+  }
+  to { transform: translate3d(60vw, -58px, 0) rotate(-7deg) scale(.72); }
+}
+
+@keyframes flightVisibility {
+  0%, 100% { opacity: 0; }
+  20%, 79% { opacity: 1; }
+}
+
+@keyframes sleighRock {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(3px) rotate(2deg); }
+}
+
+@keyframes teamBob {
+  0%, 100% { transform: translateY(1px) rotate(1deg); }
+  48% { transform: translateY(-4px) rotate(-2.4deg); }
+}
+
+@keyframes deerStep {
+  0%, 100% { transform: rotate(var(--reach)); }
+  50% { transform: rotate(var(--gather)); }
+}
+
+@keyframes cargoGlow {
+  0%, 100% { opacity: 0; transform: scale(.6); }
+  63% { opacity: .82; transform: scale(1.12); }
+}
+
+@keyframes cargoGift {
+  0%, 100% { opacity: 0; }
+  64%, 83% { opacity: 1; }
+}
+
+@keyframes releaseGlow {
+  0% { opacity: .87; transform: translate(-50%, -50%) scale(1.13); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(.86); }
+}
+
+@keyframes trailDrift {
+  0% { opacity: 0; transform: scale(.45); }
+  18% { opacity: .82; }
+  100% { opacity: 0; transform: translate(-18px, 9px) scale(.38); }
+}
+
+@keyframes deliverGift {
+  from { transform: translate3d(var(--launch-x), 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes giftApproach {
+  from { transform: translate3d(0, var(--launch-y), 0) scale(.067); }
+  to { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes giftPitch {
+  0% { rotate: -3deg; }
+  43% { rotate: -9deg; }
+  100% { rotate: 0deg; }
+}
+
+@keyframes giftOpen {
+  to { transform: scale(1.038); }
+}
+
+@keyframes giftBounce {
+  0%, 100% { transform: translateY(0); }
+  20% { transform: translateY(3px); }
+  52% { transform: translateY(-5px); }
+}
+
+@keyframes lightGather {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(1.28); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.48); }
+}
+
+@keyframes liftLid {
+  from { transform: translate3d(0, 0, 0) rotateX(0) rotateZ(0); }
+  to { transform: translate3d(1.6%, -20%, 0) rotateX(-9deg) rotateZ(2deg); }
+}
+
+@keyframes revealInterior {
+  to { opacity: 1; }
+}
+
+@keyframes innerGlow {
+  0% { opacity: 0; }
+  52%, 100% { opacity: .88; }
+}
+
+@keyframes seamLight {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.55, .12); }
+  44% { opacity: .76; transform: translate(-50%, -50%) scale(.97, .75); }
+  100% { opacity: .16; transform: translate(-50%, -50%) scale(1.22, 1.1); }
+}
+
+@keyframes lightWave {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.26); }
+  42% { opacity: .89; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.54); }
+}
+
+@keyframes sparkOut {
+  0% { opacity: 0; transform: translate(0, 0) scale(.3); }
+  22% { opacity: .92; }
+  100% { opacity: 0; transform: translate(var(--x), var(--y)) scale(.65); }
+}
+
+@media (min-width: 850px) and (min-height: 620px) {
+  .scene { --gift-width: clamp(360px, 70dvh, 640px); }
+}
+
+@media (max-width: 640px) {
+  .scene {
+    --flight-width: clamp(220px, 56vw, 240px);
+    --stage-y: 58dvh;
+  }
+  .moon { top: 12dvh; left: 68%; width: clamp(76px, 26vw, 125px); }
+  .snow span:nth-of-type(n + 16) { display: none; }
+  .sparkBurst span:nth-child(n + 8) { display: none; }
+  .forest {
+    background-image: url("/assets/gift/winter-wonder-forest-mobile.webp");
+    background-position: center 61%;
+  }
+}
+
+@media (max-height: 480px) {
+  .scene {
+    --gift-width: clamp(134px, 48dvh, 218px);
+    --stage-y: 47dvh;
+    --flight-top: min(23dvh, calc(var(--stage-y) - var(--transfer-rise) - var(--flight-width) * var(--cargo-y) - 30px));
+  }
+  .copy { gap: 12px; }
+  .moon { top: 12dvh; width: clamp(54px, 20dvh, 96px); }
+  .copy h1 { font-size: clamp(23px, 7dvh, 34px); }
+  .copy button { min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene:not([data-winter-force]) :is(.forest, .vignette, .moon, .arrival, .arrivalDepth, .landing, .lanterns, .giftSettle) { animation: none; }
+  .scene:not([data-winter-force]) .arrivalDepth::before { display: none; }
+  .scene:not([data-winter-force]) :is(.sky, .snow) { display: none; }
+}

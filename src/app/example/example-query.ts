@@ -1,4 +1,4 @@
-import type { GiftAnimationId } from "@/lib/gift-animations";
+import { isGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import type { DemoTemplateId } from "./example-experience";
 
 export const newYearExampleThemes = {
@@ -33,4 +33,4 @@ export const resolveDemoTemplateId = (value: string | undefined, theme?: string)
 };
 
 export const resolveDemoAnimationId = (value: string | undefined): GiftAnimationId | undefined =>
-  value === "envelope" || value === "collect-messages" ? value : undefined;
+  value && isGiftAnimationId(value) ? value : undefined;

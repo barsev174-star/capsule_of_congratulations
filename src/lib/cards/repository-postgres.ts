@@ -1,6 +1,6 @@
 import { getPostgresPool } from "@/lib/db/postgres";
 import type { CardTemplateId } from "@/lib/cards/templates";
-import { defaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
+import { defaultGiftAnimationId, getDefaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import type { CardDraft, CardMediaAsset, CardStatus, Contribution, ContributionDetailsUpdate } from "@/lib/cards/types";
 import { deleteStoredCardMediaFile } from "@/lib/media/local-card-media-storage";
 import { CARD_CONTRIBUTION_LIMIT, ContributionLimitReachedError } from "@/lib/contributions/limits";
@@ -135,7 +135,7 @@ const mapCard = (row: CardRow): CardDraft => ({
   signature: row.signature,
   templateId: row.template_id,
   ...(row.template_theme ? { templateTheme: row.template_theme } : {}),
-  giftAnimationId: row.gift_animation_id ?? defaultGiftAnimationId,
+  giftAnimationId: row.gift_animation_id,
   finalBlockSettings: row.final_block_settings,
   finalBlockOrder: row.final_block_order,
   finalMessageSettings: row.final_message_settings,
@@ -258,7 +258,7 @@ export const saveCardDraft = async (card: CardDraft) => {
       card.description,
       card.signature,
       card.templateId,
-      card.giftAnimationId ?? defaultGiftAnimationId,
+      card.giftAnimationId === undefined ? defaultGiftAnimationId : card.giftAnimationId,
       jsonParam(card.finalBlockSettings),
       jsonParam(card.finalBlockOrder),
       jsonParam(card.finalMessageSettings),
@@ -467,6 +467,7 @@ export const purgeCardToTombstone = async (cardId: string): Promise<PurgedCardMe
            signature = NULL,
            template_id = NULL,
            template_theme = NULL,
+           gift_animation_id = CASE WHEN gift_animation_id = 'winter-wonder' THEN 'envelope' ELSE gift_animation_id END,
            final_block_settings = NULL,
            final_block_order = NULL,
            final_message_settings = NULL,
@@ -519,11 +520,12 @@ export const updateCardTemplate = async (cardId: string, templateId: CardTemplat
       UPDATE cards
       SET template_id = $2,
           template_theme = $3,
+          gift_animation_id = COALESCE(gift_animation_id, $4),
           updated_at = now()
       WHERE id = $1
       RETURNING *
     `,
-    [cardId, templateId, templateTheme]
+    [cardId, templateId, templateTheme, getDefaultGiftAnimationId(templateId)]
   );
   return result.rows[0] ? mapCard(result.rows[0]) : null;
 };
@@ -556,6 +558,7 @@ export const updateCardFinalPresentationSettings = async (
       UPDATE cards
       SET template_id = $2,
           template_theme = CASE WHEN template_id = $2 THEN template_theme ELSE NULL END,
+          gift_animation_id = COALESCE(gift_animation_id, $8),
           final_block_settings = $3::jsonb,
           final_block_order = $4::jsonb,
           final_message_settings = $5::jsonb,
@@ -572,7 +575,8 @@ export const updateCardFinalPresentationSettings = async (
       jsonParam(finalBlockOrder),
       jsonParam(finalMessageSettings),
       jsonParam(finalMainGreetingSettings),
-      jsonParam(finalMemorySettings)
+      jsonParam(finalMemorySettings),
+      getDefaultGiftAnimationId(templateId)
     ]
   );
   return result.rows[0] ? mapCard(result.rows[0]) : null;

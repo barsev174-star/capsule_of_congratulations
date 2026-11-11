@@ -995,6 +995,26 @@
   gap: 18px;
 }
 
+.winterRevealOption {
+  grid-column: 1 / -1;
+}
+
+.winterRevealOption[data-reveal-option] {
+  height: auto;
+  min-height: 164px;
+  flex-direction: row;
+}
+
+.winterRevealOption .revealOptionPreview {
+  flex: 0 0 52%;
+  max-height: none;
+  padding: 0;
+}
+
+.winterRevealOption .revealOptionBody {
+  justify-content: center;
+}
+
 .revealOption {
   appearance: none;
   display: flex;
@@ -1989,6 +2009,14 @@
   .revealOptions {
     grid-template-columns: minmax(0, 1fr);
     gap: 12px;
+  }
+
+  .winterRevealOption[data-reveal-option] {
+    flex-direction: column;
+  }
+
+  .winterRevealOption .revealOptionPreview {
+    flex-basis: 124px;
   }
 
   .revealOption {

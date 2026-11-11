@@ -4,7 +4,7 @@ import { saveCardDraft, saveContribution } from "@/lib/cards/repository";
 import { getGiftUrl, getJoinUrl, getManageUrl } from "@/lib/routes/card-links";
 import type { LogContext } from "@/lib/logger";
 import type { CardTemplateId } from "@/lib/cards/templates";
-import { defaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
+import { getDefaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import type {
   CardDraft,
   Contribution,
@@ -51,7 +51,7 @@ export const createCardDraft = async (input: CreateCardInput): Promise<CreateCar
     description: input.description ?? null,
     signature: input.signature ?? null,
     templateId: input.templateId,
-    giftAnimationId: defaultGiftAnimationId,
+    giftAnimationId: getDefaultGiftAnimationId(input.templateId),
     finalBlockSettings: null,
     finalBlockOrder: null,
     finalMessageSettings: null,
@@ -125,7 +125,7 @@ export const createEmptyCardDraft = async (
     signature: null,
     templateId: options.templateId ?? null,
     ...(options.templateTheme ? { templateTheme: options.templateTheme } : {}),
-    giftAnimationId: options.giftAnimationId ?? defaultGiftAnimationId,
+    giftAnimationId: options.giftAnimationId ?? (options.templateId ? getDefaultGiftAnimationId(options.templateId) : null),
     finalBlockSettings: null,
     finalBlockOrder: null,
     finalMessageSettings: null,

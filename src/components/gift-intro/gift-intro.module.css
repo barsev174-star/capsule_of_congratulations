@@ -2643,6 +2643,48 @@
   filter: blur(0);
 }
 
+.page[data-animation-id="winter-wonder"] {
+  background: transparent;
+  outline: none;
+}
+
+.page[data-animation-id="winter-wonder"]::before,
+.page[data-animation-id="winter-wonder"]::after {
+  content: none;
+}
+
+.winterBrand {
+  color: #fff;
+  font-size: clamp(20px, 3vw, 25px);
+  font-weight: 800;
+  letter-spacing: -.045em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .55);
+}
+
+.page[data-animation-id="winter-wonder"] .skipButton {
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .24);
+  pointer-events: auto;
+}
+
+.page[data-animation-id="winter-wonder"].handoff {
+  transition-duration: 1200ms;
+  transition-delay: 0ms;
+  transition-timing-function: ease-in-out;
+}
+
+.page[data-animation-id="winter-wonder"][data-motion-mode="reduced"].handoff {
+  transition-duration: 340ms;
+}
+
+.giftWrapper[data-animation-id="winter-wonder"] {
+  transform: none;
+  filter: none;
+  transition: none;
+}
+
 .replayBar {
   display: flex;
   justify-content: center;

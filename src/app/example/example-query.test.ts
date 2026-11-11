@@ -9,6 +9,7 @@ describe("example query parameters", () => {
     expect(resolveDemoTemplateId("new-year", "green")).toBe("new-year-green");
     expect(resolveDemoTemplateId("new-year")).toBe("new-year-red");
     expect(resolveDemoAnimationId("collect-messages")).toBe("collect-messages");
+    expect(resolveDemoAnimationId("winter-wonder")).toBe("winter-wonder");
   });
 
   it.each(["unknown-template", "../../manage/private", "constructor", ""])("falls back for an invalid template %s", (value) => {

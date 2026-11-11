@@ -6,11 +6,18 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { GiftIntro } from "@/components/gift-intro/gift-intro";
 import type { GiftIntroProps, GiftIntroVariant } from "@/components/gift-intro/gift-intro";
+import { WinterGiftPreview } from "@/components/gift-intro/winter-gift-scene";
 import { ScrollReveal, useScrollReveal } from "@/components/scroll-reveal/scroll-reveal";
 import { exampleCardModel, kindergartenDoodlesDemoCardModel, routeAdventureDemoCardModel, schoolClassicDemoCardModel, schoolScrapbookDemoCardModel, teamEditorialDemoCardModel } from "@/lib/example-card";
 import { sendClientTelemetry } from "@/lib/client-telemetry";
 import { birthdayExampleCardModel } from "@/lib/birthday-example";
-import type { GiftAnimationId } from "@/lib/gift-animations";
+import {
+  getGiftAnimationNeighbor,
+  getGiftAnimationsForTemplate,
+  getWinterGiftTheme,
+  winterWonderAnimation,
+  type GiftAnimationId
+} from "@/lib/gift-animations";
 import type { UniversalTemplateViewModel } from "@/lib/templates/view-model";
 import { toGiftRevealExcerpt } from "@/lib/gift-reveal-preview";
 import { newYearThemeCatalog } from "@/templates/new-year/catalog";
@@ -85,7 +92,8 @@ const demoTemplateMeta: Record<DemoTemplateId, { name: string; preview: string; 
 
 const revealNames: Record<GiftAnimationId, string> = {
   envelope: "Конверт",
-  "collect-messages": "Собрать поздравления"
+  "collect-messages": "Собрать поздравления",
+  "winter-wonder": winterWonderAnimation.name
 };
 
 const StoryPhotoPlaceholder = () => (
@@ -98,7 +106,7 @@ const StoryPhotoPlaceholder = () => (
 export const ExampleExperience = ({ children, routeChildren, schoolChildren, schoolClassicChildren, kindergartenDoodlesChildren, teamEditorialChildren, newYearDemos, initialTemplateId, initialAnimationId, birthdayScenario = false, introVariant = "assembled", forceFullMotion = false, previewPhotoCount = 3 }: Props) => {
   const [demoOpenSource, setDemoOpenSource] = useState<DemoOpenSource | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<DemoTemplateId>(initialTemplateId ?? "paper-birthday");
-  const [selectedRevealType, setSelectedRevealType] = useState<GiftAnimationId>(initialAnimationId ?? (birthdayScenario ? "envelope" : "collect-messages"));
+  const [revealTypeOverride, setRevealTypeOverride] = useState(initialAnimationId);
   const demoModelByTemplate: Record<DemoTemplateId, typeof exampleCardModel | typeof schoolScrapbookDemoCardModel> = {
     "paper-birthday": birthdayScenario ? birthdayExampleCardModel : exampleCardModel,
     "route-adventure": routeAdventureDemoCardModel,
@@ -179,6 +187,8 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
   const isNewYear = selectedTemplateId === "new-year-red" || selectedTemplateId === "new-year-green";
   const selectedProductTemplateId = isNewYear ? "new-year" : selectedTemplateId;
   const selectedTemplateTheme = isNewYear ? newYearExampleThemes[selectedTemplateId] : undefined;
+  const selectedRevealType = revealTypeOverride ?? (isNewYear ? winterWonderAnimation.id : birthdayScenario ? "envelope" : "collect-messages");
+  const availableAnimations = getGiftAnimationsForTemplate(selectedProductTemplateId);
   const selectedDemoModel = demoModelByTemplate[selectedTemplateId];
   const selectedDemoPhotos = "mediaAssets" in selectedDemoModel
     ? selectedDemoModel.mediaAssets.slice(0, previewPhotoCount).map((asset) => ({
@@ -267,13 +277,14 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
 
   const selectTemplate = (templateId: DemoTemplateId) => {
     if (templateId === selectedTemplateId) return;
+    if (isNewYear) setRevealTypeOverride(selectedRevealType);
     setSelectedTemplateId(templateId);
     sendClientTelemetry("demo_template_selected", { route: "/example", template: templateId });
   };
 
   const selectAnimation = (animationId: GiftAnimationId) => {
+    setRevealTypeOverride(animationId);
     if (animationId === selectedRevealType) return;
-    setSelectedRevealType(animationId);
     sendClientTelemetry("demo_reveal_selected", {
       route: "/example",
       template: selectedTemplateId,
@@ -281,8 +292,9 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
     });
   };
 
-  const moveRevealSelection = (event: KeyboardEvent<HTMLButtonElement>, nextReveal: GiftAnimationId) => {
-    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+  const moveRevealSelection = (event: KeyboardEvent<HTMLButtonElement>, current: GiftAnimationId) => {
+    const nextReveal = getGiftAnimationNeighbor(availableAnimations, current, event.key);
+    if (!nextReveal) return;
     event.preventDefault();
     selectAnimation(nextReveal);
     window.requestAnimationFrame(() => {
@@ -334,6 +346,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
         previewDecor={demoIntroByTemplate[selectedTemplateId].decor}
         previewScene={isNewYear ? newYearDemos[selectedTemplateId].introScene : undefined}
         templateId={selectedProductTemplateId}
+        templateTheme={selectedTemplateTheme}
         animationId={selectedRevealType}
         accent={demoIntroByTemplate[selectedTemplateId].accent}
         assemblyPreview={{
@@ -353,6 +366,31 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
       </GiftIntro>
     );
   }
+
+  const winterOption = (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selectedRevealType === "winter-wonder"}
+      aria-label={winterWonderAnimation.name}
+      tabIndex={selectedRevealType === "winter-wonder" ? 0 : -1}
+      data-reveal-option="winter-wonder"
+      className={`${styles.revealOption} ${styles.winterRevealOption} ${selectedRevealType === "winter-wonder" ? styles.revealOptionActive : ""}`}
+      onClick={() => selectAnimation("winter-wonder")}
+      onKeyDown={(event) => moveRevealSelection(event, "winter-wonder")}
+    >
+      <span className={styles.revealOptionPreview} data-preview-story="winter-wonder">
+        <WinterGiftPreview theme={getWinterGiftTheme(selectedProductTemplateId, selectedTemplateTheme)} templatePreviewSrc={demoTemplateMeta[selectedTemplateId].preview} />
+      </span>
+      <span className={styles.revealOptionBody}>
+        <strong>{winterWonderAnimation.name}</strong>
+        <span>{winterWonderAnimation.description}</span>
+        <span className={selectedRevealType === "winter-wonder" ? styles.revealOptionStatusActive : styles.revealOptionStatus}>
+          {selectedRevealType === "winter-wonder" ? "✓ Выбрано" : "Выбрать"}
+        </span>
+      </span>
+    </button>
+  );
 
   return (
     <main className={styles.page}>
@@ -651,6 +689,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
           </div>
 
           <div className={styles.revealOptions} role="radiogroup" aria-label="Способ открытия открытки">
+            {isNewYear && winterOption}
             <button
               type="button"
               role="radio"
@@ -660,7 +699,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
               data-reveal-option="envelope"
               className={`${styles.revealOption} ${selectedRevealType === "envelope" ? styles.revealOptionActive : ""}`}
               onClick={() => selectAnimation("envelope")}
-              onKeyDown={(event) => moveRevealSelection(event, "collect-messages")}
+              onKeyDown={(event) => moveRevealSelection(event, "envelope")}
             >
               <span
                 className={`${styles.revealOptionPreview} ${styles.envelopePreview}`}
@@ -762,7 +801,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
               data-reveal-option="collect-messages"
               className={`${styles.revealOption} ${selectedRevealType === "collect-messages" ? styles.revealOptionActive : ""}`}
               onClick={() => selectAnimation("collect-messages")}
-              onKeyDown={(event) => moveRevealSelection(event, "envelope")}
+              onKeyDown={(event) => moveRevealSelection(event, "collect-messages")}
             >
               <span
                 className={`${styles.revealOptionPreview} ${styles.collectPreview}`}
@@ -827,6 +866,7 @@ export const ExampleExperience = ({ children, routeChildren, schoolChildren, sch
                 </span>
               </span>
             </button>
+            {!isNewYear && winterOption}
           </div>
 
           <div className={styles.animationAction}>

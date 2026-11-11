@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { GiftIntro } from "@/components/gift-intro/gift-intro";
 import { PreviewBar } from "@/components/preview/preview-bar";
 import { PreviewWatermark } from "@/components/preview/preview-watermark";
 import { TemplateCardRenderer } from "@/components/templates/template-card-renderer";
@@ -21,6 +22,7 @@ import { getUniversalLayoutPreset } from "@/lib/templates/layout-presets";
 import { buildPrivateCardPresentation } from "@/lib/templates/private-card-presentation";
 import { getCardManagementAccess } from "@/lib/manage/access";
 import { resolveCardRecoveryToken } from "@/lib/manage/recovery-tokens";
+import { getGiftIntroScene } from "@/lib/templates/gift-intro-scene";
 
 export const metadata = {
   robots: {
@@ -33,10 +35,12 @@ type Props = {
   params: Promise<{
     manageToken: string;
   }>;
+  searchParams?: Promise<{ opening?: string }>;
 };
 
-export default async function PreviewPage({ params }: Props) {
+export default async function PreviewPage({ params, searchParams }: Props) {
   const { manageToken: identifier } = await params;
+  const openingRequested = (await searchParams)?.opening === "1";
   const permanentCard = await getCardDraftByManagementId(identifier);
   const recoveryCardId = permanentCard ? null : await resolveCardRecoveryToken(identifier);
   const recoveryCard = permanentCard
@@ -48,7 +52,7 @@ export default async function PreviewPage({ params }: Props) {
   if (!card) notFound();
   const access = await getCardManagementAccess(card, { allowGuestDraft: true });
   if (!access.allowed) redirect(`/manage/${recoveryCard ? identifier : card.id}`);
-  if (identifier !== card.id) redirect(`/preview/${card.id}`);
+  if (identifier !== card.id) redirect(`/preview/${card.id}${openingRequested ? "?opening=1" : ""}`);
   const lifecycle = await getCardLifecycleByManageToken(card.id);
 
   if (!lifecycle || lifecycle.purgedAt !== null) {
@@ -101,9 +105,16 @@ export default async function PreviewPage({ params }: Props) {
 
   const published = isGiftAccessible(lifecycle);
 
-  return (
+  const canPreviewOpening = card.giftAnimationId === "winter-wonder";
+  const showOpening = canPreviewOpening && openingRequested;
+  const preview = (
     <>
-      <PreviewBar manageToken={card.id} finalSlug={card.finalSlug} published={published} />
+      <PreviewBar
+        manageToken={card.id}
+        finalSlug={card.finalSlug}
+        published={published}
+        openingPreviewHref={canPreviewOpening && !showOpening ? `/preview/${card.id}?opening=1` : undefined}
+      />
       <PreviewWatermark />
       {presentation.kind === "universal-v1"
         ? <TemplateCardRenderer
@@ -122,4 +133,16 @@ export default async function PreviewPage({ params }: Props) {
           />}
     </>
   );
+
+  return showOpening ? (
+    <GiftIntro
+      recipientName={presentation.model.recipientName}
+      templateId={card.templateId ?? undefined}
+      templateTheme={card.templateTheme}
+      animationId="winter-wonder"
+      previewScene={presentation.kind === "universal-v1" ? getGiftIntroScene(presentation.dispatch.registration.profile) : undefined}
+    >
+      {preview}
+    </GiftIntro>
+  ) : preview;
 }

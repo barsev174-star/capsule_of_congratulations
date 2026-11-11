@@ -141,11 +141,25 @@ describe("landing card creation actions", () => {
     const formData = new FormData();
     formData.set("templateId", "new-year");
     formData.set("templateTheme", theme);
+    formData.set("giftAnimationId", "winter-wonder");
     await startCardFromExampleSelectionAction(formData);
 
     expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution, {
       templateId: "new-year",
-      templateTheme: theme
+      templateTheme: theme,
+      giftAnimationId: "winter-wonder"
+    });
+  });
+
+  it("persists the winter opening on a non-seasonal draft", async () => {
+    const formData = new FormData();
+    formData.set("templateId", "paper-birthday");
+    formData.set("giftAnimationId", "winter-wonder");
+    await startCardFromExampleSelectionAction(formData);
+
+    expect(mocks.createEmptyCardDraft).toHaveBeenCalledWith(attribution, {
+      templateId: "paper-birthday",
+      giftAnimationId: "winter-wonder"
     });
   });
 

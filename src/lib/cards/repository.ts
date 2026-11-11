@@ -4,7 +4,7 @@ import { isPostgresConfigured } from "@/lib/db/postgres";
 import * as postgresRepository from "@/lib/cards/repository-postgres";
 import type { CardDraft, CardMediaAsset, CardStatus, Contribution, ContributionDetailsUpdate } from "@/lib/cards/types";
 import type { CardTemplateId } from "@/lib/cards/templates";
-import { defaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
+import { defaultGiftAnimationId, getDefaultGiftAnimationId, type GiftAnimationId } from "@/lib/gift-animations";
 import { deleteStoredCardMediaFile } from "@/lib/media/local-card-media-storage";
 import { deletePublicSharePhotoDerivative } from "@/lib/public-shares/media-storage";
 import { CARD_CONTRIBUTION_LIMIT, ContributionLimitReachedError } from "@/lib/contributions/limits";
@@ -44,7 +44,7 @@ const normalizeCard = (card: CardDraft): CardDraft => ({
   ...card,
   occasionText: card.occasionText ?? card.description ?? card.occasion,
   signature: card.signature ?? null,
-  giftAnimationId: card.giftAnimationId ?? defaultGiftAnimationId,
+  giftAnimationId: card.giftAnimationId === undefined ? defaultGiftAnimationId : card.giftAnimationId,
   finalBlockSettings: card.finalBlockSettings ?? null,
   finalBlockOrder: card.finalBlockOrder ?? null,
   finalMainGreetingSettings: card.finalMainGreetingSettings
@@ -346,6 +346,7 @@ export const purgeExpiredCards = async (now = new Date()) => {
       description: null,
       signature: null,
       templateId: null,
+      giftAnimationId: card.giftAnimationId === "winter-wonder" ? defaultGiftAnimationId : card.giftAnimationId,
       finalBlockSettings: null,
       finalBlockOrder: null,
       finalMessageSettings: null,
@@ -407,6 +408,7 @@ export const updateCardTemplate = async (cardId: string, templateId: CardTemplat
     ...cards[index],
     templateId,
     templateTheme,
+    giftAnimationId: cards[index].giftAnimationId ?? getDefaultGiftAnimationId(templateId),
     updatedAt: new Date().toISOString()
   };
   cards[index] = updated;
@@ -464,6 +466,7 @@ export const updateCardFinalPresentationSettings = async (
   const updated = {
     ...cards[index],
     templateId,
+    giftAnimationId: cards[index].giftAnimationId ?? getDefaultGiftAnimationId(templateId),
     ...(cards[index].templateId !== templateId ? { templateTheme: null } : {}),
     finalBlockSettings,
     finalBlockOrder,

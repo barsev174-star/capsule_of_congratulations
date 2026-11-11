@@ -97,6 +97,21 @@ describe("example creation", () => {
     expect(document.querySelector('[data-message-count="6"]')).toBeInTheDocument();
   });
 
+  it("defaults to delivery for New Year and keeps it selected when switching templates", () => {
+    render(demo("new-year-red"));
+    let winter = screen.getByRole("radio", { name: "Волшебная доставка" });
+    expect(screen.getAllByRole("radio")[0]).toBe(winter);
+    expect(winter).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByRole("button", { name: /Новый год · Зелёный/ }));
+    expect(winter).toHaveAttribute("aria-checked", "true");
+    expect(winter.querySelector("[data-winter-theme]")).toHaveAttribute("data-winter-theme", "green");
+    fireEvent.click(screen.getByRole("button", { name: /Бумажный классический/ }));
+    winter = screen.getByRole("radio", { name: "Волшебная доставка" });
+    expect(screen.getAllByRole("radio").at(-1)).toBe(winter);
+    expect(winter).toHaveAttribute("aria-checked", "true");
+    expect(winter.querySelector("[data-winter-theme]")).toHaveAttribute("data-winter-theme", "plum");
+  });
+
   it.each([
     ["red", "collect-messages"],
     ["green", "collect-messages"],
@@ -104,7 +119,7 @@ describe("example creation", () => {
     ["green", "envelope"]
   ] as const)("renders the %s winter scene in the %s preview", (theme, animation) => {
     render(demo(theme === "red" ? "new-year-red" : "new-year-green"));
-    if (animation === "envelope") fireEvent.click(screen.getByRole("radio", { name: /Конверт/ }));
+    fireEvent.click(screen.getByRole("radio", { name: animation === "envelope" ? /Конверт/ : /Собрать поздравления/ }));
     fireEvent.click(screen.getByRole("button", { name: "Посмотреть анимацию" }));
     const intro = screen.getByRole("dialog");
     expect(intro).toHaveAttribute("data-animation-id", animation);

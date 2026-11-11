@@ -39,6 +39,81 @@ describe("GiftIntro", () => {
     document.body.style.overflow = "";
   });
 
+  it.each(["red", "green"])("starts the %s delivery on one click and can replay", (theme) => {
+    const onIntroDone = vi.fn();
+    vi.stubGlobal("scrollTo", vi.fn());
+    render(
+      <GiftIntro recipientName="Анна" templateId="new-year" templateTheme={theme}
+        animationId="winter-wonder" onIntroDone={onIntroDone}>
+        <div data-testid="winter-card">Полная открытка</div>
+      </GiftIntro>
+    );
+
+    const card = screen.getByTestId("winter-card");
+    expect(card.parentElement).toHaveAttribute("inert");
+    expect(document.querySelector("[data-winter-theme]")).toHaveAttribute("data-winter-theme", theme);
+    const receive = screen.getByRole("button", { name: "Получить подарок" });
+    act(() => vi.advanceTimersByTime(12000));
+    expect(document.querySelector("[data-winter-phase]")).toHaveAttribute("data-winter-phase", "ready");
+    expect(document.querySelector("circle[cx='36'][cy='75']")).toBeNull();
+    expect(document.querySelector('img[src*="winter-wonder-gift"]')).toBeNull();
+    fireEvent.click(receive);
+    expect(receive).toBeDisabled();
+    expect(document.querySelector("[data-winter-phase]")).toHaveAttribute("data-winter-phase", "delivering");
+    act(() => vi.advanceTimersByTime(5980));
+    expect(document.querySelector("[data-winter-phase]")).toHaveAttribute("data-winter-phase", "opening");
+    expect(screen.queryByRole("button", { name: "Открыть подарок" })).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(2130));
+    expect(document.querySelector("[data-winter-phase]")).toHaveAttribute("data-winter-phase", "handoff");
+    expect(screen.getByTestId("winter-card")).toBe(card);
+    act(() => vi.advanceTimersByTime(1250));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(card.parentElement).not.toHaveAttribute("inert");
+    expect(onIntroDone).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Посмотреть ещё раз" }));
+    expect(screen.getByRole("button", { name: "Получить подарок" })).toBeEnabled();
+    expect(screen.getByTestId("winter-card")).toBe(card);
+  });
+
+  it.each([0, 2300, 6200, 6800, 9000])("skips the winter scene at %i ms and cancels the pending sequence", (time) => {
+    const onIntroDone = vi.fn();
+    render(
+      <GiftIntro recipientName="Анна" templateId="new-year" animationId="winter-wonder" onIntroDone={onIntroDone}>
+        <div data-testid="winter-card">Полная открытка</div>
+      </GiftIntro>
+    );
+
+    if (time > 0) {
+      fireEvent.click(screen.getByRole("button", { name: "Получить подарок" }));
+      act(() => vi.advanceTimersByTime(time));
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Пропустить" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByTestId("winter-card").parentElement).toHaveFocus();
+    expect(document.body.style.overflow).toBe("");
+    act(() => vi.advanceTimersByTime(15000));
+    expect(onIntroDone).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits for the start button and uses a short fade in reduced motion", () => {
+    stubMotionPreference(true);
+    render(
+      <GiftIntro recipientName="Анна" templateId="new-year" animationId="winter-wonder">
+        <div>Полная открытка</div>
+      </GiftIntro>
+    );
+
+    expect(screen.getByRole("dialog")).toHaveAttribute("data-motion-mode", "reduced");
+    act(() => vi.advanceTimersByTime(10000));
+    expect(document.querySelector("[data-winter-phase]")).toHaveAttribute("data-winter-phase", "ready");
+    fireEvent.click(screen.getByRole("button", { name: "Получить подарок" }));
+    expect(document.querySelector("[data-winter-phase]")).toHaveAttribute("data-winter-phase", "handoff");
+    expect(document.querySelector("circle[cx='36'][cy='75']")).toBeNull();
+    act(() => vi.advanceTimersByTime(360));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("runs the staged reveal and mounts the full card behind the assembly handoff", () => {
     render(
       <GiftIntro recipientName="Анна" templateId="route-adventure" assemblyPreview={assemblyPreview}>
