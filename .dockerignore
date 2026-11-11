@@ -4,6 +4,7 @@ node_modules
 .npm-cache
 coverage
 screenshots
+template-assets/
 data/*.json
 data/public-share-media
 public/uploads

@@ -50,11 +50,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "next": "^16.3.3",
+    "next": "^16.4.1",
     "pg": "^8.22.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
@@ -64,12 +64,17 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^9.39.1",
-    "eslint-config-next": "^16.3.3",
+    "eslint-config-next": "^16.4.1",
     "jsdom": "^27.2.0",
     "playwright-core": "^1.61.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.8"
+    "vitest": "^4.1.12"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.1"
+    }
   }
 }
