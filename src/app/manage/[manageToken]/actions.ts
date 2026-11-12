@@ -1449,32 +1449,37 @@ export async function setMainGreetingAction(formData: FormData) {
   const manageToken = String(formData.get("manageToken") ?? "");
 
   if (!manageToken) {
-    return;
+    return { ok: false, message: "Не удалось определить страницу управления." };
   }
 
   const card = await getCardDraftByManageToken(manageToken);
   if (!card) {
-    return;
+    return { ok: false, message: "Секретная ссылка управления больше не актуальна." };
   }
   await assertManageContentEditable(manageToken);
 
   const visibleContributions = await listContributionsByCardId(card.id);
   const selectedContribution = visibleContributions.find((contribution) => contribution.id === contributionId);
 
-  if (selectedContribution && selectedContribution.message.length > MAIN_GREETING_MAX_LENGTH) {
+  if (!selectedContribution) {
+    return { ok: false, message: "Поздравление больше не доступно для выбора. Выберите другое активное поздравление." };
+  }
+
+  if (selectedContribution.message.length > MAIN_GREETING_MAX_LENGTH) {
     return {
       ok: false,
       message: `Сократите выбранное поздравление до ${MAIN_GREETING_MAX_LENGTH} символов, прежде чем назначать его главным.`
     };
   }
 
-  await updateCardMainGreetingSettings(card.id, {
-    contributionId: selectedContribution?.id ?? null
+  const updated = await updateCardMainGreetingSettings(card.id, {
+    contributionId: selectedContribution.id
   });
+  if (!updated) return { ok: false, message: "Не удалось сохранить главное поздравление." };
 
   logger.info("manage.main_greeting_selected", "Main greeting selected by organizer", {
     cardId: card.id,
-    contributionId: selectedContribution?.id ?? null
+    contributionId: selectedContribution.id
   });
 
   revalidateCardSurfaces(manageToken, card.publicSlug, card.finalSlug);

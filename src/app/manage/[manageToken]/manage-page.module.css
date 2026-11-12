@@ -15220,18 +15220,30 @@ button.contentStatusItemButton:active {
 .greetingEmptyPrimary:active { scale: .96; }
 .congratulationsAddButton { flex: 0 0 auto; min-width: 218px; padding: 0 18px 0 16px; color: #fff; background: #e9652f; box-shadow: 0 8px 18px rgba(223, 86, 40, .22); white-space: nowrap; }
 
-.mainGreetingCardNew { display: grid; gap: 14px; padding: 18px; border-radius: 22px; background: linear-gradient(145deg, rgba(255, 252, 248, 0.95), rgba(255, 252, 248, 0.98)); box-shadow: 0 0 0 1px rgba(225,105,53,.18); }
-.mainGreetingCardNewEmpty { background: rgba(250,247,242,.8); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1); }
+.mainGreetingCardNew { --bg-surface: #ffffff; --bg-subtle: #f7f8fa; --bg-hover: #f7f8fa; display: grid; gap: 14px; padding: 18px; border-radius: 22px; background: #f7f8fa; box-shadow: 0 0 0 1px rgba(0,0,0,.1); }
+.mainGreetingCardNewEmpty { background: #f7f8fa; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1); }
 .mainGreetingCardNewHeading { display: flex; align-items: center; gap: 12px; }
 .mainGreetingCardNewHeading > span { display: grid; place-items: center; width: 38px; height: 38px; color: #e9652f; font-size: 1.65rem; }
 .mainGreetingCardNewHeading h3 { margin: 0; color: var(--text-primary); font-size: 1rem; }
 .mainGreetingCardNewHeading p { margin: 3px 0 0; color: var(--text-secondary); font-size: .9rem; }
 .mainGreetingCardNewContent { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 12px; border-radius: 17px; background: var(--bg-surface); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 5px 16px rgba(0, 0, 0, 0.05); }
 .mainGreetingCardNewContent strong { color: var(--text-primary); }
+.mainGreetingActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.mainGreetingEditor { --bg-surface: #ffffff; --bg-subtle: #f7f8fa; --bg-hover: #f7f8fa; --border-neutral: #e5e7eb; }
+.mainGreetingEditor .contributionEditorSubmit { white-space: normal; text-wrap: balance; }
+.mainGreetingEditor .contributionEditorError,
+.mainGreetingEditor .contributionEditorFieldError { color: #202124; }
+.mainGreetingEditorHint { max-width: 520px; margin: 8px 0 0; color: #5f6368; font-size: .9rem; line-height: 1.5; }
 .mainGreetingCardNewContent > div > span { display: block; margin-top: 2px; color: var(--text-secondary); font-size: .84rem; }
 .mainGreetingCardNewContent p { display: -webkit-box; margin: 3px 0 0; overflow: hidden; color: var(--text-primary); line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .mainGreetingCardNewContent button,
 .mainGreetingCardNewMissing button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; color: #e9652f; background: var(--bg-subtle); box-shadow: 0 0 0 1px rgba(225,105,53,.24); font: inherit; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.mainGreetingActions button:last-child,
+.mainGreetingCardNewMissing button { color: #ffffff; background: #e9652f; box-shadow: none; }
+.mainGreetingActions button:last-child:hover,
+.mainGreetingCardNewMissing button:hover { background: #df5f2e; }
+.mainGreetingActions button:last-child:active,
+.mainGreetingCardNewMissing button:active { background: #c7532a; }
 .mainGreetingCardNewMissing { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 4px 2px 2px 50px; }
 .mainGreetingCardNewMissing strong { color: var(--text-primary); }
 .mainGreetingCardNewMissing p { margin: 4px 0 0; color: var(--text-secondary); font-size: .9rem; text-wrap: pretty; }
@@ -15860,8 +15872,6 @@ button.contentStatusItemButton:active {
   .orderEditorSave:hover:not(:disabled) { background: var(--m-accent-active); box-shadow: 0 10px 22px rgba(225,101,47,.28); transform: translateY(-1px); }
   .greetingOrderButton:hover,
   .greetingCardActions button:hover,
-  .mainGreetingCardNewContent button:hover,
-  .mainGreetingCardNewMissing button:hover,
   .orderEditorMoveButton:hover,
   .orderEditorQuickActions button:hover,
   .orderEditorInlineField button:hover:not(:disabled) { color: var(--m-accent-active); background: var(--bg-hover); box-shadow: inset 0 0 0 1px rgba(233,101,47,.45), 0 5px 14px rgba(233,101,47,.08); }
@@ -15934,6 +15944,7 @@ button.contentStatusItemButton:active {
   .congratulationsAddButton { width: 100%; }
   .mainGreetingCardNew { padding: 14px; border-radius: 20px; }
   .mainGreetingCardNewContent { grid-template-columns: auto minmax(0,1fr); }
+  .mainGreetingActions { grid-column: 1 / -1; }
   .mainGreetingCardNewContent button { grid-column: 1 / -1; width: 100%; }
   .mainGreetingCardNewMissing { display: grid; padding: 4px 0 0; }
   .mainGreetingCardNewMissing button { width: 100%; }

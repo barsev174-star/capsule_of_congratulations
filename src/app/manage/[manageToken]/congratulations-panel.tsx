@@ -8,11 +8,12 @@ import { CONTRIBUTION_MESSAGE_RECOMMENDED_LENGTH } from "@/lib/contributions/lim
 import { ShareLinkButton } from "./copy-link-button";
 import { ContributionEditor } from "./contribution-editor";
 import { ContributionOrderEditor } from "./contribution-order-editor";
+import { MainGreetingPicker } from "./main-greeting-picker";
 import styles from "./manage-page.module.css";
 import { useModalFocus } from "./use-modal-focus";
 import { selectCongratulations, type GreetingFilter, type GreetingSort } from "./congratulations-model";
 
-type EditorState = { contribution?: Contribution; mode: "manual" | "ai" } | null;
+type EditorState = { contribution?: Contribution; mode: "manual" | "ai"; assignAsMain?: boolean } | null;
 
 const getInitials = (name: string) => {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -172,6 +173,7 @@ export const CongratulationsPanel = ({
   const [sort, setSort] = useState<GreetingSort>("card");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editor, setEditor] = useState<EditorState>(null);
+  const [isMainPickerOpen, setIsMainPickerOpen] = useState(false);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [pendingFilter, setPendingFilter] = useState<GreetingFilter>(activeFilter);
   const [pendingSort, setPendingSort] = useState<GreetingSort>(sort);
@@ -214,6 +216,11 @@ export const CongratulationsPanel = ({
     setExpandedId(null);
     setEditor({ contribution, mode });
   }, []);
+  const openMainEditor = (contribution?: Contribution) => {
+    setIsMainPickerOpen(false);
+    setExpandedId(null);
+    setEditor({ contribution, mode: "manual", assignAsMain: true });
+  };
   const toggleContribution = useCallback((contributionId: string) => {
     setExpandedId((current) => current === contributionId ? null : contributionId);
   }, []);
@@ -259,7 +266,7 @@ export const CongratulationsPanel = ({
           </button>
         </div>
 
-        <section className={`${styles.mainGreetingCardNew} ${mainGreeting ? "" : styles.mainGreetingCardNewEmpty}`}>
+        <section id={mainGreeting ? `contribution-${mainGreeting.id}` : undefined} className={`${styles.mainGreetingCardNew} ${mainGreeting ? "" : styles.mainGreetingCardNewEmpty}`}>
           <div className={styles.mainGreetingCardNewHeading}>
             <span aria-hidden="true">☆</span>
             <div>
@@ -277,19 +284,22 @@ export const CongratulationsPanel = ({
                 {mainGreeting.authorRole ? <span>{mainGreeting.authorRole}</span> : null}
                 <p>{mainGreeting.message}</p>
               </div>
-              <button type="button" onClick={() => openEditor(mainGreeting)}>Редактировать</button>
+              <div className={styles.mainGreetingActions}>
+                <button type="button" onClick={() => openEditor(mainGreeting)}>Редактировать</button>
+                <button type="button" onClick={() => setIsMainPickerOpen(true)}>Заменить</button>
+              </div>
             </div>
           ) : (
             <div className={styles.mainGreetingCardNewMissing}>
               <div>
                 <strong>Главное поздравление не выбрано</strong>
-                <p>Выберите одно активное поздравление — оно станет акцентом открытки.</p>
+                <p>{counts.active > 0 ? "Выберите одно активное поздравление — оно станет акцентом открытки." : "Создайте главное поздравление — оно станет акцентом открытки."}</p>
               </div>
               {counts.active > 0 ? (
-                <button type="button" onClick={() => openEditor(ordinaryContributions.find((item) => item.status === "visible"))}>
+                <button type="button" onClick={() => setIsMainPickerOpen(true)}>
                   Выбрать главное
                 </button>
-              ) : null}
+              ) : <button type="button" onClick={() => openMainEditor()}>Создать главное поздравление</button>}
             </div>
           )}
         </section>
@@ -395,12 +405,28 @@ export const CongratulationsPanel = ({
           manageToken={manageToken}
           occasionText={occasionText}
           contribution={editor.contribution}
-          isMainGreeting={editor.contribution?.id === mainGreeting?.id}
+          isMainGreeting={Boolean(editor.contribution && editor.contribution.id === mainGreeting?.id)}
+          assignAsMain={editor.assignAsMain}
           greetingMode={greetingMode}
           initialMode={editor.mode}
           onClose={() => setEditor(null)}
           onSaved={finishEditor}
           onDeleted={() => { setEditor(null); showToast("Поздравление удалено"); }}
+        />
+      ) : null}
+
+      {isMainPickerOpen ? (
+        <MainGreetingPicker
+          contributions={allContributions}
+          currentMainId={mainGreeting?.id ?? null}
+          manageToken={manageToken}
+          onClose={() => setIsMainPickerOpen(false)}
+          onCreate={() => openMainEditor()}
+          onShorten={openMainEditor}
+          onSelected={(id) => {
+            setIsMainPickerOpen(false);
+            finishEditor(id, "Главное поздравление выбрано");
+          }}
         />
       ) : null}
 

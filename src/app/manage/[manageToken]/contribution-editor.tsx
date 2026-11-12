@@ -25,6 +25,7 @@ type Props = {
   occasionText: string;
   contribution?: Contribution;
   isMainGreeting: boolean;
+  assignAsMain?: boolean;
   greetingMode?: "classic" | "matrix" | "ladder";
   initialMode?: "manual" | "ai";
   onClose: () => void;
@@ -69,6 +70,7 @@ export const ContributionEditor = ({
   occasionText,
   contribution,
   isMainGreeting,
+  assignAsMain = false,
   greetingMode = "classic",
   initialMode = "manual",
   onClose,
@@ -87,7 +89,7 @@ export const ContributionEditor = ({
   const [aiDraftInitialized, setAiDraftInitialized] = useState(initialMode === "ai");
   const [hasAiReplacement, setHasAiReplacement] = useState(false);
   const [isVisible, setIsVisible] = useState(contribution?.status !== "hidden");
-  const [isMain, setIsMain] = useState(isMainGreeting);
+  const [isMain, setIsMain] = useState(isMainGreeting || assignAsMain);
   const [confirmation, setConfirmation] = useState<"close" | "delete" | null>(null);
   const [error, setError] = useState("");
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -99,10 +101,10 @@ export const ContributionEditor = ({
     authorRole: contribution?.authorRole ?? "",
     message: contribution?.message ?? "",
     isVisible: contribution?.status !== "hidden",
-    isMain: isMainGreeting,
+    isMain: isMainGreeting || assignAsMain,
     aiDraft: "",
     aiGenerationIds: []
-  }), [contribution, isMainGreeting]);
+  }), [contribution, isMainGreeting, assignAsMain]);
   const currentSnapshot = normalizeSnapshot({
     authorName,
     authorRole,
@@ -125,7 +127,9 @@ export const ContributionEditor = ({
   );
   const authorNameError = shouldShowFieldError("authorName", authorName);
   const messageError = shouldShowFieldError("message", message);
-  const title = contribution ? "Редактировать поздравление" : "Добавить поздравление";
+  const title = assignAsMain
+    ? contribution ? "Сделать поздравление главным" : "Создать главное поздравление"
+    : contribution ? "Редактировать поздравление" : "Добавить поздравление";
 
   const markEdited = (field: RequiredField) => {
     setEditedFields((current) => current[field] ? current : { ...current, [field]: true });
@@ -154,7 +158,9 @@ export const ContributionEditor = ({
         return;
       }
       router.refresh();
-      const feedback = !contribution
+      const feedback = assignAsMain
+        ? "Главное поздравление выбрано"
+        : !contribution
         ? "Поздравление добавлено"
         : !isMainGreeting && isMain
           ? "Поздравление назначено главным"
@@ -206,7 +212,7 @@ export const ContributionEditor = ({
     <div className={styles.contributionEditorBackdrop} onMouseDown={handleBackdrop}>
       <div
         ref={dialogRef}
-        className={styles.contributionEditorDialog}
+        className={`${styles.contributionEditorDialog} ${assignAsMain ? styles.mainGreetingEditor : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="contribution-editor-title"
@@ -217,6 +223,7 @@ export const ContributionEditor = ({
           <div>
             <span className={styles.contributionEditorEyebrow}>Поздравление для открытки</span>
             <h2 id="contribution-editor-title">{title}</h2>
+            {assignAsMain ? <p className={styles.mainGreetingEditorHint}>После сохранения это поздравление станет главным. Максимум — {MAIN_GREETING_MAX_LENGTH} символов.</p> : null}
           </div>
           <button type="button" className={styles.contributionEditorClose} onClick={requestClose} aria-label="Закрыть редактор">
             ×
@@ -414,7 +421,7 @@ export const ContributionEditor = ({
               </div>
             ) : null}
 
-            {contribution ? (
+            {contribution && !assignAsMain ? (
               <section className={styles.contributionEditorOptions} aria-label="Настройки поздравления">
                 <button
                   type="button"
@@ -457,7 +464,7 @@ export const ContributionEditor = ({
 
           <footer className={styles.contributionEditorFooter}>
             <div className={styles.contributionEditorFooterSide}>
-              {contribution ? (
+              {contribution && !assignAsMain ? (
                 <button
                   type="button"
                   className={styles.contributionEditorDelete}
@@ -474,7 +481,7 @@ export const ContributionEditor = ({
                 Отмена
               </button>
               <button type="submit" className={styles.contributionEditorSubmit} disabled={isPending} data-inactive={!canSubmit || undefined} aria-busy={isPending}>
-                {isPending ? "Сохраняем…" : contribution ? "Сохранить изменения" : "Добавить поздравление"}
+                {isPending ? "Сохраняем…" : assignAsMain ? contribution ? "Сохранить и сделать главным" : "Создать главное поздравление" : contribution ? "Сохранить изменения" : "Добавить поздравление"}
               </button>
             </div>
           </footer>
