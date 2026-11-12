@@ -16,14 +16,16 @@
 
 ## 2. Релиз
 
-1. Получить подготовленный release commit.
-2. Проверить `docker compose ... config`.
-3. Собрать новый web image, не удаляя предыдущий.
-4. Выполнить `npm run db:migrate` внутри web-контейнера и применить все ожидающие миграции, включая `0036_gift_animation.sql`; повторный запуск должен быть безопасен.
-5. Перезапустить нужные сервисы и проверить health `web` и `postgres`.
+1. Получить подготовленный release commit через `git pull --ff-only origin main`.
+2. После backup/контрольного восстановления выполнить `bash infra/scripts/deploy-web.sh --check`. Два стабильных тега `capsule-web:current` и `capsule-web:rollback` должны указывать на разные проверенные рабочие версии; текущая должна совпадать с running healthy web. Первичная настройка описана в `VPS_DEPLOYMENT_NOTES.md`.
+3. Запустить `bash infra/scripts/deploy-web.sh`: config/operations preflight, сборка и замена только web, Docker/public health, ротация current/rollback, автоматическая очистка старых неиспользуемых образов и итоговый operations-check. Параллельный deploy/cleanup блокируется общим flock.
+4. Миграции идемпотентно выполняются при старте web; применяются все ожидающие миграции. Сама очистка не выполняет операций с базой, volumes, uploads или резервными копиями.
+5. Убедиться в `DEPLOY_OK`. При ошибке сборки/start/health образы автоматически не удаляются; при ошибке operations после очистки завершение остаётся неуспешным. Повторный деплой того же образа сохраняет прежний rollback. Используемые даже остановленными контейнерами старые образы пропускаются и выводятся в журнал.
 6. Убедиться, что `capsule-caddy-1` запущен в том же Compose-проекте `capsule` и подключён к `capsule_default`. Ручной `docker network connect` не используется.
 7. Проверить HTTPS для `slovesto.ru` и `www.slovesto.ru`, а также 301 с `www` на основной домен.
 8. Если build cache очищался, заложить дополнительное время на полную сборку и не прерывать TypeScript/static generation без признаков ошибки.
+
+Ручная цепочка `docker compose up -d --build` обходит автоматическую ротацию/очистку и не используется для обычного web-релиза. Изменения PostgreSQL/Caddy обслуживаются отдельно. Подробности, dry-run и пределы очистки: раздел Production compose в `VPS_DEPLOYMENT_NOTES.md`.
 
 ## 3. Настройки после запуска
 

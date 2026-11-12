@@ -82,13 +82,50 @@ cd /home/deploy/capsule
 docker compose -f docker-compose.prod.yml --env-file .env.production config --quiet
 ```
 
-Запуск или обновление полного стека:
+Обычное обновление приложения (PostgreSQL, Caddy и их данные не пересоздаются):
 
 ```bash
 cd /home/deploy/capsule
 git pull --ff-only origin main
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+bash infra/scripts/deploy-web.sh
 ```
+
+`deploy-web.sh` — обязательная точка входа для обычных web-релизов. Он берёт общий lock `.deploy/web.lock`, проверяет текущий healthy-образ, существующий rollback, свежесть backup и operations с исходным порогом диска. Затем собирает и заменяет только `web`, ждёт Docker health до 180 секунд и проверяет публичный production health. После этих проверок прежний текущий образ становится `capsule-web:rollback`, новый — `capsule-web:current`; автоматически удаляются старые неиспользуемые образы приложения, затем повторяется operations-проверка. Сборка и старт сохраняют существующий контракт идемпотентных миграций web.
+
+Стабильные теги на VPS:
+
+- `capsule-web:current` — подтверждённый текущий образ (`307ee3885142` при настройке 12 ноября);
+- `capsule-web:rollback` — предыдущий рабочий (`d29f0fdbd6e4` при настройке);
+- `capsule-web:latest` — результат Compose build, сам по себе не считается подтверждением успешного выпуска.
+
+При повторном деплое того же image ID rollback не меняется. До ротации создаются временные теги `deploy-previous`, `deploy-old-rollback` и, при наличии, `deploy-old-latest`, чтобы предыдущий rollback и результат неудачной прошлой сборки не потеряли связь с репозиторием и не накапливались как dangling images. После успешного релиза очистка оставляет только два разных image ID; несколько тегов на них допустимы. Если старая версия всё ещё используется любым работающим или остановленным контейнером, она сохраняется с записью `skip in-use`, без принудительного удаления.
+
+Очистка (`cleanup-web-images.sh`) ограничена точными тегами репозитория `capsule-web`. Перед каждым удалением повторно проверяются pinned-теги, health текущей версии и использование образа контейнерами. При смене тега, ошибке Docker или отсутствии одного из двух разных защищённых образов очистка останавливается. `docker image rm` вызывается без force; общие `system/image/volume prune`, удаление контейнеров, работа с базой, uploads и backup в очистке отсутствуют. Кэш сборки этой процедурой не очищается.
+
+Ошибки сборки, старта или production health оставляют образы без автоматической очистки. Если новая версия уже запущена, но проверка не прошла, автоматический откат базы/контейнеров не выполняется: сначала диагностировать и восстановить рабочую версию по разделу Rollback. Следующий запуск требует совпадения running healthy image с `current`. Ошибка финальной operations-проверки после очистки возвращает ненулевой код; ни порог диска, ни проверка backup не отключаются.
+
+Проверка готовности без сборки, перезапуска и удаления:
+
+```bash
+bash infra/scripts/deploy-web.sh --check
+```
+
+Отдельный просмотр плана очистки (по умолчанию также dry-run) и применение:
+
+```bash
+bash infra/scripts/cleanup-web-images.sh --dry-run
+bash infra/scripts/cleanup-web-images.sh --apply
+```
+
+Первичная настройка на новом VPS требует **явно проверенных** image ID для двух разных рабочих версий; скрипт не угадывает rollback по дате создания. После сверки с running image и журналом последнего успешного релиза:
+
+```bash
+docker image tag VERIFIED_CURRENT_IMAGE_ID capsule-web:current
+docker image tag VERIFIED_PREVIOUS_WORKING_IMAGE_ID capsule-web:rollback
+bash infra/scripts/deploy-web.sh --check
+```
+
+Скрипт не создаёт и не удаляет резервные копии — backup и контрольное восстановление перед релизом остаются отдельным шагом runbook. Параметры `PROD_ENV_FILE`, `COMPOSE_FILE` и `BACKUP_DIR` совместимы с остальными инфраструктурными скриптами. Тесты выполняются командой `bash infra/tests/deploy-web.test.sh` с изолированным fake Docker, без доступа к production-образам и данным; эта команда включена в CI.
 
 Если менялся только Caddyfile или описание сервиса Caddy:
 
@@ -237,7 +274,9 @@ BACKUP_DIR=/home/deploy/capsule/backups bash infra/scripts/check-production-oper
 - `/home/deploy/capsule/public/uploads`;
 - `/home/deploy/capsule/data/public-share-media`;
 - `.env.production`;
-- активные и rollback-образы `capsule-web`.
+- текущий `capsule-web:current` и последний рабочий `capsule-web:rollback`, а также любой образ, используемый контейнером.
+
+По постоянному поручению владельца от 12 ноября старые неиспользуемые образы `capsule-web` удаляются автоматически после проверки нового web-релиза через `deploy-web.sh`. Это разрешение относится только к старым образам приложения и не распространяется на базу, volumes, загрузки и резервные копии.
 
 `docker builder prune -af` не затрагивает работающие images/containers, но удаляет кеш сборки. Следующий deploy после такой очистки будет существенно дольше.
 

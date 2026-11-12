@@ -102,3 +102,4 @@
 - Production и локальная схема доведены до миграции `0041`; перед production-выпуском обязателен backup с контрольным восстановлением по `docs/VPS_DEPLOYMENT_NOTES.md`.
 - Точные отложенные риски и ближайшие задачи ведутся только в `docs/CURRENT_STATUS_AND_PAYMENT_GATE.md`; `/roadmap` не используется как публичный backlog.
 - Базовая проверка перед пушем: `npm run typecheck`, `npm run lint`, `npm run test:coverage`, `npm run build`. GitHub Actions дополняет её PostgreSQL-миграциями, Chromium/Firefox/WebKit smoke и audit зависимостей.
+- Обычный web-деплой на VPS выполняется через `bash infra/scripts/deploy-web.sh`: после health-проверок сохраняются текущий и предыдущий рабочий образы, остальные неиспользуемые образы приложения удаляются автоматически. План без изменений — `bash infra/scripts/deploy-web.sh --check`; изолированные тесты процесса — `bash infra/tests/deploy-web.test.sh` (также в CI). Данные и резервные копии очистка не затрагивает.

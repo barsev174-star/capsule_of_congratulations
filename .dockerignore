@@ -1,5 +1,6 @@
 node_modules
 .next
+.deploy
 .git
 .npm-cache
 coverage

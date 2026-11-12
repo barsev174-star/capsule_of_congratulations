@@ -1,0 +1,3 @@
+infra/scripts/deploy-web.sh text eol=lf
+infra/scripts/cleanup-web-images.sh text eol=lf
+infra/tests/deploy-web.test.sh text eol=lf
