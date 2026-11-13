@@ -6,14 +6,17 @@ import styles from "../admin.module.css";
 
 export function CreateAdminUserForm() {
   const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     setIsPending(true);
-    await createAdminUserAction(formData);
-    setIsPending(false);
-    event.currentTarget.reset();
+    setError("");
+    try { await createAdminUserAction(formData); form.reset(); }
+    catch { setError("Не удалось добавить пользователя. Проверьте данные и повторите попытку."); }
+    finally { setIsPending(false); }
   };
 
   return (
@@ -21,20 +24,23 @@ export function CreateAdminUserForm() {
       <div className={styles.filters}>
         <input
           type="email"
+          aria-label="Email нового администратора"
           name="email"
           placeholder="Email"
           required
           className={styles.searchInput}
         />
         <input
-          type="text"
+          type="password"
+          autoComplete="new-password"
+          aria-label="Пароль нового администратора"
           name="password"
           placeholder="Пароль"
           required
           minLength={8}
           className={styles.searchInput}
         />
-        <select name="role" defaultValue="moderator" className={styles.statusSelect}>
+        <select name="role" aria-label="Роль нового администратора" defaultValue="moderator" className={styles.statusSelect}>
           <option value="admin">Администратор</option>
           <option value="moderator">Модератор</option>
           <option value="support">Поддержка</option>
@@ -43,6 +49,7 @@ export function CreateAdminUserForm() {
           {isPending ? "Создание..." : "Создать"}
         </button>
       </div>
+      {error && <p role="alert" className={styles.loginError}>{error}</p>}
       <p className={styles.loginInfo}>Скопируйте пароль перед созданием — он не сохраняется в открытом виде.</p>
     </form>
   );

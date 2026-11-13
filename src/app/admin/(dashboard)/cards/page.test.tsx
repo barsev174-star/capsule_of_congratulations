@@ -64,12 +64,12 @@ describe("AdminCardsPage", () => {
     expect(within(activeRow!).getByText("Сергей Барыкин")).toBeInTheDocument();
     expect(within(activeRow!).getByText("sergey@example.com")).toBeInTheDocument();
     expect(within(activeRow!).getByText("16.08.2026")).toBeInTheDocument();
-    expect(within(activeRow!).getByRole("link", { name: "Детали и доступ" })).toHaveAttribute(
+    expect(within(activeRow!).getByRole("link", { name: "Открыть" })).toHaveAttribute(
       "href",
       `/admin/cards/${activeCard.id}`
     );
-    expect(within(activeRow!).getByRole("link", { name: "Управлять" })).toHaveAttribute("href", `/manage/${activeCard.id}`);
-    expect(within(activeRow!).getByRole("link", { name: "Предпросмотр" })).toHaveAttribute("href", `/preview/${activeCard.id}`);
+    expect(within(activeRow!).getByText("Сбор открыт")).toBeInTheDocument();
+    expect(within(activeRow!).getByText("Не оплачено")).toBeInTheDocument();
   });
 
   it("does not expose user routes for a deleted card", async () => {
@@ -78,11 +78,10 @@ describe("AdminCardsPage", () => {
     const deletedRow = screen.getByRole("link", { name: "Удалённая открытка" }).closest("tr");
     expect(deletedRow).not.toBeNull();
     expect(within(deletedRow!).getByText("Удалена")).toBeInTheDocument();
-    expect(within(deletedRow!).getByRole("link", { name: "Детали и доступ" })).toHaveAttribute(
+    expect(within(deletedRow!).getByRole("link", { name: "Открыть" })).toHaveAttribute(
       "href",
       `/admin/cards/${deletedCard.id}`
     );
-    expect(within(deletedRow!).getByText("Пользовательские действия недоступны")).toBeInTheDocument();
     expect(within(deletedRow!).queryByRole("link", { name: "Управлять" })).not.toBeInTheDocument();
     expect(within(deletedRow!).queryByRole("link", { name: "Предпросмотр" })).not.toBeInTheDocument();
   });

@@ -51,7 +51,7 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
     await db.connect();
     await db.query("BEGIN");
     const tables: Record<string, string> = {
-      cards: "id, created_at, delivered_at, recipient_first_opened_at, paid_at",
+      cards: "id, created_at, delivered_at, recipient_first_opened_at, paid_at, is_test",
       contributions: "id, card_id, source, participant_token_hash, created_at",
       telemetry_events: "id, kind, event, card_id, context, error_id, created_at",
       ai_usage_events: "id, card_id, generation_type, status, created_at, is_reserved_free",
@@ -75,7 +75,7 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
   const card = async (days = 1, delivered = false, opened = false) => {
     const id = randomUUID();
     await db.query(`INSERT INTO cards VALUES ($1, now() - ($2 * interval '1 day'),
-      CASE WHEN $3 THEN now() END, CASE WHEN $4 THEN now() END, NULL)`, [id, days, delivered, opened]);
+      CASE WHEN $3 THEN now() END, CASE WHEN $4 THEN now() END, NULL, false)`, [id, days, delivered, opened]);
     return id;
   };
   const event = async (name: string, cardId: string | null, context: object = {}, days = 0) => {
@@ -158,6 +158,7 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
       { landing: "caregiver", views: 0, exampleClicks: 1, createClicks: 0 },
       { landing: "colleague", views: 0, exampleClicks: 0, createClicks: 1 },
       { landing: "home", views: 0, exampleClicks: 0, createClicks: 0 },
+      { landing: "new-year", views: 0, exampleClicks: 0, createClicks: 0 },
       { landing: "teacher", views: 2, exampleClicks: 0, createClicks: 0 }
     ]);
     expect((await getAcquisitionAnalytics(30))!.totals.created).toBe(3);
@@ -286,5 +287,18 @@ databaseTests("acquisition SQL against PostgreSQL", () => {
   it("returns explicit empty aggregates", async () => {
     expect((await getAcquisitionAnalytics(7))!.totals).toEqual(emptyAcquisitionCounts());
     expect((await getTelemetrySummary(7)).aiCost.totalRub).toBe(0);
+  });
+  it("excludes explicitly marked test cards and their AI costs in every period", async () => {
+    const real = await card(), test = await card(), old = await card(100);
+    await db.query("UPDATE cards SET is_test=true WHERE id=$1", [test]);
+    await payment(real); await payment(test);
+    await event("ai.join_single_generation", real, { action: "initial", composerModel: "qa-model", totalCostRub: 1 });
+    await event("ai.join_single_generation", test, { action: "initial", composerModel: "qa-model", totalCostRub: 100 });
+    await event("ai.join_single_generation", old, { action: "initial", composerModel: "qa-model", totalCostRub: 2 }, 100);
+    expect((await getAcquisitionAnalytics(7))?.totals).toMatchObject({ created: 1, paid: 1, grossKopecks: 39900 });
+    expect((await getAcquisitionAnalytics(90))?.totals.created).toBe(1);
+    expect((await getAcquisitionAnalytics(null))?.totals.created).toBe(2);
+    expect((await getTelemetrySummary(7)).aiCost).toMatchObject({ totalRub: 1, byOperation: [{ action: "initial", operations: 1, totalRub: 1 }] });
+    expect((await getTelemetrySummary(null)).aiCost.totalRub).toBe(3);
   });
 });

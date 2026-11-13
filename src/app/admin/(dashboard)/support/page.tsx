@@ -1,147 +1,28 @@
 import { requireAdminRole } from "@/lib/admin/session";
 import { listSupportRequests } from "@/lib/support/repository";
 import { listSupportNotificationDeliveries } from "@/lib/support/notifications-repository";
-import type {
-  SupportNotificationChannel,
-  SupportNotificationStatus,
-  SupportRequestCategory,
-  SupportRequestStatus
-} from "@/lib/support/types";
-import { retrySupportNotificationAction, updateSupportRequestStatusAction } from "../../actions-support";
+import type { SupportRequestStatus } from "@/lib/support/types";
+import { formatAdminDate,parsePage } from "@/lib/admin/format";
+import { retrySupportNotificationAction,updateSupportRequestStatusAction } from "../../actions-support";
+import { AdminDataTable,AdminFilterBar,AdminPageHeader,AdminPagination,AdminStatusBadge } from "../../components/admin-ui";
+import { AdminStatus } from "../../components/admin-status";
+import { AdminConfirmDialog } from "../../components/admin-confirm-dialog";
+import { AdminObjectDetails } from "../../components/admin-object-details";
 import styles from "../../admin.module.css";
-
-const statuses: SupportRequestStatus[] = ["new", "in_progress", "resolved"];
-const statusLabels: Record<SupportRequestStatus, string> = {
-  new: "Новое",
-  in_progress: "В работе",
-  resolved: "Решено"
-};
-const categoryLabels: Record<SupportRequestCategory, string> = {
-  problem: "Проблема",
-  suggestion: "Предложение",
-  question: "Вопрос"
-};
-const notificationChannelLabels: Record<SupportNotificationChannel, string> = {
-  email: "Email"
-};
-const notificationStatusLabels: Record<SupportNotificationStatus, string> = {
-  pending: "В очереди",
-  sending: "Отправляется",
-  sent: "Отправлено",
-  failed: "Ошибка"
-};
-
-type Props = { searchParams: Promise<{ status?: string }> };
-
-export default async function AdminSupportPage({ searchParams }: Props) {
+const categories={problem:"Проблема",suggestion:"Предложение",question:"Вопрос"};
+type Params={status?:string;page?:string;request?:string};
+export default async function AdminSupportPage({searchParams}:{searchParams:Promise<Params>}) {
   await requireAdminRole("support");
-  const { status } = await searchParams;
-  const selectedStatus = statuses.includes(status as SupportRequestStatus)
-    ? status as SupportRequestStatus
-    : undefined;
-  const requests = await listSupportRequests(selectedStatus);
-  const deliveries = await listSupportNotificationDeliveries(requests.map((request) => request.id));
-  const deliveriesByRequest = new Map(requests.map((request) => [
-    request.id,
-    deliveries.filter((delivery) => delivery.supportRequestId === request.id)
-  ]));
-
-  return (
-    <>
-      <h1 className={styles.pageTitle}>Обращения</h1>
-      <p className={styles.pageSubtitle}>Проблемы, вопросы и предложения пользователей</p>
-
-      <form method="get" className={styles.filters}>
-        <select name="status" defaultValue={selectedStatus ?? ""} className={styles.statusSelect}>
-          <option value="">Все статусы</option>
-          {statuses.map((item) => <option key={item} value={item}>{statusLabels[item]}</option>)}
-        </select>
-        <button type="submit" className={styles.filterButton}>Применить</button>
-      </form>
-
-      <section className={styles.panel}>
-        {requests.length === 0 ? (
-          <p className={styles.emptyState}>Обращений пока нет.</p>
-        ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Тема</th>
-                  <th>Сообщение</th>
-                  <th>Контакт</th>
-                  <th>Источник</th>
-                  <th>Статус</th>
-                  <th>Уведомления</th>
-                  <th>Дата</th>
-                  <th>Действия</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.map((request) => (
-                  <tr key={request.id}>
-                    <td>{categoryLabels[request.category]}</td>
-                    <td style={{ maxWidth: 420, whiteSpace: "pre-wrap" }}>{request.message}</td>
-                    <td>
-                      {request.contactName ? <>{request.contactName}<br /></> : null}
-                      <a href={`mailto:${request.email}`}>{request.email}</a>
-                    </td>
-                    <td>{request.source}</td>
-                    <td><span className={styles.badge}>{statusLabels[request.status]}</span></td>
-                    <td>
-                      {(deliveriesByRequest.get(request.id) ?? []).length === 0 ? (
-                        <span className={styles.notificationEmpty}>Ранее не отправлялось</span>
-                      ) : (
-                        <div className={styles.notificationList}>
-                          {(deliveriesByRequest.get(request.id) ?? []).map((delivery) => (
-                            <div key={delivery.id} className={styles.notificationItem}>
-                              <span>{notificationChannelLabels[delivery.channel]}</span>
-                              <span className={`${styles.notificationStatus} ${
-                                delivery.status === "sent"
-                                  ? styles.notificationStatusSent
-                                  : delivery.status === "failed"
-                                    ? styles.notificationStatusFailed
-                                    : ""
-                              }`}>
-                                {notificationStatusLabels[delivery.status]}
-                              </span>
-                              {delivery.status === "failed" ? (
-                                <form action={retrySupportNotificationAction} className={styles.actionForm}>
-                                  <input type="hidden" name="deliveryId" value={delivery.id} />
-                                  <button type="submit" className={styles.notificationRetry}>Повторить</button>
-                                </form>
-                              ) : null}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </td>
-                    <td>{new Date(request.createdAt).toLocaleString("ru-RU")}</td>
-                    <td>
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        {request.status !== "in_progress" ? (
-                          <form action={updateSupportRequestStatusAction} className={styles.actionForm}>
-                            <input type="hidden" name="requestId" value={request.id} />
-                            <input type="hidden" name="status" value="in_progress" />
-                            <button type="submit" className={styles.actionButton}>В работу</button>
-                          </form>
-                        ) : null}
-                        {request.status !== "resolved" ? (
-                          <form action={updateSupportRequestStatusAction} className={styles.actionForm}>
-                            <input type="hidden" name="requestId" value={request.id} />
-                            <input type="hidden" name="status" value="resolved" />
-                            <button type="submit" className={`${styles.actionButton} ${styles.actionButtonPrimary}`}>Решено</button>
-                          </form>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-    </>
-  );
+  const params=await searchParams,page=parsePage(params.page);
+  const rows=await listSupportRequests(["new","in_progress","resolved"].includes(params.status ?? "")?params.status as SupportRequestStatus:undefined,{limit:21,offset:(page-1)*20});
+  const deliveries=await listSupportNotificationDeliveries(rows.slice(0,20).map(r=>r.id));
+  return <><AdminPageHeader title="Обращения" description="Вопросы, проблемы и предложения пользователей."/>
+  <AdminFilterBar resetHref="/admin/support"><label className={styles.filterField}>Статус<select className={styles.statusSelect} name="status" defaultValue={params.status ?? ""}><option value="">Все</option><option value="new">Новое</option><option value="in_progress">В работе</option><option value="resolved">Решено</option></select></label></AdminFilterBar>
+  <section className={styles.panel}><AdminDataTable label="Обращения" rows={rows.slice(0,20)} empty="Обращений пока нет." columns={[
+    {key:"topic",label:"Тема",render:(r)=><>{categories[r.category]}<p className={styles.textPreview}>{r.message}</p></>},
+    {key:"contact",label:"Пользователь",render:(r)=><>{r.contactName}<span className={styles.cellSecondary}>{r.email}</span></>},
+    {key:"status",label:"Статус",render:(r)=><AdminStatus domain="support" value={r.status}/>},
+    {key:"date",label:"Дата",render:(r)=>formatAdminDate(r.createdAt,true)},
+    {key:"detail",label:"Подробности",render:(r)=><AdminObjectDetails title={categories[r.category]} initiallyOpen={params.request===r.id}><div><p style={{whiteSpace:"pre-wrap"}}>{r.message}</p><p className={styles.analyticsNote}>Источник: {r.source}</p><div className={styles.statusStack}>{(["new","in_progress","resolved"] as const).filter(status=>status!==r.status).map(status=><form key={status} action={updateSupportRequestStatusAction}><input type="hidden" name="requestId" value={r.id}/><input type="hidden" name="status" value={status}/><button type="submit" className={styles.actionButton}>{status==="resolved"?"Решено":status==="in_progress"?"В работу":"Вернуть в новые"}</button></form>)}</div><h3 className={styles.analyticsSubheading}>Уведомления</h3>{deliveries.filter(d=>d.supportRequestId===r.id).length===0?<p className={styles.analyticsNote}>Ранее не отправлялось</p>:deliveries.filter(d=>d.supportRequestId===r.id).map(delivery=><div key={delivery.id} className={styles.notificationList}><AdminStatusBadge tone={delivery.status==="failed"?"error":delivery.status==="sent"?"success":"info"}>{delivery.status==="failed"?"Ошибка":delivery.status==="sent"?"Отправлено":delivery.status==="sending"?"Отправляется":"В очереди"}</AdminStatusBadge>{delivery.status==="failed"&&<form action={retrySupportNotificationAction}><input type="hidden" name="deliveryId" value={delivery.id}/><AdminConfirmDialog danger={false} message="Повторить уведомление об обращении?">Повторить</AdminConfirmDialog></form>}</div>)}</div></AdminObjectDetails>}
+  ]}/></section><AdminPagination pathname="/admin/support" params={params} page={page} hasNext={rows.length>20}/></>;
 }

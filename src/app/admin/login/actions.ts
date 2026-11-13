@@ -29,7 +29,7 @@ export async function loginAdminAction(
     const dbUser = await getAdminUserByEmail(email);
 
     if (dbUser) {
-      if (!verifyAdminPassword(password, dbUser.passwordHash, dbUser.passwordSalt)) {
+      if (dbUser.disabledAt || !verifyAdminPassword(password, dbUser.passwordHash, dbUser.passwordSalt)) {
         logger.info("admin.login_failed", "Admin login failed", { email, source: "db" });
         return { ok: false, message: "Неверный email или пароль." };
       }

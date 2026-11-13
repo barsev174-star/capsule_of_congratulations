@@ -1,3 +1,4 @@
+import userEvent from "@testing-library/user-event";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { AcquisitionReport } from "./acquisition-report";
 import { emptyAcquisitionCounts, type AcquisitionAnalytics } from "@/lib/admin/acquisition-analytics";
@@ -67,7 +68,7 @@ describe("acquisition report UI", () => {
     pageMocks.summary.mockResolvedValue(emptySummary);
     render(await AnalyticsPage({ searchParams: Promise.resolve({ days: "30" }) }));
     expect(pageMocks.acquisition).toHaveBeenCalledWith(30);
-    expect(pageMocks.summary).toHaveBeenCalledWith(30);
+    expect(pageMocks.summary).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: "30 дней" })).toHaveAttribute("aria-current", "page");
   });
 
@@ -116,13 +117,18 @@ describe("acquisition report UI", () => {
       }
     });
 
-    render(await AnalyticsPage({ searchParams: Promise.resolve({}) }));
+    render(await AnalyticsPage({ searchParams: Promise.resolve({ tab: "ai" }) }));
+    const user = userEvent.setup();
+    expect(screen.getByText("Последние запуски").closest("details")).not.toHaveAttribute("open");
+    await user.click(screen.getByText("Последние запуски"));
+    await user.click(screen.getByText("Первый текст"));
+    await user.click(screen.getByText("Показатели для решений по лимитам"));
     expect(screen.getByRole("region", { name: "Детализация расходов на ИИ, таблица" })).toBeInTheDocument();
     expect(screen.getByText("Первый текст")).toBeInTheDocument();
-    expect(screen.getAllByText("1.250 ₽").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/yandexgpt-5\.1/)).toHaveLength(2);
+    expect(screen.getAllByText("1,25 ₽").length).toBeGreaterThan(0);
+    expect(screen.getByText(/Разбор: yandexgpt-5\.1.*Сборка: yandexgpt-5\.1/)).toBeInTheDocument();
     const decisionMetrics = screen.getByRole("region", { name: "Показатели для решения по лимитам" });
-    expect(within(decisionMetrics).getByText("0.625 ₽")).toBeInTheDocument();
+    expect(within(decisionMetrics).getByText("0,625 ₽")).toBeInTheDocument();
     expect(within(decisionMetrics).getByText(/33,3.*%/)).toBeInTheDocument();
     expect(within(decisionMetrics).getByText("1,5")).toBeInTheDocument();
     expect(within(decisionMetrics).getByText("3")).toBeInTheDocument();
@@ -136,14 +142,14 @@ describe("acquisition report UI", () => {
     expect(within(journey).getAllByText("50% от созданных")).toHaveLength(2);
     expect(within(journey).getAllByText("100% от созданных")).toHaveLength(2);
     expect(screen.queryByText(/от шага выше/)).not.toBeInTheDocument();
-    const seo = screen.getByRole("region", { name: "Главная и тематические страницы" });
+    const seo = screen.getByRole("table", { name: "Результаты страниц" });
     expect(within(seo).getAllByRole("link")).toHaveLength(6);
     expect(within(seo).getByRole("link", { name: "Главная" })).toHaveAttribute("href", "/");
     expect(within(seo).getByRole("link", { name: "День рождения" })).toHaveAttribute("href", "/gruppovaya-otkrytka/den-rozhdeniya");
     expect(within(seo).getByRole("link", { name: "Новый год" })).toHaveAttribute("href", "/gruppovaya-otkrytka/novyy-god");
-    expect(within(seo).getByText(/не уникальные посетители/)).toBeInTheDocument();
+    expect(screen.getByText(/не уникальные посетители/)).toBeInTheDocument();
     expect(screen.getByText("Страница входа не определена")).toBeInTheDocument();
-    const actions = screen.getByRole("region", { name: "Нажатия на главной, таблица" });
+    const actions = screen.getByRole("region", { name: "Нажатия на главной, таблица", hidden: true });
     expect(within(actions).getByRole("row", { name: "Первый экран 4 7" })).toBeInTheDocument();
     expect(screen.getByText(/не точное число людей/)).toBeInTheDocument();
     expect(screen.getByRole("region", { name: /Источники открыток, таблица/ })).toHaveAttribute("tabindex", "0");
@@ -159,5 +165,14 @@ describe("acquisition report UI", () => {
     render(<AcquisitionReport report={null} days={7} />);
     expect(screen.getByText(/продажи и конверсии не рассчитываются/)).toBeInTheDocument();
     expect(screen.queryByText("Подтверждённые платежи")).not.toBeInTheDocument();
+  });
+  it("keeps a page with creations and zero views outside the collapsed inactive list", () => {
+    render(<AcquisitionReport mode="sources" days={7} report={{ ...report, landings:[], sources:[{ ...emptyAcquisitionCounts(), created:2, landing:"home", source:null, medium:null, campaign:null }] }} />);
+    const homeCard=screen.getAllByRole("link",{name:"Главная"}).map(link=>link.closest("article")).find(Boolean);
+    expect(homeCard).toBeTruthy();
+    expect(within(homeCard!).getByText("2")).toBeInTheDocument();
+    const inactive=screen.getByText("Остальные страницы (5)").closest("details");
+    expect(inactive).not.toHaveAttribute("open");
+    expect(within(inactive!).queryByRole("link",{name:"Главная",hidden:true})).not.toBeInTheDocument();
   });
 });

@@ -14,6 +14,7 @@ import type {
 import { serializeDateOnly } from "@/lib/dates/date-only";
 
 type CardRow = {
+  is_test?: boolean;
   id: string;
   public_slug: string | null;
   manage_token: string | null;
@@ -118,6 +119,7 @@ const legacyStatus = (row: Pick<CardRow, "collection_status" | "delivery_status"
 };
 
 const mapCard = (row: CardRow): CardDraft => ({
+  isTest: row.is_test ?? false,
   id: row.id,
   // Tombstones are excluded by all public repository reads. The casts keep the
   // compatibility CardDraft shape for the internal id-only retention record.

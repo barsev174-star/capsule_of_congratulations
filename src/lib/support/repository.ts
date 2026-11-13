@@ -114,13 +114,14 @@ export const createSupportRequest = async (
   return item;
 };
 
-export const listSupportRequests = async (status?: SupportRequestStatus): Promise<SupportRequest[]> => {
+export const listSupportRequests = async (status?: SupportRequestStatus, options: { limit?: number; offset?: number } = {}): Promise<SupportRequest[]> => {
+  const limit = options.limit ?? 100, offset = options.offset ?? 0;
   if (isPostgresConfigured()) {
     const params = status ? [status] : [];
     const where = status ? "WHERE status = $1" : "";
     const result = await getPostgresPool().query<SupportRequestRow>(
-      `SELECT * FROM support_requests ${where} ORDER BY created_at DESC LIMIT 100`,
-      params
+      `SELECT * FROM support_requests ${where} ORDER BY created_at DESC, id LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, limit, offset]
     );
     return result.rows.map(mapRow);
   }
@@ -128,7 +129,7 @@ export const listSupportRequests = async (status?: SupportRequestStatus): Promis
   return (await readJson())
     .filter((item) => !status || item.status === status)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0, 100);
+    .slice(offset, offset + limit);
 };
 
 export const updateSupportRequestStatus = async (

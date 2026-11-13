@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { getAdminAuthEnv, verifyAdminSessionToken, type AdminSession } from "./auth";
 import { adminRoleSatisfies } from "./permissions";
 import type { AdminUserRole } from "./types";
+import { getAdminUserByEmail } from "./repository-phase2";
 
 const ADMIN_SESSION_COOKIE = "admin_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -15,8 +16,14 @@ export const getAdminSession = async (): Promise<AdminSession | null> => {
       return null;
     }
 
-    const { sessionSecret } = getAdminAuthEnv();
-    return verifyAdminSessionToken(token, sessionSecret);
+    const env = getAdminAuthEnv();
+    const session = verifyAdminSessionToken(token, env.sessionSecret);
+    if (!session) return null;
+    // Role changes and account removal take effect on the next server request.
+    const user = await getAdminUserByEmail(session.email);
+    if (user?.disabledAt) return null;
+    if (user) return { ...session, role: user.role };
+    return session.email.toLowerCase() === env.email.toLowerCase() ? { ...session, role: "admin" } : null;
   } catch {
     return null;
   }

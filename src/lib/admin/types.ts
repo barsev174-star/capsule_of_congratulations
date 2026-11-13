@@ -28,6 +28,7 @@ export type TemplateOverride = {
 export type AdminUserRole = "admin" | "moderator" | "support";
 
 export type AdminUser = {
+  disabledAt?: string | null;
   id: string;
   email: string;
   role: AdminUserRole;

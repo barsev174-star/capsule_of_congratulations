@@ -12,11 +12,21 @@ import { logger } from "@/lib/logger";
 import { setAiBonusLimit } from "@/lib/ai/repository";
 import { getCardDraftById } from "@/lib/cards/repository";
 import { accessGrantReasons, grantCardAccess, revokeCardAccess } from "@/lib/cards/access-grants";
+import { setCardTestFlag, recordAdminAction } from "@/lib/admin/audit";
+
+export async function setCardTestFlagAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole("admin");
+  const cardId = String(formData.get("cardId") ?? "");
+  const flag = String(formData.get("isTest") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(cardId) || !["true", "false"].includes(flag)) return;
+  await setCardTestFlag(cardId, flag === "true", session.email);
+  revalidatePath("/admin", "layout");
+}
 
 const contributionStatuses: Contribution["status"][] = ["visible", "hidden", "deleted"];
 
 export async function updateContributionStatusAdminAction(formData: FormData): Promise<void> {
-  await requireAdminRole("support");
+  const session = await requireAdminRole("support");
 
   const contributionId = String(formData.get("contributionId") ?? "");
   const status = String(formData.get("status") ?? "") as Contribution["status"];
@@ -35,12 +45,13 @@ export async function updateContributionStatusAdminAction(formData: FormData): P
     contributionId: updated.id,
     status
   });
+  await recordAdminAction({ email: session.email, action: `contribution.${status}`, objectType: "contribution", objectId: contributionId });
 
   revalidatePath("/admin/contributions");
 }
 
 export async function updateAiBonusLimitAdminAction(formData: FormData): Promise<void> {
-  await requireAdminRole("admin");
+  const session = await requireAdminRole("admin");
 
   const cardId = String(formData.get("cardId") ?? "");
   const bonusLimit = Number(formData.get("bonusLimit"));
@@ -50,6 +61,7 @@ export async function updateAiBonusLimitAdminAction(formData: FormData): Promise
   if (!card) return;
 
   const savedBonus = await setAiBonusLimit(cardId, bonusLimit);
+  await recordAdminAction({ email: session.email, action: "card.ai_limit", objectType: "card", objectId: cardId });
   logger.info("admin.ai_bonus_limit_updated", "AI bonus limit updated by admin", {
     cardId,
     bonusLimit: savedBonus

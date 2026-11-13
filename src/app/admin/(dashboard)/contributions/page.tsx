@@ -2,144 +2,32 @@ import Link from "next/link";
 import { listAdminContributions } from "@/lib/admin/repository";
 import type { ContributionStatus } from "@/lib/cards/types";
 import { requireAdminRole } from "@/lib/admin/session";
+import { formatAdminDate,parsePage,parseFilterDate } from "@/lib/admin/format";
 import { updateContributionStatusAdminAction } from "../../actions";
+import { AdminDataTable,AdminFilterBar,AdminPageHeader,AdminPagination } from "../../components/admin-ui";
+import { AdminStatus } from "../../components/admin-status";
+import { AdminConfirmDialog } from "../../components/admin-confirm-dialog";
+import { AdminObjectDetails } from "../../components/admin-object-details";
 import styles from "../../admin.module.css";
-
-const contributionStatusOptions = [
-  { value: "", label: "Все статусы" },
-  { value: "visible", label: "Видны" },
-  { value: "hidden", label: "Скрыты" },
-  { value: "deleted", label: "Удалены" }
-] as const;
-
-const contributionStatuses: ContributionStatus[] = ["visible", "hidden", "deleted"];
-const isContributionStatus = (value: string): value is ContributionStatus =>
-  contributionStatuses.includes(value as ContributionStatus);
-
-const statusLabels: Record<string, string> = {
-  visible: "Видно",
-  hidden: "Скрыто",
-  deleted: "Удалено"
-};
-
-const statusBadgeClass: Record<string, string> = {
-  visible: styles.badgeVisible,
-  hidden: styles.badgeHidden,
-  deleted: styles.badgeDeleted
-};
-
-type Props = {
-  searchParams: Promise<{
-    status?: string;
-    search?: string;
-  }>;
-};
-
-export default async function AdminContributionsPage({ searchParams }: Props) {
-  await requireAdminRole("support");
-  const { status, search } = await searchParams;
-  const statusValue = status && isContributionStatus(status) ? status : undefined;
-  const contributions = await listAdminContributions({
-    status: statusValue,
-    search: search?.trim() || undefined,
-    limit: 50
-  });
-
-  return (
-    <>
-      <h1 className={styles.pageTitle}>Поздравления</h1>
-      <p className={styles.pageSubtitle}>Модерация поздравлений</p>
-
-      <form method="get" className={styles.filters}>
-        <input
-          type="search"
-          name="search"
-          defaultValue={search}
-          placeholder="Поиск по автору или тексту"
-          className={styles.searchInput}
-        />
-        <select name="status" defaultValue={status ?? ""} className={styles.statusSelect}>
-          {contributionStatusOptions.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-        </select>
-        <button type="submit" className={styles.filterButton}>
-          Применить
-        </button>
-      </form>
-
-      <section className={styles.panel}>
-        {contributions.length === 0 ? (
-          <p className={styles.emptyState}>Поздравления не найдены.</p>
-        ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Автор</th>
-                  <th>Текст</th>
-                  <th>Открытка</th>
-                  <th>Статус</th>
-                  <th>Дата</th>
-                  <th>Действия</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contributions.map((contribution) => (
-                  <tr key={contribution.id}>
-                    <td>{contribution.authorName}</td>
-                    <td style={{ maxWidth: 360, whiteSpace: "pre-wrap" }}>{contribution.message}</td>
-                    <td>
-                      <Link href={`/admin/cards/${contribution.cardId}`}>{contribution.recipientName}</Link>
-                      <br />
-                      <Link href={`/join/${contribution.publicSlug}`} style={{ fontSize: 13 }}>
-                        Ссылка участника
-                      </Link>
-                    </td>
-                    <td>
-                      <span className={`${styles.badge} ${statusBadgeClass[contribution.status] ?? ""}`}>
-                        {statusLabels[contribution.status] ?? contribution.status}
-                      </span>
-                    </td>
-                    <td>{new Date(contribution.createdAt).toLocaleDateString("ru-RU")}</td>
-                    <td>
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        {contribution.status !== "visible" && (
-                          <form action={updateContributionStatusAdminAction} className={styles.actionForm}>
-                            <input type="hidden" name="contributionId" value={contribution.id} />
-                            <input type="hidden" name="status" value="visible" />
-                            <button type="submit" className={`${styles.actionButton} ${styles.actionButtonPrimary}`}>
-                              Показать
-                            </button>
-                          </form>
-                        )}
-                        {contribution.status !== "hidden" && (
-                          <form action={updateContributionStatusAdminAction} className={styles.actionForm}>
-                            <input type="hidden" name="contributionId" value={contribution.id} />
-                            <input type="hidden" name="status" value="hidden" />
-                            <button type="submit" className={styles.actionButton}>Скрыть</button>
-                          </form>
-                        )}
-                        {contribution.status !== "deleted" && (
-                          <form action={updateContributionStatusAdminAction} className={styles.actionForm}>
-                            <input type="hidden" name="contributionId" value={contribution.id} />
-                            <input type="hidden" name="status" value="deleted" />
-                            <button type="submit" className={`${styles.actionButton} ${styles.actionButtonDanger}`}>
-                              Удалить
-                            </button>
-                          </form>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-    </>
-  );
+type Params={status?:string;search?:string;card?:string;from?:string;to?:string;page?:string};
+export default async function AdminContributionsPage({searchParams}:{searchParams:Promise<Params>}) {
+  const session=await requireAdminRole("support");
+  const params=await searchParams,page=parsePage(params.page);
+  const rows=await listAdminContributions({status:["visible","hidden","deleted"].includes(params.status ?? "")?params.status as ContributionStatus:undefined,search:params.search?.trim(),cardId:/^[0-9a-f-]{36}$/i.test(params.card ?? "")?params.card:undefined,from:parseFilterDate(params.from),to:parseFilterDate(params.to),limit:21,offset:(page-1)*20});
+  return <><AdminPageHeader title="Поздравления" description="Полное содержание и модерация доступны в подробностях." />
+  <AdminFilterBar resetHref="/admin/contributions">
+    <label className={styles.filterField}>Поиск<input className={styles.searchInput} type="search" name="search" defaultValue={params.search} placeholder="Автор или текст" /></label>
+    <label className={styles.filterField}>Статус<select className={styles.statusSelect} name="status" defaultValue={params.status ?? ""}><option value="">Все</option><option value="visible">Видимые</option><option value="hidden">Скрытые</option><option value="deleted">Удалённые</option></select></label>
+    <label className={styles.filterField}>ID открытки<input className={styles.searchInput} name="card" defaultValue={params.card} /></label>
+    <label className={styles.filterField}>С даты<input className={styles.searchInput} type="date" name="from" defaultValue={params.from} /></label>
+    <label className={styles.filterField}>По дату<input className={styles.searchInput} type="date" name="to" defaultValue={params.to} /></label>
+  </AdminFilterBar>
+  <section className={styles.panel}><AdminDataTable label="Поздравления" rows={rows.slice(0,20)} columns={[
+    {key:"author",label:"Автор",render:(r)=>r.authorName},
+    {key:"text",label:"Текст",render:(r)=><p className={styles.textPreview}>{r.message}</p>},
+    {key:"card",label:"Открытка",render:(r)=>session.role!=="support"?<Link href={`/admin/cards/${r.cardId}`}>{r.recipientName?.trim()||"Получатель не указан"}</Link>:r.recipientName?.trim()||"Получатель не указан"},
+    {key:"status",label:"Статус",render:(r)=><AdminStatus domain="contribution" value={r.status} />},
+    {key:"date",label:"Дата",render:(r)=>formatAdminDate(r.createdAt)},
+    {key:"action",label:"Подробности",render:(r)=><AdminObjectDetails title={`Поздравление · ${r.authorName}`}><div><p style={{whiteSpace:"pre-wrap"}}>{r.message}</p><div className={styles.statusStack}>{(["visible","hidden","deleted"] as const).filter(s=>s!==r.status).map(status=><form key={status} action={updateContributionStatusAdminAction}><input type="hidden" name="contributionId" value={r.id}/><input type="hidden" name="status" value={status}/>{status==="deleted"?<AdminConfirmDialog message="Удалить поздравление из открытки?">Удалить</AdminConfirmDialog>:<button type="submit" className={styles.actionButton}>{status==="visible"?"Восстановить":"Скрыть"}</button>}</form>)}</div></div></AdminObjectDetails>}
+  ]}/></section><AdminPagination pathname="/admin/contributions" params={params} page={page} hasNext={rows.length>20}/></>;
 }

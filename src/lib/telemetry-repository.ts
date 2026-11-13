@@ -74,6 +74,8 @@ export type TelemetrySummary = {
       after: AiUsagePaymentStage;
     } | null;
     recent: AiCostGeneration[];
+    byModel?: Array<{ extractorModel: string | null; composerModel: string | null; operations: number; totalRub: number }>;
+    byOperation?: Array<{ action: string | null; operations: number; totalRub: number }>;
   };
 };
 
@@ -155,8 +157,8 @@ export const recordTelemetryEvent = async (input: Omit<TelemetryEvent, "id" | "c
   return item;
 };
 
-export const getTelemetrySummary = async (days: number): Promise<TelemetrySummary> => {
-  const safeDays = days === 30 ? 30 : 7;
+export const getTelemetrySummary = async (days: number | null): Promise<TelemetrySummary> => {
+  const safeDays = days === null || days === 30 || days === 90 ? days : 7;
   let items: TelemetryEvent[];
   if (isPostgresConfigured()) {
     const pool = getPostgresPool();
@@ -172,7 +174,7 @@ export const getTelemetrySummary = async (days: number): Promise<TelemetrySummar
       }
     };
   } else {
-    const since = Date.now() - safeDays * 86_400_000;
+    const since = safeDays === null ? 0 : Date.now() - safeDays * 86_400_000;
     items = (await readJson()).filter((item) => {
       const timestamp = new Date(item.createdAt).getTime();
       return timestamp >= since && timestamp <= Date.now();
@@ -224,10 +226,13 @@ export const getTelemetrySummary = async (days: number): Promise<TelemetrySummar
 // Aggregate the complete period in the database; only the error detail list is capped.
 export const telemetrySummarySql = `
 WITH period AS MATERIALIZED (
-  SELECT * FROM telemetry_events
-  WHERE created_at >= now() - ($1 * interval '1 day') AND created_at <= now()
+  SELECT * FROM telemetry_events t
+  WHERE ($1::int IS NULL OR created_at >= now() - ($1 * interval '1 day')) AND created_at <= now()
+    AND NOT EXISTS (SELECT 1 FROM cards test WHERE test.id::text = t.card_id AND test.is_test)
 ), ai AS (
   SELECT card_id,
+    NULLIF(context->>'extractorModel','') AS extractor_model,
+    NULLIF(context->>'composerModel','') AS composer_model,
     (context->>'totalCostRub')::numeric AS cost,
     NULLIF(context->>'action', '') AS action,
     CASE WHEN jsonb_typeof(context->'extractorUsage'->'totalRub') = 'number'
@@ -251,7 +256,8 @@ WITH period AS MATERIALIZED (
       THEN 'after' ELSE 'before' END AS payment_stage
   FROM ai_usage_events usage
   JOIN cards card ON card.id = usage.card_id
-  WHERE usage.created_at >= now() - ($1 * interval '1 day') AND usage.created_at <= now()
+  WHERE ($1::int IS NULL OR usage.created_at >= now() - ($1 * interval '1 day')) AND usage.created_at <= now()
+    AND card.is_test = false
     AND usage.status = 'succeeded' AND usage.is_reserved_free = false
 ), funnel AS (
   SELECT event, count(*) AS count FROM period WHERE kind = 'funnel' GROUP BY event
@@ -284,6 +290,8 @@ SELECT jsonb_build_object(
     'repairGenerationShare', round(COALESCE(
       (count(*) FILTER (WHERE repair_count > 0))::numeric / NULLIF(count(*), 0), 0
     ), 6),
+    'byModel', (SELECT COALESCE(jsonb_agg(m), '[]'::jsonb) FROM (SELECT extractor_model AS "extractorModel",composer_model AS "composerModel",count(*) AS operations,COALESCE(sum(cost),0) AS "totalRub" FROM ai GROUP BY extractor_model,composer_model ORDER BY sum(cost) DESC) m),
+    'byOperation', (SELECT COALESCE(jsonb_agg(o), '[]'::jsonb) FROM (SELECT action,count(*) AS operations,COALESCE(sum(cost),0) AS "totalRub" FROM ai GROUP BY action ORDER BY sum(cost) DESC) o),
     'usageByPayment', jsonb_build_object(
       'before', jsonb_build_object(
         'operations', (SELECT count(*) FROM ai_usage_by_payment WHERE payment_stage = 'before'),
@@ -307,8 +315,9 @@ SELECT jsonb_build_object(
 export const telemetryAiDetailSql = `
 SELECT id, kind, event, card_id AS "cardId", context,
   error_id AS "errorId", created_at::text AS "createdAt"
-FROM telemetry_events
-WHERE created_at >= now() - ($1 * interval '1 day') AND created_at <= now()
+FROM telemetry_events t
+WHERE ($1::int IS NULL OR created_at >= now() - ($1 * interval '1 day')) AND created_at <= now()
+  AND NOT EXISTS (SELECT 1 FROM cards test WHERE test.id::text = t.card_id AND test.is_test)
   AND event IN ('ai.join_single_generation', 'ai.two_stage_generation')
   AND jsonb_typeof(context->'totalCostRub') = 'number'
 ORDER BY created_at DESC, id

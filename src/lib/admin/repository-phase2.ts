@@ -76,6 +76,8 @@ const mapPaymentOrder = (row: PaymentOrderRow): PaymentOrder => ({
 });
 
 export type ListPaymentOrdersOptions = {
+  days?: number | null;
+  problem?: "refund";
   status?: PaymentOrderStatus | null;
   search?: string | null;
   limit?: number;
@@ -85,11 +87,13 @@ export type ListPaymentOrdersOptions = {
 export const listPaymentOrders = async (
   options: ListPaymentOrdersOptions = {}
 ): Promise<(PaymentOrder & { recipientName: string; organizerEmail: string })[]> => {
-  const { status, search, limit = 50, offset = 0 } = options;
+  const { status, search, limit = 50, offset = 0, days, problem } = options;
 
   if (isPostgresConfigured()) {
     const conditions: string[] = [];
     const params: (string | PaymentOrderStatus | number)[] = [];
+    if (days) { params.push(days); conditions.push(`po.created_at >= now() - ($${params.length} * interval '1 day')`); }
+    if (problem === "refund") conditions.push("EXISTS (SELECT 1 FROM payment_refunds r WHERE r.order_id = po.id AND r.status = 'CANCELED')");
 
     if (status) {
       conditions.push(`po.status = $${params.length + 1}`);
@@ -101,6 +105,8 @@ export const listPaymentOrders = async (
       conditions.push(`(
         LOWER(c.recipient_name) LIKE $${params.length + 1}
         OR LOWER(c.organizer_email) LIKE $${params.length + 1}
+        OR po.id::text ILIKE $${params.length + 1}
+        OR c.id::text ILIKE $${params.length + 1}
       )`);
       params.push(term);
     }
@@ -123,7 +129,7 @@ export const listPaymentOrders = async (
       FROM payment_orders po
       JOIN cards c ON c.id = po.card_id
       ${whereClause}
-      ORDER BY po.created_at DESC
+      ORDER BY po.created_at DESC, po.id
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
     params.push(limit, offset);
@@ -161,6 +167,9 @@ export const listPaymentOrders = async (
   if (status) {
     items = items.filter((item) => item.status === status);
   }
+
+  if (days) items = items.filter((item) => Date.parse(item.createdAt) >= Date.now() - days * 86400000);
+  if (problem) return []; // Local JSON storage has no verified refund ledger.
 
   if (search?.trim()) {
     const normalized = search.trim().toLowerCase();
@@ -310,6 +319,7 @@ export const toggleTemplateOverride = async (id: string, isActive: boolean): Pro
 // Admin users
 
 type AdminUserRow = {
+  disabled_at?: Date | string | null;
   id: string;
   email: string;
   password_hash: string;
@@ -320,6 +330,7 @@ type AdminUserRow = {
 };
 
 const mapAdminUser = (row: AdminUserRow): AdminUserWithCredentials => ({
+  disabledAt: row.disabled_at ? toIso(row.disabled_at) : null,
   id: row.id,
   email: row.email,
   passwordHash: row.password_hash,
@@ -334,11 +345,11 @@ export const listAdminUsers = async (): Promise<AdminUser[]> => {
     const result = await getPostgresPool().query<AdminUserRow>(
       "SELECT * FROM admin_users ORDER BY created_at DESC"
     );
-    return result.rows.map(mapAdminUser);
+    return result.rows.map((row) => ({ id: row.id, email: row.email, role: row.role, disabledAt: row.disabled_at ? toIso(row.disabled_at) : null, createdAt: toIso(row.created_at), updatedAt: toIso(row.updated_at) }));
   }
 
   const users = await readJsonFile<AdminUserWithCredentials>(adminUsersFilePath);
-  return users.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  return users.sort((left, right) => right.createdAt.localeCompare(left.createdAt)).map(({ id, email, role, disabledAt, createdAt, updatedAt }) => ({ id, email, role, disabledAt, createdAt, updatedAt }));
 };
 
 export const getAdminUserByEmail = async (email: string): Promise<AdminUserWithCredentials | null> => {
@@ -413,6 +424,20 @@ export const updateAdminUserRole = async (userId: string, role: AdminUserRole): 
   await writeJsonFile(adminUsersFilePath, users);
 
   return updated;
+};
+
+export const setAdminUserDisabled = async (userId: string, disabled: boolean): Promise<AdminUser | null> => {
+  const now = new Date().toISOString();
+  if (isPostgresConfigured()) {
+    const result = await getPostgresPool().query<AdminUserRow>("UPDATE admin_users SET disabled_at = CASE WHEN $2 THEN COALESCE(disabled_at,now()) ELSE NULL END, updated_at=now() WHERE id=$1 RETURNING *", [userId, disabled]);
+    return result.rows[0] ? mapAdminUser(result.rows[0]) : null;
+  }
+  const users = await readJsonFile<AdminUserWithCredentials>(adminUsersFilePath);
+  const index = users.findIndex((user) => user.id === userId);
+  if (index < 0) return null;
+  users[index] = { ...users[index], disabledAt: disabled ? users[index].disabledAt ?? now : null, updatedAt: now };
+  await writeJsonFile(adminUsersFilePath, users);
+  return users[index];
 };
 
 export const deleteAdminUser = async (userId: string): Promise<AdminUser | null> => {

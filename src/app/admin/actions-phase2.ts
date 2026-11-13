@@ -1,11 +1,14 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { hashAdminPassword } from "@/lib/admin/auth";
+import { getAdminAuthEnv, hashAdminPassword } from "@/lib/admin/auth";
 import { requireAdminRole } from "@/lib/admin/session";
 import {
   createAdminUser,
+  listAdminUsers,
+  setAdminUserDisabled,
   deleteAdminUser,
   toggleTemplateOverride,
   updateAdminUserRole,
@@ -14,7 +17,8 @@ import {
 import type { AdminUserRole, TemplateOverride } from "@/lib/admin/types";
 import { logger } from "@/lib/logger";
 import { grantRepurchase, isRevocationReason, revokePaymentOrder } from "@/lib/payments/admin";
-import { requestRobokassaFullRefund, syncRobokassaRefund } from "@/lib/payments/repository";
+import { requestAdminRefundOnce, syncAdminRefundOnce } from "@/lib/admin/finances";
+import { recordAdminAction } from "@/lib/admin/audit";
 import { createMerchantAccount } from "@/lib/payments/merchant-accounts";
 
 const adminRoles: AdminUserRole[] = ["admin", "moderator", "support"];
@@ -26,6 +30,7 @@ export async function revokePaymentOrderAction(formData: FormData): Promise<void
   const comment = String(formData.get("comment") ?? "").trim();
   if (!orderId || !comment || !isRevocationReason(reason)) return;
   await revokePaymentOrder({ orderId, adminEmail: session.email, reason, comment });
+  await recordAdminAction({ email: session.email, action: "payment.revoke", objectType: "order", objectId: orderId });
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
 }
@@ -35,25 +40,27 @@ export async function grantRepurchaseAction(formData: FormData): Promise<void> {
   const cardId = String(formData.get("cardId") ?? "");
   if (!cardId) return;
   await grantRepurchase({ cardId, adminEmail: session.email });
+  await recordAdminAction({ email: session.email, action: "card.repurchase", objectType: "card", objectId: cardId });
   revalidatePath("/admin/orders");
 }
 
 export async function requestRobokassaRefundAction(formData: FormData): Promise<void> {
-  await requireAdminRole("admin");
+  const session = await requireAdminRole("admin");
   const orderId = String(formData.get("orderId") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
   if (!orderId || !reason) return;
-  await requestRobokassaFullRefund(orderId, reason);
+  try { await requestAdminRefundOnce(orderId, reason, session.email); }
+  catch { /* The durable audit marker shows the unknown result on the order. */ }
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
 }
 
 export async function syncRobokassaRefundAction(formData: FormData): Promise<void> {
-  await requireAdminRole("admin");
+  const session = await requireAdminRole("admin");
   const requestId = String(formData.get("requestId") ?? "");
   if (!requestId) return;
-  await syncRobokassaRefund(requestId);
-  revalidatePath("/admin/orders");
+  await syncAdminRefundOnce(requestId, session.email);
+  revalidatePath("/admin", "layout");
 }
 
 export async function createMerchantAccountAction(formData: FormData): Promise<void> {
@@ -69,7 +76,7 @@ export async function createMerchantAccountAction(formData: FormData): Promise<v
 }
 
 export async function upsertTemplateOverrideAction(formData: FormData): Promise<void> {
-  await requireAdminRole("admin");
+  const session = await requireAdminRole("admin");
 
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim() || null;
@@ -98,9 +105,11 @@ export async function upsertTemplateOverrideAction(formData: FormData): Promise<
   };
 
   await upsertTemplateOverride(override);
+  await recordAdminAction({ email: session.email, action: "template.update", objectType: "template", objectId: id });
   logger.info("admin.template_override_updated", "Template override updated", { templateId: id, isActive });
 
   revalidatePath("/admin/templates");
+  revalidatePath(`/admin/templates/${id}`);
 }
 
 export async function toggleTemplateOverrideAction(formData: FormData): Promise<void> {
@@ -120,7 +129,7 @@ export async function toggleTemplateOverrideAction(formData: FormData): Promise<
 }
 
 export async function createAdminUserAction(formData: FormData): Promise<void> {
-  await requireAdminRole("admin");
+  const session = await requireAdminRole("admin");
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
@@ -132,14 +141,15 @@ export async function createAdminUserAction(formData: FormData): Promise<void> {
 
   const { salt, hash } = generateAdminPasswordInline(password);
 
-  await createAdminUser({ email, passwordHash: hash, passwordSalt: salt, role });
-  logger.info("admin.user_created", "Admin user created", { email, role });
+  const created = await createAdminUser({ email, passwordHash: hash, passwordSalt: salt, role });
+  await recordAdminAction({ email: session.email, action: "user.create", objectType: "admin_user", objectId: created.id });
+  logger.info("admin.user_created", "Admin user created", { userId: created.id, role });
 
   revalidatePath("/admin/users");
 }
 
 export async function updateAdminUserRoleAction(formData: FormData): Promise<void> {
-  await requireAdminRole("admin");
+  const session = await requireAdminRole("admin");
 
   const userId = String(formData.get("userId") ?? "");
   const role = String(formData.get("role") ?? "") as AdminUserRole;
@@ -148,9 +158,12 @@ export async function updateAdminUserRoleAction(formData: FormData): Promise<voi
     return;
   }
 
+  const target = (await listAdminUsers()).find((user) => user.id === userId);
+  if (!target || (target.email.toLowerCase() === session.email.toLowerCase() && role !== "admin")) return;
   const updated = await updateAdminUserRole(userId, role);
 
   if (updated) {
+    await recordAdminAction({ email: session.email, action: `user.role.${role}`, objectType: "admin_user", objectId: updated.id });
     logger.info("admin.user_role_updated", "Admin user role updated", { userId: updated.id, role });
   }
 
@@ -158,7 +171,7 @@ export async function updateAdminUserRoleAction(formData: FormData): Promise<voi
 }
 
 export async function deleteAdminUserAction(formData: FormData): Promise<void> {
-  await requireAdminRole("admin");
+  const session = await requireAdminRole("admin");
 
   const userId = String(formData.get("userId") ?? "");
 
@@ -166,13 +179,30 @@ export async function deleteAdminUserAction(formData: FormData): Promise<void> {
     return;
   }
 
-  const deleted = await deleteAdminUser(userId);
+  const target = (await listAdminUsers()).find((user) => user.id === userId);
+  if (!target || target.email.toLowerCase() === session.email.toLowerCase() || target.email.toLowerCase() === getAdminAuthEnv().email.toLowerCase()) return;
+  let deleted;
+  try { deleted = await deleteAdminUser(userId); }
+  catch (error) { if ((error as { code?: string }).code === "23503") redirect("/admin/users?notice=linked-account"); throw error; }
 
   if (deleted) {
+    await recordAdminAction({ email: session.email, action: "user.delete", objectType: "admin_user", objectId: deleted.id });
     logger.info("admin.user_deleted", "Admin user deleted", { userId: deleted.id });
   }
 
   revalidatePath("/admin/users");
+}
+
+export async function setAdminUserDisabledAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole("admin");
+  const userId = String(formData.get("userId") ?? "");
+  const disabled = String(formData.get("disabled") ?? "");
+  if (!["true", "false"].includes(disabled)) return;
+  const target = (await listAdminUsers()).find((user) => user.id === userId);
+  if (!target || target.email.toLowerCase() === session.email.toLowerCase()) return;
+  await setAdminUserDisabled(userId, disabled === "true");
+  await recordAdminAction({ email: session.email, action: disabled === "true" ? "user.disable" : "user.enable", objectType: "admin_user", objectId: userId });
+  revalidatePath("/admin", "layout");
 }
 
 function generateAdminPasswordInline(password: string) {

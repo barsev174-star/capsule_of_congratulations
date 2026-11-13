@@ -7,12 +7,13 @@ import { retrySupportNotification } from "@/lib/support/notifications-repository
 import { runSupportNotificationBatch } from "@/lib/support/notifications-service";
 import type { SupportRequestStatus } from "@/lib/support/types";
 import { logger } from "@/lib/logger";
+import { recordAdminAction } from "@/lib/admin/audit";
 
 const statuses: SupportRequestStatus[] = ["new", "in_progress", "resolved"];
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function updateSupportRequestStatusAction(formData: FormData): Promise<void> {
-  await requireAdminRole("support");
+  const session = await requireAdminRole("support");
   const requestId = String(formData.get("requestId") ?? "");
   const status = String(formData.get("status") ?? "") as SupportRequestStatus;
 
@@ -20,6 +21,7 @@ export async function updateSupportRequestStatusAction(formData: FormData): Prom
 
   const updated = await updateSupportRequestStatus(requestId, status);
   if (updated) {
+    await recordAdminAction({ email: session.email, action: `support.${status}`, objectType: "support", objectId: requestId });
     logger.info("admin.support_status_updated", "Support request status updated", {
       requestId,
       status

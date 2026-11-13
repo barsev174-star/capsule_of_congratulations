@@ -206,6 +206,10 @@ export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => 
 };
 
 export type ListAdminCardsOptions = {
+  from?: string;
+  to?: string;
+  days?: number | null;
+  isTest?: boolean;
   paymentStatus?: PaymentStatus | null;
   collectionStatus?: CollectionStatus | null;
   deliveryStatus?: DeliveryStatus | null;
@@ -217,6 +221,7 @@ export type ListAdminCardsOptions = {
 const buildSearchMatch = (search: string) => {
   const normalized = search.trim().toLowerCase();
   return (card: CardDraft) =>
+    card.id.toLowerCase().includes(normalized) ||
     card.recipientName.toLowerCase().includes(normalized) ||
     card.organizerName.toLowerCase().includes(normalized) ||
     card.organizerEmail.toLowerCase().includes(normalized) ||
@@ -224,11 +229,15 @@ const buildSearchMatch = (search: string) => {
 };
 
 export const listAdminCards = async (options: ListAdminCardsOptions = {}): Promise<CardDraft[]> => {
-  const { paymentStatus, collectionStatus, deliveryStatus, search, limit = 50, offset = 0 } = options;
+  const { paymentStatus, collectionStatus, deliveryStatus, search, limit = 50, offset = 0, from, to, days, isTest } = options;
 
   if (isPostgresConfigured()) {
     const conditions: string[] = ["purged_at IS NULL"];
-    const params: (string | PaymentStatus | CollectionStatus | DeliveryStatus)[] = [];
+    const params: (string | number | boolean)[] = [];
+    if (from) { params.push(from); conditions.push(`created_at >= ($${params.length}::date::timestamp AT TIME ZONE 'Asia/Yekaterinburg')`); }
+    if (to) { params.push(to); conditions.push(`created_at < (($${params.length}::date + 1)::timestamp AT TIME ZONE 'Asia/Yekaterinburg')`); }
+    if (days) { params.push(days); conditions.push(`created_at >= now() - ($${params.length} * interval '1 day')`); }
+    if (isTest !== undefined) { params.push(isTest); conditions.push(`is_test = $${params.length}`); }
 
     if (paymentStatus) {
       conditions.push(`payment_status = $${params.length + 1}`);
@@ -252,6 +261,7 @@ export const listAdminCards = async (options: ListAdminCardsOptions = {}): Promi
         OR LOWER(organizer_name) LIKE $${params.length + 1}
         OR LOWER(organizer_email) LIKE $${params.length + 1}
         OR LOWER(occasion_text) LIKE $${params.length + 1}
+        OR id::text ILIKE $${params.length + 1}
       )`);
       params.push(term);
     }
@@ -260,7 +270,7 @@ export const listAdminCards = async (options: ListAdminCardsOptions = {}): Promi
     const query = `
       SELECT * FROM cards
       ${whereClause}
-      ORDER BY created_at DESC
+      ORDER BY created_at DESC, id
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
     params.push(String(limit), String(offset));
@@ -270,6 +280,10 @@ export const listAdminCards = async (options: ListAdminCardsOptions = {}): Promi
   }
 
   let cards = await listCardDrafts();
+  if (from) cards = cards.filter((card) => Date.parse(card.createdAt) >= Date.parse(`${from}T00:00:00+05:00`));
+  if (to) cards = cards.filter((card) => new Date(card.createdAt).getTime() < Date.parse(`${to}T00:00:00+05:00`) + 86400000);
+  if (days) cards = cards.filter((card) => Date.parse(card.createdAt) >= Date.now() - days * 86400000);
+  if (isTest !== undefined) cards = cards.filter((card) => Boolean(card.isTest) === isTest);
 
   if (paymentStatus) cards = cards.filter((card) => card.paymentStatus === paymentStatus);
   if (collectionStatus) cards = cards.filter((card) => (card.collectionStatus ?? "DRAFT") === collectionStatus);
@@ -315,10 +329,12 @@ export type AdminContributionListItem = Contribution & {
   cardId: string;
   recipientName: string;
   publicSlug: string;
-  manageToken: string;
 };
 
 export type ListAdminContributionsOptions = {
+  cardId?: string;
+  from?: string;
+  to?: string;
   status?: ContributionStatus | null;
   search?: string | null;
   limit?: number;
@@ -328,11 +344,14 @@ export type ListAdminContributionsOptions = {
 export const listAdminContributions = async (
   options: ListAdminContributionsOptions = {}
 ): Promise<AdminContributionListItem[]> => {
-  const { status, search, limit = 50, offset = 0 } = options;
+  const { status, search, limit = 50, offset = 0, cardId, from, to } = options;
 
   if (isPostgresConfigured()) {
     const conditions: string[] = [];
     const params: (string | ContributionStatus)[] = [];
+    if (cardId) { params.push(cardId); conditions.push(`c.card_id = $${params.length}::uuid`); }
+    if (from) { params.push(from); conditions.push(`c.created_at >= ($${params.length}::date::timestamp AT TIME ZONE 'Asia/Yekaterinburg')`); }
+    if (to) { params.push(to); conditions.push(`c.created_at < (($${params.length}::date + 1)::timestamp AT TIME ZONE 'Asia/Yekaterinburg')`); }
 
     if (status) {
       conditions.push(`c.status = $${params.length + 1}`);
@@ -363,12 +382,11 @@ export const listAdminContributions = async (
         c.created_at AS "createdAt",
         c.updated_at AS "updatedAt",
         cards.recipient_name AS "recipientName",
-        cards.public_slug AS "publicSlug",
-        cards.manage_token AS "manageToken"
+        cards.public_slug AS "publicSlug"
       FROM contributions c
       JOIN cards ON cards.id = c.card_id
       ${whereClause}
-      ORDER BY c.created_at DESC
+      ORDER BY c.created_at DESC, c.id
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
     params.push(String(limit), String(offset));
@@ -395,8 +413,7 @@ export const listAdminContributions = async (
         ...contribution,
         cardId: contribution.cardId,
         recipientName: card?.recipientName ?? "—",
-        publicSlug: card?.publicSlug ?? "",
-        manageToken: card?.manageToken ?? ""
+        publicSlug: card?.publicSlug ?? ""
       };
     })
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
@@ -404,6 +421,9 @@ export const listAdminContributions = async (
   if (status) {
     items = items.filter((item) => item.status === status);
   }
+  if (cardId) items = items.filter((item) => item.cardId === cardId);
+  if (from) items = items.filter((item) => Date.parse(item.createdAt) >= Date.parse(`${from}T00:00:00+05:00`));
+  if (to) items = items.filter((item) => Date.parse(item.createdAt) < Date.parse(`${to}T00:00:00+05:00`) + 86400000);
 
   if (search?.trim()) {
     const normalized = search.trim().toLowerCase();

@@ -60,7 +60,7 @@ WITH landing_catalog AS (
   SELECT * FROM unnest($2::text[], $3::text[]) AS l(landing, path)
 ), cohort AS MATERIALIZED (
   SELECT id, created_at, delivered_at, recipient_first_opened_at
-  FROM cards WHERE created_at >= now() - ($1 * interval '1 day') AND created_at <= now()
+  FROM cards WHERE is_test = false AND ($1::int IS NULL OR created_at >= now() - ($1 * interval '1 day')) AND created_at <= now()
 ), card_facts AS (
   SELECT c.id, l.landing,
     CASE WHEN l.landing IS NOT NULL THEN COALESCE(NULLIF(left(btrim(t.context->>'utm_source'), 100), ''),
@@ -114,7 +114,8 @@ WITH landing_catalog AS (
       (l.landing = 'home' AND t.event IN ('home_page_view', 'home_example_click', 'home_create_click'))
       OR (l.landing <> 'home' AND t.event IN ('seo_landing_view', 'seo_example_click', 'seo_create_click'))
     )
-    AND t.created_at >= now() - ($1 * interval '1 day') AND t.created_at <= now()
+    AND ($1::int IS NULL OR t.created_at >= now() - ($1 * interval '1 day')) AND t.created_at <= now()
+    AND NOT EXISTS (SELECT 1 FROM cards test WHERE test.id::text = t.card_id AND test.is_test)
   GROUP BY l.landing
 ), home_actions AS (
   SELECT t.context->>'placement' AS placement,
@@ -124,14 +125,16 @@ WITH landing_catalog AS (
   WHERE t.kind = 'funnel' AND t.event IN ('home_example_click', 'home_create_click')
     AND t.context->>'landing_type' = 'home' AND t.context->>'landing_path' = '/'
     AND t.context->>'placement' = ANY($4::text[])
-    AND t.created_at >= now() - ($1 * interval '1 day') AND t.created_at <= now()
+    AND ($1::int IS NULL OR t.created_at >= now() - ($1 * interval '1 day')) AND t.created_at <= now()
+    AND NOT EXISTS (SELECT 1 FROM cards test WHERE test.id::text = t.card_id AND test.is_test)
   GROUP BY t.context->>'placement'
 ), participants AS (
   SELECT count(*) AS submissions,
     count(DISTINCT (card_id, participant_token_hash)) FILTER (WHERE NULLIF(participant_token_hash, '') IS NOT NULL) AS identities,
     count(*) FILTER (WHERE NULLIF(participant_token_hash, '') IS NULL) AS "unidentifiedSubmissions"
   FROM contributions WHERE source = 'participant'
-    AND created_at >= now() - ($1 * interval '1 day') AND created_at <= now()
+    AND ($1::int IS NULL OR created_at >= now() - ($1 * interval '1 day')) AND created_at <= now()
+    AND NOT EXISTS (SELECT 1 FROM cards test WHERE test.id = contributions.card_id AND test.is_test)
 )
 SELECT
   COALESCE((SELECT jsonb_agg(s ORDER BY created DESC, landing NULLS LAST, source NULLS LAST, medium NULLS LAST, campaign NULLS LAST) FROM source_groups s), '[]'::jsonb) AS sources,
@@ -140,11 +143,11 @@ SELECT
   (SELECT to_jsonb(p) FROM participants p) AS participants
 `;
 
-export const getAcquisitionAnalytics = async (days: number): Promise<AcquisitionAnalytics | null> => {
+export const getAcquisitionAnalytics = async (days: number | null): Promise<AcquisitionAnalytics | null> => {
   // JSON development storage has no verified payment ledger. Do not invent zero sales.
   if (!isPostgresConfigured()) return null;
   const result = await getPostgresPool().query<Omit<AcquisitionAnalytics, "totals">>(acquisitionAnalyticsSql, [
-    days === 30 ? 30 : 7, analyticsLandings.map((l) => l.id), analyticsLandings.map((l) => l.path), homeActivityPlacements
+    days === null || days === 30 || days === 90 ? days : 7, analyticsLandings.map((l) => l.id), analyticsLandings.map((l) => l.path), homeActivityPlacements
   ]);
   const row = result.rows[0];
   return { ...row, totals: sumAcquisitionCounts(row.sources) };

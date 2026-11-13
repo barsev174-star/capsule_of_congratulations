@@ -1,117 +1,43 @@
 import Link from "next/link";
 import { listAdminCards } from "@/lib/admin/repository";
 import { requireAdminRole } from "@/lib/admin/session";
-import { getCardLifecycleLabel } from "@/lib/cards/lifecycle";
-import { getManagePath, getPreviewPath } from "@/lib/routes/card-links";
+import { parsePage, parsePeriod, parseFilterDate, formatAdminDate } from "@/lib/admin/format";
+import { AdminDataTable, AdminPageHeader, AdminFilterBar, AdminPagination, AdminStatusBadge } from "../../components/admin-ui";
+import { AdminStatus } from "../../components/admin-status";
+import type { PaymentStatus, CollectionStatus, DeliveryStatus } from "@/lib/cards/types";
 import styles from "../../admin.module.css";
 
-type Props = {
-  searchParams: Promise<{
-    search?: string;
-  }>;
-};
-
-const valueOrFallback = (value: string | null | undefined, fallback: string) => value?.trim() || fallback;
-
-const formatCreatedAt = (value: string) => {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "Дата не указана" : date.toLocaleDateString("ru-RU");
-};
-
-export default async function AdminCardsPage({ searchParams }: Props) {
+type Params = { search?: string; collection?: string; payment?: string; quick?: string; from?: string; to?: string; days?: string; test?: string; page?: string };
+export default async function AdminCardsPage({ searchParams }: { searchParams: Promise<Params> }) {
   await requireAdminRole("moderator");
-  const { search } = await searchParams;
-  const cards = await listAdminCards({
-    search: search?.trim() || undefined,
-    limit: 50
-  });
-
-  return (
-    <>
-      <h1 className={styles.pageTitle}>Открытки</h1>
-      <p className={styles.pageSubtitle}>Управление открытками и их статусами</p>
-
-      <form method="get" className={styles.filters}>
-        <input
-          type="search"
-          name="search"
-          defaultValue={search}
-          placeholder="Поиск по получателю, организатору, email"
-          className={styles.searchInput}
-        />
-        <button type="submit" className={styles.filterButton}>
-          Применить
-        </button>
-      </form>
-
-      <section className={styles.panel}>
-        {cards.length === 0 ? (
-          <p className={styles.emptyState}>Открытки не найдены.</p>
-        ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Получатель</th>
-                  <th>Повод</th>
-                  <th>Организатор</th>
-                  <th>Статус</th>
-                  <th>Создана</th>
-                  <th>Действия</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cards.map((card) => (
-                  <tr key={card.id}>
-                    <td>
-                      <Link href={`/admin/cards/${card.id}`} className={styles.cardPrimaryLink}>
-                        {valueOrFallback(card.recipientName, "Получатель не указан")}
-                      </Link>
-                      <span className={styles.cardId} title={card.id}>ID: {card.id.slice(0, 8)}</span>
-                    </td>
-                    <td>{valueOrFallback(card.occasionText, "Повод не указан")}</td>
-                    <td className={styles.organizerCell}>
-                      <span>{valueOrFallback(card.organizerName, "Организатор не указан")}</span>
-                      <span className={styles.cellSecondary}>{valueOrFallback(card.organizerEmail, "Email не указан")}</span>
-                    </td>
-                    <td>
-                      <span className={`${styles.badge} ${card.deletedAt ? styles.badgeDeleted : ""}`.trim()}>
-                        {card.deletedAt
-                          ? "Удалена"
-                          : getCardLifecycleLabel({
-                              paymentStatus: card.paymentStatus,
-                              collectionStatus: card.collectionStatus ?? "DRAFT",
-                              deliveryStatus: card.deliveryStatus ?? "PREPARING"
-                            })}
-                      </span>
-                    </td>
-                    <td className={styles.dateCell}>{formatCreatedAt(card.createdAt)}</td>
-                    <td>
-                      <div className={styles.cardActions}>
-                        <Link href={`/admin/cards/${card.id}`} className={`${styles.detailLink} ${styles.detailLinkPrimary}`.trim()}>
-                          Детали и доступ
-                        </Link>
-                        {!card.deletedAt ? (
-                          <>
-                          <Link href={getManagePath(card.id)} className={styles.detailLink}>
-                            Управлять
-                          </Link>
-                          <Link href={getPreviewPath(card.id)} className={styles.detailLink}>
-                            Предпросмотр
-                          </Link>
-                          </>
-                        ) : (
-                          <span className={styles.emptyValue}>Пользовательские действия недоступны</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-    </>
-  );
+  const params = await searchParams;
+  const page = parsePage(params.page);
+  const quick = params.quick;
+  const collection = quick === "draft" ? "DRAFT" : quick === "open" ? "OPEN" : ["DRAFT", "OPEN", "CLOSED"].includes(params.collection ?? "") ? params.collection as CollectionStatus : undefined;
+  const payment = quick === "paid" ? "PAID" : ["UNPAID", "PAID", "REFUNDED", "REVOKED"].includes(params.payment ?? "") ? params.payment as PaymentStatus : undefined;
+  const cards = await listAdminCards({ search: params.search?.trim(), collectionStatus: collection, paymentStatus: payment, deliveryStatus: quick === "delivered" ? "DELIVERED" as DeliveryStatus : undefined, from: parseFilterDate(params.from), to: parseFilterDate(params.to), days: params.days ? parsePeriod(params.days) : null, isTest: params.test === "test" ? true : params.test === "real" ? false : undefined, limit: 21, offset: (page - 1) * 20 });
+  const quickHref = (value: string) => { const q=new URLSearchParams(); for(const [key,item] of Object.entries(params)) if(item && key!=="page")q.set(key,item); if(value)q.set("quick",value);else q.delete("quick"); if(["draft","open"].includes(value))q.delete("collection");if(value==="paid")q.delete("payment");return `/admin/cards?${q}`; };
+  return <>
+    <AdminPageHeader title="Открытки" description="Поиск, состояние и безопасное управление открытками." />
+    <nav className={styles.tabs} aria-label="Быстрые фильтры">{[["", "Все"], ["draft", "Черновики"], ["open", "Сбор открыт"], ["paid", "Оплачены"], ["delivered", "Переданы"]].map(([value, label]) => <Link key={value} href={quickHref(value)} aria-current={(quick ?? "") === value ? "page" : undefined}>{label}</Link>)}</nav>
+    <AdminFilterBar resetHref="/admin/cards">
+      <label className={styles.filterField}>Поиск<input type="search" name="search" defaultValue={params.search} placeholder="Получатель, организатор, email или ID" className={styles.searchInput} /></label>
+      <label className={styles.filterField}>Сбор<select name="collection" defaultValue={collection ?? ""} className={styles.statusSelect}><option value="">Все</option><option value="DRAFT">Черновик</option><option value="OPEN">Сбор открыт</option><option value="CLOSED">Сбор закрыт</option></select></label>
+      <label className={styles.filterField}>Оплата<select name="payment" defaultValue={payment ?? ""} className={styles.statusSelect}><option value="">Все</option><option value="UNPAID">Не оплачено</option><option value="PAID">Оплачено</option><option value="REFUNDED">Возврат</option><option value="REVOKED">Доступ отозван</option></select></label>
+      <label className={styles.filterField}>Созданы с<input type="date" name="from" defaultValue={params.from} className={styles.searchInput} /></label>
+      <label className={styles.filterField}>Созданы по<input type="date" name="to" defaultValue={params.to} className={styles.searchInput} /></label>
+      <label className={styles.filterField}>Период<select name="days" defaultValue={params.days ?? "all"} className={styles.statusSelect}><option value="all">Всё время</option><option value="7">7 дней</option><option value="30">30 дней</option><option value="90">90 дней</option></select></label>
+      <label className={styles.filterField}>Тип данных<select name="test" defaultValue={params.test ?? ""} className={styles.statusSelect}><option value="">Все</option><option value="real">Реальные</option><option value="test">Тестовые</option></select></label>
+      {quick === "delivered" && <input type="hidden" name="quick" value="delivered" />}
+    </AdminFilterBar>
+    <section className={styles.panel}><AdminDataTable label="Открытки" rows={cards.slice(0,20)} columns={[
+      { key: "recipient", label: "Получатель", render: (card) => <><Link href={`/admin/cards/${card.id}`} className={styles.cardPrimaryLink}>{card.recipientName?.trim() || "Получатель не указан"}</Link><span className={styles.cardId}>ID: {card.id.slice(0,8)}</span>{card.isTest && <AdminStatusBadge>Тестовая</AdminStatusBadge>}</> },
+      { key: "occasion", label: "Повод", render: (card) => card.occasionText?.trim() || "Повод не указан" },
+      { key: "organizer", label: "Организатор", render: (card) => <>{card.organizerName?.trim() || "Организатор не указан"}<span className={`${styles.cellSecondary} ${styles.emailValue}`} title={card.organizerEmail}>{card.organizerEmail || "Email не указан"}</span></> },
+      { key: "status", label: "Состояние", render: (card) => <div className={styles.statusStack}>{card.deletedAt ? <AdminStatusBadge>Удалена</AdminStatusBadge> : <><AdminStatus domain="collection" value={card.collectionStatus ?? "DRAFT"} /><AdminStatus domain="payment" value={card.paymentStatus} />{card.deliveryStatus === "DELIVERED" && <AdminStatus domain="delivery" value="DELIVERED" />}</>}</div> },
+      { key: "date", label: "Создана", render: (card) => formatAdminDate(card.createdAt) },
+      { key: "action", label: "Действие", render: (card) => <Link href={`/admin/cards/${card.id}`} className={`${styles.detailLink} ${styles.detailLinkPrimary}`}>Открыть</Link> }
+    ]} /></section>
+    <AdminPagination pathname="/admin/cards" params={params} page={page} hasNext={cards.length > 20} />
+  </>;
 }

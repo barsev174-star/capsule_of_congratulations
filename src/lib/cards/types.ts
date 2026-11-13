@@ -15,6 +15,8 @@ export type CollectionStatus = "DRAFT" | "OPEN" | "CLOSED";
 export type DeliveryStatus = "PREPARING" | "DELIVERED";
 
 export type CardDraft = {
+  /** Explicit administrator classification; never inferred from personal data. */
+  isTest?: boolean;
   id: string;
   publicSlug: string;
   manageToken: string;

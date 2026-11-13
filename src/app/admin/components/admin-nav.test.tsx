@@ -19,6 +19,6 @@ describe("AdminNav", () => {
     render(<AdminNav role="admin" />);
 
     expect(screen.getByRole("link", { name: "Открытки" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "Dashboard" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: "Обзор" })).not.toHaveAttribute("aria-current");
   });
 });

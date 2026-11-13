@@ -70,7 +70,7 @@ try {
     const alert = await page.getByRole("alert").textContent().catch(() => "no alert");
     throw new Error(`Valid admin login failed at ${page.url()}: ${alert}. ${serverOutput.slice(-1200)}`);
   }
-  await page.getByText(email, { exact: true }).waitFor({ state: "visible" });
+  await page.locator("header").first().getByText(email, { exact: true }).waitFor({ state: "visible" });
   await page.getByRole("link", { name: "Аналитика", exact: true }).waitFor({ state: "visible" });
 
   await page.getByRole("button", { name: "Выйти", exact: true }).click();
